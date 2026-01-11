@@ -1,6 +1,7 @@
 #!/bin/bash
 # Ralph Specum Stop Hook Handler
 # Reads state, determines if loop should continue or block
+# Handles auto-compaction in auto mode
 
 # Read input from stdin (Claude Code hook input)
 INPUT=$(cat)
@@ -27,6 +28,9 @@ if [[ -z "$STATE_FILE" || ! -f "$STATE_FILE" ]]; then
     exit 0
 fi
 
+# Get spec directory from state file path
+SPEC_DIR=$(dirname "$STATE_FILE")
+
 # Read state
 STATE=$(cat "$STATE_FILE")
 MODE=$(echo "$STATE" | jq -r '.mode')
@@ -42,33 +46,64 @@ if [[ "$ITERATION" -ge "$MAX_ITERATIONS" ]]; then
     exit 0
 fi
 
-# Check for stop_hook_active to prevent infinite loops
-STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false')
-if [[ "$STOP_HOOK_ACTIVE" == "true" ]]; then
-    # Already in a continue loop, check if we should keep going
-    # Increment iteration
-    NEW_ITERATION=$((ITERATION + 1))
-    echo "$STATE" | jq ".iteration = $NEW_ITERATION" > "$STATE_FILE"
-fi
+# Increment iteration
+NEW_ITERATION=$((ITERATION + 1))
 
-# Read last output from transcript to detect phase/task completion
-# Look for PHASE_COMPLETE, TASK_COMPLETE, or RALPH_COMPLETE markers
+# Compaction instructions per phase
+get_compact_instruction() {
+    local phase=$1
+    case "$phase" in
+        "requirements")
+            echo "Run: /compact preserve: user stories, acceptance criteria (AC-*), functional requirements (FR-*), non-functional requirements (NFR-*), glossary. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to design phase."
+            ;;
+        "design")
+            echo "Run: /compact preserve: architecture decisions, component boundaries, file paths, patterns. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to tasks phase."
+            ;;
+        "tasks")
+            echo "Run: /compact preserve: task list with IDs, dependencies, quality gates. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to execution phase."
+            ;;
+        "execution")
+            echo "Run: /compact preserve: current task context, verification results. Read $SPEC_DIR/.ralph-progress.md for completed tasks and learnings. Then continue to next task."
+            ;;
+    esac
+}
 
-# For now, use a simpler approach: check phase approvals and task progress
+# Advance phase helper
+get_next_phase() {
+    local current=$1
+    case "$current" in
+        "requirements") echo "design" ;;
+        "design") echo "tasks" ;;
+        "tasks") echo "execution" ;;
+        *) echo "$current" ;;
+    esac
+}
 
 case "$PHASE" in
     "requirements"|"design"|"tasks")
-        # Check if phase needs approval (interactive mode)
         PHASE_APPROVED=$(echo "$STATE" | jq -r ".phaseApprovals.$PHASE")
 
         if [[ "$MODE" == "interactive" && "$PHASE_APPROVED" != "true" ]]; then
-            # Block and wait for approval
-            echo "{\"decision\": \"block\", \"reason\": \"Phase '$PHASE' complete. Review the generated file and run /ralph-specum:approve to continue.\"}"
+            # Block and wait for approval or revision
+            echo "{\"decision\": \"block\", \"reason\": \"Phase '$PHASE' complete. Options: (1) Discuss/give feedback to revise current phase (2) /ralph-specum:approve to advance to next phase.\"}"
             exit 0
         fi
 
-        # Auto mode or already approved: continue
-        # The approve command will handle compaction and phase advancement
+        # Auto mode: advance phase and trigger compaction
+        if [[ "$MODE" == "auto" ]]; then
+            NEXT_PHASE=$(get_next_phase "$PHASE")
+            COMPACT_MSG=$(get_compact_instruction "$PHASE")
+
+            # Update state: advance phase, mark approved, increment iteration
+            echo "$STATE" | jq "
+                .phase = \"$NEXT_PHASE\" |
+                .phaseApprovals.$PHASE = true |
+                .iteration = $NEW_ITERATION
+            " > "$STATE_FILE"
+
+            echo "{\"decision\": \"block\", \"reason\": \"Phase '$PHASE' complete. $COMPACT_MSG\"}"
+            exit 0
+        fi
         ;;
 
     "execution")
@@ -78,12 +113,20 @@ case "$PHASE" in
             exit 0
         fi
 
-        # More tasks to do, continue
-        # Increment iteration for tracking
-        NEW_ITERATION=$((ITERATION + 1))
-        echo "$STATE" | jq ".iteration = $NEW_ITERATION" > "$STATE_FILE"
+        # More tasks to do
+        if [[ "$MODE" == "auto" ]]; then
+            COMPACT_MSG=$(get_compact_instruction "execution")
 
-        # Return continue signal (empty output = continue)
+            # Update iteration
+            echo "$STATE" | jq ".iteration = $NEW_ITERATION" > "$STATE_FILE"
+
+            echo "{\"decision\": \"block\", \"reason\": \"Task complete. $COMPACT_MSG\"}"
+            exit 0
+        fi
+
+        # Interactive mode: allow discussion or continue
+        echo "$STATE" | jq ".iteration = $NEW_ITERATION" > "$STATE_FILE"
+        echo "{\"decision\": \"block\", \"reason\": \"Task done. Discuss results or say 'continue' for next task.\"}"
         exit 0
         ;;
 esac

@@ -44,6 +44,14 @@ From `$ARGUMENTS`, extract:
 
 7. Output: "Phase approved. Continuing to <next_phase>..."
 
+## Interactive Flow
+
+When a phase completes in interactive mode, you can:
+1. **Discuss/revise**: Give feedback, Claude will update the phase docs
+2. **Approve**: Run this command to advance to next phase with compaction
+
+No need to approve if you want to keep iterating on current phase.
+
 ## Error Cases
 
 - If no state file: "No active Ralph loop. Start with /ralph-specum."

@@ -1,13 +1,15 @@
 # Ralph Specum
 
-Spec-driven development with smart compaction. A Claude Code plugin that combines the Ralph Wiggum agentic loop with structured specification workflow.
+Spec-driven development with smart compaction. A Claude Code plugin that combines the Ralph Wiggum agentic loop with structured specification workflow and specialized sub-agents.
 
 ## Features
 
-- **Spec-Driven Workflow**: Automatically generates requirements, design, and tasks from a goal description
+- **Spec-Driven Workflow**: Generates requirements, design, and tasks from a goal description
+- **Sub-Agent Delegation**: Specialized agents for each phase (product-manager, architect-reviewer, task-planner, spec-executor)
+- **POC-First Workflow**: Make it work, then make it right (Phase 1: POC, Phase 2: Refactor, Phase 3: Test, Phase 4: Quality)
 - **Smart Compaction**: Strategic context management between phases and tasks
 - **Persistent Progress**: Learnings and state survive compaction via progress file
-- **Two Modes**: Interactive (pause per phase) or fully autonomous
+- **Two Modes**: Interactive (pause per phase for discussion) or fully autonomous
 
 ## Installation
 
@@ -36,15 +38,6 @@ git clone https://github.com/tzachbon/ralph-specum.git
 /plugin install https://github.com/tzachbon/ralph-specum
 ```
 
-### Local Development
-
-```bash
-# Clone and link for development
-git clone https://github.com/tzachbon/ralph-specum.git
-cd ralph-specum
-/plugin install .
-```
-
 ## Quick Start
 
 ### Interactive Mode (Recommended)
@@ -54,15 +47,16 @@ cd ralph-specum
 ```
 
 This will:
-1. Generate `requirements.md` and pause for approval
-2. After `/ralph-specum:approve`, generate `design.md` and pause
-3. After approval, generate `tasks.md` and pause
-4. After approval, execute all tasks (compacting after each)
+1. Invoke `product-manager` agent to generate `requirements.md` and pause
+2. You can discuss/refine the requirements, then `/ralph-specum:approve`
+3. Invoke `architect-reviewer` agent to generate `design.md` and pause
+4. After approval, invoke `task-planner` for POC-first `tasks.md`
+5. After approval, `spec-executor` runs tasks autonomously with compaction
 
 ### Autonomous Mode
 
 ```
-/ralph-specum "Refactor database layer" --mode auto --dir ./db-refactor
+/ralph-specum "Refactor database layer" --mode auto --dir ./db-refactor --max-iterations 15
 ```
 
 Runs through all phases without pausing. Compacts automatically between phases and tasks.
@@ -73,6 +67,7 @@ Runs through all phases without pausing. Compacts automatically between phases a
 |---------|-------------|
 | `/ralph-specum "goal" [options]` | Start the spec-driven loop |
 | `/ralph-specum:approve` | Approve current phase (interactive mode) |
+| `/ralph-specum:implement [phase]` | Start/resume task execution |
 | `/ralph-specum:cancel` | Cancel active loop and cleanup |
 | `/ralph-specum:help` | Show help |
 
@@ -82,51 +77,106 @@ Runs through all phases without pausing. Compacts automatically between phases a
 |--------|---------|-------------|
 | `--mode` | `interactive` | `interactive` or `auto` |
 | `--dir` | `./spec` | Directory for spec files |
+| `--max-iterations` | `10` | Max loop iterations |
 
-## How It Works
+## Sub-Agent Architecture
 
-### Phase Workflow
+Each phase delegates to a specialized agent:
 
-```mermaid
-flowchart TB
-    subgraph Input
-        G[Goal Description]
-    end
+| Phase | Agent | Purpose |
+|-------|-------|---------|
+| Requirements | `product-manager` | User stories, acceptance criteria, business value |
+| Design | `architect-reviewer` | Architecture, patterns, technical decisions |
+| Tasks | `task-planner` | POC-first breakdown, quality gates |
+| Execution | `spec-executor` | Autonomous task implementation |
 
-    subgraph Spec["Specification Phases"]
-        R[Requirements]
-        D[Design]
-        T[Tasks]
-    end
+### Product Manager Agent
 
-    subgraph Exec["Execution Phase"]
-        E1[Task 1]
-        E2[Task 2]
-        EN[Task N]
-    end
+Creates requirements with:
+- User stories with testable acceptance criteria
+- Functional requirements (FR-*) with priorities
+- Non-functional requirements (NFR-*)
+- Glossary, out-of-scope, dependencies
 
-    subgraph Output
-        C[Complete]
-    end
+### Architect Reviewer Agent
 
-    G --> R
-    R -->|compact| D
-    D -->|compact| T
-    T -->|compact| E1
-    E1 -->|compact| E2
-    E2 -->|compact| EN
-    EN --> C
+Creates design with:
+- Architecture diagrams (mermaid)
+- Component design and interfaces
+- Technical decisions with rationale
+- File structure matrix
+- Test strategy
 
-    R -.->|interactive| A1{Approve?}
-    D -.->|interactive| A2{Approve?}
-    T -.->|interactive| A3{Approve?}
+### Task Planner Agent
 
-    A1 -->|yes| D
-    A2 -->|yes| T
-    A3 -->|yes| E1
+Creates POC-first tasks:
+- **Phase 1: Make It Work** - Validate idea fast
+- **Phase 2: Refactoring** - Clean up code
+- **Phase 3: Testing** - Unit/integration/e2e
+- **Phase 4: Quality Gates** - Lint, types, CI
+
+### Spec Executor Agent
+
+Executes tasks autonomously:
+- Reads Do/Files/Done when/Verify from each task
+- Commits after verification passes
+- Updates progress file
+- Handles errors gracefully
+
+## POC-First Workflow
+
+Every spec follows the POC-first approach:
+
+```
+Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality)
 ```
 
-### State Management
+### Phase 1: Make It Work
+- Focus on proving the concept
+- Skip tests, accept hardcoded values
+- Only type check must pass
+- Goal: Working prototype
+
+### Phase 2: Refactoring
+- Clean up code structure
+- Add proper error handling
+- Remove hardcoded values
+
+### Phase 3: Testing
+- Unit tests for components
+- Integration tests for flows
+- E2E tests for user journeys
+
+### Phase 4: Quality Gates
+- Lint check
+- Type check
+- All tests pass
+- CI verification
+
+## Task Structure
+
+Each task in tasks.md includes:
+
+```markdown
+- [ ] 1.1 Create auth middleware
+  - **Do**: Create JWT validation middleware
+  - **Files**: src/middleware/auth.ts
+  - **Done when**: Middleware validates tokens
+  - **Verify**: Manual test with curl
+  - **Commit**: `feat(auth): add JWT validation middleware`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Auth Component_
+```
+
+## Interactive Mode Features
+
+When a phase completes in interactive mode:
+1. **Discuss/refine**: Give feedback, Claude revises the phase docs
+2. **Approve**: `/ralph-specum:approve` to advance with compaction
+
+No need to approve immediately. Keep iterating until satisfied.
+
+## State Management
 
 ```mermaid
 flowchart LR
@@ -155,32 +205,6 @@ Each phase transition uses targeted compaction:
 | Tasks | Task list, dependencies, quality gates |
 | Per-task | Current task context only |
 
-### Progress File
-
-The `.ralph-progress.md` file carries state across compactions:
-
-```markdown
-# Ralph Progress
-
-## Current Goal
-**Phase**: execution
-**Task**: 3/7 - Implement auth flow
-**Objective**: Create login/logout endpoints
-
-## Completed
-- [x] Task 1: Setup scaffolding
-- [x] Task 2: Database schema
-- [ ] Task 3: Auth flow (IN PROGRESS)
-
-## Learnings
-- Project uses Zod for validation
-- Rate limiting exists in middleware/
-
-## Next Steps
-1. Complete JWT generation
-2. Add refresh tokens
-```
-
 ## Files Generated
 
 In your spec directory:
@@ -189,54 +213,27 @@ In your spec directory:
 |------|---------|
 | `requirements.md` | User stories, acceptance criteria |
 | `design.md` | Architecture, patterns, file matrix |
-| `tasks.md` | Phased task breakdown |
+| `tasks.md` | POC-first task breakdown |
 | `.ralph-state.json` | Loop state (deleted on completion) |
 | `.ralph-progress.md` | Progress and learnings (deleted on completion) |
 
-## Configuration
-
-### Max Iterations
-
-Default: 50 iterations. The loop stops if this limit is reached to prevent infinite loops.
-
-### Templates
-
-Templates in `templates/` can be customized for your project's needs.
-
-## Troubleshooting
-
-### Loop not continuing?
-
-1. Check if in interactive mode waiting for `/ralph-specum:approve`
-2. Verify `.ralph-state.json` exists in spec directory
-3. Check iteration count hasn't exceeded max
-
-### Lost context after compaction?
-
-1. Check `.ralph-progress.md` for preserved state
-2. Learnings should persist across compactions
-3. The skill always reads progress file first
-
-### Cancel and restart?
-
-```
-/ralph-specum:cancel --dir ./your-spec
-/ralph-specum "your goal" --dir ./your-spec
-```
-
-## Development
-
-### Plugin Structure
+## Plugin Structure
 
 ```
 ralph-specum/
 ├── .claude-plugin/
 │   ├── plugin.json
 │   └── marketplace.json
+├── agents/
+│   ├── product-manager.md
+│   ├── architect-reviewer.md
+│   ├── task-planner.md
+│   └── spec-executor.md
 ├── commands/
 │   ├── ralph-loop.md
-│   ├── cancel-ralph.md
+│   ├── implement.md
 │   ├── approve.md
+│   ├── cancel-ralph.md
 │   └── help.md
 ├── skills/
 │   └── spec-workflow/
@@ -253,9 +250,39 @@ ralph-specum/
 └── README.md
 ```
 
+## Troubleshooting
+
+### Loop not continuing?
+
+1. Check if in interactive mode waiting for `/ralph-specum:approve`
+2. Verify `.ralph-state.json` exists in spec directory
+3. Check iteration count hasn't exceeded max
+
+### Lost context after compaction?
+
+1. Check `.ralph-progress.md` for preserved state
+2. Learnings should persist across compactions
+3. The skill always reads progress file first
+
+### Resume after crash?
+
+```
+/ralph-specum "your goal" --dir ./your-spec
+```
+
+If `.ralph-state.json` exists, it resumes from current state.
+
+### Cancel and restart?
+
+```
+/ralph-specum:cancel --dir ./your-spec
+/ralph-specum "your goal" --dir ./your-spec
+```
+
 ## Credits
 
 - Inspired by the [Ralph Wiggum](https://ghuntley.com/ralph/) agentic loop pattern
+- Sub-agent patterns from [Morphite](https://github.com/Morphite-ai/morphite-ai)
 - Built for [Claude Code](https://claude.ai/code)
 
 ## License

@@ -2,92 +2,91 @@
 
 ## Overview
 
-{{High-level description of the design approach}}
+{{Technical approach summary in 2-3 sentences}}
 
 ## Architecture
 
 ### Component Diagram
 
 ```mermaid
-graph TD
-    subgraph "{{System Name}}"
+graph TB
+    subgraph System["{{System Name}}"]
         A[Component A] --> B[Component B]
         B --> C[Component C]
     end
+    External[External Service] --> A
 ```
+
+### Components
+
+#### Component A
+**Purpose**: {{What this component does}}
+**Responsibilities**:
+- {{Responsibility 1}}
+- {{Responsibility 2}}
+
+#### Component B
+**Purpose**: {{What this component does}}
+**Responsibilities**:
+- {{Responsibility 1}}
+- {{Responsibility 2}}
 
 ### Data Flow
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Frontend
-    participant Backend
-    participant Database
-
-    User->>Frontend: Action
-    Frontend->>Backend: Request
-    Backend->>Database: Query
-    Database-->>Backend: Result
-    Backend-->>Frontend: Response
-    Frontend-->>User: Display
+    participant System
+    participant External
+    User->>System: Action
+    System->>External: Request
+    External->>System: Response
+    System->>User: Result
 ```
+
+1. {{Step one of data flow}}
+2. {{Step two}}
+3. {{Step three}}
+
+## Technical Decisions
+
+| Decision | Options Considered | Choice | Rationale |
+|----------|-------------------|--------|-----------|
+| {{Decision 1}} | A, B, C | B | {{Why B was chosen}} |
+| {{Decision 2}} | X, Y | X | {{Why X was chosen}} |
 
 ## File Structure
 
 | File | Action | Purpose |
 |------|--------|---------|
-| {{path/to/file.ts}} | Create | {{purpose}} |
-| {{path/to/file.ts}} | Modify | {{purpose}} |
-| {{path/to/file.ts}} | Delete | {{reason}} |
+| {{src/path/file.ts}} | Create | {{Purpose}} |
+| {{src/path/existing.ts}} | Modify | {{What changes}} |
 
-## Key Patterns
-
-### Pattern 1: {{Name}}
-
-{{Description of pattern and why it's used}}
+## Interfaces
 
 ```typescript
-// Example code
-```
-
-### Pattern 2: {{Name}}
-
-{{Description}}
-
-## API Design
-
-### Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | /api/{{resource}} | {{description}} |
-| POST | /api/{{resource}} | {{description}} |
-
-### Request/Response
-
-```typescript
-// Request type
-interface {{Name}}Request {
-  {{field}}: {{type}};
+interface {{ComponentInput}} {
+  {{param}}: {{type}};
 }
 
-// Response type
-interface {{Name}}Response {
-  {{field}}: {{type}};
+interface {{ComponentOutput}} {
+  success: boolean;
+  result?: {{type}};
+  error?: string;
 }
 ```
 
-## Data Models
+## Error Handling
 
-```typescript
-interface {{Model}} {
-  id: string;
-  {{field}}: {{type}};
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+| Error Scenario | Handling Strategy | User Impact |
+|----------------|-------------------|-------------|
+| {{Scenario 1}} | {{How handled}} | {{What user sees}} |
+| {{Scenario 2}} | {{How handled}} | {{What user sees}} |
+
+## Edge Cases
+
+- **{{Edge case 1}}**: {{How handled}}
+- **{{Edge case 2}}**: {{How handled}}
 
 ## Dependencies
 
@@ -95,29 +94,28 @@ interface {{Model}} {
 |---------|---------|---------|
 | {{package}} | {{version}} | {{purpose}} |
 
-## Technical Constraints
-
-- {{constraint 1}}
-- {{constraint 2}}
-
 ## Security Considerations
 
-- {{consideration 1}}
-- {{consideration 2}}
+- {{Security requirement or approach}}
 
 ## Performance Considerations
 
-- {{consideration 1}}
-- {{consideration 2}}
+- {{Performance approach or constraint}}
 
-## Edge Cases
+## Test Strategy
 
-| Case | Handling |
-|------|----------|
-| {{case}} | {{handling}} |
+### Unit Tests
+- {{Component/function to test}}
+- Mock requirements: {{what to mock}}
 
-## Testing Strategy
+### Integration Tests
+- {{Integration point to test}}
 
-- Unit tests for: {{components}}
-- Integration tests for: {{flows}}
-- E2E tests for: {{scenarios}}
+### E2E Tests (if UI)
+- {{User flow to test}}
+
+## Existing Patterns to Follow
+
+Based on codebase analysis:
+- {{Pattern 1 found in codebase}}
+- {{Pattern 2 to maintain consistency}}

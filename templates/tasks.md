@@ -3,67 +3,115 @@
 ## Overview
 
 Total tasks: {{N}}
-Estimated phases: {{M}}
+POC-first workflow with 4 phases.
 
-## Phase 1: Scaffolding
+## Phase 1: Make It Work (POC)
 
-Setup the basic structure and dependencies.
+Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
-- [ ] Task 1.1: Create directory structure
-- [ ] Task 1.2: Add type definitions
-- [ ] Task 1.3: Setup configuration
+- [ ] 1.1 {{Specific task name}}
+  - **Do**: {{Exact steps to implement}}
+  - **Files**: {{Exact file paths to create/modify}}
+  - **Done when**: {{Explicit success criteria}}
+  - **Verify**: {{Command to verify, e.g., "manually test X does Y"}}
+  - **Commit**: `feat(scope): {{task description}}`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Component A_
 
-## Phase 2: Core Implementation
+- [ ] 1.2 {{Another task}}
+  - **Do**: {{Steps}}
+  - **Files**: {{Paths}}
+  - **Done when**: {{Criteria}}
+  - **Verify**: {{Command}}
+  - **Commit**: `feat(scope): {{description}}`
+  - _Requirements: FR-2_
+  - _Design: Component B_
 
-Implement the main functionality.
+- [ ] 1.3 POC Checkpoint
+  - **Do**: Verify feature works end-to-end
+  - **Done when**: Feature can be demonstrated working
+  - **Verify**: Manual test of core flow
+  - **Commit**: `feat(scope): complete POC`
 
-- [ ] Task 2.1: {{core feature 1}}
-- [ ] Task 2.2: {{core feature 2}}
-- [ ] Task 2.3: {{core feature 3}}
+## Phase 2: Refactoring
 
-## Phase 3: Integration
+After POC validated, clean up code.
 
-Connect components and wire up the system.
+- [ ] 2.1 Extract and modularize
+  - **Do**: {{Specific refactoring steps}}
+  - **Files**: {{Files to modify}}
+  - **Done when**: Code follows project patterns
+  - **Verify**: Type check passes
+  - **Commit**: `refactor(scope): extract {{component}}`
+  - _Design: Architecture section_
 
-- [ ] Task 3.1: {{integration point 1}}
-- [ ] Task 3.2: {{integration point 2}}
-- [ ] Task 3.3: Add error handling
+- [ ] 2.2 Add error handling
+  - **Do**: Add try/catch, proper error messages
+  - **Done when**: All error paths handled
+  - **Verify**: Type check passes
+  - **Commit**: `refactor(scope): add error handling`
+  - _Design: Error Handling_
 
-## Phase 4: Testing
+- [ ] 2.3 Code cleanup
+  - **Do**: Remove hardcoded values, add proper types
+  - **Done when**: No TODOs or hardcoded values remain
+  - **Verify**: Code review checklist passes
+  - **Commit**: `refactor(scope): cleanup and finalize`
 
-Add comprehensive test coverage.
+## Phase 3: Testing
 
-- [ ] Task 4.1: Unit tests for core logic
-- [ ] Task 4.2: Integration tests for flows
-- [ ] Task 4.3: E2E tests for critical paths
+- [ ] 3.1 Unit tests for {{component}}
+  - **Do**: Create test file at {{path}}
+  - **Files**: {{test file path}}
+  - **Done when**: Tests cover main functionality
+  - **Verify**: `pnpm test` or test command passes
+  - **Commit**: `test(scope): add unit tests for {{component}}`
+  - _Requirements: AC-1.1, AC-1.2_
+  - _Design: Test Strategy_
 
-## Phase 5: Documentation
+- [ ] 3.2 Integration tests
+  - **Do**: Create integration test at {{path}}
+  - **Files**: {{test file path}}
+  - **Done when**: Integration points tested
+  - **Verify**: Test command passes
+  - **Commit**: `test(scope): add integration tests`
+  - _Design: Test Strategy_
 
-Document the implementation.
+- [ ] 3.3 E2E tests (if UI)
+  - **Do**: Create E2E test at {{path}}
+  - **Files**: {{test file path}}
+  - **Done when**: User flow tested
+  - **Verify**: E2E test command passes
+  - **Commit**: `test(scope): add e2e tests`
+  - _Requirements: US-1_
 
-- [ ] Task 5.1: Update README
-- [ ] Task 5.2: Add inline documentation
-- [ ] Task 5.3: Update architecture docs
+## Phase 4: Quality Gates
 
-## Phase 6: Quality Gates
+- [ ] 4.1 Local quality check
+  - **Do**: Run ALL quality checks locally
+  - **Verify**: All commands must pass:
+    - Type check: `pnpm check-types` or equivalent
+    - Lint: `pnpm lint` or equivalent
+    - Tests: `pnpm test`
+  - **Done when**: All commands pass with no errors
+  - **Commit**: `fix(scope): address lint/type issues` (if fixes needed)
 
-Final verification before completion.
+- [ ] 4.2 Create PR and verify CI
+  - **Do**: Push branch, create PR, wait for CI
+  - **Verify**: All CI checks green
+  - **Done when**: CI passes, PR ready for review
 
-- [ ] Task 6.1: Run lint check (`pnpm lint`)
-- [ ] Task 6.2: Run type check (`pnpm check-types`)
-- [ ] Task 6.3: Run all tests (`pnpm test`)
-- [ ] Task 6.4: Verify acceptance criteria met
-- [ ] Task 6.5: Review for security issues
+- [ ] 4.3 Merge after approval
+  - **Do**: Merge PR after approval and CI green
+  - **Done when**: Changes in main branch
+
+## Notes
+
+- **POC shortcuts taken**: {{list hardcoded values, skipped validations}}
+- **Production TODOs**: {{what needs proper implementation in Phase 2}}
 
 ## Dependencies
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4
-                              ↓
-                         Phase 5 → Phase 6
+Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality)
 ```
-
-## Notes
-
-- {{important note 1}}
-- {{important note 2}}

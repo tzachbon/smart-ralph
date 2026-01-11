@@ -1,54 +1,70 @@
 # Requirements: {{FEATURE_NAME}}
 
-## User Story
+## Goal
 
-As a {{ROLE}}, I want {{FEATURE}}, so that {{BENEFIT}}.
+{{1-2 sentence description of what this feature accomplishes and why it matters}}
 
-## Acceptance Criteria
+## User Stories
 
-- [ ] AC-1: {{criterion}}
-- [ ] AC-2: {{criterion}}
-- [ ] AC-3: {{criterion}}
+### US-1: {{Story Title}}
+
+**As a** {{user type}}
+**I want to** {{action/capability}}
+**So that** {{benefit/value}}
+
+**Acceptance Criteria:**
+- [ ] AC-1.1: {{Specific, testable criterion}}
+- [ ] AC-1.2: {{Specific, testable criterion}}
+
+### US-2: {{Story Title}}
+
+**As a** {{user type}}
+**I want to** {{action/capability}}
+**So that** {{benefit/value}}
+
+**Acceptance Criteria:**
+- [ ] AC-2.1: {{Specific, testable criterion}}
+- [ ] AC-2.2: {{Specific, testable criterion}}
 
 ## Functional Requirements
 
-| ID | Requirement | Priority | Notes |
-|----|-------------|----------|-------|
-| FR-1 | {{description}} | High | |
-| FR-2 | {{description}} | Medium | |
-| FR-3 | {{description}} | Low | |
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 | {{description}} | High | {{how to verify}} |
+| FR-2 | {{description}} | Medium | {{how to verify}} |
+| FR-3 | {{description}} | Low | {{how to verify}} |
 
 ## Non-Functional Requirements
 
 | ID | Requirement | Metric | Target |
 |----|-------------|--------|--------|
-| NFR-1 | Performance | Response time | < 200ms |
-| NFR-2 | Security | {{standard}} | {{target}} |
-| NFR-3 | Reliability | Uptime | 99.9% |
+| NFR-1 | Performance | {{metric}} | {{target value}} |
+| NFR-2 | Reliability | {{metric}} | {{target value}} |
+| NFR-3 | Security | {{standard}} | {{compliance level}} |
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| {{term}} | {{definition}} |
+- **{{Term 1}}**: {{Definition relevant to this feature}}
+- **{{Term 2}}**: {{Another domain-specific term}}
 
 ## Out of Scope
 
-- {{item 1}}
-- {{item 2}}
+- {{Item explicitly not included in this implementation}}
+- {{Another exclusion to prevent scope creep}}
 
 ## Dependencies
 
-- {{dependency 1}}
-- {{dependency 2}}
+- {{External dependency or prerequisite}}
+- {{Another dependency}}
+
+## Success Criteria
+
+- {{Measurable outcome that defines success}}
+- {{Another measurable outcome}}
 
 ## Risks
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| {{risk}} | High/Medium/Low | {{mitigation}} |
-
-## Success Criteria
-
-- [ ] {{measurable outcome 1}}
-- [ ] {{measurable outcome 2}}
+| {{Risk 1}} | High/Medium/Low | {{How to mitigate}} |
+| {{Risk 2}} | High/Medium/Low | {{How to mitigate}} |
