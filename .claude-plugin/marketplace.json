@@ -10,7 +10,7 @@
     {
       "name": "ralph-specum",
       "description": "Spec-driven development with smart compaction. Ralph Wiggum loop for autonomous task execution.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "tzachbon"
       },
