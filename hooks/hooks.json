@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ./hooks/scripts/stop-handler.sh"
+            "command": "bash \"$(git rev-parse --show-toplevel)/hooks/scripts/stop-handler.sh\""
           }
         ]
       }
