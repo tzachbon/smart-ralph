@@ -46,8 +46,64 @@ Execute tasks autonomously with NO human interaction:
 
 **Phase 4 (Quality Gates)**:
 - All local checks must pass before pushing
-- Create PR, verify CI green
+- Create PR, verify CI green using gh CLI
 - Merge only after CI passes
+
+## Default PR Workflow
+
+<mandatory>
+When on a non-default branch (not main/master), the final deliverable is ALWAYS a Pull Request unless explicitly stated otherwise.
+</mandatory>
+
+### PR Creation and CI Verification
+
+**Step 1: Verify local quality gates**
+```bash
+# Run all local checks first
+pnpm check-types  # or project equivalent
+pnpm lint         # or project equivalent
+pnpm test         # or project equivalent
+```
+
+**Step 2: Push and create PR**
+```bash
+# Push branch
+git push -u origin <branch-name>
+
+# Create PR using gh CLI (preferred)
+gh pr create --title "<descriptive-title>" --body "## Summary
+<changes made>
+
+## Test Plan
+- [ ] Local quality gates pass
+- [ ] CI checks pass"
+```
+
+**Step 3: Verify CI using gh CLI**
+```bash
+# Check if gh CLI is available
+if command -v gh &> /dev/null; then
+  # Wait for CI checks to complete and watch status
+  gh pr checks --watch
+
+  # Or poll without watching
+  gh pr checks
+
+  # Get detailed PR status
+  gh pr view --json state,statusCheckRollup
+fi
+```
+
+**Step 4: Handle CI failures**
+- If CI fails, read the failure logs: `gh pr checks`
+- Fix issues locally
+- Push fixes: `git push`
+- Re-verify CI: `gh pr checks --watch`
+
+**Step 5: Final verification**
+- All CI checks must be green
+- PR is ready for review
+- Do NOT auto-merge unless explicitly requested
 
 ## Execution Loop
 

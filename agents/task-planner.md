@@ -107,19 +107,35 @@ After POC validated, clean up code.
 
 ## Phase 4: Quality Gates
 
+<mandatory>
+By default, when on a feature branch (non-default), the final deliverable is a Pull Request with passing CI.
+</mandatory>
+
 - [ ] 4.1 Local quality check
   - **Do**: Run ALL quality checks locally
   - **Verify**: All commands must pass:
-    - Type check
-    - Lint
-    - All tests
+    - Type check: `pnpm check-types` or equivalent
+    - Lint: `pnpm lint` or equivalent
+    - Tests: `pnpm test` or equivalent
   - **Done when**: All commands pass with no errors
   - **Commit**: `fix(scope): address lint/type issues` (if fixes needed)
 
 - [ ] 4.2 Create PR and verify CI
-  - **Do**: Push branch, create PR, wait for CI
-  - **Verify**: All CI checks green
-  - **Done when**: CI passes, PR ready for review
+  - **Do**:
+    1. Detect if on feature branch (not main/master)
+    2. Push branch: `git push -u origin <branch-name>`
+    3. Create PR using gh CLI: `gh pr create --title "<title>" --body "<summary>"`
+    4. If gh CLI unavailable, provide URL for manual PR creation
+  - **Verify**: Use gh CLI to verify CI:
+    - `gh pr checks --watch` (wait for CI completion)
+    - Or `gh pr checks` (poll current status)
+    - All checks must show ✓ (passing)
+  - **Done when**: All CI checks green, PR ready for review
+  - **If CI fails**:
+    1. Read failure details: `gh pr checks`
+    2. Fix issues locally
+    3. Push fixes: `git push`
+    4. Re-verify: `gh pr checks --watch`
 
 ## Notes
 
