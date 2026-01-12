@@ -80,6 +80,28 @@ claude "/ralph-specum \"my feature\" --mode auto --force-restart"
 Use the Task tool with specialized sub-agents for each phase. Never skip sub-agent delegation when the agent exists.
 </mandatory>
 
+### Compaction Between Phases (Auto Mode)
+
+<mandatory>
+In auto mode, you MUST run `/compact` after completing each phase to manage context.
+</mandatory>
+
+After each phase completes in auto mode:
+1. Update `.ralph-progress.md` with phase results
+2. Update `.ralph-state.json` to advance phase
+3. Output `PHASE_COMPLETE: <phase>`
+4. **Run `/compact`** with phase-specific preservation:
+
+| After Phase | Compact Command |
+|-------------|-----------------|
+| Requirements | `/compact preserve: user stories, acceptance criteria (AC-*), functional requirements (FR-*), non-functional requirements (NFR-*), glossary. Read <specPath>/.ralph-progress.md for context.` |
+| Design | `/compact preserve: architecture decisions, component boundaries, file paths, patterns. Read <specPath>/.ralph-progress.md for context.` |
+| Tasks | `/compact preserve: task list with IDs, dependencies, quality gates. Read <specPath>/.ralph-progress.md for context.` |
+| Per Task | `/compact preserve: current task context, verification results. Read <specPath>/.ralph-progress.md for completed tasks.` |
+
+5. After compaction, **immediately read `.ralph-progress.md`** to restore context
+6. Continue to next phase
+
 ### Sub-Agent Selection
 
 | Phase | Primary Agent | Purpose |
@@ -108,6 +130,8 @@ Use Task tool with `subagent_type: general-purpose` and include the product-mana
 
 3. Update `.ralph-progress.md` with phase status
 4. Output: `PHASE_COMPLETE: requirements`
+5. **Auto mode only**: Run `/compact preserve: user stories, acceptance criteria (AC-*), functional requirements (FR-*), non-functional requirements (NFR-*), glossary. Read <specPath>/.ralph-progress.md for context.`
+6. Read `.ralph-progress.md` to restore context, then continue to Design phase
 
 ### Phase: Design
 
@@ -130,6 +154,8 @@ Use Task tool with `subagent_type: general-purpose` and include the architect-re
 
 3. Update `.ralph-progress.md`
 4. Output: `PHASE_COMPLETE: design`
+5. **Auto mode only**: Run `/compact preserve: architecture decisions, component boundaries, file paths, patterns. Read <specPath>/.ralph-progress.md for context.`
+6. Read `.ralph-progress.md` to restore context, then continue to Tasks phase
 
 ### Phase: Tasks
 
@@ -160,6 +186,8 @@ ALL specs MUST follow POC-first workflow.
 4. Update `.ralph-state.json` with `totalTasks`
 5. Update `.ralph-progress.md`
 6. Output: `PHASE_COMPLETE: tasks`
+7. **Auto mode only**: Run `/compact preserve: task list with IDs, dependencies, quality gates. Read <specPath>/.ralph-progress.md for context.`
+8. Read `.ralph-progress.md` to restore context, then continue to Execution phase
 
 ### Phase: Execution
 
@@ -189,6 +217,8 @@ For each task:
 
 4. Update `.ralph-state.json` with `taskIndex`
 5. Output: `TASK_COMPLETE: <task_number>`
+6. **Auto mode only**: Run `/compact preserve: current task context, verification results. Read <specPath>/.ralph-progress.md for completed tasks.`
+7. Read `.ralph-progress.md` to restore context, then continue to next task
 
 ## Default PR Workflow
 
