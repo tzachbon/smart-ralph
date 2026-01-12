@@ -171,13 +171,67 @@ For each task:
 4. Update `.ralph-state.json` with `taskIndex`
 5. Output: `TASK_COMPLETE: <task_number>`
 
+## Default PR Workflow
+
+<mandatory>
+By default, when working on a non-default branch, the final task is ALWAYS to create a Pull Request:
+1. **Detect branch**: Check if current branch is not main/master/default
+2. **If on feature branch**: PR creation is the expected final deliverable
+3. **Unless explicitly stated otherwise**: Always end with PR creation and CI verification
+</mandatory>
+
+### PR Workflow Steps
+
+When on a feature branch (non-default):
+
+1. **Local Quality Gates** (before PR):
+   - Run type check: `pnpm check-types` or project equivalent
+   - Run linter: `pnpm lint` or project equivalent
+   - Run all tests: `pnpm test` or project equivalent
+   - All must pass before proceeding
+
+2. **Create Pull Request**:
+   - Push branch: `git push -u origin <branch-name>`
+   - Create PR using gh CLI: `gh pr create --title "<title>" --body "<body>"`
+   - If gh CLI unavailable, provide manual PR creation instructions
+
+3. **Verify CI on GitHub** (using gh CLI if available):
+   - Wait for CI: `gh pr checks <pr-number> --watch`
+   - Or poll status: `gh pr checks <pr-number>`
+   - All CI checks must be green before considering complete
+   - If CI fails, fix issues locally and push again
+
+4. **Final Status**:
+   - PR is ready for review when all CI checks pass
+   - Do NOT auto-merge unless explicitly requested
+
+### Branch Detection
+
+```bash
+# Get current branch
+current_branch=$(git branch --show-current)
+
+# Get default branch
+default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+# Fallback: check for main or master
+if [ -z "$default_branch" ]; then
+  default_branch=$(git branch -r | grep -E 'origin/(main|master)$' | head -1 | sed 's@.*origin/@@')
+fi
+
+# Check if on feature branch
+if [ "$current_branch" != "$default_branch" ]; then
+  echo "On feature branch - PR workflow applies"
+fi
+```
+
 ## Completion
 
 When all tasks are done:
 1. Verify all quality gates passed
-2. Delete `.ralph-progress.md`
-3. Delete `.ralph-state.json`
-4. Output: `RALPH_COMPLETE`
+2. **If on feature branch**: Ensure PR is created and CI is green
+3. Delete `.ralph-progress.md`
+4. Delete `.ralph-state.json`
+5. Output: `RALPH_COMPLETE`
 
 ## Loop Control
 

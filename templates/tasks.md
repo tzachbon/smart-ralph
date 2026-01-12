@@ -87,8 +87,10 @@ After POC validated, clean up code.
 
 ## Phase 4: Quality Gates
 
+> **Default Behavior**: When on a feature branch (not main/master), the final deliverable is a Pull Request with all CI checks passing. This is the default unless explicitly stated otherwise.
+
 - [ ] 4.1 Local quality check
-  - **Do**: Run ALL quality checks locally
+  - **Do**: Run ALL quality checks locally before creating PR
   - **Verify**: All commands must pass:
     - Type check: `pnpm check-types` or equivalent
     - Lint: `pnpm lint` or equivalent
@@ -97,13 +99,44 @@ After POC validated, clean up code.
   - **Commit**: `fix(scope): address lint/type issues` (if fixes needed)
 
 - [ ] 4.2 Create PR and verify CI
-  - **Do**: Push branch, create PR, wait for CI
-  - **Verify**: All CI checks green
-  - **Done when**: CI passes, PR ready for review
+  - **Do**:
+    1. Check current branch: `git branch --show-current`
+    2. If on feature branch (not main/master), proceed with PR
+    3. Push branch: `git push -u origin $(git branch --show-current)`
+    4. Create PR using gh CLI (if available):
+       ```bash
+       gh pr create --title "feat: {{feature-name}}" --body "## Summary
+       {{brief description of changes}}
 
-- [ ] 4.3 Merge after approval
+       ## Test Plan
+       - [x] Local quality gates pass (types, lint, tests)
+       - [ ] CI checks pass"
+       ```
+    5. If gh CLI unavailable, output: "Create PR at: https://github.com/<org>/<repo>/compare/<branch>"
+  - **Verify**: Use gh CLI to verify CI status:
+    ```bash
+    # Wait for CI and watch status
+    gh pr checks --watch
+
+    # Or check current status
+    gh pr checks
+
+    # Get detailed status
+    gh pr view --json statusCheckRollup --jq '.statusCheckRollup[] | "\(.name): \(.conclusion)"'
+    ```
+  - **Done when**: All CI checks show ✓ (passing), PR ready for review
+  - **If CI fails**:
+    1. View failures: `gh pr checks`
+    2. Get detailed logs: `gh run view <run-id> --log-failed`
+    3. Fix issues locally
+    4. Commit and push: `git add . && git commit -m "fix: address CI failures" && git push`
+    5. Re-verify: `gh pr checks --watch`
+
+- [ ] 4.3 Merge after approval (optional - only if explicitly requested)
   - **Do**: Merge PR after approval and CI green
+  - **Verify**: `gh pr merge --auto` or manual merge
   - **Done when**: Changes in main branch
+  - **Note**: Do NOT auto-merge unless user explicitly requests it
 
 ## Notes
 
