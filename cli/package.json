@@ -1,0 +1,32 @@
+{
+  "name": "ralph-specum",
+  "version": "1.2.0",
+  "description": "Spec-driven development CLI using the Ralph Wiggum agentic loop pattern",
+  "type": "module",
+  "bin": {
+    "ralph-specum": "./bin/ralph-specum"
+  },
+  "scripts": {
+    "start": "bun run src/index.js",
+    "dev": "bun --watch src/index.js"
+  },
+  "keywords": [
+    "cli",
+    "spec-driven",
+    "development",
+    "ai",
+    "claude",
+    "agents"
+  ],
+  "author": "tzachbon",
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "files": [
+    "bin",
+    "src",
+    "agents",
+    "templates"
+  ]
+}
