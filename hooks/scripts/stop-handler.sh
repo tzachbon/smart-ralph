@@ -68,6 +68,9 @@ NEW_ITERATION=$((ITERATION + 1))
 get_compact_instruction() {
     local phase=$1
     case "$phase" in
+        "research")
+            echo "Run: /compact preserve: executive summary, feasibility rating, key risks, recommendations, open questions. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to requirements phase."
+            ;;
         "requirements")
             echo "Run: /compact preserve: user stories, acceptance criteria (AC-*), functional requirements (FR-*), non-functional requirements (NFR-*), glossary. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to design phase."
             ;;
@@ -87,6 +90,7 @@ get_compact_instruction() {
 get_next_phase() {
     local current=$1
     case "$current" in
+        "research") echo "requirements" ;;
         "requirements") echo "design" ;;
         "design") echo "tasks" ;;
         "tasks") echo "execution" ;;
@@ -95,7 +99,7 @@ get_next_phase() {
 }
 
 case "$PHASE" in
-    "requirements"|"design"|"tasks")
+    "research"|"requirements"|"design"|"tasks")
         PHASE_APPROVED=$(echo "$STATE" | jq -r ".phaseApprovals.$PHASE")
 
         if [[ "$MODE" == "interactive" && "$PHASE_APPROVED" != "true" ]]; then

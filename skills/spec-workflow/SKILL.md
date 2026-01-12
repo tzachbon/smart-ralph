@@ -1,6 +1,6 @@
 ---
 name: spec-workflow
-description: Spec-driven development workflow with smart compaction. Guides requirements, design, tasks, and execution phases. Use for autonomous spec-based development.
+description: Spec-driven development workflow with smart compaction. Guides research, requirements, design, tasks, and execution phases. Use for autonomous spec-based development.
 ---
 
 # Spec-Driven Development Workflow
@@ -11,14 +11,72 @@ This skill guides you through spec-driven development with smart compaction betw
 
 **Always read `.ralph-progress.md` first** after any restart or compaction. This file is your memory across compactions.
 
+**Research first, assume never.** Every project starts with thorough research to validate assumptions and inform requirements.
+
 ## Phase Workflow
 
-### 1. Requirements Phase
+### 0. Research Phase
 
-**Goal**: Capture what needs to be built.
+**Goal**: Verify assumptions, research best practices, assess feasibility BEFORE writing requirements.
 
 **Read first**:
 - `.ralph-progress.md` (always)
+- User's goal description
+- Existing codebase structure
+
+**Generate**: `research.md`
+
+```markdown
+# Research: <Feature Name>
+
+## Executive Summary
+[2-3 sentence summary of key findings and recommendation]
+
+## Research Questions
+- Q1: [Key question]
+- Q2: [Another key question]
+
+## Findings
+
+### External Research
+| Practice | Source | Applicability |
+|----------|--------|---------------|
+| [practice] | [source] | High/Medium/Low |
+
+### Internal Research
+- **Existing Patterns**: [What's already in codebase]
+- **Constraints**: [Technical limitations]
+- **Integration Points**: [Where this connects]
+
+## Feasibility Assessment
+**Rating**: [1-5] / 5
+**Risks**: [Key risks and mitigations]
+
+## Recommendations
+- **Recommended**: [Approach with rationale]
+- **Alternatives**: [Other options considered]
+
+## Open Questions
+- [ ] [Question requiring user input]
+
+## Confidence Level
+**Overall**: High/Medium/Low
+```
+
+**Update `.ralph-progress.md`**:
+- Set phase to "research"
+- Add key findings as learnings
+- Document any open questions
+
+**Output**: `PHASE_COMPLETE: research`
+
+### 1. Requirements Phase
+
+**Goal**: Capture what needs to be built, informed by research findings.
+
+**Read first**:
+- `.ralph-progress.md` (always)
+- `research.md` (research findings and recommendations)
 - User's goal description
 
 **Generate**: `requirements.md`
@@ -231,6 +289,11 @@ graph TD
 
 Use these exact compact commands at phase transitions:
 
+### After Research
+```
+/compact preserve: executive summary, feasibility rating, key risks, recommendations, open questions. Read .ralph-progress.md for full context.
+```
+
 ### After Requirements
 ```
 /compact preserve: user stories, acceptance criteria (AC-*), functional requirements (FR-*), non-functional requirements (NFR-*), glossary terms. Read .ralph-progress.md for full context.
@@ -253,15 +316,25 @@ Use these exact compact commands at phase transitions:
 
 ## Quality Standards
 
+### Research Quality
+- External sources consulted (web search, docs)
+- Internal codebase analyzed
+- Feasibility assessed with rating
+- Risks identified with mitigations
+- Clear recommendation provided
+- Open questions documented
+
 ### Requirements Quality
 - Every requirement has acceptance criteria
 - No ambiguous language ("fast", "easy", "simple")
 - Clear out-of-scope section
+- Informed by research findings
 
 ### Design Quality
 - Architecture matches requirements
 - File structure is complete
 - Patterns are justified
+- Considers research recommendations
 
 ### Task Quality
 - Tasks are atomic (one clear outcome)
@@ -275,7 +348,10 @@ Use these exact compact commands at phase transitions:
 
 ## Anti-Patterns
 
+- **Never skip research phase** - assumptions lead to rework
 - **Never skip reading `.ralph-progress.md`** after compaction
+- **Never start requirements without research** - uninformed requirements fail
+- **Never assume you know best practices** - always verify with web search
 - **Never update state without updating progress file**
 - **Never mark task complete without verification**
 - **Never compact without updating progress file first**

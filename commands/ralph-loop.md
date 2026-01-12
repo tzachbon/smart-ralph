@@ -37,11 +37,12 @@ From `$ARGUMENTS`, extract:
   "goal": "<goal description>",
   "featureName": "<feature-name>",
   "specPath": "<dir>/<feature-name>",
-  "phase": "requirements",
+  "phase": "research",
   "taskIndex": 0,
   "totalTasks": 0,
   "currentTaskName": "",
   "phaseApprovals": {
+    "research": false,
     "requirements": false,
     "design": false,
     "tasks": false
@@ -65,10 +66,36 @@ Use the Task tool with specialized sub-agents for each phase. Never skip sub-age
 
 | Phase | Primary Agent | Purpose |
 |-------|---------------|---------|
+| Research | `research-analyst` | Feasibility, best practices, codebase analysis |
 | Requirements | `product-manager` | User stories, acceptance criteria, business value |
 | Design | `architect-reviewer` | Architecture, patterns, technical decisions |
 | Tasks | `task-planner` | POC-first breakdown, quality gates |
 | Execution | `spec-executor` | Autonomous task implementation |
+
+### Phase: Research
+
+<mandatory>
+Use Task tool with `subagent_type: general-purpose` and include the research-analyst agent prompt.
+This phase runs BEFORE requirements to ensure all decisions are well-informed.
+</mandatory>
+
+1. Invoke research-analyst agent with:
+   - User's goal description
+   - Context about the codebase
+   - Output: `<specPath>/research.md`
+
+2. Agent creates research.md with:
+   - Executive summary with recommendation
+   - External research (best practices, similar solutions, technology options)
+   - Internal research (existing patterns, codebase constraints, integration points)
+   - Feasibility assessment with complexity rating
+   - Risks, blockers, and mitigations
+   - Clear recommendations and alternatives
+   - Open questions requiring user input
+   - Sources with confidence level
+
+3. Update `.ralph-progress.md` with phase status and key findings
+4. Output: `PHASE_COMPLETE: research`
 
 ### Phase: Requirements
 
@@ -78,6 +105,7 @@ Use Task tool with `subagent_type: general-purpose` and include the product-mana
 
 1. Invoke product-manager agent with:
    - User's goal description
+   - Research findings from `<specPath>/research.md`
    - Any constraints discussed
    - Output: `<specPath>/requirements.md`
 
@@ -246,12 +274,15 @@ When all tasks are done:
 3. **Update progress file before any phase/task transition**
 4. **Append learnings immediately** when discovered
 5. **Never skip the progress file update** before stopping
-6. **POC first** - validate idea before production quality
+6. **Research first** - verify assumptions, check best practices before requirements
+7. **POC first** - validate idea before production quality
 
 ## Anti-Patterns
 
 - Never assume context is preserved after compaction
 - Never skip sub-agent delegation
+- Never skip research phase - assumptions lead to rework
+- Never start requirements without reviewing research findings
 - Never mark task complete without verification
 - Never compact without updating progress file first
 - Never mix POC and production code without Phase 2
