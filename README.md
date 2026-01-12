@@ -48,11 +48,11 @@ git clone https://github.com/tzachbon/ralph-specum.git
 
 This will:
 1. Create feature directory: `./spec/add-user-authentication-with-jwt-tokens/`
-2. Delegate to `product-manager` subagent to generate `requirements.md` and pause
+2. Spawn fresh Claude via `! claude -p` with `product-manager` agent to generate `requirements.md` and pause
 3. You can discuss/refine the requirements, then `/ralph-specum:approve`
-4. Delegate to `architect-reviewer` subagent to generate `design.md` and pause
-5. After approval, delegate to `task-planner` for POC-first `tasks.md`
-6. After approval, `spec-executor` runs tasks autonomously with compaction
+4. Spawn fresh Claude via `! claude -p` with `architect-reviewer` agent to generate `design.md` and pause
+5. After approval, spawn fresh Claude with `task-planner` for POC-first `tasks.md`
+6. After approval, `spec-executor` runs tasks autonomously (each task = fresh context)
 
 ### Autonomous Mode
 
@@ -82,7 +82,7 @@ Creates `./spec/refactor-database-layer/` and runs through all phases without pa
 
 ## Sub-Agent Architecture
 
-Each phase delegates to a specialized agent:
+Each phase spawns a **fresh Claude instance** via `! claude -p` with the specialized agent prompt. This ensures clean context for each phase, avoiding context bloat:
 
 | Phase | Agent | Purpose |
 |-------|-------|---------|

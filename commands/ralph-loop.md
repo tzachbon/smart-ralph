@@ -58,7 +58,7 @@ From `$ARGUMENTS`, extract:
 **ALWAYS read `.ralph-progress.md` first on each iteration.**
 
 <mandatory>
-Delegate to specialized sub-agents for each phase. Never skip sub-agent delegation when the agent exists.
+Spawn fresh Claude instances for each phase using `! claude -p`. This gives each sub-agent clean context. Never skip sub-agent spawning when the agent exists.
 </mandatory>
 
 ### Sub-Agent Selection
@@ -73,15 +73,17 @@ Delegate to specialized sub-agents for each phase. Never skip sub-agent delegati
 ### Phase: Requirements
 
 <mandatory>
-Use the product-manager subagent to create requirements.
+Spawn a fresh Claude instance with the product-manager agent prompt:
+```bash
+! claude -p "$(cat ${CLAUDE_PLUGIN_ROOT}/agents/product-manager.md)
+
+Goal: <goal>
+Constraints: <any discussed constraints>
+Output: <specPath>/requirements.md"
+```
 </mandatory>
 
-1. Delegate to product-manager agent:
-   - Goal: `<goal>`
-   - Constraints: Any discussed constraints
-   - Output: `<specPath>/requirements.md`
-
-2. Agent creates requirements.md with:
+1. The spawned agent creates requirements.md with:
    - User stories with acceptance criteria
    - Functional requirements (FR-*) with priorities
    - Non-functional requirements (NFR-*)
@@ -93,15 +95,17 @@ Use the product-manager subagent to create requirements.
 ### Phase: Design
 
 <mandatory>
-Use the architect-reviewer subagent to create design.
+Spawn a fresh Claude instance with the architect-reviewer agent prompt:
+```bash
+! claude -p "$(cat ${CLAUDE_PLUGIN_ROOT}/agents/architect-reviewer.md)
+
+Requirements: <specPath>/requirements.md
+Codebase: Consider existing patterns in the project
+Output: <specPath>/design.md"
+```
 </mandatory>
 
-1. Delegate to architect-reviewer agent:
-   - Requirements: `<specPath>/requirements.md`
-   - Consider existing codebase patterns
-   - Output: `<specPath>/design.md`
-
-2. Agent creates design.md with:
+1. The spawned agent creates design.md with:
    - Architecture overview with mermaid diagrams
    - Component design and interfaces
    - Data flow diagrams
@@ -115,15 +119,19 @@ Use the architect-reviewer subagent to create design.
 ### Phase: Tasks
 
 <mandatory>
-Use the task-planner subagent to create tasks. ALL specs MUST follow POC-first workflow.
+Spawn a fresh Claude instance with the task-planner agent prompt:
+```bash
+! claude -p "$(cat ${CLAUDE_PLUGIN_ROOT}/agents/task-planner.md)
+
+Requirements: <specPath>/requirements.md
+Design: <specPath>/design.md
+Output: <specPath>/tasks.md
+
+IMPORTANT: ALL specs MUST follow POC-first workflow."
+```
 </mandatory>
 
-1. Delegate to task-planner agent:
-   - Requirements: `<specPath>/requirements.md`
-   - Design: `<specPath>/design.md`
-   - Output: `<specPath>/tasks.md`
-
-2. Agent creates tasks.md with POC-first phases:
+1. The spawned agent creates tasks.md with POC-first phases:
    - **Phase 1: Make It Work** - POC validation
    - **Phase 2: Refactoring** - Code cleanup
    - **Phase 3: Testing** - Unit/integration/e2e
@@ -144,15 +152,19 @@ Use the task-planner subagent to create tasks. ALL specs MUST follow POC-first w
 ### Phase: Execution
 
 <mandatory>
-Use the spec-executor subagent to execute tasks autonomously with NO human interaction.
+For each task, spawn a fresh Claude instance with the spec-executor agent prompt:
+```bash
+! claude -p "$(cat ${CLAUDE_PLUGIN_ROOT}/agents/spec-executor.md)
+
+Tasks file: <specPath>/tasks.md
+Current task index: <taskIndex>
+Progress file: <specPath>/.ralph-progress.md
+
+Execute autonomously with NO human interaction."
+```
 </mandatory>
 
-For each task:
-1. Delegate to spec-executor agent:
-   - Task: `<taskIndex>` from `<specPath>/tasks.md`
-   - Progress: `<specPath>/.ralph-progress.md`
-
-2. Agent executes:
+For each task, the spawned agent:
    - Reads Do section, executes exactly
    - Modifies only Files listed
    - Checks Done when criteria
@@ -239,7 +251,7 @@ When all tasks are done:
 ## Important Rules
 
 1. **Always read `.ralph-progress.md` first** after any compaction
-2. **Always use sub-agents** for specialized work
+2. **Always spawn fresh Claude instances** via `! claude -p` for sub-agents (gives clean context)
 3. **Update progress file before any phase/task transition**
 4. **Append learnings immediately** when discovered
 5. **Never skip the progress file update** before stopping
@@ -248,7 +260,7 @@ When all tasks are done:
 ## Anti-Patterns
 
 - Never assume context is preserved after compaction
-- Never skip sub-agent delegation
+- Never skip spawning fresh Claude instances for sub-agents
 - Never mark task complete without verification
 - Never compact without updating progress file first
 - Never mix POC and production code without Phase 2
