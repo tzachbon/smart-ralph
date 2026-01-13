@@ -122,6 +122,8 @@ After POC validated, clean up code.
 
 ## Phase 4: Quality Gates
 
+> **IMPORTANT**: NEVER push directly to the default branch (main/master). Always create a feature branch first if you're on the default branch. The only exception is if the user explicitly requests pushing to the default branch.
+
 > **Default Behavior**: When on a feature branch (not main/master), the final deliverable is a Pull Request with all CI checks passing. This is the default unless explicitly stated otherwise.
 
 - [ ] 4.1 Local quality check
@@ -136,9 +138,10 @@ After POC validated, clean up code.
 - [ ] 4.2 Create PR and verify CI
   - **Do**:
     1. Check current branch: `git branch --show-current`
-    2. If on feature branch (not main/master), proceed with PR
-    3. Push branch: `git push -u origin $(git branch --show-current)`
-    4. Create PR using gh CLI (if available):
+    2. If on default branch (main/master), create a feature branch first: `git checkout -b feat/<feature-name>`
+    3. If on feature branch, proceed with PR
+    4. Push branch: `git push -u origin $(git branch --show-current)`
+    5. Create PR using gh CLI (if available):
        ```bash
        gh pr create --title "feat: {{feature-name}}" --body "## Summary
        {{brief description of changes}}
@@ -147,7 +150,7 @@ After POC validated, clean up code.
        - [x] Local quality gates pass (types, lint, tests)
        - [ ] CI checks pass"
        ```
-    5. If gh CLI unavailable, output: "Create PR at: https://github.com/<org>/<repo>/compare/<branch>"
+    6. If gh CLI unavailable, output: "Create PR at: https://github.com/<org>/<repo>/compare/<branch>"
   - **Verify**: Use gh CLI to verify CI status:
     ```bash
     # Wait for CI and watch status

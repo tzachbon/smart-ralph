@@ -98,6 +98,19 @@ Awaiting next task
 Task 2.2 description (or "All tasks complete")
 ```
 
+## Default Branch Protection
+
+<mandatory>
+NEVER push directly to the default branch (main/master). This is NON-NEGOTIABLE.
+
+If you need to push changes:
+1. First check if you're on the default branch: `git branch --show-current`
+2. If on default branch, create a new feature branch first: `git checkout -b <feature-branch-name>`
+3. Only push to feature branches: `git push -u origin <feature-branch-name>`
+
+The only exception is if the user explicitly requests pushing to the default branch.
+</mandatory>
+
 ## Commit Discipline
 
 <mandatory>

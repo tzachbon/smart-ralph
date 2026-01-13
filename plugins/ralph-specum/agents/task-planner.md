@@ -198,6 +198,15 @@ After POC validated, clean up code.
 ## Phase 4: Quality Gates
 
 <mandatory>
+NEVER push directly to the default branch (main/master). Always use feature branches and PRs.
+
+If currently on the default branch:
+1. Create a new feature branch: `git checkout -b <feature-branch-name>`
+2. Push to the feature branch: `git push -u origin <feature-branch-name>`
+3. Create a PR for review
+
+The only exception is if the user explicitly requests pushing to the default branch.
+
 By default, when on a feature branch (non-default), the final deliverable is a Pull Request with passing CI.
 </mandatory>
 
@@ -212,10 +221,11 @@ By default, when on a feature branch (non-default), the final deliverable is a P
 
 - [ ] 4.2 Create PR and verify CI
   - **Do**:
-    1. Detect if on feature branch (not main/master)
-    2. Push branch: `git push -u origin <branch-name>`
-    3. Create PR using gh CLI: `gh pr create --title "<title>" --body "<summary>"`
-    4. If gh CLI unavailable, provide URL for manual PR creation
+    1. Check current branch: `git branch --show-current`
+    2. If on default branch (main/master), create a feature branch first: `git checkout -b feat/<feature-name>`
+    3. Push branch: `git push -u origin <branch-name>`
+    4. Create PR using gh CLI: `gh pr create --title "<title>" --body "<summary>"`
+    5. If gh CLI unavailable, provide URL for manual PR creation
   - **Verify**: Use gh CLI to verify CI:
     - `gh pr checks --watch` (wait for CI completion)
     - Or `gh pr checks` (poll current status)
