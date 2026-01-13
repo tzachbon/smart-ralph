@@ -1,6 +1,7 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
 argument-hint: [name] [goal] [--fresh] [--quick]
+argument-hint: [name] [goal] [--fresh] [--quick]
 allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
 ---
 
@@ -14,6 +15,7 @@ From `$ARGUMENTS`, extract:
 - **name**: Optional spec name (kebab-case)
 - **goal**: Everything after the name except flags (optional)
 - **--fresh**: Force new spec without prompting if one exists
+- **--quick**: Skip all spec phases, auto-generate artifacts, start execution immediately
 - **--quick**: Quick mode - auto-generate all specs and start execution
 
 Examples:
@@ -256,6 +258,52 @@ Rollback Procedure:
    ```
 6. Create `.progress.md` with goal
 7. Invoke research-analyst agent
+
+## Quick Mode Flow
+
+Triggered when `--quick` flag detected. Skips all spec phases and auto-generates artifacts.
+
+```
+1. Check if --quick flag present in $ARGUMENTS
+   |
+   +-- Yes: Extract args before --quick
+   |   |
+   |   +-- Two args: name = first, goal = second
+   |   |
+   |   +-- One arg: goal = first (infer name later)
+   |   |
+   |   +-- Zero args: Error "Quick mode requires a goal or plan"
+   |
+   +-- No: Continue to normal Detection Logic
+```
+
+### Quick Mode Steps (POC)
+
+1. Parse args before `--quick`:
+   - If two args: `name` = first arg (kebab-case), `goal` = second arg
+   - If one arg: `goal` = arg, `name` = infer from goal (first 3 words, kebab-case, max 30 chars)
+2. Validate non-empty goal
+3. Create spec directory: `./specs/$name/`
+4. Initialize `.ralph-state.json` with `source: "plan"`:
+   ```json
+   {
+     "source": "plan",
+     "name": "$name",
+     "basePath": "./specs/$name",
+     "phase": "tasks",
+     "taskIndex": 0,
+     "totalTasks": 0,
+     "taskIteration": 1,
+     "maxTaskIterations": 5,
+     "globalIteration": 1,
+     "maxGlobalIterations": 100
+   }
+   ```
+5. Write `.progress.md` with goal
+6. Update `.current-spec` with name
+7. Invoke plan-synthesizer agent to generate all artifacts
+8. After generation: update state `phase: "execution"`, read task count
+9. Invoke spec-executor for task 1
 
 ## Status Display (on resume)
 
