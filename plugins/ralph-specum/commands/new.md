@@ -122,6 +122,20 @@ The agent will:
 3. Assess feasibility
 4. Create research.md with findings and recommendations
 
+After research completes:
+
+<mandatory>
+**STOP HERE. DO NOT PROCEED TO REQUIREMENTS.**
+
+After displaying the output, you MUST:
+1. End your response immediately
+2. Wait for the user to review research.md
+3. Only proceed to requirements when user explicitly runs `/ralph-specum:requirements`
+
+DO NOT automatically invoke the product-manager or run the requirements phase.
+The user needs time to review research findings before proceeding.
+</mandatory>
+
 ## Execute Requirements Phase (if --skip-research)
 
 If `--skip-research` was specified:
@@ -148,3 +162,10 @@ Next steps:
 - Review the generated research.md (or requirements.md)
 - Run /ralph-specum:requirements to proceed (or /ralph-specum:design if skipped research)
 ```
+
+<mandatory>
+**STOP AFTER DISPLAYING OUTPUT.**
+
+Do NOT proceed to the next phase automatically.
+Wait for explicit user command to continue.
+</mandatory>

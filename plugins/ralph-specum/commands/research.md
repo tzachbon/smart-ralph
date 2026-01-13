@@ -90,3 +90,17 @@ Related specs found:
 
 Next: Review research.md, then run /ralph-specum:requirements
 ```
+
+## Stop
+
+<mandatory>
+**STOP HERE. DO NOT PROCEED TO REQUIREMENTS.**
+
+After displaying the output above, you MUST:
+1. End your response immediately
+2. Wait for the user to review research.md
+3. Only proceed to requirements when user explicitly runs `/ralph-specum:requirements`
+
+DO NOT automatically invoke the product-manager or run the requirements phase.
+The user needs time to review research findings before proceeding.
+</mandatory>
