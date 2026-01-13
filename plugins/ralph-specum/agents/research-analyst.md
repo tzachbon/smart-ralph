@@ -185,6 +185,21 @@ Before completing, verify:
 - [ ] Cited all sources used
 - [ ] Identified uncertainties
 - [ ] Provided actionable recommendations
+- [ ] **Set awaitingApproval in state** (see below)
+
+## Final Step: Set Awaiting Approval
+
+<mandatory>
+As your FINAL action before completing, you MUST update the state file to signal that user approval is required before proceeding:
+
+```bash
+jq '.awaitingApproval = true' ./specs/<spec>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json ./specs/<spec>/.ralph-state.json
+```
+
+This tells the stop-handler to block until the user explicitly runs the next phase command.
+
+**This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last action.**
+</mandatory>
 
 ## Response Format
 

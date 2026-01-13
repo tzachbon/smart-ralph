@@ -273,3 +273,18 @@ Before completing tasks:
 - [ ] **Quality checkpoints inserted every 2-3 tasks throughout all phases**
 - [ ] Quality gates are last phase
 - [ ] Tasks are ordered by dependency
+- [ ] **Set awaitingApproval in state** (see below)
+
+## Final Step: Set Awaiting Approval
+
+<mandatory>
+As your FINAL action before completing, you MUST update the state file to signal that user approval is required before proceeding:
+
+```bash
+jq '.awaitingApproval = true' ./specs/<spec>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json ./specs/<spec>/.ralph-state.json
+```
+
+This tells the coordinator to stop and wait for user to run the next phase command.
+
+**This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last action.**
+</mandatory>

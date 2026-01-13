@@ -348,6 +348,31 @@ Rollback Procedure:
 | tasks | Invoke task-planner agent |
 | execution | Invoke spec-executor for current task |
 
+<mandatory>
+## CRITICAL: Stop After Subagent Completes
+
+After ANY subagent (research-analyst, product-manager, architect-reviewer, task-planner) returns, you MUST:
+
+1. **Read the state file**: `cat ./specs/$name/.ralph-state.json`
+2. **Check awaitingApproval**: If `awaitingApproval: true`, you MUST STOP IMMEDIATELY
+3. **Do NOT invoke the next phase** - the user must explicitly run the next command
+
+```
+Subagent returns
+       ↓
+Read .ralph-state.json
+       ↓
+awaitingApproval == true?
+       ↓
+  YES → STOP. Output: "Phase complete. Run /ralph-specum:<next> to continue."
+  NO  → Continue (only in quick mode where awaitingApproval is not set)
+```
+
+**This is NON-NEGOTIABLE in normal mode.** Each phase requires user approval before proceeding.
+
+The only exception is `--quick` mode, which skips approval between phases.
+</mandatory>
+
 ## New Flow
 
 1. If no name provided, ask:
@@ -373,6 +398,7 @@ Rollback Procedure:
    ```
 6. Create `.progress.md` with goal
 7. Invoke research-analyst agent
+8. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
 
 ## Quick Mode Flow
 
