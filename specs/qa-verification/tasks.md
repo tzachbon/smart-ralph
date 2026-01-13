@@ -59,7 +59,7 @@ Focus: Validate [VERIFY] tasks work end-to-end. Create qa-engineer, basic spec-e
   - **Done when**: All verification commands pass
   - **Commit**: `chore(qa): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.4 Update task-planner with [VERIFY] task format
+- [x] 1.4 Update task-planner with [VERIFY] task format
   - **Do**: Add new section to task-planner.md:
     1. Add "## [VERIFY] Task Format" section after "Intermediate Quality Gate Checkpoints"
     2. Add mandatory block with standard [VERIFY] checkpoint format

@@ -64,13 +64,10 @@ Insert quality gate checkpoints throughout the task list to catch issues early:
 
 **Checkpoint Task Format:**
 ```markdown
-- [ ] X.Y Quality Checkpoint
-  - **Do**: Run all quality checks to verify recent changes don't break the build
-  - **Verify**: All commands must pass:
-    - Type check: `pnpm check-types` or equivalent
-    - Lint: `pnpm lint` or equivalent
-    - Tests: `pnpm test` (if applicable)
-  - **Done when**: All quality checks pass with no errors
+- [ ] X.Y [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd>
+  - **Do**: Run quality commands discovered from research.md
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors
   - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes were needed)
 ```
 
@@ -79,6 +76,44 @@ Insert quality gate checkpoints throughout the task list to catch issues early:
 - Prevent accumulation of technical debt
 - Ensure each batch of work maintains code quality
 - Make debugging easier by limiting scope of potential issues
+</mandatory>
+
+## [VERIFY] Task Format
+
+<mandatory>
+Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
+
+**Standard [VERIFY] checkpoint** (every 2-3 tasks):
+```markdown
+- [ ] V1 [VERIFY] Quality check: <discovered lint cmd> && <discovered typecheck cmd>
+  - **Do**: Run quality commands and verify all pass
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors
+  - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
+```
+
+**Final verification sequence** (last 3 tasks of spec):
+```markdown
+- [ ] V4 [VERIFY] Full local CI: <lint> && <typecheck> && <test> && <build>
+  - **Do**: Run complete local CI suite
+  - **Verify**: All commands pass
+  - **Done when**: Build succeeds, all tests pass
+  - **Commit**: `chore(scope): pass local CI` (if fixes needed)
+
+- [ ] V5 [VERIFY] CI pipeline passes
+  - **Do**: Verify GitHub Actions/CI passes after push
+  - **Verify**: `gh pr checks` shows all green
+  - **Done when**: CI pipeline passes
+  - **Commit**: None
+
+- [ ] V6 [VERIFY] AC checklist
+  - **Do**: Read requirements.md, verify each AC-* is satisfied
+  - **Verify**: Manual review against implementation
+  - **Done when**: All acceptance criteria confirmed met
+  - **Commit**: None
+```
+
+**Discovery**: Read research.md for actual project commands. Do NOT assume `pnpm lint` or `npm test` exists.
 </mandatory>
 
 ## Tasks Structure
@@ -110,12 +145,10 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-2_
   - _Design: Component B_
 
-- [ ] 1.3 Quality Checkpoint
-  - **Do**: Run all quality checks to verify recent changes don't break the build
-  - **Verify**: All commands must pass:
-    - Type check: `pnpm check-types` or equivalent
-    - Lint: `pnpm lint` or equivalent
-  - **Done when**: All quality checks pass with no errors
+- [ ] 1.3 [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd>
+  - **Do**: Run quality commands discovered from research.md
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors
   - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
 
 - [ ] 1.4 [Continue with more tasks...]
@@ -150,13 +183,10 @@ After POC validated, clean up code.
   - **Commit**: `refactor(scope): add error handling`
   - _Design: Error Handling_
 
-- [ ] 2.3 Quality Checkpoint
-  - **Do**: Run all quality checks to verify refactoring doesn't break the build
-  - **Verify**: All commands must pass:
-    - Type check: `pnpm check-types` or equivalent
-    - Lint: `pnpm lint` or equivalent
-    - Tests: `pnpm test` (if applicable)
-  - **Done when**: All quality checks pass with no errors
+- [ ] 2.3 [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd> && <test cmd>
+  - **Do**: Run quality commands discovered from research.md
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors, tests pass
   - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
 
 ## Phase 3: Testing
@@ -178,13 +208,10 @@ After POC validated, clean up code.
   - **Commit**: `test(scope): add integration tests`
   - _Design: Test Strategy_
 
-- [ ] 3.3 Quality Checkpoint
-  - **Do**: Run all quality checks to verify tests don't introduce issues
-  - **Verify**: All commands must pass:
-    - Type check: `pnpm check-types` or equivalent
-    - Lint: `pnpm lint` or equivalent
-    - Tests: `pnpm test`
-  - **Done when**: All quality checks pass with no errors
+- [ ] 3.3 [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd> && <test cmd>
+  - **Do**: Run quality commands discovered from research.md
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors, tests pass
   - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
 
 - [ ] 3.4 E2E tests (if UI)
