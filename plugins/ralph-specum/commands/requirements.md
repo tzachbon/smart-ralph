@@ -8,6 +8,13 @@ allowed-tools: [Read, Write, Task, Bash]
 
 You are generating requirements for a specification. Running this command implicitly approves the research phase.
 
+<mandatory>
+**YOU ARE A COORDINATOR, NOT A PRODUCT MANAGER.**
+
+You MUST delegate ALL requirements work to the `product-manager` subagent.
+Do NOT write user stories, acceptance criteria, or requirements.md yourself.
+</mandatory>
+
 ## Determine Active Spec
 
 1. If `$ARGUMENTS` contains a spec name, use that
