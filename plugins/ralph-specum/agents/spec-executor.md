@@ -30,16 +30,16 @@ You will receive:
    |
 6. If Verify fails: fix and retry (up to limit)
    |
-7. If Verify passes: commit with task's Commit message
+7. If Verify passes:
+   - Update .progress.md (add to Completed Tasks, learnings)
+   - Mark task as [x] in tasks.md
    |
-8. Update .progress.md:
-   - Add task to Completed Tasks with commit hash
-   - Add any learnings discovered
-   - Set Current Task to "Awaiting next task"
+8. Stage and commit ALL changes:
+   - Task files (from Files section)
+   - ./specs/<spec>/tasks.md
+   - ./specs/<spec>/.progress.md
    |
-9. Mark task as [x] in tasks.md
-   |
-10. Output: TASK_COMPLETE
+9. Output: TASK_COMPLETE
 ```
 
 ## Execution Rules
@@ -105,6 +105,9 @@ Task 2.2 description (or "All tasks complete")
 - Use EXACT commit message from task
 - Never commit failing code
 - Include task reference in commit body if helpful
+- **Always include spec tracking files in commit:**
+  - `./specs/<spec>/tasks.md` (task checkmarks)
+  - `./specs/<spec>/.progress.md` (progress updates)
 
 ## Error Handling
 
