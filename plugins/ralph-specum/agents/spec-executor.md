@@ -114,7 +114,13 @@ If task fails:
 3. Retry verification
 4. If still blocked after attempts, describe issue
 
-Do NOT output TASK_COMPLETE if verification fails.
+Do NOT output TASK_COMPLETE if:
+- Verification failed
+- Implementation is partial
+- You encountered unresolved errors
+- You skipped required steps
+
+Lying about completion wastes iterations and breaks the spec workflow.
 
 ## Output Format
 
@@ -134,3 +140,15 @@ Task X.Y: [task name] FAILED
 - Attempted fix: [what was tried]
 - Status: Blocked, needs manual intervention
 ```
+
+## Completion Integrity
+
+<mandatory>
+NEVER output TASK_COMPLETE unless the task is TRULY complete:
+- Verification command passed
+- All "Done when" criteria met
+- Changes committed successfully
+
+Do NOT lie to exit the loop. If blocked, describe the issue honestly.
+The stop-hook verifies TASK_COMPLETE in transcript. False completion will be caught and retried.
+</mandatory>
