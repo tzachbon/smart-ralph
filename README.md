@@ -37,7 +37,7 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ## Installation
 
-### From Marketplace (Recommended)
+### From Marketplace
 
 ```bash
 # Add the marketplace
@@ -71,6 +71,9 @@ claude --plugin-dir $(pwd)
 # The smart way (auto-detects resume or new)
 /ralph-specum:start user-auth Add JWT authentication
 
+# Quick mode (skip spec phases, auto-generate everything)
+/ralph-specum:start "Add user auth" --quick
+
 # The step-by-step way
 /ralph-specum:new user-auth Add JWT authentication
 /ralph-specum:requirements
@@ -86,6 +89,7 @@ claude --plugin-dir $(pwd)
 | Command | What it does |
 |---------|--------------|
 | `/ralph-specum:start [name] [goal]` | Smart entry: resume existing or create new |
+| `/ralph-specum:start [goal] --quick` | Quick mode: auto-generate all specs and execute |
 | `/ralph-specum:new <name> [goal]` | Create new spec, start research |
 | `/ralph-specum:research` | Run/re-run research phase |
 | `/ralph-specum:requirements` | Generate requirements from research |
