@@ -103,6 +103,68 @@ For each related spec determine `mayNeedUpdate`: true if new spec could invalida
 
 Report in research.md "Related Specs" section.
 
+### Step 2.6: Quality Command Discovery
+
+<mandatory>
+During research, discover actual Quality Commands for [VERIFY] tasks.
+
+Quality Command discovery is essential because projects use different tools and scripts.
+
+### Sources to Check
+
+1. **package.json** (primary):
+   ```bash
+   cat package.json | jq '.scripts'
+   ```
+   Look for: `lint`, `typecheck`, `type-check`, `check-types`, `test`, `build`
+
+2. **Makefile** (if exists):
+   ```bash
+   grep -E '^[a-z]+:' Makefile
+   ```
+   Look for: `lint`, `test`, `check`, `build` targets
+
+3. **CI configs** (.github/workflows/*.yml):
+   ```bash
+   grep -E 'run:' .github/workflows/*.yml
+   ```
+   Extract actual commands from CI steps
+
+### Commands to Run
+
+Run these discovery commands during research:
+
+```bash
+# Check package.json scripts
+cat package.json | jq -r '.scripts | keys[]' 2>/dev/null || echo "No package.json"
+
+# Check Makefile targets
+grep -E '^[a-z_-]+:' Makefile 2>/dev/null | head -20 || echo "No Makefile"
+
+# Check CI workflow commands
+grep -rh 'run:' .github/workflows/*.yml 2>/dev/null | head -20 || echo "No CI configs"
+```
+
+### Output Format
+
+Add to research.md:
+
+```markdown
+## Quality Commands
+
+| Type | Command | Source |
+|------|---------|--------|
+| Lint | `pnpm run lint` | package.json scripts.lint |
+| TypeCheck | `pnpm run check-types` | package.json scripts.check-types |
+| Test | `pnpm test` | package.json scripts.test |
+| Build | `pnpm run build` | package.json scripts.build |
+
+**Local CI**: `pnpm run lint && pnpm run check-types && pnpm test && pnpm run build`
+```
+
+If a command type is not found in the project, mark as "Not found" so task-planner knows to skip that check in [VERIFY] tasks.
+</mandatory>
+
 ### Step 3: Cross-Reference
 
 - Compare external best practices with internal implementation

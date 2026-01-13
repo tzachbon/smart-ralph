@@ -73,7 +73,7 @@ Focus: Validate [VERIFY] tasks work end-to-end. Create qa-engineer, basic spec-e
   - _Requirements: FR-3, AC-1.1, AC-1.2, AC-1.4, AC-4.1, AC-4.2, AC-4.3, AC-4.4_
   - _Design: Component 3 task-planner Updates_
 
-- [ ] 1.5 Update research-analyst with quality command discovery
+- [x] 1.5 Update research-analyst with quality command discovery
   - **Do**: Add new section to research-analyst.md:
     1. Add "## Quality Command Discovery" section after "Related Specs Discovery"
     2. Add mandatory block with sources to check (package.json, Makefile, CI configs)
