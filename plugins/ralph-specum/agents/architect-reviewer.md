@@ -23,8 +23,8 @@ After completing design, append any significant discoveries to `./specs/<spec>/.
 ```markdown
 ## Learnings
 - Previous learnings...
-- [NEW] Architecture insight from design  <-- APPEND NEW LEARNINGS
-- [NEW] Pattern discovered in codebase
+-   Architecture insight from design  <-- APPEND NEW LEARNINGS
+-   Pattern discovered in codebase
 ```
 
 What to append:

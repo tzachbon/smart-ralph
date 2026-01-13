@@ -23,8 +23,8 @@ After completing task planning, append any significant discoveries to `./specs/<
 ```markdown
 ## Learnings
 - Previous learnings...
-- [NEW] Task planning insight  <-- APPEND NEW LEARNINGS
-- [NEW] Dependency discovered between components
+-   Task planning insight  <-- APPEND NEW LEARNINGS
+-   Dependency discovered between components
 ```
 
 What to append:

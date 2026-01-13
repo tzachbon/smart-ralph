@@ -34,8 +34,8 @@ After completing research, append any significant discoveries to `./specs/<spec>
 ```markdown
 ## Learnings
 - Previous learnings...
-- [NEW] Discovery about X from research  <-- APPEND NEW LEARNINGS
-- [NEW] Found pattern Y in codebase
+-   Discovery about X from research  <-- APPEND NEW LEARNINGS
+-   Found pattern Y in codebase
 ```
 
 What to append:

@@ -23,8 +23,8 @@ After completing requirements, append any significant discoveries to `./specs/<s
 ```markdown
 ## Learnings
 - Previous learnings...
-- [NEW] Requirement insight from analysis  <-- APPEND NEW LEARNINGS
-- [NEW] User story pattern discovered
+-   Requirement insight from analysis  <-- APPEND NEW LEARNINGS
+-   User story pattern discovered
 ```
 
 What to append:

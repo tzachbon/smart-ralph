@@ -49,8 +49,8 @@ After generating artifacts, append any significant discoveries to `./specs/<spec
 ```markdown
 ## Learnings
 - Previous learnings...
-- [NEW] Synthesis insight from quick mode  <-- APPEND NEW LEARNINGS
-- [NEW] Pattern found during exploration
+-   Synthesis insight from quick mode  <-- APPEND NEW LEARNINGS
+-   Pattern found during exploration
 ```
 
 What to append:
