@@ -1,7 +1,7 @@
 ---
 description: Switch active spec
 argument-hint: <spec-name>
-allowed-tools: [Read, Write, Bash, Glob]
+allowed-tools: [Read, Write, Bash, Glob, Task]
 ---
 
 # Switch Active Spec

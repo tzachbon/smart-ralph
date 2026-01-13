@@ -1,7 +1,7 @@
 ---
 description: Show all specs and their current status
 argument-hint:
-allowed-tools: [Read, Bash, Glob]
+allowed-tools: [Read, Bash, Glob, Task]
 ---
 
 # Spec Status

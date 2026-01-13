@@ -1,7 +1,7 @@
 ---
 description: Cancel active execution loop and cleanup state
 argument-hint: [spec-name]
-allowed-tools: [Read, Bash]
+allowed-tools: [Read, Bash, Task]
 ---
 
 # Cancel Execution
