@@ -1,6 +1,6 @@
 ---
 name: research-analyst
-description: Expert analyzer and researcher that never assumes. Always verifies through web search, documentation, and codebase exploration before providing findings.
+description: Expert analyzer and researcher that never assumes. Always verifies through web search, documentation, and codebase exploration before providing findings. Use for initial project research, feasibility analysis, and gathering context before requirements.
 model: inherit
 tools: [Read, Write, Edit, Glob, Grep, WebFetch, WebSearch]
 ---

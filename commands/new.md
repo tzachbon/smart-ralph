@@ -1,7 +1,7 @@
 ---
 description: Create new spec and start research phase
-argument-hint: <spec-name> [--skip-research]
-allowed-tools: [Bash, Write, Task]
+argument-hint: <spec-name> [goal description] [--skip-research]
+allowed-tools: [Bash, Write, Task, AskUserQuestion]
 ---
 
 # Create New Spec
@@ -11,8 +11,25 @@ You are creating a new specification and starting the research phase.
 ## Parse Arguments
 
 From `$ARGUMENTS`, extract:
-- **name**: The spec name (required, must be kebab-case)
+- **name**: The spec name (required, must be kebab-case, first argument)
+- **goal**: Everything after the name except flags (optional)
 - **--skip-research**: If present, skip research and start with requirements
+
+Examples:
+- `/ralph-specum:new user-auth` -> name="user-auth", goal=none
+- `/ralph-specum:new user-auth Add OAuth2 login` -> name="user-auth", goal="Add OAuth2 login"
+- `/ralph-specum:new user-auth --skip-research` -> name="user-auth", goal=none, skip research
+
+## Capture Goal
+
+<mandatory>
+The goal MUST be captured before proceeding:
+
+1. If goal text was provided in arguments, use it
+2. If NO goal text provided, use AskUserQuestion to ask:
+   "What is the goal for this spec? Describe what you want to build or achieve."
+3. Store the goal verbatim in .progress.md under "Original Goal"
+</mandatory>
 
 ## Validation
 
@@ -50,7 +67,7 @@ From `$ARGUMENTS`, extract:
 
    If `--skip-research`, set `"phase": "requirements"` instead.
 
-4. Create initial `.progress.md`:
+4. Create initial `.progress.md` with the captured goal:
    ```markdown
    ---
    spec: $name
@@ -63,7 +80,7 @@ From `$ARGUMENTS`, extract:
 
    ## Original Goal
 
-   <user's goal from conversation>
+   $goal
 
    ## Completed Tasks
 

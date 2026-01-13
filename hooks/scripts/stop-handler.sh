@@ -25,16 +25,26 @@ if [[ ! -f "$STATE_FILE" ]]; then
     exit 0  # No active loop, allow stop
 fi
 
-# Read state
-STATE=$(cat "$STATE_FILE")
-PHASE=$(echo "$STATE" | jq -r '.phase')
-TASK_INDEX=$(echo "$STATE" | jq -r '.taskIndex')
-TOTAL_TASKS=$(echo "$STATE" | jq -r '.totalTasks')
-TASK_ITER=$(echo "$STATE" | jq -r '.taskIteration')
-MAX_TASK_ITER=$(echo "$STATE" | jq -r '.maxTaskIterations')
-GLOBAL_ITER=$(echo "$STATE" | jq -r '.globalIteration')
-MAX_GLOBAL_ITER=$(echo "$STATE" | jq -r '.maxGlobalIterations')
-SPEC_PATH=$(echo "$STATE" | jq -r '.basePath')
+# Read state with error handling
+STATE=$(cat "$STATE_FILE" 2>/dev/null)
+if [[ -z "$STATE" ]]; then
+    exit 0  # Empty or unreadable state file, allow stop
+fi
+
+# Parse state with jq, exit gracefully on parse failure
+PHASE=$(echo "$STATE" | jq -r '.phase' 2>/dev/null) || exit 0
+TASK_INDEX=$(echo "$STATE" | jq -r '.taskIndex' 2>/dev/null) || exit 0
+TOTAL_TASKS=$(echo "$STATE" | jq -r '.totalTasks' 2>/dev/null) || exit 0
+TASK_ITER=$(echo "$STATE" | jq -r '.taskIteration' 2>/dev/null) || exit 0
+MAX_TASK_ITER=$(echo "$STATE" | jq -r '.maxTaskIterations' 2>/dev/null) || exit 0
+GLOBAL_ITER=$(echo "$STATE" | jq -r '.globalIteration' 2>/dev/null) || exit 0
+MAX_GLOBAL_ITER=$(echo "$STATE" | jq -r '.maxGlobalIterations' 2>/dev/null) || exit 0
+SPEC_PATH=$(echo "$STATE" | jq -r '.basePath' 2>/dev/null) || exit 0
+
+# Validate required fields parsed correctly
+if [[ -z "$PHASE" || "$PHASE" == "null" ]]; then
+    exit 0  # Invalid state, allow stop
+fi
 
 # Check global iteration limit (safety cap)
 if [[ $GLOBAL_ITER -ge $MAX_GLOBAL_ITER ]]; then
@@ -64,12 +74,18 @@ fi
 NEW_TASK_INDEX=$((TASK_INDEX + 1))
 NEW_GLOBAL_ITER=$((GLOBAL_ITER + 1))
 
-# Update state file: increment task, reset task iteration
-echo "$STATE" | jq "
+# Update state file atomically: write to temp, then move
+TEMP_STATE=$(mktemp)
+if echo "$STATE" | jq "
     .taskIndex = $NEW_TASK_INDEX |
     .taskIteration = 1 |
     .globalIteration = $NEW_GLOBAL_ITER
-" > "$STATE_FILE"
+" > "$TEMP_STATE" 2>/dev/null && [[ -s "$TEMP_STATE" ]]; then
+    mv "$TEMP_STATE" "$STATE_FILE"
+else
+    rm -f "$TEMP_STATE"
+    exit 0  # Failed to update state, allow stop
+fi
 
 # Return block decision with continue prompt
 # The reason becomes the next user input, giving fresh context
