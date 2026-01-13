@@ -13,8 +13,8 @@
 **So that** {{benefit/value}}
 
 **Acceptance Criteria:**
-- [ ] AC-1.1: {{Specific, testable criterion}}
-- [ ] AC-1.2: {{Specific, testable criterion}}
+- AC-1.1: {{Specific, testable criterion}}
+- AC-1.2: {{Specific, testable criterion}}
 
 ### US-2: {{Story Title}}
 
@@ -23,8 +23,8 @@
 **So that** {{benefit/value}}
 
 **Acceptance Criteria:**
-- [ ] AC-2.1: {{Specific, testable criterion}}
-- [ ] AC-2.2: {{Specific, testable criterion}}
+- AC-2.1: {{Specific, testable criterion}}
+- AC-2.2: {{Specific, testable criterion}}
 
 ## Functional Requirements
 
