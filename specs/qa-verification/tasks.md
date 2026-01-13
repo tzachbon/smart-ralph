@@ -213,7 +213,7 @@ No automated tests for markdown agent files. Testing via integration validation.
   - **Commit**: `test(qa): validate spec-executor against design` (if corrections made)
   - _Design: Component 2_
 
-- [ ] 3.3 Validate task-planner [VERIFY] format against design
+- [x] 3.3 Validate task-planner [VERIFY] format against design
   - **Do**: Compare task-planner [VERIFY] section against design.md:
     1. Check [VERIFY] task format matches design
     2. Verify final sequence (V4/V5/V6) order matches design
@@ -225,7 +225,7 @@ No automated tests for markdown agent files. Testing via integration validation.
   - **Commit**: `test(qa): validate task-planner against design` (if corrections made)
   - _Design: Component 3_
 
-- [ ] 3.4 [VERIFY] Quality checkpoint: all files match design
+- [x] 3.4 [VERIFY] Quality checkpoint: all files match design
   - **Do**: Verify all modifications align with design
   - **Verify**: Run these commands, ALL must succeed (exit 0):
     ```bash
