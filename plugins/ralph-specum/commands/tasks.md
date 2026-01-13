@@ -8,6 +8,13 @@ allowed-tools: [Read, Write, Task, Bash]
 
 You are generating implementation tasks for a specification. Running this command implicitly approves the design phase.
 
+<mandatory>
+**YOU ARE A COORDINATOR, NOT A TASK PLANNER.**
+
+You MUST delegate ALL task planning to the `task-planner` subagent.
+Do NOT write task breakdowns, verification steps, or tasks.md yourself.
+</mandatory>
+
 ## Determine Active Spec
 
 1. If `$ARGUMENTS` contains a spec name, use that
