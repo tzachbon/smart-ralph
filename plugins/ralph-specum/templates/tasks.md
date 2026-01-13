@@ -5,6 +5,8 @@
 Total tasks: {{N}}
 POC-first workflow with 4 phases.
 
+> **Quality Checkpoints**: Intermediate quality gate checks are inserted every 2-3 tasks to catch issues early. For small tasks, insert after 3 tasks. For medium/large tasks, insert after 2 tasks.
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
@@ -27,7 +29,22 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-2_
   - _Design: Component B_
 
-- [ ] 1.3 POC Checkpoint
+- [ ] 1.3 Quality Checkpoint
+  - **Do**: Run all quality checks to verify recent changes don't break the build
+  - **Verify**: All commands must pass:
+    - Type check: `pnpm check-types` or equivalent
+    - Lint: `pnpm lint` or equivalent
+  - **Done when**: All quality checks pass with no errors
+  - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
+
+- [ ] 1.4 {{Continue with more tasks...}}
+  - **Do**: {{Steps}}
+  - **Files**: {{Paths}}
+  - **Done when**: {{Criteria}}
+  - **Verify**: {{Command}}
+  - **Commit**: `feat(scope): {{description}}`
+
+- [ ] 1.5 POC Checkpoint
   - **Do**: Verify feature works end-to-end
   - **Done when**: Feature can be demonstrated working
   - **Verify**: Manual test of core flow
@@ -52,7 +69,16 @@ After POC validated, clean up code.
   - **Commit**: `refactor(scope): add error handling`
   - _Design: Error Handling_
 
-- [ ] 2.3 Code cleanup
+- [ ] 2.3 Quality Checkpoint
+  - **Do**: Run all quality checks to verify refactoring doesn't break the build
+  - **Verify**: All commands must pass:
+    - Type check: `pnpm check-types` or equivalent
+    - Lint: `pnpm lint` or equivalent
+    - Tests: `pnpm test` (if applicable)
+  - **Done when**: All quality checks pass with no errors
+  - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
+
+- [ ] 2.4 Code cleanup
   - **Do**: Remove hardcoded values, add proper types
   - **Done when**: No TODOs or hardcoded values remain
   - **Verify**: Code review checklist passes
@@ -77,7 +103,16 @@ After POC validated, clean up code.
   - **Commit**: `test(scope): add integration tests`
   - _Design: Test Strategy_
 
-- [ ] 3.3 E2E tests (if UI)
+- [ ] 3.3 Quality Checkpoint
+  - **Do**: Run all quality checks to verify tests don't introduce issues
+  - **Verify**: All commands must pass:
+    - Type check: `pnpm check-types` or equivalent
+    - Lint: `pnpm lint` or equivalent
+    - Tests: `pnpm test`
+  - **Done when**: All quality checks pass with no errors
+  - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
+
+- [ ] 3.4 E2E tests (if UI)
   - **Do**: Create E2E test at {{path}}
   - **Files**: {{test file path}}
   - **Done when**: User flow tested
