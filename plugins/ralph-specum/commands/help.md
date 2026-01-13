@@ -12,7 +12,8 @@ Ralph Specum is a spec-driven development plugin that guides you through researc
 
 | Command | Description |
 |---------|-------------|
-| `/ralph-specum:new <name>` | Create new spec and start research |
+| `/ralph-specum:start [name] [goal]` | Smart entry point: resume or create new |
+| `/ralph-specum:new <name> [goal]` | Create new spec and start research |
 | `/ralph-specum:research` | Run/re-run research phase |
 | `/ralph-specum:requirements` | Generate requirements (approves research) |
 | `/ralph-specum:design` | Generate design (approves requirements) |
@@ -53,27 +54,31 @@ Done!
 ## Quick Start
 
 ```bash
-# Create new spec (auto-runs research)
-/ralph-specum:new user-authentication
+# Easiest: use start (auto-detects resume or new)
+/ralph-specum:start user-auth Add JWT authentication
 
-# Review research.md, then generate requirements
+# Or resume an existing spec
+/ralph-specum:start
+
+# Manual workflow with individual commands:
+/ralph-specum:new user-auth Add JWT authentication
 /ralph-specum:requirements
-
-# Review requirements.md, then generate design
 /ralph-specum:design
-
-# Review design.md, then generate tasks
 /ralph-specum:tasks
-
-# Review tasks.md, then start execution
 /ralph-specum:implement
 ```
 
 ## Options
 
+### start command
+```
+/ralph-specum:start [name] [goal] [--fresh]
+```
+- `--fresh`: Force new spec, overwrite if exists (skips "resume or fresh?" prompt)
+
 ### new command
 ```
-/ralph-specum:new <name> [--skip-research]
+/ralph-specum:new <name> [goal] [--skip-research]
 ```
 - `--skip-research`: Skip research phase, start with requirements
 

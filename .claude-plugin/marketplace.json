@@ -1,22 +1,22 @@
 {
-  "name": "ralph-specum",
+  "name": "smart-ralph",
   "owner": {
     "name": "tzachbon"
   },
   "metadata": {
-    "description": "Spec-driven development with smart compaction"
+    "description": "Spec-driven development with task-by-task execution"
   },
   "plugins": [
     {
       "name": "ralph-specum",
-      "description": "Spec-driven development with smart compaction. Ralph Wiggum loop for autonomous task execution.",
-      "version": "1.2.0",
+      "description": "Spec-driven development with research, requirements, design, tasks, and autonomous execution. Fresh context per task.",
+      "version": "2.0.0",
       "author": {
         "name": "tzachbon"
       },
-      "source": "./",
+      "source": "./plugins/ralph-specum",
       "category": "development",
-      "tags": ["ralph", "spec-driven", "autonomous", "compaction"]
+      "tags": ["ralph", "spec-driven", "autonomous", "research", "tasks"]
     }
   ]
 }
