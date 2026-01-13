@@ -84,7 +84,7 @@ Focus: Get --quick flag working end-to-end with goal string input. Skip edge cas
 
 Clean up code, add proper input detection, error handling.
 
-- [ ] 2.1 Add full input detection logic
+- [x] 2.1 Add full input detection logic
   - **Do**:
     1. Expand input detection in start.md to handle all cases:
        - Two args before --quick: first=name, second=goal or file
@@ -101,7 +101,7 @@ Clean up code, add proper input detection, error handling.
   - _Requirements: FR-2, FR-8_
   - _Design: Input Detector, Detection Rules_
 
-- [ ] 2.2 Add error handling and validation
+- [x] 2.2 Add error handling and validation
   - **Do**:
     1. Add validation before spec creation:
        - File not found: "File not found: ./path.md"
@@ -120,7 +120,7 @@ Clean up code, add proper input detection, error handling.
   - _Requirements: FR-7, NFR-4_
   - _Design: Error Handling_
 
-- [ ] 2.3 Improve name inference in plan-synthesizer
+- [x] 2.3 Improve name inference in plan-synthesizer
   - **Do**:
     1. Update plan-synthesizer to improve name inference:
        - Extract key terms (nouns, verbs) from goal
@@ -139,7 +139,7 @@ Clean up code, add proper input detection, error handling.
 
 Manual verification of all user stories.
 
-- [ ] 3.1 Test goal string input (US-1)
+- [x] 3.1 Test goal string input (US-1)
   - **Do**:
     1. Test: `/ralph-specum:start "Build auth with JWT" --quick`
     2. Verify: Spec created with auto-generated name
