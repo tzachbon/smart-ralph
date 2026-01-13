@@ -84,8 +84,9 @@ fi
 
 # Check if all tasks are done
 if [[ $TASK_INDEX -ge $TOTAL_TASKS ]]; then
-    # All tasks complete! Cleanup state file, keep progress
+    # All tasks complete! Cleanup state file and current-spec pointer, keep progress
     rm "$STATE_FILE"
+    rm "$CURRENT_SPEC_FILE"
     exit 0  # Allow stop - execution complete
 fi
 
