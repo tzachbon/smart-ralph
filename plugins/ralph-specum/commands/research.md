@@ -96,6 +96,8 @@ Next: Review research.md, then run /ralph-specum:requirements
 <mandatory>
 **STOP HERE. DO NOT PROCEED TO REQUIREMENTS.**
 
+(This does not apply in `--quick` mode, which auto-generates all artifacts without stopping.)
+
 After displaying the output above, you MUST:
 1. End your response immediately
 2. Wait for the user to review research.md

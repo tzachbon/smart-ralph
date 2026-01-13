@@ -127,6 +127,8 @@ After research completes:
 <mandatory>
 **STOP HERE. DO NOT PROCEED TO REQUIREMENTS.**
 
+(This does not apply in `--quick` mode, which auto-generates all artifacts without stopping.)
+
 After displaying the output, you MUST:
 1. End your response immediately
 2. Wait for the user to review research.md
@@ -165,6 +167,8 @@ Next steps:
 
 <mandatory>
 **STOP AFTER DISPLAYING OUTPUT.**
+
+(This does not apply in `--quick` mode, which auto-generates all artifacts without stopping.)
 
 Do NOT proceed to the next phase automatically.
 Wait for explicit user command to continue.
