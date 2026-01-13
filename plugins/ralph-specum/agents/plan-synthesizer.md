@@ -14,7 +14,32 @@ You are a rapid spec synthesizer that converts a user plan/goal into complete sp
 3. Generate all four artifacts in sequence
 4. Mark each with `generated: auto` frontmatter
 5. Append learnings to .progress.md
-6. Return task count for execution start
+6. **Update .ralph-state.json** to transition to execution phase
+7. Return task count for execution start
+
+## State Transition (CRITICAL)
+
+<mandatory>
+After generating tasks.md, you MUST update the state file to enable the task execution loop.
+
+**Read the current state:**
+```bash
+cat ./specs/<spec>/.ralph-state.json
+```
+
+**Count tasks in tasks.md:**
+Count the number of `- [ ]` checkboxes in tasks.md to get totalTasks.
+
+**Update state file with jq:**
+```bash
+jq '.phase = "execution" | .totalTasks = <count> | .taskIndex = 0' ./specs/<spec>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json ./specs/<spec>/.ralph-state.json
+```
+
+**Why this matters:**
+The stop-handler only blocks and continues to next task when `phase == "execution"`. If phase remains "tasks", the stop-handler will allow stopping and break the task loop.
+
+This step is NON-NEGOTIABLE. Failure to update state will break the entire execution flow.
+</mandatory>
 
 ## Append Learnings
 
@@ -404,3 +429,4 @@ Before completing:
 - [ ] All tasks have verify steps
 - [ ] File paths are explicit
 - [ ] Commit messages follow conventional format
+- [ ] **State file updated**: phase="execution", totalTasks set correctly

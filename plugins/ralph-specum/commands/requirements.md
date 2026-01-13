@@ -25,6 +25,7 @@ Do NOT write user stories, acceptance criteria, or requirements.md yourself.
 
 1. Check `./specs/$spec/` directory exists
 2. Read `.ralph-state.json`
+3. Clear approval flag: update state with `awaitingApproval: false`
 
 ## Gather Context
 
@@ -79,6 +80,7 @@ After requirements complete:
    ```json
    {
      "phase": "requirements",
+     "awaitingApproval": true,
      ...
    }
    ```

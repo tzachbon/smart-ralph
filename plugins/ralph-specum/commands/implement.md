@@ -45,6 +45,7 @@ From `$ARGUMENTS`:
 1. Check `./specs/$spec/` directory exists
 2. Check `./specs/$spec/tasks.md` exists. If not, error: "Tasks not found. Run /ralph-specum:tasks first."
 3. Read `.ralph-state.json`
+4. Clear approval flag: update state with `awaitingApproval: false`
 
 ## Initialize Execution State
 

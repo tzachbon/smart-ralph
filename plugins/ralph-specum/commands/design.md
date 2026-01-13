@@ -26,6 +26,7 @@ Do NOT create architecture diagrams, technical decisions, or design.md yourself.
 1. Check `./specs/$spec/` directory exists
 2. Check `./specs/$spec/requirements.md` exists. If not, error: "Requirements not found. Run /ralph-specum:requirements first."
 3. Read `.ralph-state.json`
+4. Clear approval flag: update state with `awaitingApproval: false`
 
 ## Gather Context
 
@@ -87,6 +88,7 @@ After design complete:
    ```json
    {
      "phase": "design",
+     "awaitingApproval": true,
      ...
    }
    ```

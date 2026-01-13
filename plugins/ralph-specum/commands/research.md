@@ -70,6 +70,7 @@ After research completes:
    ```json
    {
      "phase": "research",
+     "awaitingApproval": true,
      "relatedSpecs": [
        {"name": "...", "relevance": "high", "reason": "...", "mayNeedUpdate": true}
      ]

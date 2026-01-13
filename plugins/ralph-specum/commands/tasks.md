@@ -27,6 +27,7 @@ Do NOT write task breakdowns, verification steps, or tasks.md yourself.
 2. Check `./specs/$spec/design.md` exists. If not, error: "Design not found. Run /ralph-specum:design first."
 3. Check `./specs/$spec/requirements.md` exists
 4. Read `.ralph-state.json`
+5. Clear approval flag: update state with `awaitingApproval: false`
 
 ## Gather Context
 
@@ -97,6 +98,7 @@ After tasks complete:
    {
      "phase": "tasks",
      "totalTasks": <count>,
+     "awaitingApproval": true,
      ...
    }
    ```
