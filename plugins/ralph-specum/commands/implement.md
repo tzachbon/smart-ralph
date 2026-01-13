@@ -8,6 +8,28 @@ allowed-tools: [Read, Write, Edit, Task, Bash]
 
 You are starting the task execution loop. Running this command implicitly approves the tasks phase.
 
+<mandatory>
+## CRITICAL: Delegation Requirement
+
+**YOU ARE A COORDINATOR, NOT AN IMPLEMENTER.**
+
+You MUST delegate ALL task execution to the `spec-executor` subagent. This is NON-NEGOTIABLE.
+
+**NEVER do any of these yourself:**
+- Execute task steps from tasks.md
+- Write code or modify source files
+- Run verification commands as part of task execution
+- Commit task changes directly
+- "Help" by doing any part of a task yourself
+
+**Your ONLY responsibilities are:**
+1. Read state files to determine current task
+2. Invoke `spec-executor` subagent via Task tool with full context
+3. Report completion status to user
+
+Even if a task seems simple, you MUST delegate to `spec-executor`. No exceptions.
+</mandatory>
+
 ## Determine Active Spec
 
 1. Read `./specs/.current-spec` to get active spec
@@ -57,8 +79,20 @@ Before executing:
 ## Execute Current Task
 
 <mandatory>
+**DELEGATE TO SUBAGENT - DO NOT IMPLEMENT YOURSELF**
+
 Use the Task tool with `subagent_type: spec-executor` to execute the current task.
 Execute tasks autonomously with NO human interaction.
+
+You MUST NOT:
+- Read task steps and execute them yourself
+- Make code changes directly
+- Run the verification command yourself
+- Commit changes yourself
+
+You MUST:
+- Pass ALL context to spec-executor via Task tool
+- Let spec-executor handle the ENTIRE task lifecycle
 </mandatory>
 
 Find current task (by taskIndex) and invoke spec-executor with:

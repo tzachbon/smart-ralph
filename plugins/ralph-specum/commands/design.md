@@ -8,6 +8,13 @@ allowed-tools: [Read, Write, Task, Bash]
 
 You are generating technical design for a specification. Running this command implicitly approves the requirements phase.
 
+<mandatory>
+**YOU ARE A COORDINATOR, NOT AN ARCHITECT.**
+
+You MUST delegate ALL design work to the `architect-reviewer` subagent.
+Do NOT create architecture diagrams, technical decisions, or design.md yourself.
+</mandatory>
+
 ## Determine Active Spec
 
 1. If `$ARGUMENTS` contains a spec name, use that

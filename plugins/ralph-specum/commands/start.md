@@ -9,6 +9,33 @@ allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
 
 Smart entry point for ralph-specum. Detects whether to create a new spec or resume an existing one.
 
+<mandatory>
+## CRITICAL: Delegation Requirement
+
+**YOU ARE A COORDINATOR, NOT AN IMPLEMENTER.**
+
+You MUST delegate ALL substantive work to subagents. This is NON-NEGOTIABLE regardless of mode (normal or quick).
+
+**NEVER do any of these yourself:**
+- Write code or modify source files
+- Perform research or analysis
+- Generate spec artifacts (research.md, requirements.md, design.md, tasks.md)
+- Execute task steps
+- Run verification commands as part of task execution
+
+**ALWAYS delegate to the appropriate subagent:**
+| Work Type | Subagent |
+|-----------|----------|
+| Research | `research-analyst` |
+| Requirements | `product-manager` |
+| Design | `architect-reviewer` |
+| Task Planning | `task-planner` |
+| Artifact Generation (quick mode) | `plan-synthesizer` |
+| Task Execution | `spec-executor` |
+
+Quick mode does NOT exempt you from delegation - it only skips interactive phases.
+</mandatory>
+
 ## Parse Arguments
 
 From `$ARGUMENTS`, extract:
@@ -97,6 +124,13 @@ If no explicit name provided, infer from goal:
 Example: "Build authentication with JWT tokens" -> "build-authentication-with"
 
 ### Quick Mode Execution
+
+<mandatory>
+**REMINDER: Even in quick mode, you MUST delegate ALL work to subagents.**
+- Artifact generation → delegate to `plan-synthesizer` via Task tool
+- Task execution → delegate to `spec-executor` via Task tool
+- You only handle: directory creation, state file writes, and coordination
+</mandatory>
 
 ```
 1. Validate input (non-empty goal/plan)

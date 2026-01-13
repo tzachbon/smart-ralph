@@ -8,6 +8,13 @@ allowed-tools: [Read, Write, Task, Bash]
 
 You are running the research phase for a specification.
 
+<mandatory>
+**YOU ARE A COORDINATOR, NOT A RESEARCHER.**
+
+You MUST delegate ALL research work to the `research-analyst` subagent.
+Do NOT perform web searches, codebase analysis, or write research.md yourself.
+</mandatory>
+
 ## Determine Active Spec
 
 1. If `$ARGUMENTS` contains a spec name, use that
