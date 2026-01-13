@@ -73,22 +73,9 @@ fi
 AWAITING_APPROVAL=$(echo "$STATE" | jq -r '.awaitingApproval // false' 2>/dev/null)
 
 if [[ "$AWAITING_APPROVAL" == "true" ]]; then
-    # Derive next command from current phase
-    case "$PHASE" in
-        research)     NEXT_CMD="/ralph-specum:requirements" ;;
-        requirements) NEXT_CMD="/ralph-specum:design" ;;
-        design)       NEXT_CMD="/ralph-specum:tasks" ;;
-        tasks)        NEXT_CMD="/ralph-specum:implement" ;;
-        *)            NEXT_CMD="" ;;
-    esac
-
-    if [[ -n "$NEXT_CMD" ]]; then
-        jq -n \
-            --arg reason "Phase '$PHASE' complete. Waiting for user review and approval." \
-            --arg msg "Run $NEXT_CMD to continue (or /ralph-specum:cancel to stop)" \
-            '{"decision": "block", "reason": $reason, "systemMessage": $msg}'
-        exit 0
-    fi
+    # Allow stop - user needs to review and run next command manually
+    # The agent already displayed the "run /ralph-specum:<next>" message
+    exit 0
 fi
 
 # Only handle execution phase for task loop
