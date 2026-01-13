@@ -1,6 +1,6 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
-argument-hint: [name] [goal] [--fresh]
+argument-hint: [name] [goal] [--fresh] [--quick]
 allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
 ---
 
