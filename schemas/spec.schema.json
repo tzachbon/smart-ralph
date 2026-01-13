@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ralph-specum",
+  "title": "Ralph Specum Specification Schema",
+  "description": "Schema for ralph-specum state files and spec document frontmatter",
+
+  "definitions": {
+    "state": {
+      "type": "object",
+      "description": "Runtime state for spec execution loop",
+      "required": ["source", "name", "basePath", "phase"],
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": ["spec", "plan", "direct"],
+          "description": "Origin of tasks: spec (full workflow), plan (skip to tasks), direct (manual tasks.md)"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Spec name in kebab-case"
+        },
+        "basePath": {
+          "type": "string",
+          "description": "Path to spec directory (e.g., ./specs/my-feature)"
+        },
+        "phase": {
+          "type": "string",
+          "enum": ["research", "requirements", "design", "tasks", "execution"],
+          "description": "Current workflow phase"
+        },
+        "taskIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Current task index (0-based)"
+        },
+        "totalTasks": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Total number of tasks in tasks.md"
+        },
+        "taskIteration": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Current iteration for this task (resets per task)"
+        },
+        "maxTaskIterations": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Max retries per task before failure"
+        },
+        "globalIteration": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1,
+          "description": "Total loop iterations across all tasks"
+        },
+        "maxGlobalIterations": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 100,
+          "description": "Safety cap on total iterations"
+        }
+      }
+    },
+
+    "task": {
+      "type": "object",
+      "description": "Individual task structure in tasks.md",
+      "required": ["id", "do", "files", "done_when", "verify"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Task ID in Phase.Task format (e.g., 1.2)"
+        },
+        "do": {
+          "type": "string",
+          "description": "Exact implementation steps"
+        },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "File paths to create or modify"
+        },
+        "done_when": {
+          "type": "string",
+          "description": "Explicit success criteria"
+        },
+        "verify": {
+          "type": "string",
+          "description": "Command to verify completion"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Conventional commit message"
+        },
+        "requirements_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Referenced requirement IDs"
+        },
+        "design_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Referenced design sections"
+        }
+      }
+    },
+
+    "researchFrontmatter": {
+      "type": "object",
+      "properties": {
+        "spec": { "type": "string" },
+        "phase": { "const": "research" },
+        "created": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "requirementsFrontmatter": {
+      "type": "object",
+      "properties": {
+        "spec": { "type": "string" },
+        "phase": { "const": "requirements" },
+        "created": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "designFrontmatter": {
+      "type": "object",
+      "properties": {
+        "spec": { "type": "string" },
+        "phase": { "const": "design" },
+        "created": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "tasksFrontmatter": {
+      "type": "object",
+      "properties": {
+        "spec": { "type": "string" },
+        "phase": { "const": "tasks" },
+        "total_tasks": { "type": "integer" },
+        "created": { "type": "string", "format": "date-time" }
+      }
+    },
+
+    "progressFrontmatter": {
+      "type": "object",
+      "properties": {
+        "spec": { "type": "string" },
+        "phase": { "type": "string" },
+        "task": { "type": "string", "pattern": "^[0-9]+/[0-9]+$" },
+        "updated": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

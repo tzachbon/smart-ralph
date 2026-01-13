@@ -1,154 +1,78 @@
 #!/bin/bash
 # Ralph Specum Stop Hook Handler
-# Reads state, determines if loop should continue or block
-# Handles auto-compaction in auto mode
+# Handles task-by-task execution loop with fresh context per task
 
 # Read input from stdin (Claude Code hook input)
 INPUT=$(cat)
 
-# Extract transcript path to find working directory
+# Extract transcript path (not used currently but available)
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty')
 
-# Try to find state file in common locations
-# Checks both root spec directories and feature subdirectories
-find_state_file() {
-    local base_dirs=("./spec" "." "../spec")
-
-    # First check for state files in feature subdirectories (new structure)
-    for base in "${base_dirs[@]}"; do
-        if [[ -d "$base" ]]; then
-            # Look for .ralph-state.json in any subdirectory (feature directories)
-            local found=$(find "$base" -maxdepth 2 -name ".ralph-state.json" -type f 2>/dev/null | head -n 1)
-            if [[ -n "$found" ]]; then
-                echo "$found"
-                return 0
-            fi
-        fi
-    done
-
-    # Fallback: check root directories (legacy structure)
-    for dir in "${base_dirs[@]}"; do
-        if [[ -f "$dir/.ralph-state.json" ]]; then
-            echo "$dir/.ralph-state.json"
-            return 0
-        fi
-    done
-    return 1
-}
-
-STATE_FILE=$(find_state_file)
-
-# If no state file found, allow normal stop
-if [[ -z "$STATE_FILE" || ! -f "$STATE_FILE" ]]; then
-    exit 0
+# Find current spec
+CURRENT_SPEC_FILE="./specs/.current-spec"
+if [[ ! -f "$CURRENT_SPEC_FILE" ]]; then
+    exit 0  # No active spec, allow stop
 fi
 
-# Get spec directory from state file path
-SPEC_DIR=$(dirname "$STATE_FILE")
+CURRENT_SPEC=$(cat "$CURRENT_SPEC_FILE" 2>/dev/null)
+if [[ -z "$CURRENT_SPEC" ]]; then
+    exit 0  # No active spec, allow stop
+fi
+
+# Find state file
+STATE_FILE="./specs/$CURRENT_SPEC/.ralph-state.json"
+if [[ ! -f "$STATE_FILE" ]]; then
+    exit 0  # No active loop, allow stop
+fi
 
 # Read state
 STATE=$(cat "$STATE_FILE")
-MODE=$(echo "$STATE" | jq -r '.mode')
 PHASE=$(echo "$STATE" | jq -r '.phase')
-ITERATION=$(echo "$STATE" | jq -r '.iteration')
-MAX_ITERATIONS=$(echo "$STATE" | jq -r '.maxIterations')
 TASK_INDEX=$(echo "$STATE" | jq -r '.taskIndex')
 TOTAL_TASKS=$(echo "$STATE" | jq -r '.totalTasks')
+TASK_ITER=$(echo "$STATE" | jq -r '.taskIteration')
+MAX_TASK_ITER=$(echo "$STATE" | jq -r '.maxTaskIterations')
+GLOBAL_ITER=$(echo "$STATE" | jq -r '.globalIteration')
+MAX_GLOBAL_ITER=$(echo "$STATE" | jq -r '.maxGlobalIterations')
+SPEC_PATH=$(echo "$STATE" | jq -r '.basePath')
 
-# Check for max iterations
-if [[ "$ITERATION" -ge "$MAX_ITERATIONS" ]]; then
-    echo '{"decision": "block", "reason": "Max iterations reached. Run /ralph-specum:cancel to cleanup."}'
+# Check global iteration limit (safety cap)
+if [[ $GLOBAL_ITER -ge $MAX_GLOBAL_ITER ]]; then
+    echo "{\"decision\": \"block\", \"reason\": \"Max global iterations ($MAX_GLOBAL_ITER) reached. Run /ralph-specum:cancel to cleanup and review progress.\"}"
     exit 0
 fi
 
-# Increment iteration
-NEW_ITERATION=$((ITERATION + 1))
+# Only handle execution phase for task loop
+if [[ "$PHASE" != "execution" ]]; then
+    exit 0  # Allow stop for non-execution phases (research, requirements, design, tasks)
+fi
 
-# Compaction instructions per phase
-get_compact_instruction() {
-    local phase=$1
-    case "$phase" in
-        "research")
-            echo "Run: /compact preserve: executive summary, feasibility rating, key risks, recommendations, open questions. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to requirements phase."
-            ;;
-        "requirements")
-            echo "Run: /compact preserve: user stories, acceptance criteria (AC-*), functional requirements (FR-*), non-functional requirements (NFR-*), glossary. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to design phase."
-            ;;
-        "design")
-            echo "Run: /compact preserve: architecture decisions, component boundaries, file paths, patterns. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to tasks phase."
-            ;;
-        "tasks")
-            echo "Run: /compact preserve: task list with IDs, dependencies, quality gates. Read $SPEC_DIR/.ralph-progress.md for context. Then continue to execution phase."
-            ;;
-        "execution")
-            echo "Run: /compact preserve: current task context, verification results. Read $SPEC_DIR/.ralph-progress.md for completed tasks and learnings. Then continue to next task."
-            ;;
-    esac
-}
+# Check if task failed too many times
+if [[ $TASK_ITER -ge $MAX_TASK_ITER ]]; then
+    echo "{\"decision\": \"block\", \"reason\": \"Task $TASK_INDEX failed after $MAX_TASK_ITER attempts. Fix the issue manually, then run /ralph-specum:implement to resume from task $TASK_INDEX.\"}"
+    exit 0
+fi
 
-# Advance phase helper
-get_next_phase() {
-    local current=$1
-    case "$current" in
-        "research") echo "requirements" ;;
-        "requirements") echo "design" ;;
-        "design") echo "tasks" ;;
-        "tasks") echo "execution" ;;
-        *) echo "$current" ;;
-    esac
-}
+# Check if all tasks are done
+if [[ $TASK_INDEX -ge $TOTAL_TASKS ]]; then
+    # All tasks complete! Cleanup state file, keep progress
+    rm "$STATE_FILE"
+    exit 0  # Allow stop - execution complete
+fi
 
-case "$PHASE" in
-    "research"|"requirements"|"design"|"tasks")
-        PHASE_APPROVED=$(echo "$STATE" | jq -r ".phaseApprovals.$PHASE")
+# Continue to next task with fresh context
+NEW_TASK_INDEX=$((TASK_INDEX + 1))
+NEW_GLOBAL_ITER=$((GLOBAL_ITER + 1))
 
-        if [[ "$MODE" == "interactive" && "$PHASE_APPROVED" != "true" ]]; then
-            # Block and wait for approval or revision
-            echo "{\"decision\": \"block\", \"reason\": \"Phase '$PHASE' complete. Options: (1) Discuss/give feedback to revise current phase (2) /ralph-specum:approve to advance to next phase.\"}"
-            exit 0
-        fi
+# Update state file: increment task, reset task iteration
+echo "$STATE" | jq "
+    .taskIndex = $NEW_TASK_INDEX |
+    .taskIteration = 1 |
+    .globalIteration = $NEW_GLOBAL_ITER
+" > "$STATE_FILE"
 
-        # Auto mode: advance phase and trigger compaction
-        if [[ "$MODE" == "auto" ]]; then
-            NEXT_PHASE=$(get_next_phase "$PHASE")
-            COMPACT_MSG=$(get_compact_instruction "$PHASE")
+# Return block decision with continue prompt
+# The reason becomes the next user input, giving fresh context
+REASON="Continue execution for spec '$CURRENT_SPEC'. Read $SPEC_PATH/.progress.md for context and $SPEC_PATH/tasks.md for task $NEW_TASK_INDEX."
 
-            # Update state: advance phase, mark approved, increment iteration
-            echo "$STATE" | jq "
-                .phase = \"$NEXT_PHASE\" |
-                .phaseApprovals.$PHASE = true |
-                .iteration = $NEW_ITERATION
-            " > "$STATE_FILE"
-
-            echo "{\"decision\": \"block\", \"reason\": \"Phase '$PHASE' complete. $COMPACT_MSG\"}"
-            exit 0
-        fi
-        ;;
-
-    "execution")
-        # Check if all tasks are done
-        if [[ "$TASK_INDEX" -ge "$TOTAL_TASKS" && "$TOTAL_TASKS" -gt 0 ]]; then
-            # All done, allow stop
-            exit 0
-        fi
-
-        # More tasks to do
-        if [[ "$MODE" == "auto" ]]; then
-            COMPACT_MSG=$(get_compact_instruction "execution")
-
-            # Update iteration
-            echo "$STATE" | jq ".iteration = $NEW_ITERATION" > "$STATE_FILE"
-
-            echo "{\"decision\": \"block\", \"reason\": \"Task complete. $COMPACT_MSG\"}"
-            exit 0
-        fi
-
-        # Interactive mode: allow discussion or continue
-        echo "$STATE" | jq ".iteration = $NEW_ITERATION" > "$STATE_FILE"
-        echo "{\"decision\": \"block\", \"reason\": \"Task done. Discuss results or say 'continue' for next task.\"}"
-        exit 0
-        ;;
-esac
-
-# Default: allow stop
-exit 0
+echo "{\"decision\": \"block\", \"reason\": \"$REASON\", \"systemMessage\": \"Task $TASK_INDEX complete. Continuing to task $NEW_TASK_INDEX of $TOTAL_TASKS.\"}"

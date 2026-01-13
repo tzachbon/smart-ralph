@@ -1,0 +1,91 @@
+---
+description: Generate requirements from goal and research
+argument-hint: [spec-name]
+allowed-tools: [Read, Write, Task, Bash]
+---
+
+# Requirements Phase
+
+You are generating requirements for a specification. Running this command implicitly approves the research phase.
+
+## Determine Active Spec
+
+1. If `$ARGUMENTS` contains a spec name, use that
+2. Otherwise, read `./specs/.current-spec` to get active spec
+3. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
+
+## Validate
+
+1. Check `./specs/$spec/` directory exists
+2. Read `.ralph-state.json`
+
+## Gather Context
+
+Read available context:
+- `./specs/$spec/research.md` (if exists)
+- `./specs/$spec/.progress.md`
+- Original goal from conversation or progress file
+
+## Execute Requirements
+
+<mandatory>
+Use the Task tool with `subagent_type: product-manager` to generate requirements.
+</mandatory>
+
+Invoke product-manager agent with prompt:
+
+```
+You are generating requirements for spec: $spec
+Spec path: ./specs/$spec/
+
+Context:
+- Research: [include research.md content if exists]
+- Original goal: [from conversation or progress]
+
+Your task:
+1. Analyze the goal and research findings
+2. Create user stories with acceptance criteria
+3. Define functional requirements (FR-*) with priorities
+4. Define non-functional requirements (NFR-*)
+5. Document glossary, out-of-scope items, dependencies
+6. Output to ./specs/$spec/requirements.md
+
+Use the requirements.md template with frontmatter:
+---
+spec: $spec
+phase: requirements
+created: <timestamp>
+---
+
+Focus on:
+- Testable acceptance criteria
+- Clear priority levels
+- Explicit success criteria
+- Risk identification
+```
+
+## Update State
+
+After requirements complete:
+
+1. Update `.ralph-state.json`:
+   ```json
+   {
+     "phase": "requirements",
+     ...
+   }
+   ```
+
+2. Update `.progress.md`:
+   - Mark research as implicitly approved
+   - Set current phase to requirements
+
+## Output
+
+```
+Requirements phase complete for '$spec'.
+
+Output: ./specs/$spec/requirements.md
+
+Next: Review requirements.md, then run /ralph-specum:design
+```

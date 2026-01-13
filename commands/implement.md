@@ -1,127 +1,130 @@
 ---
-description: Start implementation from approved tasks. Executes tasks autonomously following POC-first workflow.
-argument-hint: [phase-number] [--dir ./spec-dir]
+description: Start task execution loop
+argument-hint: [--max-task-iterations 5]
+allowed-tools: [Read, Write, Edit, Task, Bash]
 ---
 
-# Implement Tasks
+# Start Execution
 
-Execute tasks from approved spec autonomously.
+You are starting the task execution loop. Running this command implicitly approves the tasks phase.
+
+## Determine Active Spec
+
+1. Read `./specs/.current-spec` to get active spec
+2. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
 
 ## Parse Arguments
 
-From `$ARGUMENTS`, extract:
-- **phase**: Phase number to execute (optional, default: current incomplete phase)
-- **dir**: Spec directory path (default: `./spec`)
+From `$ARGUMENTS`:
+- **--max-task-iterations**: Max retries per task (default: 5)
 
-## Context Check
+## Validate
 
-1. Verify `.ralph-state.json` exists
-2. Verify all phases approved (requirements, design, tasks)
-3. Read current progress from `.ralph-progress.md`
+1. Check `./specs/$spec/` directory exists
+2. Check `./specs/$spec/tasks.md` exists. If not, error: "Tasks not found. Run /ralph-specum:tasks first."
+3. Read `.ralph-state.json`
 
-## Current State
+## Initialize Execution State
 
-Read tasks.md and show:
-- Phase overview
-- Incomplete tasks
-- Current task index
+1. Count total tasks in tasks.md (lines matching `- [ ]` or `- [x]`)
+2. Count already completed tasks (lines matching `- [x]`)
+3. Set taskIndex to first incomplete task
 
-## Execution Rules
+Update `.ralph-state.json`:
+```json
+{
+  "phase": "execution",
+  "taskIndex": <first incomplete>,
+  "totalTasks": <count>,
+  "taskIteration": 1,
+  "maxTaskIterations": 5,
+  ...
+}
+```
+
+## Read Context
+
+Before executing:
+
+1. Read `./specs/$spec/.progress.md` for:
+   - Original goal
+   - Completed tasks
+   - Learnings
+   - Blockers
+
+2. Read `./specs/$spec/tasks.md` for current task
+
+## Execute Current Task
 
 <mandatory>
-Execute tasks autonomously with NO human interaction:
-1. Read the **Do** section - execute exactly as specified
-2. Modify only the **Files** listed
-3. Check **Done when** criteria is met
-4. Run the **Verify** command - must pass before moving on
-5. **Commit** using the message from the task's Commit line
-6. Mark task complete in .ralph-progress.md
+Use the Task tool with `subagent_type: spec-executor` to execute the current task.
+Execute tasks autonomously with NO human interaction.
 </mandatory>
 
-## Phase-Specific Rules
-
-### Phase 1 (POC)
-- Goal: Working prototype
-- Skip tests, accept hardcoded values
-- Only type check must pass
-- Move fast, validate idea
-
-### Phase 2 (Refactoring)
-- POC must be validated first
-- Clean up code, add error handling
-- Type check must pass
-
-### Phase 3 (Testing)
-- Write tests as specified in tasks
-- All tests must pass before proceeding
-
-### Phase 4 (Quality Gates)
-- All local checks must pass before pushing
-- Create PR, verify CI green
-- Merge only after CI passes
-
-## Execution Loop
-
-For each task in the specified phase:
+Find current task (by taskIndex) and invoke spec-executor with:
 
 ```
-1. Read task details from tasks.md
-   ↓
-2. Execute Do steps exactly
-   ↓
-3. Check Done when criteria
-   ↓
-4. Run Verify command
-   ↓
-5. If Verify fails → fix and retry
-   ↓
-6. If Verify passes → commit changes
-   ↓
-7. Update .ralph-progress.md:
-   - Mark task [x]
-   - Add learnings
-   ↓
-8. Update .ralph-state.json:
-   - Increment taskIndex
-   ↓
-9. Output: TASK_COMPLETE: <task_number>
-   ↓
-10. Move to next task
+You are executing task for spec: $spec
+Spec path: ./specs/$spec/
+Task index: $taskIndex (0-based)
+
+Context from .progress.md:
+[include progress file content]
+
+Current task from tasks.md:
+[include the specific task block]
+
+Your task:
+1. Read the task's Do section and execute exactly
+2. Only modify files listed in Files section
+3. Verify completion with the Verify command
+4. Commit with the task's Commit message
+5. Update .progress.md:
+   - Add task to Completed Tasks with commit hash
+   - Add any learnings discovered
+   - Update Current Task to next task
+6. Mark task as [x] in tasks.md
+
+After successful completion, output exactly:
+TASK_COMPLETE
+
+If verification fails, describe the issue and retry.
 ```
 
-## Commit Discipline
+## After Task Completes
 
-- Each task = one commit
-- Commit AFTER verify passes
-- Use exact commit message from task
-- Never commit failing code
+The spec-executor will:
+1. Execute the task
+2. Run verification
+3. Commit changes
+4. Update progress
+5. Say "TASK_COMPLETE"
 
-## Error Handling
-
-If a task fails:
-1. Document the error in .ralph-progress.md Learnings
-2. Attempt to fix if straightforward
-3. If blocked, add to Blockers section
-4. Do not skip to next task without resolution
+The stop hook will then:
+1. Increment taskIndex
+2. Reset taskIteration
+3. Return block with continue prompt (fresh context)
+4. OR allow stop if all tasks done
 
 ## Completion
 
-When all tasks in phase complete:
-1. Verify phase quality gate passed
-2. If more phases remain, continue to next
-3. When all phases done, output: `RALPH_COMPLETE`
+When all tasks are done:
+1. Stop hook deletes `.ralph-state.json`
+2. `.progress.md` remains as record
+3. Session ends normally
 
-## Usage Examples
+## Output on Start
 
-```bash
-# Execute current incomplete phase
-/ralph-specum:implement
-
-# Execute specific phase
-/ralph-specum:implement 2
-
-# Execute from specific directory
-/ralph-specum:implement --dir ./my-spec
 ```
+Starting execution for '$spec'
 
-Start implementing now!
+Tasks: $completed/$total completed
+Starting from task $taskIndex
+
+The execution loop will:
+- Execute one task at a time
+- Stop after each task for fresh context
+- Continue until all tasks complete or max iterations reached
+
+Beginning task $taskIndex...
+```

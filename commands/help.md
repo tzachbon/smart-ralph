@@ -6,73 +6,137 @@ description: Show help for Ralph Specum plugin commands and workflow.
 
 ## Overview
 
-Ralph Specum combines the Ralph Wiggum agentic loop with spec-driven development. It generates specifications from a goal description and executes tasks autonomously with smart compaction between phases.
+Ralph Specum is a spec-driven development plugin that guides you through research, requirements, design, and task generation phases, then executes tasks autonomously with fresh context per task.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/ralph-specum "goal" [options]` | Start the spec-driven loop |
-| `/ralph-specum:approve` | Approve current phase (interactive mode) |
-| `/ralph-specum:cancel` | Cancel active loop and cleanup |
+| `/ralph-specum:new <name>` | Create new spec and start research |
+| `/ralph-specum:research` | Run/re-run research phase |
+| `/ralph-specum:requirements` | Generate requirements (approves research) |
+| `/ralph-specum:design` | Generate design (approves requirements) |
+| `/ralph-specum:tasks` | Generate tasks (approves design) |
+| `/ralph-specum:implement` | Start execution loop (approves tasks) |
+| `/ralph-specum:status` | Show all specs and progress |
+| `/ralph-specum:switch <name>` | Change active spec |
+| `/ralph-specum:cancel` | Cancel active loop, cleanup state |
 | `/ralph-specum:help` | Show this help |
 
-## Usage
+## Workflow
 
-### Interactive Mode (default)
 ```
-/ralph-specum "Add user authentication with JWT tokens" --mode interactive --dir ./auth-spec
+/ralph-specum:new "my-feature"
+    |
+    v
+[Research Phase] - Automatic on new
+    |
+    v (review research.md)
+/ralph-specum:requirements
+    |
+    v (review requirements.md)
+/ralph-specum:design
+    |
+    v (review design.md)
+/ralph-specum:tasks
+    |
+    v (review tasks.md)
+/ralph-specum:implement
+    |
+    v
+[Task-by-task execution with fresh context]
+    |
+    v
+Done!
 ```
 
-Pauses after each phase for your approval:
-1. Requirements → approve → compact
-2. Design → approve → compact
-3. Tasks → approve → compact
-4. Execution (runs all tasks, compacts after each)
+## Quick Start
 
-### Autonomous Mode
-```
-/ralph-specum "Refactor database layer" --mode auto --dir ./db-refactor
-```
+```bash
+# Create new spec (auto-runs research)
+/ralph-specum:new user-authentication
 
-Runs through all phases without pausing. Compacts automatically.
+# Review research.md, then generate requirements
+/ralph-specum:requirements
+
+# Review requirements.md, then generate design
+/ralph-specum:design
+
+# Review design.md, then generate tasks
+/ralph-specum:tasks
+
+# Review tasks.md, then start execution
+/ralph-specum:implement
+```
 
 ## Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--mode` | `interactive` | `interactive` or `auto` |
-| `--dir` | `./spec` | Directory for spec files |
+### new command
+```
+/ralph-specum:new <name> [--skip-research]
+```
+- `--skip-research`: Skip research phase, start with requirements
 
-## Files Created
+### implement command
+```
+/ralph-specum:implement [--max-task-iterations 5]
+```
+- `--max-task-iterations`: Max retries per task before failure (default: 5)
 
-In your spec directory:
-- `requirements.md` - User stories, acceptance criteria
-- `design.md` - Architecture, patterns, file matrix
-- `tasks.md` - Phased task breakdown
-- `.ralph-state.json` - Loop state (deleted on completion)
-- `.ralph-progress.md` - Progress and learnings (deleted on completion)
+## Directory Structure
 
-## Smart Compaction
+Specs are stored in `./specs/`:
+```
+./specs/
+├── .current-spec           # Active spec name
+├── my-feature/
+│   ├── .ralph-state.json   # Loop state (deleted on completion)
+│   ├── .progress.md        # Progress tracking (persists)
+│   ├── research.md         # Research findings
+│   ├── requirements.md     # Requirements
+│   ├── design.md           # Technical design
+│   └── tasks.md            # Implementation tasks
+```
 
-Context is compacted at phase boundaries with phase-specific preservation:
-- **Requirements**: Preserves user stories, AC, FR/NFR, glossary
-- **Design**: Preserves architecture, patterns, file paths
-- **Tasks**: Preserves task list, dependencies
-- **Per-task**: Preserves current task context only
+## Execution Loop
 
-The `.ralph-progress.md` file carries learnings and state across compactions.
+The implement command runs tasks one at a time:
+1. Execute task from tasks.md
+2. Verify completion
+3. Commit changes
+4. Update progress
+5. Stop and restart with fresh context
+6. Continue until all tasks done
+
+This ensures each task has full context without accumulating irrelevant history.
+
+## Sub-Agents
+
+Each phase uses a specialized agent:
+- **research-analyst**: Research and feasibility analysis
+- **product-manager**: Requirements and user stories
+- **architect-reviewer**: Technical design and architecture
+- **task-planner**: POC-first task breakdown
+- **spec-executor**: Autonomous task execution
+
+## POC-First Workflow
+
+Tasks follow a 4-phase structure:
+1. **Phase 1: Make It Work** - POC validation, skip tests
+2. **Phase 2: Refactoring** - Clean up code
+3. **Phase 3: Testing** - Unit, integration, e2e tests
+4. **Phase 4: Quality Gates** - Lint, types, CI
 
 ## Troubleshooting
 
-**Loop not continuing?**
-- Check if in interactive mode and waiting for `/ralph-specum:approve`
-- Verify `.ralph-state.json` exists in spec directory
+**Spec not found?**
+- Run `/ralph-specum:status` to see available specs
+- Run `/ralph-specum:switch <name>` to change active spec
 
-**Lost context after compaction?**
-- Check `.ralph-progress.md` for preserved state
-- Learnings should persist across compactions
+**Task failing repeatedly?**
+- After 5 attempts, hook blocks with error message
+- Fix manually, then run `/ralph-specum:implement` to resume
 
-**Cancel and restart?**
-- Run `/ralph-specum:cancel --dir ./your-spec`
-- Then restart with `/ralph-specum`
+**Want to restart?**
+- Run `/ralph-specum:cancel` to cleanup state
+- Progress file is preserved with completed tasks

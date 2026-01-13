@@ -1,115 +1,63 @@
-# Research: {{FEATURE_NAME}}
+---
+spec: {{SPEC_NAME}}
+phase: research
+created: {{TIMESTAMP}}
+---
+
+# Research: {{SPEC_NAME}}
 
 ## Executive Summary
 
-{{2-3 sentence summary of key findings and recommendation}}
+{{2-3 sentence overview of research findings and feasibility assessment}}
 
-## Research Questions
+## External Research
 
-- Q1: {{Key question this research answers}}
-- Q2: {{Another key question}}
-- Q3: {{Additional question if needed}}
+### Best Practices
+- {{Finding with source URL}}
+- {{Additional finding}}
 
-## Findings
+### Prior Art
+- {{Similar solutions or implementations found}}
+- {{Relevant patterns from other projects}}
 
-### External Research
+### Pitfalls to Avoid
+- {{Common mistakes from community research}}
+- {{Known issues or gotchas}}
 
-#### Best Practices
+## Codebase Analysis
 
-| Practice | Source | Applicability |
-|----------|--------|---------------|
-| {{practice 1}} | {{source URL/name}} | High/Medium/Low |
-| {{practice 2}} | {{source URL/name}} | High/Medium/Low |
+### Existing Patterns
+- {{Pattern found in codebase with file path}}
+- {{Related implementation details}}
 
-#### Similar Solutions
+### Dependencies
+- {{Existing dependencies that can be leveraged}}
+- {{Required new dependencies}}
 
-- **{{Solution 1}}**: {{Description, pros/cons}}
-  - Source: {{URL}}
-- **{{Solution 2}}**: {{Description, pros/cons}}
-  - Source: {{URL}}
-
-#### Technology/Library Options
-
-| Option | Pros | Cons | Recommendation |
-|--------|------|------|----------------|
-| {{option 1}} | {{pros}} | {{cons}} | Recommended/Consider/Avoid |
-| {{option 2}} | {{pros}} | {{cons}} | Recommended/Consider/Avoid |
-
-### Internal Research
-
-#### Existing Patterns
-
-- **Pattern**: {{Name}}
-  - Location: `{{path/to/code}}`
-  - Relevance: {{How it relates to this goal}}
-
-#### Codebase Constraints
-
-- {{Constraint 1}}: {{Description and impact}}
-- {{Constraint 2}}: {{Description and impact}}
-
-#### Integration Points
-
-| Component | Integration Type | Complexity |
-|-----------|------------------|------------|
-| {{component 1}} | {{type}} | Low/Medium/High |
-| {{component 2}} | {{type}} | Low/Medium/High |
+### Constraints
+- {{Technical limitations discovered}}
+- {{Architectural constraints}}
 
 ## Feasibility Assessment
 
-### Technical Complexity
+| Aspect | Assessment | Notes |
+|--------|------------|-------|
+| Technical Viability | High/Medium/Low | {{reasoning}} |
+| Effort Estimate | S/M/L/XL | {{basis for estimate}} |
+| Risk Level | High/Medium/Low | {{key risks identified}} |
 
-**Rating**: {{1-5}} / 5
+## Recommendations for Requirements
 
-**Justification**: {{Why this rating}}
-
-### Risks & Blockers
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| {{risk 1}} | High/Medium/Low | High/Medium/Low | {{mitigation}} |
-| {{risk 2}} | High/Medium/Low | High/Medium/Low | {{mitigation}} |
-
-### Dependencies
-
-- **Required**: {{Must have before starting}}
-- **Optional**: {{Nice to have}}
-
-## Recommendations
-
-### Recommended Approach
-
-{{Clear recommendation with rationale}}
-
-### Alternative Approaches
-
-1. **{{Alternative 1}}**: {{Description}}
-   - Pros: {{list}}
-   - Cons: {{list}}
-
-2. **{{Alternative 2}}**: {{Description}}
-   - Pros: {{list}}
-   - Cons: {{list}}
-
-### Not Recommended
-
-- {{Approach to avoid}}: {{Why}}
+1. {{Actionable recommendation based on research}}
+2. {{Another recommendation}}
+3. {{Additional consideration}}
 
 ## Open Questions
 
-- [ ] {{Question requiring user input}}
-- [ ] {{Another unresolved question}}
+- {{Question needing clarification before requirements}}
+- {{Unresolved technical question}}
 
 ## Sources
 
-- {{Source 1}}: {{URL or reference}}
-- {{Source 2}}: {{URL or reference}}
-- {{Source 3}}: {{URL or reference}}
-
-## Confidence Level
-
-**Overall Confidence**: High/Medium/Low
-
-**Areas of Uncertainty**:
-- {{Area where more research may be needed}}
-- {{Another area of uncertainty}}
+- {{URL with description}}
+- {{File path with context}}
