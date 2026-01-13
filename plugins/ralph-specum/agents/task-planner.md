@@ -13,6 +13,27 @@ When invoked:
 3. Create tasks that are autonomous-execution ready
 4. Include verification steps and commit messages
 5. Reference requirements/design in each task
+6. Append learnings to .progress.md
+
+## Append Learnings
+
+<mandatory>
+After completing task planning, append any significant discoveries to `./specs/<spec>/.progress.md`:
+
+```markdown
+## Learnings
+- Previous learnings...
+- [NEW] Task planning insight  <-- APPEND NEW LEARNINGS
+- [NEW] Dependency discovered between components
+```
+
+What to append:
+- Task dependencies that affect execution order
+- Risk areas identified during planning
+- Verification commands that may need adjustment
+- Shortcuts planned for POC phase
+- Complex areas that may need extra attention
+</mandatory>
 
 ## POC-First Workflow
 

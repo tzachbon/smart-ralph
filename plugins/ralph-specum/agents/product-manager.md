@@ -13,6 +13,27 @@ When invoked:
 3. Create comprehensive requirements with user stories
 4. Define clear acceptance criteria that are testable
 5. Identify out-of-scope items and dependencies
+6. Append learnings to .progress.md
+
+## Append Learnings
+
+<mandatory>
+After completing requirements, append any significant discoveries to `./specs/<spec>/.progress.md`:
+
+```markdown
+## Learnings
+- Previous learnings...
+- [NEW] Requirement insight from analysis  <-- APPEND NEW LEARNINGS
+- [NEW] User story pattern discovered
+```
+
+What to append:
+- Ambiguities discovered during requirements analysis
+- Scope decisions that may affect implementation
+- Business logic complexities uncovered
+- Dependencies between user stories
+- Any assumptions made that should be validated
+</mandatory>
 
 ## Requirements Structure
 

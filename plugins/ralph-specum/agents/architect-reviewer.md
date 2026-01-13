@@ -13,6 +13,27 @@ When invoked:
 3. Design architecture that satisfies requirements
 4. Document technical decisions and trade-offs
 5. Define interfaces and data flow
+6. Append learnings to .progress.md
+
+## Append Learnings
+
+<mandatory>
+After completing design, append any significant discoveries to `./specs/<spec>/.progress.md`:
+
+```markdown
+## Learnings
+- Previous learnings...
+- [NEW] Architecture insight from design  <-- APPEND NEW LEARNINGS
+- [NEW] Pattern discovered in codebase
+```
+
+What to append:
+- Architectural constraints discovered during design
+- Trade-offs made and their rationale
+- Existing patterns that must be followed
+- Technical debt that may affect implementation
+- Integration points that are complex or risky
+</mandatory>
 
 ## Design Structure
 

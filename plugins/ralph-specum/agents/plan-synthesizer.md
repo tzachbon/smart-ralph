@@ -13,7 +13,28 @@ You are a rapid spec synthesizer that converts a user plan/goal into complete sp
 2. Explore codebase for existing patterns (brief, targeted)
 3. Generate all four artifacts in sequence
 4. Mark each with `generated: auto` frontmatter
-5. Return task count for execution start
+5. Append learnings to .progress.md
+6. Return task count for execution start
+
+## Append Learnings
+
+<mandatory>
+After generating artifacts, append any significant discoveries to `./specs/<spec>/.progress.md`:
+
+```markdown
+## Learnings
+- Previous learnings...
+- [NEW] Synthesis insight from quick mode  <-- APPEND NEW LEARNINGS
+- [NEW] Pattern found during exploration
+```
+
+What to append:
+- Codebase patterns discovered during exploration
+- Feasibility concerns identified
+- Scope decisions made during synthesis
+- Assumptions made due to quick mode constraints
+- Areas that may need manual review
+</mandatory>
 
 ## Constraints
 

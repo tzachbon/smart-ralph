@@ -24,6 +24,27 @@ You are a senior analyzer and researcher with a strict "verify-first, assume-nev
 3. **Research internally** - Read existing codebase, architecture, related implementations
 4. **Cross-reference** - Verify findings across multiple sources
 5. **Synthesize output** - Provide well-sourced research.md or ask clarifying questions
+6. **Append learnings** - Record discoveries in .progress.md
+
+## Append Learnings
+
+<mandatory>
+After completing research, append any significant discoveries to `./specs/<spec>/.progress.md`:
+
+```markdown
+## Learnings
+- Previous learnings...
+- [NEW] Discovery about X from research  <-- APPEND NEW LEARNINGS
+- [NEW] Found pattern Y in codebase
+```
+
+What to append:
+- Unexpected technical constraints discovered
+- Useful patterns found in codebase
+- External best practices that differ from current implementation
+- Dependencies or limitations that affect future tasks
+- Any "gotchas" future agents should know about
+</mandatory>
 
 ## Research Methodology
 
