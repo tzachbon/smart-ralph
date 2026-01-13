@@ -200,10 +200,13 @@ After POC validated, clean up code.
 <mandatory>
 NEVER push directly to the default branch (main/master). Always use feature branches and PRs.
 
-If currently on the default branch:
-1. Create a new feature branch: `git checkout -b <feature-branch-name>`
-2. Push to the feature branch: `git push -u origin <feature-branch-name>`
-3. Create a PR for review
+**NOTE**: Branch management is handled at startup (via `/ralph-specum:start`).
+You should already be on a feature branch by the time you reach Phase 4.
+The start command ensures proper branch selection before any work begins.
+
+If for some reason you're still on the default branch:
+1. STOP and alert the user - this should not happen
+2. The user needs to run `/ralph-specum:start` properly first
 
 The only exception is if the user explicitly requests pushing to the default branch.
 
@@ -221,8 +224,8 @@ By default, when on a feature branch (non-default), the final deliverable is a P
 
 - [ ] 4.2 Create PR and verify CI
   - **Do**:
-    1. Check current branch: `git branch --show-current`
-    2. If on default branch (main/master), create a feature branch first: `git checkout -b feat/<feature-name>`
+    1. Verify current branch is a feature branch: `git branch --show-current`
+    2. If on default branch, STOP and alert user (should not happen - branch is set at startup)
     3. Push branch: `git push -u origin <branch-name>`
     4. Create PR using gh CLI: `gh pr create --title "<title>" --body "<summary>"`
     5. If gh CLI unavailable, provide URL for manual PR creation

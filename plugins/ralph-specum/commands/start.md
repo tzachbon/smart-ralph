@@ -9,6 +9,86 @@ allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
 
 Smart entry point for ralph-specum. Detects whether to create a new spec or resume an existing one.
 
+## Branch Management (FIRST STEP)
+
+<mandatory>
+Before creating any files or directories, check the current git branch and handle appropriately.
+</mandatory>
+
+### Step 1: Check Current Branch
+
+```bash
+git branch --show-current
+```
+
+### Step 2: Determine Default Branch
+
+Check which is the default branch:
+```bash
+git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'
+```
+
+If that fails, assume `main` or `master` (check which exists):
+```bash
+git rev-parse --verify origin/main 2>/dev/null && echo "main" || echo "master"
+```
+
+### Step 3: Branch Decision Logic
+
+```
+1. Get current branch name
+   |
+   +-- ON DEFAULT BRANCH (main/master):
+   |   |
+   |   +-- Automatically create a new feature branch
+   |   |   - Generate branch name from spec name: feat/$specName
+   |   |   - If spec name not yet known, use temp name: feat/spec-work-<timestamp>
+   |   |   - Create and switch: git checkout -b <branch-name>
+   |   |   - Inform user: "Created branch '<branch-name>' for this work"
+   |   |
+   |   +-- Continue to Parse Arguments
+   |
+   +-- ON NON-DEFAULT BRANCH (feature branch):
+       |
+       +-- Ask user for preference:
+       |   "You are currently on branch '<current-branch>'.
+       |    Would you like to:
+       |    1. Continue working on this branch
+       |    2. Create a new branch for this spec"
+       |
+       +-- If user chooses 1 (continue):
+       |   - Stay on current branch
+       |   - Continue to Parse Arguments
+       |
+       +-- If user chooses 2 (new branch):
+           - Generate branch name from spec name: feat/$specName
+           - If spec name not yet known, use temp name: feat/spec-work-<timestamp>
+           - Create and switch: git checkout -b <branch-name>
+           - Continue to Parse Arguments
+```
+
+### Branch Naming Convention
+
+When creating a new branch:
+- Use format: `feat/<spec-name>` (e.g., `feat/user-auth`)
+- If spec name contains special chars, sanitize to kebab-case
+- If branch already exists, append `-2`, `-3`, etc.
+
+Example:
+```
+Spec name: user-auth
+Branch: feat/user-auth
+
+If feat/user-auth exists:
+Branch: feat/user-auth-2
+```
+
+### Quick Mode Branch Handling
+
+In `--quick` mode, still perform branch check but skip the user prompt for non-default branches:
+- If on default branch: auto-create feature branch (same as normal mode)
+- If on non-default branch: stay on current branch (no prompt, quick mode is non-interactive)
+
 ## Parse Arguments
 
 From `$ARGUMENTS`, extract:

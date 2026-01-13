@@ -103,9 +103,12 @@ Task 2.2 description (or "All tasks complete")
 <mandatory>
 NEVER push directly to the default branch (main/master). This is NON-NEGOTIABLE.
 
+**NOTE**: Branch management should already be handled at startup (via `/ralph-specum:start`).
+The start command ensures you're on a feature branch before any work begins. This section serves as a safety verification.
+
 If you need to push changes:
-1. First check if you're on the default branch: `git branch --show-current`
-2. If on default branch, create a new feature branch first: `git checkout -b <feature-branch-name>`
+1. First verify you're NOT on the default branch: `git branch --show-current`
+2. If somehow still on default branch (should not happen), STOP and alert the user
 3. Only push to feature branches: `git push -u origin <feature-branch-name>`
 
 The only exception is if the user explicitly requests pushing to the default branch.
