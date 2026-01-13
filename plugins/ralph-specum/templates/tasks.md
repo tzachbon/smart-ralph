@@ -7,6 +7,8 @@ POC-first workflow with 4 phases.
 
 > **Quality Checkpoints**: Intermediate quality gate checks are inserted every 2-3 tasks to catch issues early. For small tasks, insert after 3 tasks. For medium/large tasks, insert after 2 tasks.
 
+> **Parallel Tasks**: Tasks marked with `[P]` can be executed in parallel. Consecutive `[P]` tasks in the same group will be launched simultaneously. Use this for independent tasks that don't depend on each other (e.g., creating separate test files, implementing unrelated components).
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
@@ -86,7 +88,7 @@ After POC validated, clean up code.
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Unit tests for {{component}}
+- [P] 3.1 Unit tests for {{component}}
   - **Do**: Create test file at {{path}}
   - **Files**: {{test file path}}
   - **Done when**: Tests cover main functionality
@@ -95,7 +97,7 @@ After POC validated, clean up code.
   - _Requirements: AC-1.1, AC-1.2_
   - _Design: Test Strategy_
 
-- [ ] 3.2 Integration tests
+- [P] 3.2 Integration tests
   - **Do**: Create integration test at {{path}}
   - **Files**: {{test file path}}
   - **Done when**: Integration points tested

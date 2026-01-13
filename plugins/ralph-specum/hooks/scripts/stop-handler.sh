@@ -74,21 +74,92 @@ fi
 NEW_TASK_INDEX=$((TASK_INDEX + 1))
 NEW_GLOBAL_ITER=$((GLOBAL_ITER + 1))
 
+# Read tasks.md to check for parallel tasks
+TASKS_FILE="$SPEC_PATH/tasks.md"
+PARALLEL_TASKS=""
+PARALLEL_COUNT=0
+
+if [[ -f "$TASKS_FILE" ]]; then
+    # Extract all task lines with their markers and indices
+    # Task lines match: - [ ], - [x], - [P], or - [X] (completed parallel)
+    TASK_LINES=$(grep -n '^\- \[\([ xPX]\)\]' "$TASKS_FILE" 2>/dev/null)
+
+    # Find the task at NEW_TASK_INDEX (0-based, so we need line N+1)
+    TASK_LINE_NUM=$((NEW_TASK_INDEX + 1))
+    CURRENT_TASK_LINE=$(echo "$TASK_LINES" | sed -n "${TASK_LINE_NUM}p")
+
+    # Check if current task is marked as parallel [P]
+    if echo "$CURRENT_TASK_LINE" | grep -q '\- \[P\]'; then
+        # Found a parallel task, collect all consecutive parallel tasks
+        PARALLEL_INDICES="$NEW_TASK_INDEX"
+        PARALLEL_COUNT=1
+
+        # Look ahead for more consecutive [P] tasks
+        NEXT_LINE_NUM=$((TASK_LINE_NUM + 1))
+        while true; do
+            NEXT_TASK_LINE=$(echo "$TASK_LINES" | sed -n "${NEXT_LINE_NUM}p")
+            if echo "$NEXT_TASK_LINE" | grep -q '\- \[P\]'; then
+                NEXT_TASK_INDEX=$((NEXT_LINE_NUM - 1))
+                PARALLEL_INDICES="$PARALLEL_INDICES,$NEXT_TASK_INDEX"
+                PARALLEL_COUNT=$((PARALLEL_COUNT + 1))
+                NEXT_LINE_NUM=$((NEXT_LINE_NUM + 1))
+                # Safety limit: max 4 parallel tasks
+                if [[ $PARALLEL_COUNT -ge 4 ]]; then
+                    break
+                fi
+            else
+                break
+            fi
+        done
+
+        PARALLEL_TASKS="$PARALLEL_INDICES"
+    fi
+fi
+
+# Calculate the end task index (for parallel tasks, skip to after the group)
+if [[ $PARALLEL_COUNT -gt 1 ]]; then
+    END_TASK_INDEX=$((NEW_TASK_INDEX + PARALLEL_COUNT))
+else
+    END_TASK_INDEX=$NEW_TASK_INDEX
+fi
+
 # Update state file atomically: write to temp, then move
 TEMP_STATE=$(mktemp)
-if echo "$STATE" | jq "
-    .taskIndex = $NEW_TASK_INDEX |
-    .taskIteration = 1 |
-    .globalIteration = $NEW_GLOBAL_ITER
-" > "$TEMP_STATE" 2>/dev/null && [[ -s "$TEMP_STATE" ]]; then
-    mv "$TEMP_STATE" "$STATE_FILE"
+if [[ $PARALLEL_COUNT -gt 1 ]]; then
+    # Store parallel task info in state
+    if echo "$STATE" | jq "
+        .taskIndex = $END_TASK_INDEX |
+        .taskIteration = 1 |
+        .globalIteration = $NEW_GLOBAL_ITER |
+        .parallelTasks = \"$PARALLEL_TASKS\" |
+        .parallelCount = $PARALLEL_COUNT
+    " > "$TEMP_STATE" 2>/dev/null && [[ -s "$TEMP_STATE" ]]; then
+        mv "$TEMP_STATE" "$STATE_FILE"
+    else
+        rm -f "$TEMP_STATE"
+        exit 0  # Failed to update state, allow stop
+    fi
 else
-    rm -f "$TEMP_STATE"
-    exit 0  # Failed to update state, allow stop
+    if echo "$STATE" | jq "
+        .taskIndex = $NEW_TASK_INDEX |
+        .taskIteration = 1 |
+        .globalIteration = $NEW_GLOBAL_ITER |
+        del(.parallelTasks) |
+        del(.parallelCount)
+    " > "$TEMP_STATE" 2>/dev/null && [[ -s "$TEMP_STATE" ]]; then
+        mv "$TEMP_STATE" "$STATE_FILE"
+    else
+        rm -f "$TEMP_STATE"
+        exit 0  # Failed to update state, allow stop
+    fi
 fi
 
 # Return block decision with continue prompt
 # The reason becomes the next user input, giving fresh context
-REASON="Continue execution for spec '$CURRENT_SPEC'. Read $SPEC_PATH/.progress.md for context and $SPEC_PATH/tasks.md for task $NEW_TASK_INDEX."
-
-echo "{\"decision\": \"block\", \"reason\": \"$REASON\", \"systemMessage\": \"Task $TASK_INDEX complete. Continuing to task $NEW_TASK_INDEX of $TOTAL_TASKS.\"}"
+if [[ $PARALLEL_COUNT -gt 1 ]]; then
+    REASON="Continue execution for spec '$CURRENT_SPEC'. PARALLEL EXECUTION: Tasks $PARALLEL_TASKS should be executed in parallel. Read $SPEC_PATH/.progress.md for context and $SPEC_PATH/tasks.md for tasks $PARALLEL_TASKS."
+    echo "{\"decision\": \"block\", \"reason\": \"$REASON\", \"systemMessage\": \"Task $TASK_INDEX complete. Continuing with $PARALLEL_COUNT parallel tasks ($PARALLEL_TASKS) of $TOTAL_TASKS total.\"}"
+else
+    REASON="Continue execution for spec '$CURRENT_SPEC'. Read $SPEC_PATH/.progress.md for context and $SPEC_PATH/tasks.md for task $NEW_TASK_INDEX."
+    echo "{\"decision\": \"block\", \"reason\": \"$REASON\", \"systemMessage\": \"Task $TASK_INDEX complete. Continuing to task $NEW_TASK_INDEX of $TOTAL_TASKS.\"}"
+fi

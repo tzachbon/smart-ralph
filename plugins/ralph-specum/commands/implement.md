@@ -26,9 +26,10 @@ From `$ARGUMENTS`:
 
 ## Initialize Execution State
 
-1. Count total tasks in tasks.md (lines matching `- [ ]` or `- [x]`)
-2. Count already completed tasks (lines matching `- [x]`)
+1. Count total tasks in tasks.md (lines matching `- [ ]`, `- [x]`, `- [P]`, or `- [X]`)
+2. Count already completed tasks (lines matching `- [x]` or `- [X]`)
 3. Set taskIndex to first incomplete task
+4. Check if first incomplete task is a parallel task `[P]`
 
 Update `.ralph-state.json`:
 ```json
@@ -38,6 +39,8 @@ Update `.ralph-state.json`:
   "totalTasks": <count>,
   "taskIteration": 1,
   "maxTaskIterations": 5,
+  "parallelTasks": "<comma-separated indices if parallel>",
+  "parallelCount": <number of parallel tasks or 0>,
   ...
 }
 ```
@@ -57,11 +60,13 @@ Before executing:
 ## Execute Current Task
 
 <mandatory>
-Use the Task tool with `subagent_type: spec-executor` to execute the current task.
+Use the Task tool with `subagent_type: spec-executor` to execute tasks.
 Execute tasks autonomously with NO human interaction.
 </mandatory>
 
-Find current task (by taskIndex) and invoke spec-executor with:
+### Single Task Execution
+
+If taskIndex points to a regular task `[ ]`, invoke spec-executor with:
 
 ```
 You are executing task for spec: $spec
@@ -91,20 +96,59 @@ TASK_COMPLETE
 If verification fails, describe the issue and retry.
 ```
 
+### Parallel Task Execution
+
+If taskIndex points to a parallel task `[P]`:
+1. Find ALL consecutive `[P]` tasks starting from taskIndex
+2. Invoke spec-executor with parallel mode:
+
+```
+You are executing PARALLEL TASKS for spec: $spec
+Spec path: ./specs/$spec/
+Task indices: $taskIndex,$taskIndex+1,... (comma-separated, 0-based)
+
+Context from .progress.md:
+[include progress file content]
+
+PARALLEL EXECUTION - The following tasks should run in parallel:
+
+Task $taskIndex from tasks.md:
+[include task block]
+
+Task $taskIndex+1 from tasks.md:
+[include task block]
+
+...
+
+Your task:
+1. Launch MULTIPLE Task tool calls in a SINGLE message (one per task above)
+2. Each sub-agent should execute its task independently
+3. Wait for all parallel tasks to complete
+4. Mark each task as [X] in tasks.md when complete
+5. Update .progress.md with all completed tasks
+
+After ALL parallel tasks complete successfully, output exactly:
+TASK_COMPLETE
+
+If any task fails, report which tasks failed and why.
+```
+
 ## After Task Completes
 
 The spec-executor will:
-1. Execute the task
+1. Execute the task(s)
 2. Run verification
 3. Commit changes
 4. Update progress
 5. Say "TASK_COMPLETE"
 
 The stop hook will then:
-1. Increment taskIndex
-2. Reset taskIteration
-3. Return block with continue prompt (fresh context)
-4. OR allow stop if all tasks done
+1. Check next task(s) for parallel markers `[P]`
+2. If parallel: group consecutive `[P]` tasks and set parallelTasks in state
+3. Increment taskIndex (to end of parallel group if applicable)
+4. Reset taskIteration
+5. Return block with continue prompt (includes parallel task info if applicable)
+6. OR allow stop if all tasks done
 
 ## Completion
 
@@ -122,9 +166,12 @@ Tasks: $completed/$total completed
 Starting from task $taskIndex
 
 The execution loop will:
-- Execute one task at a time
-- Stop after each task for fresh context
+- Execute tasks (single or parallel groups)
+- Stop after each task/group for fresh context
 - Continue until all tasks complete or max iterations reached
+
+[If parallel tasks detected:]
+Parallel tasks detected: $parallelCount tasks ($parallelTasks) will run simultaneously.
 
 Beginning task $taskIndex...
 ```

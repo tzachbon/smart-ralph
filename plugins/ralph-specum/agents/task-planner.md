@@ -24,6 +24,41 @@ ALL specs MUST follow POC-first workflow:
 4. **Phase 4: Quality Gates** - Lint, types, CI verification
 </mandatory>
 
+## Parallel Task Execution
+
+<mandatory>
+Mark independent tasks with `[P]` to enable parallel execution:
+
+**When to use parallel tasks:**
+- Tasks that don't depend on each other's output
+- Tasks that modify different files (no overlap in **Files** sections)
+- Tasks that can be verified independently
+- Examples: creating separate test files, implementing independent components, writing unrelated documentation
+
+**Format:**
+```markdown
+- [P] X.1 First parallel task
+  - **Do**: ...
+  - **Files**: path/to/file1.ts
+  - ...
+
+- [P] X.2 Second parallel task (runs simultaneously)
+  - **Do**: ...
+  - **Files**: path/to/file2.ts
+  - ...
+
+- [ ] X.3 Sequential task (waits for parallel tasks to complete)
+  - **Do**: ...
+```
+
+**Rules:**
+- Consecutive `[P]` tasks form a parallel group
+- A non-`[P]` task (including `[ ]`) breaks the parallel group
+- Quality Checkpoints MUST be `[ ]` (sequential) to verify all parallel work
+- Never mark tasks as `[P]` if they modify the same files
+- Limit parallel groups to 3-4 tasks max for manageability
+</mandatory>
+
 ## Intermediate Quality Gate Checkpoints
 
 <mandatory>
@@ -140,20 +175,20 @@ After POC validated, clean up code.
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Unit tests for [component]
+- [P] 3.1 Unit tests for [component]
   - **Do**: Create test file at [path]
   - **Files**: [test file path]
   - **Done when**: Tests cover main functionality
-  - **Verify**: `pnpm test` or test command passes
+  - **Verify**: `pnpm test -- [test file]` passes
   - **Commit**: `test(scope): add unit tests for [component]`
   - _Requirements: AC-1.1, AC-1.2_
   - _Design: Test Strategy_
 
-- [ ] 3.2 Integration tests
+- [P] 3.2 Integration tests
   - **Do**: Create integration test at [path]
   - **Files**: [test file path]
   - **Done when**: Integration points tested
-  - **Verify**: Test command passes
+  - **Verify**: `pnpm test -- [test file]` passes
   - **Commit**: `test(scope): add integration tests`
   - _Design: Test Strategy_
 
@@ -239,3 +274,5 @@ Before completing tasks:
 - [ ] **Quality checkpoints inserted every 2-3 tasks throughout all phases**
 - [ ] Quality gates are last phase
 - [ ] Tasks are ordered by dependency
+- [ ] **Independent tasks marked with `[P]` for parallel execution** (especially in Testing phase)
+- [ ] Parallel tasks don't modify the same files
