@@ -20,12 +20,69 @@ Examples:
 - `/ralph-specum:start user-auth` -> Resume or create user-auth
 - `/ralph-specum:start user-auth Add OAuth2` -> Create user-auth with goal
 - `/ralph-specum:start user-auth --fresh` -> Force new, overwrite if exists
-- `/ralph-specum:start "Build auth with JWT" --quick` -> Quick mode with goal
+- `/ralph-specum:start "Build auth with JWT" --quick` -> Quick mode with goal string
 - `/ralph-specum:start my-feature "Add logging" --quick` -> Quick mode with name+goal
+- `/ralph-specum:start ./my-plan.md --quick` -> Quick mode with file input
+- `/ralph-specum:start my-feature ./plan.md --quick` -> Quick mode with name+file
+- `/ralph-specum:start my-feature --quick` -> Quick mode using existing plan.md
+- `/ralph-specum:start /absolute/path/plan.md --quick` -> Quick mode with absolute file path
 
 ## Quick Mode Flow
 
 When `--quick` flag detected, bypass interactive spec phases and auto-generate all artifacts.
+
+### Quick Mode Input Detection
+
+Parse arguments before `--quick` flag and classify input type:
+
+```
+Input Classification:
+
+1. TWO ARGS before --quick:
+   - First arg = spec name (must be kebab-case: ^[a-z0-9-]+$)
+   - Second arg = goal string OR file path
+   - Detect file path if: starts with "./" OR "/" OR ends with ".md"
+   - Examples:
+     - `my-feature "Add login" --quick` -> name=my-feature, goal="Add login"
+     - `my-feature ./plan.md --quick` -> name=my-feature, file=./plan.md
+
+2. ONE ARG before --quick:
+   a. FILE PATH: starts with "./" OR "/" OR ends with ".md"
+      - Read file content as plan
+      - Infer name from plan content
+      - Example: `./my-plan.md --quick` -> read file, infer name
+
+   b. KEBAB-CASE NAME: matches ^[a-z0-9-]+$
+      - Check if ./specs/$name/plan.md exists
+      - If exists: use plan.md content, name=$name
+      - If not exists: error "No plan.md found in ./specs/$name/. Provide goal: /ralph-specum:start $name 'your goal' --quick"
+      - Example: `my-feature --quick` -> check ./specs/my-feature/plan.md
+
+   c. GOAL STRING: anything else (contains spaces, uppercase, special chars)
+      - Use as goal content
+      - Infer name from goal
+      - Example: `"Build auth with JWT" --quick` -> goal, infer name
+
+3. ZERO ARGS with --quick:
+   - Error: "Quick mode requires a goal or plan file"
+```
+
+### File Reading
+
+When file path detected:
+1. Validate file exists using Read tool
+2. If not exists: error "File not found: $filePath"
+3. Read file content
+4. Strip frontmatter if present (content between --- markers at start)
+5. If content empty after stripping: error "Plan content is empty. Provide a goal or non-empty file."
+6. Use content as planContent
+
+### Existing Plan Check
+
+When kebab-case name provided without goal:
+1. Check if `./specs/$name/plan.md` exists
+2. If exists: read content, use as planContent
+3. If not exists: error with guidance message
 
 ### Input Validation
 
