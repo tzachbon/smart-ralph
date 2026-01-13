@@ -107,7 +107,7 @@ Focus: Validate [VERIFY] tasks work end-to-end. Create qa-engineer, basic spec-e
   - **Done when**: All verification commands pass
   - **Commit**: `chore(qa): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.7 [VERIFY] POC Checkpoint: All 4 agent files complete
+- [x] 1.7 [VERIFY] POC Checkpoint: All 4 agent files complete
   - **Do**: Verify all 4 agent modifications are complete per design
   - **Verify**: Run these commands, ALL must succeed (exit 0):
     ```bash
