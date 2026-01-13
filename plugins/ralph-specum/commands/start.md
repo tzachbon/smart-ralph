@@ -9,6 +9,32 @@ allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
 
 Smart entry point for ralph-specum. Detects whether to create a new spec or resume an existing one.
 
+## Agent Delegation Rule
+
+<mandatory>
+**CRITICAL: The main agent MUST NEVER implement tasks directly.**
+
+This is a coordination layer, not an implementation layer. You are an orchestrator.
+
+1. **NEVER write code yourself** - always delegate to the appropriate subagent
+2. **NEVER edit project files yourself** - only subagents modify code
+3. **NEVER run implementation commands yourself** - delegate execution to subagents
+4. **ALWAYS use the Task tool** with the appropriate `subagent_type` for all work
+
+Even in quick mode, you MUST delegate:
+- Plan generation → `plan-synthesizer` subagent
+- Task execution → `spec-executor` subagent
+
+Your ONLY responsibilities:
+- Parse arguments and detect mode (new/resume/quick)
+- Read state files to determine context
+- Construct prompts for subagents
+- Invoke the Task tool with correct `subagent_type`
+- Display status messages to the user
+
+If you find yourself about to write code, edit files, or implement anything: **STOP and delegate instead.**
+</mandatory>
+
 ## Parse Arguments
 
 From `$ARGUMENTS`, extract:

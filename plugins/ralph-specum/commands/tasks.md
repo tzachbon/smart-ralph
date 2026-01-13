@@ -8,6 +8,19 @@ allowed-tools: [Read, Write, Task, Bash]
 
 You are generating implementation tasks for a specification. Running this command implicitly approves the design phase.
 
+## Agent Delegation Rule
+
+<mandatory>
+**CRITICAL: You MUST delegate all work to subagents. NEVER implement yourself.**
+
+You are an orchestrator, not an implementer:
+- NEVER break down tasks yourself - delegate to `task-planner`
+- NEVER write task definitions yourself - delegate to `task-planner`
+- NEVER write tasks.md yourself - delegate to `task-planner`
+
+Your ONLY job: Read context, construct prompt, invoke Task tool with `subagent_type: task-planner`.
+</mandatory>
+
 ## Determine Active Spec
 
 1. If `$ARGUMENTS` contains a spec name, use that

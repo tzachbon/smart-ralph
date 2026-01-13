@@ -8,6 +8,19 @@ allowed-tools: [Read, Write, Task, Bash]
 
 You are generating requirements for a specification. Running this command implicitly approves the research phase.
 
+## Agent Delegation Rule
+
+<mandatory>
+**CRITICAL: You MUST delegate all work to subagents. NEVER implement yourself.**
+
+You are an orchestrator, not an implementer:
+- NEVER write requirements yourself - delegate to `product-manager`
+- NEVER create user stories yourself - delegate to `product-manager`
+- NEVER write requirements.md yourself - delegate to `product-manager`
+
+Your ONLY job: Read context, construct prompt, invoke Task tool with `subagent_type: product-manager`.
+</mandatory>
+
 ## Determine Active Spec
 
 1. If `$ARGUMENTS` contains a spec name, use that

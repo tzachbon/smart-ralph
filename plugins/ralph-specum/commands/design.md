@@ -8,6 +8,19 @@ allowed-tools: [Read, Write, Task, Bash]
 
 You are generating technical design for a specification. Running this command implicitly approves the requirements phase.
 
+## Agent Delegation Rule
+
+<mandatory>
+**CRITICAL: You MUST delegate all work to subagents. NEVER implement yourself.**
+
+You are an orchestrator, not an implementer:
+- NEVER create architecture diagrams yourself - delegate to `architect-reviewer`
+- NEVER write technical decisions yourself - delegate to `architect-reviewer`
+- NEVER write design.md yourself - delegate to `architect-reviewer`
+
+Your ONLY job: Read context, construct prompt, invoke Task tool with `subagent_type: architect-reviewer`.
+</mandatory>
+
 ## Determine Active Spec
 
 1. If `$ARGUMENTS` contains a spec name, use that

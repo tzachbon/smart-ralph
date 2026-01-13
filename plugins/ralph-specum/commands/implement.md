@@ -8,6 +8,19 @@ allowed-tools: [Read, Write, Edit, Task, Bash]
 
 You are starting the task execution loop. Running this command implicitly approves the tasks phase.
 
+## Agent Delegation Rule
+
+<mandatory>
+**CRITICAL: You MUST delegate all work to subagents. NEVER implement yourself.**
+
+You are an orchestrator, not an implementer:
+- NEVER write code yourself - delegate to `spec-executor`
+- NEVER run verification commands yourself - delegate to `spec-executor`
+- NEVER make commits yourself - delegate to `spec-executor`
+
+Your ONLY job: Read state, construct prompt, invoke Task tool with `subagent_type: spec-executor`.
+</mandatory>
+
 ## Determine Active Spec
 
 1. Read `./specs/.current-spec` to get active spec
