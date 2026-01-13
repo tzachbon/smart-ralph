@@ -64,6 +64,20 @@
           "minimum": 1,
           "default": 100,
           "description": "Safety cap on total iterations"
+        },
+        "relatedSpecs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "relevance": { "enum": ["high", "medium", "low"] },
+              "reason": { "type": "string" },
+              "mayNeedUpdate": { "type": "boolean" }
+            },
+            "required": ["name", "relevance", "reason"]
+          },
+          "description": "Existing specs related to this one"
         }
       }
     },

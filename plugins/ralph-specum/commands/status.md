@@ -33,6 +33,10 @@ For each spec directory found:
    - Count lines matching `- [x]` pattern
    - Count lines matching `- [ ]` pattern
 
+4. If `.ralph-state.json` has `relatedSpecs`:
+   - List related specs with relevance
+   - Mark those with `mayNeedUpdate: true` with asterisk
+
 ## Output Format
 
 ```
@@ -46,11 +50,14 @@ Active spec: <name from .current-spec> (or "none")
 Phase: <phase>
 Progress: <completed>/<total> tasks (<percentage>%)
 Files: [research] [requirements] [design] [tasks]
+Related: auth-system (HIGH*), api-middleware (MEDIUM)
+         * = may need update
 
 ### <spec-name-2>
 Phase: <phase>
 Progress: <completed>/<total> tasks
 Files: [research] [requirements] [design] [tasks]
+Related: <none or list>
 
 ---
 

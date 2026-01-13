@@ -36,13 +36,16 @@ Goal from user conversation or existing progress file.
 Your task:
 1. Search web for best practices, prior art, and patterns
 2. Explore the codebase for existing related implementations
-3. Assess technical feasibility
-4. Create ./specs/$spec/research.md with your findings
+3. Scan ./specs/ for existing specs that relate to this goal
+4. Document related specs in the "Related Specs" section
+5. Assess technical feasibility
+6. Create ./specs/$spec/research.md with your findings
 
 Use the research.md template structure:
 - Executive Summary
 - External Research (best practices, prior art, pitfalls)
 - Codebase Analysis (patterns, dependencies, constraints)
+- Related Specs (table with relevance, relationship, mayNeedUpdate)
 - Feasibility Assessment (table)
 - Recommendations for Requirements
 - Open Questions
@@ -55,15 +58,17 @@ Remember: Never guess, always verify. Cite all sources.
 
 After research completes:
 
-1. Update `.ralph-state.json`:
+1. Parse "Related Specs" table from research.md
+2. Update `.ralph-state.json`:
    ```json
    {
      "phase": "research",
-     ...
+     "relatedSpecs": [
+       {"name": "...", "relevance": "high", "reason": "...", "mayNeedUpdate": true}
+     ]
    }
    ```
-
-2. Update `.progress.md` with research completion status
+3. Update `.progress.md` with research completion
 
 ## Output
 
@@ -71,6 +76,10 @@ After research completes:
 Research phase complete for '$spec'.
 
 Output: ./specs/$spec/research.md
+
+Related specs found:
+  - <name> (<RELEVANCE>) - may need update
+  - <name> (<RELEVANCE>)
 
 Next: Review research.md, then run /ralph-specum:requirements
 ```
