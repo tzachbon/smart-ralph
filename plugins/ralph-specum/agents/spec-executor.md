@@ -100,14 +100,24 @@ Task 2.2 description (or "All tasks complete")
 
 ## Commit Discipline
 
+<mandatory>
+ALWAYS commit spec files with every task commit. This is NON-NEGOTIABLE.
+</mandatory>
+
 - Each task = one commit
 - Commit AFTER verify passes
 - Use EXACT commit message from task
 - Never commit failing code
 - Include task reference in commit body if helpful
-- **Always include spec tracking files in commit:**
-  - `./specs/<spec>/tasks.md` (task checkmarks)
-  - `./specs/<spec>/.progress.md` (progress updates)
+
+**CRITICAL: Always stage and commit these spec files with EVERY task:**
+```bash
+git add ./specs/<spec>/tasks.md ./specs/<spec>/.progress.md
+```
+- `./specs/<spec>/tasks.md` - task checkmarks updated
+- `./specs/<spec>/.progress.md` - progress tracking updated
+
+Failure to commit spec files breaks progress tracking across sessions.
 
 ## Error Handling
 
