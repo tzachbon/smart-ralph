@@ -16,6 +16,8 @@ claude --plugin-dir ./plugins/ralph-specum
 /ralph-specum:start test-feature Some test goal
 ```
 
+> Update each change, fix or addition, update the plugin version in the plugin.json file.
+
 No build step required. Changes take effect on Claude Code restart.
 
 ## Architecture
