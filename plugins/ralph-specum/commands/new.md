@@ -49,7 +49,19 @@ The goal MUST be captured before proceeding:
    echo "$name" > ./specs/.current-spec
    ```
 
-3. Create `.ralph-state.json` in the spec directory:
+3. Ensure gitignore entries exist for spec state files:
+   ```bash
+   # Add .current-spec and .progress.md to .gitignore if not already present
+   if [ -f .gitignore ]; then
+     grep -q "specs/.current-spec" .gitignore || echo "specs/.current-spec" >> .gitignore
+     grep -q "\*\*/\.progress\.md" .gitignore || echo "**/.progress.md" >> .gitignore
+   else
+     echo "specs/.current-spec" > .gitignore
+     echo "**/.progress.md" >> .gitignore
+   fi
+   ```
+
+4. Create `.ralph-state.json` in the spec directory:
    ```json
    {
      "source": "spec",
@@ -67,7 +79,7 @@ The goal MUST be captured before proceeding:
 
    If `--skip-research`, set `"phase": "requirements"` instead.
 
-4. Create initial `.progress.md` with the captured goal:
+5. Create initial `.progress.md` with the captured goal:
    ```markdown
    ---
    spec: $name

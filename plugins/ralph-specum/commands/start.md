@@ -281,6 +281,10 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
    |
 3. Create spec directory: ./specs/$name/
    |
+3a. Ensure gitignore entries exist for spec state files:
+   - Add specs/.current-spec to .gitignore if not present
+   - Add **/.progress.md to .gitignore if not present
+   |
 4. Write .ralph-state.json:
    {
      "source": "plan",
@@ -442,7 +446,18 @@ The only exception is `--quick` mode, which skips approval between phases.
    - "What is the goal? Describe what you want to build."
 3. Create spec directory: `./specs/$name/`
 4. Update active spec: `echo "$name" > ./specs/.current-spec`
-5. Initialize `.ralph-state.json`:
+5. Ensure gitignore entries exist for spec state files:
+   ```bash
+   # Add .current-spec and .progress.md to .gitignore if not already present
+   if [ -f .gitignore ]; then
+     grep -q "specs/.current-spec" .gitignore || echo "specs/.current-spec" >> .gitignore
+     grep -q "\*\*/\.progress\.md" .gitignore || echo "**/.progress.md" >> .gitignore
+   else
+     echo "specs/.current-spec" > .gitignore
+     echo "**/.progress.md" >> .gitignore
+   fi
+   ```
+6. Initialize `.ralph-state.json`:
    ```json
    {
      "source": "spec",
@@ -457,9 +472,9 @@ The only exception is `--quick` mode, which skips approval between phases.
      "maxGlobalIterations": 100
    }
    ```
-6. Create `.progress.md` with goal
-7. Invoke research-analyst agent
-8. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
+7. Create `.progress.md` with goal
+8. Invoke research-analyst agent
+9. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
 
 ## Quick Mode Flow
 
