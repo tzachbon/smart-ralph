@@ -65,6 +65,53 @@ Update `.ralph-state.json`:
 }
 ```
 
+## Commit Specs First (Before Any Implementation)
+
+<mandatory>
+**COMMIT SPECS BEFORE STARTING IMPLEMENTATION**
+
+Before executing any tasks, commit all spec files. This ensures:
+- Specs are version-controlled before any code changes
+- Clear separation between spec definition and implementation
+- Spec history is preserved even if implementation fails
+</mandatory>
+
+### Check If Specs Already Committed
+
+Check if this is a fresh start (taskIndex == 0 after initialization) and specs haven't been committed yet:
+
+```bash
+# Check if any spec files are uncommitted or untracked
+git status --porcelain ./specs/$spec/*.md ./specs/$spec/.progress.md 2>/dev/null | grep -q '.' && echo "uncommitted" || echo "clean"
+```
+
+### Commit Spec Files
+
+If specs are uncommitted (new or modified), commit them:
+
+```bash
+# Stage all spec files
+git add ./specs/$spec/research.md ./specs/$spec/requirements.md ./specs/$spec/design.md ./specs/$spec/tasks.md ./specs/$spec/.progress.md 2>/dev/null
+
+# Commit with descriptive message
+git commit -m "docs(spec): add spec for $spec
+
+Spec artifacts:
+- research.md: feasibility analysis and codebase exploration
+- requirements.md: user stories and acceptance criteria
+- design.md: architecture and technical decisions
+- tasks.md: POC-first implementation plan
+
+Ready for implementation."
+```
+
+If commit succeeds, output:
+```
+Committed spec files for '$spec'
+```
+
+If nothing to commit (specs already committed), continue silently.
+
 ## Read Context
 
 Before executing:

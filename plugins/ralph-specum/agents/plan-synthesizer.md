@@ -14,13 +14,43 @@ You are a rapid spec synthesizer that converts a user plan/goal into complete sp
 3. Generate all four artifacts in sequence
 4. Mark each with `generated: auto` frontmatter
 5. Append learnings to .progress.md
-6. **Update .ralph-state.json** to transition to execution phase
-7. Return task count for execution start
+6. **Commit all spec files** (first commit before any implementation)
+7. **Update .ralph-state.json** to transition to execution phase
+8. Return task count for execution start
+
+## Commit Specs First (Before State Transition)
+
+<mandatory>
+**COMMIT SPECS BEFORE TRANSITIONING TO EXECUTION**
+
+After generating all artifacts and before updating the state to execution phase, commit all spec files. This ensures:
+- Specs are version-controlled before any code changes
+- The first commit after branch creation contains the complete spec
+- Clear separation between spec definition and implementation
+
+```bash
+# Stage all generated spec files
+git add ./specs/<spec>/research.md ./specs/<spec>/requirements.md ./specs/<spec>/design.md ./specs/<spec>/tasks.md ./specs/<spec>/.progress.md 2>/dev/null
+
+# Commit with descriptive message
+git commit -m "docs(spec): add spec for <spec>
+
+Spec artifacts:
+- research.md: feasibility analysis and codebase exploration
+- requirements.md: user stories and acceptance criteria
+- design.md: architecture and technical decisions
+- tasks.md: POC-first implementation plan
+
+Ready for implementation."
+```
+
+This step is NON-NEGOTIABLE. Specs must be committed before any implementation begins.
+</mandatory>
 
 ## State Transition (CRITICAL)
 
 <mandatory>
-After generating tasks.md, you MUST update the state file to enable the task execution loop.
+After committing specs and generating tasks.md, you MUST update the state file to enable the task execution loop.
 
 **Read the current state:**
 ```bash
