@@ -1,7 +1,7 @@
 ---
 description: Generate implementation tasks from design
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash]
+allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
 # Tasks Phase
@@ -37,6 +37,59 @@ Read:
 - `./specs/$spec/research.md` (if exists)
 - `./specs/$spec/.progress.md`
 
+## Interview
+
+<mandatory>
+**Skip interview if --quick flag detected in $ARGUMENTS.**
+
+If NOT quick mode, conduct interview using AskUserQuestion before delegating to subagent.
+</mandatory>
+
+### Quick Mode Check
+
+Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Tasks Generation".
+
+### Tasks Interview
+
+Use AskUserQuestion to gather execution and deployment context:
+
+```
+AskUserQuestion:
+  questions:
+    - question: "What testing depth is needed?"
+      options:
+        - "Standard - unit + integration (Recommended)"
+        - "Minimal - POC only, add tests later"
+        - "Comprehensive - include E2E"
+        - "Other"
+    - question: "Deployment considerations?"
+      options:
+        - "Standard CI/CD pipeline"
+        - "Feature flag needed"
+        - "Gradual rollout required"
+        - "Other"
+```
+
+### Adaptive Depth
+
+If user selects "Other" for any question:
+1. Ask a follow-up question to clarify using AskUserQuestion
+2. Continue until clarity reached or 5 follow-up rounds complete
+3. Each follow-up should probe deeper into the "Other" response
+
+### Interview Context Format
+
+After interview, format responses as:
+
+```
+Interview Context:
+- Testing depth: [Answer]
+- Deployment considerations: [Answer]
+- Follow-up details: [Any additional clarifications]
+```
+
+Store this context to include in the Task delegation prompt.
+
 ## Execute Tasks Generation
 
 <mandatory>
@@ -53,6 +106,10 @@ Spec path: ./specs/$spec/
 Context:
 - Requirements: [include requirements.md content]
 - Design: [include design.md content]
+
+[If interview was conducted, include:]
+Interview Context:
+$interview_context
 
 Your task:
 1. Read requirements and design thoroughly
@@ -72,6 +129,7 @@ Your task:
    - _Design: references_
 5. Count total tasks
 6. Output to ./specs/$spec/tasks.md
+7. Include interview responses in an "Execution Context" section of tasks.md
 
 Use the tasks.md template with frontmatter:
 ---

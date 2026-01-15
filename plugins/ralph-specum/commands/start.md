@@ -493,9 +493,97 @@ The only exception is `--quick` mode, which skips approval between phases.
      "maxGlobalIterations": 100
    }
    ```
-7. Create `.progress.md` with goal
-8. Invoke research-analyst agent
+6. Create `.progress.md` with goal
+7. **Goal Interview** (skip if --quick in $ARGUMENTS)
+8. Invoke research-analyst agent with goal interview context
 9. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
+
+## Goal Interview (Pre-Research)
+
+<mandatory>
+**Skip interview if --quick flag detected in $ARGUMENTS.**
+
+If NOT quick mode, conduct goal interview using AskUserQuestion before research phase.
+</mandatory>
+
+### Quick Mode Check
+
+Check if `--quick` appears in `$ARGUMENTS`. If present, skip directly to "Invoke research-analyst".
+
+### Goal Interview Questions
+
+Use AskUserQuestion to clarify the goal before research:
+
+```
+AskUserQuestion:
+  questions:
+    - question: "What problem are you solving with this feature?"
+      options:
+        - "Fixing a bug or issue"
+        - "Adding new functionality"
+        - "Improving existing behavior"
+        - "Other"
+    - question: "Any constraints or must-haves for this feature?"
+      options:
+        - "No special constraints"
+        - "Must integrate with existing code"
+        - "Performance is critical"
+        - "Other"
+    - question: "How will you know this feature is successful?"
+      options:
+        - "Tests pass and code works"
+        - "Users can complete specific workflow"
+        - "Performance meets target metrics"
+        - "Other"
+```
+
+### Adaptive Depth
+
+If user selects "Other" for any question:
+1. Ask follow-up question to clarify their custom response
+2. Continue until clarity reached or 5 rounds complete
+3. Each follow-up round uses single question focused on the "Other" response
+
+Example follow-up:
+```
+AskUserQuestion:
+  questions:
+    - question: "You mentioned [Other response]. Can you elaborate?"
+      options:
+        - "[Contextual option 1]"
+        - "[Contextual option 2]"
+        - "This is sufficient detail"
+        - "Other"
+```
+
+### Store Goal Context
+
+After interview, update `.progress.md` to include Goal Context section:
+
+```markdown
+## Goal Context
+
+Interview responses from goal clarification:
+- Problem: [response to question 1]
+- Constraints: [response to question 2]
+- Success criteria: [response to question 3]
+[Additional follow-up responses if any]
+```
+
+### Pass Context to Research
+
+Include goal interview context when invoking research-analyst:
+
+```
+Task delegation prompt should include:
+
+Goal Interview Context:
+- Problem: [response]
+- Constraints: [response]
+- Success criteria: [response]
+
+Use this context to focus research on relevant areas.
+```
 
 ## Quick Mode Flow
 

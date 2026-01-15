@@ -1,7 +1,7 @@
 ---
 description: Generate requirements from goal and research
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash]
+allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
 # Requirements Phase
@@ -34,6 +34,59 @@ Read available context:
 - `./specs/$spec/.progress.md`
 - Original goal from conversation or progress file
 
+## Interview
+
+<mandatory>
+**Skip interview if --quick flag detected in $ARGUMENTS.**
+
+If NOT quick mode, conduct interview using AskUserQuestion before delegating to subagent.
+</mandatory>
+
+### Quick Mode Check
+
+Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Requirements".
+
+### Requirements Interview
+
+Use AskUserQuestion to gather user and priority context:
+
+```
+AskUserQuestion:
+  questions:
+    - question: "Who are the primary users of this feature?"
+      options:
+        - "Internal developers only"
+        - "End users via UI"
+        - "Both developers and end users"
+        - "Other"
+    - question: "What priority tradeoffs should we consider?"
+      options:
+        - "Prioritize speed of delivery"
+        - "Prioritize code quality and maintainability"
+        - "Prioritize feature completeness"
+        - "Other"
+```
+
+### Adaptive Depth
+
+If user selects "Other" for any question:
+1. Ask a follow-up question to clarify using AskUserQuestion
+2. Continue until clarity reached or 5 follow-up rounds complete
+3. Each follow-up should probe deeper into the "Other" response
+
+### Interview Context Format
+
+After interview, format responses as:
+
+```
+Interview Context:
+- Primary users: [Answer]
+- Priority tradeoffs: [Answer]
+- Follow-up details: [Any additional clarifications]
+```
+
+Store this context to include in the Task delegation prompt.
+
 ## Execute Requirements
 
 <mandatory>
@@ -50,6 +103,10 @@ Context:
 - Research: [include research.md content if exists]
 - Original goal: [from conversation or progress]
 
+[If interview was conducted, include:]
+Interview Context:
+$interview_context
+
 Your task:
 1. Analyze the goal and research findings
 2. Create user stories with acceptance criteria
@@ -57,6 +114,7 @@ Your task:
 4. Define non-functional requirements (NFR-*)
 5. Document glossary, out-of-scope items, dependencies
 6. Output to ./specs/$spec/requirements.md
+7. Include interview responses in a "User Decisions" section of requirements.md
 
 Use the requirements.md template with frontmatter:
 ---

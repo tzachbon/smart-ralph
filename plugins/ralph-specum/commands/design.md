@@ -1,7 +1,7 @@
 ---
 description: Generate technical design from requirements
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash]
+allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
 # Design Phase
@@ -36,6 +36,59 @@ Read:
 - `./specs/$spec/.progress.md`
 - Existing codebase patterns (via exploration)
 
+## Interview
+
+<mandatory>
+**Skip interview if --quick flag detected in $ARGUMENTS.**
+
+If NOT quick mode, conduct interview using AskUserQuestion before delegating to subagent.
+</mandatory>
+
+### Quick Mode Check
+
+Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Design".
+
+### Design Interview
+
+Use AskUserQuestion to gather architecture and technology context:
+
+```
+AskUserQuestion:
+  questions:
+    - question: "What architecture style fits this feature?"
+      options:
+        - "Extend existing architecture (Recommended)"
+        - "Create isolated module"
+        - "Major refactor to support this"
+        - "Other"
+    - question: "Any technology constraints?"
+      options:
+        - "No constraints"
+        - "Must use specific library/framework"
+        - "Must avoid certain dependencies"
+        - "Other"
+```
+
+### Adaptive Depth
+
+If user selects "Other" for any question:
+1. Ask a follow-up question to clarify using AskUserQuestion
+2. Continue until clarity reached or 5 follow-up rounds complete
+3. Each follow-up should probe deeper into the "Other" response
+
+### Interview Context Format
+
+After interview, format responses as:
+
+```
+Interview Context:
+- Architecture style: [Answer]
+- Technology constraints: [Answer]
+- Follow-up details: [Any additional clarifications]
+```
+
+Store this context to include in the Task delegation prompt.
+
 ## Execute Design
 
 <mandatory>
@@ -52,6 +105,10 @@ Context:
 - Requirements: [include requirements.md content]
 - Research: [include research.md if exists]
 
+[If interview was conducted, include:]
+Interview Context:
+$interview_context
+
 Your task:
 1. Read and understand all requirements
 2. Explore the codebase for existing patterns to follow
@@ -62,6 +119,7 @@ Your task:
 7. Define error handling and edge cases
 8. Create test strategy
 9. Output to ./specs/$spec/design.md
+10. Include interview responses in a "Design Inputs" section of design.md
 
 Use the design.md template with frontmatter:
 ---
