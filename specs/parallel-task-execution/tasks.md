@@ -154,7 +154,7 @@ After POC validated, clean up code and add robustness.
   - _Requirements: AC-5.1, AC-5.2, AC-5.3_
   - _Design: Test Strategy - E2E Tests - Backwards compatibility_
 
-- [ ] 3.3 Test partial failure scenario
+- [x] 3.3 Test partial failure scenario
   - **Do**: Create test spec with 3 [P] tasks where one intentionally fails. Verify successful tasks marked complete, failed task remains unchecked, progress preserved.
   - **Files**: `specs/test-parallel-failure/tasks.md`, `specs/test-parallel-failure/.progress.md`, `specs/test-parallel-failure/.ralph-state.json`
   - **Done when**: Partial failure handled correctly
