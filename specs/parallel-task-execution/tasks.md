@@ -64,7 +64,7 @@ Focus: Validate parallel execution works end-to-end. Skip tests, accept minimal 
   - _Requirements: FR-009, FR-010_
   - _Design: Component 4 - Progress File Merger_
 
-- [ ] 1.8 Add BATCH_COMPLETE signal and taskIndex update
+- [x] 1.8 Add BATCH_COMPLETE signal and taskIndex update
   - **Do**: After merge, update taskIndex to endIndex+1, serialize git commits from each executor, output both TASK_COMPLETE and BATCH_COMPLETE. Ensure stop-handler sees TASK_COMPLETE for compatibility.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: Coordinator outputs BATCH_COMPLETE and advances taskIndex past group

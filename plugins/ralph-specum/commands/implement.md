@@ -566,6 +566,87 @@ This ensures:
 - Clean state for next parallel group
 - No accumulation of temp files over time
 
+## Batch Completion
+
+After all parallel executors complete and progress files are merged, signal batch completion.
+
+### Completion Sequence
+
+1. **Update taskIndex**: Set taskIndex = parallelGroup.endIndex + 1
+2. **Serialize git commits**: Ensure all executor commits are finalized (no pending commits)
+3. **Output dual signals**: Output both TASK_COMPLETE and BATCH_COMPLETE for compatibility
+
+### TaskIndex Advancement
+
+After successful parallel batch:
+
+```
+newTaskIndex = parallelGroup.endIndex + 1
+```
+
+Update `.ralph-state.json`:
+```json
+{
+  "phase": "execution",
+  "taskIndex": <endIndex + 1>,
+  "parallelGroup": null,
+  "taskResults": {},
+  ...
+}
+```
+
+Clear parallelGroup and taskResults after completion to prepare for next batch or sequential task.
+
+### Dual Signal Output
+
+Output both signals for stop-handler compatibility:
+
+```
+Parallel batch complete (tasks X-Y).
+
+TASK_COMPLETE
+BATCH_COMPLETE
+```
+
+Where:
+- X = parallelGroup.startIndex (first task in batch)
+- Y = parallelGroup.endIndex (last task in batch)
+- TASK_COMPLETE satisfies stop-handler regex for advancement
+- BATCH_COMPLETE indicates parallel batch completion (vs single task)
+
+### Stop-Handler Behavior
+
+The stop-handler:
+1. Sees TASK_COMPLETE and considers the cycle complete
+2. Reads updated taskIndex from state (already advanced past batch)
+3. Proceeds to next task normally
+
+BATCH_COMPLETE is informational. It enables future enhancements but is not required by stop-handler.
+
+### Completion Output Pattern
+
+For a parallel batch of tasks [5, 6, 7]:
+
+```
+Executed parallel batch: tasks 5-7
+- Task 5: PASSED (commit abc1234)
+- Task 6: PASSED (commit def5678)
+- Task 7: PASSED (commit ghi9012)
+
+Progress merged from temp files.
+TaskIndex advanced: 5 -> 8
+
+TASK_COMPLETE
+BATCH_COMPLETE
+```
+
+### Sequential Completion (Single Task)
+
+For non-parallel groups or single-task groups, skip BATCH_COMPLETE:
+- Use standard "TASK_COMPLETE" only
+- Stop-handler handles advancement as usual
+- No taskIndex manipulation needed (stop-handler increments by 1)
+
 ## Read Context
 
 Before executing:
