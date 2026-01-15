@@ -125,7 +125,7 @@ After POC validated, clean up code and add robustness.
   - _Requirements: FR-004, AC-1.4_
   - _Design: Edge Cases - [P] with [VERIFY] on same task_
 
-- [ ] 2.5 Improve progress merge robustness
+- [x] 2.5 Improve progress merge robustness
   - **Do**: Handle incomplete temp files gracefully (skip if no Learnings section). Log warnings for missing files. Ensure merge is idempotent.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: Merge handles edge cases without crashing

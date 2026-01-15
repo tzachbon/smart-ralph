@@ -482,13 +482,30 @@ This ensures [P] markers on isolated tasks do not incur unnecessary file I/O or 
 
 After all parallel executors complete, merge their isolated progress files into the main `.progress.md`.
 
+### Idempotent Merge Guarantee
+
+The merge operation is **idempotent**: running it multiple times with the same inputs produces the same result.
+
+**Idempotency mechanisms**:
+- Temp files are deleted after successful merge (no re-processing)
+- If merge runs again with no temp files, nothing changes
+- Duplicate learnings/tasks are not prevented (temp files exist only once per batch)
+- State reset (parallelGroup = null) prevents re-merge attempts
+
+**Recovery safety**: If coordinator crashes mid-merge:
+- Temp files may still exist (partial cleanup)
+- Re-running merge collects remaining files
+- Already-merged content may duplicate (acceptable, manually dedupe if needed)
+
 ### Merge Process Overview
 
 1. **Collect temp files**: Gather all `.progress-task-{N}.md` files for the completed batch
-2. **Sort by task index**: Process files in ascending task index order
-3. **Extract sections**: Pull Learnings and Completed Tasks from each temp file
-4. **Append to main**: Add extracted content to corresponding sections in `.progress.md`
-5. **Cleanup**: Delete temp files after successful merge
+2. **Validate files**: Check each file exists and is non-empty (skip invalid with warning)
+3. **Sort by task index**: Process files in ascending task index order
+4. **Extract sections**: Pull Learnings and Completed Tasks from each temp file
+5. **Skip missing sections**: If Learnings section not found, skip extraction (no crash)
+6. **Append to main**: Add extracted content to corresponding sections in `.progress.md`
+7. **Cleanup**: Delete temp files after successful merge
 
 ### Temp File Paths
 
@@ -524,31 +541,47 @@ function mergeProgressFiles(parallelGroup, specPath):
   for taskIndex in sorted(parallelGroup.taskIndices):
     tempFile = specPath + "/.progress-task-" + taskIndex + ".md"
 
+    // ROBUSTNESS: Skip missing temp files with warning
     if not exists(tempFile):
-      log("Warning: temp file missing for task " + taskIndex)
+      log("Warning: temp file missing for task " + taskIndex + ", skipping")
       continue
 
     content = read(tempFile)
 
-    // Extract Learnings
-    learnings = extractSection(content, "## Learnings")
-    for line in learnings:
-      if line.startsWith("-"):
-        allLearnings.push(line)
+    // ROBUSTNESS: Skip empty temp files with warning
+    if content.trim() == "":
+      log("Warning: temp file empty for task " + taskIndex + ", skipping")
+      continue
 
-    // Extract Completed Tasks
-    completed = extractSection(content, "## Completed Tasks")
-    for line in completed:
-      if line.matches(/- \[x\]/):
-        allCompletedTasks.push(line)
+    // ROBUSTNESS: Check for Learnings section before extraction
+    if not content.contains("## Learnings"):
+      log("Warning: no Learnings section in temp file for task " + taskIndex + ", skipping learnings")
+    else:
+      // Extract Learnings
+      learnings = extractSection(content, "## Learnings")
+      for line in learnings:
+        if line.startsWith("-"):
+          allLearnings.push(line)
 
-  // Append to main progress file
-  mainProgress = appendToSection(mainProgress, "## Learnings", allLearnings)
-  mainProgress = appendToSection(mainProgress, "## Completed Tasks", allCompletedTasks)
+    // ROBUSTNESS: Check for Completed Tasks section before extraction
+    if not content.contains("## Completed Tasks"):
+      log("Warning: no Completed Tasks section in temp file for task " + taskIndex + ", skipping completed tasks")
+    else:
+      // Extract Completed Tasks
+      completed = extractSection(content, "## Completed Tasks")
+      for line in completed:
+        if line.matches(/- \[x\]/):
+          allCompletedTasks.push(line)
+
+  // Append to main progress file (skip if nothing to add - idempotent)
+  if allLearnings.length > 0:
+    mainProgress = appendToSection(mainProgress, "## Learnings", allLearnings)
+  if allCompletedTasks.length > 0:
+    mainProgress = appendToSection(mainProgress, "## Completed Tasks", allCompletedTasks)
 
   write(specPath + "/.progress.md", mainProgress)
 
-  // Cleanup temp files
+  // Cleanup temp files (ensures idempotency)
   for taskIndex in parallelGroup.taskIndices:
     tempFile = specPath + "/.progress-task-" + taskIndex + ".md"
     if exists(tempFile):
@@ -608,10 +641,14 @@ function appendToSection(content, sectionHeader, newLines):
 
 ### Error Handling in Merge
 
-- **Missing temp file**: Log warning, continue with available files
-- **Empty section**: Skip, do not add blank lines
-- **Malformed temp file**: Log warning, skip extraction for that file
+- **Missing temp file**: Log warning "temp file missing for task N, skipping", continue with available files
+- **Empty temp file**: Log warning "temp file empty for task N, skipping", continue with available files
+- **No Learnings section**: Log warning "no Learnings section in temp file for task N", skip learnings extraction only (continue with Completed Tasks)
+- **No Completed Tasks section**: Log warning "no Completed Tasks section in temp file for task N", skip completed tasks extraction only (continue with Learnings)
+- **Empty section content**: Skip, do not add blank lines to main progress file
+- **Malformed temp file**: Log warning, skip extraction for that file entirely
 - **Write failure**: Retry once, then fail batch with error message
+- **Nothing to merge**: If all temp files invalid/empty, main progress unchanged (idempotent no-op)
 
 ### Cleanup After Merge
 
