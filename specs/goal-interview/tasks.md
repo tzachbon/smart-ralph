@@ -37,7 +37,7 @@ Focus: Add interview logic to start.md (goal clarification) and 4 phase commands
   - _Requirements: FR-15, FR-16, FR-17, FR-18, AC-6.2, AC-6.3, AC-6.4, AC-6.5_
   - _Design: Agent File Cleanup_
 
-- [ ] 1.3 Quality Checkpoint
+- [x] 1.3 Quality Checkpoint
   - **Do**: Verify agent files still have valid frontmatter structure
   - **Verify**: All commands must pass:
     - Check frontmatter: `head -6 plugins/ralph-specum/agents/*.md` shows name/description/model only
