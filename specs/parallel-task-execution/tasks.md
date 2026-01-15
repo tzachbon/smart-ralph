@@ -110,13 +110,13 @@ After POC validated, clean up code and add robustness.
   - _Requirements: AC-5.1_
   - _Design: Edge Cases - Single [P] task_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: verify error handling
+- [x] 2.3 [VERIFY] Quality checkpoint: verify error handling
   - **Do**: Verify error handling and edge cases in implement.md
   - **Verify**: `grep -q "taskResults" plugins/ralph-specum/commands/implement.md && grep -q "size" plugins/ralph-specum/commands/implement.md`
   - **Done when**: Both patterns present
   - **Commit**: `chore(parallel): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.4 Add marker override precedence
+- [x] 2.4 Add marker override precedence
   - **Do**: Ensure [VERIFY] and [SEQUENTIAL] on same line as [P] cause override. Check for override markers before isParallel flag. Document precedence in implement.md.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: [VERIFY] [P] task treated as sequential

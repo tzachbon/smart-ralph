@@ -174,6 +174,27 @@ ParsedTask {
 }
 ```
 
+### Marker Override Precedence
+
+When multiple markers appear on the same task line, precedence determines execution behavior:
+
+```
+1. [VERIFY] always wins over [P]
+2. [SEQUENTIAL] always wins over [P]
+3. [P] only applies when no override markers present
+```
+
+**Override Check Order**:
+Before setting isParallel=true, check for override markers:
+1. If [VERIFY] present: isParallel = false (verification must be sequential)
+2. If [SEQUENTIAL] present: isParallel = false (explicit override)
+3. If neither override present and [P] present: isParallel = true
+
+**Examples**:
+- `- [ ] 1.5 [VERIFY] [P] Quality checkpoint` -> isParallel = false (VERIFY wins)
+- `- [ ] 2.1 [SEQUENTIAL] [P] Critical update` -> isParallel = false (SEQUENTIAL wins)
+- `- [ ] 3.1 [P] Independent task` -> isParallel = true (no override)
+
 ### Parsing Logic
 
 1. Read all task lines from tasks.md
@@ -182,7 +203,7 @@ ParsedTask {
    - Check for [P] marker: `line.includes('[P]')`
    - Check for [VERIFY] marker: `line.includes('[VERIFY]')`
    - Check for [SEQUENTIAL] marker: `line.includes('[SEQUENTIAL]')`
-   - Set isParallel = has [P] AND NOT has [VERIFY] AND NOT has [SEQUENTIAL]
+   - **Apply override precedence**: isParallel = has [P] AND NOT has [VERIFY] AND NOT has [SEQUENTIAL]
    - Set isVerify = has [VERIFY]
    - Set isSequential = has [SEQUENTIAL] OR NOT isParallel
 3. Store parsed tasks for group detection
