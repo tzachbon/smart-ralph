@@ -1,6 +1,6 @@
 {
   "name": "ralph-specum",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, and autonomous implementation with fresh context per task.",
   "author": {
     "name": "tzachbon"

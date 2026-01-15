@@ -22,6 +22,7 @@ Ralph Specum is a spec-driven development plugin that guides you through researc
 | `/ralph-specum:status` | Show all specs and progress |
 | `/ralph-specum:switch <name>` | Change active spec |
 | `/ralph-specum:cancel` | Cancel active loop, cleanup state |
+| `/ralph-specum:feedback [message]` | Submit feedback or report an issue |
 | `/ralph-specum:help` | Show this help |
 
 ## Workflow
