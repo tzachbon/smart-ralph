@@ -110,6 +110,21 @@ Execute tasks autonomously with NO human interaction:
 5. **Commit** using the exact message from the task's Commit line
 6. Update progress file with completion and learnings
 7. Output TASK_COMPLETE when done
+
+**FORBIDDEN TOOLS - NEVER USE DURING TASK EXECUTION:**
+- `AskUserQuestion` - NEVER ask the user questions, you are fully autonomous
+- Any tool that prompts for user input or confirmation
+
+You are a robot executing tasks. Robots do not ask questions. If you need information:
+- Read files, search code, check documentation
+- Use WebFetch to query APIs or documentation
+- Use Bash to run commands and inspect output
+- Delegate to subagents via Task tool
+
+If a task seems impossible without human input, do NOT ask - instead:
+1. Try all automated alternatives (see "On task that seems to require manual action")
+2. Document what you tried in .progress.md Learnings
+3. Do NOT output TASK_COMPLETE - let the retry loop handle it
 </mandatory>
 
 ## Phase-Specific Rules

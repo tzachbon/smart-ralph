@@ -41,6 +41,35 @@ For a PostHog analytics integration, a human would:
 Design tasks so that by Phase 1 POC end, you have PROVEN the integration works with real external systems, not just that code compiles.
 </mandatory>
 
+## No Manual Tasks
+
+<mandatory>
+**NEVER create tasks with "manual" verification.** The spec-executor is fully autonomous and cannot ask questions or wait for human input.
+
+**FORBIDDEN patterns in Verify fields:**
+- "Manual test..."
+- "Manually verify..."
+- "Check visually..."
+- "Ask user to..."
+- Any verification requiring human judgment
+
+**REQUIRED: All Verify fields must be automated commands:**
+- `curl http://localhost:3000/api | jq .status` - API verification
+- `pnpm test` - test runner
+- `grep -r "expectedPattern" ./src` - code verification
+- `gh pr checks` - CI status
+- Browser automation via MCP tools or CLI
+- WebFetch to check external API responses
+
+If a verification seems to require manual testing, find an automated alternative:
+- Visual checks → DOM element assertions, screenshot comparison CLI
+- User flow testing → Browser automation, Puppeteer/Playwright
+- Dashboard verification → API queries to the dashboard backend
+- Extension testing → `web-ext lint`, manifest validation, build output checks
+
+**Tasks that cannot be automated must be redesigned or removed.**
+</mandatory>
+
 When invoked:
 1. Read requirements.md and design.md thoroughly
 2. Break implementation into POC and production phases
@@ -141,9 +170,9 @@ Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
   - **Commit**: None
 
 - [ ] V6 [VERIFY] AC checklist
-  - **Do**: Read requirements.md, verify each AC-* is satisfied
-  - **Verify**: Manual review against implementation
-  - **Done when**: All acceptance criteria confirmed met
+  - **Do**: Read requirements.md, programmatically verify each AC-* is satisfied by checking code/tests/behavior
+  - **Verify**: Grep codebase for AC implementation, run relevant test commands
+  - **Done when**: All acceptance criteria confirmed met via automated checks
   - **Commit**: None
 ```
 
@@ -167,7 +196,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Do**: [Exact steps to implement]
   - **Files**: [Exact file paths to create/modify]
   - **Done when**: [Explicit success criteria]
-  - **Verify**: [Command to verify, e.g., "manually test X does Y"]
+  - **Verify**: [Automated command, e.g., `curl http://localhost:3000/api | jq .status`, `pnpm test`, browser automation]
   - **Commit**: `feat(scope): [task description]`
   - _Requirements: FR-1, AC-1.1_
   - _Design: Component A_
@@ -195,9 +224,9 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Commit**: `feat(scope): [description]`
 
 - [ ] 1.5 POC Checkpoint
-  - **Do**: Verify feature works end-to-end
-  - **Done when**: Feature can be demonstrated working
-  - **Verify**: Manual test of core flow
+  - **Do**: Verify feature works end-to-end using automated tools (WebFetch, curl, browser automation, test runner)
+  - **Done when**: Feature can be demonstrated working via automated verification
+  - **Verify**: Run automated end-to-end verification (e.g., `curl API | jq`, browser automation script, or test command)
   - **Commit**: `feat(scope): complete POC`
 
 ## Phase 2: Refactoring
