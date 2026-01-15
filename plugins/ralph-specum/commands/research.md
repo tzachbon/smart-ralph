@@ -80,11 +80,7 @@ Spec path: ./specs/$spec/
 Goal: [goal from .progress.md]
 
 Your task:
-1. EXTERNAL RESEARCH FIRST (mandatory):
-   - WebSearch for industry best practices and standards
-   - WebSearch for prior art and existing solutions
-   - WebFetch official documentation for relevant libraries/frameworks
-   - Document pitfalls and common mistakes from community
+1. Search web for best practices, prior art, and patterns
 2. Explore the codebase for existing related implementations
 3. Scan ./specs/ for existing specs that relate to this goal
 4. Document related specs in the "Related Specs" section
