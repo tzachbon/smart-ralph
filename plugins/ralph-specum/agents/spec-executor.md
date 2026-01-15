@@ -243,7 +243,7 @@ TASK_COMPLETE
 ```
 
 On task that seems to require manual action:
-```
+```text
 NEVER mark complete, lie, or expect user input. Use these tools instead:
 
 - Browser/UI testing: Use MCP browser tools, WebFetch, or CLI test runners
