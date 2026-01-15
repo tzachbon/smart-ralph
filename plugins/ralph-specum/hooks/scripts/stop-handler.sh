@@ -122,9 +122,11 @@ if [[ $TASK_INDEX -ge $TOTAL_TASKS ]]; then
         fi
     fi
 
-    # All tasks verified complete! Cleanup state file and current-spec pointer, keep progress
+    # All tasks verified complete! Cleanup state file, current-spec pointer, and lock files
     rm "$STATE_FILE"
     rm "$CURRENT_SPEC_FILE"
+    rm -f "$SPEC_PATH/.tasks.lock"
+    rm -f "$SPEC_PATH/.git-commit.lock"
     exit 0  # Allow stop - execution complete
 fi
 

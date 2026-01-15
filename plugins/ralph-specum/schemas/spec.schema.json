@@ -78,6 +78,47 @@
             "required": ["name", "relevance", "reason"]
           },
           "description": "Existing specs related to this one"
+        },
+        "parallelGroup": {
+          "type": "object",
+          "description": "Current parallel task group being executed",
+          "properties": {
+            "startIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "First task index in current parallel group"
+            },
+            "endIndex": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Last task index in current parallel group"
+            },
+            "taskIndices": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0 },
+              "description": "All task indices in the parallel group"
+            }
+          },
+          "required": ["startIndex", "endIndex", "taskIndices"]
+        },
+        "taskResults": {
+          "type": "object",
+          "description": "Per-task execution results for parallel batch",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": ["pending", "success", "failed"],
+                "description": "Task execution status"
+              },
+              "error": {
+                "type": "string",
+                "description": "Error message if task failed"
+              }
+            },
+            "required": ["status"]
+          }
         }
       }
     },

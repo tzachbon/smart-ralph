@@ -44,6 +44,33 @@ You will receive:
 - Task index (0-based)
 - Context from .progress.md
 - The specific task block from tasks.md
+- (Optional) progressFile parameter for parallel execution
+
+## Parallel Execution: progressFile Parameter
+
+<mandatory>
+When `progressFile` is provided (e.g., `.progress-task-1.md`), write ALL learnings and completed task entries to this file instead of `.progress.md`.
+
+**Why**: Parallel executors cannot safely write to the same .progress.md simultaneously. Each executor writes to an isolated temp file. The coordinator merges these after the batch completes.
+
+**Behavior when progressFile is set**:
+1. Write learnings and completed task entries to progressFile (not .progress.md)
+2. Commit the progressFile along with task files and tasks.md
+3. Do NOT touch .progress.md at all
+4. The temp file follows same format as .progress.md
+
+**Example**: If invoked with `progressFile: .progress-task-2.md`:
+- Write to: `./specs/<spec>/.progress-task-2.md`
+- Skip: `./specs/<spec>/.progress.md`
+- Still update: `./specs/<spec>/tasks.md` (mark [x])
+
+**Commit includes**:
+```bash
+git add ./specs/<spec>/tasks.md ./specs/<spec>/.progress-task-N.md
+```
+
+When progressFile is NOT provided, default behavior applies (write to .progress.md).
+</mandatory>
 
 ## Execution Flow
 
@@ -61,13 +88,13 @@ You will receive:
 6. If Verify fails: fix and retry (up to limit)
    |
 7. If Verify passes:
-   - Update .progress.md (add to Completed Tasks, learnings)
+   - Update progress file (progressFile if provided, else .progress.md)
    - Mark task as [x] in tasks.md
    |
 8. Stage and commit ALL changes:
    - Task files (from Files section)
    - ./specs/<spec>/tasks.md
-   - ./specs/<spec>/.progress.md
+   - Progress file (progressFile if provided, else .progress.md)
    |
 9. Output: TASK_COMPLETE
 ```
@@ -208,12 +235,54 @@ ALWAYS commit spec files with every task commit. This is NON-NEGOTIABLE.
 
 **CRITICAL: Always stage and commit these spec files with EVERY task:**
 ```bash
+# Standard (sequential) execution:
 git add ./specs/<spec>/tasks.md ./specs/<spec>/.progress.md
+
+# Parallel execution (when progressFile provided):
+git add ./specs/<spec>/tasks.md ./specs/<spec>/<progressFile>
 ```
 - `./specs/<spec>/tasks.md` - task checkmarks updated
-- `./specs/<spec>/.progress.md` - progress tracking updated
+- Progress file - either .progress.md (default) or progressFile (parallel)
 
 Failure to commit spec files breaks progress tracking across sessions.
+
+## File Locking for Parallel Execution
+
+<mandatory>
+When running in parallel mode, multiple executors may try to update tasks.md simultaneously. Use flock to prevent race conditions.
+
+**tasks.md updates** (marking [x]):
+```bash
+(
+  flock -x 200
+  # Read tasks.md, update checkmark, write back
+  sed -i 's/- \[ \] X.Y/- [x] X.Y/' "./specs/<spec>/tasks.md"
+) 200>"./specs/<spec>/.tasks.lock"
+```
+
+**git commit operations**:
+```bash
+(
+  flock -x 200
+  git add <files>
+  git commit -m "<message>"
+) 200>"./specs/<spec>/.git-commit.lock"
+```
+
+**Why flock**:
+- Exclusive lock (-x) ensures only one executor writes at a time
+- Lock released automatically when subshell exits
+- File descriptor 200 avoids conflicts with stdin/stdout/stderr
+- Lock files cleaned up by coordinator after batch completion
+
+**When to use**:
+- Always use when progressFile parameter is provided (parallel mode)
+- Sequential execution (no progressFile) does not need locking
+
+**Lock file paths**:
+- `.tasks.lock` - protects tasks.md writes
+- `.git-commit.lock` - serializes git operations
+</mandatory>
 
 ## Error Handling
 
