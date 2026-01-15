@@ -103,7 +103,7 @@ Focus: Add interview logic to start.md (goal clarification) and 4 phase commands
   - **Done when**: Both files have AskUserQuestion tool and quick mode bypass
   - **Commit**: `chore(commands): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.8 Add interview to design.md
+- [x] 1.8 Add interview to design.md
   - **Do**:
     1. Add `AskUserQuestion` to allowed-tools in frontmatter line 4
     2. Add interview section between "## Gather Context" and "## Execute Design" with:
