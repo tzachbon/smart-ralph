@@ -647,6 +647,131 @@ For non-parallel groups or single-task groups, skip BATCH_COMPLETE:
 - Stop-handler handles advancement as usual
 - No taskIndex manipulation needed (stop-handler increments by 1)
 
+## Error Handling
+
+Handle partial failures in parallel batches gracefully without corrupting progress.
+
+### taskResults Tracking
+
+Track each task's execution status in `.ralph-state.json`:
+
+```typescript
+taskResults?: {
+  [taskIndex: number]: {
+    status: "pending" | "success" | "failed";
+    error?: string;
+  };
+}
+```
+
+### Initialize taskResults Before Spawning
+
+Before spawning parallel executors, initialize all tasks as pending:
+
+```json
+{
+  "taskResults": {
+    "5": { "status": "pending" },
+    "6": { "status": "pending" },
+    "7": { "status": "pending" }
+  }
+}
+```
+
+### Update taskResults After Execution
+
+After each executor returns:
+1. **If TASK_COMPLETE in output**: Mark status = "success"
+2. **If no TASK_COMPLETE or error**: Mark status = "failed", record error message
+
+```
+function updateTaskResult(taskIndex, output):
+  if output.contains("TASK_COMPLETE"):
+    taskResults[taskIndex] = { status: "success" }
+  else:
+    taskResults[taskIndex] = {
+      status: "failed",
+      error: extractErrorMessage(output) or "No TASK_COMPLETE signal"
+    }
+```
+
+### Partial Failure Handling
+
+On batch completion with mixed results:
+
+1. **Identify successful tasks**: Filter taskResults where status == "success"
+2. **Identify failed tasks**: Filter taskResults where status == "failed"
+3. **Merge only successful progress files**:
+   - Only include .progress-task-N.md files for successful tasks
+   - Skip temp files for failed tasks
+4. **Update tasks.md selectively**:
+   - Successful tasks should already be marked [x] by their executor
+   - Failed tasks remain unchecked [ ] for retry
+5. **Advance taskIndex past successful tasks only**:
+   - If all tasks succeeded: taskIndex = endIndex + 1
+   - If partial failure: taskIndex = first failed task index
+
+### Partial Failure Merge Logic
+
+```
+function mergePartialResults(parallelGroup, taskResults, specPath):
+  successfulIndices = []
+  failedIndices = []
+
+  for taskIndex in parallelGroup.taskIndices:
+    if taskResults[taskIndex].status == "success":
+      successfulIndices.push(taskIndex)
+    else:
+      failedIndices.push(taskIndex)
+
+  // Only merge progress from successful tasks
+  for taskIndex in sorted(successfulIndices):
+    tempFile = specPath + "/.progress-task-" + taskIndex + ".md"
+    if exists(tempFile):
+      mergeIntoMainProgress(tempFile)
+      delete(tempFile)
+
+  // Clean up failed task temp files (no merge)
+  for taskIndex in failedIndices:
+    tempFile = specPath + "/.progress-task-" + taskIndex + ".md"
+    if exists(tempFile):
+      delete(tempFile)
+
+  // Report results
+  return {
+    successCount: successfulIndices.length,
+    failedCount: failedIndices.length,
+    failedTasks: failedIndices
+  }
+```
+
+### Failed Task Retry
+
+Failed tasks remain unchecked in tasks.md and will be retried:
+- taskIndex set to first failed task
+- Next iteration picks up where failure occurred
+- Stop-handler retry logic applies normally
+
+### Batch Failure Scenarios
+
+| Scenario | Behavior |
+|----------|----------|
+| All succeed | Merge all, advance past batch, output BATCH_COMPLETE |
+| All fail | No merge, taskIndex stays at startIndex, retry all |
+| Partial (some succeed) | Merge successful only, taskIndex = first failed, retry failed |
+
+### Clear taskResults After Batch
+
+After batch processing (success or partial), clear taskResults:
+
+```json
+{
+  "taskResults": {}
+}
+```
+
+This ensures clean state for next batch or sequential task.
+
 ## Read Context
 
 Before executing:
