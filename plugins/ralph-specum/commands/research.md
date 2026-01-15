@@ -116,7 +116,7 @@ Focus ONLY on external research:
 1. WebSearch for GraphQL best practices, schema design patterns
 2. WebSearch for GraphQL caching strategies
 3. Research popular GraphQL libraries for this stack
-4. Document findings in ./specs/$spec/research-external.md
+4. Document findings in ./specs/$spec/.research-external.md
 
 Do NOT explore codebase or related specs - another agent handles that.
 ```
@@ -132,7 +132,7 @@ Focus ONLY on internal research:
 2. Check for existing caching implementations
 3. Identify dependencies and constraints
 4. Discover quality commands (lint, test, build)
-5. Document findings in ./specs/$spec/research-codebase.md
+5. Document findings in ./specs/$spec/.research-codebase.md
 
 Do NOT do web searches - another agent handles that.
 ```
@@ -147,7 +147,7 @@ Focus ONLY on related specs:
 1. Scan ./specs/ for all existing specs
 2. Read each spec's .progress.md, research.md, requirements.md
 3. Identify overlap, conflicts, specs that may need updates
-4. Document findings in ./specs/$spec/research-related-specs.md
+4. Document findings in ./specs/$spec/.research-related-specs.md
 
 Format as table with: Name, Relevance (High/Medium/Low), Relationship, mayNeedUpdate
 ```
@@ -160,7 +160,7 @@ After ALL parallel research-analyst tasks complete, YOU must merge results into 
 
 If you invoked multiple research-analysts:
 
-1. Read all partial research files (research-external.md, research-codebase.md, research-related-specs.md, etc.)
+1. Read all partial research files (.research-external.md, .research-codebase.md, .research-related-specs.md, etc.)
 2. Create unified `./specs/$spec/research.md` with standard structure:
    - Executive Summary (synthesize all findings)
    - External Research (from external research task)
