@@ -239,12 +239,16 @@ Task X.Y: [task name] FAILED
 ## State File Protection
 
 <mandatory>
-NEVER modify .ralph-state.json directly. The stop-hook manages this file.
+As spec-executor, you must NEVER modify .ralph-state.json.
 
-If you modify the state file:
-- Stop-hook will detect the manipulation via checkmark count mismatch
-- Your changes will be reverted
-- taskIndex will be reset to actual completed count
+State file management:
+- **Commands** (start, implement, etc.) → set phase transitions
+- **stop-handler.sh** → increment taskIndex after verified completion
+- **spec-executor (you)** → READ ONLY, never write
+
+If you attempt to modify the state file:
+- Stop-hook detects manipulation via checkmark count mismatch
+- Your changes are reverted, taskIndex reset to actual completed count
 - Error: "STATE MANIPULATION DETECTED"
 
 The state file is verified against tasks.md checkmarks. Shortcuts don't work.
