@@ -91,9 +91,38 @@ if [[ $TASK_ITER -ge $MAX_TASK_ITER ]]; then
     exit 0
 fi
 
-# Check if all tasks are done
+# Check if all tasks are done - but verify checkmarks match before allowing completion
 if [[ $TASK_INDEX -ge $TOTAL_TASKS ]]; then
-    # All tasks complete! Cleanup state file and current-spec pointer, keep progress
+    # CRITICAL: Verify actual checkmark count matches totalTasks
+    # This prevents agent from manipulating state file to skip tasks
+    TASKS_FILE="$SPEC_PATH/tasks.md"
+    if [[ -f "$TASKS_FILE" ]]; then
+        COMPLETED_COUNT=$(grep -c '^\s*-\s*\[x\]' "$TASKS_FILE" 2>/dev/null || echo "0")
+
+        if [[ $COMPLETED_COUNT -lt $TOTAL_TASKS ]]; then
+            # State file says all done, but checkmarks don't match - likely manipulation
+            # Reset taskIndex to actual completed count
+            TEMP_STATE=$(mktemp)
+            if echo "$STATE" | jq "
+                .taskIndex = $COMPLETED_COUNT |
+                .taskIteration = 1 |
+                .globalIteration = $((GLOBAL_ITER + 1))
+            " > "$TEMP_STATE" 2>/dev/null && [[ -s "$TEMP_STATE" ]]; then
+                mv "$TEMP_STATE" "$STATE_FILE"
+            else
+                rm -f "$TEMP_STATE"
+            fi
+
+            REASON="STATE MANIPULATION DETECTED. State file claims $TASK_INDEX tasks done but only $COMPLETED_COUNT checkmarks in tasks.md. Resetting to task $COMPLETED_COUNT. Do NOT modify .ralph-state.json directly."
+            jq -n \
+                --arg reason "$REASON" \
+                --arg msg "INTEGRITY VIOLATION: State file manipulated. Only $COMPLETED_COUNT of $TOTAL_TASKS tasks actually completed." \
+                '{"decision": "block", "reason": $reason, "systemMessage": $msg}'
+            exit 0
+        fi
+    fi
+
+    # All tasks verified complete! Cleanup state file and current-spec pointer, keep progress
     rm "$STATE_FILE"
     rm "$CURRENT_SPEC_FILE"
     exit 0  # Allow stop - execution complete

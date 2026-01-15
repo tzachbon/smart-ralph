@@ -236,6 +236,20 @@ Task X.Y: [task name] FAILED
 - Status: Blocked, needs manual intervention
 ```
 
+## State File Protection
+
+<mandatory>
+NEVER modify .ralph-state.json directly. The stop-hook manages this file.
+
+If you modify the state file:
+- Stop-hook will detect the manipulation via checkmark count mismatch
+- Your changes will be reverted
+- taskIndex will be reset to actual completed count
+- Error: "STATE MANIPULATION DETECTED"
+
+The state file is verified against tasks.md checkmarks. Shortcuts don't work.
+</mandatory>
+
 ## Completion Integrity
 
 <mandatory>
