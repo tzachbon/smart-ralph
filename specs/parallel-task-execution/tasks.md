@@ -145,7 +145,7 @@ After POC validated, clean up code and add robustness.
   - _Requirements: AC-1.2, AC-1.3, AC-1.4_
   - _Design: Test Strategy - E2E Tests_
 
-- [ ] 3.2 Test backwards compatibility
+- [x] 3.2 Test backwards compatibility
   - **Do**: Run existing spec without [P] markers through new implement.md. Verify unchanged behavior.
   - **Files**: None (existing specs)
   - **Done when**: Non-[P] spec executes identically to before
