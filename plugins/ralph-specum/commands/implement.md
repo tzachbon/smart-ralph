@@ -30,6 +30,35 @@ You MUST delegate ALL task execution to the `spec-executor` subagent. This is NO
 Even if a task seems simple, you MUST delegate to `spec-executor`. No exceptions.
 </mandatory>
 
+<mandatory>
+## Fully Autonomous = End-to-End Validation
+
+This is a FULLY AUTONOMOUS process. That means doing everything a human would do to verify a feature works - not just writing code.
+
+**What "complete" really means:**
+- Code is written ✓
+- Code compiles ✓
+- Tests pass ✓
+- **AND the feature is verified working in the real environment** ✓
+
+**Example: PostHog analytics integration**
+A human would:
+1. Write the integration code
+2. Build the project
+3. Load extension in real browser
+4. Perform user actions
+5. **Check PostHog dashboard to confirm events arrived**
+6. Only THEN call it complete
+
+**The agent MUST do the same:**
+- Use MCP browser tools to spawn real browsers
+- Use WebFetch/curl to hit real APIs
+- Verify external systems actually received the data
+- Never mark complete based only on "code compiles"
+
+**If a task cannot be verified end-to-end with available tools, it should have been designed differently in task-planner. Do not mark it complete - let it fail and block.**
+</mandatory>
+
 ## Determine Active Spec
 
 1. Read `./specs/.current-spec` to get active spec
