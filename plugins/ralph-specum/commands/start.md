@@ -50,13 +50,17 @@ git rev-parse --verify origin/main 2>/dev/null && echo "main" || echo "master"
    |   |   - If spec name not yet known, use temp name: feat/spec-work-<timestamp>
    |   |   - Create and switch: git checkout -b <branch-name>
    |   |   - Inform user: "Created branch '<branch-name>' for this work"
+   |   |   - Suggest: "Run /ralph-specum:research to start the research phase."
    |   |
    |   +-- If user chooses 2 (worktree):
    |   |   - Generate branch name from spec name: feat/$specName
    |   |   - Determine worktree path: ../<repo-name>-<spec-name> or prompt user
    |   |   - Create worktree: git worktree add <path> -b <branch-name>
    |   |   - Inform user: "Created worktree at '<path>' on branch '<branch-name>'"
-   |   |   - Note: User must cd to worktree directory to continue work there
+   |   |   - IMPORTANT: Suggest user to cd to worktree and resume conversation there:
+   |   |     "For best results, cd to '<path>' and start a new Claude Code session from there."
+   |   |     "Then run /ralph-specum:research to begin."
+   |   |   - STOP HERE - do not continue to Parse Arguments (user needs to switch directories)
    |   |
    |   +-- Continue to Parse Arguments
    |
@@ -71,12 +75,15 @@ git rev-parse --verify origin/main 2>/dev/null && echo "main" || echo "master"
        |
        +-- If user chooses 1 (continue):
        |   - Stay on current branch
+       |   - Suggest: "Run /ralph-specum:research to start the research phase."
        |   - Continue to Parse Arguments
        |
        +-- If user chooses 2 (new branch):
        |   - Generate branch name from spec name: feat/$specName
        |   - If spec name not yet known, use temp name: feat/spec-work-<timestamp>
        |   - Create and switch: git checkout -b <branch-name>
+       |   - Inform user: "Created branch '<branch-name>' for this work"
+       |   - Suggest: "Run /ralph-specum:research to start the research phase."
        |   - Continue to Parse Arguments
        |
        +-- If user chooses 3 (worktree):
@@ -84,7 +91,10 @@ git rev-parse --verify origin/main 2>/dev/null && echo "main" || echo "master"
            - Determine worktree path: ../<repo-name>-<spec-name> or prompt user
            - Create worktree: git worktree add <path> -b <branch-name>
            - Inform user: "Created worktree at '<path>' on branch '<branch-name>'"
-           - Note: User must cd to worktree directory to continue work there
+           - IMPORTANT: Suggest user to cd to worktree and resume conversation there:
+             "For best results, cd to '<path>' and start a new Claude Code session from there."
+             "Then run /ralph-specum:research to begin."
+           - STOP HERE - do not continue to Parse Arguments (user needs to switch directories)
 ```
 
 ### Branch Naming Convention
@@ -120,8 +130,19 @@ git worktree add "$WORKTREE_PATH" -b "feat/${SPEC_NAME}"
 
 After worktree creation:
 - Inform user of the worktree path
-- Spec files will be created in current directory's `./specs/` (not worktree)
-- User should `cd` to worktree to continue implementation work
+- IMPORTANT: Output clear guidance for the user:
+  ```
+  Created worktree at '<path>' on branch '<branch-name>'
+
+  For best results, cd to the worktree directory and start a new Claude Code session from there:
+
+    cd <path>
+    claude
+
+  Then run /ralph-specum:research to begin the research phase.
+  ```
+- STOP the command here - do not continue to Parse Arguments or create spec files
+- The user needs to switch directories first to work in the worktree
 - To clean up later: `git worktree remove <path>`
 
 ### Quick Mode Branch Handling
