@@ -78,7 +78,7 @@ Focus: Add interview logic to start.md (goal clarification) and 4 phase commands
   - _Requirements: FR-1, FR-2, FR-6, FR-10, FR-11, FR-12, AC-1.1, AC-1.5, AC-2.1, AC-2.2, AC-2.4, AC-3.1_
   - _Design: Interview Logic Template, Question Format Examples (Research)_
 
-- [ ] 1.6 Add interview to requirements.md
+- [x] 1.6 Add interview to requirements.md
   - **Do**:
     1. Add `AskUserQuestion` to allowed-tools in frontmatter line 4
     2. Add interview section between "## Gather Context" and "## Execute Requirements" with:
