@@ -45,7 +45,7 @@ Focus: Add interview logic to start.md (goal clarification) and 4 phase commands
   - **Done when**: All agent frontmatters valid, no tools field present
   - **Commit**: `chore(agents): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.4 Add goal interview to start.md (pre-research)
+- [x] 1.4 Add goal interview to start.md (pre-research)
   - **Do**:
     1. start.md already has AskUserQuestion in allowed-tools (line 5)
     2. Add goal interview section in "New Flow" after spec directory created, before research-analyst invocation:
