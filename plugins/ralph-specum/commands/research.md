@@ -25,6 +25,41 @@ Do NOT perform web searches, codebase analysis, or write research.md yourself.
 
 1. Check `./specs/$spec/` directory exists
 2. Read `.ralph-state.json` if it exists
+3. Read `.progress.md` to understand the goal
+
+## Analyze Research Topics
+
+<mandatory>
+**BEFORE invoking any research-analyst, analyze the goal and identify distinct research topics.**
+
+Break down the goal into independent research areas that can be explored in parallel. Consider:
+- **External/Best Practices**: Industry standards, patterns, libraries to research online
+- **Codebase Analysis**: Existing implementations, patterns, constraints in the project
+- **Related Specs**: Other specs in ./specs/ that may overlap or be affected
+- **Domain-Specific**: Any specialized topics that need focused research (APIs, protocols, frameworks)
+- **Quality Commands**: Project lint/test/build commands discovery
+</mandatory>
+
+### Topic Splitting Guidelines
+
+| Scenario | Recommendation |
+|----------|----------------|
+| Simple, focused goal | Single research-analyst invocation is fine |
+| Goal spans multiple domains | Split into 2-4 topic-specific research tasks |
+| Goal involves external APIs + codebase | Separate external research from internal analysis |
+| Goal touches multiple components | Research each component area in parallel |
+| Research needs web + codebase analysis | Can split if topics are distinct enough |
+| External best practices needed | Always include a dedicated external research task for web search |
+
+**Benefits of splitting:**
+- Parallel execution = faster results
+- Each sub-agent has focused context = better depth
+- Results can be merged for comprehensive coverage
+
+**When NOT to split:**
+- Very simple, narrow goals
+- Topics are tightly coupled and can't be researched independently
+- Splitting would create redundant searches
 
 ## Interview
 
@@ -82,16 +117,20 @@ Store this context to include in the Task delegation prompt.
 ## Execute Research
 
 <mandatory>
-Use the Task tool with `subagent_type: research-analyst` to run the research phase.
+Use the Task tool with `subagent_type: research-analyst` to run research.
+
+**IMPORTANT**: If you identified multiple distinct topics above, invoke research-analyst MULTIPLE TIMES IN PARALLEL by including multiple Task tool calls in a single message. This maximizes parallelism and research depth.
 </mandatory>
 
-Invoke research-analyst agent with prompt:
+### Single Topic Invocation
+
+If the goal is simple or topics cannot be meaningfully split, invoke one research-analyst:
 
 ```
 You are researching for spec: $spec
 Spec path: ./specs/$spec/
 
-Goal from user conversation or existing progress file.
+Goal: [goal from .progress.md]
 
 [If interview was conducted, include:]
 Interview Context:
@@ -102,9 +141,10 @@ Your task:
 2. Explore the codebase for existing related implementations
 3. Scan ./specs/ for existing specs that relate to this goal
 4. Document related specs in the "Related Specs" section
-5. Assess technical feasibility
-6. Create ./specs/$spec/research.md with your findings
-7. Include interview responses in a "User Context" section of research.md
+5. Discover quality commands (lint, test, build)
+6. Assess technical feasibility
+7. Create ./specs/$spec/research.md with your findings
+8. Include interview responses in a "User Context" section of research.md
 
 Use the research.md template structure:
 - Executive Summary
@@ -120,6 +160,85 @@ Use the research.md template structure:
 Remember: Never guess, always verify. Cite all sources.
 Store user interview responses in the "User Context" section of research.md.
 ```
+
+### Multiple Topic Invocation (Preferred for Complex Goals)
+
+<mandatory>
+If you identified 2-4 distinct topics, invoke research-analyst MULTIPLE TIMES IN PARALLEL.
+Each invocation should focus on ONE specific topic area.
+</mandatory>
+
+**Example: Goal involves "Add GraphQL API with caching"**
+
+Invoke 3 research-analysts in parallel (all in ONE message with multiple Task tool calls):
+
+**Task 1 - External Best Practices:**
+```
+You are researching for spec: $spec
+Spec path: ./specs/$spec/
+Topic: GraphQL API best practices and patterns
+
+Focus ONLY on external research:
+1. WebSearch for GraphQL best practices, schema design patterns
+2. WebSearch for GraphQL caching strategies
+3. Research popular GraphQL libraries for this stack
+4. Document findings in ./specs/$spec/.research-external.md
+
+Do NOT explore codebase or related specs - another agent handles that.
+```
+
+**Task 2 - Codebase Analysis:**
+```
+You are researching for spec: $spec
+Spec path: ./specs/$spec/
+Topic: Existing codebase patterns and constraints
+
+Focus ONLY on internal research:
+1. Explore existing API patterns in codebase
+2. Check for existing caching implementations
+3. Identify dependencies and constraints
+4. Discover quality commands (lint, test, build)
+5. Document findings in ./specs/$spec/.research-codebase.md
+
+Do NOT do web searches - another agent handles that.
+```
+
+**Task 3 - Related Specs:**
+```
+You are researching for spec: $spec
+Spec path: ./specs/$spec/
+Topic: Related specs discovery
+
+Focus ONLY on related specs:
+1. Scan ./specs/ for all existing specs
+2. Read each spec's .progress.md, research.md, requirements.md
+3. Identify overlap, conflicts, specs that may need updates
+4. Document findings in ./specs/$spec/.research-related-specs.md
+
+Format as table with: Name, Relevance (High/Medium/Low), Relationship, mayNeedUpdate
+```
+
+## Merge Results (For Multi-Topic Research)
+
+<mandatory>
+After ALL parallel research-analyst tasks complete, YOU must merge results into a single research.md.
+</mandatory>
+
+If you invoked multiple research-analysts:
+
+1. Read all partial research files (.research-external.md, .research-codebase.md, .research-related-specs.md, etc.)
+2. Create unified `./specs/$spec/research.md` with standard structure:
+   - Executive Summary (synthesize all findings)
+   - External Research (from external research task)
+   - Codebase Analysis (from codebase task)
+   - Related Specs (from related specs task)
+   - Feasibility Assessment (synthesize from all sources)
+   - Quality Commands (from codebase task)
+   - Recommendations for Requirements
+   - Open Questions (consolidated)
+   - Sources (all sources from all tasks)
+3. Delete partial research files after merging
+4. Ensure no duplicate information in merged document
 
 ## Update State
 

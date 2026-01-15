@@ -1,6 +1,7 @@
 # State files (created at runtime in user's spec directory)
 .ralph-state.json
-.ralph-progress.md
+**/.progress.md
+specs/.current-spec
 
 # OS files
 .DS_Store

@@ -95,7 +95,7 @@ Focus: Add interview logic to start.md (goal clarification) and 4 phase commands
   - _Requirements: FR-1, FR-3, FR-7, FR-10, FR-11, FR-12, AC-1.2, AC-1.5, AC-2.1, AC-2.2, AC-2.4, AC-3.1_
   - _Design: Interview Logic Template, Question Format Examples (Requirements)_
 
-- [ ] 1.7 Quality Checkpoint
+- [x] 1.7 Quality Checkpoint
   - **Do**: Verify research.md and requirements.md have valid structure
   - **Verify**: All commands must pass:
     - AskUserQuestion in tools: `grep "AskUserQuestion" plugins/ralph-specum/commands/research.md plugins/ralph-specum/commands/requirements.md`
