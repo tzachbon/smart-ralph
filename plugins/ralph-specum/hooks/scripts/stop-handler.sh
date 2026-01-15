@@ -97,7 +97,7 @@ if [[ $TASK_INDEX -ge $TOTAL_TASKS ]]; then
     # This prevents agent from manipulating state file to skip tasks
     TASKS_FILE="$SPEC_PATH/tasks.md"
     if [[ -f "$TASKS_FILE" ]]; then
-        COMPLETED_COUNT=$(grep -c '^\s*-\s*\[x\]' "$TASKS_FILE" 2>/dev/null || echo "0")
+        COMPLETED_COUNT=$(grep -c '^[[:space:]]*-[[:space:]]*\[x\]' "$TASKS_FILE" 2>/dev/null || echo "0")
 
         if [[ $COMPLETED_COUNT -lt $TOTAL_TASKS ]]; then
             # State file says all done, but checkmarks don't match - likely manipulation
@@ -190,7 +190,7 @@ if echo "$LAST_OUTPUT" | grep -q "TASK_COMPLETE"; then
     TASKS_FILE="$SPEC_PATH/tasks.md"
     if [[ -f "$TASKS_FILE" ]]; then
         # Count completed tasks (lines with [x])
-        COMPLETED_COUNT=$(grep -c '^\s*-\s*\[x\]' "$TASKS_FILE" 2>/dev/null || echo "0")
+        COMPLETED_COUNT=$(grep -c '^[[:space:]]*-[[:space:]]*\[x\]' "$TASKS_FILE" 2>/dev/null || echo "0")
 
         # Task index is 0-based, so completed count should be at least taskIndex + 1
         EXPECTED_MIN=$((TASK_INDEX + 1))
