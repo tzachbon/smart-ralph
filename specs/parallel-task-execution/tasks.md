@@ -4,7 +4,7 @@
 
 Focus: Validate parallel execution works end-to-end. Skip tests, accept minimal error handling.
 
-- [ ] 1.1 Add parallel state fields to schema
+- [x] 1.1 Add parallel state fields to schema
   - **Do**: Extend spec.schema.json with parallelGroup and taskResults definitions
   - **Files**: `plugins/ralph-specum/schemas/spec.schema.json`
   - **Done when**: Schema includes parallelGroup object and taskResults map definitions
