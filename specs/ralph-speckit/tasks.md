@@ -69,7 +69,7 @@ approach: wrapper
   - _Spec: FR-7, AC-5.2_
   - _Plan: Stop Watcher Hook_
 
-- [ ] 2.2 Create stop-watcher.sh adapted for .specify paths
+- [x] 2.2 Create stop-watcher.sh adapted for .specify paths
   - **Do**: Copy ralph-specum's stop-watcher.sh. Adapt paths:
     - `./specs/$SPEC_NAME/` -> `.specify/specs/$FEATURE_ID-$NAME/`
     - `specs/.current-spec` -> `.specify/.current-feature`
