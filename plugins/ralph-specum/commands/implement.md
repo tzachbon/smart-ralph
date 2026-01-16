@@ -54,12 +54,25 @@ Write `.ralph-state.json`:
 
 Calculate max iterations: `totalTasks * maxTaskIterations * 2`
 
-Use the Skill tool to invoke ralph-wiggum:ralph-loop with:
-- Prompt: the coordinator prompt below
-- Completion promise: ALL_TASKS_COMPLETE
-- Max iterations: calculated value
+### Step 1: Write Coordinator Prompt to File
+
+Write the ENTIRE coordinator prompt (from section below) to `./specs/$spec/.coordinator-prompt.md`.
+
+This file contains the full instructions for task execution. Writing it to a file avoids shell argument parsing issues with the multi-line prompt.
+
+### Step 2: Invoke Ralph Loop Skill
+
+Use the Skill tool to invoke `ralph-loop:ralph-loop` with args:
+
+```
+Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
+```
+
+Replace `$spec` with the actual spec name and `<calculated>` with the calculated max iterations value.
 
 ## Coordinator Prompt
+
+Write this prompt to `./specs/$spec/.coordinator-prompt.md`:
 
 ```
 You are the execution COORDINATOR for spec: $spec

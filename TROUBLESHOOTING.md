@@ -63,6 +63,26 @@ This error occurs when you have an old plugin installation (v1.x) that reference
 
 ## Execution Issues
 
+### "command not found: You" or shell parsing errors
+
+```
+(eval):5: command not found: You
+(eval):cd:6: too many arguments
+```
+
+This error occurs when the ralph-loop skill's setup script receives the coordinator prompt as unquoted shell arguments, causing the shell to interpret the prompt text as commands.
+
+**Solution:**
+
+Upgrade to Smart Ralph v2.0.1+ which writes the prompt to the state file directly instead of passing it through CLI arguments.
+
+```bash
+/plugin uninstall ralph-specum
+/plugin install ralph-specum@smart-ralph
+```
+
+---
+
 ### Task keeps failing / Max iterations reached
 
 After max iterations (default: 5), the Ralph Wiggum loop stops to prevent infinite loops.
