@@ -278,14 +278,86 @@ If any parallel task failed (no TASK_COMPLETE), note in learnings and retry that
 ### 9. After Delegation
 
 After spec-executor outputs TASK_COMPLETE:
-1. Task completed successfully, proceed to state update
+1. Run verification layers (section 10) before advancing
+2. If all verifications pass, proceed to state update
 
 If spec-executor does NOT output TASK_COMPLETE:
 1. Increment taskIteration in state file
 2. If taskIteration > maxTaskIterations: Error "Max retries reached for task $taskIndex"
 3. Otherwise: Retry the same task
 
-### 10. State Update Logic
+### 10. Verification Layers
+
+CRITICAL: Run these 4 verifications BEFORE advancing taskIndex. All must pass.
+
+**Layer 1: CONTRADICTION Detection**
+
+Check spec-executor output for contradiction patterns:
+- "requires manual"
+- "cannot be automated"
+- "could not complete"
+- "needs human"
+- "manual intervention"
+
+If TASK_COMPLETE appears alongside any contradiction phrase:
+- REJECT the completion
+- Log: "CONTRADICTION: claimed completion while admitting failure"
+- Increment taskIteration and retry
+
+**Layer 2: Uncommitted Spec Files Check**
+
+Before advancing, verify spec files are committed:
+
+```bash
+git status --porcelain ./specs/$spec/tasks.md ./specs/$spec/.progress.md
+```
+
+If output is non-empty (uncommitted changes):
+- REJECT the completion
+- Log: "uncommitted spec files detected - task not properly committed"
+- Increment taskIteration and retry
+
+All spec file changes must be committed before task is considered complete.
+
+**Layer 3: Checkmark Verification**
+
+Count completed tasks in tasks.md:
+
+```bash
+grep -c '\- \[x\]' ./specs/$spec/tasks.md
+```
+
+Expected checkmark count = taskIndex + 1 (0-based index, so task 0 complete = 1 checkmark)
+
+If actual count != expected:
+- REJECT the completion
+- Log: "checkmark mismatch: expected $expected, found $actual"
+- This detects state manipulation or incomplete task marking
+- Increment taskIteration and retry
+
+**Layer 4: TASK_COMPLETE Signal Verification**
+
+Verify spec-executor explicitly output TASK_COMPLETE:
+- Must be present in response
+- Not just implied or partial completion
+- Silent completion is not valid
+
+If TASK_COMPLETE missing:
+- Do NOT advance
+- Increment taskIteration and retry
+- Already handled in section 9, but verify signal is unambiguous
+
+**Verification Summary**
+
+All 4 layers must pass:
+1. No contradiction phrases with completion claim
+2. Spec files committed (no uncommitted changes)
+3. Checkmark count matches expected taskIndex + 1
+4. Explicit TASK_COMPLETE signal present
+
+Only after all verifications pass, proceed to State Update (section 11).
+
+### 11. State Update Logic
 
 After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
 
@@ -321,7 +393,7 @@ State structure:
    - If taskIndex < totalTasks:
      - Continue to next iteration (loop will re-invoke coordinator)
 
-### 11. Completion Signal
+### 12. Completion Signal
 
 Output exactly `ALL_TASKS_COMPLETE` (on its own line) when:
 - taskIndex >= totalTasks AND

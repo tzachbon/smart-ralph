@@ -86,13 +86,13 @@ Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator
   - _Requirements: FR-8, AC-2.5_
   - _Design: Component 3 section 6_
 
-- [ ] 1.8 [VERIFY] Quality checkpoint: implement.md structure
+- [x] 1.8 [VERIFY] Quality checkpoint: implement.md structure
   - **Do**: Verify implement.md has all required sections
   - **Verify**: `grep -q "COORDINATOR" plugins/ralph-specum/commands/implement.md && grep -q "ralph-loop" plugins/ralph-specum/commands/implement.md && grep -q "ALL_TASKS_COMPLETE" plugins/ralph-specum/commands/implement.md && echo "PASS"`
   - **Done when**: All key patterns present
   - **Commit**: (none unless fixes needed)
 
-- [ ] 1.9 Add verification layers to coordinator
+- [x] 1.9 Add verification layers to coordinator
   - **Do**: Migrate 4 verification layers from stop-handler.sh into coordinator prompt:
     1. Contradiction detection (manual action claims)
     2. Uncommitted spec files check (before advancing)
