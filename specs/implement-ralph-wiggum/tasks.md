@@ -156,7 +156,7 @@ After POC validated, clean up code and documentation.
   - **Commit**: `refactor(implement): organize coordinator prompt into sections`
   - _Design: Component 3 structure_
 
-- [ ] 2.2 Add error handling to coordinator
+- [x] 2.2 Add error handling to coordinator
   - **Do**: Add error handling for:
     1. Missing/corrupt .ralph-state.json
     2. Missing tasks.md

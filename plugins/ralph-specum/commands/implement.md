@@ -85,7 +85,13 @@ Read `./specs/$spec/.ralph-state.json` to get current state:
 }
 ```
 
-If state file missing or corrupt: Error and stop.
+**ERROR: Missing/Corrupt State File**
+
+If state file missing or corrupt (invalid JSON, missing required fields):
+1. Output error: "ERROR: State file missing or corrupt at ./specs/$spec/.ralph-state.json"
+2. Suggest: "Run /ralph-specum:implement to reinitialize execution state"
+3. Do NOT continue execution
+4. Do NOT output ALL_TASKS_COMPLETE
 
 ### 3. Check Completion
 
@@ -98,6 +104,22 @@ If taskIndex >= totalTasks:
 ### 4. Parse Current Task
 
 Read `./specs/$spec/tasks.md` and find the task at taskIndex (0-based).
+
+**ERROR: Missing tasks.md**
+
+If tasks.md does not exist:
+1. Output error: "ERROR: Tasks file missing at ./specs/$spec/tasks.md"
+2. Suggest: "Run /ralph-specum:tasks to generate task list"
+3. Do NOT continue execution
+4. Do NOT output ALL_TASKS_COMPLETE
+
+**ERROR: Missing Spec Directory**
+
+If spec directory does not exist (./specs/$spec/):
+1. Output error: "ERROR: Spec directory missing at ./specs/$spec/"
+2. Suggest: "Run /ralph-specum:new <spec-name> to create a new spec"
+3. Do NOT continue execution
+4. Do NOT output ALL_TASKS_COMPLETE
 
 Tasks follow this format:
 ```
@@ -246,8 +268,18 @@ If spec-executor outputs TASK_COMPLETE (or qa-engineer outputs VERIFICATION_PASS
 
 If no completion signal:
 1. Increment taskIteration in state file
-2. If taskIteration > maxTaskIterations: Error "Max retries reached for task $taskIndex"
+2. If taskIteration > maxTaskIterations: proceed to max retries error handling
 3. Otherwise: Retry the same task
+
+**ERROR: Max Retries Reached**
+
+If taskIteration exceeds maxTaskIterations:
+1. Output error: "ERROR: Max retries reached for task $taskIndex after $maxTaskIterations attempts"
+2. Include last error/failure reason from spec-executor output
+3. Suggest: "Review .progress.md Learnings section for failure details"
+4. Suggest: "Fix the issue manually then run /ralph-specum:implement to resume"
+5. Do NOT continue execution
+6. Do NOT output ALL_TASKS_COMPLETE
 
 ### 7. Verification Layers
 
@@ -367,7 +399,16 @@ Merge format in .progress.md:
 - [x] 3.3 Task C - ghi789
 ```
 
-If any parallel task failed (no TASK_COMPLETE), note in learnings and retry that task only.
+**ERROR: Partial Parallel Batch Failure**
+
+If any parallel task failed (no TASK_COMPLETE in its output):
+1. Identify which task(s) failed from the batch
+2. Note successful tasks in .progress.md
+3. For failed tasks, increment taskIteration
+4. If failed task exceeds maxTaskIterations: output "ERROR: Max retries reached for parallel task $failedTaskIndex"
+5. Otherwise: retry ONLY the failed task(s), do NOT re-run successful ones
+6. Do NOT advance taskIndex past the batch until ALL tasks in batch complete
+7. Merge only successful task progress files
 
 ### 10. Completion Signal
 
