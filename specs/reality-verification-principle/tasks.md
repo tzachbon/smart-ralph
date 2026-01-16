@@ -44,7 +44,7 @@ Focus: Create skill file and add detection to plan-synthesizer. Skip qa-engineer
   - **Done when**: Both files exist and are valid
   - **Commit**: `chore(reality-verification): pass quality checkpoint` (if fixes needed)
 
-- [ ] 1.4 Add VF task template to templates/tasks.md
+- [x] 1.4 Add VF task template to templates/tasks.md
   - **Do**:
     1. Add VF task after 4.2 section
     2. Include BEFORE state reference

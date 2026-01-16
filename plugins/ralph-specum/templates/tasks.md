@@ -169,6 +169,12 @@ After POC validated, clean up code.
     4. Commit and push: `git add . && git commit -m "fix: address CI failures" && git push`
     5. Re-verify: `gh pr checks --watch`
 
+- [ ] VF [VERIFY] Verify original issue resolved (only for fix-type goals)
+  - **Do**: Re-run the command from "Reality Check (BEFORE)" section in .progress.md
+  - **Verify**: Same command now exits 0 (or produces expected output)
+  - **Done when**: Original failure no longer reproduces, BEFORE/AFTER comparison documented
+  - **Note**: This task only applies when goal was classified as "fix" type. Skip if goal was "add" or "enhance".
+
 - [ ] 4.3 Merge after approval (optional - only if explicitly requested)
   - **Do**: Merge PR after approval and CI green
   - **Verify**: `gh pr merge --auto` or manual merge
