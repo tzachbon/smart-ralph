@@ -1,6 +1,6 @@
 ---
 description: Generate implementation tasks from design
-argument-hint: [spec-name]
+argument-hint: [spec-name] [--commit-spec] [--no-commit-spec]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
@@ -28,6 +28,17 @@ Do NOT write task breakdowns, verification steps, or tasks.md yourself.
 3. Check `./specs/$spec/requirements.md` exists
 4. Read `.ralph-state.json`
 5. Clear approval flag: update state with `awaitingApproval: false`
+
+## Parse Commit Flag
+
+Determine whether to commit spec files after generation:
+
+```
+1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
+2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
+3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
+4. Else → commitSpec = true (normal mode default)
+```
 
 ## Gather Context
 
@@ -166,6 +177,25 @@ After tasks complete:
    - Set current phase to tasks
    - Update task count
 
+## Commit Spec (if enabled)
+
+If `commitSpec` is true (determined from Parse Commit Flag section):
+
+1. Stage tasks file:
+   ```bash
+   git add ./specs/$spec/tasks.md
+   ```
+2. Commit with message:
+   ```bash
+   git commit -m "spec($spec): add implementation tasks"
+   ```
+3. Push to current branch:
+   ```bash
+   git push -u origin $(git branch --show-current)
+   ```
+
+If commit or push fails, display warning but continue (don't block the workflow).
+
 ## Output
 
 ```
@@ -173,6 +203,7 @@ Tasks phase complete for '$spec'.
 
 Output: ./specs/$spec/tasks.md
 Total tasks: <count>
+[If commitSpec: "Spec committed and pushed."]
 
 Next: Review tasks.md, then run /ralph-specum:implement to start execution
 ```

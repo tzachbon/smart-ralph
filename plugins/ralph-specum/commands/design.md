@@ -1,6 +1,6 @@
 ---
 description: Generate technical design from requirements
-argument-hint: [spec-name]
+argument-hint: [spec-name] [--commit-spec] [--no-commit-spec]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
@@ -27,6 +27,17 @@ Do NOT create architecture diagrams, technical decisions, or design.md yourself.
 2. Check `./specs/$spec/requirements.md` exists. If not, error: "Requirements not found. Run /ralph-specum:requirements first."
 3. Read `.ralph-state.json`
 4. Clear approval flag: update state with `awaitingApproval: false`
+
+## Parse Commit Flag
+
+Determine whether to commit spec files after generation:
+
+```
+1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
+2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
+3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
+4. Else → commitSpec = true (normal mode default)
+```
 
 ## Gather Context
 
@@ -155,12 +166,32 @@ After design complete:
    - Mark requirements as implicitly approved
    - Set current phase to design
 
+## Commit Spec (if enabled)
+
+If `commitSpec` is true (determined from Parse Commit Flag section):
+
+1. Stage design file:
+   ```bash
+   git add ./specs/$spec/design.md
+   ```
+2. Commit with message:
+   ```bash
+   git commit -m "spec($spec): add technical design"
+   ```
+3. Push to current branch:
+   ```bash
+   git push -u origin $(git branch --show-current)
+   ```
+
+If commit or push fails, display warning but continue (don't block the workflow).
+
 ## Output
 
 ```
 Design phase complete for '$spec'.
 
 Output: ./specs/$spec/design.md
+[If commitSpec: "Spec committed and pushed."]
 
 Next: Review design.md, then run /ralph-specum:tasks
 ```

@@ -1,6 +1,6 @@
 ---
 description: Run or re-run research phase for current spec
-argument-hint: [spec-name]
+argument-hint: [spec-name] [--commit-spec] [--no-commit-spec]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
@@ -26,6 +26,17 @@ Do NOT perform web searches, codebase analysis, or write research.md yourself.
 1. Check `./specs/$spec/` directory exists
 2. Read `.ralph-state.json` if it exists
 3. Read `.progress.md` to understand the goal
+
+## Parse Commit Flag
+
+Determine whether to commit spec files after generation:
+
+```
+1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
+2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
+3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
+4. Else → commitSpec = true (normal mode default)
+```
 
 ## Analyze Research Topics
 
@@ -256,12 +267,32 @@ After research completes:
    ```
 3. Update `.progress.md` with research completion
 
+## Commit Spec (if enabled)
+
+If `commitSpec` is true (determined from Parse Commit Flag section):
+
+1. Stage research file:
+   ```bash
+   git add ./specs/$spec/research.md
+   ```
+2. Commit with message:
+   ```bash
+   git commit -m "spec($spec): add research findings"
+   ```
+3. Push to current branch:
+   ```bash
+   git push -u origin $(git branch --show-current)
+   ```
+
+If commit or push fails, display warning but continue (don't block the workflow).
+
 ## Output
 
 ```
 Research phase complete for '$spec'.
 
 Output: ./specs/$spec/research.md
+[If commitSpec: "Spec committed and pushed."]
 
 Related specs found:
   - <name> (<RELEVANCE>) - may need update
