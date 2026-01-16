@@ -41,13 +41,13 @@ Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator
   - _Requirements: FR-2, AC-2.1, AC-2.2, AC-2.3, AC-2.6_
   - _Design: Component 3 sections 1-4, 10_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: syntax validation
+- [x] 1.4 [VERIFY] Quality checkpoint: syntax validation
   - **Do**: Verify implement.md has valid markdown structure and no broken sections
   - **Verify**: `head -20 plugins/ralph-specum/commands/implement.md | grep -q "^---" && grep -q "^---" plugins/ralph-specum/commands/implement.md && echo "PASS"`
   - **Done when**: Frontmatter present, markdown valid
   - **Commit**: (none unless fixes needed)
 
-- [ ] 1.5 Add state update logic to coordinator
+- [x] 1.5 Add state update logic to coordinator
   - **Do**: Extend coordinator prompt to:
     1. Update .ralph-state.json taskIndex after TASK_COMPLETE
     2. Reset taskIteration on success

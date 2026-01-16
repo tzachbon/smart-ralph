@@ -149,12 +149,43 @@ Wait for spec-executor to complete. It will output TASK_COMPLETE on success.
 
 ### 6. After Delegation
 
-After spec-executor completes:
-1. Read .ralph-state.json to get updated taskIndex (stop-handler increments it)
-2. If taskIndex < totalTasks: Continue to next iteration
-3. If taskIndex >= totalTasks: Output ALL_TASKS_COMPLETE
+After spec-executor outputs TASK_COMPLETE:
+1. Task completed successfully, proceed to state update
 
-### 10. Completion Signal
+If spec-executor does NOT output TASK_COMPLETE:
+1. Increment taskIteration in state file
+2. If taskIteration > maxTaskIterations: Error "Max retries reached for task $taskIndex"
+3. Otherwise: Retry the same task
+
+### 7. State Update Logic
+
+After successful TASK_COMPLETE from spec-executor:
+
+1. Read current .ralph-state.json
+2. Increment taskIndex by 1
+3. Reset taskIteration to 1
+4. Write updated state:
+
+```json
+{
+  "phase": "execution",
+  "taskIndex": <previous + 1>,
+  "totalTasks": <unchanged>,
+  "taskIteration": 1,
+  "maxTaskIterations": <unchanged>
+}
+```
+
+5. Check if all tasks complete:
+   - If taskIndex >= totalTasks:
+     - Verify all tasks marked [x] in tasks.md
+     - Delete .ralph-state.json (cleanup execution state)
+     - Keep .progress.md (preserve learnings and history)
+     - Output ALL_TASKS_COMPLETE
+   - If taskIndex < totalTasks:
+     - Continue to next iteration (loop will re-invoke coordinator)
+
+### 8. Completion Signal
 
 Output exactly `ALL_TASKS_COMPLETE` (on its own line) when:
 - taskIndex >= totalTasks AND
