@@ -175,7 +175,7 @@ approach: wrapper
   - _Spec: AC-7.1, AC-7.2, AC-7.3_
   - _Plan: Status Command_
 
-- [ ] 3.4 Create switch command
+- [x] 3.4 Create switch command
   - **Do**: Create `plugins/ralph-speckit/commands/switch.md`. Changes active feature by:
     1. Validating feature exists in `.specify/specs/`
     2. Updating `.specify/.current-feature`
