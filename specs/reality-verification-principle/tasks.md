@@ -77,7 +77,7 @@ Focus: Create skill file and add detection to plan-synthesizer. Skip qa-engineer
   - _Requirements: FR-5_
   - _Design: Task Planner Updates_
 
-- [ ] 2.2 Update qa-engineer for VF task handling
+- [x] 2.2 Update qa-engineer for VF task handling
   - **Do**:
     1. Add VF task detection section
     2. Add logic to read BEFORE state from .progress.md
