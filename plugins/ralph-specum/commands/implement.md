@@ -54,38 +54,25 @@ Write `.ralph-state.json`:
 
 Calculate max iterations: `totalTasks * maxTaskIterations * 2`
 
-### Step 1: Create Ralph Loop State File
+### Step 1: Write Coordinator Prompt to File
 
-CRITICAL: Create the state file BEFORE invoking the skill. This avoids shell argument parsing issues with the multi-line prompt.
+Write the ENTIRE coordinator prompt (from section below) to `./specs/$spec/.coordinator-prompt.md`.
 
-Write the file `.claude/ralph-loop.local.md` with this structure:
-
-```yaml
----
-active: true
-iteration: 1
-max_iterations: <calculated from above>
-completion_promise: "ALL_TASKS_COMPLETE"
-started_at: "<current ISO 8601 timestamp>"
----
-```
-
-Immediately after the YAML frontmatter closing `---`, append the ENTIRE coordinator prompt from section below (without the markdown code fences).
+This file contains the full instructions for task execution. Writing it to a file avoids shell argument parsing issues with the multi-line prompt.
 
 ### Step 2: Invoke Ralph Loop Skill
 
 Use the Skill tool to invoke `ralph-loop:ralph-loop` with args:
+
 ```
---resume
+Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
 ```
 
-This tells ralph-loop to continue from the existing state file rather than creating a new one.
-
-If `--resume` is not supported, invoke with empty args - the state file already contains all configuration.
+Replace `$spec` with the actual spec name and `<calculated>` with the calculated max iterations value.
 
 ## Coordinator Prompt
 
-The following prompt should be written to the state file (NOT passed as CLI args):
+Write this prompt to `./specs/$spec/.coordinator-prompt.md`:
 
 ```
 You are the execution COORDINATOR for spec: $spec
