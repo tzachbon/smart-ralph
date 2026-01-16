@@ -131,7 +131,7 @@ approach: wrapper
 
 ## Phase 3: Session Management Commands
 
-- [ ] 3.1 Create implement command (task loop entry)
+- [x] 3.1 Create implement command (task loop entry)
   - **Do**: Create `plugins/ralph-speckit/commands/implement.md`. This command:
     1. Validates tasks.md exists in current feature at `.specify/specs/<id>-<name>/`
     2. Commits spec files before starting (if not committed)
