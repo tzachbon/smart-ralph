@@ -57,7 +57,7 @@ Focus: Create skill file and add detection to plan-synthesizer. Skip qa-engineer
   - _Requirements: FR-4_
   - _Design: File Structure_
 
-- [ ] 1.5 POC Checkpoint
+- [x] 1.5 POC Checkpoint
   - **Do**: Verify core components exist and reference each other
   - **Done when**: SKILL.md, plan-synthesizer changes, template VF task all present
   - **Verify**: `grep -q "reality-verification" plugins/ralph-specum/agents/plan-synthesizer.md || grep -q "Goal Type" plugins/ralph-specum/agents/plan-synthesizer.md`
