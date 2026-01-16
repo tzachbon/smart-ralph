@@ -37,13 +37,13 @@ Replace the custom stop-handler loop mechanism in `/implement` with the official
 ### US-3: Stop Handler Removal
 
 **As a** plugin maintainer
-**I want to** remove the custom stop-handler.sh and hooks.json
-**So that** the plugin relies on Ralph Wiggum's maintained stop-hook instead of custom code
+**I want to** remove the custom stop-handler.sh and convert hooks.json to a read-only watcher
+**So that** the plugin relies on Ralph Wiggum's maintained stop-hook for loop control
 
 **Acceptance Criteria:**
 - [ ] AC-3.1: `hooks/scripts/stop-handler.sh` (274 lines) deleted
-- [ ] AC-3.2: `hooks/hooks.json` deleted
-- [ ] AC-3.3: No custom Stop hook registered by this plugin
+- [ ] AC-3.2: `hooks/hooks.json` updated to register stop-watcher.sh (logging only, no loop control)
+- [ ] AC-3.3: Stop hook is read-only watcher (always exits 0, does not block or restart)
 - [ ] AC-3.4: Ralph Wiggum's stop-hook handles loop continuation
 
 ### US-4: Dependency Management
@@ -110,7 +110,7 @@ Replace the custom stop-handler loop mechanism in `/implement` with the official
 |----|-------------|----------|---------------------|
 | FR-1 | `/implement` becomes thin wrapper calling `/ralph-loop` | High | AC-1.1, AC-1.2, AC-1.5 |
 | FR-2 | Coordinator prompt includes full task orchestration logic | High | AC-2.1 through AC-2.7 |
-| FR-3 | Delete custom stop-handler.sh and hooks.json | High | AC-3.1, AC-3.2, AC-3.3 |
+| FR-3 | Delete stop-handler.sh, update hooks.json for watcher | High | AC-3.1, AC-3.2, AC-3.3 |
 | FR-4 | Check Ralph Wiggum dependency on `/implement` invocation | High | AC-4.1, AC-4.2 |
 | FR-5 | Maintain .ralph-state.json for task tracking | High | AC-5.1, AC-5.2 |
 | FR-6 | Update /cancel to call /cancel-ralph | Medium | AC-6.1, AC-6.2, AC-6.3 |
@@ -125,7 +125,7 @@ Replace the custom stop-handler loop mechanism in `/implement` with the official
 | ID | Requirement | Metric | Target |
 |----|-------------|--------|--------|
 | NFR-1 | implement.md line count | Lines of code | < 100 lines (vs current ~1000) |
-| NFR-2 | No custom hooks | Hook registrations | 0 hooks.json entries |
+| NFR-2 | Watcher-only hook | Hook behavior | stop-watcher.sh exits 0 (no loop control) |
 | NFR-3 | Backward compatibility for agents | Agent changes | spec-executor.md, qa-engineer.md unchanged |
 | NFR-4 | Documentation completeness | Migration coverage | README + CHANGELOG updated |
 
@@ -169,6 +169,6 @@ Replace the custom stop-handler loop mechanism in `/implement` with the official
 - `/implement` successfully delegates to `/ralph-loop` and completes multi-task specs
 - Parallel [P] task execution continues working via multi-Task tool calls
 - [VERIFY] delegation to qa-engineer continues working
-- Custom hooks directory can be deleted (no hooks.json, no stop-handler.sh)
+- Custom stop-handler.sh deleted, hooks.json updated for read-only watcher
 - Error message guides users to install Ralph Wiggum when missing
 - All existing specs can complete using the new loop mechanism

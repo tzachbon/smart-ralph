@@ -246,7 +246,9 @@ Another Ralph loop may be running. Use `/cancel-ralph` to reset Ralph Wiggum sta
 
 Starting with v2.0.0, Smart Ralph delegates task execution to the official Ralph Wiggum plugin.
 
-**Migration from v1.x:**
+**Migration from v1.x:** See [MIGRATION.md](MIGRATION.md) for detailed guide.
+
+Quick version:
 1. Install Ralph Wiggum: `/plugin install ralph-wiggum@claude-plugins-official`
 2. Restart Claude Code
 3. Existing specs continue working. No spec file changes needed.
