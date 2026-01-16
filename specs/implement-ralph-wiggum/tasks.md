@@ -138,7 +138,7 @@ Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator
 
 After POC validated, clean up code and documentation.
 
-- [ ] 2.1 Refactor coordinator prompt sections
+- [x] 2.1 Refactor coordinator prompt sections
   - **Do**: Organize coordinator prompt into clearly labeled sections:
     1. Role Definition
     2. Read State

@@ -113,7 +113,7 @@ Extract the full task block including all bullet points under it.
 
 Detect markers in task description:
 - [P] = parallel task (can run with adjacent [P] tasks)
-- [VERIFY] = verification task (handled in later iteration)
+- [VERIFY] = verification task (delegate to qa-engineer)
 - No marker = sequential task
 
 ### 5. Parallel Group Detection
@@ -145,21 +145,19 @@ If no [P] marker on current task, set:
 }
 ```
 
-### 6. [VERIFY] Task Detection and Delegation
+### 6. Task Delegation
+
+**[VERIFY] Task Detection**:
 
 Before standard delegation, check if current task has [VERIFY] marker.
+Look for `[VERIFY]` in task description line (e.g., `- [ ] 1.4 [VERIFY] Quality checkpoint`).
 
-**Detection**: Look for `[VERIFY]` in task description line (e.g., `- [ ] 1.4 [VERIFY] Quality checkpoint`)
-
-**[VERIFY] Task Handling**:
-
-If current task has [VERIFY] marker:
+If [VERIFY] marker present:
 1. Do NOT delegate to spec-executor
 2. Delegate to qa-engineer via Task tool instead
 3. [VERIFY] tasks are ALWAYS sequential (break parallel groups)
 
 Delegate [VERIFY] task to qa-engineer:
-
 ```
 Task: Execute verification task $taskIndex for spec $spec
 
@@ -178,27 +176,11 @@ Instructions:
 4. Output VERIFICATION_FAIL if verification fails and cannot be fixed
 ```
 
-**Handling qa-engineer Response**:
+Handle qa-engineer response:
+- VERIFICATION_PASS: Treat as TASK_COMPLETE, mark task [x], update .progress.md
+- VERIFICATION_FAIL: Do NOT mark complete, increment taskIteration, retry or error if max reached
 
-- VERIFICATION_PASS:
-  - Treat as TASK_COMPLETE (task succeeded)
-  - Mark task [x] in tasks.md
-  - Update .progress.md with pass status
-  - Proceed to state update
-
-- VERIFICATION_FAIL:
-  - Do NOT mark task complete
-  - Do NOT advance taskIndex
-  - Increment taskIteration
-  - Log failure details in .progress.md Learnings
-  - If taskIteration > maxTaskIterations: Error "Max retries for verification task $taskIndex"
-  - Otherwise: Retry same task
-
-After [VERIFY] handling, skip to section 9 (After Delegation).
-
-### 7. Task Delegation
-
-**Sequential Execution** (parallelGroup.isParallel = false):
+**Sequential Execution** (parallelGroup.isParallel = false, no [VERIFY]):
 
 Delegate ONE task to spec-executor via Task tool:
 
@@ -256,37 +238,18 @@ progressFile: .progress-task-5.md
 
 All parallel tasks execute simultaneously. Wait for ALL to complete.
 
-### 8. Progress Merge (Parallel Only)
+**After Delegation**:
 
-After parallel batch completes:
-
-1. Read each temp progress file (.progress-task-N.md)
-2. Extract completed task entries and learnings
-3. Append to main .progress.md in task index order
-4. Delete temp files after merge
-
-Merge format in .progress.md:
-```markdown
-## Completed Tasks
-- [x] 3.1 Task A - abc123
-- [x] 3.2 Task B - def456  <- merged from temp files
-- [x] 3.3 Task C - ghi789
-```
-
-If any parallel task failed (no TASK_COMPLETE), note in learnings and retry that task only.
-
-### 9. After Delegation
-
-After spec-executor outputs TASK_COMPLETE:
-1. Run verification layers (section 10) before advancing
+If spec-executor outputs TASK_COMPLETE (or qa-engineer outputs VERIFICATION_PASS):
+1. Run verification layers (section 7) before advancing
 2. If all verifications pass, proceed to state update
 
-If spec-executor does NOT output TASK_COMPLETE:
+If no completion signal:
 1. Increment taskIteration in state file
 2. If taskIteration > maxTaskIterations: Error "Max retries reached for task $taskIndex"
 3. Otherwise: Retry the same task
 
-### 10. Verification Layers
+### 7. Verification Layers
 
 CRITICAL: Run these 4 verifications BEFORE advancing taskIndex. All must pass.
 
@@ -345,7 +308,6 @@ Verify spec-executor explicitly output TASK_COMPLETE:
 If TASK_COMPLETE missing:
 - Do NOT advance
 - Increment taskIteration and retry
-- Already handled in section 9, but verify signal is unambiguous
 
 **Verification Summary**
 
@@ -355,9 +317,9 @@ All 4 layers must pass:
 3. Checkmark count matches expected taskIndex + 1
 4. Explicit TASK_COMPLETE signal present
 
-Only after all verifications pass, proceed to State Update (section 11).
+Only after all verifications pass, proceed to State Update (section 8).
 
-### 11. State Update Logic
+### 8. State Update
 
 After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
 
@@ -384,20 +346,39 @@ State structure:
 }
 ```
 
-5. Check if all tasks complete:
-   - If taskIndex >= totalTasks:
-     - Verify all tasks marked [x] in tasks.md
-     - Delete .ralph-state.json (cleanup execution state)
-     - Keep .progress.md (preserve learnings and history)
-     - Output ALL_TASKS_COMPLETE
-   - If taskIndex < totalTasks:
-     - Continue to next iteration (loop will re-invoke coordinator)
+Check if all tasks complete:
+- If taskIndex >= totalTasks: proceed to section 10 (Completion Signal)
+- If taskIndex < totalTasks: continue to next iteration (loop re-invokes coordinator)
 
-### 12. Completion Signal
+### 9. Progress Merge
+
+**Parallel Only**: After parallel batch completes:
+
+1. Read each temp progress file (.progress-task-N.md)
+2. Extract completed task entries and learnings
+3. Append to main .progress.md in task index order
+4. Delete temp files after merge
+
+Merge format in .progress.md:
+```markdown
+## Completed Tasks
+- [x] 3.1 Task A - abc123
+- [x] 3.2 Task B - def456  <- merged from temp files
+- [x] 3.3 Task C - ghi789
+```
+
+If any parallel task failed (no TASK_COMPLETE), note in learnings and retry that task only.
+
+### 10. Completion Signal
 
 Output exactly `ALL_TASKS_COMPLETE` (on its own line) when:
 - taskIndex >= totalTasks AND
 - All tasks marked [x] in tasks.md
+
+Before outputting:
+1. Verify all tasks marked [x] in tasks.md
+2. Delete .ralph-state.json (cleanup execution state)
+3. Keep .progress.md (preserve learnings and history)
 
 This signal terminates the Ralph Wiggum loop.
 
