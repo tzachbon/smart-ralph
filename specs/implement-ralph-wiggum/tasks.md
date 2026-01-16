@@ -13,7 +13,7 @@ Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator
   - _Requirements: FR-3, AC-3.1, AC-3.2, AC-3.3_
   - _Design: File Structure_
 
-- [ ] 1.2 Create minimal implement.md wrapper with dependency check
+- [x] 1.2 Create minimal implement.md wrapper with dependency check
   - **Do**: Rewrite implement.md as thin wrapper that:
     1. Reads spec from .current-spec
     2. Validates prerequisites (spec dir, tasks.md exist)
