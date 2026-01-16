@@ -187,12 +187,12 @@ After POC validated, clean up code and documentation.
 - [x] 2.5 Update README with breaking change documentation
   - **Do**: Update README.md to:
     1. Add "Requirements" section listing Ralph Wiggum dependency
-    2. Add installation command: `/plugin install ralph-wiggum@claude-plugins-official`
+    2. Add installation command: `/plugin install ralph-loop@claude-plugins-official`
     3. Add "Breaking Changes" section for v2.0.0
     4. Update troubleshooting for new error messages
   - **Files**: `README.md`
   - **Done when**: README documents Ralph Wiggum dependency clearly
-  - **Verify**: `grep -q "ralph-wiggum@claude-plugins-official" README.md && grep -q "2.0.0" README.md && echo "PASS"`
+  - **Verify**: `grep -q "ralph-loop@claude-plugins-official" README.md && grep -q "2.0.0" README.md && echo "PASS"`
   - **Commit**: `docs(readme): document Ralph Wiggum dependency and breaking change`
   - _Requirements: FR-10, AC-4.3, AC-4.4_
   - _Design: Migration Notes_
@@ -300,7 +300,7 @@ Manual verification for markdown-only plugin.
 - Version bump to 2.0.0 (breaking change)
 
 ## Breaking Change
-Requires Ralph Wiggum plugin: \`/plugin install ralph-wiggum@claude-plugins-official\`
+Requires Ralph Wiggum plugin: \`/plugin install ralph-loop@claude-plugins-official\`
 
 ## Test Plan
 - [ ] Verify implement.md invokes /ralph-loop

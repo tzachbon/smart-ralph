@@ -54,7 +54,7 @@ Replace the custom stop-handler loop mechanism in `/implement` with the official
 
 **Acceptance Criteria:**
 - [ ] AC-4.1: `/implement` checks if Ralph Wiggum plugin is available
-- [ ] AC-4.2: If missing, error message includes: `/plugin install ralph-wiggum@claude-plugins-official`
+- [ ] AC-4.2: If missing, error message includes: `/plugin install ralph-loop@claude-plugins-official`
 - [ ] AC-4.3: README documents Ralph Wiggum as required dependency
 - [ ] AC-4.4: Migration guide documents this breaking change
 
@@ -151,7 +151,7 @@ Replace the custom stop-handler loop mechanism in `/implement` with the official
 
 ## Dependencies
 
-- **Ralph Wiggum plugin**: Must be installed via `/plugin install ralph-wiggum@claude-plugins-official`
+- **Ralph Wiggum plugin**: Must be installed via `/plugin install ralph-loop@claude-plugins-official`
 - **Claude Code hooks**: Ralph Wiggum relies on Stop hook mechanism
 - **Task tool**: Subagent delegation requires Task tool support
 
