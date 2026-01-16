@@ -63,7 +63,7 @@ smart-ralph/
 │       │   └── plugin.json      # Plugin manifest
 │       ├── agents/              # Sub-agent definitions
 │       ├── commands/            # Slash command implementations
-│       ├── hooks/               # Lifecycle hooks
+│       ├── hooks/               # Stop watcher (logging only)
 │       ├── templates/           # Spec file templates
 │       └── schemas/             # JSON schemas for validation
 └── README.md

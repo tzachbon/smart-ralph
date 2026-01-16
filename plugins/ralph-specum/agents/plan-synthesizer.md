@@ -65,7 +65,7 @@ jq '.phase = "execution" | .totalTasks = <count> | .taskIndex = 0' ./specs/<spec
 ```
 
 **Why this matters:**
-The stop-handler only blocks and continues to next task when `phase == "execution"`. If phase remains "tasks", the stop-handler will allow stopping and break the task loop.
+The Ralph Wiggum loop only continues to the next task when `phase == "execution"`. If phase remains "tasks", the loop will allow stopping and break the task execution.
 
 This step is NON-NEGOTIABLE. Failure to update state will break the entire execution flow.
 </mandatory>

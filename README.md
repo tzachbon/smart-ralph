@@ -37,11 +37,26 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ---
 
+## Requirements
+
+**v2.0.0+** requires the Ralph Wiggum plugin for task execution:
+
+```bash
+/plugin install ralph-wiggum@claude-plugins-official
+```
+
+Ralph Wiggum provides the execution loop. Smart Ralph provides the spec-driven workflow on top.
+
+---
+
 ## Installation
 
 ### From Marketplace
 
 ```bash
+# Install Ralph Wiggum dependency first
+/plugin install ralph-wiggum@claude-plugins-official
+
 # Add the marketplace
 /plugin marketplace add tzachbon/smart-ralph
 
@@ -54,12 +69,18 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 ### From GitHub
 
 ```bash
+# Install Ralph Wiggum dependency first
+/plugin install ralph-wiggum@claude-plugins-official
+
 /plugin install https://github.com/tzachbon/smart-ralph
 ```
 
 ### Local Development
 
 ```bash
+# Install Ralph Wiggum dependency first
+/plugin install ralph-wiggum@claude-plugins-official
+
 git clone https://github.com/tzachbon/smart-ralph.git
 cd smart-ralph/plugins/ralph-specum
 claude --plugin-dir $(pwd)
@@ -174,7 +195,7 @@ smart-ralph/
 │       │   └── plugin.json
 │       ├── agents/           # Sub-agent definitions
 │       ├── commands/         # Slash commands
-│       ├── hooks/            # Lifecycle hooks
+│       ├── hooks/            # Stop watcher (logging only)
 │       ├── templates/        # Spec templates
 │       └── schemas/          # Validation schemas
 └── README.md
@@ -200,14 +221,48 @@ Specs live in `./specs/` in your project:
 
 ## Troubleshooting
 
+**"Ralph Wiggum plugin not found"?**
+Install the dependency: `/plugin install ralph-wiggum@claude-plugins-official`
+
 **Task keeps failing?**
-After 5 attempts, the hook blocks with an error. Fix manually, then `/ralph-specum:implement` to resume.
+After max iterations, the loop stops. Check `.progress.md` for errors. Fix manually, then `/ralph-specum:implement` to resume.
 
 **Want to start over?**
-`/ralph-specum:cancel` cleans up state. Then start fresh.
+`/ralph-specum:cancel` cleans up state (both Ralph Wiggum and Smart Ralph state files). Then start fresh.
 
 **Resume existing spec?**
 Just `/ralph-specum:start` - it auto-detects and continues where you left off.
+
+**"Loop state conflict"?**
+Another Ralph loop may be running. Use `/cancel-ralph` to reset Ralph Wiggum state, then retry.
+
+---
+
+## Breaking Changes
+
+### v2.0.0
+
+**Ralph Wiggum dependency required**
+
+Starting with v2.0.0, Smart Ralph delegates task execution to the official Ralph Wiggum plugin.
+
+**Migration from v1.x:** See [MIGRATION.md](MIGRATION.md) for detailed guide.
+
+Quick version:
+1. Install Ralph Wiggum: `/plugin install ralph-wiggum@claude-plugins-official`
+2. Restart Claude Code
+3. Existing specs continue working. No spec file changes needed.
+
+**What changed:**
+- Custom stop-handler removed. Ralph Wiggum provides the execution loop.
+- `/implement` now invokes `/ralph-loop` internally
+- `/cancel` now calls `/cancel-ralph` for cleanup
+- Same task format, same verification, same workflow. Just different internals.
+
+**Why:**
+- Less code to maintain (deleted ~300 lines of bash)
+- Official plugin gets updates and fixes
+- Better reliability for the execution loop
 
 ---
 

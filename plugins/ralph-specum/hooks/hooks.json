@@ -2,11 +2,10 @@
   "hooks": {
     "Stop": [
       {
-        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/stop-handler.sh\""
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/stop-watcher.sh"
           }
         ]
       }

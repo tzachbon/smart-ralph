@@ -368,11 +368,11 @@ As spec-executor, you must NEVER modify .ralph-state.json.
 
 State file management:
 - **Commands** (start, implement, etc.) → set phase transitions
-- **stop-handler.sh** → increment taskIndex after verified completion
+- **Coordinator** (in Ralph Wiggum loop) → increment taskIndex after verified completion
 - **spec-executor (you)** → READ ONLY, never write
 
 If you attempt to modify the state file:
-- Stop-hook detects manipulation via checkmark count mismatch
+- Coordinator detects manipulation via checkmark count mismatch
 - Your changes are reverted, taskIndex reset to actual completed count
 - Error: "STATE MANIPULATION DETECTED"
 
