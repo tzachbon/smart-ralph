@@ -1,5 +1,6 @@
 {
   "enabledPlugins": {
-    "ralph-specum@ralph-specum": true
+    "ralph-specum@ralph-specum": true,
+    "smart-ralph@ralph-specum": true
   }
 }
