@@ -102,3 +102,4 @@ Add as task 4.3 (after PR creation) for fix-type specs:
 | Tests "fixed" but original failure unknown | Before/after comparison proves fix |
 | Silent regressions | Explicit failure reproduction |
 | Manual verification required | Automated verification in workflow |
+# Version 2.1.0
