@@ -8,536 +8,239 @@ allowed-tools: [Read, Write, Edit, Task, Bash, Skill]
 
 You are starting the task execution loop with Beads dependency-aware task scheduling.
 
-## Beads Dependency Check (REQUIRED)
+## Prerequisites Check
 
-**BEFORE proceeding**, verify Beads is installed:
+### 1. Beads (REQUIRED)
 
 ```bash
-bd --version || { echo "ERROR: Beads is required for Smart Ralph v3.0. Install with: brew install steveyegge/tap/beads"; exit 1; }
+bd --version || { echo "ERROR: Beads required. Install: brew install steveyegge/tap/beads"; exit 1; }
 ```
 
-If Beads is not installed:
-1. Output error: "ERROR: Beads not installed. Smart Ralph v3.0 requires Beads for dependency-aware task execution."
-2. Output: "Install with: brew install steveyegge/tap/beads"
-3. STOP execution immediately. Do NOT continue.
+If Beads is not installed, STOP and output the error.
 
-If Beads is installed:
-1. Initialize Beads if not already: `bd init 2>/dev/null || true`
-2. Set beadsEnabled=true in state file
+### 2. Ralph Wiggum Plugin (REQUIRED)
 
-## Ralph Wiggum Dependency Check
+Verify by attempting to invoke `ralph-wiggum:ralph-loop`. If skill not found, output:
+"ERROR: Ralph Wiggum plugin not found. Install: /plugin install ralph-loop@claude-plugins-official"
 
-**BEFORE proceeding**, verify Ralph Wiggum plugin is installed by attempting to invoke the skill.
+### 3. Active Spec
 
-If the Skill tool fails with "skill not found" or similar error for `ralph-wiggum:ralph-loop`:
-1. Output error: "ERROR: Ralph Wiggum plugin not found. Install with: /plugin install ralph-loop@claude-plugins-official"
-2. STOP execution immediately. Do NOT continue.
+```bash
+cat ./specs/.current-spec
+```
 
-This is a hard dependency. The command cannot function without Ralph Wiggum.
+If missing: "ERROR: No active spec. Run /ralph-specum:new <name> first."
 
-## Determine Active Spec
+### 4. Tasks File
 
-1. Read `./specs/.current-spec` to get active spec name
-2. If file missing or empty: error "No active spec. Run /ralph-specum:new <name> first."
+Check `./specs/$spec/tasks.md` exists. If not: "ERROR: Tasks not found. Run /ralph-specum:tasks first."
 
-## Validate Prerequisites
+### 5. Beads Spec Issue
 
-1. Check `./specs/$spec/` directory exists
-2. Check `./specs/$spec/tasks.md` exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
+Read the Beads spec ID from research.md:
+```bash
+grep -oP 'Spec Issue: \Kbd-[a-f0-9]+' ./specs/$spec/research.md
+```
+
+If not found, create one:
+```bash
+SPEC_ID=$(bd create --title "$spec" --type epic --json | jq -r '.id')
+```
 
 ## Parse Arguments
 
 From `$ARGUMENTS`:
 - **--max-task-iterations**: Max retries per task (default: 5)
 
-## Initialize Execution State
-
-1. Count total tasks in tasks.md (lines matching `- [ ]` or `- [x]`)
-2. Count already completed tasks (lines matching `- [x]`)
-3. Set taskIndex to first incomplete task
-
-Write `.ralph-state.json`:
-```json
-{
-  "phase": "execution",
-  "taskIndex": <first incomplete>,
-  "totalTasks": <count>,
-  "taskIteration": 1,
-  "maxTaskIterations": <parsed from --max-task-iterations or default 5>,
-  "beadsEnabled": <true if Beads available>,
-  "beadsSpecId": <from previous phase if exists>
-}
-```
-
 ## Invoke Ralph Loop
 
-Calculate max iterations: `totalTasks * maxTaskIterations * 2`
+### Step 1: Write Coordinator Prompt
 
-### Step 1: Write Coordinator Prompt to File
+Write the coordinator prompt to `./specs/$spec/.coordinator-prompt.md`.
 
-Write the ENTIRE coordinator prompt (from section below) to `./specs/$spec/.coordinator-prompt.md`.
-
-This file contains the full instructions for task execution. Writing it to a file avoids shell argument parsing issues with the multi-line prompt.
-
-### Step 2: Invoke Ralph Loop Skill
-
-Use the Skill tool to invoke `ralph-loop:ralph-loop` with args:
+### Step 2: Invoke Skill
 
 ```
-Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
+ralph-wiggum:ralph-loop Read ./specs/$spec/.coordinator-prompt.md and follow instructions. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
 ```
-
-Replace `$spec` with the actual spec name and `<calculated>` with the calculated max iterations value.
 
 ## Coordinator Prompt
 
-Write this prompt to `./specs/$spec/.coordinator-prompt.md`:
+Write this to `./specs/$spec/.coordinator-prompt.md`:
 
 ```
 You are the execution COORDINATOR for spec: $spec
+Beads Spec ID: $SPEC_ID
 
 ### 1. Role Definition
 
 You are a COORDINATOR, NOT an implementer. Your job is to:
-- Use Beads `bd list --ready` to find executable tasks (if Beads enabled)
+- Query Beads for ready tasks: `bd list --ready --json`
 - Delegate task execution to spec-executor via Task tool
-- Track completion and signal when all tasks done
+- Pass Beads issue ID to spec-executor for each task
 - Run `bd sync` on completion
 
-CRITICAL: You MUST delegate via Task tool. Do NOT implement tasks yourself.
-You are fully autonomous. NEVER ask questions or wait for user input.
+CRITICAL: Delegate via Task tool. Do NOT implement tasks yourself.
+Fully autonomous. NEVER ask questions or wait for user input.
 
-### 1.5. Beads Verification
+### 2. Find Ready Tasks
 
-Verify Beads is working:
+Query Beads for unblocked tasks:
+
 ```bash
-bd --version || { echo "ERROR: Beads required"; exit 1; }
+bd list --ready --parent $SPEC_ID --json
 ```
 
-Smart Ralph v3.0 always uses Beads for task selection. Use `bd list --ready` (section 4.5) for all task selection.
+This returns tasks with no blocking dependencies.
 
-### 2. Read State
-
-Read `./specs/$spec/.ralph-state.json` to get current state:
-
-```json
-{
-  "phase": "execution",
-  "taskIndex": <current task index, 0-based>,
-  "totalTasks": <total task count>,
-  "taskIteration": <retry count for current task>,
-  "maxTaskIterations": <max retries>
-}
-```
-
-**ERROR: Missing/Corrupt State File**
-
-If state file missing or corrupt (invalid JSON, missing required fields):
-1. Output error: "ERROR: State file missing or corrupt at ./specs/$spec/.ralph-state.json"
-2. Suggest: "Run /ralph-specum:implement to reinitialize execution state"
-3. Do NOT continue execution
-4. Do NOT output ALL_TASKS_COMPLETE
+**Parse the result**:
+- Extract task IDs from issue titles (e.g., "1.1 Setup config" → task ID "1.1")
+- Extract Beads issue IDs (e.g., "bd-abc123")
 
 ### 3. Check Completion
 
-If taskIndex >= totalTasks:
-1. Verify all tasks marked [x] in tasks.md
-2. Delete .ralph-state.json (cleanup)
-3. Output: ALL_TASKS_COMPLETE
-4. STOP - do not delegate any task
-
-### 4. Parse Current Task
-
-Read `./specs/$spec/tasks.md` and find the task at taskIndex (0-based).
-
-**ERROR: Missing tasks.md**
-
-If tasks.md does not exist:
-1. Output error: "ERROR: Tasks file missing at ./specs/$spec/tasks.md"
-2. Suggest: "Run /ralph-specum:tasks to generate task list"
-3. Do NOT continue execution
-4. Do NOT output ALL_TASKS_COMPLETE
-
-**ERROR: Missing Spec Directory**
-
-If spec directory does not exist (./specs/$spec/):
-1. Output error: "ERROR: Spec directory missing at ./specs/$spec/"
-2. Suggest: "Run /ralph-specum:new <spec-name> to create a new spec"
-3. Do NOT continue execution
-4. Do NOT output ALL_TASKS_COMPLETE
-
-Tasks follow this format:
-```
-- [ ] X.Y Task description
-  - **Do**: Steps to execute
-  - **Files**: Files to modify
-  - **Done when**: Success criteria
-  - **Verify**: Verification command
-  - **Commit**: Commit message
-```
-
-Extract the full task block including all bullet points under it.
-
-Detect markers in task description:
-- [P] = parallel task (can run with adjacent [P] tasks)
-- [VERIFY] = verification task (delegate to qa-engineer)
-- No marker = sequential task
-
-### 4.5. Beads-Based Task Selection
-
-Use `bd list --ready` to find executable tasks:
-
 ```bash
-# Get all ready (unblocked) tasks
-READY_TASKS=$(bd list --ready --json)
+OPEN_COUNT=$(bd list --open --parent $SPEC_ID --json | jq 'length')
 ```
 
-This returns tasks with no blocking dependencies. Parse JSON to extract task IDs.
+If OPEN_COUNT = 0:
+1. Run Land the Plane protocol (section 8)
+2. Output: ALL_TASKS_COMPLETE
+3. STOP
 
-**Single Ready Task**:
-- Execute the single ready task
+### 4. Task Delegation
 
-**Multiple Ready Tasks** (true parallelism):
-- Spawn multiple spec-executor Task tool calls in ONE message
-- Each gets a unique progressFile
-- True parallel execution without manual [P] detection
+For each ready task from Beads:
 
-**No Ready Tasks**:
-- All tasks blocked or complete
-- Check if all closed: `bd list --open --json | jq 'length'`
-- If 0 open tasks: proceed to completion
-- If >0 open tasks but none ready: circular dependency or error
-
-**Map Beads ID to Task**:
-
-Read task_beads_map from tasks.md frontmatter to find task details:
+**Extract task block from tasks.md**:
 ```bash
-# Get task ID from Beads issue title (e.g., "1.1 Setup config" -> "1.1")
-TASK_ID=$(echo "$BEADS_TITLE" | grep -oE '^[0-9]+\.[0-9]+')
+# Find task block by ID (e.g., "1.1")
+grep -A 10 "^\- \[ \] $TASK_ID" ./specs/$spec/tasks.md
 ```
 
-Then find the task block in tasks.md matching that ID.
+**Delegate to spec-executor via Task tool**:
 
-**Benefits over taskIndex**:
-- Automatic parallel detection (no [P] markers needed)
-- Complex dependency graphs supported
-- No manual parallel group detection
-- Transitive dependencies resolved automatically
-
-### 5. Parallel Group Detection (Legacy Mode)
-
-If current task has [P] marker, scan for consecutive [P] tasks starting from taskIndex.
-
-Build parallelGroup structure:
-```json
-{
-  "startIndex": <first [P] task index>,
-  "endIndex": <last consecutive [P] task index>,
-  "taskIndices": [startIndex, startIndex+1, ..., endIndex],
-  "isParallel": true
-}
 ```
+Task: Execute task $TASK_ID for spec $spec
 
-Rules:
-- Adjacent [P] tasks form a single parallel batch
-- Non-[P] task breaks the sequence
-- Single [P] task treated as sequential (no parallelism benefit)
+beadsId: $BEADS_ISSUE_ID
+taskId: $TASK_ID
+specPath: ./specs/$spec
 
-If no [P] marker on current task, set:
-```json
-{
-  "startIndex": <taskIndex>,
-  "endIndex": <taskIndex>,
-  "taskIndices": [taskIndex],
-  "isParallel": false
-}
-```
-
-### 6. Task Delegation
-
-**[VERIFY] Task Detection**:
-
-Before standard delegation, check if current task has [VERIFY] marker.
-Look for `[VERIFY]` in task description line (e.g., `- [ ] 1.4 [VERIFY] Quality checkpoint`).
-
-If [VERIFY] marker present:
-1. Do NOT delegate to spec-executor
-2. Delegate to qa-engineer via Task tool instead
-3. [VERIFY] tasks are ALWAYS sequential (break parallel groups)
-
-Delegate [VERIFY] task to qa-engineer:
-```
-Task: Execute verification task $taskIndex for spec $spec
-
-Spec: $spec
-Path: ./specs/$spec/
-
-Task: [Full task description]
-
-Task Body:
-[Include Do, Verify, Done when sections]
+Task block:
+[Include full task specification from tasks.md]
 
 Instructions:
-1. Execute the verification as specified
-2. If issues found, attempt to fix them
-3. Output VERIFICATION_PASS if verification succeeds
-4. Output VERIFICATION_FAIL if verification fails and cannot be fixed
-```
-
-Handle qa-engineer response:
-- VERIFICATION_PASS: Treat as TASK_COMPLETE, mark task [x], update .progress.md
-- VERIFICATION_FAIL: Do NOT mark complete, increment taskIteration, retry or error if max reached
-
-**Sequential Execution** (parallelGroup.isParallel = false, no [VERIFY]):
-
-Delegate ONE task to spec-executor via Task tool:
-
-```
-Task: Execute task $taskIndex for spec $spec
-
-Spec: $spec
-Path: ./specs/$spec/
-Task index: $taskIndex
-
-Context from .progress.md:
-[Include relevant context]
-
-Current task from tasks.md:
-[Include full task block]
-
-Instructions:
-1. Read Do section and execute exactly
+1. Execute Do steps exactly as specified
 2. Only modify Files listed
-3. Verify completion with Verify command
-4. Commit with task's Commit message
-5. Update .progress.md with completion and learnings
-6. Mark task [x] in tasks.md
+3. Run Verify command (must pass)
+4. Commit with Beads ID: git commit -m "type(scope): msg ($BEADS_ISSUE_ID)"
+5. Close Beads issue: bd close $BEADS_ISSUE_ID --reason "completed"
+6. Update tasks.md checkmark (for human readability)
 7. Output TASK_COMPLETE when done
 ```
 
-Wait for spec-executor to complete. It will output TASK_COMPLETE on success.
+**Multiple Ready Tasks (parallel execution)**:
 
-**Parallel Execution** (parallelGroup.isParallel = true):
+If `bd list --ready` returns multiple tasks, spawn multiple Task tool calls in ONE message for true parallelism:
 
-CRITICAL: Spawn MULTIPLE Task tool calls in ONE message. This enables true parallelism.
-
-For each task index in parallelGroup.taskIndices, create a Task tool call with:
-- Unique progressFile: `.progress-task-$taskIndex.md`
-- Full task block from tasks.md
-- Same instructions as sequential but writing to temp progress file
-
-Example for parallel batch of tasks 3, 4, 5:
 ```
 [Task tool call 1]
-Task: Execute task 3 for spec $spec
-progressFile: .progress-task-3.md
+beadsId: bd-abc123
+taskId: 1.3
 ...
 
 [Task tool call 2]
-Task: Execute task 4 for spec $spec
-progressFile: .progress-task-4.md
-...
-
-[Task tool call 3]
-Task: Execute task 5 for spec $spec
-progressFile: .progress-task-5.md
+beadsId: bd-def456
+taskId: 1.4
 ...
 ```
 
-All parallel tasks execute simultaneously. Wait for ALL to complete.
+Each parallel task gets a unique progressFile.
 
-**After Delegation**:
+### 5. [VERIFY] Task Handling
 
-If spec-executor outputs TASK_COMPLETE (or qa-engineer outputs VERIFICATION_PASS):
-1. Run verification layers (section 7) before advancing
-2. If all verifications pass, proceed to state update
+If task title contains "[VERIFY]":
+1. Delegate to qa-engineer instead of spec-executor
+2. Pass same beadsId and taskId
+3. On VERIFICATION_PASS: Close Beads issue
+4. On VERIFICATION_FAIL: Retry (up to max iterations)
 
-If no completion signal:
-1. Increment taskIteration in state file
-2. If taskIteration > maxTaskIterations: proceed to max retries error handling
-3. Otherwise: Retry the same task
+### 6. Handle Completion
 
-**ERROR: Max Retries Reached**
+On TASK_COMPLETE from spec-executor:
+- Beads issue should already be closed by spec-executor
+- Verify with: `bd show $BEADS_ISSUE_ID --json | jq '.status'`
+- If not closed, close it: `bd close $BEADS_ISSUE_ID`
+- Loop back to section 2 (Find Ready Tasks)
 
-If taskIteration exceeds maxTaskIterations:
-1. Output error: "ERROR: Max retries reached for task $taskIndex after $maxTaskIterations attempts"
-2. Include last error/failure reason from spec-executor output
-3. Suggest: "Review .progress.md Learnings section for failure details"
-4. Suggest: "Fix the issue manually then run /ralph-specum:implement to resume"
-5. Do NOT continue execution
-6. Do NOT output ALL_TASKS_COMPLETE
+On failure (no TASK_COMPLETE):
+- Increment retry count (track in memory or temp file)
+- If retries exceed --max-task-iterations: output error and stop
+- Otherwise: retry the same task
 
-### 7. Verification Layers
+### 7. Retry Tracking
 
-CRITICAL: Run these 4 verifications BEFORE advancing taskIndex. All must pass.
+Track retries per task in memory during coordinator execution:
+- taskRetries = { "bd-abc123": 1, "bd-def456": 2, ... }
+- Increment on failure
+- If taskRetries[id] > maxIterations: error and stop
 
-**Layer 1: CONTRADICTION Detection**
+### 8. Land the Plane Protocol
 
-Check spec-executor output for contradiction patterns:
-- "requires manual"
-- "cannot be automated"
-- "could not complete"
-- "needs human"
-- "manual intervention"
-
-If TASK_COMPLETE appears alongside any contradiction phrase:
-- REJECT the completion
-- Log: "CONTRADICTION: claimed completion while admitting failure"
-- Increment taskIteration and retry
-
-**Layer 2: Uncommitted Spec Files Check**
-
-Before advancing, verify spec files are committed:
+When all Beads issues are closed:
 
 ```bash
-git status --porcelain ./specs/$spec/tasks.md ./specs/$spec/.progress.md
+# Check for orphaned work
+bd doctor
+
+# Sync to git
+git pull --rebase
+bd sync
+git push
+
+# Verify clean state
+git status
 ```
 
-If output is non-empty (uncommitted changes):
-- REJECT the completion
-- Log: "uncommitted spec files detected - task not properly committed"
-- Increment taskIteration and retry
+Then output: ALL_TASKS_COMPLETE
 
-All spec file changes must be committed before task is considered complete.
+### 9. Error Handling
 
-**Layer 3: Checkmark Verification**
-
-Count completed tasks in tasks.md:
-
-```bash
-grep -c '\- \[x\]' ./specs/$spec/tasks.md
+**Max Retries Reached**:
+```
+ERROR: Max retries ($max) reached for task $TASK_ID ($BEADS_ID)
+Review Beads issue notes: bd show $BEADS_ID
+Fix manually, then run /ralph-specum:implement to resume
 ```
 
-Expected checkmark count = taskIndex + 1 (0-based index, so task 0 complete = 1 checkmark)
-
-If actual count != expected:
-- REJECT the completion
-- Log: "checkmark mismatch: expected $expected, found $actual"
-- This detects state manipulation or incomplete task marking
-- Increment taskIteration and retry
-
-**Layer 4: TASK_COMPLETE Signal Verification**
-
-Verify spec-executor explicitly output TASK_COMPLETE:
-- Must be present in response
-- Not just implied or partial completion
-- Silent completion is not valid
-
-If TASK_COMPLETE missing:
-- Do NOT advance
-- Increment taskIteration and retry
-
-**Verification Summary**
-
-All 4 layers must pass:
-1. No contradiction phrases with completion claim
-2. Spec files committed (no uncommitted changes)
-3. Checkmark count matches expected taskIndex + 1
-4. Explicit TASK_COMPLETE signal present
-
-Only after all verifications pass, proceed to State Update (section 8).
-
-### 8. State Update
-
-After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
-
-**Sequential Update**:
-1. Read current .ralph-state.json
-2. Increment taskIndex by 1
-3. Reset taskIteration to 1
-4. Write updated state
-
-**Parallel Batch Update**:
-1. Read current .ralph-state.json
-2. Set taskIndex to parallelGroup.endIndex + 1 (jump past entire batch)
-3. Reset taskIteration to 1
-4. Write updated state
-
-State structure:
-```json
-{
-  "phase": "execution",
-  "taskIndex": <next task after current/batch>,
-  "totalTasks": <unchanged>,
-  "taskIteration": 1,
-  "maxTaskIterations": <unchanged>
-}
+**Circular Dependencies**:
+If `bd list --ready` returns empty but open issues exist:
+```
+ERROR: No ready tasks but $OPEN_COUNT issues still open
+Possible circular dependency. Check: bd list --open --parent $SPEC_ID
 ```
 
-Check if all tasks complete:
-- If taskIndex >= totalTasks: proceed to section 10 (Completion Signal)
-- If taskIndex < totalTasks: continue to next iteration (loop re-invokes coordinator)
-
-### 9. Progress Merge
-
-**Parallel Only**: After parallel batch completes:
-
-1. Read each temp progress file (.progress-task-N.md)
-2. Extract completed task entries and learnings
-3. Append to main .progress.md in task index order
-4. Delete temp files after merge
-
-Merge format in .progress.md:
-```markdown
-## Completed Tasks
-- [x] 3.1 Task A - abc123
-- [x] 3.2 Task B - def456  <- merged from temp files
-- [x] 3.3 Task C - ghi789
+**Missing Task Block**:
+If task ID from Beads not found in tasks.md:
 ```
-
-**ERROR: Partial Parallel Batch Failure**
-
-If any parallel task failed (no TASK_COMPLETE in its output):
-1. Identify which task(s) failed from the batch
-2. Note successful tasks in .progress.md
-3. For failed tasks, increment taskIteration
-4. If failed task exceeds maxTaskIterations: output "ERROR: Max retries reached for parallel task $failedTaskIndex"
-5. Otherwise: retry ONLY the failed task(s), do NOT re-run successful ones
-6. Do NOT advance taskIndex past the batch until ALL tasks in batch complete
-7. Merge only successful task progress files
-
-### 10. Completion Signal
-
-Output exactly `ALL_TASKS_COMPLETE` (on its own line) when:
-- taskIndex >= totalTasks AND
-- All tasks marked [x] in tasks.md
-- (Beads mode) All Beads issues closed
-
-Before outputting:
-1. Verify all tasks marked [x] in tasks.md
-2. **Beads Land the Plane Protocol** (if beadsEnabled):
-   ```bash
-   # Run bd doctor to check for orphaned work
-   bd doctor
-
-   # Sync Beads issues to git
-   git pull --rebase
-   bd sync
-   git push
-
-   # Verify clean state
-   git status  # Should show "up to date"
-   ```
-3. Delete .ralph-state.json (cleanup execution state)
-4. Keep .progress.md (preserve learnings and history)
-
-This signal terminates the Ralph Wiggum loop.
-
-Do NOT output ALL_TASKS_COMPLETE if tasks remain incomplete.
-Do NOT output TASK_COMPLETE (that's for spec-executor only).
+ERROR: Task $TASK_ID not found in tasks.md
+Beads issue $BEADS_ID exists but no matching task specification
+```
 ```
 
 ## Output on Start
 
 ```
 Starting execution for '$spec'
+Beads Spec: $SPEC_ID
 
-Tasks: $completed/$total completed
-Starting from task $taskIndex
+Querying ready tasks...
 
 The execution loop will:
-- Execute one task at a time
-- Continue until all tasks complete or max iterations reached
+- Execute tasks as dependencies are satisfied
+- Use Beads for tracking and parallel detection
+- Sync to git on completion
 
 Beginning execution...
 ```
