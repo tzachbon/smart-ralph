@@ -214,7 +214,7 @@ After POC validated, clean up code and documentation.
 
 Manual verification for markdown-only plugin.
 
-- [ ] 3.1 Verify implement.md structure completeness
+- [x] 3.1 Verify implement.md structure completeness
   - **Do**: Check implement.md has all required components:
     1. Frontmatter with description, argument-hint, allowed-tools
     2. Dependency check section
@@ -228,7 +228,7 @@ Manual verification for markdown-only plugin.
   - **Commit**: (none unless fixes needed)
   - _Requirements: AC-1.2, AC-1.3, AC-1.4_
 
-- [ ] 3.2 Verify cancel.md completeness
+- [x] 3.2 Verify cancel.md completeness
   - **Do**: Check cancel.md has:
     1. /cancel-ralph invocation
     2. .ralph-state.json deletion
@@ -240,7 +240,7 @@ Manual verification for markdown-only plugin.
   - **Commit**: (none unless fixes needed)
   - _Requirements: AC-6.1, AC-6.2, AC-6.3, AC-6.4_
 
-- [ ] 3.3 Verify plugin.json version
+- [x] 3.3 Verify plugin.json version
   - **Do**: Confirm version is exactly 2.0.0
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`
   - **Done when**: Version matches
@@ -248,7 +248,7 @@ Manual verification for markdown-only plugin.
   - **Commit**: (none unless fixes needed)
   - _Requirements: AC-11.1_
 
-- [ ] 3.4 [VERIFY] Quality checkpoint: full verification
+- [x] 3.4 [VERIFY] Quality checkpoint: full verification
   - **Do**: Run all verifications together
   - **Verify**: `! test -f plugins/ralph-specum/hooks/hooks.json && grep -q "2.0.0" plugins/ralph-specum/.claude-plugin/plugin.json && grep -q "ralph-wiggum" README.md && echo "ALL CHECKS PASS"`
   - **Done when**: All checks pass
@@ -256,7 +256,7 @@ Manual verification for markdown-only plugin.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 [VERIFY] Final file structure validation
+- [x] 4.1 [VERIFY] Final file structure validation
   - **Do**: Verify all file changes are correct:
     1. hooks/scripts/stop-handler.sh deleted
     2. hooks/hooks.json deleted
@@ -268,13 +268,13 @@ Manual verification for markdown-only plugin.
   - **Done when**: All structure checks pass
   - **Commit**: (none unless fixes needed)
 
-- [ ] 4.2 [VERIFY] CI pipeline passes
+- [x] 4.2 [VERIFY] CI pipeline passes
   - **Do**: Push changes and verify CI
   - **Verify**: `git status && echo "Ready for PR"`
   - **Done when**: Working tree clean, ready for PR
   - **Commit**: (none)
 
-- [ ] 4.3 [VERIFY] AC checklist verification
+- [x] 4.3 [VERIFY] AC checklist verification
   - **Do**: Programmatically verify acceptance criteria:
     - AC-1.5: implement.md < 1000 lines (wrapper + inline prompt)
     - AC-3.1: stop-handler.sh deleted
@@ -286,7 +286,7 @@ Manual verification for markdown-only plugin.
   - **Done when**: All acceptance criteria verified
   - **Commit**: (none)
 
-- [ ] 4.4 Create PR
+- [x] 4.4 Create PR
   - **Do**: Create pull request with:
     1. Title: "feat: integrate Ralph Wiggum loop mechanism"
     2. Summary of changes (wrapper, deleted hooks, version bump)
