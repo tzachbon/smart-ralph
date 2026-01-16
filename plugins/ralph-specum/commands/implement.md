@@ -145,7 +145,58 @@ If no [P] marker on current task, set:
 }
 ```
 
-### 6. Task Delegation
+### 6. [VERIFY] Task Detection and Delegation
+
+Before standard delegation, check if current task has [VERIFY] marker.
+
+**Detection**: Look for `[VERIFY]` in task description line (e.g., `- [ ] 1.4 [VERIFY] Quality checkpoint`)
+
+**[VERIFY] Task Handling**:
+
+If current task has [VERIFY] marker:
+1. Do NOT delegate to spec-executor
+2. Delegate to qa-engineer via Task tool instead
+3. [VERIFY] tasks are ALWAYS sequential (break parallel groups)
+
+Delegate [VERIFY] task to qa-engineer:
+
+```
+Task: Execute verification task $taskIndex for spec $spec
+
+Spec: $spec
+Path: ./specs/$spec/
+
+Task: [Full task description]
+
+Task Body:
+[Include Do, Verify, Done when sections]
+
+Instructions:
+1. Execute the verification as specified
+2. If issues found, attempt to fix them
+3. Output VERIFICATION_PASS if verification succeeds
+4. Output VERIFICATION_FAIL if verification fails and cannot be fixed
+```
+
+**Handling qa-engineer Response**:
+
+- VERIFICATION_PASS:
+  - Treat as TASK_COMPLETE (task succeeded)
+  - Mark task [x] in tasks.md
+  - Update .progress.md with pass status
+  - Proceed to state update
+
+- VERIFICATION_FAIL:
+  - Do NOT mark task complete
+  - Do NOT advance taskIndex
+  - Increment taskIteration
+  - Log failure details in .progress.md Learnings
+  - If taskIteration > maxTaskIterations: Error "Max retries for verification task $taskIndex"
+  - Otherwise: Retry same task
+
+After [VERIFY] handling, skip to section 9 (After Delegation).
+
+### 7. Task Delegation
 
 **Sequential Execution** (parallelGroup.isParallel = false):
 
@@ -205,7 +256,7 @@ progressFile: .progress-task-5.md
 
 All parallel tasks execute simultaneously. Wait for ALL to complete.
 
-### 7. Progress Merge (Parallel Only)
+### 8. Progress Merge (Parallel Only)
 
 After parallel batch completes:
 
@@ -224,7 +275,7 @@ Merge format in .progress.md:
 
 If any parallel task failed (no TASK_COMPLETE), note in learnings and retry that task only.
 
-### 8. After Delegation
+### 9. After Delegation
 
 After spec-executor outputs TASK_COMPLETE:
 1. Task completed successfully, proceed to state update
@@ -234,7 +285,7 @@ If spec-executor does NOT output TASK_COMPLETE:
 2. If taskIteration > maxTaskIterations: Error "Max retries reached for task $taskIndex"
 3. Otherwise: Retry the same task
 
-### 9. State Update Logic
+### 10. State Update Logic
 
 After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
 
@@ -270,7 +321,7 @@ State structure:
    - If taskIndex < totalTasks:
      - Continue to next iteration (loop will re-invoke coordinator)
 
-### 10. Completion Signal
+### 11. Completion Signal
 
 Output exactly `ALL_TASKS_COMPLETE` (on its own line) when:
 - taskIndex >= totalTasks AND

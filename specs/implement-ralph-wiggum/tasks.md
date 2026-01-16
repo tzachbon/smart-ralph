@@ -74,7 +74,7 @@ Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator
   - _Requirements: FR-7, AC-2.4_
   - _Design: Component 3 section 5, Parallel Group Detection, Parallel Executor Spawning_
 
-- [ ] 1.7 Add [VERIFY] task delegation to coordinator
+- [x] 1.7 Add [VERIFY] task delegation to coordinator
   - **Do**: Extend coordinator prompt to:
     1. Detect [VERIFY] marker on tasks
     2. Delegate to qa-engineer instead of spec-executor
