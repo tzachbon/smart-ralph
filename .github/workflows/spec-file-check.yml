@@ -1,0 +1,33 @@
+name: Spec File Check
+
+on:
+  pull_request:
+    paths:
+      - 'specs/**'
+
+jobs:
+  check-no-current-spec:
+    name: Verify .current-spec not committed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Check for .current-spec file
+        run: |
+          if [ -f "specs/.current-spec" ]; then
+            echo "❌ ERROR: specs/.current-spec should not be committed!"
+            echo ""
+            echo "This file is used for local state tracking and should remain local."
+            echo "Please remove it from your commit:"
+            echo ""
+            echo "  git rm --cached specs/.current-spec"
+            echo "  git commit --amend"
+            echo ""
+            echo "Consider adding it to .gitignore if not already present."
+            exit 1
+          fi
+
+          echo "✅ No .current-spec file found in specs/ directory"
