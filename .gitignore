@@ -7,6 +7,9 @@ specs/.current-spec
 **/.tasks.lock
 **/.git-commit.lock
 
+# Active spec pointer (user-specific)
+specs/.current-spec
+
 # OS files
 .DS_Store
 Thumbs.db
