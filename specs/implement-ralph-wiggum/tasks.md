@@ -184,7 +184,7 @@ After POC validated, clean up code and documentation.
   - _Requirements: FR-11, AC-11.1_
   - _Design: File Structure_
 
-- [ ] 2.5 Update README with breaking change documentation
+- [x] 2.5 Update README with breaking change documentation
   - **Do**: Update README.md to:
     1. Add "Requirements" section listing Ralph Wiggum dependency
     2. Add installation command: `/plugin install ralph-wiggum@claude-plugins-official`
