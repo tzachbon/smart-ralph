@@ -50,7 +50,7 @@ approach: wrapper
   - **Commit**: `docs(speckit): document spec-kit generated structure`
   - _Spec: FR-1_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: spec-kit bootstrap complete
+- [x] 1.4 [VERIFY] Quality checkpoint: spec-kit bootstrap complete
   - **Do**: Verify spec-kit files generated correctly. Check for plugin.json, commands/, templates/.
   - **Verify**: `ls -la plugins/ralph-speckit/.specify/`
   - **Done when**: Spec-kit directory structure exists
@@ -82,7 +82,7 @@ approach: wrapper
   - _Spec: FR-7, AC-5.2_
   - _Plan: Stop Watcher Hook_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: hook syntax valid
+- [x] 2.3 [VERIFY] Quality checkpoint: hook syntax valid
   - **Do**: Validate JSON and bash syntax
   - **Verify**: `jq . plugins/ralph-speckit/hooks/hooks.json && bash -n plugins/ralph-speckit/hooks/scripts/stop-watcher.sh`
   - **Done when**: Both commands exit 0
@@ -123,7 +123,7 @@ approach: wrapper
   - _Spec: AC-5.6_
   - _Plan: QA Engineer Agent_
 
-- [ ] 2.7 [VERIFY] Quality checkpoint: agents valid
+- [x] 2.7 [VERIFY] Quality checkpoint: agents valid
   - **Do**: Check both agents have valid frontmatter and correct path references
   - **Verify**: `head -10 plugins/ralph-speckit/agents/spec-executor.md && head -10 plugins/ralph-speckit/agents/qa-engineer.md`
   - **Done when**: Both agents have correct frontmatter structure
@@ -199,7 +199,7 @@ approach: wrapper
   - _Spec: AC-7.5_
   - _Plan: Cancel Command_
 
-- [ ] 3.6 [VERIFY] Quality checkpoint: session commands complete
+- [x] 3.6 [VERIFY] Quality checkpoint: session commands complete
   - **Do**: Verify all 5 session commands exist: implement, start, status, switch, cancel
   - **Verify**: `ls plugins/ralph-speckit/commands/{implement,start,status,switch,cancel}.md 2>/dev/null | wc -l`
   - **Done when**: Count shows 5
@@ -232,7 +232,7 @@ approach: wrapper
   - **Commit**: `chore(speckit): add gitignore entries`
   - _Plan: State file handling_
 
-- [ ] 4.3 [VERIFY] Quality checkpoint: plugin structure complete
+- [x] 4.3 [VERIFY] Quality checkpoint: plugin structure complete
   - **Do**: Verify plugin has: .specify/ (from spec-kit), hooks/, agents/, commands/, schemas/
   - **Verify**: `ls -d plugins/ralph-speckit/hooks plugins/ralph-speckit/agents plugins/ralph-speckit/commands plugins/ralph-speckit/schemas 2>/dev/null | wc -l`
   - **Done when**: Count shows 4
@@ -265,7 +265,7 @@ approach: wrapper
   - **Commit**: `test(speckit): verify stop-handler loop`
   - _Spec: FR-7, AC-5.2_
 
-- [ ] 5.3 [VERIFY] Quality checkpoint: e2e tests pass
+- [x] 5.3 [VERIFY] Quality checkpoint: e2e tests pass
   - **Do**: Confirm manual tests from 5.1 and 5.2 passed
   - **Verify**: Manual confirmation
   - **Done when**: All test scenarios passed
@@ -273,7 +273,7 @@ approach: wrapper
 
 ## Phase 6: Quality Gates
 
-- [ ] V1 [VERIFY] Full local verification
+- [x] V1 [VERIFY] Full local verification
   - **Do**: Verify all plugin files valid:
     - hooks.json is valid JSON
     - stop-watcher.sh passes bash syntax check
@@ -283,13 +283,13 @@ approach: wrapper
   - **Done when**: All validation commands exit 0
   - **Commit**: `chore(speckit): pass local verification` (if fixes needed)
 
-- [ ] V2 [VERIFY] CI pipeline passes
+- [x] V2 [VERIFY] CI pipeline passes
   - **Do**: Push branch, verify GitHub Actions/CI passes
   - **Verify**: `gh pr checks --watch` shows all green
   - **Done when**: CI pipeline passes
   - **Commit**: None
 
-- [ ] V3 [VERIFY] AC checklist
+- [x] V3 [VERIFY] AC checklist
   - **Do**: Read requirements.md, verify each key AC is satisfied:
     - AC-5.1: Spec files committed before implementation
     - AC-5.2: Stop-handler reads state and advances taskIndex

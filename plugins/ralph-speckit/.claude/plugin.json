@@ -1,0 +1,10 @@
+{
+  "name": "ralph-speckit",
+  "version": "0.1.0",
+  "description": "Spec-driven development using GitHub spec-kit methodology. Constitution-first approach with specify, plan, tasks, and implement phases.",
+  "author": {
+    "name": "tzachbon"
+  },
+  "license": "MIT",
+  "keywords": ["ralph", "speckit", "spec-driven", "constitution", "specify", "plan", "tasks", "implement"]
+}
