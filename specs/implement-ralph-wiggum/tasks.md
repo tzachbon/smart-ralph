@@ -169,13 +169,13 @@ After POC validated, clean up code and documentation.
   - **Commit**: `refactor(implement): add error handling to coordinator`
   - _Design: Error Handling_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: structure review
+- [x] 2.3 [VERIFY] Quality checkpoint: structure review
   - **Do**: Verify implement.md and cancel.md have clean structure
   - **Verify**: `wc -l plugins/ralph-specum/commands/implement.md plugins/ralph-specum/commands/cancel.md`
   - **Done when**: Files have reasonable line counts
   - **Commit**: (none unless fixes needed)
 
-- [ ] 2.4 Bump plugin version to 2.0.0
+- [x] 2.4 Bump plugin version to 2.0.0
   - **Do**: Update plugin.json version from 1.6.1 to 2.0.0. This signals breaking change.
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`
   - **Done when**: Version is 2.0.0
