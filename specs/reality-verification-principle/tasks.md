@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Create skill file and add detection to plan-synthesizer. Skip qa-engineer for now.
 
-- [ ] 1.1 Create reality-verification SKILL.md
+- [x] 1.1 Create reality-verification SKILL.md
   - **Do**:
     1. Create directory `plugins/ralph-specum/skills/reality-verification/`
     2. Create SKILL.md with goal detection heuristics table
