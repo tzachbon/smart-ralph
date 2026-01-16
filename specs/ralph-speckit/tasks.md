@@ -305,7 +305,7 @@ approach: wrapper
   - **Done when**: All key acceptance criteria confirmed met
   - **Commit**: None
 
-- [ ] V4 Create PR
+- [x] V4 Create PR
   - **Do**:
     1. Verify on feature branch: `git branch --show-current`
     2. Push: `git push -u origin $(git branch --show-current)`
