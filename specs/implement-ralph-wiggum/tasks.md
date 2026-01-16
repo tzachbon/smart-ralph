@@ -4,7 +4,7 @@
 
 Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator logic.
 
-- [ ] 1.1 Delete custom stop-handler files
+- [x] 1.1 Delete custom stop-handler files
   - **Do**: Remove hooks/scripts/stop-handler.sh and hooks/hooks.json. These are replaced by Ralph Wiggum's stop-hook.
   - **Files**: `plugins/ralph-specum/hooks/scripts/stop-handler.sh`, `plugins/ralph-specum/hooks/hooks.json`
   - **Done when**: Both files deleted, hooks directory empty or contains only README
