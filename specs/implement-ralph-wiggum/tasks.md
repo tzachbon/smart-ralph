@@ -60,7 +60,7 @@ Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator
   - _Requirements: FR-5, AC-5.1, AC-5.2_
   - _Design: Component 4_
 
-- [ ] 1.6 Add parallel [P] task support to coordinator
+- [x] 1.6 Add parallel [P] task support to coordinator
   - **Do**: Extend coordinator prompt to:
     1. Detect [P] markers on tasks
     2. Build parallelGroup structure
