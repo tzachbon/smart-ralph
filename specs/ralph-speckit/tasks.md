@@ -240,7 +240,7 @@ approach: wrapper
 
 ## Phase 5: Integration Testing
 
-- [ ] 5.1 Test full workflow manually
+- [x] 5.1 Test full workflow manually
   - **Do**:
     1. Load plugin: `claude --plugin-dir ./plugins/ralph-speckit`
     2. Run `/speckit:start test-feature "Test goal"`
