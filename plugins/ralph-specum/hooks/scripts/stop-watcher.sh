@@ -49,5 +49,8 @@ if [ "$PHASE" = "execution" ]; then
     echo "[ralph-specum] Spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
 fi
 
+# Cleanup orphaned temp progress files (from interrupted parallel batches)
+find "$CWD/specs/$SPEC_NAME" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
+
 # Always exit 0 - Ralph Wiggum handles loop continuation
 exit 0

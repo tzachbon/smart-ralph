@@ -1,13 +1,14 @@
 {
-  "hooks": [
-    {
-      "matcher": "Stop",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "$PLUGIN_DIR/hooks/scripts/stop-watcher.sh"
-        }
-      ]
-    }
-  ]
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/stop-watcher.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
