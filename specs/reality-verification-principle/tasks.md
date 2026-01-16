@@ -108,7 +108,7 @@ Focus: Create skill file and add detection to plan-synthesizer. Skip qa-engineer
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Local quality check
+- [x] 4.1 Local quality check
   - **Do**: Verify all markdown files are syntactically valid
   - **Verify**: `find plugins/ralph-specum -name "*.md" -exec test -f {} \; && echo "All files valid"`
   - **Done when**: All commands pass with no errors
