@@ -224,6 +224,9 @@ Specs live in `./specs/` in your project:
 **"Ralph Wiggum plugin not found"?**
 Install the dependency: `/plugin install ralph-wiggum@claude-plugins-official`
 
+**"stop-handler.sh: No such file or directory"?**
+Old v1.x installation conflict. Reinstall the plugin or see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+
 **Task keeps failing?**
 After max iterations, the loop stops. Check `.progress.md` for errors. Fix manually, then `/ralph-specum:implement` to resume.
 
@@ -235,6 +238,8 @@ Just `/ralph-specum:start` - it auto-detects and continues where you left off.
 
 **"Loop state conflict"?**
 Another Ralph loop may be running. Use `/cancel-ralph` to reset Ralph Wiggum state, then retry.
+
+**More issues?** See the full [Troubleshooting Guide](TROUBLESHOOTING.md).
 
 ---
 
