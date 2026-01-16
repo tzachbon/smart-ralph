@@ -54,6 +54,9 @@ Ralph Wiggum provides the execution loop. Smart Ralph provides the spec-driven w
 ### From Marketplace
 
 ```bash
+# Install Ralph Wiggum dependency first
+/plugin install ralph-wiggum@claude-plugins-official
+
 # Add the marketplace
 /plugin marketplace add tzachbon/smart-ralph
 
@@ -66,12 +69,18 @@ Ralph Wiggum provides the execution loop. Smart Ralph provides the spec-driven w
 ### From GitHub
 
 ```bash
+# Install Ralph Wiggum dependency first
+/plugin install ralph-wiggum@claude-plugins-official
+
 /plugin install https://github.com/tzachbon/smart-ralph
 ```
 
 ### Local Development
 
 ```bash
+# Install Ralph Wiggum dependency first
+/plugin install ralph-wiggum@claude-plugins-official
+
 git clone https://github.com/tzachbon/smart-ralph.git
 cd smart-ralph/plugins/ralph-specum
 claude --plugin-dir $(pwd)
