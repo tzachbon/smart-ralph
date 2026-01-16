@@ -27,7 +27,7 @@ Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator
   - _Requirements: FR-1, FR-4, AC-1.1, AC-1.5, AC-4.1, AC-4.2_
   - _Design: Component 1, Component 2_
 
-- [ ] 1.3 Add coordinator prompt with basic task reading
+- [x] 1.3 Add coordinator prompt with basic task reading
   - **Do**: Add inline coordinator prompt section to implement.md that:
     1. Defines coordinator role (not implementer)
     2. Reads .ralph-state.json for taskIndex
