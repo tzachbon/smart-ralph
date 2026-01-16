@@ -105,7 +105,7 @@ Focus: Validate /ralph-loop invocation works end-to-end with minimal coordinator
   - _Requirements: FR-9, AC-7.1, AC-7.2, AC-7.3, AC-7.4, AC-7.5_
   - _Design: Component 3 section 7_
 
-- [ ] 1.10 Update cancel.md to call /cancel-ralph
+- [x] 1.10 Update cancel.md to call /cancel-ralph
   - **Do**: Modify cancel.md to:
     1. Call /cancel-ralph via Skill tool to stop Ralph Wiggum loop
     2. Continue existing .ralph-state.json deletion
