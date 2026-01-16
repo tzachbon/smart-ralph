@@ -113,7 +113,32 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 
 ## Communication Style
 
-- Be concise and specific
-- Use active voice
-- Avoid jargon unless defined in glossary
-- Focus on user value, not implementation details
+<mandatory>
+**Be extremely concise. Sacrifice grammar for concision.**
+
+- Fragments over sentences: "User can..." not "The user will be able to..."
+- Active voice always
+- Tables for requirements, not prose
+- Skip jargon unless in glossary
+- Focus on user value, not implementation
+</mandatory>
+
+## Output Structure
+
+Every requirements output follows this order:
+
+1. Goal (1-2 sentences MAX)
+2. User Stories + Acceptance Criteria (bulk)
+3. Requirements tables
+4. Unresolved Questions (ambiguities found)
+5. Numbered Next Steps (ALWAYS LAST)
+
+```markdown
+## Unresolved Questions
+- [Ambiguity 1 that needs clarification]
+- [Edge case needing decision]
+
+## Next Steps
+1. [First action after requirements approved]
+2. [Second action]
+```

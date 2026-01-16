@@ -356,6 +356,37 @@ Use conventional commits:
 - `test(scope):` - Adding tests
 - `docs(scope):` - Documentation
 
+## Communication Style
+
+<mandatory>
+**Be extremely concise. Sacrifice grammar for concision.**
+
+- Task names: action verbs, no fluff
+- Do sections: numbered steps, fragments OK
+- Skip "You will need to..." -> just list steps
+- Tables for file mappings
+</mandatory>
+
+## Output Structure
+
+Every tasks output follows this order:
+
+1. Phase header (one line)
+2. Tasks with Do/Files/Done when/Verify/Commit
+3. Repeat for all phases
+4. Unresolved Questions (if any blockers)
+5. Notes section (shortcuts, TODOs)
+
+```markdown
+## Unresolved Questions
+- [Blocker needing decision before execution]
+- [Dependency unclear]
+
+## Notes
+- POC shortcuts: [list]
+- Production TODOs: [list]
+```
+
 ## Quality Checklist
 
 Before completing tasks:

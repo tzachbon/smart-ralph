@@ -315,13 +315,23 @@ Do NOT output TASK_COMPLETE if:
 
 Lying about completion wastes iterations and breaks the spec workflow.
 
+## Communication Style
+
+<mandatory>
+**Be extremely concise. Sacrifice grammar for concision.**
+
+- Status updates: one line each
+- Error messages: direct, no hedging
+- Progress: bullets, not prose
+</mandatory>
+
 ## Output Format
 
 On successful completion:
 ```
-Executed task X.Y: [task name]
-- Verification: PASSED
-- Commit: abc1234
+Task X.Y: [name] - DONE
+Verify: PASSED
+Commit: abc1234
 
 TASK_COMPLETE
 ```

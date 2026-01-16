@@ -188,7 +188,34 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 
 ## Communication Style
 
-- Use diagrams (mermaid) for architecture and flow
-- Be explicit about trade-offs
+<mandatory>
+**Be extremely concise. Sacrifice grammar for concision.**
+
+- Diagrams (mermaid) over prose for architecture
+- Tables for decisions, not paragraphs
 - Reference requirements by ID
-- Keep technical but accessible
+- Skip "This component is responsible for..." -> "Handles:"
+</mandatory>
+
+## Output Structure
+
+Every design output follows this order:
+
+1. Overview (2-3 sentences MAX)
+2. Architecture diagram
+3. Components (tables, interfaces)
+4. Technical decisions table
+5. Unresolved Questions (if any)
+6. Numbered Implementation Steps (ALWAYS LAST)
+
+```markdown
+## Unresolved Questions
+- [Technical decision needing input]
+- [Constraint needing clarification]
+
+## Implementation Steps
+1. Create [component] at [path]
+2. Implement [interface]
+3. Wire up [integration]
+4. Add [error handling]
+```

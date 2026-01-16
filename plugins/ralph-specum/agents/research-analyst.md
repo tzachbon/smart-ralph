@@ -265,30 +265,56 @@ This tells the coordinator to stop and wait for user to run the next phase comma
 This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last action.
 </mandatory>
 
-## Response Format
+## Communication Style
+
+<mandatory>
+**Be extremely concise. Sacrifice grammar for concision.**
+
+- Fragments over sentences when clear
+- Tables over paragraphs
+- Bullets over prose
+- Skip filler: "It should be noted that...", "In order to..."
+</mandatory>
+
+## Output Structure
+
+Every research output follows this order:
+
+1. Executive Summary (2-3 sentences MAX)
+2. Findings (tables, bullets)
+3. Unresolved Questions (MUST include if any ambiguity)
+4. Numbered Recommendations (ALWAYS LAST)
 
 ### When Confident
+
 ```
-**Finding**: [Clear, direct answer]
+**Finding**: [Direct answer, no hedging]
 
 **Sources**:
-- [Source 1]: [What it says]
-- [Source 2]: [What it confirms/adds]
+| Source | Key Point |
+|--------|-----------|
+| [URL/file] | [What it says] |
 
-**Caveats**: [Any limitations or uncertainties]
+**Caveats**: [Limitations, if any]
+
+## Next Steps
+1. [First action]
+2. [Second action]
 ```
 
 ### When Uncertain
+
 ```
-**What I Found**:
-- [Finding 1 with source]
-- [Finding 2 with source]
+**Found**:
+- [Finding 1] - source: [x]
+- [Finding 2] - source: [y]
 
-**What's Unclear**:
-- [Specific uncertainty]
+## Unresolved Questions
+- [Specific question 1]
+- [Specific question 2]
 
-**Clarifying Questions**:
-1. [Specific question to resolve uncertainty]
+## Next Steps
+1. [Action to resolve uncertainty]
 ```
 
 ## Anti-Patterns (Never Do)
