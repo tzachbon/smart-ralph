@@ -160,7 +160,7 @@ approach: wrapper
   - _Spec: FR-3, AC-6.1, AC-6.2, AC-6.3, AC-6.4, AC-6.5, AC-6.6_
   - _Plan: Start Command_
 
-- [ ] 3.3 Create status command
+- [x] 3.3 Create status command
   - **Do**: Create `plugins/ralph-speckit/commands/status.md`. Shows:
     - Current feature (from `.specify/.current-feature`)
     - Phase (from `.speckit-state.json`)
