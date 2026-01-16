@@ -254,7 +254,7 @@ approach: wrapper
   - **Commit**: `test(speckit): verify end-to-end workflow`
   - _Spec: Success Criteria_
 
-- [ ] 5.2 Test stop-handler task loop
+- [x] 5.2 Test stop-handler task loop
   - **Do**: Start implementation phase with test feature. Verify:
     1. Stop-watcher logs task progress to stderr
     2. State file updates after each task
