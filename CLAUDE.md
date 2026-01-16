@@ -16,9 +16,11 @@ claude --plugin-dir ./plugins/ralph-specum
 /ralph-specum:start test-feature Some test goal
 ```
 
-> For each change, fix, or addition, update the plugin version in BOTH:
+> When completing work on a branch, update the plugin version once in BOTH:
 > - `plugins/ralph-specum/.claude-plugin/plugin.json`
 > - `.claude-plugin/marketplace.json`
+>
+> Update version per branch, not per commit.
 
 No build step required. Changes take effect on Claude Code restart.
 
