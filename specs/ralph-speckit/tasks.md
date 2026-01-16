@@ -42,7 +42,7 @@ approach: wrapper
   - _Spec: FR-1, FR-2_
   - _Plan: Directory Structure_
 
-- [ ] 1.3 Document spec-kit generated structure
+- [x] 1.3 Document spec-kit generated structure
   - **Do**: Read all generated files in `plugins/ralph-speckit/.specify/`. Document in .progress.md what was generated: which commands exist, template format, directory layout. This informs integration work.
   - **Files**: `./specs/ralph-speckit/.progress.md`
   - **Verify**: .progress.md has "Spec-kit Generated Structure" section listing all generated files
