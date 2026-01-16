@@ -114,7 +114,7 @@ Focus: Create skill file and add detection to plan-synthesizer. Skip qa-engineer
   - **Done when**: All commands pass with no errors
   - **Commit**: `fix(reality-verification): address lint/type issues` (if fixes needed)
 
-- [ ] 4.2 Create PR and verify CI
+- [x] 4.2 Create PR and verify CI
   - **Do**:
     1. Verify on feature branch: `git branch --show-current`
     2. Push branch: `git push -u origin $(git branch --show-current)`
