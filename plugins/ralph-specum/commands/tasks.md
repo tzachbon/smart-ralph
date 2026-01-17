@@ -166,6 +166,27 @@ After tasks complete:
    - Set current phase to tasks
    - Update task count
 
+## Commit Spec (if enabled)
+
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
+
+1. Stage tasks file:
+   ```bash
+   git add ./specs/$spec/tasks.md
+   ```
+2. Commit with message:
+   ```bash
+   git commit -m "spec($spec): add implementation tasks"
+   ```
+3. Push to current branch:
+   ```bash
+   git push -u origin $(git branch --show-current)
+   ```
+
+If commit or push fails, display warning but continue (don't block the workflow).
+
 ## Output
 
 ```
@@ -173,6 +194,7 @@ Tasks phase complete for '$spec'.
 
 Output: ./specs/$spec/tasks.md
 Total tasks: <count>
+[If commitSpec: "Spec committed and pushed."]
 
 Next: Review tasks.md, then run /ralph-specum:implement to start execution
 ```

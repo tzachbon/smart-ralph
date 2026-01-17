@@ -73,15 +73,26 @@ Done!
 
 ### start command
 ```
-/ralph-specum:start [name] [goal] [--fresh]
+/ralph-specum:start [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec]
 ```
 - `--fresh`: Force new spec, overwrite if exists (skips "resume or fresh?" prompt)
+- `--quick`: Skip interactive phases, auto-generate all specs, start execution immediately
+- `--commit-spec`: Commit and push spec files after each phase (default: true in normal mode, false in quick mode)
+- `--no-commit-spec`: Explicitly disable committing spec files
+
+The `--commit-spec` setting is stored in `.ralph-state.json` and applies to all subsequent phases (research, requirements, design, tasks).
 
 ### new command
 ```
 /ralph-specum:new <name> [goal] [--skip-research]
 ```
 - `--skip-research`: Skip research phase, start with requirements
+
+### phase commands (research, requirements, design, tasks)
+```
+/ralph-specum:<phase> [spec-name]
+```
+Phase commands use the `commitSpec` setting from `.ralph-state.json` (set during `/ralph-specum:start`).
 
 ### implement command
 ```

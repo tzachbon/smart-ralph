@@ -1,7 +1,6 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
-argument-hint: [name] [goal] [--fresh] [--quick]
-argument-hint: [name] [goal] [--fresh] [--quick]
+argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec]
 allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
 ---
 
@@ -206,7 +205,17 @@ From `$ARGUMENTS`, extract:
 - **goal**: Everything after the name except flags (optional)
 - **--fresh**: Force new spec without prompting if one exists
 - **--quick**: Skip all spec phases, auto-generate artifacts, start execution immediately
-- **--quick**: Quick mode - auto-generate all specs and start execution
+- **--commit-spec**: Commit and push spec files after generation (default: true in normal mode, false in quick mode)
+- **--no-commit-spec**: Explicitly disable committing spec files
+
+### Commit Spec Flag Logic
+
+```text
+1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
+2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
+3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
+4. Else → commitSpec = true (normal mode default)
+```
 
 Examples:
 - `/ralph-specum:start` -> Auto-detect: resume active or ask for new
@@ -317,7 +326,8 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
      "taskIteration": 1,
      "maxTaskIterations": 5,
      "globalIteration": 1,
-     "maxGlobalIterations": 100
+     "maxGlobalIterations": 100,
+     "commitSpec": $commitSpec
    }
    |
 5. Write .progress.md with original goal
@@ -332,8 +342,14 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
    - Update .ralph-state.json: phase="execution", taskIndex=0
    - Read tasks.md to get totalTasks count
    |
+8a. If commitSpec is true:
+   - Stage spec files: git add ./specs/$name/research.md ./specs/$name/requirements.md ./specs/$name/design.md ./specs/$name/tasks.md
+   - Commit: git commit -m "spec($name): add spec artifacts"
+   - Push: git push -u origin $(git branch --show-current)
+   |
 9. Display brief summary:
    Quick mode: Created spec '$name'
+   [If commitSpec: "Spec committed and pushed."]
    Starting execution...
    |
 10. Invoke spec-executor for task 1
@@ -490,7 +506,8 @@ The only exception is `--quick` mode, which skips approval between phases.
      "taskIteration": 1,
      "maxTaskIterations": 5,
      "globalIteration": 1,
-     "maxGlobalIterations": 100
+     "maxGlobalIterations": 100,
+     "commitSpec": $commitSpec
    }
    ```
 6. Create `.progress.md` with goal

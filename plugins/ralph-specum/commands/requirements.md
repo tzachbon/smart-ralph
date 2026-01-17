@@ -147,12 +147,34 @@ After requirements complete:
    - Mark research as implicitly approved
    - Set current phase to requirements
 
+## Commit Spec (if enabled)
+
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
+
+1. Stage requirements file:
+   ```bash
+   git add ./specs/$spec/requirements.md
+   ```
+2. Commit with message:
+   ```bash
+   git commit -m "spec($spec): add requirements"
+   ```
+3. Push to current branch:
+   ```bash
+   git push -u origin $(git branch --show-current)
+   ```
+
+If commit or push fails, display warning but continue (don't block the workflow).
+
 ## Output
 
 ```
 Requirements phase complete for '$spec'.
 
 Output: ./specs/$spec/requirements.md
+[If commitSpec: "Spec committed and pushed."]
 
 Next: Review requirements.md, then run /ralph-specum:design
 ```

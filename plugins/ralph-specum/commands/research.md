@@ -256,12 +256,34 @@ After research completes:
    ```
 3. Update `.progress.md` with research completion
 
+## Commit Spec (if enabled)
+
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
+
+1. Stage research file:
+   ```bash
+   git add ./specs/$spec/research.md
+   ```
+2. Commit with message:
+   ```bash
+   git commit -m "spec($spec): add research findings"
+   ```
+3. Push to current branch:
+   ```bash
+   git push -u origin $(git branch --show-current)
+   ```
+
+If commit or push fails, display warning but continue (don't block the workflow).
+
 ## Output
 
 ```
 Research phase complete for '$spec'.
 
 Output: ./specs/$spec/research.md
+[If commitSpec: "Spec committed and pushed."]
 
 Related specs found:
   - <name> (<RELEVANCE>) - may need update
