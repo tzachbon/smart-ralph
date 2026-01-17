@@ -1,6 +1,6 @@
 ---
 description: Generate implementation tasks from design
-argument-hint: [spec-name] [--commit-spec] [--no-commit-spec]
+argument-hint: [spec-name]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
@@ -28,17 +28,6 @@ Do NOT write task breakdowns, verification steps, or tasks.md yourself.
 3. Check `./specs/$spec/requirements.md` exists
 4. Read `.ralph-state.json`
 5. Clear approval flag: update state with `awaitingApproval: false`
-
-## Parse Commit Flag
-
-Determine whether to commit spec files after generation:
-
-```
-1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
-2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
-3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
-4. Else → commitSpec = true (normal mode default)
-```
 
 ## Gather Context
 
@@ -179,7 +168,9 @@ After tasks complete:
 
 ## Commit Spec (if enabled)
 
-If `commitSpec` is true (determined from Parse Commit Flag section):
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
 
 1. Stage tasks file:
    ```bash

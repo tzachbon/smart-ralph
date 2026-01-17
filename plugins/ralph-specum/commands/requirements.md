@@ -1,6 +1,6 @@
 ---
 description: Generate requirements from goal and research
-argument-hint: [spec-name] [--commit-spec] [--no-commit-spec]
+argument-hint: [spec-name]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
@@ -26,17 +26,6 @@ Do NOT write user stories, acceptance criteria, or requirements.md yourself.
 1. Check `./specs/$spec/` directory exists
 2. Read `.ralph-state.json`
 3. Clear approval flag: update state with `awaitingApproval: false`
-
-## Parse Commit Flag
-
-Determine whether to commit spec files after generation:
-
-```
-1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
-2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
-3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
-4. Else → commitSpec = true (normal mode default)
-```
 
 ## Gather Context
 
@@ -160,7 +149,9 @@ After requirements complete:
 
 ## Commit Spec (if enabled)
 
-If `commitSpec` is true (determined from Parse Commit Flag section):
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
 
 1. Stage requirements file:
    ```bash

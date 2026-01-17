@@ -1,6 +1,6 @@
 ---
 description: Generate technical design from requirements
-argument-hint: [spec-name] [--commit-spec] [--no-commit-spec]
+argument-hint: [spec-name]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
@@ -27,17 +27,6 @@ Do NOT create architecture diagrams, technical decisions, or design.md yourself.
 2. Check `./specs/$spec/requirements.md` exists. If not, error: "Requirements not found. Run /ralph-specum:requirements first."
 3. Read `.ralph-state.json`
 4. Clear approval flag: update state with `awaitingApproval: false`
-
-## Parse Commit Flag
-
-Determine whether to commit spec files after generation:
-
-```
-1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
-2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
-3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
-4. Else → commitSpec = true (normal mode default)
-```
 
 ## Gather Context
 
@@ -168,7 +157,9 @@ After design complete:
 
 ## Commit Spec (if enabled)
 
-If `commitSpec` is true (determined from Parse Commit Flag section):
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
 
 1. Stage design file:
    ```bash
@@ -187,7 +178,7 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
-```
+```text
 Design phase complete for '$spec'.
 
 Output: ./specs/$spec/design.md

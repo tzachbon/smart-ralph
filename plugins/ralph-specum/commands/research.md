@@ -1,6 +1,6 @@
 ---
 description: Run or re-run research phase for current spec
-argument-hint: [spec-name] [--commit-spec] [--no-commit-spec]
+argument-hint: [spec-name]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
@@ -26,17 +26,6 @@ Do NOT perform web searches, codebase analysis, or write research.md yourself.
 1. Check `./specs/$spec/` directory exists
 2. Read `.ralph-state.json` if it exists
 3. Read `.progress.md` to understand the goal
-
-## Parse Commit Flag
-
-Determine whether to commit spec files after generation:
-
-```
-1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
-2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
-3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
-4. Else → commitSpec = true (normal mode default)
-```
 
 ## Analyze Research Topics
 
@@ -269,7 +258,9 @@ After research completes:
 
 ## Commit Spec (if enabled)
 
-If `commitSpec` is true (determined from Parse Commit Flag section):
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
 
 1. Stage research file:
    ```bash

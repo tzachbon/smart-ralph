@@ -210,7 +210,7 @@ From `$ARGUMENTS`, extract:
 
 ### Commit Spec Flag Logic
 
-```
+```text
 1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
 2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
 3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
@@ -326,7 +326,8 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
      "taskIteration": 1,
      "maxTaskIterations": 5,
      "globalIteration": 1,
-     "maxGlobalIterations": 100
+     "maxGlobalIterations": 100,
+     "commitSpec": $commitSpec
    }
    |
 5. Write .progress.md with original goal
@@ -505,7 +506,8 @@ The only exception is `--quick` mode, which skips approval between phases.
      "taskIteration": 1,
      "maxTaskIterations": 5,
      "globalIteration": 1,
-     "maxGlobalIterations": 100
+     "maxGlobalIterations": 100,
+     "commitSpec": $commitSpec
    }
    ```
 6. Create `.progress.md` with goal
