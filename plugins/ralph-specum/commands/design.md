@@ -4,6 +4,8 @@ argument-hint: [spec-name]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
+ultrathink
+
 # Design Phase
 
 You are generating technical design for a specification. Running this command implicitly approves the requirements phase.

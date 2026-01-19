@@ -4,6 +4,8 @@ argument-hint: [spec-name]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
+ultrathink
+
 # Requirements Phase
 
 You are generating requirements for a specification. Running this command implicitly approves the research phase.

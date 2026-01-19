@@ -4,6 +4,8 @@ argument-hint: [spec-name]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
+ultrathink
+
 # Tasks Phase
 
 You are generating implementation tasks for a specification. Running this command implicitly approves the design phase.

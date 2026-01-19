@@ -4,6 +4,8 @@ argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-sp
 allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
 ---
 
+ultrathink
+
 # Start
 
 Smart entry point for ralph-specum. Detects whether to create a new spec or resume an existing one.

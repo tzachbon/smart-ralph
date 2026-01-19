@@ -4,6 +4,8 @@ argument-hint: <spec-name> [goal description] [--skip-research]
 allowed-tools: [Bash, Write, Task, AskUserQuestion]
 ---
 
+ultrathink
+
 # Create New Spec
 
 You are creating a new specification and starting the research phase.

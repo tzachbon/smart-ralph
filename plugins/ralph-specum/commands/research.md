@@ -4,6 +4,8 @@ argument-hint: [spec-name]
 allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 ---
 
+ultrathink
+
 # Research Phase
 
 You are running the research phase for a specification.

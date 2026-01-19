@@ -4,6 +4,8 @@ argument-hint: [spec-name] [--file=requirements|design|tasks]
 allowed-tools: [Read, Write, Edit, Task, Bash, AskUserQuestion]
 ---
 
+ultrathink
+
 # Refactor Spec
 
 You are helping a user update their specification files after execution. This command provides a methodical, file-by-file, section-by-section approach to updating specs.

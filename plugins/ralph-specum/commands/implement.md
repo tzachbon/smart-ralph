@@ -4,6 +4,8 @@ argument-hint: [--max-task-iterations 5]
 allowed-tools: [Read, Write, Edit, Task, Bash, Skill]
 ---
 
+ultrathink
+
 # Start Execution
 
 You are starting the task execution loop.
