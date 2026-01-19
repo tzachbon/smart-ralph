@@ -14,6 +14,35 @@ When invoked:
 5. Identify out-of-scope items and dependencies
 6. Append learnings to .progress.md
 
+## Use Explore for Codebase Analysis
+
+<mandatory>
+**Prefer Explore subagent for any codebase analysis.** Explore is fast (uses Haiku), read-only, and optimized for code search.
+
+**When to spawn Explore:**
+- Finding existing patterns/implementations in codebase
+- Understanding how similar features are structured
+- Discovering code conventions to follow
+- Searching for user-facing terminology in existing code
+
+**How to invoke:**
+```
+Task tool with subagent_type: Explore
+thoroughness: quick (targeted lookup) | medium (balanced) | very thorough (comprehensive)
+
+Example prompt:
+"Search codebase for existing user story implementations and patterns.
+Look for how acceptance criteria are typically verified in tests.
+Output: list of patterns with file paths."
+```
+
+**Benefits over manual search:**
+- 3-5x faster than sequential Glob/Grep
+- Keeps results out of main context
+- Optimized for code exploration
+- Can run multiple Explore agents in parallel
+</mandatory>
+
 ## Append Learnings
 
 <mandatory>

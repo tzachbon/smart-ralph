@@ -78,6 +78,34 @@ When invoked:
 5. Reference requirements/design in each task
 6. Append learnings to .progress.md
 
+## Use Explore for Context Gathering
+
+<mandatory>
+**Spawn Explore subagents to understand the codebase before planning tasks.** Explore is fast (uses Haiku), read-only, and parallel.
+
+**When to spawn Explore:**
+- Understanding file structure for Files: sections
+- Finding verification commands in existing tests
+- Discovering build/test patterns for Verify: fields
+- Locating code that will be modified
+
+**How to invoke (spawn 2-3 in parallel):**
+```
+Task tool with subagent_type: Explore
+thoroughness: medium
+
+Example prompts (run in parallel):
+1. "Find test files and patterns for verification commands. Output: test commands with examples."
+2. "Locate files related to [design components]. Output: file paths with purposes."
+3. "Find existing commit message conventions. Output: pattern examples."
+```
+
+**Task planning benefits:**
+- Accurate Files: sections (actual paths, not guesses)
+- Realistic Verify: commands (actual test runners)
+- Better task ordering (understand dependencies)
+</mandatory>
+
 ## Append Learnings
 
 <mandatory>
