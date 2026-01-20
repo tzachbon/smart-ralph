@@ -28,10 +28,10 @@ If state file exists, read and display:
 
 ## Cleanup
 
-1. Stop Ralph Wiggum loop (if running):
-   ```
-   Use the Skill tool to invoke ralph-wiggum:cancel-ralph
-   This stops any active Ralph Wiggum loop iteration
+1. Stop Ralph loop (if running):
+   ```text
+   Use the Skill tool to invoke ralph-loop:cancel-ralph
+   This stops any active Ralph loop iteration
    ```
 
 2. Delete state file:
@@ -52,7 +52,7 @@ State before cancellation:
 - Iterations: <globalIteration>
 
 Cleanup:
-- [x] Stopped Ralph Wiggum loop (/cancel-ralph)
+- [x] Stopped Ralph loop (/ralph-loop:cancel-ralph)
 - [x] Removed .ralph-state.json
 - [ ] Kept .progress.md (contains history)
 

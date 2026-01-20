@@ -1,8 +1,9 @@
 #!/bin/bash
-# Stop Watcher Hook for Ralph Specum
-# This is a WATCHER only - does NOT control the loop
-# Ralph Wiggum plugin handles loop continuation via exit code 2
-# This hook always exits 0 to let Ralph Wiggum do its job
+# Stop Hook for Ralph Specum
+# Performs cleanup when session stops:
+# 1. Removes .ralph-state.json to reset execution state
+# 2. Cleans up orphaned temp progress files
+# Note: .progress.md is preserved for history/learnings
 
 # Read hook input from stdin
 INPUT=$(cat)
@@ -33,24 +34,33 @@ if [ ! -f "$STATE_FILE" ]; then
 fi
 
 # Validate state file is readable JSON
+CORRUPT_STATE=false
 if ! jq empty "$STATE_FILE" 2>/dev/null; then
     echo "WARNING: Corrupt .ralph-state.json detected for spec: $SPEC_NAME" >&2
-    exit 0
+    CORRUPT_STATE=true
 fi
 
 # Read state for logging (guard all jq calls)
-PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
-TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
+if [ "$CORRUPT_STATE" = false ]; then
+    PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
+    TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+    TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+    TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 
-# Only log if in execution phase
-if [ "$PHASE" = "execution" ]; then
-    echo "[ralph-specum] Spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
+    # Log current state before cleanup
+    if [ "$PHASE" = "execution" ]; then
+        echo "[ralph-specum] Cleaning up spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
+    fi
 fi
+
+# Cleanup: Remove state file to reset execution state
+# This achieves the same result as /ralph-loop:cancel-ralph - the loop will not resume on next start
+rm -f "$STATE_FILE" 2>/dev/null || true
+echo "[ralph-specum] Removed .ralph-state.json for spec: $SPEC_NAME" >&2
 
 # Cleanup orphaned temp progress files (from interrupted parallel batches)
 find "$CWD/specs/$SPEC_NAME" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
 
-# Always exit 0 - Ralph Wiggum handles loop continuation
+# Note: .progress.md is preserved - contains valuable history and learnings
+
 exit 0
