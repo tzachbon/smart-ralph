@@ -42,7 +42,7 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 **v2.0.0+** requires the Ralph Loop plugin for task execution:
 
 ```bash
-/plugin install ralph-loop@claude-plugins-official
+/plugin install ralph-wiggum@claude-plugins-official
 ```
 
 Ralph Loop provides the execution loop. Smart Ralph provides the spec-driven workflow on top.
@@ -55,7 +55,7 @@ Ralph Loop provides the execution loop. Smart Ralph provides the spec-driven wor
 
 ```bash
 # Install Ralph Loop dependency first
-/plugin install ralph-loop@claude-plugins-official
+/plugin install ralph-wiggum@claude-plugins-official
 
 # Add the marketplace
 /plugin marketplace add tzachbon/smart-ralph
@@ -70,7 +70,7 @@ Ralph Loop provides the execution loop. Smart Ralph provides the spec-driven wor
 
 ```bash
 # Install Ralph Loop dependency first
-/plugin install ralph-loop@claude-plugins-official
+/plugin install ralph-wiggum@claude-plugins-official
 
 /plugin install https://github.com/tzachbon/smart-ralph
 ```
@@ -79,7 +79,7 @@ Ralph Loop provides the execution loop. Smart Ralph provides the spec-driven wor
 
 ```bash
 # Install Ralph Loop dependency first
-/plugin install ralph-loop@claude-plugins-official
+/plugin install ralph-wiggum@claude-plugins-official
 
 git clone https://github.com/tzachbon/smart-ralph.git
 cd smart-ralph/plugins/ralph-specum
@@ -243,7 +243,7 @@ Specs live in `./specs/` in your project:
 
 ```bash
 # Install Ralph Loop dependency first
-/plugin install ralph-loop@claude-plugins-official
+/plugin install ralph-wiggum@claude-plugins-official
 
 # Install ralph-speckit
 /plugin install ralph-speckit@smart-ralph
@@ -308,7 +308,7 @@ Specs live in `./specs/` in your project:
 ## Troubleshooting
 
 **"Ralph Loop plugin not found"?**
-Install the dependency: `/plugin install ralph-loop@claude-plugins-official`
+Install the dependency: `/plugin install ralph-wiggum@claude-plugins-official`
 
 **"stop-handler.sh: No such file or directory"?**
 Old v1.x installation conflict. Reinstall the plugin or see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
@@ -340,7 +340,7 @@ Starting with v2.0.0, Smart Ralph delegates task execution to the official Ralph
 **Migration from v1.x:** See [MIGRATION.md](MIGRATION.md) for detailed guide.
 
 Quick version:
-1. Install Ralph Loop: `/plugin install ralph-loop@claude-plugins-official`
+1. Install Ralph Loop: `/plugin install ralph-wiggum@claude-plugins-official`
 2. Restart Claude Code
 3. Existing specs continue working. No spec file changes needed.
 

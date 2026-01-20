@@ -12,7 +12,7 @@ Smart Ralph v2.0.0+ requires the Ralph Loop plugin as a dependency.
 
 **Solution:**
 ```bash
-/plugin install ralph-loop@claude-plugins-official
+/plugin install ralph-wiggum@claude-plugins-official
 ```
 
 Then restart Claude Code.

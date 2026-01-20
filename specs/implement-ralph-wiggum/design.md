@@ -179,7 +179,7 @@ The /implement command now uses Ralph Loop for its execution loop.
 This is a breaking change in version 2.0.0.
 
 Install the dependency:
-  /plugin install ralph-loop@claude-plugins-official
+  /plugin install ralph-wiggum@claude-plugins-official
 
 Then retry:
   /ralph-specum:implement
@@ -445,7 +445,7 @@ sequenceDiagram
 
 | Error Scenario | Handling Strategy | User Impact |
 |----------------|-------------------|-------------|
-| Ralph Loop not installed | Fail fast with clear install instructions | User sees: "ERROR: Ralph Loop plugin required. Install via /plugin install ralph-loop@claude-plugins-official" |
+| Ralph Loop not installed | Fail fast with clear install instructions | User sees: "ERROR: Ralph Loop plugin required. Install via /plugin install ralph-wiggum@claude-plugins-official" |
 | Task verification fails | Increment taskIteration, retry same task | User sees retry message in progress |
 | Contradiction detected | Reject TASK_COMPLETE, retry with specific error | User sees: "CONTRADICTION: claimed complete but requires manual action" |
 | Max iterations reached | Block with error, preserve state | User sees: "Max iterations reached. Run /cancel to cleanup." |
@@ -514,7 +514,7 @@ Based on codebase analysis:
 
 1. Install Ralph Loop before upgrading:
    ```
-   /plugin install ralph-loop@claude-plugins-official
+   /plugin install ralph-wiggum@claude-plugins-official
    ```
 
 2. Existing in-progress specs will continue working (state file compatible)

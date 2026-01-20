@@ -13,7 +13,7 @@ You are starting the task execution loop.
 **BEFORE proceeding**, verify Ralph Loop plugin is installed by attempting to invoke the skill.
 
 If the Skill tool fails with "skill not found" or similar error for `ralph-loop:ralph-loop`:
-1. Output error: "ERROR: Ralph Loop plugin not found. Install with: /plugin install ralph-loop@claude-plugins-official"
+1. Output error: "ERROR: Ralph Loop plugin not found. Install with: /plugin install ralph-wiggum@claude-plugins-official"
 2. STOP execution immediately. Do NOT continue.
 
 This is a hard dependency. The command cannot function without Ralph Loop.

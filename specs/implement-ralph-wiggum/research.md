@@ -39,7 +39,7 @@ Interview responses:
 ### Official Ralph Loop Plugin
 
 **Repository**: `anthropics/claude-code` at `plugins/ralph-wiggum/`
-**Installation**: `/plugin install ralph-loop@claude-plugins-official`
+**Installation**: `/plugin install ralph-wiggum@claude-plugins-official`
 
 ### Core Mechanism
 
@@ -197,7 +197,7 @@ None. This is a markdown-only plugin repository. CI only checks plugin version b
 
 **Decision**: Require users to install Ralph Loop plugin separately.
 
-- Install: `/plugin install ralph-loop@claude-plugins-official`
+- Install: `/plugin install ralph-wiggum@claude-plugins-official`
 - This is a **breaking change** for existing users
 - Document in README and migration guide
 - `/implement` should check if Ralph Loop is available and error with install instructions if not
