@@ -7,7 +7,8 @@ get_repo_root() {
         git rev-parse --show-toplevel
     else
         # Fall back to script location for non-git repos
-        local script_dir="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        local script_dir
+        script_dir="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
         (cd "$script_dir/../../.." && pwd)
     fi
 }
@@ -27,7 +28,8 @@ get_current_branch() {
     fi
 
     # For non-git repos, try to find the latest feature directory
-    local repo_root=$(get_repo_root)
+    local repo_root
+    repo_root=$(get_repo_root)
     local specs_dir="$repo_root/specs"
 
     if [[ -d "$specs_dir" ]]; then
@@ -36,7 +38,8 @@ get_current_branch() {
 
         for dir in "$specs_dir"/*; do
             if [[ -d "$dir" ]]; then
-                local dirname=$(basename "$dir")
+                local dirname
+                dirname=$(basename "$dir")
                 if [[ "$dirname" =~ ^([0-9]{3})- ]]; then
                     local number=${BASH_REMATCH[1]}
                     number=$((10#$number))
@@ -125,8 +128,10 @@ find_feature_dir_by_prefix() {
 }
 
 get_feature_paths() {
-    local repo_root=$(get_repo_root)
-    local current_branch=$(get_current_branch)
+    local repo_root
+    repo_root=$(get_repo_root)
+    local current_branch
+    current_branch=$(get_current_branch)
     local has_git_repo="false"
 
     if has_git; then
@@ -134,7 +139,8 @@ get_feature_paths() {
     fi
 
     # Use prefix-based lookup to support multiple branches per spec
-    local feature_dir=$(find_feature_dir_by_prefix "$repo_root" "$current_branch")
+    local feature_dir
+    feature_dir=$(find_feature_dir_by_prefix "$repo_root" "$current_branch")
 
     cat <<EOF
 REPO_ROOT='$repo_root'
