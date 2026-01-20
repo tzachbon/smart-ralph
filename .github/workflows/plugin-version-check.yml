@@ -16,35 +16,51 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Detect changed plugins
+        id: detect
+        run: |
+          BASE_BRANCH="${{ github.base_ref }}"
+          CHANGED_PLUGINS=""
+          MARKETPLACE_JSON=".claude-plugin/marketplace.json"
+          BASE_MARKETPLACE_JSON=$(git show "origin/${BASE_BRANCH}:${MARKETPLACE_JSON}" 2>/dev/null || echo '{"plugins":[]}')
+
+          # Check which plugins have changes in their directory
+          for plugin_dir in plugins/*/; do
+            plugin_name=$(basename "$plugin_dir")
+            if git diff --name-only "origin/${BASE_BRANCH}...HEAD" | grep -q "^plugins/${plugin_name}/"; then
+              CHANGED_PLUGINS="${CHANGED_PLUGINS} ${plugin_name}"
+            fi
+          done
+
+          # Also include plugins whose marketplace version changed (catches marketplace-only changes)
+          if [ -f "$MARKETPLACE_JSON" ]; then
+            CURRENT_PLUGINS=$(jq -r '.plugins[].name' "$MARKETPLACE_JSON" 2>/dev/null || echo "")
+            BASE_PLUGINS=$(echo "$BASE_MARKETPLACE_JSON" | jq -r '.plugins[].name' 2>/dev/null || echo "")
+            ALL_PLUGIN_NAMES=$(echo -e "${CURRENT_PLUGINS}\n${BASE_PLUGINS}" | sort -u)
+
+            for plugin_name in $ALL_PLUGIN_NAMES; do
+              [ -z "$plugin_name" ] && continue
+              # Skip if already in changed list
+              echo "$CHANGED_PLUGINS" | grep -qw "$plugin_name" && continue
+
+              CURRENT_VER=$(jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .version // "null"' "$MARKETPLACE_JSON" 2>/dev/null || echo "null")
+              BASE_VER=$(echo "$BASE_MARKETPLACE_JSON" | jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .version // "null"' 2>/dev/null || echo "null")
+
+              if [ "$CURRENT_VER" != "$BASE_VER" ]; then
+                echo "Detected marketplace version change for $plugin_name: $BASE_VER → $CURRENT_VER"
+                CHANGED_PLUGINS="${CHANGED_PLUGINS} ${plugin_name}"
+              fi
+            done
+          fi
+
+          echo "Changed plugins:${CHANGED_PLUGINS}"
+          echo "plugins=${CHANGED_PLUGINS}" >> $GITHUB_OUTPUT
+
       - name: Check for version bump
         run: |
-          PLUGIN_JSON="plugins/ralph-specum/.claude-plugin/plugin.json"
           MARKETPLACE_JSON=".claude-plugin/marketplace.json"
           BASE_BRANCH="${{ github.base_ref }}"
-
-          # Get versions from PR branch
-          PR_PLUGIN_VERSION=$(jq -r '.version' "$PLUGIN_JSON")
-          PR_MARKETPLACE_VERSION=$(jq -r '.plugins[0].version' "$MARKETPLACE_JSON")
-
-          # Get versions from base branch
-          BASE_PLUGIN_VERSION=$(git show "origin/${BASE_BRANCH}:${PLUGIN_JSON}" 2>/dev/null | jq -r '.version')
-          BASE_MARKETPLACE_VERSION=$(git show "origin/${BASE_BRANCH}:${MARKETPLACE_JSON}" 2>/dev/null | jq -r '.plugins[0].version')
-
-          echo "=== Version Summary ==="
-          echo "plugin.json:      $BASE_PLUGIN_VERSION → $PR_PLUGIN_VERSION"
-          echo "marketplace.json: $BASE_MARKETPLACE_VERSION → $PR_MARKETPLACE_VERSION"
-          echo ""
-
-          # Check if versions match between plugin.json and marketplace.json
-          if [ "$PR_PLUGIN_VERSION" != "$PR_MARKETPLACE_VERSION" ]; then
-            echo "❌ ERROR: Version mismatch between plugin.json and marketplace.json!"
-            echo ""
-            echo "plugin.json version:      $PR_PLUGIN_VERSION"
-            echo "marketplace.json version: $PR_MARKETPLACE_VERSION"
-            echo ""
-            echo "Please ensure both files have the same version."
-            exit 1
-          fi
+          CHANGED_PLUGINS="${{ steps.detect.outputs.plugins }}"
 
           # Version comparison function (returns 0 if v1 > v2)
           version_greater() {
@@ -66,44 +82,84 @@ jobs:
             return 1
           }
 
-          # Check if this is a new plugin (no base versions)
-          if [ -z "$BASE_PLUGIN_VERSION" ] || [ "$BASE_PLUGIN_VERSION" == "null" ]; then
-            echo "✅ No base version found (new plugin). Current version: $PR_PLUGIN_VERSION"
-            exit 0
-          fi
+          # Function to get marketplace version for a plugin
+          get_marketplace_version() {
+            local plugin_name=$1
+            local file=$2
+            jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .version // "null"' "$file"
+          }
 
-          # Check plugin.json version bump
-          if [ "$PR_PLUGIN_VERSION" == "$BASE_PLUGIN_VERSION" ]; then
-            echo "❌ ERROR: Plugin files changed but plugin.json version was not bumped!"
+          ALL_PASSED=true
+
+          for plugin_name in $CHANGED_PLUGINS; do
             echo ""
-            echo "Current version: $BASE_PLUGIN_VERSION"
-            echo "Please update the version in: $PLUGIN_JSON"
-            exit 1
-          fi
+            echo "=== Checking $plugin_name ==="
 
-          if ! version_greater "$PR_PLUGIN_VERSION" "$BASE_PLUGIN_VERSION"; then
-            echo "❌ ERROR: plugin.json version appears to be downgraded!"
-            echo "Base: $BASE_PLUGIN_VERSION → PR: $PR_PLUGIN_VERSION"
-            exit 1
-          fi
+            PLUGIN_JSON="plugins/${plugin_name}/.claude-plugin/plugin.json"
 
-          # Check marketplace.json version bump
-          if [ -n "$BASE_MARKETPLACE_VERSION" ] && [ "$BASE_MARKETPLACE_VERSION" != "null" ]; then
-            if [ "$PR_MARKETPLACE_VERSION" == "$BASE_MARKETPLACE_VERSION" ]; then
-              echo "❌ ERROR: Plugin files changed but marketplace.json version was not bumped!"
-              echo ""
-              echo "Current version: $BASE_MARKETPLACE_VERSION"
-              echo "Please update the version in: $MARKETPLACE_JSON"
-              exit 1
+            if [ ! -f "$PLUGIN_JSON" ]; then
+              echo "❌ ERROR: No plugin.json found for $plugin_name!"
+              echo "Plugin changes detected but plugin.json is missing at: $PLUGIN_JSON"
+              ALL_PASSED=false
+              continue
             fi
 
-            if ! version_greater "$PR_MARKETPLACE_VERSION" "$BASE_MARKETPLACE_VERSION"; then
-              echo "❌ ERROR: marketplace.json version appears to be downgraded!"
-              echo "Base: $BASE_MARKETPLACE_VERSION → PR: $PR_MARKETPLACE_VERSION"
-              exit 1
-            fi
-          fi
+            # Get versions from PR branch
+            PR_PLUGIN_VERSION=$(jq -r '.version' "$PLUGIN_JSON")
+            PR_MARKETPLACE_VERSION=$(get_marketplace_version "$plugin_name" "$MARKETPLACE_JSON")
 
-          echo "✅ All version checks passed!"
-          echo "   plugin.json:      $BASE_PLUGIN_VERSION → $PR_PLUGIN_VERSION"
-          echo "   marketplace.json: $BASE_MARKETPLACE_VERSION → $PR_MARKETPLACE_VERSION"
+            # Get versions from base branch
+            BASE_PLUGIN_VERSION=$(git show "origin/${BASE_BRANCH}:${PLUGIN_JSON}" 2>/dev/null | jq -r '.version' 2>/dev/null || echo "null")
+            BASE_MARKETPLACE_VERSION=$(git show "origin/${BASE_BRANCH}:${MARKETPLACE_JSON}" 2>/dev/null | jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .version // "null"' 2>/dev/null || echo "null")
+
+            echo "plugin.json:      ${BASE_PLUGIN_VERSION:-new} → $PR_PLUGIN_VERSION"
+            echo "marketplace.json: ${BASE_MARKETPLACE_VERSION:-new} → $PR_MARKETPLACE_VERSION"
+
+            # Check if plugin exists in marketplace
+            if [ "$PR_MARKETPLACE_VERSION" == "null" ] || [ -z "$PR_MARKETPLACE_VERSION" ]; then
+              echo "❌ ERROR: Plugin $plugin_name not found in marketplace.json!"
+              echo "Please add an entry for $plugin_name in $MARKETPLACE_JSON"
+              ALL_PASSED=false
+              continue
+            fi
+
+            # Check if versions match between plugin.json and marketplace.json
+            if [ "$PR_PLUGIN_VERSION" != "$PR_MARKETPLACE_VERSION" ]; then
+              echo "❌ ERROR: Version mismatch for $plugin_name!"
+              echo "plugin.json version:      $PR_PLUGIN_VERSION"
+              echo "marketplace.json version: $PR_MARKETPLACE_VERSION"
+              ALL_PASSED=false
+              continue
+            fi
+
+            # Check if this is a new plugin (no base versions)
+            if [ -z "$BASE_PLUGIN_VERSION" ] || [ "$BASE_PLUGIN_VERSION" == "null" ]; then
+              echo "✅ New plugin. Version: $PR_PLUGIN_VERSION"
+              continue
+            fi
+
+            # Check plugin.json version bump
+            if [ "$PR_PLUGIN_VERSION" == "$BASE_PLUGIN_VERSION" ]; then
+              echo "❌ ERROR: $plugin_name files changed but version not bumped!"
+              echo "Current version: $BASE_PLUGIN_VERSION"
+              ALL_PASSED=false
+              continue
+            fi
+
+            if ! version_greater "$PR_PLUGIN_VERSION" "$BASE_PLUGIN_VERSION"; then
+              echo "❌ ERROR: $plugin_name version downgraded!"
+              echo "Base: $BASE_PLUGIN_VERSION → PR: $PR_PLUGIN_VERSION"
+              ALL_PASSED=false
+              continue
+            fi
+
+            echo "✅ $plugin_name version check passed"
+          done
+
+          echo ""
+          if [ "$ALL_PASSED" = true ]; then
+            echo "✅ All version checks passed!"
+          else
+            echo "❌ Some version checks failed"
+            exit 1
+          fi

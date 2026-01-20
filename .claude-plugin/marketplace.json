@@ -17,6 +17,17 @@
       "source": "./plugins/ralph-specum",
       "category": "development",
       "tags": ["ralph", "spec-driven", "autonomous", "research", "tasks"]
+    },
+    {
+      "name": "ralph-speckit",
+      "description": "Spec-driven development using GitHub spec-kit methodology. Constitution-first approach with specify, plan, tasks, and implement phases.",
+      "version": "0.1.1",
+      "author": {
+        "name": "tzachbon"
+      },
+      "source": "./plugins/ralph-speckit",
+      "category": "development",
+      "tags": ["ralph", "speckit", "spec-driven", "constitution", "specify", "plan", "tasks"]
     }
   ]
 }
