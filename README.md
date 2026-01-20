@@ -190,14 +190,20 @@ smart-ralph/
 ├── .claude-plugin/
 │   └── marketplace.json
 ├── plugins/
-│   └── ralph-specum/
+│   ├── ralph-specum/           # Original spec workflow
+│   │   ├── .claude-plugin/
+│   │   │   └── plugin.json
+│   │   ├── agents/             # Sub-agent definitions
+│   │   ├── commands/           # Slash commands
+│   │   ├── hooks/              # Stop watcher (logging only)
+│   │   ├── templates/          # Spec templates
+│   │   └── schemas/            # Validation schemas
+│   └── ralph-speckit/          # Spec-kit methodology
 │       ├── .claude-plugin/
 │       │   └── plugin.json
-│       ├── agents/           # Sub-agent definitions
-│       ├── commands/         # Slash commands
-│       ├── hooks/            # Stop watcher (logging only)
-│       ├── templates/        # Spec templates
-│       └── schemas/          # Validation schemas
+│       ├── agents/             # spec-executor, qa-engineer
+│       ├── commands/           # /speckit:* commands
+│       └── templates/          # Constitution, spec, plan templates
 └── README.md
 ```
 
