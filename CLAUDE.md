@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⛔ CRITICAL SAFETY RULES
+
+1. **NEVER merge PRs without explicit user permission** — If unsure whether to merge, the answer is NO
+2. **NEVER close PRs without explicit user permission** — Only fix conflicts, push changes, create PRs
+3. **NEVER delete branches on remote without explicit user permission**
+4. **Ask before any destructive action** — When in doubt, ask the user
+
 ## Overview
 
 Smart Ralph is a Claude Code plugin for spec-driven development. It transforms feature requests into structured specs (research, requirements, design, tasks) then executes them task-by-task with fresh context per task.
