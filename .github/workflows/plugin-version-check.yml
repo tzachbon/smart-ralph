@@ -21,14 +21,37 @@ jobs:
         run: |
           BASE_BRANCH="${{ github.base_ref }}"
           CHANGED_PLUGINS=""
+          MARKETPLACE_JSON=".claude-plugin/marketplace.json"
+          BASE_MARKETPLACE_JSON=$(git show "origin/${BASE_BRANCH}:${MARKETPLACE_JSON}" 2>/dev/null || echo '{"plugins":[]}')
 
-          # Check which plugins have changes
+          # Check which plugins have changes in their directory
           for plugin_dir in plugins/*/; do
             plugin_name=$(basename "$plugin_dir")
             if git diff --name-only "origin/${BASE_BRANCH}...HEAD" | grep -q "^plugins/${plugin_name}/"; then
               CHANGED_PLUGINS="${CHANGED_PLUGINS} ${plugin_name}"
             fi
           done
+
+          # Also include plugins whose marketplace version changed (catches marketplace-only changes)
+          if [ -f "$MARKETPLACE_JSON" ]; then
+            CURRENT_PLUGINS=$(jq -r '.plugins[].name' "$MARKETPLACE_JSON" 2>/dev/null || echo "")
+            BASE_PLUGINS=$(echo "$BASE_MARKETPLACE_JSON" | jq -r '.plugins[].name' 2>/dev/null || echo "")
+            ALL_PLUGIN_NAMES=$(echo -e "${CURRENT_PLUGINS}\n${BASE_PLUGINS}" | sort -u)
+
+            for plugin_name in $ALL_PLUGIN_NAMES; do
+              [ -z "$plugin_name" ] && continue
+              # Skip if already in changed list
+              echo "$CHANGED_PLUGINS" | grep -qw "$plugin_name" && continue
+
+              CURRENT_VER=$(jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .version // "null"' "$MARKETPLACE_JSON" 2>/dev/null || echo "null")
+              BASE_VER=$(echo "$BASE_MARKETPLACE_JSON" | jq -r --arg name "$plugin_name" '.plugins[] | select(.name == $name) | .version // "null"' 2>/dev/null || echo "null")
+
+              if [ "$CURRENT_VER" != "$BASE_VER" ]; then
+                echo "Detected marketplace version change for $plugin_name: $BASE_VER → $CURRENT_VER"
+                CHANGED_PLUGINS="${CHANGED_PLUGINS} ${plugin_name}"
+              fi
+            done
+          fi
 
           echo "Changed plugins:${CHANGED_PLUGINS}"
           echo "plugins=${CHANGED_PLUGINS}" >> $GITHUB_OUTPUT
