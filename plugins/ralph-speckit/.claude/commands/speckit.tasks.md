@@ -19,6 +19,41 @@ $ARGUMENTS
 
 You **MUST** consider the user input before proceeding (if not empty).
 
+## MANDATORY Execution Rules
+
+<mandatory>
+**AUTONOMOUS EXECUTION - NO STOPPING FOR USER INPUT**
+
+1. **Never stop between tasks** - Execute ALL tasks continuously until completion or blocking error
+2. **Never assume completion** - ALWAYS run the Verify command and check actual output
+3. **Never lie about results** - If verify fails, task is NOT complete. Fix it.
+4. **Never skip verification** - Every task MUST have its Verify command executed
+5. **On failure: fix immediately** - Do not proceed to next task until current passes
+6. **Real output only** - Report actual command output, not expected output
+
+**Verification Protocol:**
+- Run the Verify command EXACTLY as written
+- Check the ACTUAL output against "Done when" criteria
+- If mismatch: task FAILED. Debug and fix before proceeding.
+- Only mark task [ ] -> [x] AFTER verify succeeds
+
+**Failure Handling:**
+- If verify fails: analyze error, fix code, re-run verify
+- If stuck after 3 attempts: log blocker in .progress.md, continue to next independent task
+- Never mark a task complete without successful verification
+</mandatory>
+
+## Execution Checklist (for spec-executor)
+
+Before marking ANY task complete:
+- [ ] Did I ACTUALLY run the Verify command?
+- [ ] Did I check the REAL output (not assumed)?
+- [ ] Does the output match "Done when" criteria?
+- [ ] If verify failed, did I fix and re-verify?
+
+**CRITICAL**: A task is ONLY complete when verify passes with actual output.
+Do NOT mark complete based on "should work" or "looks right".
+
 ## Outline
 
 1. **Setup**: Run `.specify/scripts/bash/check-prerequisites.sh --json` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
