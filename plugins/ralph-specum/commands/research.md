@@ -11,8 +11,13 @@ You are running the research phase for a specification.
 <mandatory>
 **YOU ARE A COORDINATOR, NOT A RESEARCHER.**
 
-You MUST delegate ALL research work to the `research-analyst` subagent.
+You MUST delegate ALL research work to subagents:
+- Use `Explore` subagent for fast codebase analysis (read-only, uses Haiku model)
+- Use `research-analyst` subagent for web research (needs WebSearch/WebFetch)
+
 Do NOT perform web searches, codebase analysis, or write research.md yourself.
+
+**PARALLEL EXECUTION IS MANDATORY for complex goals.** Spawn 3-5 subagents in a single message to maximize speed.
 </mandatory>
 
 ## Determine Active Spec
@@ -30,35 +35,46 @@ Do NOT perform web searches, codebase analysis, or write research.md yourself.
 ## Analyze Research Topics
 
 <mandatory>
-**BEFORE invoking any research-analyst, analyze the goal and identify distinct research topics.**
+**BEFORE invoking any subagents, analyze the goal and identify distinct research topics.**
 
 Break down the goal into independent research areas that can be explored in parallel. Consider:
-- **External/Best Practices**: Industry standards, patterns, libraries to research online
-- **Codebase Analysis**: Existing implementations, patterns, constraints in the project
-- **Related Specs**: Other specs in ./specs/ that may overlap or be affected
-- **Domain-Specific**: Any specialized topics that need focused research (APIs, protocols, frameworks)
-- **Quality Commands**: Project lint/test/build commands discovery
+- **External/Best Practices**: Industry standards, patterns, libraries to research online → `research-analyst`
+- **Codebase Analysis**: Existing implementations, patterns, constraints → `Explore` (fast, read-only)
+- **Related Specs**: Other specs in ./specs/ that may overlap → `Explore` (fast, read-only)
+- **Domain-Specific**: Specialized topics needing focused research → `research-analyst` for web, `Explore` for code
+- **Quality Commands**: Project lint/test/build commands discovery → `Explore` (fast, read-only)
 </mandatory>
+
+### Subagent Selection Guide
+
+| Task Type | Subagent | Reason |
+|-----------|----------|--------|
+| Web search for best practices | `research-analyst` | Needs WebSearch/WebFetch tools |
+| Library/API documentation | `research-analyst` | Needs web access |
+| Codebase pattern analysis | `Explore` | Fast, read-only, optimized for code |
+| Related specs discovery | `Explore` | Fast scanning of ./specs/ |
+| Quality commands discovery | `Explore` | Fast package.json/Makefile analysis |
+| File structure exploration | `Explore` | Fast, uses Haiku model |
+| Cross-referencing (code vs docs) | Both in parallel | Divide by source type |
 
 ### Topic Splitting Guidelines
 
 | Scenario | Recommendation |
 |----------|----------------|
-| Simple, focused goal | Single research-analyst invocation is fine |
-| Goal spans multiple domains | Split into 2-4 topic-specific research tasks |
-| Goal involves external APIs + codebase | Separate external research from internal analysis |
-| Goal touches multiple components | Research each component area in parallel |
-| Research needs web + codebase analysis | Can split if topics are distinct enough |
-| External best practices needed | Always include a dedicated external research task for web search |
+| Simple, focused goal | 2 agents minimum: 1 Explore (codebase) + 1 research-analyst (web) |
+| Goal spans multiple domains | Split into 3-5 topic-specific tasks |
+| Goal involves external APIs + codebase | Separate: research-analyst for API docs, Explore for codebase |
+| Goal touches multiple components | Multiple Explore agents, one per component |
+| Complex architecture question | 3-5 agents: multiple Explore + research-analyst for external |
 
-**Benefits of splitting:**
-- Parallel execution = faster results
-- Each sub-agent has focused context = better depth
-- Results can be merged for comprehensive coverage
+**Benefits of parallel execution:**
+- 3-5 agents in parallel = up to 90% faster research
+- Explore agents use Haiku model = very fast codebase analysis
+- Each agent has focused context = better depth
+- Results synthesized for comprehensive coverage
 
 **When NOT to split:**
-- Very simple, narrow goals
-- Topics are tightly coupled and can't be researched independently
+- Topics are tightly coupled and depend on each other
 - Splitting would create redundant searches
 
 ## Interview
@@ -117,127 +133,244 @@ Store this context to include in the Task delegation prompt.
 ## Execute Research
 
 <mandatory>
-Use the Task tool with `subagent_type: research-analyst` to run research.
+**SPAWN MULTIPLE SUBAGENTS IN PARALLEL** using the Task tool in a single message.
 
-**IMPORTANT**: If you identified multiple distinct topics above, invoke research-analyst MULTIPLE TIMES IN PARALLEL by including multiple Task tool calls in a single message. This maximizes parallelism and research depth.
+Use the appropriate subagent type:
+- `subagent_type: Explore` - For codebase analysis (fast, read-only, Haiku model)
+- `subagent_type: research-analyst` - For web research (needs WebSearch/WebFetch)
+
+**CRITICAL**: Include ALL Task tool calls in ONE message to ensure parallel execution.
 </mandatory>
 
-### Single Topic Invocation
+### Minimum Parallel Pattern (Always Use)
 
-If the goal is simple or topics cannot be meaningfully split, invoke one research-analyst:
+Even for simple goals, spawn at least 2 agents in parallel:
 
 ```
+Task 1 (Explore - codebase): Analyze existing patterns
+Task 2 (research-analyst - web): Search for best practices
+```
+
+### Standard Parallel Pattern (Recommended)
+
+For most goals, spawn 3-4 agents in ONE message:
+
+**Task 1 - External Research (research-analyst):**
+```
+subagent_type: research-analyst
+
 You are researching for spec: $spec
 Spec path: ./specs/$spec/
+Topic: External best practices and patterns
 
-Goal: [goal from .progress.md]
+Focus ONLY on web research:
+1. WebSearch for best practices, industry standards
+2. WebSearch for common pitfalls and gotchas
+3. Research relevant libraries/frameworks for this stack
+4. Document findings in ./specs/$spec/.research-external.md
 
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
-
-Your task:
-1. Search web for best practices, prior art, and patterns
-2. Explore the codebase for existing related implementations
-3. Scan ./specs/ for existing specs that relate to this goal
-4. Document related specs in the "Related Specs" section
-5. Discover quality commands (lint, test, build)
-6. Assess technical feasibility
-7. Create ./specs/$spec/research.md with your findings
-8. Include interview responses in a "User Context" section of research.md
-
-Use the research.md template structure:
-- Executive Summary
-- User Context (interview responses and user-provided constraints)
-- External Research (best practices, prior art, pitfalls)
-- Codebase Analysis (patterns, dependencies, constraints)
-- Related Specs (table with relevance, relationship, mayNeedUpdate)
-- Feasibility Assessment (table)
-- Recommendations for Requirements
-- Open Questions
-- Sources
-
-Remember: Never guess, always verify. Cite all sources.
+Do NOT explore codebase - Explore agents handle that in parallel.
 ```
 
-### Multiple Topic Invocation (Preferred for Complex Goals)
+**Task 2 - Codebase Analysis (Explore - fast):**
+```
+subagent_type: Explore
+thoroughness: very thorough
 
-<mandatory>
-If you identified 2-4 distinct topics, invoke research-analyst MULTIPLE TIMES IN PARALLEL.
-Each invocation should focus on ONE specific topic area.
-</mandatory>
+Analyze codebase for spec: $spec
+Output file: ./specs/$spec/.research-codebase.md
+
+Tasks:
+1. Find existing patterns related to [goal]
+2. Identify dependencies and constraints
+3. Check for similar implementations
+4. Document architectural patterns used
+
+Write findings to the output file with sections:
+- Existing Patterns (with file paths)
+- Dependencies
+- Constraints
+- Recommendations
+```
+
+**Task 3 - Quality Commands Discovery (Explore - fast):**
+```
+subagent_type: Explore
+thoroughness: quick
+
+Discover quality commands for spec: $spec
+Output file: ./specs/$spec/.research-quality.md
+
+Tasks:
+1. Read package.json scripts section
+2. Check for Makefile targets
+3. Scan .github/workflows/*.yml for CI commands
+4. Document lint, test, build, typecheck commands
+
+Write findings as table: | Type | Command | Source |
+```
+
+**Task 4 - Related Specs Discovery (Explore - fast):**
+```
+subagent_type: Explore
+thoroughness: medium
+
+Scan related specs for: $spec
+Output file: ./specs/$spec/.research-related-specs.md
+
+Tasks:
+1. List all directories in ./specs/ (each is a spec)
+2. For each spec, read .progress.md for Original Goal
+3. Read research.md/requirements.md summaries if exist
+4. Identify overlaps, conflicts, specs needing updates
+
+Write findings as table: | Name | Relevance | Relationship | mayNeedUpdate |
+```
+
+### Complex Goal Pattern (3-5 Agents)
 
 **Example: Goal involves "Add GraphQL API with caching"**
 
-Invoke 3 research-analysts in parallel (all in ONE message with multiple Task tool calls):
+Spawn 5 agents in ONE message:
 
-**Task 1 - External Best Practices:**
+| Agent # | Type | Focus | Output File |
+|---------|------|-------|-------------|
+| 1 | research-analyst | GraphQL best practices (web) | .research-graphql.md |
+| 2 | research-analyst | Caching strategies (web) | .research-caching.md |
+| 3 | Explore | Existing API patterns (code) | .research-codebase.md |
+| 4 | Explore | Quality commands | .research-quality.md |
+| 5 | Explore | Related specs | .research-related-specs.md |
+
+**Task 1 - GraphQL Best Practices (research-analyst):**
 ```
-You are researching for spec: $spec
-Spec path: ./specs/$spec/
-Topic: GraphQL API best practices and patterns
+subagent_type: research-analyst
 
-Focus ONLY on external research:
-1. WebSearch for GraphQL best practices, schema design patterns
-2. WebSearch for GraphQL caching strategies
-3. Research popular GraphQL libraries for this stack
-4. Document findings in ./specs/$spec/.research-external.md
+Topic: GraphQL API best practices
+Output: ./specs/$spec/.research-graphql.md
 
-Do NOT explore codebase or related specs - another agent handles that.
-```
-
-**Task 2 - Codebase Analysis:**
-```
-You are researching for spec: $spec
-Spec path: ./specs/$spec/
-Topic: Existing codebase patterns and constraints
-
-Focus ONLY on internal research:
-1. Explore existing API patterns in codebase
-2. Check for existing caching implementations
-3. Identify dependencies and constraints
-4. Discover quality commands (lint, test, build)
-5. Document findings in ./specs/$spec/.research-codebase.md
-
-Do NOT do web searches - another agent handles that.
+1. WebSearch: "GraphQL schema design best practices 2024"
+2. WebSearch: "GraphQL resolvers performance patterns"
+3. Research popular GraphQL libraries (Apollo, Yoga, etc.)
+4. Document best practices, patterns, pitfalls
 ```
 
-**Task 3 - Related Specs:**
+**Task 2 - Caching Strategies (research-analyst):**
 ```
-You are researching for spec: $spec
-Spec path: ./specs/$spec/
+subagent_type: research-analyst
+
+Topic: Caching strategies for GraphQL
+Output: ./specs/$spec/.research-caching.md
+
+1. WebSearch: "GraphQL caching strategies 2024"
+2. WebSearch: "DataLoader patterns best practices"
+3. Research cache invalidation approaches
+4. Document caching patterns and recommendations
+```
+
+**Task 3 - Codebase Analysis (Explore):**
+```
+subagent_type: Explore
+thoroughness: very thorough
+
+Topic: Existing API and caching patterns in codebase
+Output: ./specs/$spec/.research-codebase.md
+
+1. Search for existing API implementations
+2. Find any caching code or patterns
+3. Identify relevant dependencies
+4. Document patterns with file paths
+```
+
+**Task 4 - Quality Commands (Explore):**
+```
+subagent_type: Explore
+thoroughness: quick
+
+Topic: Quality commands discovery
+Output: ./specs/$spec/.research-quality.md
+
+1. Check package.json scripts
+2. Check Makefile if exists
+3. Check CI workflow commands
+4. Output as table: Type | Command | Source
+```
+
+**Task 5 - Related Specs (Explore):**
+```
+subagent_type: Explore
+thoroughness: medium
+
 Topic: Related specs discovery
+Output: ./specs/$spec/.research-related-specs.md
 
-Focus ONLY on related specs:
-1. Scan ./specs/ for all existing specs
-2. Read each spec's .progress.md, research.md, requirements.md
-3. Identify overlap, conflicts, specs that may need updates
-4. Document findings in ./specs/$spec/.research-related-specs.md
-
-Format as table with: Name, Relevance (High/Medium/Low), Relationship, mayNeedUpdate
+1. Scan ./specs/ for existing specs
+2. Read each spec's progress and requirements
+3. Identify overlaps with GraphQL/caching goal
+4. Output as table: Name | Relevance | Relationship | mayNeedUpdate
 ```
 
-## Merge Results (For Multi-Topic Research)
+## Merge Results (After Parallel Research)
 
 <mandatory>
-After ALL parallel research-analyst tasks complete, YOU must merge results into a single research.md.
+After ALL parallel subagent tasks complete, YOU must merge results into a single research.md.
 </mandatory>
 
-If you invoked multiple research-analysts:
+### Merge Process
 
-1. Read all partial research files (.research-external.md, .research-codebase.md, .research-related-specs.md, etc.)
-2. Create unified `./specs/$spec/research.md` with standard structure:
-   - Executive Summary (synthesize all findings)
-   - External Research (from external research task)
-   - Codebase Analysis (from codebase task)
-   - Related Specs (from related specs task)
-   - Feasibility Assessment (synthesize from all sources)
-   - Quality Commands (from codebase task)
-   - Recommendations for Requirements
-   - Open Questions (consolidated)
-   - Sources (all sources from all tasks)
-3. Delete partial research files after merging
-4. Ensure no duplicate information in merged document
+1. **Read all partial research files** created by subagents:
+   - `.research-external.md` (from research-analyst)
+   - `.research-graphql.md`, `.research-caching.md` (domain-specific, from research-analyst)
+   - `.research-codebase.md` (from Explore)
+   - `.research-quality.md` (from Explore)
+   - `.research-related-specs.md` (from Explore)
+
+2. **Create unified `./specs/$spec/research.md`** with standard structure:
+   ```markdown
+   # Research: $spec
+
+   ## Executive Summary
+   [Synthesize key findings from ALL agents - 2-3 sentences]
+
+   ## External Research
+   [Merge from .research-external.md and domain-specific files]
+   ### Best Practices
+   ### Prior Art
+   ### Pitfalls to Avoid
+
+   ## Codebase Analysis
+   [From .research-codebase.md]
+   ### Existing Patterns
+   ### Dependencies
+   ### Constraints
+
+   ## Related Specs
+   [From .research-related-specs.md]
+   | Spec | Relevance | Relationship | May Need Update |
+
+   ## Quality Commands
+   [From .research-quality.md]
+   | Type | Command | Source |
+
+   ## Feasibility Assessment
+   [Synthesize from all sources]
+   | Aspect | Assessment | Notes |
+
+   ## Recommendations for Requirements
+   [Consolidated recommendations]
+
+   ## Open Questions
+   [Consolidated from all agents]
+
+   ## Sources
+   [All URLs and file paths from all agents]
+   ```
+
+3. **Delete partial research files** after successful merge:
+   ```bash
+   rm ./specs/$spec/.research-*.md
+   ```
+
+4. **Quality check**: Ensure no duplicate information, consistent formatting
 
 ## Update State
 
@@ -256,12 +389,34 @@ After research completes:
    ```
 3. Update `.progress.md` with research completion
 
+## Commit Spec (if enabled)
+
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
+
+1. Stage research file:
+   ```bash
+   git add ./specs/$spec/research.md
+   ```
+2. Commit with message:
+   ```bash
+   git commit -m "spec($spec): add research findings"
+   ```
+3. Push to current branch:
+   ```bash
+   git push -u origin $(git branch --show-current)
+   ```
+
+If commit or push fails, display warning but continue (don't block the workflow).
+
 ## Output
 
 ```
 Research phase complete for '$spec'.
 
 Output: ./specs/$spec/research.md
+[If commitSpec: "Spec committed and pushed."]
 
 Related specs found:
   - <name> (<RELEVANCE>) - may need update

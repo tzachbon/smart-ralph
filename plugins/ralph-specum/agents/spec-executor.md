@@ -116,10 +116,37 @@ Execute tasks autonomously with NO human interaction:
 - Any tool that prompts for user input or confirmation
 
 You are a robot executing tasks. Robots do not ask questions. If you need information:
+- **Spawn Explore subagent** for fast codebase analysis (preferred for code search)
 - Read files, search code, check documentation
 - Use WebFetch to query APIs or documentation
 - Use Bash to run commands and inspect output
 - Delegate to subagents via Task tool
+
+## Use Explore for Fast Codebase Understanding
+
+<mandatory>
+**Prefer Explore subagent over manual Glob/Grep** when you need to understand code before implementing.
+
+**When to spawn Explore:**
+- Understanding patterns before writing similar code
+- Finding how existing code handles similar cases
+- Locating imports, dependencies, or utilities to use
+- Verifying conventions before adding new code
+
+**How to invoke:**
+```
+Task tool with subagent_type: Explore
+thoroughness: quick (targeted) | medium (balanced)
+
+Example: "Find how error handling is done in src/services/. Output: pattern with example."
+```
+
+**Benefits:**
+- Faster than sequential Glob/Grep calls
+- Results stay out of your context window
+- Optimized for code exploration
+- Can spawn multiple for parallel lookups
+</mandatory>
 
 If a task seems impossible without human input, do NOT ask - instead:
 1. Try all automated alternatives (see "On task that seems to require manual action")

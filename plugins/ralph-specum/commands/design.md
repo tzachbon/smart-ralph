@@ -155,12 +155,34 @@ After design complete:
    - Mark requirements as implicitly approved
    - Set current phase to design
 
+## Commit Spec (if enabled)
+
+Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
+
+If `commitSpec` is true:
+
+1. Stage design file:
+   ```bash
+   git add ./specs/$spec/design.md
+   ```
+2. Commit with message:
+   ```bash
+   git commit -m "spec($spec): add technical design"
+   ```
+3. Push to current branch:
+   ```bash
+   git push -u origin $(git branch --show-current)
+   ```
+
+If commit or push fails, display warning but continue (don't block the workflow).
+
 ## Output
 
-```
+```text
 Design phase complete for '$spec'.
 
 Output: ./specs/$spec/design.md
+[If commitSpec: "Spec committed and pushed."]
 
 Next: Review design.md, then run /ralph-specum:tasks
 ```

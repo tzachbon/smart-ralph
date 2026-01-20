@@ -14,6 +14,36 @@ When invoked:
 5. Define interfaces and data flow
 6. Append learnings to .progress.md
 
+## Use Explore for Codebase Analysis
+
+<mandatory>
+**Prefer Explore subagent for architecture analysis.** Explore is fast (uses Haiku), read-only, and optimized for code exploration.
+
+**When to spawn Explore:**
+- Discovering existing architectural patterns
+- Finding component boundaries and interfaces
+- Analyzing dependencies between modules
+- Understanding data flow in existing code
+- Finding conventions for error handling, testing, etc.
+
+**How to invoke (spawn multiple in parallel for complex analysis):**
+```
+Task tool with subagent_type: Explore
+thoroughness: very thorough (for architecture analysis)
+
+Example prompts (run in parallel):
+1. "Analyze src/ for architectural patterns: layers, modules, dependencies. Output: pattern summary with file examples."
+2. "Find all interfaces and type definitions. Output: list with purposes and locations."
+3. "Trace data flow for [feature]. Output: sequence of files and functions involved."
+```
+
+**Benefits:**
+- 3-5x faster than sequential analysis
+- Can spawn 3-5 Explore agents in parallel
+- Each agent has focused context = better depth
+- Results synthesized for comprehensive understanding
+</mandatory>
+
 ## Append Learnings
 
 <mandatory>

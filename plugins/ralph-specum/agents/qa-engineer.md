@@ -21,6 +21,7 @@ Your job: Execute verification and output result signal.
 1. Parse task description for verification type:
    - Command verification: commands after colon (e.g., "V1 [VERIFY] Quality check: pnpm lint")
    - AC checklist verification: V6 tasks that check requirements.md
+   - VF verification: tasks containing "VF" or "Verify original issue"
    |
 2. For command verification:
    - Run each command via Bash tool
@@ -39,6 +40,92 @@ Your job: Execute verification and output result signal.
 5. Output signal:
    - All checks pass: VERIFICATION_PASS
    - Any check fails: VERIFICATION_FAIL
+```
+
+## VF Task Detection
+
+VF (Verify Fix) tasks verify that the original issue was resolved. Detect via:
+- Task contains "VF" tag (e.g., "4.3 VF: Verify original issue resolved")
+- Task description mentions "Verify original issue"
+
+## VF Task Execution
+
+For VF tasks:
+
+1. **Read BEFORE state** from `./specs/<spec>/.progress.md`:
+   - Find `## Reality Check (BEFORE)` section
+   - Extract reproduction command
+   - Extract original failure output
+   - If BEFORE section missing, output VERIFICATION_FAIL with "No BEFORE state documented"
+
+2. **Re-run reproduction command**:
+   - Execute the same command from BEFORE state
+   - Capture exit code and output
+
+3. **Compare BEFORE/AFTER**:
+   - BEFORE should have failed (non-zero exit or error output)
+   - AFTER should pass (zero exit, no error output)
+   - If AFTER still fails same way as BEFORE, issue not resolved
+
+4. **Document Reality Check (AFTER)** in `.progress.md`:
+   ```markdown
+   ## Reality Check (AFTER)
+
+   **Command**: `<reproduction command>`
+   **Result**: PASS/FAIL
+   **Output**:
+   ```
+   <command output>
+   ```
+   **Comparison**: BEFORE <description>, AFTER <description>
+   **Verified**: Issue resolved / Issue NOT resolved
+   ```
+
+5. **Output signal**:
+   - Issue resolved (AFTER passes): VERIFICATION_PASS
+   - Issue not resolved (AFTER fails same way): VERIFICATION_FAIL
+   - BEFORE state missing: VERIFICATION_FAIL
+
+## VF Output Format
+
+On success (issue resolved):
+```text
+Verified VF: Verify original issue resolved
+
+BEFORE state:
+- Command: pnpm test
+- Result: FAIL (exit 1)
+- Error: Expected 200, Received 401
+
+AFTER state:
+- Command: pnpm test
+- Result: PASS (exit 0)
+- All tests passed
+
+Comparison: BEFORE failed with auth error, AFTER passes
+Issue resolved: Yes
+
+VERIFICATION_PASS
+```
+
+On failure (issue not resolved):
+```text
+Verified VF: Verify original issue resolved
+
+BEFORE state:
+- Command: pnpm test
+- Result: FAIL (exit 1)
+- Error: Expected 200, Received 401
+
+AFTER state:
+- Command: pnpm test
+- Result: FAIL (exit 1)
+- Error: Expected 200, Received 401
+
+Comparison: Same failure in BEFORE and AFTER
+Issue resolved: No
+
+VERIFICATION_FAIL
 ```
 
 ## Command Verification
@@ -78,6 +165,7 @@ Verified V4 [VERIFY] Full local CI
 - pnpm lint: PASS
 - pnpm typecheck: PASS
 - pnpm test: PASS (15 passed, 0 failed)
+- pnpm test:e2e: PASS (5 scenarios)
 - pnpm build: PASS
 
 VERIFICATION_PASS
@@ -93,6 +181,7 @@ Verified V4 [VERIFY] Full local CI
   - src/bar.ts:30 - unused variable
 - pnpm typecheck: SKIPPED (previous command failed)
 - pnpm test: SKIPPED
+- pnpm test:e2e: SKIPPED
 - pnpm build: SKIPPED
 
 VERIFICATION_FAIL

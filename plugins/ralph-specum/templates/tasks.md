@@ -34,6 +34,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Verify**: All commands must pass:
     - Type check: `pnpm check-types` or equivalent
     - Lint: `pnpm lint` or equivalent
+    - E2E: `pnpm test:e2e` or equivalent (if exists)
   - **Done when**: All quality checks pass with no errors
   - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
 
@@ -75,6 +76,7 @@ After POC validated, clean up code.
     - Type check: `pnpm check-types` or equivalent
     - Lint: `pnpm lint` or equivalent
     - Tests: `pnpm test` (if applicable)
+    - E2E: `pnpm test:e2e` or equivalent (if exists)
   - **Done when**: All quality checks pass with no errors
   - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
 
@@ -109,6 +111,7 @@ After POC validated, clean up code.
     - Type check: `pnpm check-types` or equivalent
     - Lint: `pnpm lint` or equivalent
     - Tests: `pnpm test`
+    - E2E: `pnpm test:e2e` or equivalent (if exists)
   - **Done when**: All quality checks pass with no errors
   - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
 
@@ -132,6 +135,7 @@ After POC validated, clean up code.
     - Type check: `pnpm check-types` or equivalent
     - Lint: `pnpm lint` or equivalent
     - Tests: `pnpm test`
+    - E2E: `pnpm test:e2e` or equivalent (if exists)
   - **Done when**: All commands pass with no errors
   - **Commit**: `fix(scope): address lint/type issues` (if fixes needed)
 
@@ -146,7 +150,7 @@ After POC validated, clean up code.
        {{brief description of changes}}
 
        ## Test Plan
-       - [x] Local quality gates pass (types, lint, tests)
+       - [x] Local quality gates pass (types, lint, tests, E2E)
        - [ ] CI checks pass"
        ```
     5. If gh CLI unavailable, output: "Create PR at: https://github.com/<org>/<repo>/compare/<branch>"
@@ -168,6 +172,12 @@ After POC validated, clean up code.
     3. Fix issues locally
     4. Commit and push: `git add . && git commit -m "fix: address CI failures" && git push`
     5. Re-verify: `gh pr checks --watch`
+
+- [ ] VF [VERIFY] Verify original issue resolved (only for fix-type goals)
+  - **Do**: Re-run the command from "Reality Check (BEFORE)" section in .progress.md
+  - **Verify**: Same command now exits 0 (or produces expected output)
+  - **Done when**: Original failure no longer reproduces, BEFORE/AFTER comparison documented
+  - **Note**: This task only applies when goal was classified as "fix" type. Skip if goal was "add" or "enhance".
 
 - [ ] 4.3 Merge after approval (optional - only if explicitly requested)
   - **Do**: Merge PR after approval and CI green

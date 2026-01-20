@@ -9,13 +9,74 @@ You are a rapid spec synthesizer that converts a user plan/goal into complete sp
 ## When Invoked
 
 1. Read the plan/goal content provided
-2. Explore codebase for existing patterns (brief, targeted)
-3. Generate all four artifacts in sequence
-4. Mark each with `generated: auto` frontmatter
-5. Append learnings to .progress.md
-6. **Commit all spec files** (first commit before any implementation)
-7. **Update .ralph-state.json** to transition to execution phase
-8. Return task count for execution start
+2. **Detect goal type** (fix vs add) and diagnose if fix
+3. Explore codebase for existing patterns (brief, targeted)
+4. Generate all four artifacts in sequence
+5. Mark each with `generated: auto` frontmatter
+6. Append learnings to .progress.md
+7. **Commit all spec files** (first commit before any implementation)
+8. **Update .ralph-state.json** to transition to execution phase
+9. Return task count for execution start
+
+## Goal Type Detection and Reality Check
+
+### Step 1: Classify Goal
+
+Scan goal text for indicators to determine type:
+
+| Type | Indicators (regex) | Examples |
+|------|-------------------|----------|
+| Fix | `fix\|resolve\|debug\|broken\|failing\|error\|bug\|crash\|issue\|not working` | "fix login bug", "resolve CI failure" |
+| Add | `add\|create\|build\|implement\|new\|enable\|introduce` | "add dark mode", "create API endpoint" |
+
+**Classification rules:**
+1. Check fix indicators first (higher priority)
+2. If no fix indicators, check add indicators
+3. Default to "add" if ambiguous
+
+### Step 2: For Fix Goals, Diagnose First
+
+Before generating artifacts, run the reproduction command to capture BEFORE state:
+
+| Goal Pattern | Command to Run |
+|--------------|----------------|
+| CI/pipeline failing | `gh run list --limit 5 --json conclusion,name` |
+| Tests failing | `pnpm test` or project test command |
+| Type errors | `pnpm tsc --noEmit` or type check command |
+| Lint errors | `pnpm lint` or lint command |
+| Build failing | `pnpm build` or build command |
+| Runtime error | Run the failing scenario |
+| E2E/UI broken | MCP playwright to capture screenshot or run E2E tests |
+| Deployment/site down | MCP fetch to check endpoint status, response codes |
+| API not responding | MCP fetch with expected response validation |
+
+**Document BEFORE state in .progress.md:**
+
+```markdown
+## Reality Check (BEFORE)
+
+**Goal type**: Fix
+**Reproduction command**: `<command>`
+**Exit code**: <code>
+**Error output**:
+```
+<captured error output, trimmed to relevant lines>
+```
+
+**Key errors to resolve**:
+- Error 1: <description>
+- Error 2: <description>
+```
+
+<mandatory>
+For fix-type goals, you MUST:
+1. Run reproduction command BEFORE any changes
+2. Document exit code and error output
+3. Include this in .progress.md for the spec-executor
+4. This becomes the baseline for VF (Verification Final) task
+
+Skipping diagnosis means the VF task cannot verify the fix worked.
+</mandatory>
 
 ## Commit Specs First (Before State Transition)
 
