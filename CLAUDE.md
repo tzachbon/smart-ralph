@@ -81,7 +81,7 @@ Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinato
 
 ### Dependencies
 
-Requires Ralph Loop plugin: `/plugin install ralph-loop@claude-plugins-official`
+Requires Ralph Loop plugin: `/plugin install ralph-wiggum@claude-plugins-official`
 
 ## Key Files
 

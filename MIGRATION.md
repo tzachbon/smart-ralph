@@ -17,7 +17,7 @@ v2.0.0 delegates task execution to the official Ralph Loop plugin instead of usi
 
 1. **Install Ralph Loop**
    ```bash
-   /plugin install ralph-loop@claude-plugins-official
+   /plugin install ralph-wiggum@claude-plugins-official
    ```
 
 2. **Restart Claude Code**
@@ -57,7 +57,7 @@ The new loop picks up from the last completed task.
 ### Troubleshooting
 
 **"Ralph Loop plugin not found"**
-- Install it: `/plugin install ralph-loop@claude-plugins-official`
+- Install it: `/plugin install ralph-wiggum@claude-plugins-official`
 - Restart Claude Code
 
 **"Loop state conflict"**
