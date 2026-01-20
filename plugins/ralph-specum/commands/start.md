@@ -156,7 +156,7 @@ In quick mode (`--quick`), execution uses `/ralph-loop` for autonomous task comp
 
 After generating spec artifacts in quick mode, invoke ralph-loop:
 ```
-Skill: ralph-wiggum:ralph-loop
+Skill: ralph-loop:ralph-loop
 Args: Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
 ```
 
