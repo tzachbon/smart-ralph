@@ -131,6 +131,78 @@ Add as task 4.3 (after PR creation) for fix-type specs:
   - **Commit**: `chore(<name>): verify fix resolves original issue`
 ```
 
+## Test Quality Reality Check
+
+When verifying test-related fixes, also check for mock-only test anti-patterns:
+
+### Mock-Only Test Red Flags
+
+Tests may pass but not actually test implementation. Detect:
+
+1. **Mockery Pattern**: Test file has more mock setup than real assertions
+   - Count: `grep -c "mock\|stub\|spy" test-file` vs `grep -c "expect(" test-file`
+   - Red flag: Mock lines > 3x assertion lines
+
+2. **Missing Real Imports**: Test only imports test libraries, not actual module
+   - Check: Does test import the real implementation?
+   - Red flag: Only imports from jest/vitest/testing-library
+
+3. **Behavioral-Only Testing**: All assertions are mock interactions
+   - Check: `grep "toHaveBeenCalled\|spy.calledWith" test-file`
+   - Red flag: No `toBe`, `toEqual`, `toMatch` assertions on real values
+
+4. **No Integration Coverage**: Every dependency is mocked
+   - Check: Are there any tests without mocks?
+   - Red flag: 100% mock coverage = 0% real integration tested
+
+5. **Partial Mocks**: Using `vi.spyOn`/`jest.spyOn` excessively
+   - Red flag: Mixing real and mocked behavior creates unpredictability
+
+6. **No Mock Cleanup**: Mocks persist across tests
+   - Check: `grep "afterEach\|mockClear\|mockReset" test-file`
+   - Red flag: Missing cleanup = flaky tests
+
+### Reality Check for Test Fixes
+
+For "fix tests" specs, verify BOTH conditions:
+
+```markdown
+## Reality Check (Test Quality)
+
+**Before State**:
+- Tests: FAILING
+- Mock ratio: N/A (tests failing)
+
+**After State**:
+- Tests: PASSING ✓
+- Mock quality check:
+  - Mock declarations: 2
+  - Real assertions: 15
+  - Real module import: YES ✓
+  - Integration tests: 3 ✓
+  - Mock cleanup: afterEach present ✓
+
+**Verdict**: Tests now pass AND test real behavior (not just mocks)
+```
+
+If tests pass but have mock quality issues:
+
+```markdown
+## Reality Check (Test Quality)
+
+**After State**:
+- Tests: PASSING ⚠️
+- Mock quality issues:
+  - Mock declarations: 20
+  - Real assertions: 4
+  - Mock ratio: 5.0x (exceeds 3x threshold)
+  - Real module import: MISSING
+  - Integration tests: 0
+
+**Verdict**: Tests pass but only test mocks, not implementation
+**Required**: Fix test quality before marking VERIFICATION_PASS
+```
+
 ## Why This Matters
 
 | Without | With |
@@ -139,4 +211,6 @@ Add as task 4.3 (after PR creation) for fix-type specs:
 | Tests "fixed" but original failure unknown | Before/after comparison proves fix |
 | Silent regressions | Explicit failure reproduction |
 | Manual verification required | Automated verification in workflow |
+| Tests pass but only test mocks | Tests verify real behavior, not mock behavior |
+| False sense of security from green tests | Confidence that tests catch real bugs |
 # Version 2.1.0
