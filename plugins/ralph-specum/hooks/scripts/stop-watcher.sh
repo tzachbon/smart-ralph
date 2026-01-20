@@ -34,20 +34,23 @@ if [ ! -f "$STATE_FILE" ]; then
 fi
 
 # Validate state file is readable JSON
+CORRUPT_STATE=false
 if ! jq empty "$STATE_FILE" 2>/dev/null; then
     echo "WARNING: Corrupt .ralph-state.json detected for spec: $SPEC_NAME" >&2
-    exit 0
+    CORRUPT_STATE=true
 fi
 
 # Read state for logging (guard all jq calls)
-PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
-TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
+if [ "$CORRUPT_STATE" = false ]; then
+    PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
+    TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+    TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+    TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 
-# Log current state before cleanup
-if [ "$PHASE" = "execution" ]; then
-    echo "[ralph-specum] Cleaning up spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
+    # Log current state before cleanup
+    if [ "$PHASE" = "execution" ]; then
+        echo "[ralph-specum] Cleaning up spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
+    fi
 fi
 
 # Cleanup: Remove state file to reset execution state

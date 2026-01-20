@@ -29,7 +29,7 @@ If state file exists, read and display:
 ## Cleanup
 
 1. Stop Ralph loop (if running):
-   ```
+   ```text
    Use the Skill tool to invoke ralph-loop:cancel-ralph
    This stops any active Ralph loop iteration
    ```
