@@ -51,7 +51,7 @@ if [ "$PHASE" = "execution" ]; then
 fi
 
 # Cleanup: Remove state file to reset execution state
-# This achieves the same result as /cancel - the loop will not resume on next start
+# This achieves the same result as /ralph-loop:cancel-ralph - the loop will not resume on next start
 rm -f "$STATE_FILE" 2>/dev/null || true
 echo "[ralph-specum] Removed .ralph-state.json for spec: $SPEC_NAME" >&2
 
