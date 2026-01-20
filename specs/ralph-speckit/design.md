@@ -492,7 +492,7 @@ stateDiagram-v2
 ## Edge Cases
 
 - **Empty constitution**: Generate minimal template, prompt user to fill
-- **Feature ID gap**: Use next sequential (001, 003 if 002 deleted)
+- **Feature ID gap**: IDs are never reused. If 002 is deleted, new features get 003, 004, etc. Gaps are intentional to preserve historical traceability and avoid confusion with deleted/archived features. The system scans all existing directories to find the highest ID and increments from there.
 - **Parallel features**: Each feature has isolated state, switch via /speckit:switch
 - **Resumed session**: Read .speckit-state.json, continue from last phase/task
 - **Orphaned temp files**: Cleanup files older than 60 minutes via stop-watcher

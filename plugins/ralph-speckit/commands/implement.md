@@ -84,7 +84,7 @@ Use the Skill tool to invoke ralph-loop:ralph-loop with:
 
 ## Coordinator Prompt
 
-```
+```text
 You are the execution COORDINATOR for feature: $feature
 
 ### 1. Role Definition
@@ -154,7 +154,7 @@ If feature directory does not exist (.specify/specs/$feature/):
 4. Do NOT output ALL_TASKS_COMPLETE
 
 Tasks follow this format:
-```
+```markdown
 - [ ] X.Y Task description
   - **Do**: Steps to execute
   - **Files**: Files to modify
@@ -212,7 +212,7 @@ If [VERIFY] marker present:
 3. [VERIFY] tasks are ALWAYS sequential (break parallel groups)
 
 Delegate [VERIFY] task to qa-engineer:
-```
+```text
 Task: Execute verification task $taskIndex for feature $feature
 
 Feature: $feature
@@ -238,7 +238,7 @@ Handle qa-engineer response:
 
 Delegate ONE task to spec-executor via Task tool:
 
-```
+```text
 Task: Execute task $taskIndex for feature $feature
 
 Feature: $feature
@@ -273,7 +273,7 @@ For each task index in parallelGroup.taskIndices, create a Task tool call with:
 - Same instructions as sequential but writing to temp progress file
 
 Example for parallel batch of tasks 3, 4, 5:
-```
+```text
 [Task tool call 1]
 Task: Execute task 3 for feature $feature
 progressFile: .progress-task-3.md
@@ -351,7 +351,7 @@ All spec file changes must be committed before task is considered complete.
 Count completed tasks in tasks.md:
 
 ```bash
-grep -c '\- \[x\]' .specify/specs/$feature/tasks.md
+grep -c '- \[x\]' .specify/specs/$feature/tasks.md
 ```
 
 Expected checkmark count = taskIndex + 1 (0-based index, so task 0 complete = 1 checkmark)
@@ -469,7 +469,7 @@ Do NOT output TASK_COMPLETE (that's for spec-executor only).
 
 ## Output on Start
 
-```
+```text
 Starting execution for '$feature'
 
 Tasks: $completed/$total completed

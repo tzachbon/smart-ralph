@@ -205,7 +205,7 @@ fi
 
 ## Output
 
-```
+```text
 Feature '$FEATURE_ID-$feature-name' created
 
 Location: .specify/specs/$FEATURE_ID-$feature-name/

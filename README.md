@@ -24,7 +24,7 @@ Ralph Wiggum + Spec-Driven Development = <3
 
 Smart Ralph is a Claude Code plugin that turns your vague feature ideas into structured specs, then executes them task-by-task. Like having a tiny product team in your terminal.
 
-```
+```text
 You: "Add user authentication"
 Ralph: *creates research.md, requirements.md, design.md, tasks.md*
 Ralph: *executes each task with fresh context*
@@ -128,7 +128,7 @@ claude --plugin-dir $(pwd)
 
 ## How It Works
 
-```
+```text
         "I want a feature!"
                |
                v
@@ -185,7 +185,7 @@ Tasks follow a 4-phase structure:
 
 ## Project Structure
 
-```
+```text
 smart-ralph/
 ├── .claude-plugin/
 │   └── marketplace.json
@@ -205,7 +205,7 @@ smart-ralph/
 
 Specs live in `./specs/` in your project:
 
-```
+```text
 ./specs/
 ├── .current-spec           # Active spec name
 └── my-feature/
@@ -216,6 +216,86 @@ Specs live in `./specs/` in your project:
     ├── design.md
     └── tasks.md
 ```
+
+---
+
+## Ralph Speckit (Spec-Kit Methodology)
+
+**ralph-speckit** is an alternative plugin implementing [GitHub's spec-kit methodology](https://github.com/github/spec-kit) with constitution-first governance.
+
+### Key Differences from ralph-specum
+
+| Feature | ralph-specum | ralph-speckit |
+|---------|--------------|---------------|
+| Directory | `./specs/` | `.specify/specs/` |
+| Naming | `my-feature/` | `001-feature-name/` |
+| Constitution | None | `.specify/memory/constitution.md` |
+| Spec structure | research, requirements, design, tasks | spec (WHAT/WHY), plan (HOW), tasks |
+| Traceability | Basic | Full FR/AC annotations |
+
+### Installation
+
+```bash
+# Install Ralph Wiggum dependency first
+/plugin install ralph-loop@claude-plugins-official
+
+# Install ralph-speckit
+/plugin install ralph-speckit@smart-ralph
+```
+
+### Quick Start
+
+```bash
+# Initialize constitution (first time only)
+/speckit:constitution
+
+# Create and develop a feature
+/speckit:start user-auth "Add JWT authentication"
+/speckit:specify
+/speckit:plan
+/speckit:tasks
+/speckit:implement
+```
+
+### Commands
+
+| Command | What it does |
+|---------|--------------|
+| `/speckit:constitution` | Create/update project constitution |
+| `/speckit:start <name> [goal]` | Create new feature with auto ID |
+| `/speckit:specify` | Define feature spec (WHAT/WHY) |
+| `/speckit:plan [tech]` | Create technical plan with research |
+| `/speckit:tasks` | Generate task breakdown by user story |
+| `/speckit:implement` | Execute tasks task-by-task |
+| `/speckit:status` | Show current feature status |
+| `/speckit:switch <name>` | Switch active feature |
+| `/speckit:cancel` | Cancel execution loop |
+| `/speckit:clarify` | Optional: clarify ambiguous requirements |
+| `/speckit:analyze` | Optional: check spec consistency |
+
+### Feature Directory Structure
+
+```text
+.specify/
+├── memory/
+│   └── constitution.md       # Project-level principles
+├── .current-feature          # Active feature pointer
+└── specs/
+    ├── 001-user-auth/
+    │   ├── .speckit-state.json
+    │   ├── .progress.md
+    │   ├── spec.md           # Requirements (WHAT/WHY)
+    │   ├── research.md
+    │   ├── plan.md           # Technical design (HOW)
+    │   └── tasks.md
+    └── 002-payment-flow/
+        └── ...
+```
+
+### When to Use Which
+
+- **ralph-specum**: Quick iterations, personal projects, simple features
+- **ralph-speckit**: Enterprise projects, team collaboration, audit trails needed
 
 ---
 
