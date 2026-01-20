@@ -23,7 +23,7 @@ claude --plugin-dir ./plugins/ralph-specum
 /ralph-specum:start test-feature Some test goal
 ```
 
-> For each change, fix, or addition, update the plugin version in BOTH:
+> **Version bumps**: Once per branch (not per commit). Update version in BOTH files:
 > - `plugins/ralph-specum/.claude-plugin/plugin.json`
 > - `.claude-plugin/marketplace.json`
 

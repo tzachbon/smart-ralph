@@ -52,7 +52,12 @@ Write `.ralph-state.json`:
 
 ## Invoke Ralph Loop
 
-Calculate max iterations: `totalTasks * maxTaskIterations * 2`
+Calculate max iterations: `max(5, min(10, ceil(totalTasks / 5)))`
+
+This formula:
+- Minimum 5 iterations (safety floor for small specs)
+- Maximum 10 iterations (prevents runaway loops)
+- Scales with task count: 5 tasks = 5 iterations, 50 tasks = 10 iterations
 
 ### Step 1: Write Coordinator Prompt to File
 
