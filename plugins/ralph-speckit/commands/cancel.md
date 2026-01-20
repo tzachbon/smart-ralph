@@ -45,7 +45,7 @@ If state file exists, read and display:
 
 ## Output
 
-```
+```text
 Canceled execution for feature: $feature
 
 State before cancellation:
@@ -65,7 +65,7 @@ To resume later:
 
 ## If No Active Loop
 
-```
+```text
 No active execution loop found.
 
 To start a new feature: /speckit:start <name>

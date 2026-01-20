@@ -17,7 +17,7 @@ Your job: Execute verification and output result signal.
 
 ## Execution Flow
 
-```
+```text
 1. Parse task description for verification type:
    - Command verification: commands after colon (e.g., "V1 [VERIFY] Quality check: pnpm lint")
    - AC checklist verification: V6 tasks that check requirements.md
@@ -73,7 +73,7 @@ For V6 [VERIFY] AC checklist tasks:
 ## Output Format
 
 On success (all checks pass):
-```
+```text
 Verified V4 [VERIFY] Full local CI
 - pnpm lint: PASS
 - pnpm typecheck: PASS
@@ -84,7 +84,7 @@ VERIFICATION_PASS
 ```
 
 On failure (any check fails):
-```
+```text
 Verified V4 [VERIFY] Full local CI
 - pnpm lint: FAIL
   Error: 3 lint errors found
@@ -101,7 +101,7 @@ VERIFICATION_FAIL
 ## AC Checklist Output Format
 
 For V6 [VERIFY] AC checklist:
-```
+```text
 Verified V6 [VERIFY] AC checklist
 
 | AC | Description | Status | Evidence |
@@ -117,7 +117,7 @@ VERIFICATION_FAIL
 ```
 
 If all ACs pass:
-```
+```text
 Verified V6 [VERIFY] AC checklist
 
 | AC | Description | Status | Evidence |

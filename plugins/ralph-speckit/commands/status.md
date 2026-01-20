@@ -41,7 +41,7 @@ If a current feature is set:
 
 ## Output Format
 
-```
+```text
 # Ralph Speckit Status
 
 Current feature: <id>-<name> (or "none set")
@@ -113,7 +113,7 @@ Example: `[x] spec.md [x] plan.md [ ] tasks.md`
 
 If `.specify/.current-feature` does not exist or is empty:
 
-```
+```text
 # Ralph Speckit Status
 
 No active feature.
@@ -130,12 +130,12 @@ Commands:
 ## Error Handling
 
 If `.specify/` directory does not exist:
-```
+```text
 Ralph Speckit not initialized.
 Run `/speckit:start <name> <goal>` to begin.
 ```
 
 If state file is corrupted:
-```
+```text
 Warning: .speckit-state.json is malformed. Run /speckit:cancel to reset.
 ```

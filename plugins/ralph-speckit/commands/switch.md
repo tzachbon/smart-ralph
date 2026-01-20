@@ -27,7 +27,7 @@ If `$ARGUMENTS` is empty:
 2. Read current active feature from `.specify/.current-feature`
 3. Show list with current marked
 
-```
+```text
 Available features:
 - 001-user-auth [ACTIVE]
 - 002-payment-flow
@@ -60,7 +60,7 @@ Run: /speckit:switch <feature-name>
 
 ## Output
 
-```
+```text
 Switched to feature: $FEATURE
 
 Current phase: <phase>

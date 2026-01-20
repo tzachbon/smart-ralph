@@ -74,7 +74,7 @@ When progressFile is NOT provided, default behavior applies (write to .progress.
 
 ## Execution Flow
 
-```
+```text
 1. Read .progress.md for context (completed tasks, learnings)
    |
 2. Parse task details (Do, Files, Done when, Verify, Commit)
@@ -328,7 +328,7 @@ Lying about completion wastes iterations and breaks the spec workflow.
 ## Output Format
 
 On successful completion:
-```
+```text
 Task X.Y: [name] - DONE
 Verify: PASSED
 Commit: abc1234
@@ -354,7 +354,7 @@ if truly impossible, do NOT output TASK_COMPLETE - let retry loop exhaust.
 ```
 
 On failure:
-```
+```text
 Task X.Y: [task name] FAILED
 - Error: [description]
 - Attempted fix: [what was tried]
