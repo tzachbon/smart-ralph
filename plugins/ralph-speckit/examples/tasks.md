@@ -10,9 +10,11 @@
 
 ---
 
-## Phase 1: Setup (Shared Infrastructure)
+## Phase 1: Make It Work (POC)
 
-**Purpose**: Project initialization and basic structure
+**Purpose**: Get core functionality working, skip tests initially
+
+### Setup and Infrastructure
 
 - [ ] T001 Create project structure with src/, tests/, docs/ directories
 - [ ] T002 Initialize Node.js project with TypeScript and required dependencies
@@ -28,11 +30,7 @@
   - **Verify**: `npm run lint`
   - **Commit**: "chore: add linting configuration"
 
----
-
-## Phase 2: Foundational (Blocking Prerequisites)
-
-**Purpose**: Core infrastructure required before any user story
+### Database and Core Utils
 
 - [ ] T004 Setup database schema with Prisma
   - **Do**: Initialize Prisma, create User and RefreshToken models
@@ -48,136 +46,165 @@
   - **Commit**: "feat: add error handling middleware"
 - [ ] T006 [P] Setup JWT utilities
   - **Do**: Create sign/verify functions with Zod schema for payload
-  - **Files**: src/utils/jwt.ts, src/utils/jwt.test.ts
-  - **Done when**: Tests pass for sign/verify
-  - **Verify**: `npm test -- jwt`
+  - **Files**: src/utils/jwt.ts
+  - **Done when**: Can sign and verify tokens
+  - **Verify**: Manual verification
   - **Commit**: "feat: add JWT utilities"
 
-**Checkpoint**: Foundation ready
+### User Story 1: Registration (US1)
 
----
-
-## Phase 3: User Story 1 - Registration (Priority: P1)
-
-**Goal**: Users can create accounts
-**Independent Test**: POST /api/auth/register with valid data
-
-### Tests for User Story 1
-
-- [ ] T007 [P] [US1] Write registration API tests
-  - **Do**: Test valid registration, duplicate email, weak password cases
-  - **Files**: tests/integration/register.test.ts
-  - **Done when**: Tests exist and FAIL (not implemented yet)
-  - **Verify**: `npm test -- register` fails with "not implemented"
-  - **Commit**: "test: add registration API tests"
-
-### Implementation for User Story 1
-
-- [ ] T008 [US1] Implement password hashing utility
+- [ ] T007 [US1] Implement password hashing utility
   - **Do**: Create hash/compare functions with bcrypt cost 12
   - **Files**: src/utils/password.ts
   - **Done when**: Can hash and compare passwords
-  - **Verify**: `npm test -- password`
+  - **Verify**: Manual verification
   - **Commit**: "feat: add password hashing utility"
-- [ ] T009 [US1] Create registration endpoint
+- [ ] T008 [US1] Create registration endpoint
   - **Do**: POST /api/auth/register with email/password validation
   - **Files**: src/routes/auth.ts, src/controllers/authController.ts
-  - **Done when**: Registration tests pass
-  - **Verify**: `npm test -- register`
-  - **Commit**: "feat: implement user registration"
-- [ ] T010 [US1] [VERIFY] Quality checkpoint - Registration complete
-  - **Do**: Verify registration flow works end-to-end
+  - **Done when**: Endpoint accepts requests and creates users
   - **Verify**: `curl -X POST localhost:3000/api/auth/register -d '{"email":"test@example.com","password":"Test123!"}' -H 'Content-Type: application/json'`
-  - **Done when**: Returns 201 with JWT token
+  - **Commit**: "feat: implement user registration"
 
-**Checkpoint**: User Story 1 complete
+### User Story 2: Login (US2)
 
----
-
-## Phase 4: User Story 2 - Login (Priority: P1)
-
-**Goal**: Users can login to get JWT
-**Independent Test**: POST /api/auth/login with valid credentials
-
-### Tests for User Story 2
-
-- [ ] T011 [P] [US2] Write login API tests
-  - **Do**: Test valid login, wrong password, unknown email cases
-  - **Files**: tests/integration/login.test.ts
-  - **Done when**: Tests exist and FAIL
-  - **Verify**: `npm test -- login` fails
-  - **Commit**: "test: add login API tests"
-
-### Implementation for User Story 2
-
-- [ ] T012 [US2] Create login endpoint
+- [ ] T009 [US2] Create login endpoint
   - **Do**: POST /api/auth/login, verify password, return JWT
   - **Files**: src/routes/auth.ts, src/controllers/authController.ts
-  - **Done when**: Login tests pass
-  - **Verify**: `npm test -- login`
-  - **Commit**: "feat: implement user login"
-- [ ] T013 [US2] [VERIFY] Quality checkpoint - Login complete
-  - **Do**: Verify login flow works end-to-end
+  - **Done when**: Endpoint returns JWT on valid credentials
   - **Verify**: Register user, then login with same credentials
-  - **Done when**: Login returns valid JWT
+  - **Commit**: "feat: implement user login"
 
-**Checkpoint**: User Story 2 complete
+### User Story 3: Token Refresh (US3)
 
----
-
-## Phase 5: User Story 3 - Token Refresh (Priority: P2)
-
-**Goal**: Users can refresh tokens
-**Independent Test**: POST /api/auth/refresh with valid token
-
-### Implementation for User Story 3
-
-- [ ] T014 [US3] Create refresh token storage
+- [ ] T010 [US3] Create refresh token storage
   - **Do**: Implement RefreshToken model operations
   - **Files**: src/services/tokenService.ts
   - **Done when**: Can store/retrieve/invalidate refresh tokens
-  - **Verify**: Unit tests pass
+  - **Verify**: Manual verification
   - **Commit**: "feat: add refresh token service"
-- [ ] T015 [US3] Create token refresh endpoint
+- [ ] T011 [US3] Create token refresh endpoint
   - **Do**: POST /api/auth/refresh validates token and issues new one
   - **Files**: src/routes/auth.ts, src/controllers/authController.ts
   - **Done when**: Refresh endpoint works
-  - **Verify**: `npm test -- refresh`
+  - **Verify**: Manual test with curl
   - **Commit**: "feat: implement token refresh"
 
-**Checkpoint**: All user stories complete
+- [ ] T012 [VERIFY] POC checkpoint - All endpoints working
+  - **Do**: Verify all auth flows work end-to-end
+  - **Verify**: Register, login, refresh token sequence works
+  - **Done when**: All endpoints return expected responses
+
+**Checkpoint**: Phase 1 complete - POC validated
 
 ---
 
-## Phase 6: Polish
+## Phase 2: Refactoring
 
-**Purpose**: Final cleanup and documentation
+**Purpose**: Clean up code, improve structure
 
-- [ ] T016 [P] Add API documentation
+- [ ] T013 [P] Extract validation schemas to separate module
+  - **Do**: Move Zod schemas to src/schemas/auth.ts
+  - **Files**: src/schemas/auth.ts, src/controllers/authController.ts
+  - **Done when**: Schemas reusable across endpoints
+  - **Verify**: All endpoints still work
+  - **Commit**: "refactor: extract validation schemas"
+- [ ] T014 [P] Improve error messages and codes
+  - **Do**: Standardize error responses with specific codes
+  - **Files**: src/middleware/errorHandler.ts, src/errors/
+  - **Done when**: Errors have consistent format
+  - **Verify**: Test error scenarios return proper codes
+  - **Commit**: "refactor: standardize error handling"
+- [ ] T015 Add request logging middleware
+  - **Do**: Log incoming requests with timing info
+  - **Files**: src/middleware/logger.ts
+  - **Done when**: Requests logged to console
+  - **Verify**: Make requests, check logs
+  - **Commit**: "feat: add request logging"
+
+- [ ] T016 [VERIFY] Refactoring checkpoint
+  - **Do**: Verify code quality and all endpoints still work
+  - **Verify**: Manual smoke test of all endpoints
+  - **Done when**: No regressions
+
+**Checkpoint**: Phase 2 complete - Code cleaned up
+
+---
+
+## Phase 3: Testing
+
+**Purpose**: Add comprehensive test coverage
+
+- [ ] T017 [P] Write JWT utility tests
+  - **Do**: Test sign/verify functions
+  - **Files**: src/utils/jwt.test.ts
+  - **Done when**: Tests pass
+  - **Verify**: `npm test -- jwt`
+  - **Commit**: "test: add JWT utility tests"
+- [ ] T018 [P] Write password utility tests
+  - **Do**: Test hash/compare functions
+  - **Files**: src/utils/password.test.ts
+  - **Done when**: Tests pass
+  - **Verify**: `npm test -- password`
+  - **Commit**: "test: add password utility tests"
+- [ ] T019 [US1] Write registration API tests
+  - **Do**: Test valid registration, duplicate email, weak password cases
+  - **Files**: tests/integration/register.test.ts
+  - **Done when**: All test cases pass
+  - **Verify**: `npm test -- register`
+  - **Commit**: "test: add registration API tests"
+- [ ] T020 [US2] Write login API tests
+  - **Do**: Test valid login, wrong password, unknown email cases
+  - **Files**: tests/integration/login.test.ts
+  - **Done when**: All test cases pass
+  - **Verify**: `npm test -- login`
+  - **Commit**: "test: add login API tests"
+- [ ] T021 [US3] Write token refresh tests
+  - **Do**: Test valid refresh, expired token, invalid token cases
+  - **Files**: tests/integration/refresh.test.ts
+  - **Done when**: All test cases pass
+  - **Verify**: `npm test -- refresh`
+  - **Commit**: "test: add token refresh tests"
+
+- [ ] T022 [VERIFY] Testing checkpoint
+  - **Do**: Run full test suite
+  - **Verify**: `npm test`
+  - **Done when**: All tests pass with good coverage
+
+**Checkpoint**: Phase 3 complete - Tests added
+
+---
+
+## Phase 4: Quality Gates
+
+**Purpose**: Final validation and documentation
+
+- [ ] T023 [P] Add API documentation
   - **Do**: Document all auth endpoints in OpenAPI format
   - **Files**: docs/api.yaml
   - **Done when**: OpenAPI spec valid
   - **Verify**: `npx @redocly/cli lint docs/api.yaml`
   - **Commit**: "docs: add OpenAPI spec for auth endpoints"
-- [ ] T017 [VERIFY] Final quality gate
-  - **Do**: Run full test suite and lint
+- [ ] T024 [VERIFY] Final quality gate
+  - **Do**: Run full test suite, lint, and build
   - **Verify**: `npm test && npm run lint && npm run build`
   - **Done when**: All checks pass
+
+**Checkpoint**: Phase 4 complete - Ready for PR
 
 ---
 
 ## Dependencies
 
-- Phase 1 (Setup): No dependencies
-- Phase 2 (Foundation): Depends on Phase 1
-- Phase 3 (US1): Depends on Phase 2
-- Phase 4 (US2): Depends on Phase 2 (can run parallel with Phase 3)
-- Phase 5 (US3): Depends on Phase 2
-- Phase 6 (Polish): Depends on all user stories
+- Phase 1 (Make It Work): No dependencies
+- Phase 2 (Refactoring): Depends on Phase 1
+- Phase 3 (Testing): Depends on Phase 2
+- Phase 4 (Quality Gates): Depends on Phase 3
 
 ## Notes
 
 - [P] tasks can run in parallel within the same phase
 - [VERIFY] tasks delegate to qa-engineer agent
-- Tests written before implementation per TDD
-- Each checkpoint validates the user story independently
+- Phase 1 skips tests to validate POC quickly
+- Tests added in Phase 3 after implementation is stable
+- Each checkpoint validates the phase independently
