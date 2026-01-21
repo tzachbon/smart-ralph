@@ -145,6 +145,113 @@ pnpm typecheck
 # If exit code != 0, stop and report VERIFICATION_FAIL
 ```
 
+## Test Quality Verification
+
+When running test verification commands (e.g., `pnpm test`, `npm test`), analyze test files for mock-only test anti-patterns:
+
+### Red Flags for Mock-Only Tests
+
+Detect the following warning signs:
+
+1. **Mockery Anti-Pattern**:
+   - High ratio of mock/stub declarations to actual assertions
+   - More lines setting up mocks than testing real behavior
+   - Rule: If mocks > 3x real assertions, flag as suspicious
+
+2. **Missing Real Imports**:
+   - Test file only imports testing/mocking libraries (jest, vitest, sinon, @testing-library)
+   - No import of the actual module under test
+   - Check: Grep for `import.*from.*['"](?!.*test|.*mock|.*jest|.*vitest)`
+
+3. **Behavioral Over State Testing**:
+   - All assertions check mock interactions (toHaveBeenCalled, spy.calledWith)
+   - No assertions on actual return values or state changes
+   - Flag if >80% of assertions are mock verifications
+
+4. **No Real Data Flow**:
+   - All inputs are mocked/stubbed
+   - All outputs are from mocks, not real function execution
+   - Look for: every dependency is mocked, no real execution path
+
+5. **Partial Mocking Issues**:
+   - Use of `vi.spyOn` or `jest.spyOn` without clear necessity
+   - Mixing real and mocked behavior in same module
+
+6. **Missing Mock Cleanup**:
+   - No `afterEach` clearing mocks
+   - No `mockClear()`, `mockReset()`, or `mockRestore()` calls
+   - Mocks persist across tests causing false positives
+
+### Mock Quality Check Process
+
+For test files, run this analysis:
+
+```
+1. Read test file content
+   |
+2. Count mock declarations vs assertions:
+   - Mock indicators: mock, stub, spy, fake, vi.mock, jest.mock
+   - Real assertions: expect(...).toBe, toEqual, toMatch (non-mock methods)
+   |
+3. Check imports:
+   - Real module imported? (import { actualFn } from '../actual-module')
+   - Only test libraries? (RED FLAG)
+   |
+4. Analyze assertion types:
+   - Mock interaction checks: toHaveBeenCalled, calledWith
+   - State/value checks: toBe, toEqual, toContain
+   - Ratio: interaction checks / total assertions
+   |
+5. Search for integration tests:
+   - Any tests without mocks?
+   - Any tests using real dependencies?
+   |
+6. Flag issues and suggest fixes
+```
+
+### Mock Quality Report Format
+
+When mock-only tests detected:
+
+```text
+⚠️  Mock Quality Issues Detected
+
+File: src/auth.test.ts
+- Mock declarations: 15
+- Real assertions: 3
+- Mock ratio: 5.0x (threshold: 3x)
+- Real module import: MISSING
+- Integration tests: 0
+
+Issues:
+1. Missing import of actual auth module
+2. All assertions verify mock interactions, none check real behavior
+3. No integration test coverage
+
+Suggested fixes:
+- Import actual auth module: import { authenticate } from '../auth'
+- Add state-based assertions: expect(result).toEqual({...})
+- Create integration test with real dependencies
+- Reduce mocking to only external services (network, DB)
+
+Status: VERIFICATION_FAIL (test quality issues)
+```
+
+When tests are healthy:
+
+```text
+✓ Mock Quality Check: PASS
+
+File: src/auth.test.ts
+- Mock declarations: 2 (external services only)
+- Real assertions: 12
+- Real module import: YES
+- Integration tests: 3
+- Mock cleanup: afterEach present
+
+Tests verify real behavior, not mock behavior.
+```
+
 ## AC Checklist Verification
 
 For V6 [VERIFY] AC checklist tasks:
@@ -249,13 +356,27 @@ VERIFICATION_FAIL conditions (output VERIFICATION_FAIL if ANY is true):
 - Any AC is marked FAIL
 - Required file not found when expected
 - Command times out
+- Mock-only test anti-patterns detected (mockery, missing real imports, no state assertions)
 
 VERIFICATION_PASS conditions (output VERIFICATION_PASS only when ALL are true):
 - All verification commands exit 0
 - All ACs are PASS or SKIP (no FAIL)
 - All required files exist
+- Test quality checks pass (mocks used appropriately, real behavior tested)
 
 Never output VERIFICATION_PASS if any check failed. The spec-executor relies on accurate signals to determine task completion.
+
+## When to Run Mock Quality Checks
+
+Run mock quality analysis automatically when:
+- Verification command contains "test" (e.g., pnpm test, npm run test, jest)
+- New test files were added in current phase
+- V6 AC checklist verification runs
+
+Skip mock quality checks when:
+- Only running lint/typecheck/build commands
+- No test files in scope
+- Verification is VF (Verify Fix) type
 </mandatory>
 
 ## Error Handling
