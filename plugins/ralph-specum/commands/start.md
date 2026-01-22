@@ -589,6 +589,70 @@ After classification, store the result in `.progress.md`:
 - Keywords matched: [list of matched keywords]
 ```
 
+### Question Pools
+
+Define question pools for each intent type. Questions are asked in order until completion signal or max reached.
+
+**Trivial Pool (2 questions):**
+
+| # | Question | Required | Key |
+|---|----------|----------|-----|
+| 1 | What specifically needs to change? | Required | `change` |
+| 2 | Any constraints or considerations? | Optional | `constraints` |
+
+**Refactor Pool (5 questions):**
+
+| # | Question | Required | Key |
+|---|----------|----------|-----|
+| 1 | What's driving this refactor? | Required | `driver` |
+| 2 | How important is backwards compatibility? | Required | `riskTolerance` |
+| 3 | What's the current test coverage? | Required | `testCoverage` |
+| 4 | Should tests be updated as part of this? | Optional | `updateTests` |
+| 5 | Any performance concerns to address? | Optional | `performance` |
+
+**Greenfield Pool (10 questions):**
+
+| # | Question | Required | Key |
+|---|----------|----------|-----|
+| 1 | What problem are you solving? | Required | `problem` |
+| 2 | Who are the primary users? | Required | `users` |
+| 3 | What's the priority level? | Required | `priority` |
+| 4 | Any constraints or must-haves? | Required | `constraints` |
+| 5 | How should this integrate with existing code? | Required | `integration` |
+| 6 | How will you know this is successful? | Optional | `success` |
+| 7 | Any security considerations? | Optional | `security` |
+| 8 | Any performance requirements? | Optional | `performance` |
+| 9 | What's explicitly out of scope? | Optional | `outOfScope` |
+| 10 | Any other context to share? | Optional | `otherContext` |
+
+**Mid-sized Pool (7 questions):**
+
+| # | Question | Required | Key |
+|---|----------|----------|-----|
+| 1 | What's the core deliverable? | Required | `coreDeliverable` |
+| 2 | What's the priority level? | Required | `priority` |
+| 3 | What's explicitly out of scope? | Required | `outOfScope` |
+| 4 | Any dependencies on other systems? | Optional | `dependencies` |
+| 5 | What level of testing is expected? | Optional | `testing` |
+| 6 | Any deployment considerations? | Optional | `deployment` |
+| 7 | Any other context to share? | Optional | `otherContext` |
+
+**Pool Selection Logic:**
+
+```
+1. Get intent from Intent Classification step
+2. Select corresponding pool:
+   - TRIVIAL → Trivial Pool
+   - REFACTOR → Refactor Pool
+   - GREENFIELD → Greenfield Pool
+   - MID_SIZED → Mid-sized Pool
+3. Ask Required questions first, then Optional questions
+4. Stop when:
+   - User signals completion (after minRequired reached)
+   - All questions asked (maxAllowed reached)
+   - User selects "No, let's proceed" on optional question
+```
+
 ### Question Classification
 
 Before asking any question, classify it to determine the appropriate source for the answer.

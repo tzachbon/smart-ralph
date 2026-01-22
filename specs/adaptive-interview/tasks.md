@@ -96,7 +96,7 @@ Focus: Get single-question flow working in start.md first, then propagate to oth
 
 ### 1.6 Add Intent-Based Question Pool to start.md
 
-- [ ] 1.6 Define question pools per intent type
+- [x] 1.6 Define question pools per intent type
   - **Do**:
     1. Add "Question Pools" section after Intent Classification
     2. Define Trivial pool: 2 questions (what needs to change, any constraints)
