@@ -90,23 +90,23 @@ When `commitSpec` is false:
 - Files remain uncommitted
 - User can manually commit later
 
-## Ralph Wiggum Integration
+## Execution Loop
 
-All Ralph plugins use the Ralph Wiggum loop for task execution:
+All Ralph plugins use an internal stop-hook for task execution:
 
 ```text
-Skill: ralph-loop:ralph-loop
-Args: Read <coordinator-prompt-path> and follow instructions.
-      Output ALL_TASKS_COMPLETE when done.
-      --max-iterations <calculated>
-      --completion-promise ALL_TASKS_COMPLETE
+Stop-hook: hooks/scripts/stop-watcher.sh
+- Blocks session exit during execution phase
+- Injects continuation prompt with coordinator instructions
+- Detects ALL_TASKS_COMPLETE signal to end loop
+- Safety limit: 100 iterations maximum
 ```
 
 ### Coordinator Prompt File
 
-Write coordinator prompt to file before invoking Ralph loop:
-- Avoids shell argument parsing issues
-- Enables complex multi-line prompts
+Write coordinator prompt to file for stop-hook injection:
+- Stop-hook injects continuation prompt referencing this file
+- Enables complex multi-line coordinator instructions
 - Path: `<spec-path>/.coordinator-prompt.md`
 
 ## Task Completion Protocol

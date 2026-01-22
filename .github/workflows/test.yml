@@ -1,0 +1,72 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/ralph-specum/**'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'plugins/ralph-specum/**'
+      - '.github/workflows/test.yml'
+
+jobs:
+  bats-tests:
+    name: Bats Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install bats-core
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats
+
+      - name: Install jq
+        run: |
+          sudo apt-get install -y jq
+
+      - name: Run stop-watcher tests
+        run: |
+          bats plugins/ralph-specum/tests/stop-watcher.bats
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Run shellcheck on stop-watcher.sh
+        run: |
+          shellcheck plugins/ralph-specum/hooks/scripts/stop-watcher.sh
+
+  lint-json:
+    name: Lint JSON
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate plugin.json
+        run: |
+          jq empty plugins/ralph-specum/.claude-plugin/plugin.json
+
+      - name: Validate marketplace.json
+        run: |
+          jq empty .claude-plugin/marketplace.json
+
+      - name: Validate hooks.json
+        run: |
+          jq empty plugins/ralph-specum/hooks/hooks.json

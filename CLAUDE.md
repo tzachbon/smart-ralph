@@ -38,7 +38,7 @@ plugins/ralph-specum/
 ├── .claude-plugin/plugin.json   # Plugin manifest
 ├── agents/                      # Sub-agent definitions (markdown)
 ├── commands/                    # Slash command definitions (markdown)
-├── hooks/                       # Stop watcher (logging only, Ralph Loop handles loop)
+├── hooks/                       # Stop hook (controls execution loop)
 ├── templates/                   # Spec file templates
 └── schemas/                     # JSON schema for spec validation
 ```
@@ -46,7 +46,7 @@ plugins/ralph-specum/
 ### Execution Flow
 
 1. **Spec Phases**: Each command (`/ralph-specum:research`, `:requirements`, `:design`, `:tasks`) invokes a specialized agent to generate corresponding markdown in `./specs/<spec-name>/`
-2. **Ralph Loop**: During execution (`/ralph-specum:implement`), the command invokes `/ralph-loop` from the Ralph Loop plugin. The coordinator prompt reads `.ralph-state.json`, delegates tasks to spec-executor via Task tool, and outputs `ALL_TASKS_COMPLETE` when done.
+2. **Execution Loop**: During execution (`/ralph-specum:implement`), the stop-hook blocks session exit and injects a continuation prompt. The coordinator reads `.ralph-state.json`, delegates tasks to spec-executor via Task tool, and outputs `ALL_TASKS_COMPLETE` when done.
 3. **Fresh Context**: Each task runs in isolation via Task tool. Progress persists in `.progress.md` and task checkmarks in `tasks.md`
 
 ### State Files
@@ -77,17 +77,13 @@ Quality checkpoints inserted every 2-3 tasks throughout all phases.
 
 ### Task Completion Protocol
 
-Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinator outputs `ALL_TASKS_COMPLETE` to end the Ralph Loop. If task fails, retries up to 5 times then blocks with error.
-
-### Dependencies
-
-Requires Ralph Loop plugin: `/plugin install ralph-wiggum@claude-plugins-official`
+Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinator outputs `ALL_TASKS_COMPLETE` to end the execution loop (detected by stop-hook). If task fails, retries up to 5 times then blocks with error.
 
 ## Key Files
 
-- `commands/implement.md` - Thin wrapper + coordinator prompt for Ralph Loop
-- `commands/cancel.md` - Dual cleanup (cancel-ralph + state file deletion)
-- `hooks/scripts/stop-watcher.sh` - Logging/validation watcher (does NOT control loop)
+- `commands/implement.md` - Initializes state + coordinator prompt for execution
+- `commands/cancel.md` - Cleanup (removes state file to stop loop)
+- `hooks/scripts/stop-watcher.sh` - Controls execution loop (blocks exit, injects continuation)
 - `agents/spec-executor.md` - Task execution rules, commit discipline
 - `agents/task-planner.md` - Task format, quality checkpoint rules, POC workflow
 - `templates/*.md` - Spec file templates with structure requirements
