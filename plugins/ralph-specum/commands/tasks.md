@@ -49,26 +49,186 @@ If NOT quick mode, conduct interview using AskUserQuestion before delegating to 
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Tasks Generation".
 
-### Tasks Interview
+### Read Context from .progress.md
 
-Use AskUserQuestion to gather execution and deployment context:
+Before conducting the interview, read `.progress.md` to get:
+1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
+2. **All prior interview responses** to enable parameter chain (skip already-answered questions)
+
+```
+Context Reading:
+1. Read ./specs/$spec/.progress.md
+2. Parse "## Intent Classification" section for intent type and question counts
+3. Parse "## Interview Responses" section for prior answers (Goal Interview, Research Interview, Requirements Interview, Design Interview)
+4. Store parsed data for parameter chain checks
+```
+
+**Intent-Based Question Counts (same as start.md):**
+- TRIVIAL: 1-2 questions (minimal execution context needed)
+- REFACTOR: 3-5 questions (understand execution impact)
+- GREENFIELD: 5-10 questions (full execution context)
+- MID_SIZED: 3-7 questions (balanced approach)
+
+### Tasks Interview (Single-Question Flow)
+
+Use individual AskUserQuestion calls to gather execution and deployment context. This single-question flow enables adaptive questioning based on prior answers and context.
+
+**Parameter Chain Logic:**
+
+Before asking each question, check if the answer already exists in .progress.md:
+
+```
+Parameter Chain:
+  BEFORE asking any question:
+    1. Parse .progress.md for existing answers
+    2. Map question to semantic key:
+       - "testing depth" → testingDepth, testing, testStrategy
+       - "deployment considerations" → deployment, deploymentApproach, rollout
+       - "execution priority" → priority, executionPriority
+    3. If answer exists in prior responses:
+       → SKIP this question (do not ask again)
+       → Log: "Skipping [question] - already answered in previous phase"
+    4. If no prior answer:
+       → Ask via AskUserQuestion
+```
+
+**Question Piping:**
+
+Before asking each question, replace {var} placeholders with values from .progress.md:
+- `{goal}` - Original goal text
+- `{intent}` - Intent classification (TRIVIAL, REFACTOR, etc.)
+- `{problem}` - Problem description from Goal Interview
+- `{constraints}` - Constraints from prior interviews
+- `{users}` - Primary users from Requirements Interview
+- `{priority}` - Priority tradeoffs from Requirements Interview
+- `{technicalApproach}` - Technical approach from Research Interview
+- `{architecture}` - Architecture style from Design Interview
+
+If a variable is not found, use the original question text (graceful fallback).
+
+**Single-Question Loop Structure:**
+
+```
+Initialize:
+  askedCount = 0
+  responses = {}
+  intent = [from .progress.md Intent Classification]
+  minRequired = intent.minQuestions (adjusted for tasks phase)
+  maxAllowed = intent.maxQuestions (adjusted for tasks phase)
+  completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
+
+Tasks Question Pool (asked in order until completion):
+  1. testingDepth: "What testing depth is needed for {goal}?"
+  2. deploymentApproach: "Deployment considerations for {goal}?"
+  3. executionPriority: "What's the execution priority for this work?"
+  4. finalQuestion: "Any other execution context? (or say 'done' to proceed)" (always last, optional)
+
+Loop:
+  WHILE askedCount < maxAllowed:
+    |
+    +-- Select next question from pool
+    |
+    +-- Apply question piping: replace {var} with values from .progress.md
+    |
+    +-- Check parameter chain: does answer exist in .progress.md?
+    |   |
+    |   +-- Yes: SKIP this question, continue to next
+    |   +-- No: Proceed to ask
+    |
+    +-- Ask single question:
+    |   ```
+    |   AskUserQuestion:
+    |     question: "[Current question text with piped values]"
+    |     options:
+    |       - "[Option 1]"
+    |       - "[Option 2]"
+    |       - "[Option 3]"
+    |       - "Other"
+    |   ```
+    |
+    +-- Store response in responses[questionKey]
+    |
+    +-- askedCount++
+    |
+    +-- Check completion conditions:
+    |   |
+    |   +-- If askedCount >= minRequired AND user response matches completionSignal:
+    |   |   → EXIT loop (user signaled done)
+    |   |
+    |   +-- If askedCount >= minRequired AND currentQuestion == finalQuestion:
+    |   |   → EXIT loop (reached final optional question)
+    |   |
+    |   +-- If user selected "Other":
+    |   |   → Ask follow-up (see Adaptive Depth)
+    |   |   → DO NOT increment toward maxAllowed
+    |   |
+    |   +-- Otherwise:
+    |       → CONTINUE to next question
+```
+
+**Question 1: Testing Depth**
 
 ```
 AskUserQuestion:
-  questions:
-    - question: "What testing depth is needed?"
-      options:
-        - "Standard - unit + integration (Recommended)"
-        - "Minimal - POC only, add tests later"
-        - "Comprehensive - include E2E"
-        - "Other"
-    - question: "Deployment considerations?"
-      options:
-        - "Standard CI/CD pipeline"
-        - "Feature flag needed"
-        - "Gradual rollout required"
-        - "Other"
+  question: "What testing depth is needed for {goal}?"
+  options:
+    - "Standard - unit + integration (Recommended)"
+    - "Minimal - POC only, add tests later"
+    - "Comprehensive - include E2E"
+    - "Other"
 ```
+
+Store response as `responses.testingDepth`.
+
+**Question 2: Deployment Considerations**
+
+```
+AskUserQuestion:
+  question: "Deployment considerations for {goal}?"
+  options:
+    - "Standard CI/CD pipeline"
+    - "Feature flag needed"
+    - "Gradual rollout required"
+    - "Other"
+```
+
+Store response as `responses.deploymentApproach`.
+
+**Question 3: Execution Priority**
+
+```
+AskUserQuestion:
+  question: "What's the execution priority for this work?"
+  options:
+    - "Ship fast - POC first, polish later"
+    - "Balanced - reasonable quality with speed"
+    - "Quality first - thorough from the start"
+    - "Other"
+```
+
+Store response as `responses.executionPriority`.
+
+**Final Question: Additional Execution Context (Optional)**
+
+After reaching minRequired questions, ask final optional question:
+
+```
+AskUserQuestion:
+  question: "Any other execution context? (or say 'done' to proceed)"
+  options:
+    - "No, let's proceed"
+    - "Yes, I have more details"
+    - "Other"
+```
+
+Store response as `responses.additionalTasksContext`.
+
+**Completion Signal Detection:**
+
+After each response, check if user wants to end the interview:
+- If response contains any of: "done", "proceed", "skip", "enough", "that's all", "continue", "next"
+- AND askedCount >= minRequired
+- THEN exit the interview loop
 
 ### Adaptive Depth
 
@@ -77,14 +237,47 @@ If user selects "Other" for any question:
 2. Continue until clarity reached or 5 follow-up rounds complete
 3. Each follow-up should probe deeper into the "Other" response
 
+Example follow-up:
+```
+AskUserQuestion:
+  question: "You mentioned [Other response]. Can you elaborate?"
+  options:
+    - "[Contextual option 1]"
+    - "[Contextual option 2]"
+    - "This is sufficient detail"
+    - "Other"
+```
+
+### Store Tasks Interview Responses
+
+After interview, append to `.progress.md` under the "Interview Responses" section:
+
+```markdown
+### Tasks Interview (from tasks.md)
+- Testing depth: [responses.testingDepth]
+- Deployment approach: [responses.deploymentApproach]
+- Execution priority: [responses.executionPriority]
+- Additional execution context: [responses.additionalTasksContext]
+[Any follow-up responses from "Other" selections]
+```
+
+**Context Accumulator Instructions:**
+
+1. Read existing .progress.md content
+2. Append new "### Tasks Interview" subsection under "## Interview Responses"
+3. Use semantic keys matching the question type
+4. For "Other" follow-up responses, append with descriptive key
+5. Format must be parseable for parameter chain checks in subsequent phases
+
 ### Interview Context Format
 
-After interview, format responses as:
+Pass the combined context (prior + new responses) to the Task delegation prompt:
 
 ```
 Interview Context:
 - Testing depth: [Answer]
 - Deployment considerations: [Answer]
+- Execution priority: [Answer]
 - Follow-up details: [Any additional clarifications]
 ```
 
