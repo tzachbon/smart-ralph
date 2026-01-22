@@ -88,7 +88,7 @@ Focus: Get single-question flow working in start.md first, then propagate to oth
 
 ### 1.5 V1 [VERIFY] Quality checkpoint after start.md changes
 
-- [ ] 1.5 [VERIFY] Quality checkpoint: verify start.md is valid markdown
+- [x] 1.5 [VERIFY] Quality checkpoint: verify start.md is valid markdown
   - **Do**: Validate start.md has valid structure and no syntax errors
   - **Verify**: `head -5 plugins/ralph-specum/commands/start.md | grep -c "^---"` returns 1 (valid frontmatter)
   - **Done when**: start.md has valid frontmatter and no obvious syntax errors
