@@ -589,6 +589,43 @@ After classification, store the result in `.progress.md`:
 - Keywords matched: [list of matched keywords]
 ```
 
+### Question Classification
+
+Before asking any question, classify it to determine the appropriate source for the answer.
+
+**Classification Matrix:**
+
+| Question Type | Source | Examples |
+|---------------|--------|----------|
+| Codebase fact | Explore agent | "What patterns exist?", "Where is X located?", "What dependencies are used?" |
+| User preference | AskUserQuestion | "What priority level?", "Which approach do you prefer?" |
+| Requirement | AskUserQuestion | "What must this feature do?", "What are the constraints?" |
+| Scope decision | AskUserQuestion | "Should this include X?", "What's in/out of scope?" |
+| Risk tolerance | AskUserQuestion | "How critical is backwards compatibility?" |
+| Constraint | AskUserQuestion | "Any performance requirements?", "Timeline constraints?" |
+
+<mandatory>
+**DO NOT ask user about codebase facts - use Explore agent instead.**
+
+Questions that should go to the user (AskUserQuestion):
+- Preference: "Which approach do you prefer?"
+- Requirement: "What must this feature accomplish?"
+- Scope: "Should this include feature X?"
+- Constraint: "Any performance/timeline constraints?"
+- Risk: "How important is backwards compatibility?"
+
+Questions that should use Explore agent (NOT AskUserQuestion):
+- Existing patterns: "How does the codebase handle X?"
+- File locations: "Where are the authentication modules?"
+- Dependencies: "What libraries are currently used for Y?"
+- Code conventions: "What naming patterns are used?"
+- Architecture: "How is the service layer structured?"
+
+**Before each interview question, check: Is this a codebase fact or user decision?**
+- Codebase fact → Use Explore agent to find the answer automatically
+- User decision → Ask via AskUserQuestion
+</mandatory>
+
 ### Goal Interview Questions (Single-Question Flow)
 
 Use individual AskUserQuestion calls to clarify the goal before research. This enables adaptive questioning based on prior answers.

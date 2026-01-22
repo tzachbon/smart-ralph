@@ -56,7 +56,7 @@ Focus: Get single-question flow working in start.md first, then propagate to oth
 
 ### 1.3 Add Question Classification to start.md
 
-- [ ] 1.3 Add question classification instructions
+- [x] 1.3 Add question classification instructions
   - **Do**:
     1. Insert "Question Classification" section before single-question loop
     2. Add classification matrix: codebase fact vs user preference
