@@ -351,7 +351,7 @@ After POC validated, apply pattern to research.md, requirements.md, design.md, t
 
 ### 4.3 V6 [VERIFY] AC checklist
 
-- [ ] 4.3 [VERIFY] AC checklist: verify all acceptance criteria met
+- [x] 4.3 [VERIFY] AC checklist: verify all acceptance criteria met
   - **Do**: Verify each acceptance criterion programmatically:
     1. AC-1.1: `grep -c "AskUserQuestion:" plugins/ralph-specum/commands/start.md` >= 3 (single questions)
     2. AC-2.1: `grep -c "codebase fact" plugins/ralph-specum/commands/start.md` >= 1 (classification exists)
