@@ -34,7 +34,7 @@ git rev-parse --verify origin/main 2>/dev/null && echo "main" || echo "master"
 
 ### Step 3: Branch Decision Logic
 
-```
+```text
 1. Get current branch name
    |
    +-- ON DEFAULT BRANCH (main/master):
@@ -104,7 +104,7 @@ When creating a new branch:
 - If branch already exists, append `-2`, `-3`, etc.
 
 Example:
-```
+```text
 Spec name: user-auth
 Branch: feat/user-auth
 
@@ -155,7 +155,7 @@ In `--quick` mode, still perform branch check but skip the user prompt for non-d
 In quick mode (`--quick`), execution uses `/ralph-loop` for autonomous task completion.
 
 After generating spec artifacts in quick mode, invoke ralph-loop:
-```
+```text
 Skill: ralph-loop:ralph-loop
 Args: Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
 ```
@@ -246,7 +246,7 @@ When `--quick` flag detected, bypass interactive spec phases and auto-generate a
 
 Parse arguments before `--quick` flag and classify input type:
 
-```
+```text
 Input Classification:
 
 1. TWO ARGS before --quick:
@@ -314,7 +314,7 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
 - You only handle: directory creation, state file writes, and coordination
 </mandatory>
 
-```
+```text
 1. Validate input (non-empty goal/plan)
    |
 2. Infer name from goal (if not provided)
@@ -369,7 +369,7 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
 
 Before creating the spec, validate all inputs:
 
-```
+```text
 Validation Sequence:
 
 1. ZERO ARGS CHECK (if no args before --quick)
@@ -395,7 +395,7 @@ Validation Sequence:
 
 On generation failure after spec directory created:
 
-```
+```text
 Rollback Procedure:
 
 1. CAPTURE FAILURE
@@ -413,7 +413,7 @@ Rollback Procedure:
 
 ## Detection Logic
 
-```
+```text
 1. Check if name provided in arguments
    |
    +-- Yes: Check if ./specs/$name/ exists
@@ -469,7 +469,7 @@ After ANY subagent (research-analyst, product-manager, architect-reviewer, task-
 2. **Check awaitingApproval**: If `awaitingApproval: true`, you MUST STOP IMMEDIATELY
 3. **Do NOT invoke the next phase** - the user must explicitly run the next command
 
-```
+```text
 Subagent returns
 ↓
 Read .ralph-state.json
@@ -525,6 +525,108 @@ The only exception is `--quick` mode, which skips approval between phases.
 8. Invoke research-analyst agent with goal interview context
 9. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
 
+## Spec Scanner
+
+Before conducting the Goal Interview, scan existing specs to find related work. This helps surface prior context and avoid duplicate effort.
+
+<mandatory>
+**Skip spec scanner if --quick flag detected in $ARGUMENTS.**
+</mandatory>
+
+### Scan Steps
+
+```text
+1. List all directories in ./specs/
+   - Run: ls -d ./specs/*/ 2>/dev/null | xargs -I{} basename {}
+   - Exclude the current spec being created (if known)
+   |
+2. For each spec directory found:
+   - Read ./specs/$specName/.progress.md
+   - Extract "Original Goal" section (line after "## Original Goal")
+   - If .progress.md doesn't exist, skip this spec
+   |
+3. Keyword matching:
+   - Extract keywords from current goal (split by spaces, lowercase)
+   - Remove common words: "the", "a", "an", "to", "for", "with", "and", "or"
+   - For each existing spec, count matching keywords with its Original Goal
+   - Score = number of matching keywords
+   |
+4. Rank and filter:
+   - Sort specs by score (descending)
+   - Take top 3 specs with score > 0
+   - If no matches found, skip display step
+   |
+5. Display related specs (if any found):
+   |
+   Related specs found:
+   - spec-name-1: [first 50 chars of Original Goal]...
+   - spec-name-2: [first 50 chars of Original Goal]...
+   - spec-name-3: [first 50 chars of Original Goal]...
+   |
+   This context may inform the interview questions.
+   |
+6. Store in state file:
+   - Update .ralph-state.json with relatedSpecs array:
+     {
+       ...existing state,
+       "relatedSpecs": [
+         {"name": "spec-name-1", "goal": "Original Goal text", "score": N},
+         {"name": "spec-name-2", "goal": "Original Goal text", "score": N},
+         {"name": "spec-name-3", "goal": "Original Goal text", "score": N}
+       ]
+     }
+```
+
+### Keyword Extraction
+
+Extract meaningful keywords from the goal:
+
+```javascript
+// Pseudocode for keyword extraction
+function extractKeywords(text) {
+  const stopWords = ["the", "a", "an", "to", "for", "with", "and", "or", "is", "it", "this", "that", "be", "on", "in", "of"];
+  return text
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(word => word.length > 2)
+    .filter(word => !stopWords.includes(word));
+}
+```
+
+### Match Scoring
+
+Simple keyword overlap scoring:
+
+```javascript
+// Pseudocode for scoring
+function scoreMatch(currentGoalKeywords, existingGoalKeywords) {
+  let score = 0;
+  for (const keyword of currentGoalKeywords) {
+    if (existingGoalKeywords.includes(keyword)) {
+      score += 1;
+    }
+  }
+  return score;
+}
+```
+
+### Example Output
+
+```text
+Related specs found:
+- user-auth: Add OAuth2 authentication with JWT tokens...
+- api-refactor: Restructure API endpoints for better...
+- error-handling: Implement consistent error handling...
+
+This context may inform the interview questions.
+```
+
+### Usage in Interview
+
+After scanning, if related specs were found, you may reference them when asking clarifying questions. For example:
+- "I noticed you have a spec 'user-auth' for authentication. Does this new feature relate to or depend on that work?"
+- "There's an existing 'api-refactor' spec. Should this work integrate with those changes?"
+
 ## Goal Interview (Pre-Research)
 
 <mandatory>
@@ -537,71 +639,209 @@ If NOT quick mode, conduct goal interview using AskUserQuestion before research 
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip directly to "Invoke research-analyst".
 
-### Goal Interview Questions
+### Intent Classification
 
-Use AskUserQuestion to clarify the goal before research:
+Before asking interview questions, classify the user's goal to determine question depth.
 
+**Classification Logic:**
+
+Analyze the goal text for keywords to determine intent type:
+
+```text
+Intent Classification:
+
+1. TRIVIAL: Goal contains keywords like:
+   - "fix typo", "typo", "spelling"
+   - "small change", "minor"
+   - "quick", "simple", "tiny"
+   - "rename", "update text"
+   → Min questions: 1, Max questions: 2
+
+2. REFACTOR: Goal contains keywords like:
+   - "refactor", "restructure", "reorganize"
+   - "clean up", "cleanup", "simplify"
+   - "extract", "consolidate", "modularize"
+   - "improve code", "tech debt"
+   → Min questions: 3, Max questions: 5
+
+3. GREENFIELD: Goal contains keywords like:
+   - "new feature", "new system", "new module"
+   - "add", "build", "implement", "create"
+   - "integrate", "introduce"
+   - "from scratch"
+   → Min questions: 5, Max questions: 10
+
+4. MID_SIZED: Default if no clear match
+   → Min questions: 3, Max questions: 7
 ```
-AskUserQuestion:
-  questions:
-    - question: "What problem are you solving with this feature?"
-      options:
-        - "Fixing a bug or issue"
-        - "Adding new functionality"
-        - "Improving existing behavior"
-        - "Other"
-    - question: "Any constraints or must-haves for this feature?"
-      options:
-        - "No special constraints"
-        - "Must integrate with existing code"
-        - "Performance is critical"
-        - "Other"
-    - question: "How will you know this feature is successful?"
-      options:
-        - "Tests pass and code works"
-        - "Users can complete specific workflow"
-        - "Performance meets target metrics"
-        - "Other"
+
+**Confidence Threshold:**
+
+| Match Count | Confidence | Action |
+|-------------|------------|--------|
+| 3+ keywords | High | Use matched category |
+| 1-2 keywords | Medium | Use matched category |
+| 0 keywords | Low | Default to MID_SIZED |
+
+**Question Count Rules:**
+- TRIVIAL: 1-2 questions (get essentials, move fast)
+- REFACTOR: 3-5 questions (understand scope and risks)
+- GREENFIELD: 5-10 questions (full context needed)
+- MID_SIZED: 3-7 questions (balanced approach)
+
+**Store Intent:**
+After classification, store the result in `.progress.md`:
+```markdown
+## Interview Format
+- Version: 1.0
+
+## Intent Classification
+- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+- Confidence: [high|medium|low] ([N] keywords matched)
+- Min questions: [N]
+- Max questions: [N]
+- Keywords matched: [list of matched keywords]
 ```
 
-### Adaptive Depth
+### Question Count by Intent
 
-If user selects "Other" for any question:
-1. Ask follow-up question to clarify their custom response
-2. Continue until clarity reached or 5 rounds complete
-3. Each follow-up round uses single question focused on the "Other" response
+Intent classification determines the question count range, not which questions to ask. All goals use the same Goal Interview Question Pool (defined below), but the number of questions varies by intent:
 
-Example follow-up:
+| Intent | Min Questions | Max Questions |
+|--------|---------------|---------------|
+| TRIVIAL | 1 | 2 |
+| REFACTOR | 3 | 5 |
+| GREENFIELD | 5 | 10 |
+| MID_SIZED | 3 | 7 |
+
+**Question Selection Logic:**
+
+```text
+1. Get intent from Intent Classification step
+2. Intent determines question COUNT, not which pool to use
+3. All goals use the Goal Interview Question Pool
+4. Ask Required questions first, then Optional questions
+5. Stop when:
+   - User signals completion (after minRequired reached)
+   - All questions asked (maxAllowed reached)
+   - User selects "No, let's proceed" on optional question
 ```
-AskUserQuestion:
-  questions:
-    - question: "You mentioned [Other response]. Can you elaborate?"
-      options:
-        - "[Contextual option 1]"
-        - "[Contextual option 2]"
-        - "This is sufficient detail"
-        - "Other"
-```
+
+### Question Classification
+
+Before asking any question, classify it to determine the appropriate source for the answer.
+
+**Classification Matrix:**
+
+| Question Type | Source | Examples |
+|---------------|--------|----------|
+| Codebase fact | Explore agent | "What patterns exist?", "Where is X located?", "What dependencies are used?" |
+| User preference | AskUserQuestion | "What priority level?", "Which approach do you prefer?" |
+| Requirement | AskUserQuestion | "What must this feature do?", "What are the constraints?" |
+| Scope decision | AskUserQuestion | "Should this include X?", "What's in/out of scope?" |
+| Risk tolerance | AskUserQuestion | "How critical is backwards compatibility?" |
+| Constraint | AskUserQuestion | "Any performance requirements?", "Timeline constraints?" |
+
+<mandatory>
+**DO NOT ask user about codebase facts - use Explore agent instead.**
+
+Questions that should go to the user (AskUserQuestion):
+- Preference: "Which approach do you prefer?"
+- Requirement: "What must this feature accomplish?"
+- Scope: "Should this include feature X?"
+- Constraint: "Any performance/timeline constraints?"
+- Risk: "How important is backwards compatibility?"
+
+Questions that should use Explore agent (NOT AskUserQuestion):
+- Existing patterns: "How does the codebase handle X?"
+- File locations: "Where are the authentication modules?"
+- Dependencies: "What libraries are currently used for Y?"
+- Code conventions: "What naming patterns are used?"
+- Architecture: "How is the service layer structured?"
+
+**Before each interview question, check: Is this a codebase fact or user decision?**
+- Codebase fact → Use Explore agent to find the answer automatically
+- User decision → Ask via AskUserQuestion
+</mandatory>
+
+### Question Piping
+
+Before asking each question, replace `{var}` placeholders with values from `.progress.md` context.
+
+**Available Variables:**
+- `{goal}` - Original goal text from user
+- `{intent}` - Intent classification (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
+- `{problem}` - Problem description from Goal Interview
+- `{constraints}` - Constraints from Goal Interview
+- `{users}` - Primary users (not yet available in start.md, populated in later phases)
+- `{priority}` - Priority tradeoffs (not yet available in start.md, populated in later phases)
+
+**Piping Instructions:**
+1. Before each AskUserQuestion, replace `{var}` with values from `.progress.md`
+2. If variable not found, use original question text (graceful fallback)
+3. Example: "What priority tradeoffs for {goal}?" becomes "What priority tradeoffs for Add user authentication?"
+
+**Fallback Behavior:**
+- If `{goal}` not found → use "{goal}" literally (this should rarely happen since goal is always provided)
+- If `{intent}` not found → skip piping for that variable
+- Always prefer graceful degradation over errors
+
+### Goal Interview Questions (Single-Question Flow)
+
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+
+### Parameter Chain Note
+
+**Note**: start.md is the first phase - no prior responses exist to check.
+
+This phase initializes the interview context. Later phases (research, requirements, design, tasks) use parameter chain to skip questions already answered here.
+
+### Phase-Specific Configuration
+
+- **Phase**: Goal Interview (first phase)
+- **Available Variables**: `{goal}`, `{intent}` (others populated in later phases)
+- **Storage Section**: `### Goal Interview (from start.md)`
+- **Semantic Keys**: problem, constraints, success, additionalContext
+
+### Goal Interview Question Pool
+
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | What problem are you solving with this feature? | Required | `problem` | Fixing a bug or issue / Adding new functionality / Improving existing behavior / Other |
+| 2 | Any constraints or must-haves for this feature? | Required | `constraints` | No special constraints / Must integrate with existing code / Performance is critical / Other |
+| 3 | How will you know this feature is successful? | Required | `success` | Tests pass and code works / Users can complete specific workflow / Performance meets target metrics / Other |
+| 4 | Any other context you'd like to share? (or say 'done' to proceed) | Optional | `additionalContext` | No, let's proceed / Yes, I have more details / Other |
 
 ### Store Goal Context
 
-After interview, update `.progress.md` to include Goal Context section:
+After interview, update `.progress.md` with Interview Format, Intent Classification, and Interview Responses sections:
 
 ```markdown
-## Goal Context
+## Interview Format
+- Version: 1.0
 
-Interview responses from goal clarification:
-- Problem: [response to question 1]
-- Constraints: [response to question 2]
-- Success criteria: [response to question 3]
-[Additional follow-up responses if any]
+## Intent Classification
+- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+- Confidence: [high|medium|low] ([N] keywords matched)
+- Min questions: [N]
+- Max questions: [N]
+- Keywords matched: [list of matched keywords]
+
+## Interview Responses
+
+### Goal Interview (from start.md)
+- Problem: [responses.problem]
+- Constraints: [responses.constraints]
+- Success criteria: [responses.success]
+- Additional context: [responses.additionalContext]
+[Any follow-up responses from "Other" selections]
 ```
 
 ### Pass Context to Research
 
 Include goal interview context when invoking research-analyst:
 
-```
+```text
 Task delegation prompt should include:
 
 Goal Interview Context:
@@ -616,7 +856,7 @@ Use this context to focus research on relevant areas.
 
 Triggered when `--quick` flag detected. Skips all spec phases and auto-generates artifacts.
 
-```
+```text
 1. Check if --quick flag present in $ARGUMENTS
    |
    +-- Yes: Extract args before --quick
@@ -662,7 +902,7 @@ Triggered when `--quick` flag detected. Skips all spec phases and auto-generates
 
 Before resuming, show brief status:
 
-```
+```text
 Resuming: user-auth
 Phase: execution
 Progress: 3/8 tasks complete
@@ -676,21 +916,21 @@ Continuing...
 After detection and action:
 
 **New spec:**
-```
+```text
 Created spec 'user-auth' at ./specs/user-auth/
 
 Starting research phase...
 ```
 
 **Resume:**
-```
+```text
 Resuming 'user-auth' at execution phase, task 4/8
 
 Continuing task: 2.2 Extract retry logic
 ```
 
 **Quick mode:**
-```
+```text
 Quick mode: Created 'build-auth-with' at ./specs/build-auth-with/
 Generated 4 artifacts from goal.
 Starting task 1/N...

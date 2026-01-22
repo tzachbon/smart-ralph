@@ -89,42 +89,69 @@ If NOT quick mode, conduct interview using AskUserQuestion before delegating to 
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Research".
 
-### Research Interview
+### Read Context from .progress.md
 
-Use AskUserQuestion to gather technical context:
+Before conducting the interview, read `.progress.md` to get:
+1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
+2. **Prior interview responses** to enable parameter chain (skip already-answered questions)
 
-```
-AskUserQuestion:
-  questions:
-    - question: "What technical approach do you prefer for this feature?"
-      options:
-        - "Follow existing patterns in codebase (Recommended)"
-        - "Introduce new patterns/frameworks"
-        - "Hybrid - keep existing where possible"
-        - "Other"
-    - question: "Are there any known constraints or limitations?"
-      options:
-        - "No known constraints"
-        - "Must work with existing API"
-        - "Performance critical"
-        - "Other"
+```text
+Context Reading:
+1. Read ./specs/$spec/.progress.md
+2. Parse "## Intent Classification" section for intent type and question counts
+3. Parse "## Interview Responses" section for prior answers
+4. Store parsed data for parameter chain checks
 ```
 
-### Adaptive Depth
+**Intent-Based Question Counts (same as start.md):**
+- TRIVIAL: 1-2 questions (minimal technical context needed)
+- REFACTOR: 3-5 questions (understand approach and risks)
+- GREENFIELD: 5-10 questions (full technical context)
+- MID_SIZED: 3-7 questions (balanced approach)
 
-If user selects "Other" for any question:
-1. Ask a follow-up question to clarify using AskUserQuestion
-2. Continue until clarity reached or 5 follow-up rounds complete
-3. Each follow-up should probe deeper into the "Other" response
+### Research Interview (Single-Question Flow)
+
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+
+### Phase-Specific Configuration
+
+- **Phase**: Research Interview
+- **Parameter Chain Mappings**: technicalApproach, knownConstraints, integrationPoints
+- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`
+- **Variables Not Yet Available**: `{users}`, `{priority}` (populated in later phases)
+- **Storage Section**: `### Research Interview (from research.md)`
+
+### Research Interview Question Pool
+
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | What technical approach do you prefer for this feature? | Required | `technicalApproach` | Follow existing patterns in codebase (Recommended) / Introduce new patterns/frameworks / Hybrid - keep existing where possible / Other |
+| 2 | Are there any known constraints or limitations? | Required | `knownConstraints` | No known constraints / Must work with existing API / Performance critical / Other |
+| 3 | Are there specific integration points to consider? | Required | `integrationPoints` | Standard integration with existing services / New external dependencies required / Isolated component (minimal integration) / Other |
+| 4 | Any other technical context for research? (or say 'done' to proceed) | Optional | `additionalTechContext` | No, let's proceed / Yes, I have more details / Other |
+
+### Store Research Interview Responses
+
+After interview, append to `.progress.md` under the "Interview Responses" section:
+
+```markdown
+### Research Interview (from research.md)
+- Technical approach: [responses.technicalApproach]
+- Known constraints: [responses.knownConstraints]
+- Integration points: [responses.integrationPoints]
+- Additional technical context: [responses.additionalTechContext]
+[Any follow-up responses from "Other" selections]
+```
 
 ### Interview Context Format
 
-After interview, format responses as:
+Pass the combined context (prior + new responses) to the Task delegation prompt:
 
-```
+```text
 Interview Context:
 - Technical approach: [Answer]
 - Known constraints: [Answer]
+- Integration points: [Answer]
 - Follow-up details: [Any additional clarifications]
 ```
 
@@ -146,7 +173,7 @@ Use the appropriate subagent type:
 
 Even for simple goals, spawn at least 2 agents in parallel:
 
-```
+```text
 Task 1 (Explore - codebase): Analyze existing patterns
 Task 2 (research-analyst - web): Search for best practices
 ```
@@ -156,7 +183,7 @@ Task 2 (research-analyst - web): Search for best practices
 For most goals, spawn 3-4 agents in ONE message:
 
 **Task 1 - External Research (research-analyst):**
-```
+```yaml
 subagent_type: research-analyst
 
 You are researching for spec: $spec
@@ -173,7 +200,7 @@ Do NOT explore codebase - Explore agents handle that in parallel.
 ```
 
 **Task 2 - Codebase Analysis (Explore - fast):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: very thorough
 
@@ -194,7 +221,7 @@ Write findings to the output file with sections:
 ```
 
 **Task 3 - Quality Commands Discovery (Explore - fast):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: quick
 
@@ -211,7 +238,7 @@ Write findings as table: | Type | Command | Source |
 ```
 
 **Task 4 - Related Specs Discovery (Explore - fast):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: medium
 
@@ -242,7 +269,7 @@ Spawn 5 agents in ONE message:
 | 5 | Explore | Related specs | .research-related-specs.md |
 
 **Task 1 - GraphQL Best Practices (research-analyst):**
-```
+```yaml
 subagent_type: research-analyst
 
 Topic: GraphQL API best practices
@@ -255,7 +282,7 @@ Output: ./specs/$spec/.research-graphql.md
 ```
 
 **Task 2 - Caching Strategies (research-analyst):**
-```
+```yaml
 subagent_type: research-analyst
 
 Topic: Caching strategies for GraphQL
@@ -268,7 +295,7 @@ Output: ./specs/$spec/.research-caching.md
 ```
 
 **Task 3 - Codebase Analysis (Explore):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: very thorough
 
@@ -282,7 +309,7 @@ Output: ./specs/$spec/.research-codebase.md
 ```
 
 **Task 4 - Quality Commands (Explore):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: quick
 
@@ -296,7 +323,7 @@ Output: ./specs/$spec/.research-quality.md
 ```
 
 **Task 5 - Related Specs (Explore):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: medium
 
@@ -412,7 +439,7 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
-```
+```text
 Research phase complete for '$spec'.
 
 Output: ./specs/$spec/research.md
