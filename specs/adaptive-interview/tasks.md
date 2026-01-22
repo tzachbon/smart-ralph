@@ -282,7 +282,7 @@ After POC validated, apply pattern to research.md, requirements.md, design.md, t
 
 ### 3.4 V4 [VERIFY] Quality checkpoint after enhancements
 
-- [ ] 3.4 [VERIFY] Quality checkpoint: verify all enhancements
+- [x] 3.4 [VERIFY] Quality checkpoint: verify all enhancements
   - **Do**: Validate all command files have piping, spec scanner, and adaptive follow-ups
   - **Verify**: `grep -c "Question Piping\|Spec Scanner\|context-specific" plugins/ralph-specum/commands/start.md` >= 2
   - **Done when**: All enhancement sections present in start.md
