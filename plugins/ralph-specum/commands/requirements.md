@@ -68,204 +68,24 @@ Context Reading:
 
 ### Requirements Interview (Single-Question Flow)
 
-Use individual AskUserQuestion calls to gather user and priority context. This single-question flow enables adaptive questioning based on prior answers and context.
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
 
-**Option Limit Rule**: Each question MUST have 2-4 options (max 4 for better UX). Keep most relevant options, combine similar ones.
+### Phase-Specific Configuration
 
-**Parameter Chain Logic:**
+- **Phase**: Requirements Interview
+- **Parameter Chain Mappings**: primaryUsers, priorityTradeoffs, successCriteria
+- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`
+- **Variables Not Yet Available**: `{users}`, `{priority}` (populated by this phase)
+- **Storage Section**: `### Requirements Interview (from requirements.md)`
 
-Before asking each question, check if the answer already exists in .progress.md:
+### Requirements Interview Question Pool
 
-```
-Parameter Chain:
-  BEFORE asking any question:
-    1. Parse .progress.md for existing answers
-    2. Map question to semantic key:
-       - "primary users" → users, primaryUsers
-       - "priority tradeoffs" → priority, constraints
-       - "success criteria" → success, successCriteria
-    3. If answer exists in prior responses:
-       → SKIP this question (do not ask again)
-       → Log: "Skipping [question] - already answered in previous phase"
-    4. If no prior answer:
-       → Ask via AskUserQuestion
-```
-
-**Question Piping:**
-
-Before asking each question, replace {var} placeholders with values from .progress.md:
-- `{goal}` - Original goal text
-- `{intent}` - Intent classification (TRIVIAL, REFACTOR, etc.)
-- `{problem}` - Problem description from Goal Interview
-- `{constraints}` - Constraints from prior interviews
-- `{technicalApproach}` - Technical approach from Research Interview
-
-If a variable is not found, use the original question text (graceful fallback).
-
-**Single-Question Loop Structure:**
-
-```
-Initialize:
-  askedCount = 0
-  responses = {}
-  intent = [from .progress.md Intent Classification]
-  minRequired = intent.minQuestions (adjusted for requirements phase)
-  maxAllowed = intent.maxQuestions (adjusted for requirements phase)
-  completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
-
-Requirements Question Pool (asked in order until completion):
-  1. primaryUsers: "Who are the primary users of this feature?"
-  2. priorityTradeoffs: "What priority tradeoffs should we consider for {goal}?"
-  3. successCriteria: "What defines success for this feature?"
-  4. finalQuestion: "Any other requirements context? (or say 'done' to proceed)" (always last, optional)
-
-Loop:
-  WHILE askedCount < maxAllowed:
-    |
-    +-- Select next question from pool
-    |
-    +-- Apply question piping: replace {var} with values from .progress.md
-    |
-    +-- Check parameter chain: does answer exist in .progress.md?
-    |   |
-    |   +-- Yes: SKIP this question, continue to next
-    |   +-- No: Proceed to ask
-    |
-    +-- Ask single question:
-    |   ```
-    |   AskUserQuestion:
-    |     question: "[Current question text with piped values]"
-    |     options:
-    |       - "[Option 1]"
-    |       - "[Option 2]"
-    |       - "[Option 3]"
-    |       - "Other"
-    |   ```
-    |
-    +-- Store response in responses[questionKey]
-    |
-    +-- askedCount++
-    |
-    +-- Check completion conditions:
-    |   |
-    |   +-- If askedCount >= minRequired AND user response matches completionSignal:
-    |   |   → EXIT loop (user signaled done)
-    |   |
-    |   +-- If askedCount >= minRequired AND currentQuestion == finalQuestion:
-    |   |   → EXIT loop (reached final optional question)
-    |   |
-    |   +-- If user selected "Other":
-    |   |   → Ask follow-up (see Adaptive Depth)
-    |   |   → DO NOT increment toward maxAllowed
-    |   |
-    |   +-- Otherwise:
-    |       → CONTINUE to next question
-```
-
-**Question 1: Primary Users**
-
-```
-AskUserQuestion:
-  question: "Who are the primary users of this feature?"
-  options:
-    - "Internal developers only"
-    - "End users via UI"
-    - "Both developers and end users"
-    - "Other"
-```
-
-Store response as `responses.primaryUsers`.
-
-**Question 2: Priority Tradeoffs**
-
-```
-AskUserQuestion:
-  question: "What priority tradeoffs should we consider for {goal}?"
-  options:
-    - "Prioritize speed of delivery"
-    - "Prioritize code quality and maintainability"
-    - "Prioritize feature completeness"
-    - "Other"
-```
-
-Store response as `responses.priorityTradeoffs`.
-
-**Question 3: Success Criteria**
-
-```
-AskUserQuestion:
-  question: "What defines success for this feature?"
-  options:
-    - "Feature works as specified"
-    - "High performance/reliability required"
-    - "User satisfaction metrics"
-    - "Other"
-```
-
-Store response as `responses.successCriteria`.
-
-**Final Question: Additional Requirements Context (Optional)**
-
-After reaching minRequired questions, ask final optional question:
-
-```
-AskUserQuestion:
-  question: "Any other requirements context? (or say 'done' to proceed)"
-  options:
-    - "No, let's proceed"
-    - "Yes, I have more details"
-    - "Other"
-```
-
-Store response as `responses.additionalReqContext`.
-
-**Completion Signal Detection:**
-
-After each response, check if user wants to end the interview:
-- If response contains any of: "done", "proceed", "skip", "enough", "that's all", "continue", "next"
-- AND askedCount >= minRequired
-- THEN exit the interview loop
-
-### Adaptive Depth
-
-If user selects "Other" for any question:
-1. Ask a follow-up question to clarify using AskUserQuestion
-2. Continue until clarity reached or 5 follow-up rounds complete
-3. Each follow-up should probe deeper into the "Other" response
-
-**Context-Specific Follow-up Instructions:**
-
-Follow-up questions MUST be context-specific, not generic. When user provides an "Other" response:
-
-1. **Acknowledge the specific response**: Reference what the user actually typed, not just "[Other response]"
-2. **Ask a probing question based on response content**: Analyze keywords in their response to form relevant follow-up
-3. **Include context from prior answers**: Reference earlier responses (from Goal Interview, Research Interview) to create continuity
-
-**Follow-up questions should reference the specific 'Other' text.**
-
-Example - if user types "Both internal tools and customer portal" for primary users:
-```
-AskUserQuestion:
-  question: "You mentioned both internal tools and customer portal as users. Given your technical approach of '{technicalApproach}', which should we prioritize?"
-  options:
-    - "Internal tools first - validate with team"
-    - "Customer portal first - external value"
-    - "Build shared core for both simultaneously"
-    - "Other"
-```
-
-Example - if user types "We need audit compliance" for success criteria:
-```
-AskUserQuestion:
-  question: "You mentioned audit compliance as success criteria. Since your constraint is '{constraints}', what compliance framework applies?"
-  options:
-    - "SOC 2 Type II"
-    - "GDPR / data privacy"
-    - "Industry-specific (HIPAA, PCI, etc.)"
-    - "Other"
-```
-
-**Do NOT use generic follow-ups like "Can you elaborate?" - always tailor to their specific response.**
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | Who are the primary users of this feature? | Required | `primaryUsers` | Internal developers only / End users via UI / Both developers and end users / Other |
+| 2 | What priority tradeoffs should we consider for {goal}? | Required | `priorityTradeoffs` | Prioritize speed of delivery / Prioritize code quality and maintainability / Prioritize feature completeness / Other |
+| 3 | What defines success for this feature? | Required | `successCriteria` | Feature works as specified / High performance/reliability required / User satisfaction metrics / Other |
+| 4 | Any other requirements context? (or say 'done' to proceed) | Optional | `additionalReqContext` | No, let's proceed / Yes, I have more details / Other |
 
 ### Store Requirements Interview Responses
 
@@ -279,14 +99,6 @@ After interview, append to `.progress.md` under the "Interview Responses" sectio
 - Additional requirements context: [responses.additionalReqContext]
 [Any follow-up responses from "Other" selections]
 ```
-
-**Context Accumulator Instructions:**
-
-1. Read existing .progress.md content
-2. Append new "### Requirements Interview" subsection under "## Interview Responses"
-3. Use semantic keys matching the question type
-4. For "Other" follow-up responses, append with descriptive key
-5. Format must be parseable for parameter chain checks in subsequent phases
 
 ### Interview Context Format
 

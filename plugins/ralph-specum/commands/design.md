@@ -70,206 +70,23 @@ Context Reading:
 
 ### Design Interview (Single-Question Flow)
 
-Use individual AskUserQuestion calls to gather architecture and technology context. This single-question flow enables adaptive questioning based on prior answers and context.
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
 
-**Option Limit Rule**: Each question MUST have 2-4 options (max 4 for better UX). Keep most relevant options, combine similar ones.
+### Phase-Specific Configuration
 
-**Parameter Chain Logic:**
+- **Phase**: Design Interview
+- **Parameter Chain Mappings**: architectureStyle, techConstraints, integrationApproach
+- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`, `{users}`, `{priority}`
+- **Storage Section**: `### Design Interview (from design.md)`
 
-Before asking each question, check if the answer already exists in .progress.md:
+### Design Interview Question Pool
 
-```
-Parameter Chain:
-  BEFORE asking any question:
-    1. Parse .progress.md for existing answers
-    2. Map question to semantic key:
-       - "architecture style" → architecture, architectureStyle
-       - "technology constraints" → constraints, techConstraints
-       - "integration approach" → integration, integrationApproach
-    3. If answer exists in prior responses:
-       → SKIP this question (do not ask again)
-       → Log: "Skipping [question] - already answered in previous phase"
-    4. If no prior answer:
-       → Ask via AskUserQuestion
-```
-
-**Question Piping:**
-
-Before asking each question, replace {var} placeholders with values from .progress.md:
-- `{goal}` - Original goal text
-- `{intent}` - Intent classification (TRIVIAL, REFACTOR, etc.)
-- `{problem}` - Problem description from Goal Interview
-- `{constraints}` - Constraints from prior interviews
-- `{users}` - Primary users from Requirements Interview
-- `{priority}` - Priority tradeoffs from Requirements Interview
-- `{technicalApproach}` - Technical approach from Research Interview
-
-If a variable is not found, use the original question text (graceful fallback).
-
-**Single-Question Loop Structure:**
-
-```
-Initialize:
-  askedCount = 0
-  responses = {}
-  intent = [from .progress.md Intent Classification]
-  minRequired = intent.minQuestions (adjusted for design phase)
-  maxAllowed = intent.maxQuestions (adjusted for design phase)
-  completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
-
-Design Question Pool (asked in order until completion):
-  1. architectureStyle: "What architecture style fits this feature for {goal}?"
-  2. techConstraints: "Any technology constraints for {goal}?"
-  3. integrationApproach: "How should this integrate with existing systems?"
-  4. finalQuestion: "Any other design context? (or say 'done' to proceed)" (always last, optional)
-
-Loop:
-  WHILE askedCount < maxAllowed:
-    |
-    +-- Select next question from pool
-    |
-    +-- Apply question piping: replace {var} with values from .progress.md
-    |
-    +-- Check parameter chain: does answer exist in .progress.md?
-    |   |
-    |   +-- Yes: SKIP this question, continue to next
-    |   +-- No: Proceed to ask
-    |
-    +-- Ask single question:
-    |   ```
-    |   AskUserQuestion:
-    |     question: "[Current question text with piped values]"
-    |     options:
-    |       - "[Option 1]"
-    |       - "[Option 2]"
-    |       - "[Option 3]"
-    |       - "Other"
-    |   ```
-    |
-    +-- Store response in responses[questionKey]
-    |
-    +-- askedCount++
-    |
-    +-- Check completion conditions:
-    |   |
-    |   +-- If askedCount >= minRequired AND user response matches completionSignal:
-    |   |   → EXIT loop (user signaled done)
-    |   |
-    |   +-- If askedCount >= minRequired AND currentQuestion == finalQuestion:
-    |   |   → EXIT loop (reached final optional question)
-    |   |
-    |   +-- If user selected "Other":
-    |   |   → Ask follow-up (see Adaptive Depth)
-    |   |   → DO NOT increment toward maxAllowed
-    |   |
-    |   +-- Otherwise:
-    |       → CONTINUE to next question
-```
-
-**Question 1: Architecture Style**
-
-```
-AskUserQuestion:
-  question: "What architecture style fits this feature for {goal}?"
-  options:
-    - "Extend existing architecture (Recommended)"
-    - "Create isolated module"
-    - "Major refactor to support this"
-    - "Other"
-```
-
-Store response as `responses.architectureStyle`.
-
-**Question 2: Technology Constraints**
-
-```
-AskUserQuestion:
-  question: "Any technology constraints for {goal}?"
-  options:
-    - "No constraints"
-    - "Must use specific library/framework"
-    - "Must avoid certain dependencies"
-    - "Other"
-```
-
-Store response as `responses.techConstraints`.
-
-**Question 3: Integration Approach**
-
-```
-AskUserQuestion:
-  question: "How should this integrate with existing systems?"
-  options:
-    - "Use existing APIs and interfaces"
-    - "Create new integration layer"
-    - "Minimal integration needed"
-    - "Other"
-```
-
-Store response as `responses.integrationApproach`.
-
-**Final Question: Additional Design Context (Optional)**
-
-After reaching minRequired questions, ask final optional question:
-
-```
-AskUserQuestion:
-  question: "Any other design context? (or say 'done' to proceed)"
-  options:
-    - "No, let's proceed"
-    - "Yes, I have more details"
-    - "Other"
-```
-
-Store response as `responses.additionalDesignContext`.
-
-**Completion Signal Detection:**
-
-After each response, check if user wants to end the interview:
-- If response contains any of: "done", "proceed", "skip", "enough", "that's all", "continue", "next"
-- AND askedCount >= minRequired
-- THEN exit the interview loop
-
-### Adaptive Depth
-
-If user selects "Other" for any question:
-1. Ask a follow-up question to clarify using AskUserQuestion
-2. Continue until clarity reached or 5 follow-up rounds complete
-3. Each follow-up should probe deeper into the "Other" response
-
-**Context-Specific Follow-up Instructions:**
-
-Follow-up questions MUST be context-specific, not generic. When user provides an "Other" response:
-
-1. **Acknowledge the specific response**: Reference what the user actually typed, not just "[Other response]"
-2. **Ask a probing question based on response content**: Analyze keywords in their response to form relevant follow-up
-3. **Include context from prior answers**: Reference earlier responses (from Goal, Research, Requirements Interviews) to create continuity
-
-**Follow-up questions should reference the specific 'Other' text.**
-
-Example - if user types "Microservices with event sourcing" for architecture style:
-```
-AskUserQuestion:
-  question: "You mentioned microservices with event sourcing. Given your users are '{users}' and priority is '{priority}', which event store approach fits?"
-  options:
-    - "Kafka for high throughput events"
-    - "EventStoreDB for event-sourced aggregates"
-    - "Simple database with outbox pattern"
-    - "Other"
-```
-
-Example - if user types "Must avoid vendor lock-in" for technology constraints:
-```
-AskUserQuestion:
-  question: "You want to avoid vendor lock-in. Since your technical approach is '{technicalApproach}', how strict is this requirement?"
-  options:
-    - "Strict - only open source, self-hostable"
-    - "Moderate - cloud-agnostic but managed OK"
-    - "Flexible - minimize but accept some lock-in"
-    - "Other"
-```
-
-**Do NOT use generic follow-ups like "Can you elaborate?" - always tailor to their specific response.**
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | What architecture style fits this feature for {goal}? | Required | `architectureStyle` | Extend existing architecture (Recommended) / Create isolated module / Major refactor to support this / Other |
+| 2 | Any technology constraints for {goal}? | Required | `techConstraints` | No constraints / Must use specific library/framework / Must avoid certain dependencies / Other |
+| 3 | How should this integrate with existing systems? | Required | `integrationApproach` | Use existing APIs and interfaces / Create new integration layer / Minimal integration needed / Other |
+| 4 | Any other design context? (or say 'done' to proceed) | Optional | `additionalDesignContext` | No, let's proceed / Yes, I have more details / Other |
 
 ### Store Design Interview Responses
 
@@ -283,14 +100,6 @@ After interview, append to `.progress.md` under the "Interview Responses" sectio
 - Additional design context: [responses.additionalDesignContext]
 [Any follow-up responses from "Other" selections]
 ```
-
-**Context Accumulator Instructions:**
-
-1. Read existing .progress.md content
-2. Append new "### Design Interview" subsection under "## Interview Responses"
-3. Use semantic keys matching the question type
-4. For "Other" follow-up responses, append with descriptive key
-5. Format must be parseable for parameter chain checks in subsequent phases
 
 ### Interview Context Format
 

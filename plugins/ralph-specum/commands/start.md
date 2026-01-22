@@ -675,6 +675,14 @@ Intent Classification:
    → Min questions: 3, Max questions: 7
 ```
 
+**Confidence Threshold:**
+
+| Match Count | Confidence | Action |
+|-------------|------------|--------|
+| 3+ keywords | High | Use matched category |
+| 1-2 keywords | Medium | Use matched category |
+| 0 keywords | Low | Default to MID_SIZED |
+
 **Question Count Rules:**
 - TRIVIAL: 1-2 questions (get essentials, move fast)
 - REFACTOR: 3-5 questions (understand scope and risks)
@@ -684,8 +692,12 @@ Intent Classification:
 **Store Intent:**
 After classification, store the result in `.progress.md`:
 ```markdown
+## Interview Format
+- Version: 1.0
+
 ## Intent Classification
 - Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+- Confidence: [high|medium|low] ([N] keywords matched)
 - Min questions: [N]
 - Max questions: [N]
 - Keywords matched: [list of matched keywords]
@@ -816,187 +828,41 @@ Before asking each question, replace `{var}` placeholders with values from `.pro
 
 ### Goal Interview Questions (Single-Question Flow)
 
-Use individual AskUserQuestion calls to clarify the goal before research. This enables adaptive questioning based on prior answers.
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
 
-**Option Limit Rule**: Each question MUST have 2-4 options (max 4 for better UX). Keep most relevant options, combine similar ones.
+### Parameter Chain Note
 
-**Single-Question Loop Structure:**
+**Note**: start.md is the first phase - no prior responses exist to check.
 
-```
-Initialize:
-  askedCount = 0
-  responses = {}
-  intent = [result from Intent Classification]
-  minRequired = intent.minQuestions
-  maxAllowed = intent.maxQuestions
-  completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
+This phase initializes the interview context. Later phases (research, requirements, design, tasks) use parameter chain to skip questions already answered here.
 
-Question Pool (asked in order until completion):
-  1. problemQuestion: "What problem are you solving?"
-  2. constraintsQuestion: "Any constraints or must-haves?"
-  3. successQuestion: "How will you know this is successful?"
-  4. finalQuestion: "Any other context you'd like to share?" (always last, optional)
+### Phase-Specific Configuration
 
-Loop:
-  WHILE askedCount < maxAllowed:
-    |
-    +-- Select next question from pool
-    |
-    +-- Ask single question:
-    |   ```
-    |   AskUserQuestion:
-    |     question: "[Current question text]"
-    |     options:
-    |       - "[Option 1]"
-    |       - "[Option 2]"
-    |       - "[Option 3]"
-    |       - "Other"
-    |   ```
-    |
-    +-- Store response in responses[questionKey]
-    |
-    +-- askedCount++
-    |
-    +-- Check completion conditions:
-    |   |
-    |   +-- If askedCount >= minRequired AND user response matches completionSignal:
-    |   |   → EXIT loop (user signaled done)
-    |   |
-    |   +-- If askedCount >= minRequired AND currentQuestion == finalQuestion:
-    |   |   → EXIT loop (reached final optional question)
-    |   |
-    |   +-- If user selected "Other":
-    |   |   → Ask follow-up (see Adaptive Depth)
-    |   |   → DO NOT increment toward maxAllowed
-    |   |
-    |   +-- Otherwise:
-    |       → CONTINUE to next question
-```
+- **Phase**: Goal Interview (first phase)
+- **Available Variables**: `{goal}`, `{intent}` (others populated in later phases)
+- **Storage Section**: `### Goal Interview (from start.md)`
+- **Semantic Keys**: problem, constraints, success, additionalContext
 
-**Question 1: Problem Definition**
+### Goal Interview Question Pool
 
-```
-AskUserQuestion:
-  question: "What problem are you solving with this feature?"
-  options:
-    - "Fixing a bug or issue"
-    - "Adding new functionality"
-    - "Improving existing behavior"
-    - "Other"
-```
-
-Store response as `responses.problem`.
-
-**Question 2: Constraints**
-
-```
-AskUserQuestion:
-  question: "Any constraints or must-haves for this feature?"
-  options:
-    - "No special constraints"
-    - "Must integrate with existing code"
-    - "Performance is critical"
-    - "Other"
-```
-
-Store response as `responses.constraints`.
-
-**Question 3: Success Criteria**
-
-```
-AskUserQuestion:
-  question: "How will you know this feature is successful?"
-  options:
-    - "Tests pass and code works"
-    - "Users can complete specific workflow"
-    - "Performance meets target metrics"
-    - "Other"
-```
-
-Store response as `responses.success`.
-
-**Final Question: Additional Context (Optional)**
-
-After reaching minRequired questions, ask final optional question:
-
-```
-AskUserQuestion:
-  question: "Any other context you'd like to share? (or say 'done' to proceed)"
-  options:
-    - "No, let's proceed"
-    - "Yes, I have more details"
-    - "Other"
-```
-
-Store response as `responses.additionalContext`.
-
-**Completion Signal Detection:**
-
-After each response, check if user wants to end the interview:
-- If response contains any of: "done", "proceed", "skip", "enough", "that's all", "continue", "next"
-- AND askedCount >= minRequired
-- THEN exit the interview loop
-
-Example detection:
-```
-userResponse = [last answer from AskUserQuestion]
-if askedCount >= minRequired:
-  for signal in completionSignals:
-    if signal in userResponse.lower():
-      → EXIT interview loop
-```
-
-### Adaptive Depth
-
-If user selects "Other" for any question:
-1. Ask follow-up question to clarify their custom response
-2. Continue until clarity reached or 5 rounds complete
-3. Each follow-up round uses single question focused on the "Other" response
-
-**Context-Specific Follow-up Instructions:**
-
-Follow-up questions MUST be context-specific, not generic. When user provides an "Other" response:
-
-1. **Acknowledge the specific response**: Reference what the user actually typed, not just "[Other response]"
-2. **Ask a probing question based on response content**: Analyze keywords in their response to form relevant follow-up
-3. **Include context from prior answers**: Reference earlier responses to create continuity
-
-**Follow-up questions should reference the specific 'Other' text.**
-
-Example - if user types "We need GraphQL support" for constraints question:
-```
-AskUserQuestion:
-  question: "You mentioned needing GraphQL support. Is this for:
-    - the entire API layer, or
-    - specific endpoints only?
-    Also, does this relate to your earlier goal of '{goal}'?"
-  options:
-    - "Full API layer - replace REST"
-    - "Hybrid - GraphQL for new endpoints only"
-    - "Specific queries for mobile clients"
-    - "Other"
-```
-
-Example - if user types "Security is critical" for success criteria:
-```
-AskUserQuestion:
-  question: "You emphasized security is critical. Given your constraint of '{constraints}', which security aspects matter most?"
-  options:
-    - "Authentication and authorization"
-    - "Data encryption at rest and in transit"
-    - "Audit logging and compliance"
-    - "Other"
-```
-
-**Do NOT use generic follow-ups like "Can you elaborate?" - always tailor to their specific response.**
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | What problem are you solving with this feature? | Required | `problem` | Fixing a bug or issue / Adding new functionality / Improving existing behavior / Other |
+| 2 | Any constraints or must-haves for this feature? | Required | `constraints` | No special constraints / Must integrate with existing code / Performance is critical / Other |
+| 3 | How will you know this feature is successful? | Required | `success` | Tests pass and code works / Users can complete specific workflow / Performance meets target metrics / Other |
+| 4 | Any other context you'd like to share? (or say 'done' to proceed) | Optional | `additionalContext` | No, let's proceed / Yes, I have more details / Other |
 
 ### Store Goal Context
 
-After interview, update `.progress.md` to include Intent Classification and Interview Responses sections:
+After interview, update `.progress.md` with Interview Format, Intent Classification, and Interview Responses sections:
 
 ```markdown
+## Interview Format
+- Version: 1.0
+
 ## Intent Classification
 - Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+- Confidence: [high|medium|low] ([N] keywords matched)
 - Min questions: [N]
 - Max questions: [N]
 - Keywords matched: [list of matched keywords]
@@ -1010,18 +876,6 @@ After interview, update `.progress.md` to include Intent Classification and Inte
 - Additional context: [responses.additionalContext]
 [Any follow-up responses from "Other" selections]
 ```
-
-**Context Accumulator Instructions:**
-
-1. After intent classification, immediately write the "Intent Classification" section
-2. After each AskUserQuestion response, append to the "Interview Responses" section
-3. Use semantic keys matching the question type:
-   - `responses.problem` → "Problem:"
-   - `responses.constraints` → "Constraints:"
-   - `responses.success` → "Success criteria:"
-   - `responses.additionalContext` → "Additional context:"
-4. For "Other" follow-up responses, append with descriptive key based on the follow-up question
-5. Format must be parseable for later parameter chain checks in subsequent phases
 
 ### Pass Context to Research
 

@@ -111,212 +111,24 @@ Context Reading:
 
 ### Research Interview (Single-Question Flow)
 
-Use individual AskUserQuestion calls to gather technical context. This single-question flow enables adaptive questioning based on prior answers and context.
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
 
-**Option Limit Rule**: Each question MUST have 2-4 options (max 4 for better UX). Keep most relevant options, combine similar ones.
+### Phase-Specific Configuration
 
-**Parameter Chain Logic:**
+- **Phase**: Research Interview
+- **Parameter Chain Mappings**: technicalApproach, knownConstraints, integrationPoints
+- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`
+- **Variables Not Yet Available**: `{users}`, `{priority}` (populated in later phases)
+- **Storage Section**: `### Research Interview (from research.md)`
 
-Before asking each question, check if the answer already exists in .progress.md:
+### Research Interview Question Pool
 
-```
-Parameter Chain:
-  BEFORE asking any question:
-    1. Parse .progress.md for existing answers
-    2. Map question to semantic key:
-       - "technical approach" → constraints, integration
-       - "known constraints" → constraints, performance
-    3. If answer exists in prior responses:
-       → SKIP this question (do not ask again)
-       → Log: "Skipping [question] - already answered in start.md"
-    4. If no prior answer:
-       → Ask via AskUserQuestion
-```
-
-**Question Piping:**
-
-Before asking each question, replace `{var}` placeholders with values from `.progress.md`:
-- `{goal}` - Original goal text from user
-- `{intent}` - Intent classification (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
-- `{problem}` - Problem description from Goal Interview
-- `{constraints}` - Constraints from Goal Interview
-- `{users}` - Primary users (not yet available in research phase)
-- `{priority}` - Priority tradeoffs (not yet available in research phase)
-
-**Piping Instructions:**
-1. Before each AskUserQuestion, replace `{var}` with values from `.progress.md`
-2. If variable not found, use original question text (graceful fallback)
-3. Example: "What technical approach for {goal}?" becomes "What technical approach for Add user authentication?"
-
-**Fallback Behavior:**
-If a variable is not found, use the original question text (graceful fallback).
-
-**Single-Question Loop Structure:**
-
-```
-Initialize:
-  askedCount = 0
-  responses = {}
-  intent = [from .progress.md Intent Classification]
-  minRequired = intent.minQuestions (adjusted for research phase)
-  maxAllowed = intent.maxQuestions (adjusted for research phase)
-  completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
-
-Research Question Pool (asked in order until completion):
-  1. technicalApproach: "What technical approach do you prefer for this feature?"
-  2. knownConstraints: "Are there any known constraints or limitations?"
-  3. integrationPoints: "Are there specific integration points to consider?"
-  4. finalQuestion: "Any other technical context for research?" (always last, optional)
-
-Loop:
-  WHILE askedCount < maxAllowed:
-    |
-    +-- Select next question from pool
-    |
-    +-- Apply question piping: replace {var} with values from .progress.md
-    |
-    +-- Check parameter chain: does answer exist in .progress.md?
-    |   |
-    |   +-- Yes: SKIP this question, continue to next
-    |   +-- No: Proceed to ask
-    |
-    +-- Ask single question:
-    |   ```
-    |   AskUserQuestion:
-    |     question: "[Current question text with piped values]"
-    |     options:
-    |       - "[Option 1]"
-    |       - "[Option 2]"
-    |       - "[Option 3]"
-    |       - "Other"
-    |   ```
-    |
-    +-- Store response in responses[questionKey]
-    |
-    +-- askedCount++
-    |
-    +-- Check completion conditions:
-    |   |
-    |   +-- If askedCount >= minRequired AND user response matches completionSignal:
-    |   |   → EXIT loop (user signaled done)
-    |   |
-    |   +-- If askedCount >= minRequired AND currentQuestion == finalQuestion:
-    |   |   → EXIT loop (reached final optional question)
-    |   |
-    |   +-- If user selected "Other":
-    |   |   → Ask follow-up (see Adaptive Depth)
-    |   |   → DO NOT increment toward maxAllowed
-    |   |
-    |   +-- Otherwise:
-    |       → CONTINUE to next question
-```
-
-**Question 1: Technical Approach**
-
-```
-AskUserQuestion:
-  question: "What technical approach do you prefer for this feature?"
-  options:
-    - "Follow existing patterns in codebase (Recommended)"
-    - "Introduce new patterns/frameworks"
-    - "Hybrid - keep existing where possible"
-    - "Other"
-```
-
-Store response as `responses.technicalApproach`.
-
-**Question 2: Known Constraints**
-
-```
-AskUserQuestion:
-  question: "Are there any known constraints or limitations?"
-  options:
-    - "No known constraints"
-    - "Must work with existing API"
-    - "Performance critical"
-    - "Other"
-```
-
-Store response as `responses.knownConstraints`.
-
-**Question 3: Integration Points**
-
-```
-AskUserQuestion:
-  question: "Are there specific integration points to consider?"
-  options:
-    - "Standard integration with existing services"
-    - "New external dependencies required"
-    - "Isolated component (minimal integration)"
-    - "Other"
-```
-
-Store response as `responses.integrationPoints`.
-
-**Final Question: Additional Technical Context (Optional)**
-
-After reaching minRequired questions, ask final optional question:
-
-```
-AskUserQuestion:
-  question: "Any other technical context for research? (or say 'done' to proceed)"
-  options:
-    - "No, let's proceed"
-    - "Yes, I have more details"
-    - "Other"
-```
-
-Store response as `responses.additionalTechContext`.
-
-**Completion Signal Detection:**
-
-After each response, check if user wants to end the interview:
-- If response contains any of: "done", "proceed", "skip", "enough", "that's all", "continue", "next"
-- AND askedCount >= minRequired
-- THEN exit the interview loop
-
-### Adaptive Depth
-
-If user selects "Other" for any question:
-1. Ask a follow-up question to clarify using AskUserQuestion
-2. Continue until clarity reached or 5 follow-up rounds complete
-3. Each follow-up should probe deeper into the "Other" response
-
-**Context-Specific Follow-up Instructions:**
-
-Follow-up questions MUST be context-specific, not generic. When user provides an "Other" response:
-
-1. **Acknowledge the specific response**: Reference what the user actually typed, not just "[Other response]"
-2. **Ask a probing question based on response content**: Analyze keywords in their response to form relevant follow-up
-3. **Include context from prior answers**: Reference earlier responses (from Goal Interview) to create continuity
-
-**Follow-up questions should reference the specific 'Other' text.**
-
-Example - if user types "We have a legacy system constraint" for technical approach:
-```
-AskUserQuestion:
-  question: "You mentioned a legacy system constraint. Given your goal of '{goal}', how should we handle this:
-    - wrap the legacy system, or
-    - migrate incrementally?"
-  options:
-    - "Wrap with adapter layer - preserve legacy"
-    - "Incremental migration - phase out legacy"
-    - "Parallel systems during transition"
-    - "Other"
-```
-
-Example - if user types "Need to support offline mode" for integration points:
-```
-AskUserQuestion:
-  question: "You mentioned offline mode support. Since your problem is '{problem}', which offline approach fits best?"
-  options:
-    - "Local storage with sync on reconnect"
-    - "Service worker with cached responses"
-    - "Full offline-first architecture"
-    - "Other"
-```
-
-**Do NOT use generic follow-ups like "Can you elaborate?" - always tailor to their specific response.**
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | What technical approach do you prefer for this feature? | Required | `technicalApproach` | Follow existing patterns in codebase (Recommended) / Introduce new patterns/frameworks / Hybrid - keep existing where possible / Other |
+| 2 | Are there any known constraints or limitations? | Required | `knownConstraints` | No known constraints / Must work with existing API / Performance critical / Other |
+| 3 | Are there specific integration points to consider? | Required | `integrationPoints` | Standard integration with existing services / New external dependencies required / Isolated component (minimal integration) / Other |
+| 4 | Any other technical context for research? (or say 'done' to proceed) | Optional | `additionalTechContext` | No, let's proceed / Yes, I have more details / Other |
 
 ### Store Research Interview Responses
 
@@ -330,14 +142,6 @@ After interview, append to `.progress.md` under the "Interview Responses" sectio
 - Additional technical context: [responses.additionalTechContext]
 [Any follow-up responses from "Other" selections]
 ```
-
-**Context Accumulator Instructions:**
-
-1. Read existing .progress.md content
-2. Append new "### Research Interview" subsection under "## Interview Responses"
-3. Use semantic keys matching the question type
-4. For "Other" follow-up responses, append with descriptive key
-5. Format must be parseable for parameter chain checks in subsequent phases
 
 ### Interview Context Format
 
