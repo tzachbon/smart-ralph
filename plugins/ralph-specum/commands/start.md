@@ -525,6 +525,108 @@ The only exception is `--quick` mode, which skips approval between phases.
 8. Invoke research-analyst agent with goal interview context
 9. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
 
+## Spec Scanner
+
+Before conducting the Goal Interview, scan existing specs to find related work. This helps surface prior context and avoid duplicate effort.
+
+<mandatory>
+**Skip spec scanner if --quick flag detected in $ARGUMENTS.**
+</mandatory>
+
+### Scan Steps
+
+```
+1. List all directories in ./specs/
+   - Run: ls -d ./specs/*/ 2>/dev/null | xargs -I{} basename {}
+   - Exclude the current spec being created (if known)
+   |
+2. For each spec directory found:
+   - Read ./specs/$specName/.progress.md
+   - Extract "Original Goal" section (line after "## Original Goal")
+   - If .progress.md doesn't exist, skip this spec
+   |
+3. Keyword matching:
+   - Extract keywords from current goal (split by spaces, lowercase)
+   - Remove common words: "the", "a", "an", "to", "for", "with", "and", "or"
+   - For each existing spec, count matching keywords with its Original Goal
+   - Score = number of matching keywords
+   |
+4. Rank and filter:
+   - Sort specs by score (descending)
+   - Take top 3 specs with score > 0
+   - If no matches found, skip display step
+   |
+5. Display related specs (if any found):
+   |
+   Related specs found:
+   - spec-name-1: [first 50 chars of Original Goal]...
+   - spec-name-2: [first 50 chars of Original Goal]...
+   - spec-name-3: [first 50 chars of Original Goal]...
+   |
+   This context may inform the interview questions.
+   |
+6. Store in state file:
+   - Update .ralph-state.json with relatedSpecs array:
+     {
+       ...existing state,
+       "relatedSpecs": [
+         {"name": "spec-name-1", "goal": "Original Goal text", "score": N},
+         {"name": "spec-name-2", "goal": "Original Goal text", "score": N},
+         {"name": "spec-name-3", "goal": "Original Goal text", "score": N}
+       ]
+     }
+```
+
+### Keyword Extraction
+
+Extract meaningful keywords from the goal:
+
+```javascript
+// Pseudocode for keyword extraction
+function extractKeywords(text) {
+  const stopWords = ["the", "a", "an", "to", "for", "with", "and", "or", "is", "it", "this", "that", "be", "on", "in", "of"];
+  return text
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(word => word.length > 2)
+    .filter(word => !stopWords.includes(word));
+}
+```
+
+### Match Scoring
+
+Simple keyword overlap scoring:
+
+```javascript
+// Pseudocode for scoring
+function scoreMatch(currentGoalKeywords, existingGoalKeywords) {
+  let score = 0;
+  for (const keyword of currentGoalKeywords) {
+    if (existingGoalKeywords.includes(keyword)) {
+      score += 1;
+    }
+  }
+  return score;
+}
+```
+
+### Example Output
+
+```
+Related specs found:
+- user-auth: Add OAuth2 authentication with JWT tokens...
+- api-refactor: Restructure API endpoints for better...
+- error-handling: Implement consistent error handling...
+
+This context may inform the interview questions.
+```
+
+### Usage in Interview
+
+After scanning, if related specs were found, you may reference them when asking clarifying questions. For example:
+- "I noticed you have a spec 'user-auth' for authentication. Does this new feature relate to or depend on that work?"
+- "There's an existing 'api-refactor' spec. Should this work integrate with those changes?"
+
 ## Goal Interview (Pre-Research)
 
 <mandatory>

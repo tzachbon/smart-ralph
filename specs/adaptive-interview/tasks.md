@@ -241,7 +241,7 @@ After POC validated, apply pattern to research.md, requirements.md, design.md, t
 
 ### 3.2 Add Spec Scanner to start.md
 
-- [ ] 3.2 Add spec scanner to surface related specs
+- [x] 3.2 Add spec scanner to surface related specs
   - **Do**:
     1. Add "Spec Scanner" section to start.md before interview
     2. Add instruction: read all directories in ./specs/
