@@ -49,42 +49,68 @@ If NOT quick mode, conduct interview using AskUserQuestion before delegating to 
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Tasks Generation".
 
-### Tasks Interview
+### Read Context from .progress.md
 
-Use AskUserQuestion to gather execution and deployment context:
+Before conducting the interview, read `.progress.md` to get:
+1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
+2. **All prior interview responses** to enable parameter chain (skip already-answered questions)
 
-```
-AskUserQuestion:
-  questions:
-    - question: "What testing depth is needed?"
-      options:
-        - "Standard - unit + integration (Recommended)"
-        - "Minimal - POC only, add tests later"
-        - "Comprehensive - include E2E"
-        - "Other"
-    - question: "Deployment considerations?"
-      options:
-        - "Standard CI/CD pipeline"
-        - "Feature flag needed"
-        - "Gradual rollout required"
-        - "Other"
+```text
+Context Reading:
+1. Read ./specs/$spec/.progress.md
+2. Parse "## Intent Classification" section for intent type and question counts
+3. Parse "## Interview Responses" section for prior answers (Goal Interview, Research Interview, Requirements Interview, Design Interview)
+4. Store parsed data for parameter chain checks
 ```
 
-### Adaptive Depth
+**Intent-Based Question Counts (same as start.md):**
+- TRIVIAL: 1-2 questions (minimal execution context needed)
+- REFACTOR: 3-5 questions (understand execution impact)
+- GREENFIELD: 5-10 questions (full execution context)
+- MID_SIZED: 3-7 questions (balanced approach)
 
-If user selects "Other" for any question:
-1. Ask a follow-up question to clarify using AskUserQuestion
-2. Continue until clarity reached or 5 follow-up rounds complete
-3. Each follow-up should probe deeper into the "Other" response
+### Tasks Interview (Single-Question Flow)
+
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+
+### Phase-Specific Configuration
+
+- **Phase**: Tasks Interview
+- **Parameter Chain Mappings**: testingDepth, deploymentApproach, executionPriority
+- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`, `{users}`, `{priority}`, `{architecture}`
+- **Storage Section**: `### Tasks Interview (from tasks.md)`
+
+### Tasks Interview Question Pool
+
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | What testing depth is needed for {goal}? | Required | `testingDepth` | Standard - unit + integration (Recommended) / Minimal - POC only, add tests later / Comprehensive - include E2E / Other |
+| 2 | Deployment considerations for {goal}? | Required | `deploymentApproach` | Standard CI/CD pipeline / Feature flag needed / Gradual rollout required / Other |
+| 3 | What's the execution priority for this work? | Required | `executionPriority` | Ship fast - POC first, polish later / Balanced - reasonable quality with speed / Quality first - thorough from the start / Other |
+| 4 | Any other execution context? (or say 'done' to proceed) | Optional | `additionalTasksContext` | No, let's proceed / Yes, I have more details / Other |
+
+### Store Tasks Interview Responses
+
+After interview, append to `.progress.md` under the "Interview Responses" section:
+
+```markdown
+### Tasks Interview (from tasks.md)
+- Testing depth: [responses.testingDepth]
+- Deployment approach: [responses.deploymentApproach]
+- Execution priority: [responses.executionPriority]
+- Additional execution context: [responses.additionalTasksContext]
+[Any follow-up responses from "Other" selections]
+```
 
 ### Interview Context Format
 
-After interview, format responses as:
+Pass the combined context (prior + new responses) to the Task delegation prompt:
 
-```
+```text
 Interview Context:
 - Testing depth: [Answer]
 - Deployment considerations: [Answer]
+- Execution priority: [Answer]
 - Follow-up details: [Any additional clarifications]
 ```
 
@@ -99,7 +125,7 @@ ALL specs MUST follow POC-first workflow.
 
 Invoke task-planner agent with prompt:
 
-```
+```text
 You are creating implementation tasks for spec: $spec
 Spec path: ./specs/$spec/
 
@@ -189,7 +215,7 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
-```
+```text
 Tasks phase complete for '$spec'.
 
 Output: ./specs/$spec/tasks.md

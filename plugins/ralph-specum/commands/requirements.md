@@ -46,42 +46,69 @@ If NOT quick mode, conduct interview using AskUserQuestion before delegating to 
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Requirements".
 
-### Requirements Interview
+### Read Context from .progress.md
 
-Use AskUserQuestion to gather user and priority context:
+Before conducting the interview, read `.progress.md` to get:
+1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
+2. **Prior interview responses** to enable parameter chain (skip already-answered questions)
 
-```
-AskUserQuestion:
-  questions:
-    - question: "Who are the primary users of this feature?"
-      options:
-        - "Internal developers only"
-        - "End users via UI"
-        - "Both developers and end users"
-        - "Other"
-    - question: "What priority tradeoffs should we consider?"
-      options:
-        - "Prioritize speed of delivery"
-        - "Prioritize code quality and maintainability"
-        - "Prioritize feature completeness"
-        - "Other"
+```text
+Context Reading:
+1. Read ./specs/$spec/.progress.md
+2. Parse "## Intent Classification" section for intent type and question counts
+3. Parse "## Interview Responses" section for prior answers (Goal Interview, Research Interview)
+4. Store parsed data for parameter chain checks
 ```
 
-### Adaptive Depth
+**Intent-Based Question Counts (same as start.md):**
+- TRIVIAL: 1-2 questions (minimal user/priority context needed)
+- REFACTOR: 3-5 questions (understand scope and priorities)
+- GREENFIELD: 5-10 questions (full user and priority context)
+- MID_SIZED: 3-7 questions (balanced approach)
 
-If user selects "Other" for any question:
-1. Ask a follow-up question to clarify using AskUserQuestion
-2. Continue until clarity reached or 5 follow-up rounds complete
-3. Each follow-up should probe deeper into the "Other" response
+### Requirements Interview (Single-Question Flow)
+
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+
+### Phase-Specific Configuration
+
+- **Phase**: Requirements Interview
+- **Parameter Chain Mappings**: primaryUsers, priorityTradeoffs, successCriteria
+- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`
+- **Variables Not Yet Available**: `{users}`, `{priority}` (populated by this phase)
+- **Storage Section**: `### Requirements Interview (from requirements.md)`
+
+### Requirements Interview Question Pool
+
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | Who are the primary users of this feature? | Required | `primaryUsers` | Internal developers only / End users via UI / Both developers and end users / Other |
+| 2 | What priority tradeoffs should we consider for {goal}? | Required | `priorityTradeoffs` | Prioritize speed of delivery / Prioritize code quality and maintainability / Prioritize feature completeness / Other |
+| 3 | What defines success for this feature? | Required | `successCriteria` | Feature works as specified / High performance/reliability required / User satisfaction metrics / Other |
+| 4 | Any other requirements context? (or say 'done' to proceed) | Optional | `additionalReqContext` | No, let's proceed / Yes, I have more details / Other |
+
+### Store Requirements Interview Responses
+
+After interview, append to `.progress.md` under the "Interview Responses" section:
+
+```markdown
+### Requirements Interview (from requirements.md)
+- Primary users: [responses.primaryUsers]
+- Priority tradeoffs: [responses.priorityTradeoffs]
+- Success criteria: [responses.successCriteria]
+- Additional requirements context: [responses.additionalReqContext]
+[Any follow-up responses from "Other" selections]
+```
 
 ### Interview Context Format
 
-After interview, format responses as:
+Pass the combined context (prior + new responses) to the Task delegation prompt:
 
-```
+```text
 Interview Context:
 - Primary users: [Answer]
 - Priority tradeoffs: [Answer]
+- Success criteria: [Answer]
 - Follow-up details: [Any additional clarifications]
 ```
 
@@ -95,7 +122,7 @@ Use the Task tool with `subagent_type: product-manager` to generate requirements
 
 Invoke product-manager agent with prompt:
 
-```
+```text
 You are generating requirements for spec: $spec
 Spec path: ./specs/$spec/
 
@@ -170,7 +197,7 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
-```
+```text
 Requirements phase complete for '$spec'.
 
 Output: ./specs/$spec/requirements.md

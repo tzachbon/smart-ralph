@@ -48,42 +48,68 @@ If NOT quick mode, conduct interview using AskUserQuestion before delegating to 
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Design".
 
-### Design Interview
+### Read Context from .progress.md
 
-Use AskUserQuestion to gather architecture and technology context:
+Before conducting the interview, read `.progress.md` to get:
+1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
+2. **All prior interview responses** to enable parameter chain (skip already-answered questions)
 
 ```
-AskUserQuestion:
-  questions:
-    - question: "What architecture style fits this feature?"
-      options:
-        - "Extend existing architecture (Recommended)"
-        - "Create isolated module"
-        - "Major refactor to support this"
-        - "Other"
-    - question: "Any technology constraints?"
-      options:
-        - "No constraints"
-        - "Must use specific library/framework"
-        - "Must avoid certain dependencies"
-        - "Other"
+Context Reading:
+1. Read ./specs/$spec/.progress.md
+2. Parse "## Intent Classification" section for intent type and question counts
+3. Parse "## Interview Responses" section for prior answers (Goal Interview, Research Interview, Requirements Interview)
+4. Store parsed data for parameter chain checks
 ```
 
-### Adaptive Depth
+**Intent-Based Question Counts (same as start.md):**
+- TRIVIAL: 1-2 questions (minimal architecture context needed)
+- REFACTOR: 3-5 questions (understand architecture impact)
+- GREENFIELD: 5-10 questions (full architecture context)
+- MID_SIZED: 3-7 questions (balanced approach)
 
-If user selects "Other" for any question:
-1. Ask a follow-up question to clarify using AskUserQuestion
-2. Continue until clarity reached or 5 follow-up rounds complete
-3. Each follow-up should probe deeper into the "Other" response
+### Design Interview (Single-Question Flow)
+
+**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+
+### Phase-Specific Configuration
+
+- **Phase**: Design Interview
+- **Parameter Chain Mappings**: architectureStyle, techConstraints, integrationApproach
+- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`, `{users}`, `{priority}`
+- **Storage Section**: `### Design Interview (from design.md)`
+
+### Design Interview Question Pool
+
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | What architecture style fits this feature for {goal}? | Required | `architectureStyle` | Extend existing architecture (Recommended) / Create isolated module / Major refactor to support this / Other |
+| 2 | Any technology constraints for {goal}? | Required | `techConstraints` | No constraints / Must use specific library/framework / Must avoid certain dependencies / Other |
+| 3 | How should this integrate with existing systems? | Required | `integrationApproach` | Use existing APIs and interfaces / Create new integration layer / Minimal integration needed / Other |
+| 4 | Any other design context? (or say 'done' to proceed) | Optional | `additionalDesignContext` | No, let's proceed / Yes, I have more details / Other |
+
+### Store Design Interview Responses
+
+After interview, append to `.progress.md` under the "Interview Responses" section:
+
+```markdown
+### Design Interview (from design.md)
+- Architecture style: [responses.architectureStyle]
+- Technology constraints: [responses.techConstraints]
+- Integration approach: [responses.integrationApproach]
+- Additional design context: [responses.additionalDesignContext]
+[Any follow-up responses from "Other" selections]
+```
 
 ### Interview Context Format
 
-After interview, format responses as:
+Pass the combined context (prior + new responses) to the Task delegation prompt:
 
 ```
 Interview Context:
 - Architecture style: [Answer]
 - Technology constraints: [Answer]
+- Integration approach: [Answer]
 - Follow-up details: [Any additional clarifications]
 ```
 
