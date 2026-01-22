@@ -134,7 +134,7 @@ After POC validated, apply pattern to research.md, requirements.md, design.md, t
 
 ### 2.1 Propagate to research.md
 
-- [ ] 2.1 Add single-question flow to research.md
+- [x] 2.1 Add single-question flow to research.md
   - **Do**:
     1. Open `/Users/zachbonfil/projects/smart-ralph-speckit-adaptive-interview/plugins/ralph-specum/commands/research.md`
     2. Read .progress.md context before interview (get intent from start.md)
