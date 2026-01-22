@@ -45,7 +45,7 @@ if [ ! -f "$CURRENT_SPEC_FILE" ]; then
     exit 0
 fi
 
-SPEC_NAME=$(cat "$CURRENT_SPEC_FILE" 2>/dev/null | tr -d '[:space:]')
+SPEC_NAME=$(tr -d '[:space:]' < "$CURRENT_SPEC_FILE" 2>/dev/null)
 if [ -z "$SPEC_NAME" ]; then
     exit 0
 fi
@@ -94,9 +94,10 @@ fi
 
 # Update iteration counter atomically (temp file + mv pattern)
 NEW_ITER=$((GLOBAL_ITER + 1))
-jq ".globalIteration = $NEW_ITER" "$STATE_FILE" > "$STATE_FILE.tmp" 2>/dev/null
-if [ -f "$STATE_FILE.tmp" ]; then
+if jq ".globalIteration = $NEW_ITER" "$STATE_FILE" > "$STATE_FILE.tmp" 2>/dev/null; then
     mv "$STATE_FILE.tmp" "$STATE_FILE"
+else
+    rm -f "$STATE_FILE.tmp"
 fi
 
 # Block and inject continuation prompt (FR-1)

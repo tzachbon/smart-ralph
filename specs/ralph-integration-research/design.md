@@ -222,7 +222,7 @@ TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE")
 TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE")
 
 cat << EOF
-{"decision": "block", "reason": "Continue executing tasks for spec '$SPEC_NAME'. Read ./specs/$SPEC_NAME/.ralph-state.json for current state (task $((TASK_INDEX + 1))/$TOTAL_TASKS). Follow coordinator instructions from .coordinator-prompt.md."}
+{"decision": "block", "reason": "Continue executing tasks for spec '$SPEC_NAME'. Read ./specs/$SPEC_NAME/.ralph-state.json for current state (task $((TASK_INDEX + 1))/$TOTAL_TASKS). Follow coordinator instructions from ./specs/$SPEC_NAME/.coordinator-prompt.md."}
 EOF
 exit 0
 ```

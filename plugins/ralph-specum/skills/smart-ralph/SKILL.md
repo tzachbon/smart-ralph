@@ -71,11 +71,22 @@ All Ralph plugins use a state file with common fields:
   "totalTasks": 0,
   "taskIteration": 1,
   "maxTaskIterations": 5,
-  "awaitingApproval": false
+  "awaitingApproval": false,
+  "globalIteration": 1,
+  "maxGlobalIterations": 100
 }
 ```
 
-Plugins may extend with additional fields.
+### Field Descriptions
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `taskIteration` | number | Retry counter for current task (resets on task advance) |
+| `maxTaskIterations` | number | Max retries per task before blocking (default: 5) |
+| `globalIteration` | number | Total loop iterations across all tasks (v3.0.0+) |
+| `maxGlobalIterations` | number | Safety limit for total iterations (default: 100, v3.0.0+) |
+
+The `globalIteration` counter prevents runaway loops by limiting total stop-hook blocks across the entire execution, while `taskIteration` limits retries per individual task.
 
 ## Commit Behavior
 

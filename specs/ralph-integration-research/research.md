@@ -106,7 +106,8 @@ fi
 | spec-executor.md | agents/spec-executor.md | ~391 | Task execution agent |
 
 **Current dependency chain**:
-```
+
+```text
 /implement -> writes coordinator prompt -> invokes ralph-loop:ralph-loop skill
 ralph-loop:ralph-loop -> creates .claude/ralph-loop.local.md -> stop-hook blocks exits
 /cancel -> invokes ralph-loop:cancel-ralph -> cleans up both state files
@@ -159,7 +160,7 @@ ralph-loop:ralph-loop -> creates .claude/ralph-loop.local.md -> stop-hook blocks
 
 ### Implementation Approach
 
-```
+```text
 Before (with ralph-loop):
   /implement -> invokes ralph-loop:ralph-loop
   ralph-loop:ralph-loop -> stop-hook blocks exits
@@ -270,6 +271,7 @@ exit 0
 - Simple boolean filter (`passes: true/false`) for completion status
 
 **prd.json Structure**:
+
 | Field | Type | Purpose |
 |-------|------|---------|
 | `id` | string | Unique identifier |
@@ -317,6 +319,7 @@ exit 0
 **Failure handling**: Minimal in ralph.sh itself - uses `|| true` to suppress errors. The intelligence is in the agent, not the loop.
 
 **Contrast with ralph-specum**:
+
 | Aspect | snarktank/ralph | ralph-specum |
 |--------|-----------------|--------------|
 | Quality gates | After task, before commit | Verification layers in coordinator |
@@ -351,6 +354,7 @@ exit 0
 ### 5. Autonomy Best Practices from Industry
 
 **Core Design Patterns** ([Skywork AI](https://skywork.ai/blog/agentic-ai-examples-workflow-patterns-2025/)):
+
 | Pattern | Description |
 |---------|-------------|
 | ReAct | Reason + Act interleaving with tool calls |
@@ -360,6 +364,7 @@ exit 0
 | Multi-Agent Orchestration | Swarms of specialized agents |
 
 **Task Selection Patterns** ([Agentic Patterns](https://agentic-patterns.com/)):
+
 | Pattern | Description |
 |---------|-------------|
 | Action-Selector | Selective execution of capabilities |
@@ -388,7 +393,7 @@ exit 0
 | Learnings persistence | progress.txt append-only | .progress.md Learnings section | **Parity** |
 | Quality gates | typecheck, tests | 4-layer verification | **ralph-specum stronger** |
 | State tracking | prd.json (passes field) | tasks.md [x] checkmarks | **Parity** |
-| Error handling | Minimal (|| true) | maxTaskIterations + contradiction detection | **ralph-specum stronger** |
+| Error handling | Minimal (`\|\|` true) | maxTaskIterations + contradiction detection | **ralph-specum stronger** |
 | Todo/focus pattern | Not used | Not used | **Gap** (could adopt) |
 
 ### 7. Recommendations for Adopting Ralph's Patterns

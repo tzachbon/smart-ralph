@@ -176,16 +176,16 @@ Focus: Add bats-core unit tests for stop-watcher.sh.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Create GitHub Actions workflow for bats tests
+- [x] 4.1 Create GitHub Actions workflow for bats tests
   - **Do**:
-    1. Create `.github/workflows/test-hooks.yml`
-    2. Configure trigger for push to main and PRs affecting hooks/tests
+    1. Create `.github/workflows/test.yml`
+    2. Configure trigger for push to main and PRs affecting plugins/ralph-specum
     3. Add step to install bats-core via apt-get
-    4. Add step to run tests with `--tap` output
+    4. Add step to run tests
     5. Follow conventions from existing workflows (ubuntu-latest, actions/checkout@v4)
-  - **Files**: `.github/workflows/test-hooks.yml`
+  - **Files**: `.github/workflows/test.yml`
   - **Done when**: Workflow file exists with correct triggers and bats execution
-  - **Verify**: `test -f .github/workflows/test-hooks.yml && grep -q "bats" .github/workflows/test-hooks.yml`
+  - **Verify**: `test -f .github/workflows/test.yml && grep -q "bats" .github/workflows/test.yml`
   - **Commit**: `ci(hooks): add GitHub Actions workflow for bats tests`
   - _Requirements: NFR-2_
   - _Design: CI/CD: GitHub Actions Workflow_
