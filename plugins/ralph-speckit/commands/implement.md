@@ -13,7 +13,7 @@ You are starting the task execution loop.
 **BEFORE proceeding**, verify Ralph Loop plugin is installed by attempting to invoke the skill.
 
 If the Skill tool fails with "skill not found" or similar error for `ralph-loop:ralph-loop`:
-1. Output error: "ERROR: Ralph Loop plugin not found. Install with: /plugin install ralph-wiggum@claude-plugins-official"
+1. Output error: "ERROR: Ralph Loop plugin not found. Install with: /plugin install ralph-loop@claude-plugins-official"
 2. STOP execution immediately. Do NOT continue.
 
 This is a hard dependency. The command cannot function without Ralph Loop.
@@ -77,12 +77,25 @@ Write `.specify/specs/$feature/.speckit-state.json`:
 
 Calculate max iterations: `totalTasks * maxTaskIterations * 2`
 
-Use the Skill tool to invoke ralph-loop:ralph-loop with:
-- Prompt: the coordinator prompt below
-- Completion promise: ALL_TASKS_COMPLETE
-- Max iterations: calculated value
+### Step 1: Write Coordinator Prompt to File
+
+Write the ENTIRE coordinator prompt (from section below) to `.specify/specs/$feature/.coordinator-prompt.md`.
+
+This file contains the full instructions for task execution. Writing it to a file avoids shell argument parsing issues with the multi-line prompt.
+
+### Step 2: Invoke Ralph Loop Skill
+
+Use the Skill tool to invoke `ralph-loop:ralph-loop` with args:
+
+```
+Read .specify/specs/$feature/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
+```
+
+Replace `$feature` with the actual feature name and `<calculated>` with the calculated max iterations value.
 
 ## Coordinator Prompt
+
+Write this prompt to `.specify/specs/$feature/.coordinator-prompt.md`:
 
 ```text
 You are the execution COORDINATOR for feature: $feature
