@@ -131,6 +131,24 @@ Parameter Chain:
        → Ask via AskUserQuestion
 ```
 
+**Question Piping:**
+
+Before asking each question, replace `{var}` placeholders with values from `.progress.md`:
+- `{goal}` - Original goal text from user
+- `{intent}` - Intent classification (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
+- `{problem}` - Problem description from Goal Interview
+- `{constraints}` - Constraints from Goal Interview
+- `{users}` - Primary users (not yet available in research phase)
+- `{priority}` - Priority tradeoffs (not yet available in research phase)
+
+**Piping Instructions:**
+1. Before each AskUserQuestion, replace `{var}` with values from `.progress.md`
+2. If variable not found, use original question text (graceful fallback)
+3. Example: "What technical approach for {goal}?" becomes "What technical approach for Add user authentication?"
+
+**Fallback Behavior:**
+If a variable is not found, use the original question text (graceful fallback).
+
 **Single-Question Loop Structure:**
 
 ```
@@ -153,6 +171,8 @@ Loop:
     |
     +-- Select next question from pool
     |
+    +-- Apply question piping: replace {var} with values from .progress.md
+    |
     +-- Check parameter chain: does answer exist in .progress.md?
     |   |
     |   +-- Yes: SKIP this question, continue to next
@@ -161,7 +181,7 @@ Loop:
     +-- Ask single question:
     |   ```
     |   AskUserQuestion:
-    |     question: "[Current question text]"
+    |     question: "[Current question text with piped values]"
     |     options:
     |       - "[Option 1]"
     |       - "[Option 2]"

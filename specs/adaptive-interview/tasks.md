@@ -220,7 +220,7 @@ After POC validated, apply pattern to research.md, requirements.md, design.md, t
 
 ### 3.1 Add Question Piping Implementation
 
-- [ ] 3.1 Implement {var} replacement across all command files
+- [x] 3.1 Implement {var} replacement across all command files
   - **Do**:
     1. Add "Question Piping" section to start.md (define available variables)
     2. Document piping syntax: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{users}`, `{priority}`

@@ -690,6 +690,28 @@ Questions that should use Explore agent (NOT AskUserQuestion):
 - User decision → Ask via AskUserQuestion
 </mandatory>
 
+### Question Piping
+
+Before asking each question, replace `{var}` placeholders with values from `.progress.md` context.
+
+**Available Variables:**
+- `{goal}` - Original goal text from user
+- `{intent}` - Intent classification (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
+- `{problem}` - Problem description from Goal Interview
+- `{constraints}` - Constraints from Goal Interview
+- `{users}` - Primary users (not yet available in start.md, populated in later phases)
+- `{priority}` - Priority tradeoffs (not yet available in start.md, populated in later phases)
+
+**Piping Instructions:**
+1. Before each AskUserQuestion, replace `{var}` with values from `.progress.md`
+2. If variable not found, use original question text (graceful fallback)
+3. Example: "What priority tradeoffs for {goal}?" becomes "What priority tradeoffs for Add user authentication?"
+
+**Fallback Behavior:**
+- If `{goal}` not found → use "{goal}" literally (this should rarely happen since goal is always provided)
+- If `{intent}` not found → skip piping for that variable
+- Always prefer graceful degradation over errors
+
 ### Goal Interview Questions (Single-Question Flow)
 
 Use individual AskUserQuestion calls to clarify the goal before research. This enables adaptive questioning based on prior answers.
