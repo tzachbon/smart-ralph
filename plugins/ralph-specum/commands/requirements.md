@@ -52,7 +52,7 @@ Before conducting the interview, read `.progress.md` to get:
 1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
 2. **Prior interview responses** to enable parameter chain (skip already-answered questions)
 
-```
+```text
 Context Reading:
 1. Read ./specs/$spec/.progress.md
 2. Parse "## Intent Classification" section for intent type and question counts
@@ -104,7 +104,7 @@ After interview, append to `.progress.md` under the "Interview Responses" sectio
 
 Pass the combined context (prior + new responses) to the Task delegation prompt:
 
-```
+```text
 Interview Context:
 - Primary users: [Answer]
 - Priority tradeoffs: [Answer]
@@ -122,7 +122,7 @@ Use the Task tool with `subagent_type: product-manager` to generate requirements
 
 Invoke product-manager agent with prompt:
 
-```
+```text
 You are generating requirements for spec: $spec
 Spec path: ./specs/$spec/
 
@@ -197,7 +197,7 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
-```
+```text
 Requirements phase complete for '$spec'.
 
 Output: ./specs/$spec/requirements.md

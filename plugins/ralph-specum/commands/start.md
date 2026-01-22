@@ -34,7 +34,7 @@ git rev-parse --verify origin/main 2>/dev/null && echo "main" || echo "master"
 
 ### Step 3: Branch Decision Logic
 
-```
+```text
 1. Get current branch name
    |
    +-- ON DEFAULT BRANCH (main/master):
@@ -104,7 +104,7 @@ When creating a new branch:
 - If branch already exists, append `-2`, `-3`, etc.
 
 Example:
-```
+```text
 Spec name: user-auth
 Branch: feat/user-auth
 
@@ -155,7 +155,7 @@ In `--quick` mode, still perform branch check but skip the user prompt for non-d
 In quick mode (`--quick`), execution uses `/ralph-loop` for autonomous task completion.
 
 After generating spec artifacts in quick mode, invoke ralph-loop:
-```
+```text
 Skill: ralph-loop:ralph-loop
 Args: Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
 ```
@@ -246,7 +246,7 @@ When `--quick` flag detected, bypass interactive spec phases and auto-generate a
 
 Parse arguments before `--quick` flag and classify input type:
 
-```
+```text
 Input Classification:
 
 1. TWO ARGS before --quick:
@@ -314,7 +314,7 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
 - You only handle: directory creation, state file writes, and coordination
 </mandatory>
 
-```
+```text
 1. Validate input (non-empty goal/plan)
    |
 2. Infer name from goal (if not provided)
@@ -369,7 +369,7 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
 
 Before creating the spec, validate all inputs:
 
-```
+```text
 Validation Sequence:
 
 1. ZERO ARGS CHECK (if no args before --quick)
@@ -395,7 +395,7 @@ Validation Sequence:
 
 On generation failure after spec directory created:
 
-```
+```text
 Rollback Procedure:
 
 1. CAPTURE FAILURE
@@ -413,7 +413,7 @@ Rollback Procedure:
 
 ## Detection Logic
 
-```
+```text
 1. Check if name provided in arguments
    |
    +-- Yes: Check if ./specs/$name/ exists
@@ -469,7 +469,7 @@ After ANY subagent (research-analyst, product-manager, architect-reviewer, task-
 2. **Check awaitingApproval**: If `awaitingApproval: true`, you MUST STOP IMMEDIATELY
 3. **Do NOT invoke the next phase** - the user must explicitly run the next command
 
-```
+```text
 Subagent returns
 ↓
 Read .ralph-state.json
@@ -535,7 +535,7 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
 
 ### Scan Steps
 
-```
+```text
 1. List all directories in ./specs/
    - Run: ls -d ./specs/*/ 2>/dev/null | xargs -I{} basename {}
    - Exclude the current spec being created (if known)
@@ -612,7 +612,7 @@ function scoreMatch(currentGoalKeywords, existingGoalKeywords) {
 
 ### Example Output
 
-```
+```text
 Related specs found:
 - user-auth: Add OAuth2 authentication with JWT tokens...
 - api-refactor: Restructure API endpoints for better...
@@ -647,7 +647,7 @@ Before asking interview questions, classify the user's goal to determine questio
 
 Analyze the goal text for keywords to determine intent type:
 
-```
+```text
 Intent Classification:
 
 1. TRIVIAL: Goal contains keywords like:
@@ -703,65 +703,25 @@ After classification, store the result in `.progress.md`:
 - Keywords matched: [list of matched keywords]
 ```
 
-### Question Pools
+### Question Count by Intent
 
-Define question pools for each intent type. Questions are asked in order until completion signal or max reached.
+Intent classification determines the question count range, not which questions to ask. All goals use the same Goal Interview Question Pool (defined below), but the number of questions varies by intent:
 
-**Trivial Pool (2 questions):**
+| Intent | Min Questions | Max Questions |
+|--------|---------------|---------------|
+| TRIVIAL | 1 | 2 |
+| REFACTOR | 3 | 5 |
+| GREENFIELD | 5 | 10 |
+| MID_SIZED | 3 | 7 |
 
-| # | Question | Required | Key |
-|---|----------|----------|-----|
-| 1 | What specifically needs to change? | Required | `change` |
-| 2 | Any constraints or considerations? | Optional | `constraints` |
+**Question Selection Logic:**
 
-**Refactor Pool (5 questions):**
-
-| # | Question | Required | Key |
-|---|----------|----------|-----|
-| 1 | What's driving this refactor? | Required | `driver` |
-| 2 | How important is backwards compatibility? | Required | `riskTolerance` |
-| 3 | What's the current test coverage? | Required | `testCoverage` |
-| 4 | Should tests be updated as part of this? | Optional | `updateTests` |
-| 5 | Any performance concerns to address? | Optional | `performance` |
-
-**Greenfield Pool (10 questions):**
-
-| # | Question | Required | Key |
-|---|----------|----------|-----|
-| 1 | What problem are you solving? | Required | `problem` |
-| 2 | Who are the primary users? | Required | `users` |
-| 3 | What's the priority level? | Required | `priority` |
-| 4 | Any constraints or must-haves? | Required | `constraints` |
-| 5 | How should this integrate with existing code? | Required | `integration` |
-| 6 | How will you know this is successful? | Optional | `success` |
-| 7 | Any security considerations? | Optional | `security` |
-| 8 | Any performance requirements? | Optional | `performance` |
-| 9 | What's explicitly out of scope? | Optional | `outOfScope` |
-| 10 | Any other context to share? | Optional | `otherContext` |
-
-**Mid-sized Pool (7 questions):**
-
-| # | Question | Required | Key |
-|---|----------|----------|-----|
-| 1 | What's the core deliverable? | Required | `coreDeliverable` |
-| 2 | What's the priority level? | Required | `priority` |
-| 3 | What's explicitly out of scope? | Required | `outOfScope` |
-| 4 | Any dependencies on other systems? | Optional | `dependencies` |
-| 5 | What level of testing is expected? | Optional | `testing` |
-| 6 | Any deployment considerations? | Optional | `deployment` |
-| 7 | Any other context to share? | Optional | `otherContext` |
-
-**Pool Selection Logic:**
-
-```
+```text
 1. Get intent from Intent Classification step
-2. Select corresponding pool:
-   - TRIVIAL → Trivial Pool
-   - REFACTOR → Refactor Pool
-   - GREENFIELD → Greenfield Pool
-   - MID_SIZED → Mid-sized Pool
-3. Ask Required questions first, then Optional questions
-4. Stop when:
+2. Intent determines question COUNT, not which pool to use
+3. All goals use the Goal Interview Question Pool
+4. Ask Required questions first, then Optional questions
+5. Stop when:
    - User signals completion (after minRequired reached)
    - All questions asked (maxAllowed reached)
    - User selects "No, let's proceed" on optional question
@@ -881,7 +841,7 @@ After interview, update `.progress.md` with Interview Format, Intent Classificat
 
 Include goal interview context when invoking research-analyst:
 
-```
+```text
 Task delegation prompt should include:
 
 Goal Interview Context:
@@ -896,7 +856,7 @@ Use this context to focus research on relevant areas.
 
 Triggered when `--quick` flag detected. Skips all spec phases and auto-generates artifacts.
 
-```
+```text
 1. Check if --quick flag present in $ARGUMENTS
    |
    +-- Yes: Extract args before --quick
@@ -942,7 +902,7 @@ Triggered when `--quick` flag detected. Skips all spec phases and auto-generates
 
 Before resuming, show brief status:
 
-```
+```text
 Resuming: user-auth
 Phase: execution
 Progress: 3/8 tasks complete
@@ -956,21 +916,21 @@ Continuing...
 After detection and action:
 
 **New spec:**
-```
+```text
 Created spec 'user-auth' at ./specs/user-auth/
 
 Starting research phase...
 ```
 
 **Resume:**
-```
+```text
 Resuming 'user-auth' at execution phase, task 4/8
 
 Continuing task: 2.2 Extract retry logic
 ```
 
 **Quick mode:**
-```
+```text
 Quick mode: Created 'build-auth-with' at ./specs/build-auth-with/
 Generated 4 artifacts from goal.
 Starting task 1/N...

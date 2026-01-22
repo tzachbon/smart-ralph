@@ -5,7 +5,7 @@ description: Standard single-question adaptive interview loop used across all sp
 
 # Interview Framework
 
-Canonical interview algorithm for all spec phases. Each phase references this skill instead of duplicating the ~50 line algorithm.
+Canonical interview algorithm for all spec phases. Each phase references this skill instead of duplicating the ~50-line algorithm.
 
 ## Option Limit Rule
 
@@ -13,7 +13,7 @@ Each question MUST have 2-4 options (max 4 for better UX). Keep most relevant op
 
 ## Single-Question Loop Structure
 
-```
+```text
 Initialize:
   askedCount = 0
   responses = {}
@@ -68,7 +68,7 @@ Loop:
 
 After each response, check if user wants to end:
 
-```
+```text
 userResponse = [last answer from AskUserQuestion]
 if askedCount >= minRequired:
   for signal in completionSignals:
@@ -97,7 +97,7 @@ Follow-up questions MUST be context-specific, not generic. When user provides an
 **Do NOT use generic follow-ups like "Can you elaborate?" - always tailor to their specific response.**
 
 Example - if user types "We need GraphQL support" for constraints:
-```
+```yaml
 AskUserQuestion:
   question: "You mentioned needing GraphQL support. Is this for:
     - the entire API layer, or
@@ -111,7 +111,7 @@ AskUserQuestion:
 ```
 
 Example - if user types "Security is critical" for success criteria:
-```
+```yaml
 AskUserQuestion:
   question: "You emphasized security is critical. Given your constraint of '{constraints}', which security aspects matter most?"
   options:
@@ -133,7 +133,7 @@ After each interview, update `.progress.md`:
 
 ### Storage Format
 
-```markdown
+```text
 ### [Phase] Interview (from [phase].md)
 - [Key1]: [response1]
 - [Key2]: [response2]
@@ -165,7 +165,7 @@ After each interview, update `.progress.md`:
 
 Before asking any question, check if the answer already exists:
 
-```
+```text
 Parameter Chain:
   BEFORE asking any question:
     1. Parse .progress.md for existing answers

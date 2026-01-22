@@ -55,7 +55,7 @@ Before conducting the interview, read `.progress.md` to get:
 1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
 2. **All prior interview responses** to enable parameter chain (skip already-answered questions)
 
-```
+```text
 Context Reading:
 1. Read ./specs/$spec/.progress.md
 2. Parse "## Intent Classification" section for intent type and question counts
@@ -106,7 +106,7 @@ After interview, append to `.progress.md` under the "Interview Responses" sectio
 
 Pass the combined context (prior + new responses) to the Task delegation prompt:
 
-```
+```text
 Interview Context:
 - Testing depth: [Answer]
 - Deployment considerations: [Answer]
@@ -125,7 +125,7 @@ ALL specs MUST follow POC-first workflow.
 
 Invoke task-planner agent with prompt:
 
-```
+```text
 You are creating implementation tasks for spec: $spec
 Spec path: ./specs/$spec/
 
@@ -215,7 +215,7 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
-```
+```text
 Tasks phase complete for '$spec'.
 
 Output: ./specs/$spec/tasks.md

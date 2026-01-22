@@ -95,7 +95,7 @@ Before conducting the interview, read `.progress.md` to get:
 1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
 2. **Prior interview responses** to enable parameter chain (skip already-answered questions)
 
-```
+```text
 Context Reading:
 1. Read ./specs/$spec/.progress.md
 2. Parse "## Intent Classification" section for intent type and question counts
@@ -147,7 +147,7 @@ After interview, append to `.progress.md` under the "Interview Responses" sectio
 
 Pass the combined context (prior + new responses) to the Task delegation prompt:
 
-```
+```text
 Interview Context:
 - Technical approach: [Answer]
 - Known constraints: [Answer]
@@ -173,7 +173,7 @@ Use the appropriate subagent type:
 
 Even for simple goals, spawn at least 2 agents in parallel:
 
-```
+```text
 Task 1 (Explore - codebase): Analyze existing patterns
 Task 2 (research-analyst - web): Search for best practices
 ```
@@ -183,7 +183,7 @@ Task 2 (research-analyst - web): Search for best practices
 For most goals, spawn 3-4 agents in ONE message:
 
 **Task 1 - External Research (research-analyst):**
-```
+```yaml
 subagent_type: research-analyst
 
 You are researching for spec: $spec
@@ -200,7 +200,7 @@ Do NOT explore codebase - Explore agents handle that in parallel.
 ```
 
 **Task 2 - Codebase Analysis (Explore - fast):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: very thorough
 
@@ -221,7 +221,7 @@ Write findings to the output file with sections:
 ```
 
 **Task 3 - Quality Commands Discovery (Explore - fast):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: quick
 
@@ -238,7 +238,7 @@ Write findings as table: | Type | Command | Source |
 ```
 
 **Task 4 - Related Specs Discovery (Explore - fast):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: medium
 
@@ -269,7 +269,7 @@ Spawn 5 agents in ONE message:
 | 5 | Explore | Related specs | .research-related-specs.md |
 
 **Task 1 - GraphQL Best Practices (research-analyst):**
-```
+```yaml
 subagent_type: research-analyst
 
 Topic: GraphQL API best practices
@@ -282,7 +282,7 @@ Output: ./specs/$spec/.research-graphql.md
 ```
 
 **Task 2 - Caching Strategies (research-analyst):**
-```
+```yaml
 subagent_type: research-analyst
 
 Topic: Caching strategies for GraphQL
@@ -295,7 +295,7 @@ Output: ./specs/$spec/.research-caching.md
 ```
 
 **Task 3 - Codebase Analysis (Explore):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: very thorough
 
@@ -309,7 +309,7 @@ Output: ./specs/$spec/.research-codebase.md
 ```
 
 **Task 4 - Quality Commands (Explore):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: quick
 
@@ -323,7 +323,7 @@ Output: ./specs/$spec/.research-quality.md
 ```
 
 **Task 5 - Related Specs (Explore):**
-```
+```yaml
 subagent_type: Explore
 thoroughness: medium
 
@@ -439,7 +439,7 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
-```
+```text
 Research phase complete for '$spec'.
 
 Output: ./specs/$spec/research.md
