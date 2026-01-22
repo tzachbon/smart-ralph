@@ -113,6 +113,8 @@ Context Reading:
 
 Use individual AskUserQuestion calls to gather technical context. This single-question flow enables adaptive questioning based on prior answers and context.
 
+**Option Limit Rule**: Each question MUST have 2-4 options (max 4 for better UX). Keep most relevant options, combine similar ones.
+
 **Parameter Chain Logic:**
 
 Before asking each question, check if the answer already exists in .progress.md:

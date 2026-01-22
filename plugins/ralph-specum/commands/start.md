@@ -818,6 +818,8 @@ Before asking each question, replace `{var}` placeholders with values from `.pro
 
 Use individual AskUserQuestion calls to clarify the goal before research. This enables adaptive questioning based on prior answers.
 
+**Option Limit Rule**: Each question MUST have 2-4 options (max 4 for better UX). Keep most relevant options, combine similar ones.
+
 **Single-Question Loop Structure:**
 
 ```

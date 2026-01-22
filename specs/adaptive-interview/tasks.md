@@ -290,7 +290,7 @@ After POC validated, apply pattern to research.md, requirements.md, design.md, t
 
 ### 3.5 Add Max 4 Options Constraint
 
-- [ ] 3.5 Update all question options to max 4
+- [x] 3.5 Update all question options to max 4
   - **Do**:
     1. Review all AskUserQuestion blocks in all command files
     2. Reduce any option lists with 5+ options to max 4
