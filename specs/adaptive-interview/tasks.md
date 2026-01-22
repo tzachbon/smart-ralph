@@ -72,7 +72,7 @@ Focus: Get single-question flow working in start.md first, then propagate to oth
 
 ### 1.4 Add Context Accumulator to start.md
 
-- [ ] 1.4 Store interview responses in .progress.md
+- [x] 1.4 Store interview responses in .progress.md
   - **Do**:
     1. Update "Store Goal Context" section (lines 586-598)
     2. Add structured "Interview Responses" section format

@@ -777,17 +777,36 @@ AskUserQuestion:
 
 ### Store Goal Context
 
-After interview, update `.progress.md` to include Goal Context section:
+After interview, update `.progress.md` to include Intent Classification and Interview Responses sections:
 
 ```markdown
-## Goal Context
+## Intent Classification
+- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+- Min questions: [N]
+- Max questions: [N]
+- Keywords matched: [list of matched keywords]
 
-Interview responses from goal clarification:
-- Problem: [response to question 1]
-- Constraints: [response to question 2]
-- Success criteria: [response to question 3]
-[Additional follow-up responses if any]
+## Interview Responses
+
+### Goal Interview (from start.md)
+- Problem: [responses.problem]
+- Constraints: [responses.constraints]
+- Success criteria: [responses.success]
+- Additional context: [responses.additionalContext]
+[Any follow-up responses from "Other" selections]
 ```
+
+**Context Accumulator Instructions:**
+
+1. After intent classification, immediately write the "Intent Classification" section
+2. After each AskUserQuestion response, append to the "Interview Responses" section
+3. Use semantic keys matching the question type:
+   - `responses.problem` → "Problem:"
+   - `responses.constraints` → "Constraints:"
+   - `responses.success` → "Success criteria:"
+   - `responses.additionalContext` → "Additional context:"
+4. For "Other" follow-up responses, append with descriptive key based on the follow-up question
+5. Format must be parseable for later parameter chain checks in subsequent phases
 
 ### Pass Context to Research
 
