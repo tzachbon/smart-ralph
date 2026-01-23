@@ -17,7 +17,16 @@ v2.0.0 delegates task execution to the official Ralph Loop plugin instead of usi
 
 1. **Install Ralph Loop**
    ```bash
-   /plugin install ralph-wiggum@claude-plugins-official
+   /plugin install ralph-loop@claude-plugins-official
+   ```
+
+   **If marketplace not found:**
+   ```bash
+   # Add the official marketplace first
+   /plugin marketplace add anthropics/claude-code
+
+   # Then install Ralph Loop
+   /plugin install ralph-loop@claude-plugins-official
    ```
 
 2. **Restart Claude Code**
@@ -57,7 +66,8 @@ The new loop picks up from the last completed task.
 ### Troubleshooting
 
 **"Ralph Loop plugin not found"**
-- Install it: `/plugin install ralph-wiggum@claude-plugins-official`
+- Install it: `/plugin install ralph-loop@claude-plugins-official`
+- If marketplace not found: `/plugin marketplace add anthropics/claude-code`
 - Restart Claude Code
 
 **"Loop state conflict"**

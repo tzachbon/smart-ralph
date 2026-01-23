@@ -81,7 +81,13 @@ Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinato
 
 ### Dependencies
 
-Requires Ralph Loop plugin: `/plugin install ralph-wiggum@claude-plugins-official`
+Requires Ralph Loop plugin: `/plugin install ralph-loop@claude-plugins-official`
+
+**Note:** If you see "marketplace not found" errors, first add the official marketplace:
+```bash
+/plugin marketplace add anthropics/claude-code
+/plugin install ralph-loop@claude-plugins-official
+```
 
 ## Key Files
 
