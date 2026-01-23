@@ -12,10 +12,21 @@ Smart Ralph v2.0.0+ requires the Ralph Loop plugin as a dependency.
 
 **Solution:**
 ```bash
-/plugin install ralph-wiggum@claude-plugins-official
+/plugin install ralph-loop@claude-plugins-official
+```
+
+**If marketplace not found:**
+```bash
+# Add the official marketplace first
+/plugin marketplace add anthropics/claude-code
+
+# Then install Ralph Loop
+/plugin install ralph-loop@claude-plugins-official
 ```
 
 Then restart Claude Code.
+
+**Note:** The plugin is named `ralph-loop` (not `ralph-wiggum`). Both names refer to the same Ralph Wiggum technique, but the actual plugin name is `ralph-loop`.
 
 ---
 
