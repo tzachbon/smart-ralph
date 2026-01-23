@@ -1,9 +1,10 @@
 #!/bin/bash
 # Stop Hook for Ralph Specum
-# Performs cleanup when session stops:
-# 1. Removes .ralph-state.json to reset execution state
-# 2. Cleans up orphaned temp progress files
-# Note: .progress.md is preserved for history/learnings
+# Logging-only watcher - does NOT control loop execution
+# 1. Logs current execution state to stderr
+# 2. Cleans up orphaned temp progress files (>60min old)
+# Note: Ralph Loop plugin manages loop continuation
+# Note: .progress.md and .ralph-state.json are preserved
 
 # Read hook input from stdin
 INPUT=$(cat)
@@ -58,20 +59,18 @@ if [ "$CORRUPT_STATE" = false ]; then
     TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
     TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 
-    # Log current state before cleanup
+    # Log current state (logging only - Ralph Loop manages continuation)
     if [ "$PHASE" = "execution" ]; then
-        echo "[ralph-specum] Cleaning up spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
+        echo "[ralph-specum] Session stopped during spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
+        echo "[ralph-specum] Ralph Loop will resume execution on next iteration" >&2
     fi
 fi
 
-# Cleanup: Remove state file to reset execution state
-# This achieves the same result as /ralph-loop:cancel-ralph - the loop will not resume on next start
-rm -f "$STATE_FILE" 2>/dev/null || true
-echo "[ralph-specum] Removed .ralph-state.json for spec: $SPEC_NAME" >&2
-
 # Cleanup orphaned temp progress files (from interrupted parallel batches)
+# Only remove files older than 60 minutes to avoid race conditions with active executors
 find "$CWD/specs/$SPEC_NAME" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
 
-# Note: .progress.md is preserved - contains valuable history and learnings
+# Note: .progress.md and .ralph-state.json are preserved for loop continuation
+# Use /ralph-specum:cancel to explicitly stop execution and cleanup state
 
 exit 0
