@@ -164,9 +164,95 @@ Include:
 - Test strategy
 ```
 
+## Review & Feedback Loop
+
+<mandatory>
+**Skip review if --quick flag detected in $ARGUMENTS.**
+
+If NOT quick mode, conduct design review using AskUserQuestion after design is created.
+</mandatory>
+
+### Quick Mode Check
+
+Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
+
+### Design Review Questions
+
+After the design has been created by the architect-reviewer agent, ask the user to review it and provide feedback.
+
+**Review Question Flow:**
+
+1. **Read the generated design.md** to understand what was created
+2. **Ask initial review questions** to confirm the design meets their expectations:
+
+| # | Question | Key | Options |
+|---|----------|-----|---------|
+| 1 | Does the architecture approach align with your expectations? | `architectureApproval` | Yes, looks good / Needs changes / I have questions / Other |
+| 2 | Are the technical decisions appropriate for your needs? | `technicalDecisionsApproval` | Yes, approved / Some concerns / Need changes / Other |
+| 3 | Is the component structure clear and suitable? | `componentStructureApproval` | Yes, clear / Needs refinement / Major changes needed / Other |
+| 4 | Any other feedback on the design? (or say 'approved' to proceed) | `designFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
+
+### Store Design Review Responses
+
+After review questions, append to `.progress.md` under a new section:
+
+```markdown
+### Design Review (from design.md)
+- Architecture approval: [responses.architectureApproval]
+- Technical decisions approval: [responses.technicalDecisionsApproval]
+- Component structure approval: [responses.componentStructureApproval]
+- Design feedback: [responses.designFeedback]
+[Any follow-up responses from "Other" selections]
+```
+
+### Update Design Based on Feedback
+
+<mandatory>
+If the user provided feedback requiring changes (any answer other than "Yes, looks good", "Yes, approved", "Yes, clear", or "Approved, let's proceed"), you MUST:
+
+1. Collect specific change requests from the user
+2. Invoke architect-reviewer again with update instructions
+3. Repeat the review questions after updates
+4. Continue loop until user approves
+</mandatory>
+
+**Update Flow:**
+
+If changes are needed:
+
+1. **Ask for specific changes:**
+   ```
+   What specific changes would you like to see in the design?
+   ```
+
+2. **Invoke architect-reviewer with update prompt:**
+   ```
+   You are updating the technical design for spec: $spec
+   Spec path: ./specs/$spec/
+
+   Current design: ./specs/$spec/design.md
+
+   User feedback:
+   $user_feedback
+
+   Your task:
+   1. Read the existing design.md
+   2. Understand the user's feedback and concerns
+   3. Update the design to address the feedback
+   4. Maintain consistency with requirements
+   5. Update design.md with the changes
+   6. Append update notes to .progress.md explaining what changed
+
+   Focus on addressing the specific feedback while maintaining the overall design quality.
+   ```
+
+3. **After update, repeat review questions** (go back to "Design Review Questions")
+
+4. **Continue until approved:** Loop until user responds with approval
+
 ## Update State
 
-After design complete:
+After design complete and approved:
 
 1. Update `.ralph-state.json`:
    ```json
