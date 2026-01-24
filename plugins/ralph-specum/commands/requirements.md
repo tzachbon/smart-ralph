@@ -157,9 +157,95 @@ Focus on:
 - Risk identification
 ```
 
+## Review & Feedback Loop
+
+<mandatory>
+**Skip review if --quick flag detected in $ARGUMENTS.**
+
+If NOT quick mode, conduct requirements review using AskUserQuestion after requirements are created.
+</mandatory>
+
+### Quick Mode Check
+
+Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
+
+### Requirements Review Questions
+
+After the requirements have been created by the product-manager agent, ask the user to review them and provide feedback.
+
+**Review Question Flow:**
+
+1. **Read the generated requirements.md** to understand what was created
+2. **Ask initial review questions** to confirm the requirements meet their expectations:
+
+| # | Question | Key | Options |
+|---|----------|-----|---------|
+| 1 | Do the user stories capture your intended functionality? | `userStoriesApproval` | Yes, complete / Missing some stories / Need refinement / Other |
+| 2 | Are the acceptance criteria clear and testable? | `acceptanceCriteriaApproval` | Yes, clear / Need more details / Some are unclear / Other |
+| 3 | Are the priorities and scope appropriate? | `prioritiesApproval` | Yes, appropriate / Need adjustment / Missing items / Other |
+| 4 | Any other feedback on the requirements? (or say 'approved' to proceed) | `requirementsFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
+
+### Store Requirements Review Responses
+
+After review questions, append to `.progress.md` under a new section:
+
+```markdown
+### Requirements Review (from requirements.md)
+- User stories approval: [responses.userStoriesApproval]
+- Acceptance criteria approval: [responses.acceptanceCriteriaApproval]
+- Priorities approval: [responses.prioritiesApproval]
+- Requirements feedback: [responses.requirementsFeedback]
+[Any follow-up responses from "Other" selections]
+```
+
+### Update Requirements Based on Feedback
+
+<mandatory>
+If the user provided feedback requiring changes (any answer other than "Yes, complete", "Yes, clear", "Yes, appropriate", or "Approved, let's proceed"), you MUST:
+
+1. Collect specific change requests from the user
+2. Invoke product-manager again with update instructions
+3. Repeat the review questions after updates
+4. Continue loop until user approves
+</mandatory>
+
+**Update Flow:**
+
+If changes are needed:
+
+1. **Ask for specific changes:**
+   ```
+   What specific changes would you like to see in the requirements?
+   ```
+
+2. **Invoke product-manager with update prompt:**
+   ```
+   You are updating the requirements for spec: $spec
+   Spec path: ./specs/$spec/
+
+   Current requirements: ./specs/$spec/requirements.md
+
+   User feedback:
+   $user_feedback
+
+   Your task:
+   1. Read the existing requirements.md
+   2. Understand the user's feedback and concerns
+   3. Update the requirements to address the feedback
+   4. Maintain consistency with research findings
+   5. Update requirements.md with the changes
+   6. Append update notes to .progress.md explaining what changed
+
+   Focus on addressing the specific feedback while maintaining requirements quality.
+   ```
+
+3. **After update, repeat review questions** (go back to "Requirements Review Questions")
+
+4. **Continue until approved:** Loop until user responds with approval
+
 ## Update State
 
-After requirements complete:
+After requirements complete and approved:
 
 1. Update `.ralph-state.json`:
    ```json

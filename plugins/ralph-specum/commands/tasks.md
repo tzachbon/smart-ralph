@@ -172,9 +172,96 @@ Critical rules:
 - POC phase allows shortcuts, later phases clean up
 ```
 
+## Review & Feedback Loop
+
+<mandatory>
+**Skip review if --quick flag detected in $ARGUMENTS.**
+
+If NOT quick mode, conduct tasks review using AskUserQuestion after tasks are created.
+</mandatory>
+
+### Quick Mode Check
+
+Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
+
+### Tasks Review Questions
+
+After the tasks have been created by the task-planner agent, ask the user to review them and provide feedback.
+
+**Review Question Flow:**
+
+1. **Read the generated tasks.md** to understand what was planned
+2. **Ask initial review questions** to confirm the tasks meet their expectations:
+
+| # | Question | Key | Options |
+|---|----------|-----|---------|
+| 1 | Does the task breakdown cover all necessary work? | `taskCoverage` | Yes, comprehensive / Missing some tasks / Need more granularity / Other |
+| 2 | Are the task phases (POC, Refactor, Test, Quality) appropriate? | `taskPhases` | Yes, good structure / Adjust phases / Different approach needed / Other |
+| 3 | Are the verification steps clear and executable? | `verificationSteps` | Yes, clear / Need more details / Some are unclear / Other |
+| 4 | Any other feedback on the tasks? (or say 'approved' to proceed) | `tasksFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
+
+### Store Tasks Review Responses
+
+After review questions, append to `.progress.md` under a new section:
+
+```markdown
+### Tasks Review (from tasks.md)
+- Task coverage: [responses.taskCoverage]
+- Task phases: [responses.taskPhases]
+- Verification steps: [responses.verificationSteps]
+- Tasks feedback: [responses.tasksFeedback]
+[Any follow-up responses from "Other" selections]
+```
+
+### Update Tasks Based on Feedback
+
+<mandatory>
+If the user provided feedback requiring changes (any answer other than "Yes, comprehensive", "Yes, good structure", "Yes, clear", or "Approved, let's proceed"), you MUST:
+
+1. Collect specific change requests from the user
+2. Invoke task-planner again with update instructions
+3. Repeat the review questions after updates
+4. Continue loop until user approves
+</mandatory>
+
+**Update Flow:**
+
+If changes are needed:
+
+1. **Ask for specific changes:**
+   ```
+   What specific changes would you like to see in the tasks?
+   ```
+
+2. **Invoke task-planner with update prompt:**
+   ```
+   You are updating the implementation tasks for spec: $spec
+   Spec path: ./specs/$spec/
+
+   Current tasks: ./specs/$spec/tasks.md
+
+   User feedback:
+   $user_feedback
+
+   Your task:
+   1. Read the existing tasks.md
+   2. Understand the user's feedback and concerns
+   3. Update the tasks to address the feedback
+   4. Maintain POC-first workflow structure
+   5. Update tasks.md with the changes
+   6. Update total_tasks count in frontmatter
+   7. Append update notes to .progress.md explaining what changed
+
+   Focus on addressing the specific feedback while maintaining task quality.
+   ```
+
+3. **After update, repeat review questions** (go back to "Tasks Review Questions")
+
+4. **Continue until approved:** Loop until user responds with approval
+
 ## Update State
 
-After tasks complete:
+After tasks complete and approved:
 
 1. Count total tasks from generated file
 2. Update `.ralph-state.json`:

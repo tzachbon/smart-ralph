@@ -399,9 +399,100 @@ After ALL parallel subagent tasks complete, YOU must merge results into a single
 
 4. **Quality check**: Ensure no duplicate information, consistent formatting
 
+## Review & Feedback Loop
+
+<mandatory>
+**Skip review if --quick flag detected in $ARGUMENTS.**
+
+If NOT quick mode, conduct research review using AskUserQuestion after research is created.
+</mandatory>
+
+### Quick Mode Check
+
+Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
+
+### Research Review Questions
+
+After the research has been created and merged by the subagents, ask the user to review it and provide feedback.
+
+**Review Question Flow:**
+
+1. **Read the generated research.md** to understand what was found
+2. **Ask initial review questions** to confirm the research meets their expectations:
+
+| # | Question | Key | Options |
+|---|----------|-----|---------|
+| 1 | Does the research cover all the areas you expected? | `researchCoverage` | Yes, comprehensive / Missing some areas / Need more depth / Other |
+| 2 | Are the findings and recommendations helpful? | `findingsQuality` | Yes, very helpful / Somewhat helpful / Need more details / Other |
+| 3 | Are there any specific areas you'd like researched further? | `additionalResearch` | No, looks complete / Yes, I have specific areas / Other |
+| 4 | Any other feedback on the research? (or say 'approved' to proceed) | `researchFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
+
+### Store Research Review Responses
+
+After review questions, append to `.progress.md` under a new section:
+
+```markdown
+### Research Review (from research.md)
+- Research coverage: [responses.researchCoverage]
+- Findings quality: [responses.findingsQuality]
+- Additional research needed: [responses.additionalResearch]
+- Research feedback: [responses.researchFeedback]
+[Any follow-up responses from "Other" selections]
+```
+
+### Update Research Based on Feedback
+
+<mandatory>
+If the user provided feedback requiring changes (any answer other than "Yes, comprehensive", "Yes, very helpful", "No, looks complete", or "Approved, let's proceed"), you MUST:
+
+1. Collect specific change requests from the user
+2. Invoke appropriate subagents again with additional research instructions
+3. Merge updated results
+4. Repeat the review questions after updates
+5. Continue loop until user approves
+</mandatory>
+
+**Update Flow:**
+
+If changes are needed:
+
+1. **Ask for specific changes:**
+   ```
+   What specific areas would you like researched further or what changes would you like to see?
+   ```
+
+2. **Invoke appropriate subagents with update prompt:**
+   - Use `research-analyst` for additional web research
+   - Use `Explore` for additional codebase analysis
+
+   Example prompt:
+   ```
+   You are conducting additional research for spec: $spec
+   Spec path: ./specs/$spec/
+
+   Current research: ./specs/$spec/research.md
+
+   User feedback:
+   $user_feedback
+
+   Your task:
+   1. Read the existing research.md
+   2. Understand what additional information is needed
+   3. Conduct focused research on the requested areas
+   4. Output to ./specs/$spec/.research-additional.md
+
+   Focus on addressing the specific gaps identified by the user.
+   ```
+
+3. **Merge updated results** into research.md
+
+4. **After update, repeat review questions** (go back to "Research Review Questions")
+
+5. **Continue until approved:** Loop until user responds with approval
+
 ## Update State
 
-After research completes:
+After research completes and is approved:
 
 1. Parse "Related Specs" table from research.md
 2. Update `.ralph-state.json`:
