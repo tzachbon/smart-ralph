@@ -26,14 +26,12 @@ claude --plugin-dir ./plugins/ralph-specum
 > **⚠️ CRITICAL: Version bumps are REQUIRED for ANY plugin change**
 >
 > When making ANY changes to plugin files (commands, agents, hooks, templates, schemas):
-> 1. **ALWAYS bump the version** in BOTH files:
->    - `plugins/ralph-specum/.claude-plugin/plugin.json`
->    - `.claude-plugin/marketplace.json`
-> 2. Use semantic versioning:
->    - **Patch** (x.x.1): Bug fixes, typos, minor tweaks
->    - **Minor** (x.1.0): New features, enhancements
->    - **Major** (1.0.0): Breaking changes
+> 1. **ALWAYS bump the version** in BOTH files for the modified plugin:
+>    - `plugins/<plugin-name>/.claude-plugin/plugin.json` (the plugin you're modifying)
+>    - `.claude-plugin/marketplace.json` (update the corresponding plugin entry)
+> 2. Use semantic versioning: patch (fixes), minor (features), major (breaking)
 > 3. Bump once per set of related changes (not per commit)
+> 4. Only update the version for plugins you actually modified
 
 No build step required. Changes take effect on Claude Code restart.
 
