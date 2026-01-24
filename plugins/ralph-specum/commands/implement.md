@@ -496,9 +496,17 @@ While (CI checks not all green):
   1. Wait 3 minutes (allow CI to start/complete)
   2. Check status: gh pr checks
   3. If failures:
-     - Delegate fix to spec-executor with failure details
+     - Read failure details: gh run view --log-failed
+     - Create new Phase 5.X task in tasks.md:
+       - [ ] 5.X Fix CI failure: <failure summary>
+         - **Do**: <steps to fix based on failure logs>
+         - **Files**: <files to modify based on failure>
+         - **Done when**: CI check passes
+         - **Verify**: gh pr checks shows this check ✓
+         - **Commit**: fix: address CI failure - <summary>
+     - Delegate new task to spec-executor with task index and Files list
      - Wait for TASK_COMPLETE
-     - Push fixes
+     - Push fixes (if not already pushed by spec-executor)
      - Restart wait cycle
   4. If pending:
      - Continue waiting
@@ -509,15 +517,26 @@ While (CI checks not all green):
 **Step 3: Review Comment Check**
 
 ```
-1. Fetch review comments: gh pr view --json comments
-2. Parse for unresolved comments
-3. If unresolved comments found:
-   - Create tasks from comments (add to tasks.md as Phase 5.X)
+1. Fetch review states: gh pr view --json reviews
+   - Parse for reviews with state "CHANGES_REQUESTED" or "PENDING"
+   - Note: --json reviews returns review-level state but NOT inline comment threads
+   - For inline comments, use REST API: gh api repos/{owner}/{repo}/pulls/{number}/reviews
+   - Or use review comments endpoint: gh api repos/{owner}/{repo}/pulls/{number}/comments
+2. Parse for unresolved reviews/comments
+3. If unresolved reviews/comments found:
+   - Create tasks from reviews (add to tasks.md as Phase 5.X)
+   - For each review/comment:
+     - [ ] 5.X Address review: <reviewer> - <summary>
+       - **Do**: <change requested>
+       - **Files**: <files to modify>
+       - **Done when**: Review comment addressed
+       - **Verify**: Code implements requested change
+       - **Commit**: fix: address review - <summary>
    - Delegate each to spec-executor
    - Wait for completion
    - Push fixes
    - Return to Step 2 (re-check CI)
-4. If no unresolved comments:
+4. If no unresolved reviews/comments:
    - Proceed to Step 4
 ```
 

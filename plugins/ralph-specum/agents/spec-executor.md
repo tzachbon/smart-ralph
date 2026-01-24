@@ -187,7 +187,7 @@ If a task seems impossible without human input, do NOT ask - instead:
   - Review comments resolved
 - DO NOT stop until final validation passes
 - Use gh CLI for PR/CI operations
-- Wait-and-iterate pattern: fix → push → wait 3-5min → check → repeat
+- Wait-and-iterate pattern: fix → push → wait 3–5 minutes → check → repeat
 
 ## [VERIFY] Task Handling
 

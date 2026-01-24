@@ -3,7 +3,12 @@
 ## Overview
 
 Total tasks: {{N}}
-POC-first workflow with 4 phases.
+POC-first workflow with 5 phases:
+1. Phase 1: Make It Work (POC) - Validate idea end-to-end
+2. Phase 2: Refactoring - Clean up code structure
+3. Phase 3: Testing - Add unit/integration/e2e tests
+4. Phase 4: Quality Gates - Local quality checks and PR creation
+5. Phase 5: PR Lifecycle - Autonomous CI monitoring, review resolution, final validation
 
 ## Completion Criteria (Autonomous Execution Standard)
 
@@ -238,16 +243,17 @@ EOF
 
 - [ ] 5.3 Address code review comments
   - **Do**:
-    1. Fetch comments: `gh pr view --json comments --jq '.comments[] | select(.state == "PENDING" or .state == "CHANGES_REQUESTED")'`
-    2. For each unresolved comment:
-       - Read comment body
+    1. Fetch reviews: `gh pr view --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED" or .state == "PENDING")'`
+       - Note: For inline comment threads, use: `gh api repos/{owner}/{repo}/pulls/{number}/comments`
+    2. For each unresolved review/comment:
+       - Read review body and inline comments
        - Implement requested change
        - Commit: `fix: address review - {{comment summary}}`
     3. Push all fixes: `git push`
     4. Wait 5 minutes
-    5. Re-check for new comments
-    6. Repeat until no unresolved comments
-  - **Verify**: `gh pr view --json comments` shows no pending/requested changes
+    5. Re-check for new reviews
+    6. Repeat until no unresolved reviews
+  - **Verify**: `gh pr view --json reviews` shows no CHANGES_REQUESTED or PENDING states
   - **Done when**: All review comments resolved
   - **Commit**: `fix: address review - {{summary}}` (per comment)
 
@@ -270,5 +276,5 @@ EOF
 ## Dependencies
 
 ```
-Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality)
+Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality) → Phase 5 (PR Lifecycle)
 ```
