@@ -17,7 +17,13 @@ You MUST delegate ALL research work to subagents:
 
 Do NOT perform web searches, codebase analysis, or write research.md yourself.
 
-**PARALLEL EXECUTION IS MANDATORY for complex goals.** Spawn 3-5 subagents in a single message to maximize speed.
+**PARALLEL EXECUTION IS MANDATORY - ALWAYS.**
+- Minimum: 2 agents (1 web + 1 codebase)
+- Standard: 3-4 agents (web + codebase + quality/related-specs)
+- Complex: 5+ agents (multiple domain-specific topics)
+- **ALL agent Task calls MUST be in ONE message** (not sequential messages)
+
+Failure to spawn multiple agents in parallel violates the core design of this command.
 </mandatory>
 
 ## Determine Active Spec
@@ -160,13 +166,62 @@ Store this context to include in the Task delegation prompt.
 ## Execute Research
 
 <mandatory>
-**SPAWN MULTIPLE SUBAGENTS IN PARALLEL** using the Task tool in a single message.
+**PARALLEL EXECUTION IS MANDATORY - NO EXCEPTIONS**
 
-Use the appropriate subagent type:
+You MUST follow this algorithm:
+
+### Step 1: Identify Research Topics (REQUIRED)
+
+Analyze the goal and list AT LEAST 2 distinct research topics. Output the list to the user:
+
+```
+Research topics identified for parallel execution:
+1. [Topic name] - [Agent type: research-analyst/Explore]
+2. [Topic name] - [Agent type: research-analyst/Explore]
+3. [Topic name] - [Agent type: research-analyst/Explore] (if applicable)
+...
+```
+
+**Minimum requirement**: 2 topics minimum
+- Topic 1: External/best practices (use research-analyst)
+- Topic 2: Codebase patterns (use Explore)
+- Additional topics: Domain-specific areas, quality commands, related specs (use appropriate agent type)
+
+### Step 2: Spawn ALL Agents in ONE Message (REQUIRED)
+
+**CRITICAL**: You MUST include ALL Task tool calls in a SINGLE response message to ensure true parallel execution.
+
+Use the appropriate subagent type for each topic:
 - `subagent_type: Explore` - For codebase analysis (fast, read-only, Haiku model)
 - `subagent_type: research-analyst` - For web research (needs WebSearch/WebFetch)
 
-**CRITICAL**: Include ALL Task tool calls in ONE message to ensure parallel execution.
+**If you spawn agents one at a time (separate messages), they run sequentially - THIS IS WRONG.**
+**If you spawn all agents in one message (multiple Task calls), they run in parallel - THIS IS CORRECT.**
+
+### Pre-Execution Checklist (REQUIRED)
+
+Before spawning agents, verify you have:
+- [ ] Listed at least 2 distinct research topics
+- [ ] Assigned appropriate agent type (Explore or research-analyst) to each topic
+- [ ] Prepared unique output file path for each agent (.research-*.md)
+- [ ] Prepared all Task tool calls in your response (ready to send in ONE message)
+- [ ] NOT written any code/searches yourself (you are a coordinator, not a researcher)
+
+If all boxes are checked, proceed with Step 2 (spawn all agents in ONE message).
+</mandatory>
+
+### Fail-Safe: "But This Goal is Simple..."
+
+<mandatory>
+**Even trivial goals require parallel research.**
+
+If you think the goal is "too simple" for parallel research:
+- You're wrong - spawn at least 2 agents anyway
+- Minimum: 1 Explore (codebase) + 1 research-analyst (web)
+- Parallel execution is about SPEED, not complexity
+- 2 agents in parallel = 2x faster than sequential
+
+**There are ZERO exceptions to the parallel requirement.**
 </mandatory>
 
 ### Minimum Parallel Pattern (Always Use)
@@ -177,6 +232,36 @@ Even for simple goals, spawn at least 2 agents in parallel:
 Task 1 (Explore - codebase): Analyze existing patterns
 Task 2 (research-analyst - web): Search for best practices
 ```
+
+**Example output before spawning:**
+```
+Research topics identified for parallel execution:
+1. External best practices - research-analyst
+2. Codebase analysis - Explore
+
+Now spawning 2 research agents in parallel...
+```
+
+### Parallel Execution: Correct vs Incorrect
+
+**WRONG (Sequential)** - Each Task call in separate message:
+```
+Message 1: Task(subagent_type: research-analyst, topic: best practices)
+[wait for result]
+Message 2: Task(subagent_type: Explore, topic: codebase)
+[wait for result]
+```
+Result: Agents run one after another = SLOW
+
+**CORRECT (Parallel)** - All Task calls in ONE message:
+```
+Message 1:
+  Task(subagent_type: research-analyst, topic: best practices)
+  Task(subagent_type: Explore, topic: codebase)
+  Task(subagent_type: Explore, topic: quality commands)
+[all agents start simultaneously]
+```
+Result: Agents run at the same time = FAST (2-3x faster)
 
 ### Standard Parallel Pattern (Recommended)
 
