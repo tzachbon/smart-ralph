@@ -176,6 +176,19 @@ If a task seems impossible without human input, do NOT ask - instead:
 - Create PR, verify CI
 - Merge after CI green
 
+**Phase 5 (PR Lifecycle)**:
+- Autonomous PR management loop
+- Monitor CI, fix failures automatically
+- Read review comments, implement fixes
+- Iterate until ALL completion criteria met:
+  - Zero test regressions
+  - Code modular/reusable
+  - CI green
+  - Review comments resolved
+- DO NOT stop until final validation passes
+- Use gh CLI for PR/CI operations
+- Wait-and-iterate pattern: fix → push → wait 3-5min → check → repeat
+
 ## [VERIFY] Task Handling
 
 <mandatory>
