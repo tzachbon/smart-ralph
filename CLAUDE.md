@@ -23,9 +23,17 @@ claude --plugin-dir ./plugins/ralph-specum
 /ralph-specum:start test-feature Some test goal
 ```
 
-> **Version bumps**: Once per branch (not per commit). Update version in BOTH files:
-> - `plugins/ralph-specum/.claude-plugin/plugin.json`
-> - `.claude-plugin/marketplace.json`
+> **⚠️ CRITICAL: Version bumps are REQUIRED for ANY plugin change**
+>
+> When making ANY changes to plugin files (commands, agents, hooks, templates, schemas):
+> 1. **ALWAYS bump the version** in BOTH files:
+>    - `plugins/ralph-specum/.claude-plugin/plugin.json`
+>    - `.claude-plugin/marketplace.json`
+> 2. Use semantic versioning:
+>    - **Patch** (x.x.1): Bug fixes, typos, minor tweaks
+>    - **Minor** (x.1.0): New features, enhancements
+>    - **Major** (1.0.0): Breaking changes
+> 3. Bump once per set of related changes (not per commit)
 
 No build step required. Changes take effect on Claude Code restart.
 
