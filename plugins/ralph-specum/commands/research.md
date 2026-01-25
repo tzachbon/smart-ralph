@@ -18,10 +18,16 @@ You MUST delegate ALL research work to subagents:
 Do NOT perform web searches, codebase analysis, or write research.md yourself.
 
 **PARALLEL EXECUTION IS MANDATORY - ALWAYS.**
-- Minimum: 2 agents (1 web + 1 codebase)
-- Standard: 3-4 agents (web + codebase + quality/related-specs)
-- Complex: 5+ agents (multiple domain-specific topics)
+- Minimum: 2 agents (1 research-analyst + 1 Explore)
+- Standard: 3-4 agents (2-3 research-analyst + 1-2 Explore)
+- Complex: 5+ agents (3-4 research-analyst for different topics + 2-3 Explore)
 - **ALL agent Task calls MUST be in ONE message** (not sequential messages)
+
+**CRITICAL: You can and SHOULD spawn MULTIPLE research-analyst agents in parallel.**
+- Each research-analyst should focus on a distinct research topic
+- Example: GraphQL API + Caching strategies = 2 research-analyst agents in parallel
+- Example: Auth patterns + Security best practices + API design = 3 research-analyst agents in parallel
+- DO NOT limit yourself to just one research-analyst agent
 
 Failure to spawn multiple agents in parallel violates the core design of this command.
 </mandatory>
@@ -67,11 +73,11 @@ Break down the goal into independent research areas that can be explored in para
 
 | Scenario | Recommendation |
 |----------|----------------|
-| Simple, focused goal | 2 agents minimum: 1 Explore (codebase) + 1 research-analyst (web) |
-| Goal spans multiple domains | Split into 3-5 topic-specific tasks |
-| Goal involves external APIs + codebase | Separate: research-analyst for API docs, Explore for codebase |
-| Goal touches multiple components | Multiple Explore agents, one per component |
-| Complex architecture question | 3-5 agents: multiple Explore + research-analyst for external |
+| Simple, focused goal | 2 agents minimum: 1 research-analyst (web) + 1 Explore (codebase) |
+| Goal spans multiple domains | 3-5 agents: 2-3 research-analyst (different topics) + 1-2 Explore |
+| Goal involves external APIs + codebase | 2+ research-analyst for API docs/best practices + 1+ Explore for codebase |
+| Goal touches multiple components | Multiple Explore agents (one per component) + multiple research-analyst (one per external topic) |
+| Complex architecture question | 5+ agents: 3-4 research-analyst (different external topics) + 2-3 Explore (different code areas) |
 
 **Benefits of parallel execution:**
 - 3-5 agents in parallel = up to 90% faster research
@@ -185,7 +191,12 @@ Research topics identified for parallel execution:
 **Minimum requirement**: 2 topics minimum
 - Topic 1: External/best practices (use research-analyst)
 - Topic 2: Codebase patterns (use Explore)
-- Additional topics: Domain-specific areas, quality commands, related specs (use appropriate agent type)
+- Additional topics: Domain-specific areas (spawn MULTIPLE research-analyst agents), quality commands (Explore), related specs (Explore)
+
+**IMPORTANT: Break external research into MULTIPLE research-analyst agents**
+- If the goal involves multiple external topics (e.g., "authentication + security"), spawn separate research-analyst agents for EACH topic
+- Example: "Add OAuth with rate limiting" → 3 research-analyst agents (OAuth patterns, rate limiting strategies, security best practices)
+- DO NOT combine multiple external topics into one research-analyst agent
 
 ### Step 2: Spawn ALL Agents in ONE Message (REQUIRED)
 
@@ -229,8 +240,8 @@ If you think the goal is "too simple" for parallel research:
 Even for simple goals, spawn at least 2 agents in parallel:
 
 ```text
-Task 1 (Explore - codebase): Analyze existing patterns
-Task 2 (research-analyst - web): Search for best practices
+Task 1 (research-analyst - web): Search for best practices
+Task 2 (Explore - codebase): Analyze existing patterns
 ```
 
 **Example output before spawning:**
@@ -240,6 +251,30 @@ Research topics identified for parallel execution:
 2. Codebase analysis - Explore
 
 Now spawning 2 research agents in parallel...
+```
+
+### Multi-Topic Pattern (Common Case)
+
+For goals with multiple external topics, spawn MULTIPLE research-analyst agents:
+
+```text
+Task 1 (research-analyst): OAuth authentication patterns
+Task 2 (research-analyst): Rate limiting strategies
+Task 3 (research-analyst): Security best practices
+Task 4 (Explore): Existing auth implementation
+Task 5 (Explore): Quality commands discovery
+```
+
+**Example output before spawning:**
+```
+Research topics identified for parallel execution:
+1. OAuth patterns - research-analyst
+2. Rate limiting - research-analyst
+3. Security practices - research-analyst
+4. Existing auth code - Explore
+5. Quality commands - Explore
+
+Now spawning 5 research agents in parallel (3 research-analyst + 2 Explore)...
 ```
 
 ### Parallel Execution: Correct vs Incorrect
@@ -265,26 +300,53 @@ Result: Agents run at the same time = FAST (2-3x faster)
 
 ### Standard Parallel Pattern (Recommended)
 
-For most goals, spawn 3-4 agents in ONE message:
+For most goals with diverse topics, spawn 3-4 agents in ONE message.
 
-**Task 1 - External Research (research-analyst):**
+**CRITICAL: If the goal involves multiple external topics, spawn MULTIPLE research-analyst agents (one per topic).**
+
+Example: "Add authentication with email notifications"
+- research-analyst #1: Authentication patterns
+- research-analyst #2: Email service best practices
+- Explore #1: Existing auth/email code
+- Explore #2: Quality commands
+
+**Task 1 - External Research Topic A (research-analyst #1):**
 ```yaml
 subagent_type: research-analyst
 
 You are researching for spec: $spec
 Spec path: ./specs/$spec/
-Topic: External best practices and patterns
+Topic: [FIRST EXTERNAL TOPIC - e.g., Authentication patterns]
 
-Focus ONLY on web research:
+Focus ONLY on web research for THIS specific topic:
 1. WebSearch for best practices, industry standards
 2. WebSearch for common pitfalls and gotchas
-3. Research relevant libraries/frameworks for this stack
-4. Document findings in ./specs/$spec/.research-external.md
+3. Research relevant libraries/frameworks
+4. Document findings in ./specs/$spec/.research-[topic-name].md
 
 Do NOT explore codebase - Explore agents handle that in parallel.
+Do NOT research other topics - other research-analyst agents handle those.
 ```
 
-**Task 2 - Codebase Analysis (Explore - fast):**
+**Task 2 - External Research Topic B (research-analyst #2):**
+```yaml
+subagent_type: research-analyst
+
+You are researching for spec: $spec
+Spec path: ./specs/$spec/
+Topic: [SECOND EXTERNAL TOPIC - e.g., Email service patterns]
+
+Focus ONLY on web research for THIS specific topic:
+1. WebSearch for best practices for this topic
+2. WebSearch for common pitfalls
+3. Research relevant libraries/tools
+4. Document findings in ./specs/$spec/.research-[topic-name].md
+
+Do NOT explore codebase - Explore agents handle that in parallel.
+Do NOT research other topics - other research-analyst agents handle those.
+```
+
+**Task 3 - Codebase Analysis (Explore - fast):**
 ```yaml
 subagent_type: Explore
 thoroughness: very thorough
@@ -305,7 +367,7 @@ Write findings to the output file with sections:
 - Recommendations
 ```
 
-**Task 3 - Quality Commands Discovery (Explore - fast):**
+**Task 4 - Quality Commands Discovery (Explore - fast):**
 ```yaml
 subagent_type: Explore
 thoroughness: quick
@@ -322,7 +384,7 @@ Tasks:
 Write findings as table: | Type | Command | Source |
 ```
 
-**Task 4 - Related Specs Discovery (Explore - fast):**
+**Task 5 - Related Specs Discovery (Explore - fast):**
 ```yaml
 subagent_type: Explore
 thoroughness: medium
@@ -339,11 +401,13 @@ Tasks:
 Write findings as table: | Name | Relevance | Relationship | mayNeedUpdate |
 ```
 
-### Complex Goal Pattern (3-5 Agents)
+### Complex Goal Pattern (5+ Agents)
 
 **Example: Goal involves "Add GraphQL API with caching"**
 
-Spawn 5 agents in ONE message:
+**CRITICAL: This goal has TWO distinct external topics (GraphQL + Caching), so spawn TWO research-analyst agents (one per topic).**
+
+Spawn 5 agents in ONE message (2 research-analyst + 3 Explore):
 
 | Agent # | Type | Focus | Output File |
 |---------|------|-------|-------------|
@@ -430,8 +494,8 @@ After ALL parallel subagent tasks complete, YOU must merge results into a single
 ### Merge Process
 
 1. **Read all partial research files** created by subagents:
-   - `.research-external.md` (from research-analyst)
-   - `.research-graphql.md`, `.research-caching.md` (domain-specific, from research-analyst)
+   - `.research-[topic-1].md`, `.research-[topic-2].md`, etc. (from multiple research-analyst agents)
+   - Example: `.research-graphql.md`, `.research-caching.md`, `.research-auth.md` (from research-analyst agents)
    - `.research-codebase.md` (from Explore)
    - `.research-quality.md` (from Explore)
    - `.research-related-specs.md` (from Explore)
@@ -441,13 +505,16 @@ After ALL parallel subagent tasks complete, YOU must merge results into a single
    # Research: $spec
 
    ## Executive Summary
-   [Synthesize key findings from ALL agents - 2-3 sentences]
+   [Synthesize key findings from ALL agents (all research-analyst + all Explore) - 2-3 sentences]
 
    ## External Research
-   [Merge from .research-external.md and domain-specific files]
+   [Merge from ALL .research-[topic].md files created by research-analyst agents]
    ### Best Practices
+   [From all research-analyst agents]
    ### Prior Art
+   [From all research-analyst agents]
    ### Pitfalls to Avoid
+   [From all research-analyst agents]
 
    ## Codebase Analysis
    [From .research-codebase.md]

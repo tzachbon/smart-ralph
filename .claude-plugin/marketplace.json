@@ -10,7 +10,7 @@
     {
       "name": "ralph-specum",
       "description": "Spec-driven development with research, requirements, design, tasks, and autonomous execution. Fresh context per task.",
-      "version": "2.8.1",
+      "version": "2.8.2",
       "author": {
         "name": "tzachbon"
       },
