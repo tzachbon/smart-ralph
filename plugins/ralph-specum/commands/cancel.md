@@ -1,12 +1,12 @@
 ---
-description: Cancel active execution loop and cleanup state
+description: Cancel active execution loop, cleanup state, and remove spec
 argument-hint: [spec-name]
 allowed-tools: [Read, Bash]
 ---
 
 # Cancel Execution
 
-You are canceling the active execution loop and cleaning up state files.
+You are canceling the active execution loop, cleaning up state files, and removing the spec directory.
 
 ## Determine Target Spec
 
@@ -38,7 +38,15 @@ If state file exists, read and display:
    rm -f ./specs/$spec/.coordinator-prompt.md
    ```
 
-3. Keep `.progress.md` as it contains valuable context
+3. Remove spec directory:
+   ```bash
+   rm -rf ./specs/$spec
+   ```
+
+4. Clear current spec marker:
+   ```bash
+   rm -f ./specs/.current-spec
+   ```
 
 Note: The stop-hook automatically stops blocking exit when the state file is removed.
 
@@ -55,18 +63,30 @@ State before cancellation:
 Cleanup:
 - [x] Removed .ralph-state.json (stops execution loop)
 - [x] Removed .coordinator-prompt.md
-- [ ] Kept .progress.md (contains history)
+- [x] Removed spec directory (./specs/$spec)
+- [x] Cleared current spec marker
 
-To resume later:
-- Run /ralph-specum:implement to restart execution
-- Progress file retains completed tasks and learnings
+The spec and all its files have been permanently removed.
+
+To start a new spec:
+- Run /ralph-specum:new <name>
+- Or /ralph-specum:start <name> <goal>
 ```
 
 ## If No Active Loop
 
-```
-No active execution loop found.
+If there's no `.ralph-state.json`, still proceed with removing the spec directory and clearing `.current-spec`:
 
-To start a new spec: /ralph-specum:new <name>
-To check status: /ralph-specum:status
+```
+No active execution loop found for spec: $spec
+
+Cleanup:
+- [x] Removed spec directory (./specs/$spec)
+- [x] Cleared current spec marker
+
+The spec has been removed.
+
+To start a new spec:
+- Run /ralph-specum:new <name>
+- Or /ralph-specum:start <name> <goal>
 ```

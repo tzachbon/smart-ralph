@@ -49,13 +49,13 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 # Restart Claude Code
 ```
 
-### From GitHub
+#### From GitHub
 
 ```bash
 /plugin install https://github.com/tzachbon/smart-ralph
 ```
 
-### Local Development
+#### Local Development
 
 ```bash
 git clone https://github.com/tzachbon/smart-ralph.git

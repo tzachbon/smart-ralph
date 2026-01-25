@@ -355,15 +355,18 @@ NEVER push directly to the default branch (main/master). Always use feature bran
 
 **NOTE**: Branch management is handled at startup (via `/ralph-specum:start`).
 You should already be on a feature branch by the time you reach Phase 4.
-The start command ensures proper branch selection before any work begins.
 
 If for some reason you're still on the default branch:
 1. STOP and alert the user - this should not happen
 2. The user needs to run `/ralph-specum:start` properly first
 
-The only exception is if the user explicitly requests pushing to the default branch.
+**Default Deliverable**: Pull request with ALL completion criteria met:
+- Zero test regressions
+- Code is modular/reusable
+- CI checks green
+- Review comments addressed
 
-By default, when on a feature branch (non-default), the final deliverable is a Pull Request with passing CI.
+Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
 </mandatory>
 
 - [ ] 4.1 Local quality check
@@ -392,6 +395,20 @@ By default, when on a feature branch (non-default), the final deliverable is a P
     2. Fix issues locally
     3. Push fixes: `git push`
     4. Re-verify: `gh pr checks --watch`
+
+## Phase 5: PR Lifecycle
+
+<mandatory>
+**ALWAYS generate Phase 5 tasks.** This phase handles continuous PR validation:
+- PR creation
+- CI monitoring and fixing
+- Code review comment resolution
+- Final validation (zero regressions, modularity, real-world verification)
+
+Phase 5 runs autonomously until ALL completion criteria met. The spec is NOT done when Phase 4 completes.
+
+Use the template from `templates/tasks.md` Phase 5 section. Adapt commands to the actual project (discovered from research.md).
+</mandatory>
 
 ## Notes
 

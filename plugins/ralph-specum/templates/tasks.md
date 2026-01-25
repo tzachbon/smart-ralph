@@ -3,7 +3,26 @@
 ## Overview
 
 Total tasks: {{N}}
-POC-first workflow with 4 phases.
+POC-first workflow with 5 phases:
+1. Phase 1: Make It Work (POC) - Validate idea end-to-end
+2. Phase 2: Refactoring - Clean up code structure
+3. Phase 3: Testing - Add unit/integration/e2e tests
+4. Phase 4: Quality Gates - Local quality checks and PR creation
+5. Phase 5: PR Lifecycle - Autonomous CI monitoring, review resolution, final validation
+
+## Completion Criteria (Autonomous Execution Standard)
+
+This spec is not complete until ALL criteria are met:
+
+✅ **Zero Regressions**: All existing tests pass (no broken functionality)
+✅ **Modular & Reusable**: Code follows project patterns, properly abstracted
+✅ **Real-World Validation**: Feature tested in actual environment (not just unit tests)
+✅ **All Tests Pass**: Unit, integration, E2E all green
+✅ **CI Green**: All CI checks passing
+✅ **PR Ready**: Pull request created, reviewed, approved
+✅ **Review Comments Resolved**: All code review feedback addressed
+
+**Note**: The executor will continue working until all criteria are met. Do not stop at Phase 4 if CI fails or review comments exist.
 
 > **Quality Checkpoints**: Intermediate quality gate checks are inserted every 2-3 tasks to catch issues early. For small tasks, insert after 3 tasks. For medium/large tasks, insert after 2 tasks.
 
@@ -185,6 +204,70 @@ After POC validated, clean up code.
   - **Done when**: Changes in main branch
   - **Note**: Do NOT auto-merge unless user explicitly requests it
 
+## Phase 5: PR Lifecycle (Continuous Validation)
+
+> **Autonomous Loop**: This phase continues until ALL completion criteria met. The executor monitors CI, addresses review comments, and iterates until production-ready.
+
+- [ ] 5.1 Create pull request
+  - **Do**:
+    1. Verify current branch: `git branch --show-current`
+    2. Push: `git push -u origin $(git branch --show-current)`
+    3. Create PR: `gh pr create --title "feat: {{feature-name}}" --body "$(cat <<'EOF'
+## Summary
+{{brief description}}
+
+## Completion Criteria
+- [x] Zero regressions (all existing tests pass)
+- [x] Code is modular and reusable
+- [x] Real-world validation complete
+- [ ] CI checks green
+- [ ] Code review approved
+EOF
+)"`
+  - **Verify**: `gh pr view` shows PR URL
+  - **Done when**: PR created and URL returned
+  - **Commit**: None
+
+- [ ] 5.2 Monitor CI and fix failures
+  - **Do**:
+    1. Wait 3 minutes for CI to start
+    2. Check status: `gh pr checks`
+    3. If failures: read logs with `gh run view --log-failed`
+    4. Fix issues locally
+    5. Commit fixes: `git add . && git commit -m "fix: address CI failures"`
+    6. Push: `git push`
+    7. Repeat from step 1 until all green
+  - **Verify**: `gh pr checks` shows all ✓
+  - **Done when**: All CI checks passing
+  - **Commit**: `fix: address CI failures` (as needed per iteration)
+
+- [ ] 5.3 Address code review comments
+  - **Do**:
+    1. Fetch reviews: `gh pr view --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED" or .state == "PENDING")'`
+       - Note: For inline comment threads, use: `gh api repos/{owner}/{repo}/pulls/{number}/comments`
+    2. For each unresolved review/comment:
+       - Read review body and inline comments
+       - Implement requested change
+       - Commit: `fix: address review - {{comment summary}}`
+    3. Push all fixes: `git push`
+    4. Wait 5 minutes
+    5. Re-check for new reviews
+    6. Repeat until no unresolved reviews
+  - **Verify**: `gh pr view --json reviews` shows no CHANGES_REQUESTED or PENDING states
+  - **Done when**: All review comments resolved
+  - **Commit**: `fix: address review - {{summary}}` (per comment)
+
+- [ ] 5.4 Final validation
+  - **Do**: Verify ALL completion criteria met:
+    1. Run full test suite: `pnpm test` or equivalent
+    2. Verify zero regressions (compare test count before/after)
+    3. Check CI: `gh pr checks` all green
+    4. Verify modularity documented in .progress.md
+    5. Confirm real-world validation documented
+  - **Verify**: All commands pass, all criteria documented
+  - **Done when**: All completion criteria ✅
+  - **Commit**: None
+
 ## Notes
 
 - **POC shortcuts taken**: {{list hardcoded values, skipped validations}}
@@ -193,5 +276,5 @@ After POC validated, clean up code.
 ## Dependencies
 
 ```
-Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality)
+Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality) → Phase 5 (PR Lifecycle)
 ```
