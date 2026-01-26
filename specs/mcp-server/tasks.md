@@ -129,7 +129,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Done when**: No type errors
   - **Commit**: `chore(mcp): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.7 Implement MCPLogger
+- [x] 1.7 Implement MCPLogger
   - **Do**:
     1. Create `mcp-server/src/lib/logger.ts`
     2. Define `LogLevel` type: "debug" | "info" | "warning" | "error"
