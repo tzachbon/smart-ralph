@@ -7,21 +7,7 @@ import { z } from "zod";
 import { FileManager } from "../lib/files";
 import { StateManager } from "../lib/state";
 import { AGENTS } from "../assets";
-
-/**
- * MCP TextContent response format.
- */
-export interface TextContent {
-  type: "text";
-  text: string;
-}
-
-/**
- * MCP tool result format.
- */
-export interface ToolResult {
-  content: TextContent[];
-}
+import { buildInstructionResponse, ToolResult } from "../lib/instruction-builder";
 
 /**
  * Zod schema for design tool input validation.
@@ -35,49 +21,6 @@ export const DesignInputSchema = z.object({
  * Input type for the design tool.
  */
 export type DesignInput = z.infer<typeof DesignInputSchema>;
-
-/**
- * Build instruction response for LLM execution.
- */
-function buildInstructionResponse(params: {
-  specName: string;
-  phase: string;
-  agentPrompt: string;
-  context: string;
-  expectedActions: string[];
-  completionInstruction: string;
-}): ToolResult {
-  const text = `## ${params.phase} Phase for "${params.specName}"
-
-### Your Task
-Execute the ${params.phase} phase for this spec using the guidance below.
-
-### Context
-${params.context}
-
-### Agent Instructions
-${params.agentPrompt}
-
-### Expected Actions
-${params.expectedActions.map((a, i) => `${i + 1}. ${a}`).join("\n")}
-
-### When Complete
-${params.completionInstruction}
-
-Call \`ralph_complete_phase\` with:
-- spec_name: "${params.specName}"
-- phase: "${params.phase}"
-- summary: <brief summary of what was done>`;
-
-  return {
-    content: [
-      {
-        type: "text",
-        text,
-      },
-    ],
-  };
-}
 
 /**
  * Handle the ralph_design tool.

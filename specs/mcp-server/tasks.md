@@ -348,7 +348,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
 After POC validated, clean up code.
 
-- [ ] 2.1 Extract instruction response builder
+- [x] 2.1 Extract instruction response builder
   - **Do**:
     1. Create `mcp-server/src/lib/instruction-builder.ts`
     2. Implement `buildInstructionResponse` function matching design spec
