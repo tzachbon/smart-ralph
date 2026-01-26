@@ -385,7 +385,7 @@ After POC validated, clean up code.
   - **Done when**: No type errors
   - **Commit**: `chore(mcp): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.4 Add JSON schema validation for state files
+- [x] 2.4 Add JSON schema validation for state files
   - **Do**:
     1. Create Zod schema for RalphState in state.ts
     2. Validate on read, return null if invalid

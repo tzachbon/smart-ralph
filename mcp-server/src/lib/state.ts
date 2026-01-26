@@ -5,6 +5,7 @@
 
 import { existsSync, renameSync, unlinkSync, writeFileSync, readFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { z } from "zod";
 import { MCPLogger } from "./logger";
 
 /** Valid workflow phases */
@@ -33,6 +34,59 @@ export interface TaskResult {
   status: "pending" | "success" | "failed";
   error?: string;
 }
+
+// Zod schemas for validation
+const RelatedSpecSchema = z.object({
+  name: z.string(),
+  relevance: z.enum(["high", "medium", "low"]),
+  reason: z.string(),
+  mayNeedUpdate: z.boolean().optional(),
+});
+
+const ParallelGroupSchema = z.object({
+  startIndex: z.number(),
+  endIndex: z.number(),
+  taskIndices: z.array(z.number()),
+});
+
+const TaskResultSchema = z.object({
+  status: z.enum(["pending", "success", "failed"]),
+  error: z.string().optional(),
+});
+
+/**
+ * Zod schema for RalphState validation.
+ * Required fields: source, name, basePath, phase
+ * Optional fields: taskIndex, totalTasks, taskIteration, etc.
+ */
+export const RalphStateSchema = z.object({
+  /** Origin of tasks: spec (full workflow), plan (skip to tasks), direct (manual tasks.md) */
+  source: z.enum(["spec", "plan", "direct"]),
+  /** Spec name in kebab-case */
+  name: z.string(),
+  /** Path to spec directory (e.g., ./specs/my-feature) */
+  basePath: z.string(),
+  /** Current workflow phase */
+  phase: z.enum(["research", "requirements", "design", "tasks", "execution"]),
+  /** Current task index (0-based) */
+  taskIndex: z.number().optional(),
+  /** Total number of tasks in tasks.md */
+  totalTasks: z.number().optional(),
+  /** Current iteration for this task (resets per task) */
+  taskIteration: z.number().optional(),
+  /** Max retries per task before failure */
+  maxTaskIterations: z.number().optional(),
+  /** Total loop iterations across all tasks */
+  globalIteration: z.number().optional(),
+  /** Safety cap on total iterations */
+  maxGlobalIterations: z.number().optional(),
+  /** Existing specs related to this one */
+  relatedSpecs: z.array(RelatedSpecSchema).optional(),
+  /** Current parallel task group being executed */
+  parallelGroup: ParallelGroupSchema.optional(),
+  /** Per-task execution results for parallel batch */
+  taskResults: z.record(z.string(), TaskResultSchema).optional(),
+});
 
 /**
  * RalphState interface matching the spec.schema.json definition.
@@ -107,14 +161,15 @@ export class StateManager {
       const content = readFileSync(statePath, "utf-8");
       const parsed = JSON.parse(content);
 
-      // Validate required fields
-      if (!this.validateState(parsed)) {
-        this.logger.warning("Invalid state file - missing required fields", { path: statePath });
+      // Validate with Zod schema
+      const validatedState = this.validateState(parsed);
+      if (!validatedState) {
+        this.logger.warning("Invalid state file - schema validation failed", { path: statePath });
         this.backupCorruptFile(statePath);
         return null;
       }
 
-      return parsed as RalphState;
+      return validatedState;
     } catch (error) {
       this.logger.error("Failed to read state file", {
         path: statePath,
@@ -193,26 +248,15 @@ export class StateManager {
   }
 
   /**
-   * Validate that an object has all required RalphState fields.
+   * Validate that an object is a valid RalphState using Zod schema.
+   * Returns the validated state or null if invalid.
    */
-  private validateState(obj: unknown): boolean {
-    if (typeof obj !== "object" || obj === null) {
-      return false;
+  private validateState(obj: unknown): RalphState | null {
+    const result = RalphStateSchema.safeParse(obj);
+    if (result.success) {
+      return result.data;
     }
-
-    const state = obj as Record<string, unknown>;
-
-    // Check required fields
-    if (typeof state.source !== "string") return false;
-    if (!["spec", "plan", "direct"].includes(state.source)) return false;
-
-    if (typeof state.name !== "string") return false;
-    if (typeof state.basePath !== "string") return false;
-
-    if (typeof state.phase !== "string") return false;
-    if (!["research", "requirements", "design", "tasks", "execution"].includes(state.phase)) return false;
-
-    return true;
+    return null;
   }
 
   /**
