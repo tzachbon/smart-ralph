@@ -95,6 +95,15 @@ export function handleStart(
 
     const { name, goal, quick } = parsed.data;
 
+    // Validate quick mode requires a goal
+    if (quick && !goal) {
+      return createErrorResponse(
+        "VALIDATION_ERROR",
+        "Quick mode requires a goal. Provide a goal to use quick mode.",
+        logger
+      );
+    }
+
     // Determine spec name
     let specName: string;
 

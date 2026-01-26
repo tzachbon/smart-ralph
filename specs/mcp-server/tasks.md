@@ -397,7 +397,7 @@ After POC validated, clean up code.
   - **Commit**: `refactor(mcp): add JSON schema validation for state files`
   - _Design: StateManager validation_
 
-- [ ] 2.5 Add edge case handling
+- [x] 2.5 Add edge case handling
   - **Do**:
     1. Handle no specs exist case in ralph_status
     2. Handle spec with no state file (treat as needs restart)
