@@ -111,7 +111,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-3_
   - _Design: Embedded Assets_
 
-- [ ] 1.5 Create assets barrel with Bun text imports
+- [x] 1.5 Create assets barrel with Bun text imports
   - **Do**:
     1. Create `mcp-server/src/assets/index.ts` with Bun `import with { type: "text" }` for all agents and templates
     2. Export `AGENTS` object with researchAnalyst, productManager, architectReviewer, taskPlanner, specExecutor
