@@ -58,7 +58,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: User feedback from design review_
   - _Design: npm Package Configuration_
 
-- [ ] 1.2 Initialize mcp-server directory structure
+- [x] 1.2 Initialize mcp-server directory structure
   - **Do**:
     1. Create `mcp-server/` directory
     2. Create `mcp-server/package.json` with name `@smart-ralph/ralph-specum-mcp`, dependencies (@modelcontextprotocol/sdk, zod), scripts (start, build, typecheck)
