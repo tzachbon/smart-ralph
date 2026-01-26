@@ -594,7 +594,7 @@ After POC validated, clean up code.
   - **Done when**: All CI checks passing
   - **Commit**: `fix(mcp): address CI failures` (as needed)
 
-- [ ] 5.2 Address code review comments
+- [x] 5.2 Address code review comments
   - **Do**:
     1. Fetch reviews: `gh pr view --json reviews`
     2. For inline comments: `gh api repos/{owner}/{repo}/pulls/{number}/comments`
