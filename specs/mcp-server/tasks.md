@@ -159,7 +159,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-11_
   - _Design: StateManager component_
 
-- [ ] 1.9 Implement FileManager
+- [x] 1.9 Implement FileManager
   - **Do**:
     1. Create `mcp-server/src/lib/files.ts`
     2. Implement FileManager class with methods: readSpecFile, writeSpecFile, listSpecs, specExists, createSpecDir, deleteSpec, getCurrentSpec, setCurrentSpec
