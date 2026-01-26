@@ -1,45 +1,41 @@
 /**
  * Instruction response builder for MCP instruction tools.
  * Shared helper for research, requirements, design, and tasks tools.
+ * @module instruction-builder
  */
 
-/**
- * MCP TextContent response format.
- */
-export interface TextContent {
-  type: "text";
-  text: string;
-}
+import type { InstructionParams, ToolResult } from "./types";
 
-/**
- * MCP tool result format.
- */
-export interface ToolResult {
-  content: TextContent[];
-}
-
-/**
- * Parameters for building an instruction response.
- */
-export interface InstructionParams {
-  /** Spec name being operated on */
-  specName: string;
-  /** Current phase (research, requirements, design, tasks) */
-  phase: string;
-  /** Full agent prompt text */
-  agentPrompt: string;
-  /** Context from prior phases (progress, research, requirements, etc.) */
-  context: string;
-  /** List of expected actions for the LLM to take */
-  expectedActions: string[];
-  /** Instruction for what to do when phase is complete */
-  completionInstruction: string;
-}
+// Re-export types for convenience
+export type { InstructionParams, ToolResult };
 
 /**
  * Build instruction response for LLM execution.
- * Returns structured text with task guidance, context, agent instructions,
- * expected actions, and completion steps.
+ *
+ * Creates a structured text response with task guidance, context, agent instructions,
+ * expected actions, and completion steps. This format is designed to be consumed
+ * by LLM clients that will execute the specified workflow.
+ *
+ * @param params - The instruction parameters containing all context for the phase
+ * @param params.specName - Name of the spec being operated on
+ * @param params.phase - Current workflow phase (research, requirements, design, tasks)
+ * @param params.agentPrompt - Full agent prompt text for this phase
+ * @param params.context - Context from prior phases
+ * @param params.expectedActions - List of actions the LLM should take
+ * @param params.completionInstruction - What to do when phase is complete
+ * @returns MCP-compliant tool result with structured instructions
+ *
+ * @example
+ * ```typescript
+ * const result = buildInstructionResponse({
+ *   specName: "my-feature",
+ *   phase: "research",
+ *   agentPrompt: AGENTS.researchAnalyst,
+ *   context: "## Goal\nImplement user authentication",
+ *   expectedActions: ["Analyze codebase", "Search for patterns"],
+ *   completionInstruction: "Call ralph_complete_phase when done"
+ * });
+ * ```
  */
 export function buildInstructionResponse(params: InstructionParams): ToolResult {
   const text = `## ${params.phase} Phase for "${params.specName}"

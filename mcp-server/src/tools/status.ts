@@ -1,22 +1,14 @@
 /**
  * ralph_status tool handler.
  * Lists all specs with their phase and task progress.
+ * @module tools/status
  */
 
-import { FileManager } from "../lib/files";
-import { StateManager, type RalphState } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
-import { handleUnexpectedError, type ToolResult } from "../lib/errors";
-
-/**
- * Status information for a single spec.
- */
-interface SpecStatus {
-  name: string;
-  phase: string;
-  taskProgress: string;
-  isCurrent: boolean;
-}
+import type { FileManager } from "../lib/files";
+import type { StateManager, RalphState } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult, SpecStatus } from "../lib/types";
+import { handleUnexpectedError } from "../lib/errors";
 
 /**
  * Format task progress string.
@@ -42,7 +34,14 @@ function formatTaskProgress(state: RalphState | null): string {
 
 /**
  * Handle the ralph_status tool.
- * Lists all specs with phase and task progress.
+ *
+ * Lists all specs with their current phase and task progress.
+ * Shows which spec is currently active.
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param stateManager - StateManager instance for state file operations
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with formatted status table
  */
 export function handleStatus(
   fileManager: FileManager,

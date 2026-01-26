@@ -1,17 +1,15 @@
 /**
  * ralph_cancel tool handler.
  * Cancels a spec by deleting .ralph-state.json and optionally the spec directory.
+ * @module tools/cancel
  */
 
 import { z } from "zod";
-import { FileManager } from "../lib/files";
-import { StateManager } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
-import {
-  handleUnexpectedError,
-  createErrorResponse,
-  type ToolResult,
-} from "../lib/errors";
+import type { FileManager } from "../lib/files";
+import type { StateManager } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
+import { handleUnexpectedError, createErrorResponse } from "../lib/errors";
 
 /**
  * Zod schema for cancel tool input validation.
@@ -30,7 +28,16 @@ export type CancelInput = z.infer<typeof CancelInputSchema>;
 
 /**
  * Handle the ralph_cancel tool.
- * Deletes .ralph-state.json and optionally the spec directory.
+ *
+ * Cancels a spec by deleting its .ralph-state.json file.
+ * Optionally deletes the entire spec directory and all files.
+ * Uses current spec if spec_name is not provided.
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param stateManager - StateManager instance for state file operations
+ * @param input - Validated input with optional spec_name and delete_files flag
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with cancellation confirmation
  */
 export function handleCancel(
   fileManager: FileManager,

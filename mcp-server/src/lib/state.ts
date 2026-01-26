@@ -1,41 +1,26 @@
 /**
  * StateManager for .ralph-state.json files.
  * Handles reading, writing, and deleting state files with corruption handling.
+ * @module state
  */
 
 import { existsSync, renameSync, unlinkSync, writeFileSync, readFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { z } from "zod";
 import { MCPLogger } from "./logger";
+import type { Phase, Source, RelatedSpec, ParallelGroup, TaskResult, RalphState } from "./types";
 
-/** Valid workflow phases */
-export type Phase = "research" | "requirements" | "design" | "tasks" | "execution";
+// Re-export types for convenience
+export type { Phase, Source, RelatedSpec, ParallelGroup, TaskResult, RalphState };
 
-/** Task source origin */
-export type Source = "spec" | "plan" | "direct";
-
-/** Related spec information */
-export interface RelatedSpec {
-  name: string;
-  relevance: "high" | "medium" | "low";
-  reason: string;
-  mayNeedUpdate?: boolean;
-}
-
-/** Parallel task group information */
-export interface ParallelGroup {
-  startIndex: number;
-  endIndex: number;
-  taskIndices: number[];
-}
-
-/** Task execution result */
-export interface TaskResult {
-  status: "pending" | "success" | "failed";
-  error?: string;
-}
+/** Default filename for state files */
+const STATE_FILENAME = ".ralph-state.json";
 
 // Zod schemas for validation
+
+/**
+ * Zod schema for RelatedSpec validation.
+ */
 const RelatedSpecSchema = z.object({
   name: z.string(),
   relevance: z.enum(["high", "medium", "low"]),
@@ -43,12 +28,18 @@ const RelatedSpecSchema = z.object({
   mayNeedUpdate: z.boolean().optional(),
 });
 
+/**
+ * Zod schema for ParallelGroup validation.
+ */
 const ParallelGroupSchema = z.object({
   startIndex: z.number(),
   endIndex: z.number(),
   taskIndices: z.array(z.number()),
 });
 
+/**
+ * Zod schema for TaskResult validation.
+ */
 const TaskResultSchema = z.object({
   status: z.enum(["pending", "success", "failed"]),
   error: z.string().optional(),
@@ -56,99 +47,89 @@ const TaskResultSchema = z.object({
 
 /**
  * Zod schema for RalphState validation.
- * Required fields: source, name, basePath, phase
- * Optional fields: taskIndex, totalTasks, taskIteration, etc.
+ * Validates all required and optional fields according to the spec schema.
  */
 export const RalphStateSchema = z.object({
-  /** Origin of tasks: spec (full workflow), plan (skip to tasks), direct (manual tasks.md) */
   source: z.enum(["spec", "plan", "direct"]),
-  /** Spec name in kebab-case */
   name: z.string(),
-  /** Path to spec directory (e.g., ./specs/my-feature) */
   basePath: z.string(),
-  /** Current workflow phase */
   phase: z.enum(["research", "requirements", "design", "tasks", "execution"]),
-  /** Current task index (0-based) */
   taskIndex: z.number().optional(),
-  /** Total number of tasks in tasks.md */
   totalTasks: z.number().optional(),
-  /** Current iteration for this task (resets per task) */
   taskIteration: z.number().optional(),
-  /** Max retries per task before failure */
   maxTaskIterations: z.number().optional(),
-  /** Total loop iterations across all tasks */
   globalIteration: z.number().optional(),
-  /** Safety cap on total iterations */
   maxGlobalIterations: z.number().optional(),
-  /** Existing specs related to this one */
   relatedSpecs: z.array(RelatedSpecSchema).optional(),
-  /** Current parallel task group being executed */
   parallelGroup: ParallelGroupSchema.optional(),
-  /** Per-task execution results for parallel batch */
   taskResults: z.record(z.string(), TaskResultSchema).optional(),
 });
 
 /**
- * RalphState interface matching the spec.schema.json definition.
- * Required fields: source, name, basePath, phase
- * Optional fields: taskIndex, totalTasks, taskIteration, etc.
+ * StateManager for reading, writing, and managing .ralph-state.json files.
+ *
+ * Handles:
+ * - Atomic writes via temp file + rename
+ * - Schema validation using Zod
+ * - Corrupt file backup and recovery
+ * - Logging of all operations
+ *
+ * @example
+ * ```typescript
+ * const logger = new MCPLogger("StateManager");
+ * const stateManager = new StateManager(logger);
+ *
+ * // Read state
+ * const state = stateManager.read("/path/to/spec");
+ * if (state) {
+ *   console.log(state.phase); // "research"
+ * }
+ *
+ * // Write state
+ * stateManager.write("/path/to/spec", { ...state, phase: "requirements" });
+ * ```
  */
-export interface RalphState {
-  /** Origin of tasks: spec (full workflow), plan (skip to tasks), direct (manual tasks.md) */
-  source: Source;
-  /** Spec name in kebab-case */
-  name: string;
-  /** Path to spec directory (e.g., ./specs/my-feature) */
-  basePath: string;
-  /** Current workflow phase */
-  phase: Phase;
-  /** Current task index (0-based) */
-  taskIndex?: number;
-  /** Total number of tasks in tasks.md */
-  totalTasks?: number;
-  /** Current iteration for this task (resets per task) */
-  taskIteration?: number;
-  /** Max retries per task before failure */
-  maxTaskIterations?: number;
-  /** Total loop iterations across all tasks */
-  globalIteration?: number;
-  /** Safety cap on total iterations */
-  maxGlobalIterations?: number;
-  /** Existing specs related to this one */
-  relatedSpecs?: RelatedSpec[];
-  /** Current parallel task group being executed */
-  parallelGroup?: ParallelGroup;
-  /** Per-task execution results for parallel batch */
-  taskResults?: Record<string, TaskResult>;
-}
-
-const STATE_FILENAME = ".ralph-state.json";
-
 export class StateManager {
   private readonly logger: MCPLogger;
 
+  /**
+   * Create a new StateManager instance.
+   *
+   * @param logger - Optional MCPLogger instance. If not provided, creates
+   *                 a new logger with name "StateManager".
+   */
   constructor(logger?: MCPLogger) {
     this.logger = logger ?? new MCPLogger("StateManager");
   }
 
   /**
-   * Get the state file path for a spec directory.
+   * Get the full path to the state file for a spec directory.
+   *
+   * @param specDir - Path to the spec directory
+   * @returns Full path to the .ralph-state.json file
    */
   getStatePath(specDir: string): string {
     return join(specDir, STATE_FILENAME);
   }
 
   /**
-   * Check if a state file exists.
+   * Check if a state file exists for the given spec directory.
+   *
+   * @param specDir - Path to the spec directory
+   * @returns true if the state file exists, false otherwise
    */
   exists(specDir: string): boolean {
     return existsSync(this.getStatePath(specDir));
   }
 
   /**
-   * Read state from a spec directory.
-   * Returns null if file doesn't exist or is corrupt.
-   * Corrupt files are backed up before returning null.
+   * Read and validate state from a spec directory.
+   *
+   * If the state file is missing, returns null.
+   * If the state file is corrupt or invalid, backs it up and returns null.
+   *
+   * @param specDir - Path to the spec directory
+   * @returns Validated RalphState object, or null if not found/invalid
    */
   read(specDir: string): RalphState | null {
     const statePath = this.getStatePath(specDir);
@@ -181,8 +162,14 @@ export class StateManager {
   }
 
   /**
-   * Write state to a spec directory.
-   * Uses atomic write via temp file + rename.
+   * Write state to a spec directory using atomic write.
+   *
+   * Uses temp file + rename pattern to ensure atomic writes.
+   * Creates the spec directory if it doesn't exist.
+   *
+   * @param specDir - Path to the spec directory
+   * @param state - The RalphState object to write
+   * @returns true on success, false on failure
    */
   write(specDir: string, state: RalphState): boolean {
     const statePath = this.getStatePath(specDir);
@@ -225,7 +212,9 @@ export class StateManager {
 
   /**
    * Delete state file from a spec directory.
-   * Returns true if deleted or didn't exist.
+   *
+   * @param specDir - Path to the spec directory
+   * @returns true if deleted or didn't exist, false on error
    */
   delete(specDir: string): boolean {
     const statePath = this.getStatePath(specDir);
@@ -249,7 +238,9 @@ export class StateManager {
 
   /**
    * Validate that an object is a valid RalphState using Zod schema.
-   * Returns the validated state or null if invalid.
+   *
+   * @param obj - The object to validate
+   * @returns Validated RalphState, or null if validation fails
    */
   private validateState(obj: unknown): RalphState | null {
     const result = RalphStateSchema.safeParse(obj);
@@ -261,6 +252,8 @@ export class StateManager {
 
   /**
    * Backup a corrupt state file by renaming it with .bak extension.
+   *
+   * @param statePath - Path to the corrupt state file
    */
   private backupCorruptFile(statePath: string): void {
     const backupPath = `${statePath}.bak`;

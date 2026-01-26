@@ -1,19 +1,17 @@
 /**
  * ralph_tasks tool handler.
  * Returns task-planner prompt + design context for LLM to execute.
+ * @module tools/tasks
  */
 
 import { z } from "zod";
-import { FileManager } from "../lib/files";
-import { StateManager } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
+import type { FileManager } from "../lib/files";
+import type { StateManager } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
 import { AGENTS } from "../assets";
 import { buildInstructionResponse } from "../lib/instruction-builder";
-import {
-  handleUnexpectedError,
-  createErrorResponse,
-  type ToolResult,
-} from "../lib/errors";
+import { handleUnexpectedError, createErrorResponse } from "../lib/errors";
 
 /**
  * Zod schema for tasks tool input validation.
@@ -30,7 +28,18 @@ export type TasksInput = z.infer<typeof TasksInputSchema>;
 
 /**
  * Handle the ralph_tasks tool.
- * Returns task-planner prompt + design context.
+ *
+ * Returns task-planner instructions for the LLM to execute.
+ * The response includes the agent prompt, design context from
+ * design.md, expected actions, and completion instructions.
+ *
+ * Requires spec to be in "tasks" phase.
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param stateManager - StateManager instance for state file operations
+ * @param input - Validated input with optional spec_name
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with task planning instructions
  */
 export function handleTasks(
   fileManager: FileManager,

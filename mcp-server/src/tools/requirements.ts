@@ -1,19 +1,17 @@
 /**
  * ralph_requirements tool handler.
  * Returns product-manager prompt + research context for LLM to execute.
+ * @module tools/requirements
  */
 
 import { z } from "zod";
-import { FileManager } from "../lib/files";
-import { StateManager } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
+import type { FileManager } from "../lib/files";
+import type { StateManager } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
 import { AGENTS } from "../assets";
 import { buildInstructionResponse } from "../lib/instruction-builder";
-import {
-  handleUnexpectedError,
-  createErrorResponse,
-  type ToolResult,
-} from "../lib/errors";
+import { handleUnexpectedError, createErrorResponse } from "../lib/errors";
 
 /**
  * Zod schema for requirements tool input validation.
@@ -30,7 +28,18 @@ export type RequirementsInput = z.infer<typeof RequirementsInputSchema>;
 
 /**
  * Handle the ralph_requirements tool.
- * Returns product-manager prompt + research context.
+ *
+ * Returns product-manager instructions for the LLM to execute.
+ * The response includes the agent prompt, research context from
+ * research.md, expected actions, and completion instructions.
+ *
+ * Requires spec to be in "requirements" phase.
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param stateManager - StateManager instance for state file operations
+ * @param input - Validated input with optional spec_name
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with requirements instructions
  */
 export function handleRequirements(
   fileManager: FileManager,

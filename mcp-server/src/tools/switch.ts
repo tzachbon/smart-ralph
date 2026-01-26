@@ -1,17 +1,14 @@
 /**
  * ralph_switch tool handler.
  * Switches to a different spec by updating .current-spec.
+ * @module tools/switch
  */
 
 import { z } from "zod";
-import { FileManager } from "../lib/files";
-import { MCPLogger } from "../lib/logger";
-import {
-  handleUnexpectedError,
-  createErrorResponse,
-  ErrorMessages,
-  type ToolResult,
-} from "../lib/errors";
+import type { FileManager } from "../lib/files";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
+import { handleUnexpectedError, createErrorResponse } from "../lib/errors";
 
 /**
  * Zod schema for switch tool input validation.
@@ -28,7 +25,14 @@ export type SwitchInput = z.infer<typeof SwitchInputSchema>;
 
 /**
  * Handle the ralph_switch tool.
- * Validates spec exists and updates .current-spec.
+ *
+ * Validates that the target spec exists and updates .current-spec
+ * to point to it. Returns error if spec doesn't exist.
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param input - Validated input containing the spec name
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with switch confirmation or error
  */
 export function handleSwitch(
   fileManager: FileManager,

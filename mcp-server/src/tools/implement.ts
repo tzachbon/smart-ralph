@@ -1,18 +1,16 @@
 /**
  * ralph_implement tool handler.
  * Returns spec-executor prompt + coordinator instructions + current task.
+ * @module tools/implement
  */
 
 import { z } from "zod";
-import { FileManager } from "../lib/files";
-import { StateManager } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
+import type { FileManager } from "../lib/files";
+import type { StateManager } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
 import { AGENTS } from "../assets";
-import {
-  handleUnexpectedError,
-  createErrorResponse,
-  type ToolResult,
-} from "../lib/errors";
+import { handleUnexpectedError, createErrorResponse } from "../lib/errors";
 
 /**
  * Zod schema for implement tool input validation.
@@ -29,7 +27,12 @@ export type ImplementInput = z.infer<typeof ImplementInputSchema>;
 
 /**
  * Parse tasks.md to extract task blocks.
- * Returns array of task strings with their content.
+ *
+ * Identifies tasks by their numbered format (e.g., "- [ ] 1.1 Task name")
+ * and extracts the full task block including Do, Files, Done when, etc.
+ *
+ * @param content - Raw content of tasks.md file
+ * @returns Array of task strings, each containing the full task block
  */
 function parseTasksFile(content: string): string[] {
   const tasks: string[] = [];
@@ -80,7 +83,10 @@ function parseTasksFile(content: string): string[] {
 }
 
 /**
- * Get the first uncompleted task index from tasks.md
+ * Find the first uncompleted task in the task list.
+ *
+ * @param tasks - Array of task strings from parseTasksFile
+ * @returns 0-based index of the first task starting with "- [ ]", or -1 if all complete
  */
 function getFirstUncompletedTaskIndex(tasks: string[]): number {
   for (let i = 0; i < tasks.length; i++) {
@@ -92,18 +98,37 @@ function getFirstUncompletedTaskIndex(tasks: string[]): number {
 }
 
 /**
- * Build the execution instruction response.
+ * Parameters for building an execution response.
  */
-function buildExecutionResponse(params: {
+interface ExecutionResponseParams {
+  /** Name of the spec being executed */
   specName: string;
+  /** Path to the spec directory */
   specPath: string;
+  /** Current task index (0-based) */
   taskIndex: number;
+  /** Total number of tasks */
   totalTasks: number;
+  /** Maximum task retries before blocking */
   maxIterations: number;
+  /** Full text of the current task block */
   currentTask: string;
+  /** Content of .progress.md for context */
   progressContext: string;
+  /** The spec-executor agent prompt */
   agentPrompt: string;
-}): ToolResult {
+}
+
+/**
+ * Build the execution instruction response for the LLM.
+ *
+ * Creates a formatted response containing spec information, current task,
+ * progress context, agent instructions, and task completion protocol.
+ *
+ * @param params - Parameters for building the response
+ * @returns MCP-compliant tool result with execution instructions
+ */
+function buildExecutionResponse(params: ExecutionResponseParams): ToolResult {
   const text = `## Execute Task ${params.taskIndex + 1} of ${params.totalTasks} for "${params.specName}"
 
 ### Spec Information
@@ -160,7 +185,18 @@ If the task cannot be completed:
 
 /**
  * Handle the ralph_implement tool.
- * Returns spec-executor prompt + current task context.
+ *
+ * Returns spec-executor instructions for the LLM to execute the current task.
+ * Parses tasks.md to find the next uncompleted task and returns execution
+ * instructions including the task details, progress context, and completion protocol.
+ *
+ * Requires spec to be in "tasks" or "execution" phase.
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param stateManager - StateManager instance for state file operations
+ * @param input - Validated input with optional max_iterations
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with task execution instructions
  */
 export function handleImplement(
   fileManager: FileManager,

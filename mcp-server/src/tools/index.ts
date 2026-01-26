@@ -1,14 +1,15 @@
 /**
  * Tool registration barrel.
  * Exports all tool handlers and a registration function for McpServer.
+ * @module tools
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { FileManager } from "../lib/files";
-import { StateManager } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
-import { type ToolResult } from "../lib/errors";
+import type { FileManager } from "../lib/files";
+import type { StateManager } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
 
 // Import tool handlers
 import { handleStatus } from "./status";
@@ -26,6 +27,9 @@ import { handleImplement, ImplementInputSchema } from "./implement";
 /**
  * Convert internal ToolResult to MCP SDK CallToolResult.
  * The MCP SDK expects an index signature which our internal type lacks.
+ *
+ * @param result - Internal tool result
+ * @returns MCP SDK compatible CallToolResult
  */
 function toCallToolResult(result: ToolResult): CallToolResult {
   return { ...result } as CallToolResult;
@@ -46,7 +50,7 @@ export {
   handleImplement,
 };
 
-// Re-export all schemas
+// Re-export all schemas for external use
 export {
   SwitchInputSchema,
   CancelInputSchema,
@@ -59,12 +63,51 @@ export {
   ImplementInputSchema,
 };
 
+// Re-export input types
+export type { SwitchInput } from "./switch";
+export type { CancelInput } from "./cancel";
+export type { StartInput } from "./start";
+export type { CompletePhaseInput } from "./complete-phase";
+export type { ResearchInput } from "./research";
+export type { RequirementsInput } from "./requirements";
+export type { DesignInput } from "./design";
+export type { TasksInput } from "./tasks";
+export type { ImplementInput } from "./implement";
+
+/** Total number of registered tools */
+const TOOL_COUNT = 11;
+
 /**
  * Register all Ralph tools with an McpServer instance.
+ *
+ * Registers all 11 Ralph tools with their schemas, descriptions, and handlers.
+ * Tools are:
+ * - ralph_status: List all specs with phase and progress
+ * - ralph_help: Show usage information and tool list
+ * - ralph_switch: Switch to a different spec
+ * - ralph_cancel: Cancel a spec and optionally delete files
+ * - ralph_start: Create a new spec and begin workflow
+ * - ralph_complete_phase: Mark a phase as complete
+ * - ralph_research: Get research phase instructions
+ * - ralph_requirements: Get requirements phase instructions
+ * - ralph_design: Get design phase instructions
+ * - ralph_tasks: Get tasks phase instructions
+ * - ralph_implement: Get implementation instructions
+ *
  * @param server - The McpServer instance to register tools with
  * @param fileManager - FileManager instance for spec file operations
  * @param stateManager - StateManager instance for state file operations
- * @param logger - MCPLogger instance for error logging
+ * @param logger - Optional MCPLogger instance for error logging
+ *
+ * @example
+ * ```typescript
+ * const server = new McpServer({ name: "ralph-specum", version: "1.0.0" });
+ * const fileManager = new FileManager();
+ * const stateManager = new StateManager();
+ * const logger = new MCPLogger();
+ *
+ * registerTools(server, fileManager, stateManager, logger);
+ * ```
  */
 export function registerTools(
   server: McpServer,
@@ -263,4 +306,14 @@ export function registerTools(
       return toCallToolResult(handleImplement(fileManager, stateManager, input, logger));
     }
   );
+}
+
+/**
+ * Get the total number of registered tools.
+ * Useful for logging and validation.
+ *
+ * @returns Number of tools registered by registerTools()
+ */
+export function getToolCount(): number {
+  return TOOL_COUNT;
 }

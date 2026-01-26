@@ -1,19 +1,12 @@
 /**
  * ralph_help tool handler.
  * Returns usage information and tool list.
+ * @module tools/help
  */
 
-import { MCPLogger } from "../lib/logger";
-import { handleUnexpectedError, type ToolResult } from "../lib/errors";
-
-/**
- * Tool information for help display.
- */
-interface ToolInfo {
-  name: string;
-  description: string;
-  args: string;
-}
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult, ToolInfo } from "../lib/types";
+import { handleUnexpectedError } from "../lib/errors";
 
 /**
  * List of all available tools.
@@ -78,7 +71,15 @@ const TOOLS: ToolInfo[] = [
 
 /**
  * Handle the ralph_help tool.
- * Returns usage information and tool list.
+ *
+ * Returns comprehensive usage information including:
+ * - Workflow overview
+ * - All available tools with descriptions and arguments
+ * - Quick start example
+ * - File structure information
+ *
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with formatted help text
  */
 export function handleHelp(logger?: MCPLogger): ToolResult {
   try {

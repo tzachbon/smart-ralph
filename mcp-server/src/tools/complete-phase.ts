@@ -1,17 +1,15 @@
 /**
  * ralph_complete_phase tool handler.
  * Marks a phase as complete and transitions to the next phase.
+ * @module tools/complete-phase
  */
 
 import { z } from "zod";
-import { FileManager } from "../lib/files";
-import { StateManager, type Phase } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
-import {
-  handleUnexpectedError,
-  createErrorResponse,
-  type ToolResult,
-} from "../lib/errors";
+import type { FileManager } from "../lib/files";
+import type { StateManager, Phase } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
+import { handleUnexpectedError, createErrorResponse } from "../lib/errors";
 
 /**
  * Phase transition map: current phase -> next phase
@@ -54,7 +52,22 @@ export type CompletePhaseInput = z.infer<typeof CompletePhaseInputSchema>;
 
 /**
  * Handle the ralph_complete_phase tool.
- * Validates phase matches current state, updates state, and appends summary to progress.
+ *
+ * Marks the current phase as complete and transitions to the next phase.
+ * Appends a summary to .progress.md and updates .ralph-state.json.
+ *
+ * Phase transitions:
+ * - research -> requirements
+ * - requirements -> design
+ * - design -> tasks
+ * - tasks -> execution
+ * - execution -> (no next phase)
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param stateManager - StateManager instance for state file operations
+ * @param input - Validated input with phase and summary
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with transition confirmation
  */
 export function handleCompletePhase(
   fileManager: FileManager,

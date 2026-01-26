@@ -1,18 +1,16 @@
 /**
  * ralph_start tool handler.
  * Creates a new spec with initial files and state.
+ * @module tools/start
  */
 
 import { z } from "zod";
-import { FileManager } from "../lib/files";
-import { StateManager, type RalphState } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
+import type { FileManager } from "../lib/files";
+import type { StateManager, RalphState } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
 import { TEMPLATES } from "../assets";
-import {
-  handleUnexpectedError,
-  createErrorResponse,
-  type ToolResult,
-} from "../lib/errors";
+import { handleUnexpectedError, createErrorResponse } from "../lib/errors";
 
 /**
  * Zod schema for start tool input validation.
@@ -31,13 +29,25 @@ export const StartInputSchema = z.object({
  */
 export type StartInput = z.infer<typeof StartInputSchema>;
 
+/** Maximum characters to use from goal for name generation */
+const MAX_NAME_LENGTH = 50;
+
 /**
  * Generate a spec name from a goal string.
- * Converts to kebab-case.
+ *
+ * Converts the goal to kebab-case by:
+ * - Truncating to first 50 characters
+ * - Converting to lowercase
+ * - Removing special characters
+ * - Converting spaces to hyphens
+ * - Collapsing multiple hyphens
+ *
+ * @param goal - The goal text to convert
+ * @returns Kebab-case spec name, or empty string if goal has no valid characters
  */
 function generateNameFromGoal(goal: string): string {
-  // Take first 50 chars, convert to kebab-case
-  const truncated = goal.slice(0, 50);
+  // Take first N chars, convert to kebab-case
+  const truncated = goal.slice(0, MAX_NAME_LENGTH);
   return truncated
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "") // Remove special chars
@@ -47,7 +57,11 @@ function generateNameFromGoal(goal: string): string {
 }
 
 /**
- * Get a unique spec name by appending -2, -3, etc if needed.
+ * Get a unique spec name by appending -2, -3, etc. if a spec with the base name already exists.
+ *
+ * @param fileManager - FileManager instance to check for existing specs
+ * @param baseName - The desired spec name
+ * @returns The base name if available, or base name with numeric suffix if not
  */
 function getUniqueSpecName(fileManager: FileManager, baseName: string): string {
   if (!fileManager.specExists(baseName)) {
@@ -66,7 +80,12 @@ function getUniqueSpecName(fileManager: FileManager, baseName: string): string {
 }
 
 /**
- * Create initial .progress.md from template.
+ * Create initial .progress.md content from the progress template.
+ *
+ * Replaces the {{USER_GOAL_DESCRIPTION}} placeholder with the actual goal.
+ *
+ * @param goal - The user's goal for this spec
+ * @returns Template content with goal substituted
  */
 function createProgressContent(goal: string): string {
   return TEMPLATES.progress.replace("{{USER_GOAL_DESCRIPTION}}", goal);
@@ -74,7 +93,21 @@ function createProgressContent(goal: string): string {
 
 /**
  * Handle the ralph_start tool.
- * Creates spec directory with initial files.
+ *
+ * Creates a new spec with initial files and state:
+ * - Creates spec directory at ./specs/{name}/
+ * - Initializes .progress.md from template with goal
+ * - Initializes .ralph-state.json with phase "research"
+ * - Sets the new spec as current in .current-spec
+ *
+ * Name is generated from goal if not provided. Duplicate names
+ * are handled by appending -2, -3, etc.
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param stateManager - StateManager instance for state file operations
+ * @param input - Validated input with optional name, goal, and quick flag
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with creation confirmation
  */
 export function handleStart(
   fileManager: FileManager,

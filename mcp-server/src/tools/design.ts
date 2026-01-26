@@ -1,19 +1,17 @@
 /**
  * ralph_design tool handler.
  * Returns architect-reviewer prompt + requirements context for LLM to execute.
+ * @module tools/design
  */
 
 import { z } from "zod";
-import { FileManager } from "../lib/files";
-import { StateManager } from "../lib/state";
-import { MCPLogger } from "../lib/logger";
+import type { FileManager } from "../lib/files";
+import type { StateManager } from "../lib/state";
+import type { MCPLogger } from "../lib/logger";
+import type { ToolResult } from "../lib/types";
 import { AGENTS } from "../assets";
 import { buildInstructionResponse } from "../lib/instruction-builder";
-import {
-  handleUnexpectedError,
-  createErrorResponse,
-  type ToolResult,
-} from "../lib/errors";
+import { handleUnexpectedError, createErrorResponse } from "../lib/errors";
 
 /**
  * Zod schema for design tool input validation.
@@ -30,7 +28,18 @@ export type DesignInput = z.infer<typeof DesignInputSchema>;
 
 /**
  * Handle the ralph_design tool.
- * Returns architect-reviewer prompt + requirements context.
+ *
+ * Returns architect-reviewer instructions for the LLM to execute.
+ * The response includes the agent prompt, requirements context from
+ * requirements.md, expected actions, and completion instructions.
+ *
+ * Requires spec to be in "design" phase.
+ *
+ * @param fileManager - FileManager instance for spec file operations
+ * @param stateManager - StateManager instance for state file operations
+ * @param input - Validated input with optional spec_name
+ * @param logger - Optional logger for error logging
+ * @returns MCP-compliant tool result with design instructions
  */
 export function handleDesign(
   fileManager: FileManager,
