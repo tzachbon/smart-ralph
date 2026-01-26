@@ -232,7 +232,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Done when**: No type errors
   - **Commit**: `chore(mcp): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.15 Implement ralph_complete_phase tool
+- [x] 1.15 Implement ralph_complete_phase tool
   - **Do**:
     1. Create `mcp-server/src/tools/complete-phase.ts`
     2. Input schema: spec_name?, phase, summary
