@@ -280,7 +280,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: US-8, AC-8.1 through AC-8.5_
   - _Design: ralph_implement handler_
 
-- [ ] 1.18 Create tool registration barrel
+- [x] 1.18 Create tool registration barrel
   - **Do**:
     1. Create `mcp-server/src/tools/index.ts`
     2. Export all tool handlers
