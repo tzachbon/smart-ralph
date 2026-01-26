@@ -528,7 +528,7 @@ After POC validated, clean up code.
 
 > **IMPORTANT**: NEVER push directly to the default branch (main/master). Branch management is handled at startup via `/ralph-specum:start`. You should already be on a feature branch by this phase.
 
-- [ ] 4.1 Create build and install scripts
+- [x] 4.1 Create build and install scripts
   - **Do**:
     1. Create `mcp-server/scripts/build.sh` - cross-platform builds for darwin-arm64, darwin-x64, linux-x64, windows-x64
     2. Create `mcp-server/scripts/install.sh` - OS/arch detection, download from GitHub releases

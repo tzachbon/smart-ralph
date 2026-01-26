@@ -10,6 +10,7 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --compile --outfile=dist/ralph-specum-mcp",
+    "build:all": "./scripts/build.sh",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
