@@ -453,7 +453,7 @@ After POC validated, clean up code.
   - **Commit**: `test(mcp): add unit tests for StateManager`
   - _Design: Test Strategy - Unit Tests_
 
-- [ ] 3.3 Unit tests for FileManager
+- [x] 3.3 Unit tests for FileManager
   - **Do**:
     1. Create `mcp-server/tests/files.test.ts`
     2. Test listSpecs(): returns directories only
