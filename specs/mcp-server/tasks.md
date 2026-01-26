@@ -315,7 +315,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-4_
   - _Design: McpServer Entry Point_
 
-- [ ] 1.21 Add CLI flags (--help, --version)
+- [x] 1.21 Add CLI flags (--help, --version)
   - **Do**:
     1. Parse process.argv for --help and --version
     2. --help: Print usage info and exit

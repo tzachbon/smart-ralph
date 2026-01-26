@@ -19,9 +19,90 @@ const SERVER_NAME = "ralph-specum";
 const SERVER_VERSION = packageJson.version;
 
 /**
+ * Print version and exit.
+ */
+function printVersion(): void {
+  console.log(`${SERVER_NAME} v${SERVER_VERSION}`);
+  process.exit(0);
+}
+
+/**
+ * Print usage help and exit.
+ */
+function printHelp(): void {
+  console.log(`${SERVER_NAME} v${SERVER_VERSION}
+
+MCP server for Ralph Specum spec-driven development.
+
+USAGE:
+  ralph-specum-mcp [OPTIONS]
+
+OPTIONS:
+  --help, -h      Show this help message
+  --version, -v   Show version number
+
+DESCRIPTION:
+  This MCP server provides tools for spec-driven development workflows.
+  It communicates via stdio using the Model Context Protocol (MCP).
+
+TOOLS:
+  ralph_start           Start a new spec or resume existing
+  ralph_status          Show current spec status
+  ralph_switch          Switch active spec
+  ralph_cancel          Cancel current spec
+  ralph_help            Show available tools
+  ralph_complete_phase  Mark a phase as complete
+  ralph_research        Get research phase instructions
+  ralph_requirements    Get requirements phase instructions
+  ralph_design          Get design phase instructions
+  ralph_tasks           Get tasks phase instructions
+  ralph_implement       Get implementation instructions
+
+CONFIGURATION:
+  Add to your MCP client config (e.g., Claude Desktop):
+
+  {
+    "mcpServers": {
+      "ralph-specum": {
+        "command": "/path/to/ralph-specum-mcp"
+      }
+    }
+  }
+
+For more information, visit: https://github.com/smart-ralph/ralph-specum-mcp
+`);
+  process.exit(0);
+}
+
+/**
+ * Parse CLI arguments and handle flags.
+ * Returns true if server should start, false if handled by flag.
+ */
+function handleCliFlags(): boolean {
+  const args = process.argv.slice(2);
+
+  for (const arg of args) {
+    if (arg === "--help" || arg === "-h") {
+      printHelp();
+      return false;
+    }
+    if (arg === "--version" || arg === "-v") {
+      printVersion();
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
  * Main entry point - starts the MCP server.
  */
 async function main(): Promise<void> {
+  // Handle CLI flags first
+  if (!handleCliFlags()) {
+    return;
+  }
   const logger = new MCPLogger(SERVER_NAME);
 
   logger.info("Starting MCP server", {
