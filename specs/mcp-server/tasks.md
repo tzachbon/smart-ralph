@@ -45,7 +45,7 @@ This spec is not complete until ALL criteria are met:
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
-- [ ] 1.1 Initialize repository with Bun and corepack
+- [x] 1.1 Initialize repository with Bun and corepack
   - **Do**:
     1. Create `package.json` in repo root with `"packageManager": "bun@1.2.0"` field
     2. Add `"type": "module"` to package.json
