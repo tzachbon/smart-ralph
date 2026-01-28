@@ -559,12 +559,16 @@ After fix task completes:
 
 This section orchestrates the complete failure recovery loop when recoveryMode is enabled.
 
+**Backwards Compatibility Note**:
+
+recoveryMode defaults to false. When recoveryMode is false or missing, the existing behavior (retry then stop) is preserved exactly. The recovery orchestrator only activates when recoveryMode is explicitly set to true via --recovery-mode flag.
+
 **Entry Point**:
 
 When spec-executor does NOT output TASK_COMPLETE:
 1. First, check if `recoveryMode` is true in .ralph-state.json
-2. If recoveryMode is false or missing: skip to "ERROR: Max Retries Reached" (existing behavior)
-3. If recoveryMode is true: proceed with iterative recovery
+2. If recoveryMode is false, undefined, or missing: skip to "ERROR: Max Retries Reached" (existing behavior preserved)
+3. If recoveryMode is explicitly true: proceed with iterative recovery
 
 **Recovery Loop Flow**:
 
@@ -631,11 +635,12 @@ When spec-executor does NOT output TASK_COMPLETE:
 
 ```
 Read .ralph-state.json
-If recoveryMode !== true:
+# recoveryMode defaults to false for backwards compatibility
+If recoveryMode !== true (false, undefined, or missing):
   - Increment taskIteration
   - If taskIteration > maxTaskIterations: ERROR and STOP
-  - Otherwise: retry same task (existing behavior)
-  - EXIT this section
+  - Otherwise: retry same task (existing behavior preserved)
+  - EXIT this section - do NOT proceed with recovery orchestration
 ```
 
 **Step 2: Parse Failure (calls Section 6b)**

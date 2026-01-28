@@ -140,7 +140,7 @@ After POC validated, add robustness and edge cases.
   - _Requirements: FR-10, AC-5.2, AC-5.3_
   - _Design: Progress Updates_
 
-- [ ] 2.5 Handle backwards compatibility (recoveryMode default)
+- [x] 2.5 Handle backwards compatibility (recoveryMode default)
   - **Do**: Ensure recoveryMode defaults to false. When false, existing behavior (retry then stop) preserved exactly. Add explicit check at recovery orchestrator entry.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: Specs without --recovery-mode work unchanged
