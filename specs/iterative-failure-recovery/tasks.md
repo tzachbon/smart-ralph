@@ -160,7 +160,7 @@ After POC validated, add robustness and edge cases.
   - _Requirements: AC-2.3_
   - _Design: Data Flow_
 
-- [ ] 3.2 Test fix limit enforcement
+- [x] 3.2 Test fix limit enforcement
   - **Do**: Create test spec with task that always fails. Run with --max-fix-tasks 2. Verify execution stops after 2 fix tasks with clear error.
   - **Files**: `specs/test-recovery-limit/tasks.md`
   - **Done when**: Execution stops at limit with proper error
