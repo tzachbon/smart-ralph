@@ -32,6 +32,7 @@ This is a hard dependency. The command cannot function without Ralph Loop.
 
 From `$ARGUMENTS`:
 - **--max-task-iterations**: Max retries per task (default: 5)
+- **--recovery-mode**: Enable iterative failure recovery (default: false). When enabled, failed tasks trigger automatic fix task generation instead of stopping.
 
 ## Initialize Execution State
 
@@ -46,7 +47,10 @@ Write `.ralph-state.json`:
   "taskIndex": <first incomplete>,
   "totalTasks": <count>,
   "taskIteration": 1,
-  "maxTaskIterations": <parsed from --max-task-iterations or default 5>
+  "maxTaskIterations": <parsed from --max-task-iterations or default 5>,
+  "recoveryMode": <true if --recovery-mode flag present, false otherwise>,
+  "maxFixTasksPerOriginal": 3,
+  "fixTaskMap": {}
 }
 ```
 

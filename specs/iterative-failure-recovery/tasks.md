@@ -37,7 +37,7 @@ Focus: Validate recovery loop works. Skip edge cases, accept basic fix task gene
   - _Requirements: FR-5, FR-8_
   - _Design: State Schema Extension_
 
-- [ ] 1.2 Add --recovery-mode argument parsing to implement.md
+- [x] 1.2 Add --recovery-mode argument parsing to implement.md
   - **Do**: In implement.md Parse Arguments section, add --recovery-mode flag parsing. Store recoveryMode: true in state when flag present.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: implement.md parses --recovery-mode and writes to state
