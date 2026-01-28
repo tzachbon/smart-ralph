@@ -107,7 +107,7 @@ Focus: Validate recovery loop works. Skip edge cases, accept basic fix task gene
 
 After POC validated, add robustness and edge cases.
 
-- [ ] 2.1 Add fix task limit enforcement
+- [x] 2.1 Add fix task limit enforcement
   - **Do**: In recovery orchestrator, check fixTaskMap[taskId].attempts against maxFixTasksPerOriginal. If exceeded, output clear error with fix history and STOP.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: Execution stops with error when max fixes reached
