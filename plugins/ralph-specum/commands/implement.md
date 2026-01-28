@@ -292,9 +292,76 @@ If spec-executor outputs TASK_COMPLETE (or qa-engineer outputs VERIFICATION_PASS
 2. If all verifications pass, proceed to state update
 
 If no completion signal:
-1. Increment taskIteration in state file
-2. If taskIteration > maxTaskIterations: proceed to max retries error handling
-3. Otherwise: Retry the same task
+1. First, parse the failure output (section 6b)
+2. Increment taskIteration in state file
+3. If taskIteration > maxTaskIterations: proceed to max retries error handling
+4. Otherwise: Retry the same task
+
+### 6b. Parse Failure Output
+
+When spec-executor does not output TASK_COMPLETE, parse the failure output to extract error details.
+
+**Failure Output Pattern**:
+Spec-executor outputs failures in this format:
+```
+Task X.Y: [task name] FAILED
+- Error: [description]
+- Attempted fix: [what was tried]
+- Status: Blocked, needs manual intervention
+```
+
+**Parsing Logic**:
+
+1. **Check for FAILED marker**:
+   - Look for pattern: `Task \d+\.\d+:.*FAILED`
+   - If found, proceed to extract details
+   - If not found, use generic failure: "Task did not complete"
+
+2. **Extract Error Details**:
+   - Match `- Error: (.*)` to get error description
+   - Match `- Attempted fix: (.*)` to get fix attempt details
+   - Match `- Status: (.*)` to get status message
+
+3. **Build Failure Object**:
+   ```json
+   {
+     "taskId": "<X.Y from match>",
+     "failed": true,
+     "error": "<extracted from Error: line>",
+     "attemptedFix": "<extracted from Attempted fix: line>",
+     "status": "<extracted from Status: line>",
+     "rawOutput": "<full spec-executor output for context>"
+   }
+   ```
+
+4. **Handle Missing Fields**:
+   - If Error: line missing, use "Task execution failed"
+   - If Attempted fix: line missing, use "No fix attempted"
+   - If Status: line missing, use "Unknown status"
+
+**Example Parsing**:
+
+Input (spec-executor output):
+```
+Task 1.3: Add failure parser FAILED
+- Error: File not found: src/parser.ts
+- Attempted fix: Checked alternate paths
+- Status: Blocked, needs manual intervention
+```
+
+Parsed failure object:
+```json
+{
+  "taskId": "1.3",
+  "failed": true,
+  "error": "File not found: src/parser.ts",
+  "attemptedFix": "Checked alternate paths",
+  "status": "Blocked, needs manual intervention",
+  "rawOutput": "..."
+}
+```
+
+This failure object is used by the recovery orchestrator (section 6c) to generate fix tasks when recoveryMode is enabled.
 
 **ERROR: Max Retries Reached**
 

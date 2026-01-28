@@ -46,7 +46,7 @@ Focus: Validate recovery loop works. Skip edge cases, accept basic fix task gene
   - _Requirements: FR-7, AC-4.1_
   - _Design: Component 4 - Recovery Orchestrator_
 
-- [ ] 1.3 Add failure parser to implement.md
+- [x] 1.3 Add failure parser to implement.md
   - **Do**: Add section after task delegation to parse spec-executor failure output. Extract error and attempted fix using regex pattern from design. Return structured failure object.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: Coordinator can extract error details from failure output
