@@ -870,6 +870,61 @@ Success!
 - Only after original task passes does taskIndex advance
 - Fix task IDs use dot notation to show lineage: 1.3.1, 1.3.2, 1.3.1.1
 
+**Fix Task Progress Logging**:
+
+After original task completes (TASK_COMPLETE) following fix task recovery, log the fix task chain to .progress.md.
+
+Add/update section in .progress.md:
+```markdown
+## Fix Task History
+- Task 1.3: 2 fixes attempted (1.3.1, 1.3.2) - Final: PASS
+- Task 2.1: 1 fix attempted (2.1.1) - Final: PASS
+- Task 3.4: 3 fixes attempted (3.4.1, 3.4.2, 3.4.3) - Final: FAIL (max limit)
+```
+
+**Logging Implementation**:
+
+After successful original task retry (Step 8 TASK_COMPLETE):
+1. Check if fixTaskMap[$taskId] exists and has attempts > 0
+2. If yes, append fix task history entry to .progress.md:
+   ```
+   - Task $taskId: $attempts fixes attempted ($fixTaskIds) - Final: PASS
+   ```
+3. Use Edit tool to append to "## Fix Task History" section
+4. If section doesn't exist, create it before "## Learnings" section
+
+On max fix limit reached (section 6c limit error):
+1. Log failed recovery attempt:
+   ```
+   - Task $taskId: $attempts fixes attempted ($fixTaskIds) - Final: FAIL (max limit)
+   ```
+2. Include in .progress.md before stopping execution
+
+**Example Progress Update**:
+
+Before fix task logging:
+```markdown
+## Completed Tasks
+- [x] 1.1 Task A - abc123
+- [x] 1.2 Task B - def456
+
+## Learnings
+- Some learning
+```
+
+After fix task logging:
+```markdown
+## Completed Tasks
+- [x] 1.1 Task A - abc123
+- [x] 1.2 Task B - def456
+
+## Fix Task History
+- Task 1.2: 2 fixes attempted (1.2.1, 1.2.2) - Final: PASS
+
+## Learnings
+- Some learning
+```
+
 **ERROR: Max Retries Reached**
 
 If taskIteration exceeds maxTaskIterations:

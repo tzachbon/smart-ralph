@@ -131,7 +131,7 @@ After POC validated, add robustness and edge cases.
   - **Done when**: Both patterns found
   - **Commit**: `chore(recovery): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.4 Add progress logging for fix tasks
+- [x] 2.4 Add progress logging for fix tasks
   - **Do**: Log fix task chain in .progress.md. Add section "## Fix Task History" with entries like: `- Task 1.2: 2 fixes attempted (1.2.1, 1.2.2) - Final: PASS/FAIL`
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: .progress.md shows fix task history
