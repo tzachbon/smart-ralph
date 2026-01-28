@@ -686,15 +686,104 @@ Position: immediately after original task block
 Update totalTasks in state
 ```
 
-**Step 6: Update State**
+**Step 6: Update State (fixTaskMap tracking)**
 
+After generating a fix task, update fixTaskMap in state to track:
+- attempts: number of fix tasks generated for this original task
+- fixTaskIds: array of fix task IDs created
+- lastError: most recent error message
+
+**Implementation using jq**:
+
+```bash
+# Variables from context
+SPEC_PATH="./specs/$spec"
+TASK_ID="X.Y"           # Original task ID (e.g., "1.3")
+FIX_TASK_ID="X.Y.N"     # Generated fix task ID (e.g., "1.3.1")
+ERROR_MSG="$failure_error"  # Escaped error message from failure object
+
+# Read current state, update fixTaskMap, write back
+jq --arg taskId "$TASK_ID" \
+   --arg fixId "$FIX_TASK_ID" \
+   --arg error "$ERROR_MSG" \
+   '
+   # Initialize fixTaskMap if it does not exist
+   .fixTaskMap //= {} |
+
+   # Initialize entry for this task if it does not exist
+   .fixTaskMap[$taskId] //= {attempts: 0, fixTaskIds: [], lastError: ""} |
+
+   # Update the entry
+   .fixTaskMap[$taskId].attempts += 1 |
+   .fixTaskMap[$taskId].fixTaskIds += [$fixId] |
+   .fixTaskMap[$taskId].lastError = $error |
+
+   # Also increment totalTasks to account for inserted fix task
+   .totalTasks += 1
+   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
+   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
 ```
-Read .ralph-state.json
-Update fixTaskMap[taskId]:
-  - attempts: currentAttempts + 1
-  - fixTaskIds: [...existing, "X.Y.N"]
-  - lastError: failure.error
-Write updated state
+
+**Example state after fix task generation**:
+
+Before (task 1.3 fails first time):
+```json
+{
+  "phase": "execution",
+  "taskIndex": 2,
+  "totalTasks": 10,
+  "fixTaskMap": {}
+}
+```
+
+After (fix task 1.3.1 generated):
+```json
+{
+  "phase": "execution",
+  "taskIndex": 2,
+  "totalTasks": 11,
+  "fixTaskMap": {
+    "1.3": {
+      "attempts": 1,
+      "fixTaskIds": ["1.3.1"],
+      "lastError": "File not found: src/parser.ts"
+    }
+  }
+}
+```
+
+After second failure (fix task 1.3.2 generated):
+```json
+{
+  "phase": "execution",
+  "taskIndex": 2,
+  "totalTasks": 12,
+  "fixTaskMap": {
+    "1.3": {
+      "attempts": 2,
+      "fixTaskIds": ["1.3.1", "1.3.2"],
+      "lastError": "Syntax error in parser.ts line 42"
+    }
+  }
+}
+```
+
+**Reading fixTaskMap for limit checks**:
+
+```bash
+# Check current attempts for a task
+CURRENT_ATTEMPTS=$(jq -r --arg taskId "$TASK_ID" \
+  '.fixTaskMap[$taskId].attempts // 0' "$SPEC_PATH/.ralph-state.json")
+
+# Check if limit exceeded
+MAX_FIX=$(jq -r '.maxFixTasksPerOriginal // 3' "$SPEC_PATH/.ralph-state.json")
+if [ "$CURRENT_ATTEMPTS" -ge "$MAX_FIX" ]; then
+  echo "ERROR: Max fix attempts ($MAX_FIX) reached for task $TASK_ID"
+  # Show fix history
+  jq -r --arg taskId "$TASK_ID" \
+    '.fixTaskMap[$taskId].fixTaskIds | join(", ")' "$SPEC_PATH/.ralph-state.json"
+  exit 1
+fi
 ```
 
 **Step 7: Execute Fix Task**

@@ -116,7 +116,7 @@ After POC validated, add robustness and edge cases.
   - _Requirements: FR-6, AC-3.1, AC-3.3_
   - _Design: Error Handling_
 
-- [ ] 2.2 Add fixTaskMap tracking to state updates
+- [x] 2.2 Add fixTaskMap tracking to state updates
   - **Do**: After each fix task creation, update fixTaskMap in state: increment attempts, add fix task ID, store lastError. Read/write using jq pattern from existing state updates.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: State tracks fix task history per original task
