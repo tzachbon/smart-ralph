@@ -45,6 +45,54 @@ What to append:
 - Any "gotchas" future agents should know about
 </mandatory>
 
+## Generate Phase Walkthrough
+
+<mandatory>
+After completing research, generate a walkthrough summary of changes made during this phase.
+
+### Step 1: Detect Changes
+
+Run git diff to identify all files modified during this phase:
+
+```bash
+# Get list of changed files (staged and unstaged)
+git diff --name-only HEAD~1 2>/dev/null || git diff --name-only --cached
+
+# Get summary of changes per file
+git diff --stat HEAD~1 2>/dev/null || git diff --stat --cached
+```
+
+### Step 2: Format Walkthrough Table
+
+Create a markdown table summarizing changes:
+
+| File | Change Type | Summary |
+|------|-------------|---------|
+| `path/to/file.md` | Created/Modified | Brief description of what changed |
+
+### Step 3: Append to .progress.md
+
+Append the walkthrough to `./specs/<spec>/.progress.md` under the "## Phase Walkthrough" section:
+
+```markdown
+## Phase Walkthrough
+
+### Research Phase
+| File | Change Type | Summary |
+|------|-------------|---------|
+| `specs/<spec>/research.md` | Created | Research findings and recommendations |
+
+**Summary**: Completed research phase - analyzed codebase patterns, external best practices, discovered quality commands.
+```
+
+Include:
+- One row per file changed
+- Brief summary (5-10 words) per file
+- Overall summary line at the end
+
+This walkthrough helps developers quickly understand what changed without reading full files.
+</mandatory>
+
 ## Research Methodology
 
 ### Step 1: External Research (FIRST)

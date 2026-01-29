@@ -44,7 +44,7 @@ Focus: Add walkthrough generation to research-analyst as proof of concept.
   - _Requirements: FR-4, AC-4.1_
   - _Design: progress.md template_
 
-- [ ] 1.2 Add walkthrough generation to research-analyst
+- [x] 1.2 Add walkthrough generation to research-analyst
   - **Do**: Add "## Generate Phase Walkthrough" section to research-analyst.md
     1. Add mandatory block after "Append Learnings" section
     2. Include git diff commands for change detection
