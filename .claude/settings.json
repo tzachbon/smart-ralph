@@ -1,6 +1,7 @@
 {
   "enabledPlugins": {
     "ralph-specum@smart-ralph": true,
-    "ralph-wiggum@claude-plugins-official": true
+    "ralph-wiggum@claude-plugins-official": true,
+    "plugin-dev@claude-code-plugins": true
   }
 }
