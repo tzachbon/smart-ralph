@@ -125,6 +125,30 @@ WORKTREE_PATH="../${REPO_NAME}-${SPEC_NAME}"
 
 # Create worktree with new branch
 git worktree add "$WORKTREE_PATH" -b "feat/${SPEC_NAME}"
+
+# Copy spec state files to worktree
+if [ -d "./specs" ]; then
+    mkdir -p "$WORKTREE_PATH/specs"
+
+    # Copy .current-spec if exists
+    if [ -f "./specs/.current-spec" ]; then
+        cp "./specs/.current-spec" "$WORKTREE_PATH/specs/.current-spec"
+    fi
+
+    # If spec name known, copy spec state files
+    if [ -n "$SPEC_NAME" ] && [ -d "./specs/$SPEC_NAME" ]; then
+        mkdir -p "$WORKTREE_PATH/specs/$SPEC_NAME"
+
+        # Copy state files (don't overwrite existing)
+        [ -f "./specs/$SPEC_NAME/.ralph-state.json" ] && \
+            [ ! -f "$WORKTREE_PATH/specs/$SPEC_NAME/.ralph-state.json" ] && \
+            cp "./specs/$SPEC_NAME/.ralph-state.json" "$WORKTREE_PATH/specs/$SPEC_NAME/"
+
+        [ -f "./specs/$SPEC_NAME/.progress.md" ] && \
+            [ ! -f "$WORKTREE_PATH/specs/$SPEC_NAME/.progress.md" ] && \
+            cp "./specs/$SPEC_NAME/.progress.md" "$WORKTREE_PATH/specs/$SPEC_NAME/"
+    fi
+fi
 ```
 
 After worktree creation:

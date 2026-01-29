@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Add state file copy after worktree creation. Minimal, working solution.
 
-- [ ] 1.1 Add state copy block after git worktree add
+- [x] 1.1 Add state copy block after git worktree add
   - **Do**: Find the worktree creation section in start.md (around line 127). After `git worktree add "$WORKTREE_PATH" -b "feat/${SPEC_NAME}"`, add a bash code block that copies state files. The block should: (1) create specs/ dir in worktree, (2) copy .current-spec if exists, (3) copy spec state files if spec directory exists.
   - **Files**: `plugins/ralph-specum/commands/start.md`
   - **Done when**: start.md contains state copy bash block after worktree creation
