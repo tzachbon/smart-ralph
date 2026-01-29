@@ -29,7 +29,7 @@ Focus: Add state file copy after worktree creation. Minimal, working solution.
   - **Commit**: `docs(start): note state files copied to worktree`
   - _Requirements: AC-1.4_
 
-- [ ] 1.3 POC Checkpoint
+- [x] 1.3 POC Checkpoint
   - **Do**: Verify feature works end-to-end by testing manually: (1) Create a spec with /ralph-specum:new test-worktree "Test goal", (2) Check state files exist, (3) Create worktree manually with git worktree add, (4) Verify state files copied
   - **Done when**: State files exist in worktree after creation
   - **Verify**: Manual inspection of worktree specs/ directory
