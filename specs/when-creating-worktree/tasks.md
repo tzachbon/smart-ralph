@@ -58,7 +58,7 @@ After POC validated, clean up code.
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Add verification steps to start.md documentation
+- [x] 3.1 Add verification steps to start.md documentation
   - **Do**: In the worktree section of start.md, add inline verification note explaining what files get copied and when
   - **Files**: `plugins/ralph-specum/commands/start.md`
   - **Done when**: Documentation explains state file copy behavior

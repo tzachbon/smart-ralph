@@ -116,6 +116,18 @@ Branch: feat/user-auth-2
 
 When user chooses worktree option:
 
+**State files copied to worktree:**
+- `specs/.current-spec` - Active spec name pointer
+- `specs/$SPEC_NAME/.ralph-state.json` - Loop state (phase, taskIndex, iterations)
+- `specs/$SPEC_NAME/.progress.md` - Progress tracking and learnings
+
+These files are copied when:
+1. The worktree is created via `git worktree add`
+2. A spec is currently active (SPEC_NAME known or readable from .current-spec)
+3. The source files exist in the main worktree
+
+Copy uses non-overwrite semantics (skips if file already exists in target).
+
 ```bash
 # Get repo name for path suggestion
 REPO_NAME=$(basename $(git rev-parse --show-toplevel))
