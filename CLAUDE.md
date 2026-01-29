@@ -35,6 +35,21 @@ claude --plugin-dir ./plugins/ralph-specum
 
 No build step required. Changes take effect on Claude Code restart.
 
+### Plugin Development Skills (ALWAYS USE)
+
+When creating or modifying plugin components, **ALWAYS** use the `plugin-dev` skills for guidance:
+
+- `/plugin-dev:plugin-structure` - Plugin manifest, directory layout, component organization
+- `/plugin-dev:command-development` - Creating slash commands with frontmatter
+- `/plugin-dev:skill-development` - Creating skills with progressive disclosure
+- `/plugin-dev:agent-development` - Creating subagents with system prompts
+- `/plugin-dev:hook-development` - Creating hooks (PreToolUse, PostToolUse, Stop, etc.)
+- `/plugin-dev:mcp-integration` - Integrating MCP servers into plugins
+- `/plugin-dev:plugin-settings` - Plugin configuration with .local.md files
+- `/plugin-dev:create-plugin` - Guided end-to-end plugin creation workflow
+
+**Example:** Before adding a new command, run `/plugin-dev:command-development` to ensure correct frontmatter and structure.
+
 ## Architecture
 
 ### Plugin Structure
