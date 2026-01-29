@@ -21,7 +21,7 @@ Focus: Add state file copy after worktree creation. Minimal, working solution.
   - _Requirements: FR-1, FR-2, FR-3, FR-4_
   - _Design: State Copy Block_
 
-- [ ] 1.2 Update user guidance to mention state copy
+- [x] 1.2 Update user guidance to mention state copy
   - **Do**: In the worktree success message section (around line 132-146), add a note that state files were copied: "Spec state files copied to worktree."
   - **Files**: `plugins/ralph-specum/commands/start.md`
   - **Done when**: User message mentions state files were copied

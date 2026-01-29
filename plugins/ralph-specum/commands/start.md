@@ -156,6 +156,7 @@ After worktree creation:
 - IMPORTANT: Output clear guidance for the user:
   ```
   Created worktree at '<path>' on branch '<branch-name>'
+  Spec state files copied to worktree.
 
   For best results, cd to the worktree directory and start a new Claude Code session from there:
 
