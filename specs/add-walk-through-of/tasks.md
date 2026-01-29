@@ -32,7 +32,7 @@ This spec is not complete until ALL criteria are met:
 
 Focus: Add walkthrough generation to research-analyst as proof of concept.
 
-- [ ] 1.1 Update progress.md template with walkthrough section
+- [x] 1.1 Update progress.md template with walkthrough section
   - **Do**: Add "## Phase Walkthrough" section template to progress.md
     1. Read current template
     2. Add section after "## Learnings" with placeholder format
