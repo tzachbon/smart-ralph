@@ -116,22 +116,64 @@ Branch: feat/user-auth-2
 
 When user chooses worktree option:
 
+**State files copied to worktree:**
+- `specs/.current-spec` - Active spec name pointer
+- `specs/$SPEC_NAME/.ralph-state.json` - Loop state (phase, taskIndex, iterations)
+- `specs/$SPEC_NAME/.progress.md` - Progress tracking and learnings
+
+These files are copied when:
+1. The worktree is created via `git worktree add`
+2. A spec is currently active (SPEC_NAME known or readable from .current-spec)
+3. The source files exist in the main worktree
+
+Copy uses non-overwrite semantics (skips if file already exists in target).
+
 ```bash
 # Get repo name for path suggestion
 REPO_NAME=$(basename $(git rev-parse --show-toplevel))
+
+# If SPEC_NAME empty but .current-spec exists, read from it (before using for path/branch)
+if [ -z "$SPEC_NAME" ] && [ -f "./specs/.current-spec" ]; then
+    SPEC_NAME=$(cat "./specs/.current-spec") || true
+fi
 
 # Default worktree path
 WORKTREE_PATH="../${REPO_NAME}-${SPEC_NAME}"
 
 # Create worktree with new branch
 git worktree add "$WORKTREE_PATH" -b "feat/${SPEC_NAME}"
+
+# Copy spec state files to worktree (failures are warnings, not errors)
+if [ -d "./specs" ]; then
+    mkdir -p "$WORKTREE_PATH/specs" || echo "Warning: Failed to create specs directory in worktree"
+
+    # Copy .current-spec if exists (don't overwrite existing)
+    if [ -f "./specs/.current-spec" ] && [ ! -f "$WORKTREE_PATH/specs/.current-spec" ]; then
+        cp "./specs/.current-spec" "$WORKTREE_PATH/specs/.current-spec" || echo "Warning: Failed to copy .current-spec to worktree"
+    fi
+
+    # If spec name known, copy spec state files
+    if [ -n "$SPEC_NAME" ] && [ -d "./specs/$SPEC_NAME" ]; then
+        mkdir -p "$WORKTREE_PATH/specs/$SPEC_NAME" || echo "Warning: Failed to create spec directory in worktree"
+
+        # Copy state files (don't overwrite existing)
+        if [ -f "./specs/$SPEC_NAME/.ralph-state.json" ] && [ ! -f "$WORKTREE_PATH/specs/$SPEC_NAME/.ralph-state.json" ]; then
+            cp "./specs/$SPEC_NAME/.ralph-state.json" "$WORKTREE_PATH/specs/$SPEC_NAME/" || echo "Warning: Failed to copy .ralph-state.json to worktree"
+        fi
+
+        if [ -f "./specs/$SPEC_NAME/.progress.md" ] && [ ! -f "$WORKTREE_PATH/specs/$SPEC_NAME/.progress.md" ]; then
+            cp "./specs/$SPEC_NAME/.progress.md" "$WORKTREE_PATH/specs/$SPEC_NAME/" || echo "Warning: Failed to copy .progress.md to worktree"
+        fi
+    fi
+fi
 ```
 
 After worktree creation:
 - Inform user of the worktree path
 - IMPORTANT: Output clear guidance for the user:
-  ```
+  ```text
   Created worktree at '<path>' on branch '<branch-name>'
+  Spec state files copied to worktree.
 
   For best results, cd to the worktree directory and start a new Claude Code session from there:
 

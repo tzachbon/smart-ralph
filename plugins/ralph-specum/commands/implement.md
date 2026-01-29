@@ -1094,8 +1094,16 @@ Before outputting:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup execution state)
 3. Keep .progress.md (preserve learnings and history)
+4. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
 
 This signal terminates the Ralph Loop loop.
+
+**PR Link Output**: If a PR was created during execution, output the PR URL after ALL_TASKS_COMPLETE:
+```text
+ALL_TASKS_COMPLETE
+
+PR: https://github.com/owner/repo/pull/123
+```
 
 Do NOT output ALL_TASKS_COMPLETE if tasks remain incomplete.
 Do NOT output TASK_COMPLETE (that's for spec-executor only).
@@ -1195,7 +1203,9 @@ All must be true:
 When all Step 4 criteria met:
 1. Update .progress.md with final state
 2. Delete .ralph-state.json
-3. Output: ALL_TASKS_COMPLETE
+3. Get PR URL: `gh pr view --json url -q .url`
+4. Output: ALL_TASKS_COMPLETE
+5. Output: PR link (e.g., "PR: https://github.com/owner/repo/pull/123")
 
 **Timeout Protection**:
 - Max 48 hours in PR Lifecycle Loop
