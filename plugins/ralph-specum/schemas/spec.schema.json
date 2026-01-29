@@ -134,6 +134,7 @@
         "fixTaskMap": {
           "type": "object",
           "description": "Tracks fix attempts per original task",
+          "default": {},
           "additionalProperties": {
             "type": "object",
             "properties": {

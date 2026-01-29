@@ -330,7 +330,7 @@ When spec-executor does not output TASK_COMPLETE, parse the failure output to ex
 
 **Failure Output Pattern**:
 Spec-executor outputs failures in this format:
-```
+```text
 Task X.Y: [task name] FAILED
 - Error: [description]
 - Attempted fix: [what was tried]
@@ -369,7 +369,7 @@ Task X.Y: [task name] FAILED
 **Example Parsing**:
 
 Input (spec-executor output):
-```
+```text
 Task 1.3: Add failure parser FAILED
 - Error: File not found: src/parser.ts
 - Attempted fix: Checked alternate paths
@@ -416,7 +416,7 @@ Before generating a fix task:
 
 Use the failure object from section 6b to create a fix task:
 
-```
+```text
 Fix Task ID: $taskId.$attemptNumber
   where attemptNumber = fixTaskMap[taskId].attempts + 1 (or 1 if first attempt)
 
@@ -434,20 +434,20 @@ Fix Task Format:
 
 **Field Derivation**:
 
-| Field | Source | Fallback |
-|-------|--------|----------|
-| errorSummary | First 50 chars of failure.error | "task $taskId failure" |
-| failure.error | Parsed from Error: line | "Task execution failed" |
-| failure.attemptedFix | Parsed from Attempted fix: line | "No previous fix attempted" |
-| originalTask.files | Files field from original task | Same directory as original |
-| originalTask.verify | Verify field from original task | "echo 'Verify manually'" |
-| $scope | Derived from feature name or task area | "recovery" |
-| $errorType | Error category (e.g., "syntax", "missing file") | "error" |
+| Field                | Source                              | Fallback                       |
+|----------------------|-------------------------------------|--------------------------------|
+| errorSummary         | First 50 chars of failure.error     | "task $taskId failure"         |
+| failure.error        | Parsed from Error: line             | "Task execution failed"        |
+| failure.attemptedFix | Parsed from Attempted fix: line     | "No previous fix attempted"    |
+| originalTask.files   | Files field from original task      | Same directory as original     |
+| originalTask.verify  | Verify field from original task     | "echo 'Verify manually'"       |
+| $scope               | Derived from feature name or task area | "recovery"                  |
+| $errorType           | Error category (e.g., "syntax", "missing file") | "error"           |
 
 **Example Fix Task Generation**:
 
 Original task (failed):
-```
+```markdown
 - [ ] 1.3 Add failure parser
   - **Do**: Add parsing logic to implement.md
   - **Files**: plugins/ralph-speckit/commands/implement.md
@@ -466,7 +466,7 @@ Failure object:
 ```
 
 Generated fix task:
-```
+```markdown
 - [ ] 1.3.1 [FIX 1.3] Fix: File not found: src/parser.ts
   - **Do**: Address the error: File not found: src/parser.ts
     1. Analyze the failure: Checked alternate paths
@@ -495,7 +495,7 @@ Use the Edit tool to cleanly insert the fix task after the current task block.
 1. **Read tasks.md content** using Read tool
 
 2. **Locate current task start**:
-   - Search for pattern: `- [ ] $taskId ` or `- [x] $taskId `
+   - Search for pattern: `- [ ] $taskId` or `- [x] $taskId`
    - Store the line number as `taskStartLine`
 
 3. **Find current task block end**:
@@ -510,7 +510,7 @@ Use the Edit tool to cleanly insert the fix task after the current task block.
 4. **Build insertion content**:
    - Start with newline if needed for spacing
    - Add the complete fix task markdown block:
-   ```
+   ```markdown
    - [ ] X.Y.N [FIX X.Y] Fix: $errorSummary
      - **Do**: Address the error: $errorDetails
        1. Analyze the failure: $attemptedFix
@@ -536,6 +536,7 @@ Use the Edit tool to cleanly insert the fix task after the current task block.
 **Example Insertion**:
 
 Before insertion (task 1.3 failed):
+
 ```markdown
 - [ ] 1.3 Add failure parser
   - **Do**: Add parsing logic
@@ -547,6 +548,7 @@ Before insertion (task 1.3 failed):
 ```
 
 After insertion:
+
 ```markdown
 - [ ] 1.3 Add failure parser
   - **Do**: Add parsing logic
@@ -599,7 +601,7 @@ When spec-executor does NOT output TASK_COMPLETE:
 
 **Recovery Loop Flow**:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    ITERATIVE FAILURE RECOVERY                   │
 ├─────────────────────────────────────────────────────────────────┤
@@ -660,7 +662,7 @@ When spec-executor does NOT output TASK_COMPLETE:
 
 **Step 1: Check Recovery Mode**
 
-```
+```text
 Read .speckit-state.json
 # recoveryMode defaults to false for backwards compatibility
 If recoveryMode !== true (false, undefined, or missing):
@@ -672,7 +674,7 @@ If recoveryMode !== true (false, undefined, or missing):
 
 **Step 2: Parse Failure (calls Section 6b)**
 
-```
+```text
 Parse spec-executor output using pattern from Section 6b
 Build failure object:
 {
@@ -685,7 +687,7 @@ Build failure object:
 
 **Step 3: Check Fix Limits (from Section 6c)**
 
-```
+```text
 Read fixTaskMap from state
 currentAttempts = fixTaskMap[taskId].attempts || 0
 
@@ -698,7 +700,7 @@ If currentAttempts >= maxFixTasksPerOriginal:
 
 **Step 4: Generate Fix Task (calls Section 6c)**
 
-```
+```text
 Use failure object to create fix task markdown:
 - [ ] X.Y.N [FIX X.Y] Fix: <errorSummary>
   - **Do**: Address the error: <error>
@@ -712,7 +714,7 @@ Where N = currentAttempts + 1
 
 **Step 5: Insert Fix Task (calls Section 6c)**
 
-```
+```text
 Use Edit tool to insert fix task into tasks.md
 Position: immediately after original task block
 Update totalTasks in state
@@ -820,7 +822,7 @@ fi
 
 **Step 7: Execute Fix Task**
 
-```
+```text
 Delegate fix task to spec-executor via Task tool
 Same delegation pattern as Section 6
 
@@ -836,7 +838,7 @@ If no TASK_COMPLETE:
 
 **Step 8: Retry Original Task**
 
-```
+```text
 Return to original task (taskIndex unchanged)
 Delegate original task to spec-executor again
 
@@ -852,7 +854,7 @@ If no TASK_COMPLETE:
 
 **Example Recovery Sequence**:
 
-```
+```text
 Initial: Task 1.3 fails
   ↓
 Recovery Mode enabled
@@ -880,7 +882,7 @@ Success! → Section 7 → Section 8 → Next task
 
 **Nested Fix Example** (fix task fails):
 
-```
+```text
 Task 1.3 fails → Generate 1.3.1
   ↓
 1.3.1 fails → Generate 1.3.1.1 (fix for the fix)

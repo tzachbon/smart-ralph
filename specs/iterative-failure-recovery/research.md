@@ -16,7 +16,7 @@ Current execution loop stops on max retries (default 5 per task). Need iterative
 ### Current Failure Handling
 
 **implement.md Coordinator** (lines 290-304):
-```
+```text
 If no completion signal:
 1. Increment taskIteration in state file
 2. If taskIteration > maxTaskIterations: proceed to max retries error handling
@@ -26,7 +26,7 @@ If no completion signal:
 Current behavior: retry same task up to 5 times, then STOP with error.
 
 **Phase 5 Dynamic Task Pattern** (implement.md lines 499-511):
-```
+```text
 If failures:
 - Read failure details: gh run view --log-failed
 - Create new Phase 5.X task in tasks.md
@@ -54,7 +54,7 @@ Existing fields supporting iteration:
 ### Spec-Executor Output
 
 On failure (spec-executor.md lines 396-402):
-```
+```text
 Task X.Y: [task name] FAILED
 - Error: [description]
 - Attempted fix: [what was tried]

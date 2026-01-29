@@ -213,6 +213,6 @@ After POC validated, add robustness and edge cases.
 
 ## Dependencies
 
-```
+```text
 Phase 1 (POC) --> Phase 2 (Refactor) --> Phase 3 (Testing) --> Phase 4 (Quality)
 ```

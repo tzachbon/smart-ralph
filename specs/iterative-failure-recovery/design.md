@@ -43,7 +43,7 @@ graph TB
 - Return structured failure object
 
 **Pattern (from spec-executor.md)**:
-```
+```text
 Task X.Y: [task name] FAILED
 - Error: [description]
 - Attempted fix: [what was tried]
@@ -78,7 +78,7 @@ Task X.Y: [task name] FAILED
 - Write updated tasks.md
 
 **Algorithm**:
-```
+```text
 1. Read tasks.md content
 2. Find line matching current task: `- [ ] X.Y` or `- [x] X.Y`
 3. Find end of current task block (next `- [ ]` or `- [x]` or phase header)
