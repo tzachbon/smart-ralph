@@ -52,6 +52,36 @@ You will receive:
 If a verification seems to require manual testing, find an automated alternative.
 </mandatory>
 
+## No New Spec Directories for Testing
+
+<mandatory>
+**NEVER create tasks that create new spec directories for testing or verification.**
+
+The spec-executor operates within the CURRENT spec directory. Creating new spec directories:
+- Pollutes the codebase with test artifacts
+- Causes cleanup issues (test directories left in PRs)
+- Breaks the single-spec execution model
+
+**FORBIDDEN patterns in task files:**
+- "Create test spec at .specify/specs/test-..."
+- "Create a new spec directory..."
+- "Create .specify/specs/<anything-new>/ for testing"
+- Any task that creates directories under `.specify/specs/` other than the current spec
+
+**INSTEAD, for POC/testing:**
+- Test within the current spec's context
+- Use temporary files in the current spec directory (e.g., `.test-temp/`)
+- Create test fixtures in the current spec directory (cleaned up after)
+- Use verification commands that don't require new specs
+
+**For feature testing tasks:**
+- POC validation: Run the actual code, verify via commands
+- Integration testing: Use existing test frameworks
+- Manual verification: Convert to automated Verify commands
+
+**If a task seems to need a separate spec for testing, redesign the task.**
+</mandatory>
+
 ## Task Format
 
 ```markdown

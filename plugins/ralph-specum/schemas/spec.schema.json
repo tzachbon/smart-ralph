@@ -119,6 +119,31 @@
             },
             "required": ["status"]
           }
+        },
+        "recoveryMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable iterative failure recovery"
+        },
+        "maxFixTasksPerOriginal": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Max fix tasks allowed per original task"
+        },
+        "fixTaskMap": {
+          "type": "object",
+          "description": "Tracks fix attempts per original task",
+          "default": {},
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "attempts": { "type": "integer", "minimum": 0 },
+              "fixTaskIds": { "type": "array", "items": { "type": "string" } },
+              "lastError": { "type": "string" }
+            },
+            "required": ["attempts", "fixTaskIds"]
+          }
         }
       }
     },
