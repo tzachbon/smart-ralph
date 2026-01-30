@@ -93,13 +93,13 @@ Focus: Add walkthrough output to each phase command. Validate user sees useful s
   - _Requirements: FR-4, AC-4.1, AC-4.2, AC-4.3, AC-4.4_
   - _Design: Tasks Walkthrough Template_
 
-- [ ] 1.5 [VERIFY] Quality checkpoint: verify all 4 commands modified
+- [x] 1.5 [VERIFY] Quality checkpoint: verify all 4 commands modified
   - **Do**: Read all 4 command files and verify walkthrough sections added
   - **Verify**: `grep -l "Walkthrough" plugins/ralph-specum/commands/research.md plugins/ralph-specum/commands/requirements.md plugins/ralph-specum/commands/design.md plugins/ralph-specum/commands/tasks.md | wc -l` returns 4
   - **Done when**: All 4 files contain "Walkthrough" section
   - **Commit**: None (verification only)
 
-- [ ] 1.6 POC Checkpoint
+- [x] 1.6 POC Checkpoint
   - **Do**: Run a test spec through all phases to verify walkthroughs appear
   - **Verify**:
     1. Create test spec: Run `/ralph-specum:new test-walkthrough "test goal"`
