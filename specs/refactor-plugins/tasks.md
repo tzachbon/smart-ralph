@@ -161,7 +161,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
   - _Requirements: AC-4.2, AC-4.5_
   - _Design: Legacy commands migration_
 
-- [ ] 1.10 Remove legacy commands directory
+- [x] 1.10 Remove legacy commands directory
   - **Do**:
     1. Verify all commands migrated successfully (from 1.9)
     2. Delete `.claude/commands/` directory from ralph-speckit
