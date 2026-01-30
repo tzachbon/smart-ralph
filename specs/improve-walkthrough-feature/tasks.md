@@ -134,7 +134,7 @@ Focus: Ensure consistency and polish across all walkthrough outputs.
   - **Commit**: `refactor(ralph-specum): add walkthrough error handling`
   - _Design: Error Handling_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: consistency check
+- [x] 2.3 [VERIFY] Quality checkpoint: consistency check
   - **Do**: Compare all 4 walkthrough sections side-by-side
   - **Verify**: All use same header, same structure, same style
   - **Done when**: No inconsistencies found
@@ -144,7 +144,7 @@ Focus: Ensure consistency and polish across all walkthrough outputs.
 
 Focus: Verify walkthrough quality through usage.
 
-- [ ] 3.1 Test walkthrough with real spec
+- [x] 3.1 Test walkthrough with real spec
   - **Do**:
     1. Use this current spec (improve-walkthrough-feature) as test
     2. Re-run each phase and verify walkthrough output is useful
