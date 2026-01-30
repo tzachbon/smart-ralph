@@ -727,7 +727,7 @@ Output: ./specs/$spec/research.md
 Next: Review research.md, then run /ralph-specum:requirements
 ```
 
-**Error handling**: If research.md is missing sections or metrics cannot be extracted, show "N/A" for those fields and continue with available information.
+**Error handling**: If research.md cannot be read, display warning "Warning: Could not read research.md for walkthrough" and skip the Walkthrough section entirely - still show "Research phase complete" and the output path. If research.md exists but is missing sections or metrics cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.
 
 ## Stop
 

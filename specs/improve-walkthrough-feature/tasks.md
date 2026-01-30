@@ -124,7 +124,7 @@ Focus: Ensure consistency and polish across all walkthrough outputs.
   - **Commit**: `refactor(ralph-specum): standardize walkthrough format`
   - _Design: Walkthrough Output Section_
 
-- [ ] 2.2 Add error handling for missing files
+- [x] 2.2 Add error handling for missing files
   - **Do**:
     1. Add instruction in each command: "If generated file cannot be read, show warning and skip walkthrough"
     2. Ensure commands still complete even if walkthrough extraction fails

@@ -350,4 +350,4 @@ Output: ./specs/$spec/tasks.md
 Next: Review tasks.md, then run /ralph-specum:implement to start execution
 ```
 
-**Error handling**: If tasks.md is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information.
+**Error handling**: If tasks.md cannot be read, display warning "Warning: Could not read tasks.md for walkthrough" and skip the Walkthrough section entirely - still show "Tasks phase complete" and the output path. If tasks.md exists but is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.

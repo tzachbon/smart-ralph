@@ -341,4 +341,4 @@ Output: ./specs/$spec/design.md
 Next: Review design.md, then run /ralph-specum:tasks
 ```
 
-**Error handling**: If design.md is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information.
+**Error handling**: If design.md cannot be read, display warning "Warning: Could not read design.md for walkthrough" and skip the Walkthrough section entirely - still show "Design phase complete" and the output path. If design.md exists but is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.

@@ -332,4 +332,4 @@ Output: ./specs/$spec/requirements.md
 Next: Review requirements.md, then run /ralph-specum:design
 ```
 
-**Error handling**: If requirements.md is missing sections or metrics cannot be extracted, show "N/A" for those fields and continue with available information.
+**Error handling**: If requirements.md cannot be read, display warning "Warning: Could not read requirements.md for walkthrough" and skip the Walkthrough section entirely - still show "Requirements phase complete" and the output path. If requirements.md exists but is missing sections or metrics cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.
