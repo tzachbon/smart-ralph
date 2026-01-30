@@ -395,7 +395,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `refactor(ralph-specum): simplify start.md to reference skills`
   - _Design: Command Simplification Plan_
 
-- [ ] 2.17 Simplify research.md command
+- [x] 2.17 Simplify research.md command
   - **Do**:
     1. Replace inline parallel execution with skill reference to parallel-research
     2. Target: ~150 lines (down from 700+)
