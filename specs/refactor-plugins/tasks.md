@@ -328,7 +328,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `feat(ralph-specum): add phase-rules skill`
   - _Design: New Skills - phase-rules_
 
-- [ ] 2.11 Create commit-discipline skill
+- [x] 2.11 Create commit-discipline skill
   - **Do**:
     1. Extract commit rules from spec-executor.md
     2. Document commit message format, spec file inclusion, commit frequency rules
