@@ -239,7 +239,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `feat(ralph-specum): add failure-recovery skill`
   - _Design: New Skills - failure-recovery_
 
-- [ ] 2.2 Create verification-layers skill
+- [x] 2.2 Create verification-layers skill
   - **Do**:
     1. Extract 4-layer verification pattern from implement.md section 7
     2. Document: contradiction check, uncommitted changes, checkmark verification, completion signal
