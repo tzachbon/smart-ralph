@@ -289,7 +289,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `feat(ralph-specum): add intent-classification skill`
   - _Design: New Skills - intent-classification_
 
-- [ ] 2.7 Create spec-scanner skill
+- [x] 2.7 Create spec-scanner skill
   - **Do**:
     1. Extract spec discovery logic from start.md
     2. Document related specs finding, status checking, recommendation logic
