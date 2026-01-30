@@ -278,7 +278,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `feat(ralph-specum): add branch-management skill`
   - _Design: New Skills - branch-management_
 
-- [ ] 2.6 Create intent-classification skill
+- [x] 2.6 Create intent-classification skill
   - **Do**:
     1. Extract intent classification logic from start.md
     2. Document goal type detection, keyword matching, question count determination
