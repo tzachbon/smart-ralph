@@ -267,7 +267,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Done when**: All 3 skills exist with version field
   - **Commit**: `chore(ralph-specum): pass new skills batch 1 checkpoint` (only if fixes needed)
 
-- [ ] 2.5 Create branch-management skill
+- [x] 2.5 Create branch-management skill
   - **Do**:
     1. Extract branch management logic from start.md
     2. Document branch creation, worktree setup, naming conventions, default branch detection
