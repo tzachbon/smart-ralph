@@ -200,7 +200,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
   - _Requirements: AC-5.1, AC-5.2, AC-5.3, AC-5.4_
   - _Design: Validation Script Design_
 
-- [ ] 1.13 Update CLAUDE.md with best practices
+- [x] 1.13 Update CLAUDE.md with best practices
   - **Do**:
     1. Add section referencing plugin-dev skills for best practices
     2. Include validation script usage
