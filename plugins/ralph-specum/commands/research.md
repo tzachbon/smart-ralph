@@ -704,22 +704,20 @@ Output: ./specs/$spec/research.md
 
 ## Walkthrough
 
-**Summary**: [First 2-3 sentences from Executive Summary]
+### Key Points
+- **Summary**: [First 2-3 sentences from Executive Summary]
+- **Recommendations**:
+  1. [First recommendation from Recommendations section]
+  2. [Second recommendation]
+  3. [Third recommendation]
+- **Related Specs**: [List spec names with relevance, or "None found"]
 
-**Feasibility**: [High/Medium/Low] - [brief reason from Notes column]
-**Risk Level**: [High/Medium/Low]
-**Effort**: [S/M/L/XL]
-
-### Key Recommendations
-1. [First recommendation from Recommendations section]
-2. [Second recommendation]
-3. [Third recommendation]
-
-### Related Specs
-[If any related specs found:]
-- [Spec name] ([Relevance]) - [may need update if flagged]
-[If no related specs:]
-- None found
+### Metrics
+| Metric | Value |
+|--------|-------|
+| Feasibility | [High/Medium/Low] |
+| Risk Level | [High/Medium/Low] |
+| Effort | [S/M/L/XL] |
 
 ### Review Focus
 - Verify feasibility assessment matches your expectations

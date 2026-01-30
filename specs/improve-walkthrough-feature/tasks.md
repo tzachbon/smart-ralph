@@ -112,7 +112,7 @@ Focus: Add walkthrough output to each phase command. Validate user sees useful s
 
 Focus: Ensure consistency and polish across all walkthrough outputs.
 
-- [ ] 2.1 Standardize walkthrough header format
+- [x] 2.1 Standardize walkthrough header format
   - **Do**:
     1. Review all 4 walkthrough sections
     2. Ensure consistent header format: `## Walkthrough`

@@ -308,18 +308,21 @@ Output: ./specs/$spec/requirements.md
 
 ## Walkthrough
 
-**Goal**: [Goal summary from requirements]
+### Key Points
+- **Goal**: [Goal summary from requirements]
+- **User Stories**:
+  | ID | Title | ACs |
+  |----|-------|-----|
+  | US-1 | [title] | [count] |
+  | US-2 | [title] | [count] |
+  [... for each user story]
 
-### User Stories ([count] total)
-| ID | Title | ACs |
-|----|-------|-----|
-| US-1 | [title] | [count] |
-| US-2 | [title] | [count] |
-[... for each user story]
-
-### Requirements
-- Functional: [count] (High: [n], Medium: [n], Low: [n])
-- Non-Functional: [count]
+### Metrics
+| Metric | Value |
+|--------|-------|
+| User Stories | [count] |
+| Functional Requirements | [count] (High: [n], Med: [n], Low: [n]) |
+| Non-Functional Requirements | [count] |
 
 ### Review Focus
 - Verify all user needs captured in user stories

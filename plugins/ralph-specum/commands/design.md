@@ -313,26 +313,25 @@ Output: ./specs/$spec/design.md
 
 ## Walkthrough
 
-**Overview**: [First 2-3 sentences from Overview section]
+### Key Points
+- **Overview**: [First 2-3 sentences from Overview section]
+- **Components**:
+  | Component | Purpose |
+  |-----------|---------|
+  | [Component A] | [Purpose from design] |
+  | [Component B] | [Purpose from design] |
+- **Technical Decisions**:
+  | Decision | Choice | Rationale |
+  |----------|--------|-----------|
+  | [Decision 1] | [Choice] | [Brief rationale] |
+  | [Decision 2] | [Choice] | [Brief rationale] |
 
-### Components
-| Component | Purpose |
-|-----------|---------|
-| [Component A] | [Purpose from design] |
-| [Component B] | [Purpose from design] |
-[... for each component]
-
-### Technical Decisions
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| [Decision 1] | [Choice] | [Brief rationale] |
-| [Decision 2] | [Choice] | [Brief rationale] |
-[... for each decision]
-
-### File Changes
-- Create: [count] files
-- Modify: [count] files
-- Key files: [list of 3-5 most important files]
+### Metrics
+| Metric | Value |
+|--------|-------|
+| Files to Create | [count] |
+| Files to Modify | [count] |
+| Key Files | [list of 3-5 most important] |
 
 ### Review Focus
 - Verify architecture approach fits the requirements

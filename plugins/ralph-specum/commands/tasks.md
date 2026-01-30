@@ -325,21 +325,21 @@ Output: ./specs/$spec/tasks.md
 
 ## Walkthrough
 
-**Total Tasks**: [total_tasks from frontmatter]
+### Key Points
+- **POC Completion**: Task [X.Y] marks end of POC phase - feature demonstrable at that point
+- **Phase Breakdown**:
+  | Phase | Tasks | Focus |
+  |-------|-------|-------|
+  | 1. POC | [count] | Validate idea works |
+  | 2. Refactor | [count] | Clean up code |
+  | 3. Testing | [count] | Add test coverage |
+  | 4. Quality | [count] | CI and PR |
 
-### Phase Breakdown
-| Phase | Tasks | Focus |
-|-------|-------|-------|
-| 1. POC | [count] | Validate idea works |
-| 2. Refactor | [count] | Clean up code |
-| 3. Testing | [count] | Add test coverage |
-| 4. Quality | [count] | CI and PR |
-
-### POC Completion
-Task [X.Y] marks end of POC phase - feature demonstrable at that point.
-
-### Estimated Commits
-[total_tasks] commits (one per task)
+### Metrics
+| Metric | Value |
+|--------|-------|
+| Total Tasks | [total_tasks from frontmatter] |
+| Estimated Commits | [total_tasks] |
 
 ### Review Focus
 - Verify POC tasks prove the core idea
