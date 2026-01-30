@@ -1,4 +1,5 @@
 ---
+name: cancel
 description: Cancel active execution loop and cleanup state
 argument-hint: [feature-name]
 allowed-tools: [Read, Bash, Task]

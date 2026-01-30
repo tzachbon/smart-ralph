@@ -1,4 +1,5 @@
 ---
+name: switch
 description: Switch active feature
 argument-hint: <feature-name>
 allowed-tools: [Read, Write, Bash, Glob, Task]

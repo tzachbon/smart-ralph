@@ -1,4 +1,5 @@
 ---
+name: status
 description: Show current feature status and progress
 argument-hint:
 allowed-tools: [Read, Bash, Glob]

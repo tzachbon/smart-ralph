@@ -116,7 +116,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
 
 ### A4: Command Fixes
 
-- [ ] 1.8 Add name field to ralph-speckit modern commands (5 files)
+- [x] 1.8 Add name field to ralph-speckit modern commands (5 files)
   - **Do**:
     1. Add `name: <command>` field to frontmatter of each command
     2. Names: start, status, switch, cancel, implement
