@@ -13,7 +13,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
 
 ### A1: Agent Metadata
 
-- [ ] 1.1 Add color and examples to ralph-specum agents (8 files)
+- [x] 1.1 Add color and examples to ralph-specum agents (8 files)
   - **Do**:
     1. For each of 8 agents, add `color` field after `model` in frontmatter
     2. Add 2 `<example>` blocks with Context/user/assistant/commentary format to description
