@@ -406,7 +406,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `refactor(ralph-specum): simplify research.md to reference skills`
   - _Design: Command Simplification Plan_
 
-- [ ] 2.18 Simplify design.md, requirements.md, tasks.md commands
+- [x] 2.18 Simplify design.md, requirements.md, tasks.md commands
   - **Do**:
     1. Each command already uses interview-framework skill
     2. Ensure explicit skill references are present
