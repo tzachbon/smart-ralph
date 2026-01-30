@@ -227,7 +227,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
 
 ### B1: Create New Skills
 
-- [ ] 2.1 Create failure-recovery skill
+- [x] 2.1 Create failure-recovery skill
   - **Do**:
     1. Extract recovery orchestration logic from implement.md sections 6b-6d
     2. Create skill with proper frontmatter (name, description, version)
