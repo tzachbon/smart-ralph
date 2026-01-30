@@ -57,7 +57,7 @@ Focus: Add walkthrough output to each phase command. Validate user sees useful s
   - _Requirements: FR-2, AC-2.1, AC-2.2, AC-2.3, AC-2.4_
   - _Design: Requirements Walkthrough Template_
 
-- [ ] 1.3 Add walkthrough to design.md command
+- [x] 1.3 Add walkthrough to design.md command
   - **Do**:
     1. Read `plugins/ralph-specum/commands/design.md`
     2. Find the `## Output` section (around line 293)

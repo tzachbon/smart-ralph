@@ -290,11 +290,56 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
+After design.md is created and approved, read the generated file and extract key information for the walkthrough.
+
+### Extract from design.md
+
+1. **Overview Summary**: Read the first 2-3 sentences from `## Overview`
+2. **Components**: Extract from `## Architecture` / `### Components` section:
+   - List each component name and its purpose
+3. **Technical Decisions**: Extract from `## Technical Decisions` table:
+   - List each decision and the choice made with brief rationale
+4. **File Structure**: Extract from `## File Structure` table:
+   - Count files to create vs modify
+   - List key files
+
+### Display Walkthrough
+
 ```text
 Design phase complete for '$spec'.
 
 Output: ./specs/$spec/design.md
 [If commitSpec: "Spec committed and pushed."]
 
+## Walkthrough
+
+**Overview**: [First 2-3 sentences from Overview section]
+
+### Components
+| Component | Purpose |
+|-----------|---------|
+| [Component A] | [Purpose from design] |
+| [Component B] | [Purpose from design] |
+[... for each component]
+
+### Technical Decisions
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| [Decision 1] | [Choice] | [Brief rationale] |
+| [Decision 2] | [Choice] | [Brief rationale] |
+[... for each decision]
+
+### File Changes
+- Create: [count] files
+- Modify: [count] files
+- Key files: [list of 3-5 most important files]
+
+### Review Focus
+- Verify architecture approach fits the requirements
+- Check technical decisions align with project constraints
+- Review file structure for completeness
+
 Next: Review design.md, then run /ralph-specum:tasks
 ```
+
+**Error handling**: If design.md is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information.
