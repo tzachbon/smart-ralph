@@ -302,12 +302,52 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
+After tasks.md is created and approved, read the generated file and extract key information for the walkthrough.
+
+### Extract from tasks.md
+
+1. **Total Task Count**: Read `total_tasks` from frontmatter
+2. **Phase Breakdown**: Count tasks (`- [ ]`) under each phase header:
+   - Phase 1 (POC): Count tasks under `## Phase 1: Make It Work (POC)`
+   - Phase 2 (Refactor): Count tasks under `## Phase 2: Refactoring`
+   - Phase 3 (Testing): Count tasks under `## Phase 3: Testing`
+   - Phase 4 (Quality): Count tasks under `## Phase 4: Quality Gates`
+3. **POC Checkpoint**: Find the last task in Phase 1 - this marks POC completion
+4. **Estimated Commits**: Same as total task count (each task = one commit)
+
+### Display Walkthrough
+
 ```text
 Tasks phase complete for '$spec'.
 
 Output: ./specs/$spec/tasks.md
-Total tasks: <count>
 [If commitSpec: "Spec committed and pushed."]
+
+## Walkthrough
+
+**Total Tasks**: [total_tasks from frontmatter]
+
+### Phase Breakdown
+| Phase | Tasks | Focus |
+|-------|-------|-------|
+| 1. POC | [count] | Validate idea works |
+| 2. Refactor | [count] | Clean up code |
+| 3. Testing | [count] | Add test coverage |
+| 4. Quality | [count] | CI and PR |
+
+### POC Completion
+Task [X.Y] marks end of POC phase - feature demonstrable at that point.
+
+### Estimated Commits
+[total_tasks] commits (one per task)
+
+### Review Focus
+- Verify POC tasks prove the core idea
+- Check each task has clear Done when criteria
+- Verify commands can run autonomously
+- Review quality checkpoints are reasonable
 
 Next: Review tasks.md, then run /ralph-specum:implement to start execution
 ```
+
+**Error handling**: If tasks.md is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information.

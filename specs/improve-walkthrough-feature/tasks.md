@@ -75,7 +75,7 @@ Focus: Add walkthrough output to each phase command. Validate user sees useful s
   - _Requirements: FR-3, AC-3.1, AC-3.2, AC-3.3, AC-3.4_
   - _Design: Design Walkthrough Template_
 
-- [ ] 1.4 Add walkthrough to tasks.md command
+- [x] 1.4 Add walkthrough to tasks.md command
   - **Do**:
     1. Read `plugins/ralph-specum/commands/tasks.md`
     2. Find the `## Output` section (around line 303)
