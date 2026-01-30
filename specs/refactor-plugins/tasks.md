@@ -250,7 +250,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `feat(ralph-specum): add verification-layers skill`
   - _Design: New Skills - verification-layers_
 
-- [ ] 2.3 Create coordinator-pattern skill
+- [x] 2.3 Create coordinator-pattern skill
   - **Do**:
     1. Extract coordinator prompt pattern from implement.md
     2. Document role definition, state reading, task delegation, completion signaling
