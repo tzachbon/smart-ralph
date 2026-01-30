@@ -1,6 +1,7 @@
 ---
 name: delegation-principle
-description: Core principle that the main agent is a coordinator, not an implementer. All work must be delegated to subagents.
+version: 0.1.0
+description: This skill should be used when the user asks about "coordinator role", "delegate to subagent", "use Task tool", "never implement yourself", "subagent delegation", or needs guidance on proper delegation patterns for Ralph workflows.
 ---
 
 # Delegation Principle

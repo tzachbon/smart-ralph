@@ -76,7 +76,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
   - _Requirements: AC-2.1, AC-2.5_
   - _Design: ralph-specum Skills_
 
-- [ ] 1.5 Add version and fix descriptions for ralph-speckit skills (4 files)
+- [x] 1.5 Add version and fix descriptions for ralph-speckit skills (4 files)
   - **Do**:
     1. Add `version: 0.1.0` to frontmatter of each skill
     2. Rewrite all 4 descriptions to third-person format: "This skill should be used when..."
