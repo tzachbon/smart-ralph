@@ -382,7 +382,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `refactor(ralph-specum): simplify implement.md to reference skills`
   - _Design: Command Simplification Plan_
 
-- [ ] 2.16 Simplify start.md command
+- [x] 2.16 Simplify start.md command
   - **Do**:
     1. Replace inline branch management with skill reference to branch-management
     2. Replace inline intent classification with skill reference to intent-classification
