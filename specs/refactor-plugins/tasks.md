@@ -51,7 +51,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
   - _Requirements: AC-1.2, AC-1.3, AC-1.4, AC-1.5_
   - _Design: ralph-speckit Agents, Agent Color Assignments_
 
-- [ ] 1.3 [VERIFY] Quality checkpoint: agent metadata
+- [x] 1.3 [VERIFY] Quality checkpoint: agent metadata
   - **Do**: Verify all 14 agents have color field and 2+ example blocks
   - **Verify**: `count=0; for f in plugins/*/agents/*.md; do grep -q "^color:" "$f" && test $(grep -c "<example>" "$f") -ge 2 || ((count++)); done; test $count -eq 0`
   - **Done when**: All agents pass color and example validation
@@ -108,7 +108,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
   - _Requirements: AC-3.1, AC-3.2, AC-3.3_
   - _Design: Hooks_
 
-- [ ] 1.7 [VERIFY] Quality checkpoint: skills and hooks
+- [x] 1.7 [VERIFY] Quality checkpoint: skills and hooks
   - **Do**: Verify all skills have version and all hooks have matcher
   - **Verify**: `count=0; for f in plugins/*/skills/*/SKILL.md; do grep -q "^version:" "$f" || ((count++)); done; for f in plugins/*/hooks/hooks.json; do grep -q '"matcher"' "$f" || ((count++)); done; test $count -eq 0`
   - **Done when**: All skills and hooks pass validation
@@ -174,7 +174,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
   - _Requirements: AC-4.3, AC-4.4_
   - _Design: Post-migration cleanup_
 
-- [ ] 1.11 [VERIFY] Quality checkpoint: commands
+- [x] 1.11 [VERIFY] Quality checkpoint: commands
   - **Do**: Verify all ralph-speckit commands have name field and legacy dir removed
   - **Verify**: `count=0; for f in plugins/ralph-speckit/commands/*.md; do grep -q "^name:" "$f" || ((count++)); done; test ! -d "plugins/ralph-speckit/.claude/commands" || ((count++)); test $count -eq 0`
   - **Done when**: All commands valid, legacy directory removed
@@ -213,7 +213,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
   - _Requirements: AC-5.5_
   - _Design: Documentation_
 
-- [ ] 1.14 [VERIFY] Phase A complete validation
+- [x] 1.14 [VERIFY] Phase A complete validation
   - **Do**: Run full validation script to verify all Phase A changes
   - **Verify**: `bash scripts/validate-plugins.sh && echo "Phase A PASS"`
   - **Done when**: Validation script passes with 0 errors
@@ -261,7 +261,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `feat(ralph-specum): add coordinator-pattern skill`
   - _Design: New Skills - coordinator-pattern_
 
-- [ ] 2.4 [VERIFY] Quality checkpoint: new skills batch 1
+- [x] 2.4 [VERIFY] Quality checkpoint: new skills batch 1
   - **Do**: Verify first 3 new skills have proper structure
   - **Verify**: `count=0; for s in failure-recovery verification-layers coordinator-pattern; do test -f "plugins/ralph-specum/skills/$s/SKILL.md" && grep -q "^version:" "plugins/ralph-specum/skills/$s/SKILL.md" || ((count++)); done; test $count -eq 0`
   - **Done when**: All 3 skills exist with version field
@@ -464,7 +464,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
   - **Commit**: `refactor(ralph-specum): simplify research-analyst.md to reference skills`
   - _Design: Agent Simplification Plan_
 
-- [ ] 2.23 [VERIFY] Quality checkpoint: agent simplification
+- [x] 2.23 [VERIFY] Quality checkpoint: agent simplification
   - **Do**: Verify all simplified agents are under target line counts
   - **Verify**: `count=0; test $(wc -l < plugins/ralph-specum/agents/spec-executor.md) -lt 300 || ((count++)); test $(wc -l < plugins/ralph-specum/agents/task-planner.md) -lt 350 || ((count++)); test $(wc -l < plugins/ralph-specum/agents/research-analyst.md) -lt 280 || ((count++)); test $count -eq 0`
   - **Done when**: All simplified agents under target line counts
@@ -476,7 +476,7 @@ Focus: Extract procedural logic from commands/agents into reusable skills, then 
 
 Minimal testing per interview context.
 
-- [ ] 3.1 Run full validation script
+- [x] 3.1 Run full validation script
   - **Do**: Execute validation script to verify all compliance requirements
   - **Files**: (none - verification only)
   - **Done when**: Validation script passes with 0 errors
@@ -488,13 +488,13 @@ Minimal testing per interview context.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 [VERIFY] Full local validation
+- [x] 4.1 [VERIFY] Full local validation
   - **Do**: Run validation script and verify all components
   - **Verify**: `bash scripts/validate-plugins.sh && echo "All checks pass"`
   - **Done when**: Validation passes, no compliance issues
   - **Commit**: `fix(plugins): address validation issues` (only if fixes needed)
 
-- [ ] 4.2 Create PR and verify
+- [x] 4.2 Create PR and verify
   - **Do**:
     1. Verify current branch is feature branch: `git branch --show-current`
     2. Push branch: `git push -u origin $(git branch --show-current)`
@@ -508,7 +508,7 @@ Minimal testing per interview context.
 
 ## Phase 5: PR Lifecycle
 
-- [ ] 5.1 Monitor CI and fix failures
+- [x] 5.1 Monitor CI and fix failures
   - **Do**:
     1. Watch CI status: `gh pr checks --watch`
     2. If failures, read logs and fix issues
@@ -517,7 +517,7 @@ Minimal testing per interview context.
   - **Done when**: All CI checks pass
   - **Commit**: `fix(plugins): address CI failures` (only if fixes needed)
 
-- [ ] 5.2 [VERIFY] AC checklist verification
+- [x] 5.2 [VERIFY] AC checklist verification
   - **Do**: Programmatically verify each acceptance criterion
   - **Verify**:
     ```bash
