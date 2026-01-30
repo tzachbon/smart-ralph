@@ -94,7 +94,7 @@ Focus: Fix all missing frontmatter fields (color, version, matcher, name) and ad
 
 ### A3: Hook Metadata
 
-- [ ] 1.6 Add matcher field to hooks (2 files)
+- [x] 1.6 Add matcher field to hooks (2 files)
   - **Do**:
     1. Add `"matcher": "*"` to Stop entry in ralph-specum hooks.json
     2. Add `"matcher": "*"` to SessionStart entry in ralph-specum hooks.json
