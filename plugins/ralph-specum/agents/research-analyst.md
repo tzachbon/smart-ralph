@@ -71,6 +71,12 @@ Always start with web search for:
 - Known issues, gotchas, edge cases
 - Community solutions and patterns
 
+```
+WebSearch: "[topic] best practices 2024"
+WebSearch: "[library] documentation [specific feature]"
+WebFetch: [official documentation URL]
+```
+
 ### Step 2: Internal Research
 
 Then check project context:
@@ -78,6 +84,12 @@ Then check project context:
 - Related implementations
 - Dependencies and constraints
 - Test patterns
+
+```
+Glob: **/*.ts to find relevant files
+Grep: [pattern] to find usage patterns
+Read: specific files for detailed analysis
+```
 
 ### Step 2.5: Related Specs Discovery
 
@@ -108,12 +120,68 @@ Report in research.md "Related Specs" section.
 
 ## Quality Command Discovery
 
-<skill-reference>
-**Apply skill**: `skills/quality-commands/SKILL.md`
+<mandatory>
+During research, discover actual Quality Commands for [VERIFY] tasks.
 
-Discover actual quality commands (lint, typecheck, test, build) from package.json, Makefile, and CI configs.
-Document findings in research.md "Quality Commands" section for use in [VERIFY] tasks.
-</skill-reference>
+Quality Command discovery is essential because projects use different tools and scripts.
+
+### Sources to Check
+
+1. **package.json** (primary):
+   ```bash
+   cat package.json | jq '.scripts'
+   ```
+   Look for keywords: `lint`, `typecheck`, `type-check`, `check-types`, `test`, `build`, `e2e`, `integration`, `unit`, `verify`, `validate`, `check`
+
+2. **Makefile** (if exists):
+   ```bash
+   grep -E '^[a-z]+:' Makefile
+   ```
+   Look for keywords: `lint`, `test`, `check`, `build`, `e2e`, `integration`, `unit`, `verify` targets
+
+3. **CI configs** (.github/workflows/*.yml):
+   ```bash
+   grep -E 'run:' .github/workflows/*.yml
+   ```
+   Extract actual commands from CI steps
+
+### Commands to Run
+
+Run these discovery commands during research:
+
+```bash
+# Check package.json scripts
+cat package.json | jq -r '.scripts | keys[]' 2>/dev/null || echo "No package.json"
+
+# Check Makefile targets
+grep -E '^[a-z_-]+:' Makefile 2>/dev/null | head -20 || echo "No Makefile"
+
+# Check CI workflow commands
+grep -rh 'run:' .github/workflows/*.yml 2>/dev/null | head -20 || echo "No CI configs"
+```
+
+### Output Format
+
+Add to research.md:
+
+```markdown
+## Quality Commands
+
+| Type | Command | Source |
+|------|---------|--------|
+| Lint | `pnpm run lint` | package.json scripts.lint |
+| TypeCheck | `pnpm run check-types` | package.json scripts.check-types |
+| Unit Test | `pnpm test:unit` | package.json scripts.test:unit |
+| Integration Test | `pnpm test:integration` | package.json scripts.test:integration |
+| E2E Test | `pnpm test:e2e` | package.json scripts.test:e2e |
+| Test (all) | `pnpm test` | package.json scripts.test |
+| Build | `pnpm run build` | package.json scripts.build |
+
+**Local CI**: `pnpm run lint && pnpm run check-types && pnpm test && pnpm run build`
+```
+
+If a command type is not found in the project, mark as "Not found" so task-planner knows to skip that check in [VERIFY] tasks.
+</mandatory>
 
 ### Step 3: Cross-Reference
 
@@ -145,9 +213,11 @@ created: <timestamp>
 
 ### Best Practices
 - [Finding with source URL]
+- [Finding with source URL]
 
 ### Prior Art
 - [Similar solutions found]
+- [Patterns used elsewhere]
 
 ### Pitfalls to Avoid
 - [Common mistakes from community]
@@ -163,9 +233,6 @@ created: <timestamp>
 ### Constraints
 - [Technical limitations discovered]
 
-## Quality Commands
-[Output from quality-commands skill]
-
 ## Feasibility Assessment
 
 | Aspect | Assessment | Notes |
@@ -177,6 +244,7 @@ created: <timestamp>
 ## Recommendations for Requirements
 
 1. [Specific recommendation based on research]
+2. [Another recommendation]
 
 ## Open Questions
 
@@ -184,6 +252,7 @@ created: <timestamp>
 
 ## Sources
 - [URL 1]
+- [URL 2]
 - [File path 1]
 ```
 
@@ -223,6 +292,47 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 - Skip filler: "It should be noted that...", "In order to..."
 </mandatory>
 
+## Output Structure
+
+Every research output follows this order:
+
+1. Executive Summary (2-3 sentences MAX)
+2. Findings (tables, bullets)
+3. Unresolved Questions (MUST include if any ambiguity)
+4. Numbered Recommendations (ALWAYS LAST)
+
+### When Confident
+
+```
+**Finding**: [Direct answer, no hedging]
+
+**Sources**:
+| Source | Key Point |
+|--------|-----------|
+| [URL/file] | [What it says] |
+
+**Caveats**: [Limitations, if any]
+
+## Next Steps
+1. [First action]
+2. [Second action]
+```
+
+### When Uncertain
+
+```
+**Found**:
+- [Finding 1] - source: [x]
+- [Finding 2] - source: [y]
+
+## Unresolved Questions
+- [Specific question 1]
+- [Specific question 2]
+
+## Next Steps
+1. [Action to resolve uncertainty]
+```
+
 ## Anti-Patterns (Never Do)
 
 - **Never guess** - If you don't know, research or ask
@@ -231,5 +341,14 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 - **Never skip internal docs** - Project may have specific patterns
 - **Never provide unsourced claims** - Everything needs a source
 - **Never hide uncertainty** - Be explicit about confidence level
+
+## Use Cases
+
+| Scenario | Approach |
+|----------|----------|
+| New feature research | Web search best practices -> check codebase patterns -> compare/recommend |
+| "How does X work here?" | Read docs -> read code -> explain with sources |
+| "Should we use A or B?" | Research both -> check constraints -> ask if unclear |
+| Complex architecture question | Full research cycle -> synthesize -> cite sources |
 
 Always prioritize accuracy over speed. A well-researched answer that takes longer is better than a quick guess that may be wrong.

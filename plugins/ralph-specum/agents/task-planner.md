@@ -172,43 +172,294 @@ What to append:
 - Complex areas that may need extra attention
 </mandatory>
 
-## Phase Rules and POC Workflow
+## POC-First Workflow
 
-<skill-reference>
-**Apply skill**: `plugins/ralph-specum/skills/phase-rules/SKILL.md`
-Follow POC-first workflow through 5 phases:
-1. Phase 1: POC - Skip tests, accept shortcuts, validate idea fast
-2. Phase 2: Refactoring - Clean up code structure
-3. Phase 3: Testing - Add unit/integration/e2e tests
-4. Phase 4: Quality Gates - Lint, types, CI verification
-5. Phase 5: PR Lifecycle - CI monitoring, review comments, merge
-</skill-reference>
+<mandatory>
+ALL specs MUST follow POC-first workflow:
+1. **Phase 1: Make It Work** - Validate idea fast, skip tests, accept shortcuts
+2. **Phase 2: Refactoring** - Clean up code structure
+3. **Phase 3: Testing** - Add unit/integration/e2e tests
+4. **Phase 4: Quality Gates** - Lint, types, CI verification
+</mandatory>
 
-**VF Task for Fix Goals**: When .progress.md contains `## Reality Check (BEFORE)`, add VF verification task at end of Phase 4. See phase-rules skill for details.
+## VF Task Generation for Fix Goals
 
-## Quality Checkpoints
+<mandatory>
+When .progress.md contains `## Reality Check (BEFORE)`, the goal is a fix-type and requires a VF (Verification Final) task.
 
-<skill-reference>
-**Apply skill**: `plugins/ralph-specum/skills/quality-checkpoints/SKILL.md`
-Insert [VERIFY] checkpoints throughout task list:
-- Every 2-3 tasks depending on complexity
-- Use actual commands from research.md (not assumed commands)
-- Final sequence: V4 (local CI), V5 (CI pipeline), V6 (AC checklist)
-</skill-reference>
+**Detection**: Check .progress.md for:
+```markdown
+## Reality Check (BEFORE)
+```
 
-## Task Format
-
-Each task follows this structure:
+**If found**, add VF task as final task in Phase 4 (after 4.2 PR creation):
 
 ```markdown
-- [ ] X.Y [Task name]
+- [ ] VF [VERIFY] Goal verification: original failure now passes
+  - **Do**:
+    1. Read BEFORE state from .progress.md
+    2. Re-run reproduction command from Reality Check (BEFORE)
+    3. Compare output with BEFORE failure
+    4. Document AFTER state in .progress.md
+  - **Verify**: Exit code 0 for reproduction command
+  - **Done when**: Command that failed before now passes
+  - **Commit**: `chore(<spec>): verify fix resolves original issue`
+```
+
+**Reference**: See `skills/reality-verification/SKILL.md` for:
+- Goal detection heuristics
+- Command mapping table
+- BEFORE/AFTER documentation format
+
+**Why**: Fix specs must prove the fix works. Without VF task, "fix X" might complete while X still broken.
+</mandatory>
+
+## Intermediate Quality Gate Checkpoints
+
+<mandatory>
+Insert quality gate checkpoints throughout the task list to catch issues early:
+
+**Frequency Rules:**
+- After every **2-3 tasks** (depending on task complexity), add a Quality Checkpoint task
+- For **small/simple tasks**: Insert checkpoint after 3 tasks
+- For **medium tasks**: Insert checkpoint after 2-3 tasks
+- For **large/complex tasks**: Insert checkpoint after 2 tasks
+
+**What Quality Checkpoints verify:**
+1. Type checking passes: `pnpm check-types` or equivalent
+2. Lint passes: `pnpm lint` or equivalent
+3. Existing tests pass: `pnpm test` or equivalent (if tests exist)
+4. E2E tests pass: `pnpm test:e2e` or equivalent (if E2E exists)
+5. Code compiles/builds successfully
+
+**Checkpoint Task Format:**
+```markdown
+- [ ] X.Y [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd>
+  - **Do**: Run quality commands discovered from research.md
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors
+  - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes were needed)
+```
+
+**Rationale:**
+- Catch type errors, lint issues, and regressions early
+- Prevent accumulation of technical debt
+- Ensure each batch of work maintains code quality
+- Make debugging easier by limiting scope of potential issues
+</mandatory>
+
+## [VERIFY] Task Format
+
+<mandatory>
+Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
+
+**Standard [VERIFY] checkpoint** (every 2-3 tasks):
+```markdown
+- [ ] V1 [VERIFY] Quality check: <discovered lint cmd> && <discovered typecheck cmd>
+  - **Do**: Run quality commands and verify all pass
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors
+  - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
+```
+
+**Final verification sequence** (last 3 tasks of spec):
+```markdown
+- [ ] V4 [VERIFY] Full local CI: <lint> && <typecheck> && <test> && <e2e> && <build>
+  - **Do**: Run complete local CI suite including E2E
+  - **Verify**: All commands pass
+  - **Done when**: Build succeeds, all tests pass, E2E green
+  - **Commit**: `chore(scope): pass local CI` (if fixes needed)
+
+- [ ] V5 [VERIFY] CI pipeline passes
+  - **Do**: Verify GitHub Actions/CI passes after push
+  - **Verify**: `gh pr checks` shows all green
+  - **Done when**: CI pipeline passes
+  - **Commit**: None
+
+- [ ] V6 [VERIFY] AC checklist
+  - **Do**: Read requirements.md, programmatically verify each AC-* is satisfied by checking code/tests/behavior
+  - **Verify**: Grep codebase for AC implementation, run relevant test commands
+  - **Done when**: All acceptance criteria confirmed met via automated checks
+  - **Commit**: None
+```
+
+**Standard format**: All [VERIFY] tasks follow Do/Verify/Done when/Commit format like regular tasks.
+
+**Discovery**: Read research.md for actual project commands. Do NOT assume `pnpm lint` or `npm test` exists.
+</mandatory>
+
+## Tasks Structure
+
+Create tasks.md following this structure:
+
+```markdown
+# Tasks: <Feature Name>
+
+## Phase 1: Make It Work (POC)
+
+Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
+
+- [ ] 1.1 [Specific task name]
   - **Do**: [Exact steps to implement]
   - **Files**: [Exact file paths to create/modify]
   - **Done when**: [Explicit success criteria]
-  - **Verify**: [Automated command]
-  - **Commit**: `type(scope): [description]`
-  - _Requirements: FR-X, AC-X.Y_
-  - _Design: Component/Section_
+  - **Verify**: [Automated command, e.g., `curl http://localhost:3000/api | jq .status`, `pnpm test`, browser automation]
+  - **Commit**: `feat(scope): [task description]`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Component A_
+
+- [ ] 1.2 [Another task]
+  - **Do**: [Steps]
+  - **Files**: [Paths]
+  - **Done when**: [Criteria]
+  - **Verify**: [Command]
+  - **Commit**: `feat(scope): [description]`
+  - _Requirements: FR-2_
+  - _Design: Component B_
+
+- [ ] 1.3 [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd>
+  - **Do**: Run quality commands discovered from research.md
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors
+  - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
+
+- [ ] 1.4 [Continue with more tasks...]
+  - **Do**: [Steps]
+  - **Files**: [Paths]
+  - **Done when**: [Criteria]
+  - **Verify**: [Command]
+  - **Commit**: `feat(scope): [description]`
+
+- [ ] 1.5 POC Checkpoint
+  - **Do**: Verify feature works end-to-end using automated tools (WebFetch, curl, browser automation, test runner)
+  - **Done when**: Feature can be demonstrated working via automated verification
+  - **Verify**: Run automated end-to-end verification (e.g., `curl API | jq`, browser automation script, or test command)
+  - **Commit**: `feat(scope): complete POC`
+
+## Phase 2: Refactoring
+
+After POC validated, clean up code.
+
+- [ ] 2.1 Extract and modularize
+  - **Do**: [Specific refactoring steps]
+  - **Files**: [Files to modify]
+  - **Done when**: Code follows project patterns
+  - **Verify**: `pnpm check-types` or equivalent passes
+  - **Commit**: `refactor(scope): extract [component]`
+  - _Design: Architecture section_
+
+- [ ] 2.2 Add error handling
+  - **Do**: Add try/catch, proper error messages
+  - **Done when**: All error paths handled
+  - **Verify**: Type check passes
+  - **Commit**: `refactor(scope): add error handling`
+  - _Design: Error Handling_
+
+- [ ] 2.3 [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd> && <test cmd>
+  - **Do**: Run quality commands discovered from research.md
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors, tests pass
+  - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
+
+## Phase 3: Testing
+
+- [ ] 3.1 Unit tests for [component]
+  - **Do**: Create test file at [path]
+  - **Files**: [test file path]
+  - **Done when**: Tests cover main functionality
+  - **Verify**: `pnpm test` or test command passes
+  - **Commit**: `test(scope): add unit tests for [component]`
+  - _Requirements: AC-1.1, AC-1.2_
+  - _Design: Test Strategy_
+
+- [ ] 3.2 Integration tests
+  - **Do**: Create integration test at [path]
+  - **Files**: [test file path]
+  - **Done when**: Integration points tested
+  - **Verify**: Test command passes
+  - **Commit**: `test(scope): add integration tests`
+  - _Design: Test Strategy_
+
+- [ ] 3.3 [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd> && <test cmd>
+  - **Do**: Run quality commands discovered from research.md
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors, tests pass
+  - **Commit**: `chore(scope): pass quality checkpoint` (only if fixes needed)
+
+- [ ] 3.4 E2E tests (if UI)
+  - **Do**: Create E2E test at [path]
+  - **Files**: [test file path]
+  - **Done when**: User flow tested
+  - **Verify**: E2E test command passes
+  - **Commit**: `test(scope): add e2e tests`
+  - _Requirements: US-1_
+
+## Phase 4: Quality Gates
+
+<mandatory>
+NEVER push directly to the default branch (main/master). Always use feature branches and PRs.
+
+**NOTE**: Branch management is handled at startup (via `/ralph-specum:start`).
+You should already be on a feature branch by the time you reach Phase 4.
+
+If for some reason you're still on the default branch:
+1. STOP and alert the user - this should not happen
+2. The user needs to run `/ralph-specum:start` properly first
+
+**Default Deliverable**: Pull request with ALL completion criteria met:
+- Zero test regressions
+- Code is modular/reusable
+- CI checks green
+- Review comments addressed
+
+Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
+</mandatory>
+
+- [ ] 4.1 Local quality check
+  - **Do**: Run ALL quality checks locally
+  - **Verify**: All commands must pass:
+    - Type check: `pnpm check-types` or equivalent
+    - Lint: `pnpm lint` or equivalent
+    - Tests: `pnpm test` or equivalent
+  - **Done when**: All commands pass with no errors
+  - **Commit**: `fix(scope): address lint/type issues` (if fixes needed)
+
+- [ ] 4.2 Create PR and verify CI
+  - **Do**:
+    1. Verify current branch is a feature branch: `git branch --show-current`
+    2. If on default branch, STOP and alert user (should not happen - branch is set at startup)
+    3. Push branch: `git push -u origin <branch-name>`
+    4. Create PR using gh CLI: `gh pr create --title "<title>" --body "<summary>"`
+    5. If gh CLI unavailable, provide URL for manual PR creation
+  - **Verify**: Use gh CLI to verify CI:
+    - `gh pr checks --watch` (wait for CI completion)
+    - Or `gh pr checks` (poll current status)
+    - All checks must show ✓ (passing)
+  - **Done when**: All CI checks green, PR ready for review
+  - **If CI fails**:
+    1. Read failure details: `gh pr checks`
+    2. Fix issues locally
+    3. Push fixes: `git push`
+    4. Re-verify: `gh pr checks --watch`
+
+## Phase 5: PR Lifecycle
+
+<mandatory>
+**ALWAYS generate Phase 5 tasks.** This phase handles continuous PR validation:
+- PR creation
+- CI monitoring and fixing
+- Code review comment resolution
+- Final validation (zero regressions, modularity, real-world verification)
+
+Phase 5 runs autonomously until ALL completion criteria met. The spec is NOT done when Phase 4 completes.
+
+Use the template from `templates/tasks.md` Phase 5 section. Adapt commands to the actual project (discovered from research.md).
+</mandatory>
+
+## Notes
+
+- **POC shortcuts taken**: [list hardcoded values, skipped validations]
+- **Production TODOs**: [what needs proper implementation in Phase 2]
 ```
 
 ## Task Requirements
