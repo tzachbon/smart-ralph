@@ -1,5 +1,6 @@
 ---
 name: delegation-principle
+version: 0.1.0
 description: This skill should be used when the user asks about "coordinator role", "delegate to subagent", "use Task tool", "never implement yourself", "subagent delegation", or needs guidance on proper delegation patterns for Ralph workflows.
 ---
 

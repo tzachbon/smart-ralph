@@ -6,13 +6,11 @@ allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
 
 # Requirements Phase
 
-You are generating requirements for a specification. Running this command implicitly approves the research phase.
+Generate requirements for a specification. Running this command implicitly approves the research phase.
 
 <mandatory>
 **YOU ARE A COORDINATOR, NOT A PRODUCT MANAGER.**
-
-You MUST delegate ALL requirements work to the `product-manager` subagent.
-Do NOT write user stories, acceptance criteria, or requirements.md yourself.
+Delegate ALL requirements work to the `product-manager` subagent via Task tool.
 </mandatory>
 
 ## Determine Active Spec
@@ -24,262 +22,59 @@ Do NOT write user stories, acceptance criteria, or requirements.md yourself.
 ## Validate
 
 1. Check `./specs/$spec/` directory exists
-2. Read `.ralph-state.json`
-3. Clear approval flag: update state with `awaitingApproval: false`
+2. Read `.ralph-state.json` and clear approval flag: `awaitingApproval: false`
 
 ## Gather Context
 
-Read available context:
-- `./specs/$spec/research.md` (if exists)
-- `./specs/$spec/.progress.md`
-- Original goal from conversation or progress file
+Read: `./specs/$spec/research.md` (if exists), `./specs/$spec/.progress.md`, original goal from progress file
 
 ## Interview
 
-<mandatory>
-**Skip interview if --quick flag detected in $ARGUMENTS.**
+<skill-reference>
+**Apply skill**: `skills/interview-framework/SKILL.md`
+Use interview framework for single-question loop, parameter chain, and completion signals.
+</skill-reference>
 
-If NOT quick mode, conduct interview using AskUserQuestion before delegating to subagent.
-</mandatory>
-
-### Quick Mode Check
-
-Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Requirements".
-
-### Read Context from .progress.md
-
-Before conducting the interview, read `.progress.md` to get:
-1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
-2. **Prior interview responses** to enable parameter chain (skip already-answered questions)
-
-```text
-Context Reading:
-1. Read ./specs/$spec/.progress.md
-2. Parse "## Intent Classification" section for intent type and question counts
-3. Parse "## Interview Responses" section for prior answers (Goal Interview, Research Interview)
-4. Store parsed data for parameter chain checks
-```
-
-**Intent-Based Question Counts (same as start.md):**
-- TRIVIAL: 1-2 questions (minimal user/priority context needed)
-- REFACTOR: 3-5 questions (understand scope and priorities)
-- GREENFIELD: 5-10 questions (full user and priority context)
-- MID_SIZED: 3-7 questions (balanced approach)
-
-### Requirements Interview (Single-Question Flow)
-
-**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
-
-### Phase-Specific Configuration
-
-- **Phase**: Requirements Interview
-- **Parameter Chain Mappings**: primaryUsers, priorityTradeoffs, successCriteria
-- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`
-- **Variables Not Yet Available**: `{users}`, `{priority}` (populated by this phase)
-- **Storage Section**: `### Requirements Interview (from requirements.md)`
+**Skip if --quick flag in $ARGUMENTS.**
 
 ### Requirements Interview Question Pool
 
 | # | Question | Required | Key | Options |
 |---|----------|----------|-----|---------|
-| 1 | Who are the primary users of this feature? | Required | `primaryUsers` | Internal developers only / End users via UI / Both developers and end users / Other |
-| 2 | What priority tradeoffs should we consider for {goal}? | Required | `priorityTradeoffs` | Prioritize speed of delivery / Prioritize code quality and maintainability / Prioritize feature completeness / Other |
-| 3 | What defines success for this feature? | Required | `successCriteria` | Feature works as specified / High performance/reliability required / User satisfaction metrics / Other |
-| 4 | Any other requirements context? (or say 'done' to proceed) | Optional | `additionalReqContext` | No, let's proceed / Yes, I have more details / Other |
+| 1 | Who are the primary users of this feature? | Required | `primaryUsers` | Internal devs / End users via UI / Both / Other |
+| 2 | What priority tradeoffs for {goal}? | Required | `priorityTradeoffs` | Speed of delivery / Code quality / Feature completeness / Other |
+| 3 | What defines success for this feature? | Required | `successCriteria` | Works as specified / High performance / User satisfaction / Other |
+| 4 | Any other requirements context? (or 'done') | Optional | `additionalReqContext` | No, proceed / Yes, more details / Other |
 
-### Store Requirements Interview Responses
-
-After interview, append to `.progress.md` under the "Interview Responses" section:
-
-```markdown
-### Requirements Interview (from requirements.md)
-- Primary users: [responses.primaryUsers]
-- Priority tradeoffs: [responses.priorityTradeoffs]
-- Success criteria: [responses.successCriteria]
-- Additional requirements context: [responses.additionalReqContext]
-[Any follow-up responses from "Other" selections]
-```
-
-### Interview Context Format
-
-Pass the combined context (prior + new responses) to the Task delegation prompt:
-
-```text
-Interview Context:
-- Primary users: [Answer]
-- Priority tradeoffs: [Answer]
-- Success criteria: [Answer]
-- Follow-up details: [Any additional clarifications]
-```
-
-Store this context to include in the Task delegation prompt.
+Store responses in `.progress.md` under `### Requirements Interview (from requirements.md)`
 
 ## Execute Requirements
 
-<mandatory>
-Use the Task tool with `subagent_type: product-manager` to generate requirements.
-</mandatory>
-
-Invoke product-manager agent with prompt:
+Use Task tool with `subagent_type: product-manager`:
 
 ```text
 You are generating requirements for spec: $spec
 Spec path: ./specs/$spec/
 
 Context:
-- Research: [include research.md content if exists]
-- Original goal: [from conversation or progress]
+- Research: [research.md content if exists]
+- Original goal: [from progress]
+- Interview: [interview responses]
 
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
-
-Your task:
-1. Analyze the goal and research findings
-2. Create user stories with acceptance criteria
-3. Define functional requirements (FR-*) with priorities
-4. Define non-functional requirements (NFR-*)
-5. Document glossary, out-of-scope items, dependencies
-6. Output to ./specs/$spec/requirements.md
-7. Include interview responses in a "User Decisions" section of requirements.md
-
-Use the requirements.md template with frontmatter:
----
-spec: $spec
-phase: requirements
-created: <timestamp>
----
-
-Focus on:
-- Testable acceptance criteria
-- Clear priority levels
-- Explicit success criteria
-- Risk identification
+Create requirements.md with: user stories, acceptance criteria, functional requirements (FR-*), non-functional requirements (NFR-*), glossary, out-of-scope, dependencies.
 ```
 
-## Review & Feedback Loop
+## Review Loop
 
-<mandatory>
-**Skip review if --quick flag detected in $ARGUMENTS.**
-
-If NOT quick mode, conduct requirements review using AskUserQuestion after requirements are created.
-</mandatory>
-
-### Quick Mode Check
-
-Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
-
-### Requirements Review Questions
-
-After the requirements have been created by the product-manager agent, ask the user to review them and provide feedback.
-
-**Review Question Flow:**
-
-1. **Read the generated requirements.md** to understand what was created
-2. **Ask initial review questions** to confirm the requirements meet their expectations:
-
-| # | Question | Key | Options |
-|---|----------|-----|---------|
-| 1 | Do the user stories capture your intended functionality? | `userStoriesApproval` | Yes, complete / Missing some stories / Need refinement / Other |
-| 2 | Are the acceptance criteria clear and testable? | `acceptanceCriteriaApproval` | Yes, clear / Need more details / Some are unclear / Other |
-| 3 | Are the priorities and scope appropriate? | `prioritiesApproval` | Yes, appropriate / Need adjustment / Missing items / Other |
-| 4 | Any other feedback on the requirements? (or say 'approved' to proceed) | `requirementsFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
-
-### Store Requirements Review Responses
-
-After review questions, append to `.progress.md` under a new section:
-
-```markdown
-### Requirements Review (from requirements.md)
-- User stories approval: [responses.userStoriesApproval]
-- Acceptance criteria approval: [responses.acceptanceCriteriaApproval]
-- Priorities approval: [responses.prioritiesApproval]
-- Requirements feedback: [responses.requirementsFeedback]
-[Any follow-up responses from "Other" selections]
-```
-
-### Update Requirements Based on Feedback
-
-<mandatory>
-If the user provided feedback requiring changes (any answer other than "Yes, complete", "Yes, clear", "Yes, appropriate", or "Approved, let's proceed"), you MUST:
-
-1. Collect specific change requests from the user
-2. Invoke product-manager again with update instructions
-3. Repeat the review questions after updates
-4. Continue loop until user approves
-</mandatory>
-
-**Update Flow:**
-
-If changes are needed:
-
-1. **Ask for specific changes:**
-   ```
-   What specific changes would you like to see in the requirements?
-   ```
-
-2. **Invoke product-manager with update prompt:**
-   ```
-   You are updating the requirements for spec: $spec
-   Spec path: ./specs/$spec/
-
-   Current requirements: ./specs/$spec/requirements.md
-
-   User feedback:
-   $user_feedback
-
-   Your task:
-   1. Read the existing requirements.md
-   2. Understand the user's feedback and concerns
-   3. Update the requirements to address the feedback
-   4. Maintain consistency with research findings
-   5. Update requirements.md with the changes
-   6. Append update notes to .progress.md explaining what changed
-
-   Focus on addressing the specific feedback while maintaining requirements quality.
-   ```
-
-3. **After update, repeat review questions** (go back to "Requirements Review Questions")
-
-4. **Continue until approved:** Loop until user responds with approval
+**Skip if --quick flag.** Ask user to review generated requirements. If changes needed, invoke product-manager again with feedback and repeat until approved.
 
 ## Update State
 
-After requirements complete and approved:
-
-1. Update `.ralph-state.json`:
-   ```json
-   {
-     "phase": "requirements",
-     "awaitingApproval": true,
-     ...
-   }
-   ```
-
-2. Update `.progress.md`:
-   - Mark research as implicitly approved
-   - Set current phase to requirements
+Update `.ralph-state.json`: `{ "phase": "requirements", "awaitingApproval": true }`
 
 ## Commit Spec (if enabled)
 
-Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
-
-If `commitSpec` is true:
-
-1. Stage requirements file:
-   ```bash
-   git add ./specs/$spec/requirements.md
-   ```
-2. Commit with message:
-   ```bash
-   git commit -m "spec($spec): add requirements"
-   ```
-3. Push to current branch:
-   ```bash
-   git push -u origin $(git branch --show-current)
-   ```
-
-If commit or push fails, display warning but continue (don't block the workflow).
+If `commitSpec` is true in state: stage, commit (`spec($spec): add requirements`), push.
 
 ## Output
 
@@ -302,7 +97,6 @@ After requirements.md is created, read the generated file and extract key inform
 
 ```text
 Requirements phase complete for '$spec'.
-
 Output: ./specs/$spec/requirements.md
 [If commitSpec: "Spec committed and pushed."]
 

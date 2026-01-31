@@ -1,6 +1,7 @@
 ---
 name: interview-framework
-description: Standard single-question adaptive interview loop used across all spec phases
+version: 0.1.0
+description: This skill should be used when the user asks about "interview loop", "single-question interview", "adaptive interview", "question piping", "parameter chain", "completion signals", or needs guidance on the standard interview framework used across Ralph spec phases.
 ---
 
 # Interview Framework

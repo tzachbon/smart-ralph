@@ -1,7 +1,8 @@
 ---
+name: cancel
 description: Cancel active execution loop and cleanup state
 argument-hint: [feature-name]
-allowed-tools: [Read, Bash, Task]
+allowed-tools: [Read, Bash, Task, Skill]
 ---
 
 # Cancel Execution
@@ -28,7 +29,7 @@ If state file exists, read and display:
 
 ## Cleanup
 
-1. Stop Ralph Loop loop (if running):
+1. Stop Ralph Loop (if running):
    ```
    Use the Skill tool to invoke ralph-wiggum:cancel-ralph
    This stops any active Ralph Loop loop iteration

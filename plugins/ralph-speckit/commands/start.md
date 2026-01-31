@@ -1,4 +1,5 @@
 ---
+name: start
 description: Smart entry point for new features with auto ID and branch management
 argument-hint: <feature-name> [goal]
 allowed-tools: [Read, Write, Edit, Task, Bash]

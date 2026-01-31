@@ -1,5 +1,6 @@
 ---
 name: communication-style
+version: 0.1.0
 description: This skill should be used when the user asks about "output formatting", "concise responses", "Matt Pocock planning style", "scannable output", "action steps format", or needs guidance on communication and output formatting rules for Ralph agents.
 ---
 

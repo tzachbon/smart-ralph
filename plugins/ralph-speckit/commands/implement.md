@@ -1,4 +1,5 @@
 ---
+name: implement
 description: Start task execution loop
 argument-hint: [--max-task-iterations 5]
 allowed-tools: [Read, Write, Edit, Task, Bash, Skill]

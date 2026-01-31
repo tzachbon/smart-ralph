@@ -1,5 +1,6 @@
 ---
 name: reality-verification
+version: 0.1.0
 description: This skill should be used when the user asks to "verify a fix", "reproduce failure", "diagnose issue", "check BEFORE/AFTER state", "VF task", "reality check", or needs guidance on verifying fixes by reproducing failures before and after implementation.
 ---
 

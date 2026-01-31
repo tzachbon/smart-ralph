@@ -35,6 +35,28 @@ claude --plugin-dir ./plugins/ralph-specum
 
 No build step required. Changes take effect on Claude Code restart.
 
+### Plugin Validation
+
+Run the validation script to check all plugins for compliance:
+
+```bash
+bash scripts/validate-plugins.sh
+```
+
+This checks:
+- Agent `color:` fields and `<example>` blocks
+- Skill `version:` fields
+- Hook `matcher` fields
+- No legacy command directories
+
+### Agent Color Conventions
+
+Assign colors by function for visual consistency:
+- **blue/cyan** - Analysis agents (research-analyst, architect-reviewer)
+- **green** - Execution agents (spec-executor)
+- **yellow** - Validation agents (qa-engineer)
+- **magenta** - Transformation agents (task-planner, product-manager)
+
 ### Plugin Development Skills (ALWAYS USE)
 
 When creating or modifying plugin components, **ALWAYS** use the `plugin-dev` skills for guidance:

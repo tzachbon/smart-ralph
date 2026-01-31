@@ -1,6 +1,7 @@
 ---
+name: taskstoissues
 description: Convert existing tasks into actionable, dependency-ordered GitHub issues for the feature based on available design artifacts.
-tools: ['github/github-mcp-server/issue_write']
+allowed-tools: [Read, Bash, mcp__github__create_issue]
 ---
 
 ## User Input
