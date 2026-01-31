@@ -290,11 +290,55 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
+After design.md is created and approved, read the generated file and extract key information for the walkthrough.
+
+### Extract from design.md
+
+1. **Overview Summary**: Read the first 2-3 sentences from `## Overview`
+2. **Components**: Extract from `## Architecture` / `### Components` section:
+   - List each component name and its purpose
+3. **Technical Decisions**: Extract from `## Technical Decisions` table:
+   - List each decision and the choice made with brief rationale
+4. **File Structure**: Extract from `## File Structure` table:
+   - Count files to create vs modify
+   - List key files
+
+### Display Walkthrough
+
 ```text
 Design phase complete for '$spec'.
 
 Output: ./specs/$spec/design.md
 [If commitSpec: "Spec committed and pushed."]
 
+## Walkthrough
+
+### Key Points
+- **Overview**: [First 2-3 sentences from Overview section]
+- **Components**:
+  | Component | Purpose |
+  |-----------|---------|
+  | [Component A] | [Purpose from design] |
+  | [Component B] | [Purpose from design] |
+- **Technical Decisions**:
+  | Decision | Choice | Rationale |
+  |----------|--------|-----------|
+  | [Decision 1] | [Choice] | [Brief rationale] |
+  | [Decision 2] | [Choice] | [Brief rationale] |
+
+### Metrics
+| Metric | Value |
+|--------|-------|
+| Files to Create | [count] |
+| Files to Modify | [count] |
+| Key Files | [list of 3-5 most important] |
+
+### Review Focus
+- Verify architecture approach fits the requirements
+- Check technical decisions align with project constraints
+- Review file structure for completeness
+
 Next: Review design.md, then run /ralph-specum:tasks
 ```
+
+**Error handling**: If design.md cannot be read, display warning "Warning: Could not read design.md for walkthrough" and skip the Walkthrough section entirely - still show "Design phase complete" and the output path. If design.md exists but is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.

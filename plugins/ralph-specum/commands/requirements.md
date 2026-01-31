@@ -283,11 +283,53 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
+After requirements.md is created, read the generated file and extract key information for the walkthrough.
+
+### Extract from requirements.md
+
+1. **Goal Summary**: Read the project goal from `## Goal` or `## Overview` section
+2. **User Stories**: Extract from `## User Stories` section:
+   - Count total user stories (US-*)
+   - List each story ID and title
+   - Count acceptance criteria per story
+3. **Functional Requirements**: Extract from `## Functional Requirements` section:
+   - Count total FRs
+   - Count by priority (High/Medium/Low)
+4. **Non-Functional Requirements**: Extract from `## Non-Functional Requirements` section:
+   - Count total NFRs
+
+### Display Walkthrough
+
 ```text
 Requirements phase complete for '$spec'.
 
 Output: ./specs/$spec/requirements.md
 [If commitSpec: "Spec committed and pushed."]
 
+## Walkthrough
+
+### Key Points
+- **Goal**: [Goal summary from requirements]
+- **User Stories**:
+  | ID | Title | ACs |
+  |----|-------|-----|
+  | US-1 | [title] | [count] |
+  | US-2 | [title] | [count] |
+  [... for each user story]
+
+### Metrics
+| Metric | Value |
+|--------|-------|
+| User Stories | [count] |
+| Functional Requirements | [count] (High: [n], Med: [n], Low: [n]) |
+| Non-Functional Requirements | [count] |
+
+### Review Focus
+- Verify all user needs captured in user stories
+- Check acceptance criteria are testable
+- Confirm priority levels match business needs
+
 Next: Review requirements.md, then run /ralph-specum:design
 ```
+
+**Error handling**: If requirements.md cannot be read, display warning "Warning: Could not read requirements.md for walkthrough" and skip the Walkthrough section entirely - still show "Requirements phase complete" and the output path. If requirements.md exists but is missing sections or metrics cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.

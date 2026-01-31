@@ -682,18 +682,52 @@ If commit or push fails, display warning but continue (don't block the workflow)
 
 ## Output
 
+After research.md is created and merged, read the generated file and extract key information for the walkthrough.
+
+### Extract from research.md
+
+1. **Executive Summary**: Read the first 2-3 sentences from `## Executive Summary`
+2. **Feasibility Assessment**: Extract values from `## Feasibility Assessment` table:
+   - Overall feasibility (High/Medium/Low)
+   - Risk level (High/Medium/Low)
+   - Estimated effort (S/M/L/XL)
+3. **Key Recommendations**: Extract numbered list from `## Recommendations for Requirements`
+4. **Related Specs**: Extract spec names and relevance from `## Related Specs` table
+
+### Display Walkthrough
+
 ```text
 Research phase complete for '$spec'.
 
 Output: ./specs/$spec/research.md
 [If commitSpec: "Spec committed and pushed."]
 
-Related specs found:
-  - <name> (<RELEVANCE>) - may need update
-  - <name> (<RELEVANCE>)
+## Walkthrough
+
+### Key Points
+- **Summary**: [First 2-3 sentences from Executive Summary]
+- **Recommendations**:
+  1. [First recommendation from Recommendations section]
+  2. [Second recommendation]
+  3. [Third recommendation]
+- **Related Specs**: [List spec names with relevance, or "None found"]
+
+### Metrics
+| Metric | Value |
+|--------|-------|
+| Feasibility | [High/Medium/Low] |
+| Risk Level | [High/Medium/Low] |
+| Effort | [S/M/L/XL] |
+
+### Review Focus
+- Verify feasibility assessment matches your expectations
+- Check if recommendations align with project constraints
+- Review any related specs that may need updates
 
 Next: Review research.md, then run /ralph-specum:requirements
 ```
+
+**Error handling**: If research.md cannot be read, display warning "Warning: Could not read research.md for walkthrough" and skip the Walkthrough section entirely - still show "Research phase complete" and the output path. If research.md exists but is missing sections or metrics cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.
 
 ## Stop
 
