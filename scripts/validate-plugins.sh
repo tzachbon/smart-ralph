@@ -86,10 +86,11 @@ log_section "Checking hooks have matcher field"
 for hooks_file in "$PLUGINS_DIR"/*/hooks/hooks.json; do
     if [[ -f "$hooks_file" ]]; then
         plugin_name=$(basename "$(dirname "$(dirname "$hooks_file")")")
-        if grep -q '"matcher"' "$hooks_file"; then
+        # Validate that every hook object in .hooks.<event>[] has a matcher key
+        if jq -e '[.hooks | to_entries[].value[] | has("matcher")] | all' "$hooks_file" > /dev/null 2>&1; then
             log_pass "$plugin_name/hooks/hooks.json has matcher field"
         else
-            log_fail "$plugin_name/hooks/hooks.json missing matcher field"
+            log_fail "$plugin_name/hooks/hooks.json missing matcher field in one or more hooks"
         fi
     fi
 done
