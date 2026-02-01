@@ -574,10 +574,10 @@ After the research has been created and merged by the subagents, ask the user to
 
 | # | Question | Key | Options |
 |---|----------|-----|---------|
-| 1 | Does the research cover all the areas you expected? | `researchCoverage` | Yes, comprehensive / Missing some areas / Need more depth / Other |
-| 2 | Are the findings and recommendations helpful? | `findingsQuality` | Yes, very helpful / Somewhat helpful / Need more details / Other |
-| 3 | Are there any specific areas you'd like researched further? | `additionalResearch` | No, looks complete / Yes, I have specific areas / Other |
-| 4 | Any other feedback on the research? (or say 'approved' to proceed) | `researchFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
+| 1 | Does the research cover all the areas you expected? | `researchCoverage` | Yes, comprehensive / Missing some areas / Need more depth / Walk me through them / Other |
+| 2 | Are the findings and recommendations helpful? | `findingsQuality` | Yes, very helpful / Somewhat helpful / Need more details / Walk me through them / Other |
+| 3 | Are there any specific areas you'd like researched further? | `additionalResearch` | No, looks complete / Yes, I have specific areas / Walk me through them / Other |
+| 4 | Any other feedback on the research? (or say 'approved' to proceed) | `researchFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
 
 ### Store Research Review Responses
 

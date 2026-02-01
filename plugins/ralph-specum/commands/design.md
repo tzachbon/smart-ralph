@@ -187,10 +187,10 @@ After the design has been created by the architect-reviewer agent, ask the user 
 
 | # | Question | Key | Options |
 |---|----------|-----|---------|
-| 1 | Does the architecture approach align with your expectations? | `architectureApproval` | Yes, looks good / Needs changes / I have questions / Other |
-| 2 | Are the technical decisions appropriate for your needs? | `technicalDecisionsApproval` | Yes, approved / Some concerns / Need changes / Other |
-| 3 | Is the component structure clear and suitable? | `componentStructureApproval` | Yes, clear / Needs refinement / Major changes needed / Other |
-| 4 | Any other feedback on the design? (or say 'approved' to proceed) | `designFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
+| 1 | Does the architecture approach align with your expectations? | `architectureApproval` | Yes, looks good / Needs changes / I have questions / Walk me through them / Other |
+| 2 | Are the technical decisions appropriate for your needs? | `technicalDecisionsApproval` | Yes, approved / Some concerns / Need changes / Walk me through them / Other |
+| 3 | Is the component structure clear and suitable? | `componentStructureApproval` | Yes, clear / Needs refinement / Major changes needed / Walk me through them / Other |
+| 4 | Any other feedback on the design? (or say 'approved' to proceed) | `designFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
 
 ### Store Design Review Responses
 

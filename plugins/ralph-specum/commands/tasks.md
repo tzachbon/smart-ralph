@@ -195,10 +195,10 @@ After the tasks have been created by the task-planner agent, ask the user to rev
 
 | # | Question | Key | Options |
 |---|----------|-----|---------|
-| 1 | Does the task breakdown cover all necessary work? | `taskCoverage` | Yes, comprehensive / Missing some tasks / Need more granularity / Other |
-| 2 | Are the task phases (POC, Refactor, Test, Quality) appropriate? | `taskPhases` | Yes, good structure / Adjust phases / Different approach needed / Other |
-| 3 | Are the verification steps clear and executable? | `verificationSteps` | Yes, clear / Need more details / Some are unclear / Other |
-| 4 | Any other feedback on the tasks? (or say 'approved' to proceed) | `tasksFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
+| 1 | Does the task breakdown cover all necessary work? | `taskCoverage` | Yes, comprehensive / Missing some tasks / Need more granularity / Walk me through them / Other |
+| 2 | Are the task phases (POC, Refactor, Test, Quality) appropriate? | `taskPhases` | Yes, good structure / Adjust phases / Different approach needed / Walk me through them / Other |
+| 3 | Are the verification steps clear and executable? | `verificationSteps` | Yes, clear / Need more details / Some are unclear / Walk me through them / Other |
+| 4 | Any other feedback on the tasks? (or say 'approved' to proceed) | `tasksFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
 
 ### Store Tasks Review Responses
 

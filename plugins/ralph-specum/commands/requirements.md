@@ -180,10 +180,10 @@ After the requirements have been created by the product-manager agent, ask the u
 
 | # | Question | Key | Options |
 |---|----------|-----|---------|
-| 1 | Do the user stories capture your intended functionality? | `userStoriesApproval` | Yes, complete / Missing some stories / Need refinement / Other |
-| 2 | Are the acceptance criteria clear and testable? | `acceptanceCriteriaApproval` | Yes, clear / Need more details / Some are unclear / Other |
-| 3 | Are the priorities and scope appropriate? | `prioritiesApproval` | Yes, appropriate / Need adjustment / Missing items / Other |
-| 4 | Any other feedback on the requirements? (or say 'approved' to proceed) | `requirementsFeedback` | Approved, let's proceed / Yes, I have feedback / Other |
+| 1 | Do the user stories capture your intended functionality? | `userStoriesApproval` | Yes, complete / Missing some stories / Need refinement / Walk me through them / Other |
+| 2 | Are the acceptance criteria clear and testable? | `acceptanceCriteriaApproval` | Yes, clear / Need more details / Some are unclear / Walk me through them / Other |
+| 3 | Are the priorities and scope appropriate? | `prioritiesApproval` | Yes, appropriate / Need adjustment / Missing items / Walk me through them / Other |
+| 4 | Any other feedback on the requirements? (or say 'approved' to proceed) | `requirementsFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
 
 ### Store Requirements Review Responses
 
