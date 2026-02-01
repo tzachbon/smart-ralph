@@ -53,50 +53,38 @@ Ralph Loop provides the execution loop. Smart Ralph provides the spec-driven wor
 
 ## Installation
 
-### Step 1: Install Ralph Loop Dependency
-
-First, ensure you have the Ralph Loop plugin installed:
-
 ```bash
+# 1. Install Ralph Loop (required dependency)
 /plugin install ralph-loop@claude-plugins-official
-```
 
-**Troubleshooting:** If you get a "marketplace not found" error:
-```bash
-# Add the official marketplace (if not already added)
-/plugin marketplace add anthropics/claude-code
-
-# Then install Ralph Loop
-/plugin install ralph-loop@claude-plugins-official
-```
-
-### Step 2: Install Smart Ralph
-
-#### From Marketplace
-
-```bash
-# Add the marketplace
+# 2. Install Smart Ralph
 /plugin marketplace add tzachbon/smart-ralph
-
-# Install the plugin
 /plugin install ralph-specum@smart-ralph
 
-# Restart Claude Code
+# 3. Restart Claude Code
 ```
 
-#### From GitHub
+<details>
+<summary>Troubleshooting & alternative methods</summary>
 
+**"marketplace not found" error?** Add the official marketplace first:
+```bash
+/plugin marketplace add anthropics/claude-code
+/plugin install ralph-loop@claude-plugins-official
+```
+
+**Install from GitHub directly:**
 ```bash
 /plugin install https://github.com/tzachbon/smart-ralph
 ```
 
-#### Local Development
-
+**Local development:**
 ```bash
 git clone https://github.com/tzachbon/smart-ralph.git
-cd smart-ralph/plugins/ralph-specum
-claude --plugin-dir $(pwd)
+claude --plugin-dir ./smart-ralph/plugins/ralph-specum
 ```
+
+</details>
 
 ---
 
