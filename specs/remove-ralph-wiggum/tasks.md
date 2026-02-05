@@ -25,7 +25,7 @@ Focus: Get loop control working in stop-hook. Skip tests.
   - _Requirements: FR-1, FR-2_
   - _Design: Stop-Hook (Loop Controller)_
 
-- [ ] 1.2 Simplify implement.md to write state directly
+- [x] 1.2 Simplify implement.md to write state directly
   - **Do**: Remove ralph-loop dependency and skill invocation
     1. Remove "Ralph Loop Dependency Check" section
     2. Remove "Invoke Ralph Loop" section (step 1 and 2)

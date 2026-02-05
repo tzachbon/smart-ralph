@@ -8,16 +8,6 @@ allowed-tools: [Read, Write, Edit, Task, Bash, Skill]
 
 You are starting the task execution loop.
 
-## Ralph Loop Dependency Check
-
-**BEFORE proceeding**, verify Ralph Loop plugin is installed by attempting to invoke the skill.
-
-If the Skill tool fails with "skill not found" or similar error for `ralph-loop:ralph-loop`:
-1. Output error: "ERROR: Ralph Loop plugin not found. Install with: /plugin install ralph-wiggum@claude-plugins-official"
-2. STOP execution immediately. Do NOT continue.
-
-This is a hard dependency. The command cannot function without Ralph Loop.
-
 ## Multi-Directory Resolution
 
 This command uses the path resolver for dynamic spec path resolution:
@@ -70,34 +60,14 @@ Write `.ralph-state.json`:
 }
 ```
 
-## Invoke Ralph Loop
+## Start Execution
 
-Calculate max iterations: `max(5, min(10, ceil(totalTasks / 5)))`
-
-This formula:
-- Minimum 5 iterations (safety floor for small specs)
-- Maximum 10 iterations (prevents runaway loops)
-- Scales with task count: 5 tasks = 5 iterations, 50 tasks = 10 iterations
-
-### Step 1: Write Coordinator Prompt to File
-
-Write the ENTIRE coordinator prompt (from section below) to `./specs/$spec/.coordinator-prompt.md`.
-
-This file contains the full instructions for task execution. Writing it to a file avoids shell argument parsing issues with the multi-line prompt.
-
-### Step 2: Invoke Ralph Loop Skill
-
-Use the Skill tool to invoke `ralph-loop:ralph-loop` with args:
-
-```
-Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
-```
-
-Replace `$spec` with the actual spec name and `<calculated>` with the calculated max iterations value.
+After writing the state file, output the coordinator prompt below. This starts the execution loop.
+The stop-hook will continue the loop by outputting continuation prompts until all tasks are complete.
 
 ## Coordinator Prompt
 
-Write this prompt to `./specs/$spec/.coordinator-prompt.md`:
+Output this prompt directly to start execution:
 
 ```text
 You are the execution COORDINATOR for spec: $spec
