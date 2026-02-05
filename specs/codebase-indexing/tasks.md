@@ -397,7 +397,7 @@ Add unit and integration tests.
 - [x] Templates validate with correct frontmatter
 - [x] Index command has all major sections
 - [x] Start.md has hint and scanner enhancement
-- [ ] CI checks pass
+- [x] CI checks pass
 
 Generated with Claude Code
 EOF
@@ -429,7 +429,7 @@ EOF
   - **Done when**: All CI checks passing
   - **Commit**: `fix: address CI failures` (as needed)
 
-- [ ] 5.2 Address code review comments
+- [x] 5.2 Address code review comments
   - **Do**:
     1. Fetch reviews: `gh pr view --json reviews`
     2. For each unresolved review:
@@ -442,7 +442,7 @@ EOF
   - **Done when**: All review comments resolved
   - **Commit**: `fix: address review - [summary]` (per comment)
 
-- [ ] 5.3 Final validation - acceptance criteria check
+- [x] 5.3 Final validation - acceptance criteria check
   - **Do**: Verify ALL acceptance criteria met programmatically:
     1. AC-1.1: `grep -q "ralph-specum:index" plugins/ralph-specum/commands/index.md`
     2. AC-1.2: `grep -q "controllers\\|services\\|models\\|helpers\\|migrations" plugins/ralph-specum/commands/index.md`
@@ -461,7 +461,7 @@ EOF
   - **Done when**: All acceptance criteria verified
   - **Commit**: None
 
-- [ ] 5.4 Final validation - completion criteria
+- [x] 5.4 Final validation - completion criteria
   - **Do**: Verify ALL completion criteria met:
     1. Zero Regressions: Existing commands still work (no syntax errors in markdown)
     2. Modular & Reusable: Templates follow existing patterns
@@ -485,7 +485,7 @@ EOF
 
 ## Dependencies
 
-```
+```text
 Phase 1 (POC) -> Phase 2 (Refactor) -> Phase 3 (Testing) -> Phase 4 (Quality) -> Phase 5 (PR Lifecycle)
 
 Task dependencies within Phase 1:
