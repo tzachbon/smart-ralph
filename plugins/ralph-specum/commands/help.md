@@ -102,10 +102,10 @@ Phase commands use the `commitSpec` setting from `.ralph-state.json` (set during
 
 ## Directory Structure
 
-Specs are stored in `./specs/`:
+Specs are stored in `./specs/` by default:
 ```
 ./specs/
-├── .current-spec           # Active spec name
+├── .current-spec           # Active spec name (or full path for multi-dir)
 ├── my-feature/
 │   ├── .ralph-state.json   # Loop state (deleted on completion)
 │   ├── .progress.md        # Progress tracking (persists)
@@ -114,6 +114,84 @@ Specs are stored in `./specs/`:
 │   ├── design.md           # Technical design
 │   └── tasks.md            # Implementation tasks
 ```
+
+## Multi-Directory Support
+
+You can organize specs across multiple directories using the `specs_dirs` configuration.
+
+### Configuration
+
+Add `specs_dirs` to your settings file at `.claude/ralph-specum.local.md`:
+
+```yaml
+---
+specs_dirs:
+  - ./specs
+  - ./packages/api/specs
+  - ./packages/web/specs
+---
+```
+
+If not configured, defaults to `["./specs"]` for backward compatibility.
+
+### Using --specs-dir Flag
+
+The `start` and `new` commands accept `--specs-dir` to specify where to create a spec:
+
+```bash
+# Create spec in default directory (./specs/)
+/ralph-specum:start my-feature Some goal
+
+# Create spec in a specific directory
+/ralph-specum:start my-feature Some goal --specs-dir ./packages/api/specs
+/ralph-specum:new api-auth --specs-dir ./packages/api/specs
+```
+
+The specified directory must be listed in `specs_dirs` configuration.
+
+### Monorepo Example
+
+For a monorepo with multiple packages:
+
+```
+my-monorepo/
+├── .claude/
+│   └── ralph-specum.local.md    # specs_dirs config
+├── packages/
+│   ├── api/
+│   │   └── specs/               # API-related specs
+│   │       └── auth-feature/
+│   └── web/
+│       └── specs/               # Web-related specs
+│           └── dashboard-feature/
+└── specs/                       # Shared/root specs
+    └── infrastructure-feature/
+```
+
+Settings file:
+```yaml
+---
+specs_dirs:
+  - ./specs
+  - ./packages/api/specs
+  - ./packages/web/specs
+---
+```
+
+### Disambiguation
+
+When the same spec name exists in multiple directories, commands will prompt for disambiguation:
+
+```
+Multiple specs named "auth-feature" found:
+  1. ./specs/auth-feature
+  2. ./packages/api/specs/auth-feature
+
+Specify the full path to switch:
+  /ralph-specum:switch ./packages/api/specs/auth-feature
+```
+
+Use the full path to target a specific spec when names are ambiguous.
 
 ## Execution Loop
 

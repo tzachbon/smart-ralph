@@ -1,6 +1,6 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
-argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec]
+argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>]
 allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
 ---
 
@@ -117,13 +117,15 @@ Branch: feat/user-auth-2
 When user chooses worktree option:
 
 **State files copied to worktree:**
-- `specs/.current-spec` - Active spec name pointer
-- `specs/$SPEC_NAME/.ralph-state.json` - Loop state (phase, taskIndex, iterations)
-- `specs/$SPEC_NAME/.progress.md` - Progress tracking and learnings
+- `$DEFAULT_SPECS_DIR/.current-spec` - Active spec name/path pointer
+- `$SPEC_PATH/.ralph-state.json` - Loop state (phase, taskIndex, iterations)
+- `$SPEC_PATH/.progress.md` - Progress tracking and learnings
+
+**Note**: The spec may be in any configured specs_dir, not just `./specs/`. Use `ralph_resolve_current()` to get the full spec path.
 
 These files are copied when:
 1. The worktree is created via `git worktree add`
-2. A spec is currently active (SPEC_NAME known or readable from .current-spec)
+2. A spec is currently active (resolved via `ralph_resolve_current()`)
 3. The source files exist in the main worktree
 
 Copy uses non-overwrite semantics (skips if file already exists in target).
@@ -132,9 +134,14 @@ Copy uses non-overwrite semantics (skips if file already exists in target).
 # Get repo name for path suggestion
 REPO_NAME=$(basename $(git rev-parse --show-toplevel))
 
-# If SPEC_NAME empty but .current-spec exists, read from it (before using for path/branch)
-if [ -z "$SPEC_NAME" ] && [ -f "./specs/.current-spec" ]; then
-    SPEC_NAME=$(cat "./specs/.current-spec") || true
+# Get default specs dir and resolve current spec path using path resolver
+DEFAULT_SPECS_DIR=$(ralph_get_default_dir)  # e.g., "./specs"
+SPEC_PATH=""
+SPEC_NAME=""
+
+# Resolve current spec (handles both bare names and full paths)
+if SPEC_PATH=$(ralph_resolve_current 2>/dev/null); then
+    SPEC_NAME=$(basename "$SPEC_PATH")
 fi
 
 # Default worktree path
@@ -144,26 +151,31 @@ WORKTREE_PATH="../${REPO_NAME}-${SPEC_NAME}"
 git worktree add "$WORKTREE_PATH" -b "feat/${SPEC_NAME}"
 
 # Copy spec state files to worktree (failures are warnings, not errors)
-if [ -d "./specs" ]; then
-    mkdir -p "$WORKTREE_PATH/specs" || echo "Warning: Failed to create specs directory in worktree"
+# Note: Always copy .current-spec from default specs dir
+if [ -d "$DEFAULT_SPECS_DIR" ]; then
+    mkdir -p "$WORKTREE_PATH/$DEFAULT_SPECS_DIR" || echo "Warning: Failed to create specs directory in worktree"
 
     # Copy .current-spec if exists (don't overwrite existing)
-    if [ -f "./specs/.current-spec" ] && [ ! -f "$WORKTREE_PATH/specs/.current-spec" ]; then
-        cp "./specs/.current-spec" "$WORKTREE_PATH/specs/.current-spec" || echo "Warning: Failed to copy .current-spec to worktree"
+    if [ -f "$DEFAULT_SPECS_DIR/.current-spec" ] && [ ! -f "$WORKTREE_PATH/$DEFAULT_SPECS_DIR/.current-spec" ]; then
+        cp "$DEFAULT_SPECS_DIR/.current-spec" "$WORKTREE_PATH/$DEFAULT_SPECS_DIR/.current-spec" || echo "Warning: Failed to copy .current-spec to worktree"
+    fi
+fi
+
+# If spec path resolved, copy spec state files from that path
+# (may be in non-default specs dir like ./packages/api/specs/my-feature)
+if [ -n "$SPEC_PATH" ] && [ -d "$SPEC_PATH" ]; then
+    # Create parent directory structure in worktree
+    SPEC_PARENT_DIR=$(dirname "$SPEC_PATH")
+    mkdir -p "$WORKTREE_PATH/$SPEC_PARENT_DIR" || echo "Warning: Failed to create spec parent directory in worktree"
+    mkdir -p "$WORKTREE_PATH/$SPEC_PATH" || echo "Warning: Failed to create spec directory in worktree"
+
+    # Copy state files (don't overwrite existing)
+    if [ -f "$SPEC_PATH/.ralph-state.json" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.ralph-state.json" ]; then
+        cp "$SPEC_PATH/.ralph-state.json" "$WORKTREE_PATH/$SPEC_PATH/" || echo "Warning: Failed to copy .ralph-state.json to worktree"
     fi
 
-    # If spec name known, copy spec state files
-    if [ -n "$SPEC_NAME" ] && [ -d "./specs/$SPEC_NAME" ]; then
-        mkdir -p "$WORKTREE_PATH/specs/$SPEC_NAME" || echo "Warning: Failed to create spec directory in worktree"
-
-        # Copy state files (don't overwrite existing)
-        if [ -f "./specs/$SPEC_NAME/.ralph-state.json" ] && [ ! -f "$WORKTREE_PATH/specs/$SPEC_NAME/.ralph-state.json" ]; then
-            cp "./specs/$SPEC_NAME/.ralph-state.json" "$WORKTREE_PATH/specs/$SPEC_NAME/" || echo "Warning: Failed to copy .ralph-state.json to worktree"
-        fi
-
-        if [ -f "./specs/$SPEC_NAME/.progress.md" ] && [ ! -f "$WORKTREE_PATH/specs/$SPEC_NAME/.progress.md" ]; then
-            cp "./specs/$SPEC_NAME/.progress.md" "$WORKTREE_PATH/specs/$SPEC_NAME/" || echo "Warning: Failed to copy .progress.md to worktree"
-        fi
+    if [ -f "$SPEC_PATH/.progress.md" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.progress.md" ]; then
+        cp "$SPEC_PATH/.progress.md" "$WORKTREE_PATH/$SPEC_PATH/" || echo "Warning: Failed to copy .progress.md to worktree"
     fi
 fi
 ```
@@ -259,6 +271,41 @@ From `$ARGUMENTS`, extract:
 - **--quick**: Skip all spec phases, auto-generate artifacts, start execution immediately
 - **--commit-spec**: Commit and push spec files after generation (default: true in normal mode, false in quick mode)
 - **--no-commit-spec**: Explicitly disable committing spec files
+- **--specs-dir <path>**: Create spec in specified directory (must be in configured specs_dirs array)
+
+### Multi-Directory Resolution
+
+This command uses the path resolver for multi-directory support:
+
+```bash
+# Source path resolver (conceptually - commands don't execute bash directly)
+# These functions are available via the path-resolver.sh helper:
+
+ralph_get_specs_dirs()    # Returns all configured spec directories
+ralph_get_default_dir()   # Returns first specs_dir (default for new specs)
+ralph_find_spec(name)     # Find spec by name, returns full path
+ralph_list_specs()        # List all specs as "name|path" pairs
+ralph_resolve_current()   # Resolve .current-spec to full path
+```
+
+### --specs-dir Validation
+
+When `--specs-dir` is provided:
+1. Call `ralph_get_specs_dirs()` to get configured directories
+2. Check if provided path matches one of the configured directories
+3. If NOT in configured list: Error "Invalid --specs-dir: '$path' is not in configured specs_dirs"
+4. If valid: Use this path as the spec root instead of default
+
+```text
+--specs-dir Validation Logic:
+
+1. Extract --specs-dir value from $ARGUMENTS
+2. Get configured dirs: dirs = ralph_get_specs_dirs()
+3. Normalize paths (remove trailing slashes)
+4. Check: specsDir in dirs?
+   - YES: Use specsDir for spec creation
+   - NO: Error "Invalid --specs-dir: '$specsDir' is not in configured specs_dirs. Configured: $dirs"
+```
 
 ### Commit Spec Flag Logic
 
@@ -267,6 +314,24 @@ From `$ARGUMENTS`, extract:
 2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
 3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
 4. Else → commitSpec = true (normal mode default)
+```
+
+### Spec Directory Resolution
+
+```text
+Spec Directory Logic:
+
+1. Check if --specs-dir in $ARGUMENTS
+   - YES: Validate against configured specs_dirs, use if valid
+   - NO: Use ralph_get_default_dir() (first configured dir, defaults to ./specs)
+
+2. Determine spec base path:
+   specsDir = validated --specs-dir OR ralph_get_default_dir()
+   basePath = "$specsDir/$name"
+
+3. For .current-spec:
+   - If specsDir == "./specs" (default): Write bare name
+   - If specsDir != "./specs" (non-default): Write full path "$specsDir/$name"
 ```
 
 Examples:
@@ -333,9 +398,11 @@ When file path detected:
 ### Existing Plan Check
 
 When kebab-case name provided without goal:
-1. Check if `./specs/$name/plan.md` exists
-2. If exists: read content, use as planContent
-3. If not exists: error with guidance message
+1. Use `ralph_find_spec(name)` to locate existing spec
+2. If found: Check if `$specPath/plan.md` exists
+   - If plan.md exists: read content, use as planContent
+   - If plan.md not exists: error "No plan.md found in $specPath. Provide goal: /ralph-specum:start $name 'your goal' --quick"
+3. If not found: error "Spec '$name' not found. Provide goal: /ralph-specum:start $name 'your goal' --quick"
 
 ### Name Inference
 
@@ -361,17 +428,21 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
    |
 2. Infer name from goal (if not provided)
    |
-3. Create spec directory: ./specs/$name/
+3. Determine spec directory using path resolver:
+   specsDir = (--specs-dir value if provided and valid) OR ralph_get_default_dir()
+   basePath = "$specsDir/$name"
    |
-3a. Ensure gitignore entries exist for spec state files:
+4. Create spec directory: mkdir -p "$basePath"
+   |
+4a. Ensure gitignore entries exist for spec state files:
    - Add specs/.current-spec to .gitignore if not present
    - Add **/.progress.md to .gitignore if not present
    |
-4. Write .ralph-state.json:
+5. Write .ralph-state.json (note: basePath uses resolved path):
    {
      "source": "plan",
      "name": "$name",
-     "basePath": "./specs/$name",
+     "basePath": "$basePath",
      "phase": "tasks",
      "taskIndex": 0,
      "totalTasks": 0,
@@ -382,29 +453,34 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
      "commitSpec": $commitSpec
    }
    |
-5. Write .progress.md with original goal
+6. Write .progress.md with original goal
    |
-6. Update .current-spec: echo "$name" > ./specs/.current-spec
+7. Update .current-spec based on root directory:
+   defaultDir = ralph_get_default_dir()
+   if specsDir == defaultDir:
+       echo "$name" > "$defaultDir/.current-spec"     # Bare name for default root
+   else:
+       echo "$basePath" > "$defaultDir/.current-spec" # Full path for non-default root
    |
-7. Invoke plan-synthesizer agent via Task tool:
+8. Invoke plan-synthesizer agent via Task tool:
    Task: plan-synthesizer
-   Input: goal="$goal", basePath="./specs/$name"
+   Input: goal="$goal", basePath="$basePath"
    |
-8. After generation completes:
+9. After generation completes:
    - Update .ralph-state.json: phase="execution", taskIndex=0
    - Read tasks.md to get totalTasks count
    |
-8a. If commitSpec is true:
-   - Stage spec files: git add ./specs/$name/research.md ./specs/$name/requirements.md ./specs/$name/design.md ./specs/$name/tasks.md
+9a. If commitSpec is true:
+   - Stage spec files: git add $basePath/research.md $basePath/requirements.md $basePath/design.md $basePath/tasks.md
    - Commit: git commit -m "spec($name): add spec artifacts"
    - Push: git push -u origin $(git branch --show-current)
    |
-9. Display brief summary:
-   Quick mode: Created spec '$name'
+10. Display brief summary:
+   Quick mode: Created spec '$name' at $basePath
    [If commitSpec: "Spec committed and pushed."]
    Starting execution...
    |
-10. Invoke spec-executor for task 1
+11. Invoke spec-executor for task 1
 ```
 
 ### Quick Mode Validation
@@ -417,20 +493,27 @@ Validation Sequence:
 1. ZERO ARGS CHECK (if no args before --quick)
    - Error: "Quick mode requires a goal or plan file"
 
-2. FILE NOT FOUND (if file path detected)
+2. --specs-dir VALIDATION (if provided)
+   - Get configured dirs via ralph_get_specs_dirs()
+   - If --specs-dir value NOT in configured list:
+     - Error: "Invalid --specs-dir: '$path' is not in configured specs_dirs"
+   - If valid: Use as specsDir
+
+3. FILE NOT FOUND (if file path detected)
    - If file not exists: "File not found: $filePath"
 
-3. EMPTY CONTENT CHECK
+4. EMPTY CONTENT CHECK
    - If empty or whitespace only: "Plan content is empty. Provide a goal or non-empty file."
 
-4. PLAN TOO SHORT WARNING (< 10 words)
+5. PLAN TOO SHORT WARNING (< 10 words)
    - If word count < 10: "Warning: Short plan may produce vague tasks"
    - Continue with warning displayed
 
-5. NAME CONFLICT RESOLUTION
-   - If ./specs/$name/ already exists:
+6. NAME CONFLICT RESOLUTION
+   - specsDir = validated --specs-dir OR ralph_get_default_dir()
+   - If $specsDir/$name/ already exists:
      - Append -2, -3, etc. until unique name found
-     - Display: "Created '$name-2' ($name already exists)"
+     - Display: "Created '$name-2' at $specsDir ($name already exists)"
 ```
 
 ### Atomic Rollback
@@ -456,21 +539,27 @@ Rollback Procedure:
 ## Detection Logic
 
 ```text
-1. Check if name provided in arguments
+1. Determine target specs directory:
+   - If --specs-dir provided: Use validated path
+   - Else: Use ralph_get_default_dir()
    |
-   +-- Yes: Check if ./specs/$name/ exists
+2. Check if name provided in arguments
+   |
+   +-- Yes: Use ralph_find_spec(name) to check if spec exists
    |   |
-   |   +-- Exists + no --fresh: Ask "Resume '$name' or start fresh?"
-   |   |   +-- Resume: Go to resume flow
+   |   +-- Found + no --fresh: Ask "Resume '$name' or start fresh?"
+   |   |   +-- Resume: Go to resume flow (use found path)
    |   |   +-- Fresh: Delete existing, go to new flow
    |   |
-   |   +-- Exists + --fresh: Delete existing, go to new flow
+   |   +-- Found + --fresh: Delete existing, go to new flow
    |   |
-   |   +-- Not exists: Go to new flow
+   |   +-- Not found: Go to new flow (create in target specs dir)
+   |   |
+   |   +-- Ambiguous (exit 2): Show paths, ask user to specify
    |
-   +-- No: Check ./specs/.current-spec
+   +-- No: Use ralph_resolve_current() to check active spec
        |
-       +-- Has active spec: Go to resume flow
+       +-- Has active spec: Go to resume flow (use resolved path)
        |
        +-- No active spec: Ask for name and goal, go to new flow
 ```
@@ -533,9 +622,25 @@ The only exception is `--quick` mode, which skips approval between phases.
    - "What should we call this spec?" (validates kebab-case)
 2. If no goal provided, ask:
    - "What is the goal? Describe what you want to build."
-3. Create spec directory: `./specs/$name/`
-4. Update active spec: `echo "$name" > ./specs/.current-spec`
-5. Ensure gitignore entries exist for spec state files:
+3. Determine spec directory using path resolver and interview response:
+   ```text
+   # Resolve target directory (priority order)
+   specsDir = (--specs-dir value if provided and valid)
+              OR (interview response specsDir if multi-dir was asked)
+              OR ralph_get_default_dir()
+   basePath = "$specsDir/$name"
+   ```
+4. Create spec directory: `mkdir -p "$basePath"`
+5. Update active spec based on root directory:
+   ```text
+   # Write to .current-spec
+   defaultDir = ralph_get_default_dir()
+   if specsDir == defaultDir:
+       echo "$name" > "$defaultDir/.current-spec"     # Bare name for default root
+   else:
+       echo "$basePath" > "$defaultDir/.current-spec" # Full path for non-default root
+   ```
+6. Ensure gitignore entries exist for spec state files:
    ```bash
    # Add .current-spec and .progress.md to .gitignore if not already present
    if [ -f .gitignore ]; then
@@ -546,12 +651,12 @@ The only exception is `--quick` mode, which skips approval between phases.
      echo "**/.progress.md" >> .gitignore
    fi
    ```
-6. Initialize `.ralph-state.json`:
+7. Initialize `.ralph-state.json` (note: basePath uses resolved path):
    ```json
    {
      "source": "spec",
      "name": "$name",
-     "basePath": "./specs/$name",
+     "basePath": "$basePath",
      "phase": "research",
      "taskIndex": 0,
      "totalTasks": 0,
@@ -562,10 +667,15 @@ The only exception is `--quick` mode, which skips approval between phases.
      "commitSpec": $commitSpec
    }
    ```
-6. Create `.progress.md` with goal
-7. **Goal Interview** (skip if --quick in $ARGUMENTS)
-8. Invoke research-analyst agent with goal interview context
-9. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
+8. Create `.progress.md` with goal
+9. **Update Spec Index**:
+   ```bash
+   # Update the spec index after creating the spec
+   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
+   ```
+10. **Goal Interview** (skip if --quick in $ARGUMENTS)
+11. Invoke research-analyst agent with goal interview context
+12. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
 
 ## Index Hint
 
@@ -618,8 +728,9 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
 ### Scan Steps
 
 ```text
-1. List all directories in ./specs/
-   - Run: ls -d ./specs/*/ 2>/dev/null | xargs -I{} basename {}
+1. List all specs across all configured directories using ralph_list_specs():
+   - Returns "name|path" pairs for each spec
+   - Searches all directories in ralph_get_specs_dirs()
    - Exclude the current spec being created (if known)
    - Exclude .index directory (handled separately in step 1b)
    |
@@ -631,8 +742,8 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
      - Use the purpose/summary as the match text
      - Mark as "indexed" type for display differentiation
    |
-2. For each spec directory found:
-   - Read ./specs/$specName/.progress.md
+2. For each spec found (name|path pair):
+   - Read $path/.progress.md (using the full path from ralph_list_specs)
    - Extract "Original Goal" section (line after "## Original Goal")
    - If .progress.md doesn't exist, skip this spec
    |
@@ -654,8 +765,8 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
    Related specs found:
 
    Feature specs:
-   - spec-name-1 [High]: [first 50 chars of Original Goal]...
-   - spec-name-2 [Medium]: [first 50 chars of Original Goal]...
+   - spec-name-1 [High]: [first 50 chars of Original Goal]... [dir-path if non-default]
+   - spec-name-2 [Medium]: [first 50 chars of Original Goal]... [dir-path if non-default]
 
    Indexed components (from specs/.index/components):
    - auth-controller [High]: Handles authentication and session management...
@@ -671,10 +782,10 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
      {
        ...existing state,
        "relatedSpecs": [
-         {"name": "spec-name-1", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "High"},
-         {"name": "spec-name-2", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "Medium"},
-         {"name": "auth-controller", "goal": "Purpose text", "score": N, "type": "indexed-component", "relevance": "High"},
-         {"name": "api-docs", "goal": "Summary text", "score": N, "type": "indexed-external", "relevance": "Low"}
+         {"name": "spec-name-1", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "High"},
+         {"name": "spec-name-2", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "Medium"},
+         {"name": "auth-controller", "path": "specs/.index/components", "goal": "Purpose text", "score": N, "type": "indexed-component", "relevance": "High"},
+         {"name": "api-docs", "path": "specs/.index/external", "goal": "Summary text", "score": N, "type": "indexed-external", "relevance": "Low"}
        ]
      }
 ```
@@ -917,6 +1028,64 @@ This phase initializes the interview context. Later phases (research, requiremen
 | 2 | Any constraints or must-haves for this feature? | Required | `constraints` | No special constraints / Must integrate with existing code / Performance is critical / Other |
 | 3 | How will you know this feature is successful? | Required | `success` | Tests pass and code works / Users can complete specific workflow / Performance meets target metrics / Other |
 | 4 | Any other context you'd like to share? (or say 'done' to proceed) | Optional | `additionalContext` | No, let's proceed / Yes, I have more details / Other |
+| 5 | Where should this spec be stored? | Conditional | `specsDir` | [dynamically from specs_dirs] |
+
+### Spec Location Interview
+
+After the standard Goal Interview questions, determine where the spec should be stored:
+
+```text
+Spec Location Logic:
+
+1. Check if --specs-dir already provided in $ARGUMENTS
+   → SKIP spec location question entirely, use provided value
+
+2. Get configured directories: dirs = ralph_get_specs_dirs()
+
+3. If dirs.length > 1 (multiple directories configured):
+   → ASK using AskUserQuestion:
+     Question: "Where should this spec be stored?"
+     Options: [each configured directory as an option]
+   → Store response as specsDir
+
+4. If dirs.length == 1 (only default directory):
+   → OUTPUT awareness message (non-blocking, just inform):
+     "Spec will be created in ./specs/
+      Tip: You can organize specs in multiple directories.
+      See /ralph-specum:help for multi-directory setup."
+   → Use default directory as specsDir
+   → Continue immediately without waiting for response
+
+5. Store specsDir for use in spec creation
+```
+
+**Multi-Directory Question Format:**
+
+When multiple directories are configured, use AskUserQuestion with dynamic options:
+
+```text
+Question: "Where should this spec be stored?"
+Header: "Location"
+Options: [
+  { label: "./specs (Recommended)", description: "Default specs directory" },
+  { label: "./packages/api/specs", description: "API-related specs" },
+  ... additional configured directories
+]
+```
+
+**Awareness Message Format:**
+
+When only the default directory is configured, output this informational message:
+
+```text
+Spec will be created in ./specs/
+
+Tip: You can organize specs in multiple directories by configuring
+specs_dirs in .claude/ralph-specum.local.md. See /ralph-specum:help
+for multi-directory setup instructions.
+```
+
+This is NOT a blocking question - continue immediately after displaying.
 
 ### Store Goal Context
 
@@ -940,6 +1109,7 @@ After interview, update `.progress.md` with Interview Format, Intent Classificat
 - Constraints: [responses.constraints]
 - Success criteria: [responses.success]
 - Additional context: [responses.additionalContext]
+- Spec location: [responses.specsDir] (if multi-dir was asked)
 [Any follow-up responses from "Other" selections]
 ```
 
@@ -982,13 +1152,16 @@ Triggered when `--quick` flag detected. Skips all spec phases and auto-generates
    - If two args: `name` = first arg (kebab-case), `goal` = second arg
    - If one arg: `goal` = arg, `name` = infer from goal (first 3 words, kebab-case, max 30 chars)
 2. Validate non-empty goal
-3. Create spec directory: `./specs/$name/`
-4. Initialize `.ralph-state.json` with `source: "plan"`:
+3. Determine spec directory using path resolver:
+   - `specsDir` = (--specs-dir value if provided and valid) OR `ralph_get_default_dir()`
+   - `basePath` = "$specsDir/$name"
+4. Create spec directory: `mkdir -p "$basePath"`
+5. Initialize `.ralph-state.json` with `source: "plan"` (note: basePath uses resolved path):
    ```json
    {
      "source": "plan",
      "name": "$name",
-     "basePath": "./specs/$name",
+     "basePath": "$basePath",
      "phase": "tasks",
      "taskIndex": 0,
      "totalTasks": 0,
@@ -998,11 +1171,17 @@ Triggered when `--quick` flag detected. Skips all spec phases and auto-generates
      "maxGlobalIterations": 100
    }
    ```
-5. Write `.progress.md` with goal
-6. Update `.current-spec` with name
-7. Invoke plan-synthesizer agent to generate all artifacts
-8. After generation: update state `phase: "execution"`, read task count
-9. Invoke spec-executor for task 1
+6. Write `.progress.md` with goal
+7. Update `.current-spec` based on root:
+   - If specsDir == default: write bare name
+   - If specsDir != default: write full path "$basePath"
+8. **Update Spec Index**:
+   ```bash
+   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
+   ```
+9. Invoke plan-synthesizer agent to generate all artifacts
+10. After generation: update state `phase: "execution"`, read task count
+11. Invoke spec-executor for task 1
 
 ## Status Display (on resume)
 
@@ -1038,6 +1217,13 @@ Continuing task: 2.2 Extract retry logic
 **Quick mode:**
 ```text
 Quick mode: Created 'build-auth-with' at ./specs/build-auth-with/
+Generated 4 artifacts from goal.
+Starting task 1/N...
+```
+
+**Quick mode with --specs-dir:**
+```text
+Quick mode: Created 'api-auth' at ./packages/api/specs/api-auth/
 Generated 4 artifacts from goal.
 Starting task 1/N...
 ```

@@ -28,3 +28,6 @@ Thumbs.db
 # Logs
 *.log
 .playwright-mcp
+
+# Test fixtures
+test-ac-*/
