@@ -120,7 +120,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: AC-2.1, AC-2.2, AC-2.3, AC-2.4, AC-2.5, FR-2, FR-9_
   - _Design: start.md Specific Changes_
 
-- [ ] 1.10 Update new.md with --specs-dir flag
+- [x] 1.10 Update new.md with --specs-dir flag
   - **Do**:
     1. Add `--specs-dir <path>` to argument parsing
     2. Update spec creation path to use specified dir or `ralph_get_default_dir()`
