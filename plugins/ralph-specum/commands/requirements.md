@@ -201,54 +201,24 @@ If NOT quick mode, conduct requirements review using AskUserQuestion after requi
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
 
-### Requirements Review Questions
+### Requirements Review Question
 
-After the requirements have been created by the product-manager agent, ask the user to review them and provide feedback.
+After displaying the walkthrough, ask ONE simple question:
 
-**Review Question Flow:**
+| Question | Key | Options |
+|----------|-----|---------|
+| Does this look right? | `requirementsApproval` | Approve (Recommended) / Need changes / Other |
 
-1. **Read the generated requirements.md** to understand what was created
-2. **Ask initial review questions** to confirm the requirements meet their expectations:
+### Handle Response
 
-| # | Question | Key | Options |
-|---|----------|-----|---------|
-| 1 | Do the user stories capture your intended functionality? | `userStoriesApproval` | Yes, complete / Missing some stories / Need refinement / Walk me through them / Other |
-| 2 | Are the acceptance criteria clear and testable? | `acceptanceCriteriaApproval` | Yes, clear / Need more details / Some are unclear / Walk me through them / Other |
-| 3 | Are the priorities and scope appropriate? | `prioritiesApproval` | Yes, appropriate / Need adjustment / Missing items / Walk me through them / Other |
-| 4 | Any other feedback on the requirements? (or say 'approved' to proceed) | `requirementsFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
+**If "Approve"**: Skip to "Update State"
 
-### Store Requirements Review Responses
-
-After review questions, append to `.progress.md` under a new section:
-
-```markdown
-### Requirements Review (from requirements.md)
-- User stories approval: [responses.userStoriesApproval]
-- Acceptance criteria approval: [responses.acceptanceCriteriaApproval]
-- Priorities approval: [responses.prioritiesApproval]
-- Requirements feedback: [responses.requirementsFeedback]
-[Any follow-up responses from "Other" selections]
-```
-
-### Update Requirements Based on Feedback
-
-<mandatory>
-If the user provided feedback requiring changes (any answer other than "Yes, complete", "Yes, clear", "Yes, appropriate", or "Approved, let's proceed"), you MUST:
-
-1. Collect specific change requests from the user
-2. Invoke product-manager again with update instructions
-3. Repeat the review questions after updates
-4. Continue loop until user approves
-</mandatory>
-
-**Update Flow:**
-
-If changes are needed:
-
-1. **Ask for specific changes:**
-   ```
-   What specific changes would you like to see in the requirements?
-   ```
+**If "Need changes" or "Other"**:
+1. Ask: "What would you like changed?"
+2. Invoke product-manager again with the feedback
+3. Re-display walkthrough
+4. Ask approval question again
+5. Loop until approved
 
 2. **Invoke product-manager with update prompt:**
    ```

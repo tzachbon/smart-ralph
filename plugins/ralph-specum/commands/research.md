@@ -594,59 +594,24 @@ If NOT quick mode, conduct research review using AskUserQuestion after research 
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
 
-### Research Review Questions
+### Research Review Question
 
-After the research has been created and merged by the subagents, ask the user to review it and provide feedback.
+After displaying the walkthrough, ask ONE simple question:
 
-**Review Question Flow:**
+| Question | Key | Options |
+|----------|-----|---------|
+| Does this look right? | `researchApproval` | Approve (Recommended) / Need changes / Other |
 
-1. **Read the generated research.md** to understand what was found
-2. **Ask initial review questions** to confirm the research meets their expectations:
+### Handle Response
 
-| # | Question | Key | Options |
-|---|----------|-----|---------|
-| 1 | Does the research cover all the areas you expected? | `researchCoverage` | Yes, comprehensive / Missing some areas / Need more depth / Walk me through them / Other |
-| 2 | Are the findings and recommendations helpful? | `findingsQuality` | Yes, very helpful / Somewhat helpful / Need more details / Walk me through them / Other |
-| 3 | Are there any specific areas you'd like researched further? | `additionalResearch` | No, looks complete / Yes, I have specific areas / Walk me through them / Other |
-| 4 | Any other feedback on the research? (or say 'approved' to proceed) | `researchFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
+**If "Approve"**: Skip to "Update State"
 
-### Store Research Review Responses
-
-After review questions, append to `.progress.md` under a new section:
-
-```markdown
-### Research Review (from research.md)
-- Research coverage: [responses.researchCoverage]
-- Findings quality: [responses.findingsQuality]
-- Additional research needed: [responses.additionalResearch]
-- Research feedback: [responses.researchFeedback]
-[Any follow-up responses from "Other" selections]
-```
-
-### Update Research Based on Feedback
-
-<mandatory>
-If the user provided feedback requiring changes (any answer other than "Yes, comprehensive", "Yes, very helpful", "No, looks complete", or "Approved, let's proceed"), you MUST:
-
-1. Collect specific change requests from the user
-2. Invoke appropriate subagents again with additional research instructions
-3. Merge updated results
-4. Repeat the review questions after updates
-5. Continue loop until user approves
-</mandatory>
-
-**Update Flow:**
-
-If changes are needed:
-
-1. **Ask for specific changes:**
-   ```
-   What specific areas would you like researched further or what changes would you like to see?
-   ```
-
-2. **Invoke appropriate subagents with update prompt:**
-   - Use `research-analyst` for additional web research
-   - Use `Explore` for additional codebase analysis
+**If "Need changes" or "Other"**:
+1. Ask: "What would you like changed?"
+2. Invoke appropriate subagents with the feedback
+3. Re-display walkthrough
+4. Ask approval question again
+5. Loop until approved
 
    Example prompt:
    ```
