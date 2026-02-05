@@ -206,7 +206,7 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-7, AC-4.1, AC-4.2, AC-4.3_
   - _Design: File Structure > commands/start.md Modify_
 
-- [ ] 1.16 Enhance spec scanner in start command
+- [x] 1.16 Enhance spec scanner in start command
   - **Do**:
     1. Locate spec scanner section in start.md (lines 573-665)
     2. Add search of `specs/.index/components/*.md` to existing scanner

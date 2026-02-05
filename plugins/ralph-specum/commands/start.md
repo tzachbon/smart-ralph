@@ -613,6 +613,15 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
 1. List all directories in ./specs/
    - Run: ls -d ./specs/*/ 2>/dev/null | xargs -I{} basename {}
    - Exclude the current spec being created (if known)
+   - Exclude .index directory (handled separately in step 1b)
+   |
+1b. Scan indexed specs (if ./specs/.index/ exists):
+   - List component specs: ls ./specs/.index/components/*.md 2>/dev/null
+   - List external specs: ls ./specs/.index/external/*.md 2>/dev/null
+   - For each indexed spec:
+     - Read the file and extract "## Purpose" section (component) or "## Summary" section (external)
+     - Use the purpose/summary as the match text
+     - Mark as "indexed" type for display differentiation
    |
 2. For each spec directory found:
    - Read ./specs/$specName/.progress.md
@@ -623,19 +632,29 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
    - Extract keywords from current goal (split by spaces, lowercase)
    - Remove common words: "the", "a", "an", "to", "for", "with", "and", "or"
    - For each existing spec, count matching keywords with its Original Goal
+   - For each indexed spec, count matching keywords with its Purpose/Summary
    - Score = number of matching keywords
    |
 4. Rank and filter:
-   - Sort specs by score (descending)
-   - Take top 3 specs with score > 0
+   - Sort ALL specs (regular + indexed) by score (descending)
+   - Take top 5 specs with score > 0 (increased from 3 to accommodate indexed specs)
    - If no matches found, skip display step
+   - Classify relevance: High (score >= 5), Medium (score 3-4), Low (score 1-2)
    |
 5. Display related specs (if any found):
    |
    Related specs found:
-   - spec-name-1: [first 50 chars of Original Goal]...
-   - spec-name-2: [first 50 chars of Original Goal]...
-   - spec-name-3: [first 50 chars of Original Goal]...
+
+   Feature specs:
+   - spec-name-1 [High]: [first 50 chars of Original Goal]...
+   - spec-name-2 [Medium]: [first 50 chars of Original Goal]...
+
+   Indexed components (from specs/.index/components):
+   - auth-controller [High]: Handles authentication and session management...
+   - user-service [Medium]: User CRUD operations and validation...
+
+   Indexed external (from specs/.index/external):
+   - api-docs [Low]: External API documentation for...
    |
    This context may inform the interview questions.
    |
@@ -644,9 +663,10 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
      {
        ...existing state,
        "relatedSpecs": [
-         {"name": "spec-name-1", "goal": "Original Goal text", "score": N},
-         {"name": "spec-name-2", "goal": "Original Goal text", "score": N},
-         {"name": "spec-name-3", "goal": "Original Goal text", "score": N}
+         {"name": "spec-name-1", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "High"},
+         {"name": "spec-name-2", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "Medium"},
+         {"name": "auth-controller", "goal": "Purpose text", "score": N, "type": "indexed-component", "relevance": "High"},
+         {"name": "api-docs", "goal": "Summary text", "score": N, "type": "indexed-external", "relevance": "Low"}
        ]
      }
 ```
@@ -700,6 +720,10 @@ This context may inform the interview questions.
 After scanning, if related specs were found, you may reference them when asking clarifying questions. For example:
 - "I noticed you have a spec 'user-auth' for authentication. Does this new feature relate to or depend on that work?"
 - "There's an existing 'api-refactor' spec. Should this work integrate with those changes?"
+
+**For indexed specs**, reference them to understand existing codebase patterns:
+- "The indexed auth-controller component handles authentication. Should this feature extend that controller or create a new one?"
+- "I found an indexed external spec for your API documentation. Does this feature need to follow the patterns described there?"
 
 ## Goal Interview (Pre-Research)
 
