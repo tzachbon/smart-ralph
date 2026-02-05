@@ -85,7 +85,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: AC-3.1, AC-3.2, AC-3.3, AC-3.4_
   - _Design: status.md Specific Changes_
 
-- [ ] 1.7 Update switch.md command with disambiguation
+- [x] 1.7 Update switch.md command with disambiguation
   - **Do**:
     1. Replace hardcoded path validation with `ralph_find_spec()` usage
     2. Update available specs listing with `ralph_list_specs()`
