@@ -52,7 +52,7 @@ Focus: Get loop control working in stop-hook. Skip tests.
   - _Requirements: FR-6, FR-7_
   - _Design: cancel.md (Simplified)_
 
-- [ ] 1.4 Remove ralph-loop references from skills and documentation
+- [x] 1.4 Remove ralph-loop references from skills and documentation
   - **Do**: Clean up all remaining ralph-loop/ralph-wiggum references
     1. Update skills/smart-ralph/references/ralph-loop-integration.md - remove or mark deprecated
     2. Search for "ralph-loop" and "ralph-wiggum" in all .md files
