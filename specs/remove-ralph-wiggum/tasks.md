@@ -81,7 +81,7 @@ Focus: Get loop control working in stop-hook. Skip tests.
 
 Clean up code after POC validated.
 
-- [ ] 2.1 Extract coordinator prompt to reusable function/template
+- [x] 2.1 Extract coordinator prompt to reusable function/template
   - **Do**: Create coordinator-prompt.sh or inline template
     1. Extract large coordinator prompt text from implement.md
     2. Create function or heredoc template for maintainability
