@@ -1,0 +1,16 @@
+# Test artifacts
+*.tmp
+*.log
+tmp/
+.tmp/
+
+# Bats test output
+report.tap
+test-results/
+
+# Coverage reports
+coverage/
+*.coverage
+
+# Test workspaces (should be cleaned up by teardown)
+test-workspace-*/

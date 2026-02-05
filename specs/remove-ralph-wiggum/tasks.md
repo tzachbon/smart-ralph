@@ -118,7 +118,7 @@ Clean up code after POC validated.
 
 Add bats-core tests.
 
-- [ ] 3.1 Set up bats-core test infrastructure
+- [x] 3.1 Set up bats-core test infrastructure
   - **Do**: Create test directory and helpers
     1. Create tests/ directory
     2. Create tests/helpers/setup.bash with common fixtures

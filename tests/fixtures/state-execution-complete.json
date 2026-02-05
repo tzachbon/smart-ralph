@@ -1,0 +1,8 @@
+{
+  "phase": "execution",
+  "taskIndex": 5,
+  "totalTasks": 5,
+  "taskIteration": 1,
+  "specName": "test-spec",
+  "specPath": "specs/test-spec"
+}
