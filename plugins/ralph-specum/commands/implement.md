@@ -33,8 +33,9 @@ specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
 
 ## Determine Active Spec
 
-1. Use `ralph_resolve_current()` to get the active spec path
-2. If resolution fails or no active spec: error "No active spec. Run /ralph-specum:new <name> first."
+1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it
+2. Otherwise, use `ralph_resolve_current()` to get the active spec path
+3. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
 
 The spec path is dynamically resolved - it may be in `./specs/` or any other configured specs directory.
 

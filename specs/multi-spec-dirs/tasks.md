@@ -242,7 +242,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
 
 After POC validated, clean up code and improve consistency.
 
-- [ ] 2.1 Extract common patterns in commands to use consistent resolver invocation
+- [x] 2.1 Extract common patterns in commands to use consistent resolver invocation
   - **Do**:
     1. Review all 12 commands for consistent resolver usage pattern
     2. Standardize "Determine Active Spec" sections across commands
