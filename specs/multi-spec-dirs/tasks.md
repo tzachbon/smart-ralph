@@ -52,13 +52,13 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: FR-6_
   - _Design: Hooks section_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: Shell syntax validation
+- [x] 1.4 [VERIFY] Quality checkpoint: Shell syntax validation
   - **Do**: Validate all shell scripts have valid syntax
   - **Verify**: `for f in plugins/ralph-specum/hooks/scripts/*.sh; do bash -n "$f" || exit 1; done && echo "All scripts OK"`
   - **Done when**: All shell scripts pass syntax check
   - **Commit**: `chore(ralph-specum): fix shell script syntax issues` (only if fixes needed)
 
-- [ ] 1.5 Update stop-watcher.sh to use path resolver
+- [x] 1.5 Update stop-watcher.sh to use path resolver
   - **Do**:
     1. Source path-resolver.sh at start of script
     2. Replace hardcoded `CURRENT_SPEC_FILE="$CWD/specs/.current-spec"` with resolver
