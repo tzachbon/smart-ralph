@@ -92,7 +92,7 @@ Clean up code after POC validated.
   - **Commit**: `refactor(coordinator): extract prompt to reusable template`
   - _Design: coordinator-prompt.sh_
 
-- [ ] 2.2 Add error handling for edge cases
+- [x] 2.2 Add error handling for edge cases
   - **Do**: Handle edge cases in stop-hook
     1. Handle missing jq gracefully (already exists, verify)
     2. Handle missing state file (exit silently)
