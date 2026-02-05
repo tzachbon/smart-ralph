@@ -342,7 +342,7 @@ Add unit and integration tests.
 
 > **IMPORTANT**: NEVER push directly to the default branch (main/master). Branch management is handled at startup via `/ralph-specum:start`. You should already be on a feature branch by this phase.
 
-- [ ] 4.1 Verify all new files created
+- [x] 4.1 Verify all new files created
   - **Do**: Verify all required files from design were created
   - **Verify**: All commands must pass:
     - `test -f plugins/ralph-specum/commands/index.md`
@@ -352,7 +352,7 @@ Add unit and integration tests.
   - **Done when**: All 4 new files exist
   - **Commit**: None (verification only)
 
-- [ ] 4.2 Verify start.md modifications
+- [x] 4.2 Verify start.md modifications
   - **Do**: Verify start.md has both required modifications
   - **Verify**: All must pass:
     - `grep -q "ralph-specum:index" plugins/ralph-specum/commands/start.md` (hint added)
@@ -360,7 +360,7 @@ Add unit and integration tests.
   - **Done when**: Both modifications present
   - **Commit**: None (verification only)
 
-- [ ] 4.3 Bump plugin version
+- [x] 4.3 Bump plugin version
   - **Do**:
     1. Read current version from `plugins/ralph-specum/.claude-plugin/plugin.json`
     2. Bump minor version (e.g., 2.11.1 -> 2.12.0) for new feature
