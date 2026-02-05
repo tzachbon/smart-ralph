@@ -90,12 +90,12 @@ Conduct pre-scan interview using AskUserQuestion before scanning.
 
 ### Pre-Scan Interview Questions
 
-| # | Question | Key | Options |
-|---|----------|-----|---------|
-| 1 | Are there any external documentation URLs I should index? | `externalUrls` | No external docs / Yes, I have URLs / Other |
-| 2 | Are there any MCP servers or skills I should document? | `externalTools` | No MCP/skills / Yes, I have some / Other |
-| 3 | Are there specific directories to focus on? | `focusAreas` | Index everything / Focus on specific areas / Other |
-| 4 | Are there code areas lacking comments that need extra attention? | `sparseAreas` | No sparse areas / Yes, some areas / Other |
+| # | Question | Required | Key | Options |
+|---|----------|----------|-----|---------|
+| 1 | Are there any external documentation URLs I should index? | Optional | `externalUrls` | No external docs / Yes, I have URLs / Other |
+| 2 | Are there any MCP servers or skills I should document? | Optional | `externalTools` | No MCP/skills / Yes, I have some / Other |
+| 3 | Are there specific directories to focus on? | Optional | `focusAreas` | Index everything / Focus on specific areas / Other |
+| 4 | Are there code areas lacking comments that need extra attention? | Optional | `sparseAreas` | No sparse areas / Yes, some areas / Other |
 
 ### Store Interview Responses
 
