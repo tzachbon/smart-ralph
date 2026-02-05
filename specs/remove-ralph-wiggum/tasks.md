@@ -168,7 +168,7 @@ Add bats-core tests.
   - **Commit**: `chore(version): bump to v3.0.0 - remove ralph-loop dependency`
   - _Requirements: FR-10_
 
-- [ ] 4.2 Add GitHub Actions CI for bats tests
+- [x] 4.2 Add GitHub Actions CI for bats tests
   - **Do**: Create workflow file
     1. Create .github/workflows/bats-tests.yml
     2. Trigger on push and pull_request

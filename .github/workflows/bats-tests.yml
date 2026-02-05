@@ -1,0 +1,29 @@
+name: Bats Tests
+
+on:
+  push:
+    paths:
+      - 'plugins/**/*.sh'
+      - 'tests/**/*.bats'
+      - '.github/workflows/bats-tests.yml'
+  pull_request:
+    paths:
+      - 'plugins/**/*.sh'
+      - 'tests/**/*.bats'
+      - '.github/workflows/bats-tests.yml'
+
+jobs:
+  test:
+    name: Run bats tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install bats-core
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bats
+
+      - name: Run bats tests
+        run: bats tests/*.bats
