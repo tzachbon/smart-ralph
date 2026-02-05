@@ -242,7 +242,7 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
 
 After POC validated, clean up code and add proper error handling.
 
-- [ ] 2.1 Add error handling to index command
+- [x] 2.1 Add error handling to index command
   - **Do**:
     1. Add error handling section to index command
     2. Handle: no components found, external URL unreachable, MCP unavailable, git not available (--changed), permission denied

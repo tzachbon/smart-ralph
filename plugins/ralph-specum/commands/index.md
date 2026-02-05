@@ -764,10 +764,181 @@ Next: Run /ralph-specum:start to create specs that reference indexed components.
 
 ## Error Handling
 
-| Error Scenario | Handling |
-|----------------|----------|
-| No components found | Warning: "No components found. Try `--path=src/` or check patterns." |
-| External URL unreachable | Warning: "Could not fetch {{url}} - skipping" |
-| MCP server unavailable | Warning: "MCP server '{{name}}' not responding - skipping" |
-| Git not available (--changed) | Error: "Git required for --changed. Use --force instead." |
-| Permission denied | Warning: "Cannot read {{path}} - skipping" |
+Handle errors gracefully with warnings and fallbacks. Never abort the entire indexing process for recoverable errors.
+
+### Error Scenarios
+
+| Error Scenario | Handling Strategy | User Message |
+|----------------|-------------------|--------------|
+| No components found | Warning + suggest broader patterns | "No components found. Try `--path=src/` or check patterns." |
+| External URL unreachable | Skip with warning, continue | "Warning: Could not fetch {{url}} - skipping" |
+| MCP server unavailable | Skip with warning, continue | "Warning: MCP server '{{name}}' not responding - skipping" |
+| Git not available (--changed) | Error, suggest alternative | "Git required for --changed. Use --force instead." |
+| Permission denied | Skip file with warning | "Warning: Cannot read {{path}} - skipping" |
+| Already indexed (no --force) | Skip silently, note in summary | Shows count of "skipped (already indexed)" |
+
+### Error Handling Behavior
+
+#### No Components Found
+
+When the scanner finds zero components:
+
+```text
+Behavior:
+1. Do NOT treat as fatal error
+2. Display warning message with suggestions
+3. Check if --path is too restrictive
+4. Suggest broader patterns or different directory
+
+Output:
+⚠️ No components found.
+
+Suggestions:
+- Try broader path: /ralph-specum:index --path=src/
+- Check detection patterns match your file structure
+- Run with --dry-run to see what would be scanned
+
+No specs were generated.
+```
+
+#### External URL Unreachable
+
+When WebFetch fails for a URL:
+
+```text
+Behavior:
+1. Log warning with URL and reason
+2. Continue processing other resources
+3. Do NOT create a spec for failed URL
+4. Include failure count in final summary
+
+Output:
+Warning: Could not fetch https://api.example.com/docs - skipping
+  Reason: Connection timeout after 30s
+
+Continue processing remaining resources...
+```
+
+#### MCP Server Unavailable
+
+When ListMcpResourcesTool fails for a server:
+
+```text
+Behavior:
+1. Log warning with server name
+2. Continue processing other resources
+3. Do NOT create a spec for unavailable server
+4. Include in external resources summary as "failed"
+
+Output:
+Warning: MCP server 'mcp-slack' not responding - skipping
+  Ensure the MCP server is running and accessible.
+
+Continue processing remaining resources...
+```
+
+#### Git Not Available (--changed)
+
+When --changed is used but git is not available:
+
+```text
+Behavior:
+1. Check for git availability before scanning
+2. If git not found or not a repo, show error
+3. Suggest --force as alternative
+4. Exit without scanning (fatal for this mode)
+
+Check:
+  Run: git rev-parse --git-dir 2>/dev/null
+  If fails: git not available
+
+Output:
+Error: Git required for --changed flag.
+  This directory is not a git repository or git is not installed.
+
+Alternative: Use --force to regenerate all specs instead.
+```
+
+#### Permission Denied
+
+When Read fails due to file permissions:
+
+```text
+Behavior:
+1. Log warning with file path
+2. Skip the file, continue scanning
+3. Include in skipped count
+4. Do NOT abort scanning for permission errors
+
+Output:
+Warning: Cannot read src/legacy/protected.ts - skipping
+  Permission denied. Check file permissions.
+
+Continue scanning remaining files...
+```
+
+#### Already Indexed (No --force)
+
+When a spec already exists and content hash matches:
+
+```text
+Behavior:
+1. Compare content hash in .index-state.json
+2. If hash matches: skip silently (no warning per file)
+3. Track count of skipped files
+4. Report in final summary
+
+Output (in summary only):
+Unchanged: 15 files (content unchanged, skipped)
+```
+
+### Graceful Fallbacks
+
+Implement these fallbacks to ensure robustness:
+
+```text
+Fallback Strategies:
+
+1. Hash calculation fails:
+   - Fallback: Regenerate spec (treat as changed)
+   - Log: "Warning: Could not calculate hash for {{file}}, regenerating"
+
+2. Template file missing:
+   - Fallback: Use inline minimal template
+   - Log: "Warning: Template {{template}} not found, using default"
+
+3. Write permission denied for output:
+   - Fallback: None (fatal - cannot create specs)
+   - Log: "Error: Cannot write to specs/.index/ - check permissions"
+
+4. State file corrupted:
+   - Fallback: Reset state, perform full scan
+   - Log: "Warning: .index-state.json corrupted, performing fresh scan"
+
+5. Partial scan interrupted:
+   - Fallback: Existing specs are valid, can resume with --force
+   - Log: "Warning: Previous index incomplete. Run with --force to complete."
+```
+
+### Error Summary
+
+At the end of indexing, show error/warning summary:
+
+```text
+Index Complete with Warnings:
+
+| Status | Count | Details |
+|--------|-------|---------|
+| Generated | 25 | New or updated specs |
+| Unchanged | 10 | Skipped (already indexed) |
+| Skipped | 3 | Permission errors |
+| Failed | 1 | External URL timeout |
+
+Warnings:
+- Could not fetch https://api.example.com/docs (timeout)
+- Cannot read src/legacy/old.ts (permission denied)
+- Cannot read src/legacy/archive.ts (permission denied)
+- Cannot read src/legacy/backup.ts (permission denied)
+
+Run with --force to regenerate all specs.
+```
