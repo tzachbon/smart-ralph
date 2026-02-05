@@ -91,7 +91,7 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-1, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-24_
   - _Design: Components > 1. Index Command_
 
-- [ ] 1.6 Add pre-scan interview to index command
+- [x] 1.6 Add pre-scan interview to index command
   - **Do**:
     1. Add pre-scan interview section using AskUserQuestion
     2. Implement 4 interview questions per design: external URLs, MCP/skills, focus areas, sparse areas
