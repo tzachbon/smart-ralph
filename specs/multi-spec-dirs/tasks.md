@@ -99,13 +99,13 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: AC-4.1, AC-4.2, AC-4.3, AC-4.4, AC-4.5_
   - _Design: switch.md Specific Changes, Disambiguation Flow_
 
-- [ ] 1.8 [VERIFY] Quality checkpoint: Command syntax validation
+- [x] 1.8 [VERIFY] Quality checkpoint: Command syntax validation
   - **Do**: Verify command files are valid markdown with proper frontmatter
   - **Verify**: `for f in plugins/ralph-specum/commands/*.md; do head -1 "$f" | grep -q "^---$" && echo "$f OK" || echo "$f FAIL"; done`
   - **Done when**: All command files have valid frontmatter
   - **Commit**: `chore(ralph-specum): fix command frontmatter issues` (only if fixes needed)
 
-- [ ] 1.9 Update start.md with --specs-dir flag
+- [x] 1.9 Update start.md with --specs-dir flag
   - **Do**:
     1. Add `--specs-dir <path>` to argument parsing
     2. Update spec creation to use specified dir or `ralph_get_default_dir()`
