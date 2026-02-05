@@ -97,7 +97,7 @@ Manual verification of the integration.
   - **Verify**: `grep -q '"2.11.4"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -q '"2.11.4"' .claude-plugin/marketplace.json`
   - **Commit**: `chore(ralph-specum): bump version to 2.11.4`
 
-- [ ] 4.2 Create PR and verify
+- [x] 4.2 Create PR and verify
   - **Do**: Push branch, create PR with summary of ralph-wiggum integration changes
   - **Verify**: `gh pr view` shows PR created
   - **Done when**: PR ready for review
