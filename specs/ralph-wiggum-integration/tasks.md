@@ -21,7 +21,7 @@ Focus: Get implement.md working with ralph-wiggum API. Skip tests.
   - _Requirements: FR-1_
   - _Design: Component A_
 
-- [ ] 1.2 Update completion signal format in coordinator prompt
+- [x] 1.2 Update completion signal format in coordinator prompt
   - **Do**: Wrap ALL_TASKS_COMPLETE in `<promise>` tags in coordinator prompt section. Find all occurrences of `Output: ALL_TASKS_COMPLETE` and similar, change to `Output: <promise>ALL_TASKS_COMPLETE</promise>`
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: All completion outputs use `<promise>` tags

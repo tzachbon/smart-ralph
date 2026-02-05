@@ -74,7 +74,7 @@ This file contains the full instructions for task execution. Writing it to a fil
 Use the Skill tool to invoke `ralph-wiggum:ralph-loop` with args:
 
 ```
-Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
+Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output <promise>ALL_TASKS_COMPLETE</promise> when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
 ```
 
 Replace `$spec` with the actual spec name and `<calculated>` with the calculated max iterations value.
@@ -123,7 +123,7 @@ If state file missing or corrupt (invalid JSON, missing required fields):
 If taskIndex >= totalTasks:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup)
-3. Output: ALL_TASKS_COMPLETE
+3. Output: <promise>ALL_TASKS_COMPLETE</promise>
 4. STOP - do not delegate any task
 
 ### 4. Parse Current Task
@@ -1084,7 +1084,7 @@ If any parallel task failed (no TASK_COMPLETE in its output):
 
 **Standard Completion** (no Phase 5 or Phase 5 done):
 
-Output exactly `ALL_TASKS_COMPLETE` when:
+Output exactly `<promise>ALL_TASKS_COMPLETE</promise>` when:
 - taskIndex >= totalTasks AND
 - All tasks marked [x] in tasks.md AND
 - Zero test regressions verified AND
@@ -1098,9 +1098,9 @@ Before outputting:
 
 This signal terminates the Ralph Loop loop.
 
-**PR Link Output**: If a PR was created during execution, output the PR URL after ALL_TASKS_COMPLETE:
+**PR Link Output**: If a PR was created during execution, output the PR URL after `<promise>ALL_TASKS_COMPLETE</promise>`:
 ```text
-ALL_TASKS_COMPLETE
+<promise>ALL_TASKS_COMPLETE</promise>
 
 PR: https://github.com/owner/repo/pull/123
 ```
@@ -1204,7 +1204,7 @@ When all Step 4 criteria met:
 1. Update .progress.md with final state
 2. Delete .ralph-state.json
 3. Get PR URL: `gh pr view --json url -q .url`
-4. Output: ALL_TASKS_COMPLETE
+4. Output: <promise>ALL_TASKS_COMPLETE</promise>
 5. Output: PR link (e.g., "PR: https://github.com/owner/repo/pull/123")
 
 **Timeout Protection**:
