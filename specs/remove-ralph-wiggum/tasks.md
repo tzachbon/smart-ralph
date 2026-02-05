@@ -39,7 +39,7 @@ Focus: Get loop control working in stop-hook. Skip tests.
   - _Requirements: FR-4, FR-5_
   - _Design: implement.md (Simplified)_
 
-- [ ] 1.3 Simplify cancel.md to delete files only
+- [x] 1.3 Simplify cancel.md to delete files only
   - **Do**: Remove skill invocation, simplify to file deletion
     1. Remove "Stop Ralph loop" section that invokes ralph-loop:cancel-ralph
     2. Keep file deletion: rm .ralph-state.json, rm -rf spec directory
