@@ -39,12 +39,15 @@ If you cannot verify end-to-end, DO NOT output TASK_COMPLETE.
 
 ## When Invoked
 
-You will receive:
-- Spec name and path
+You receive via Task delegation:
+- **basePath**: Full path to spec directory (e.g., `./specs/my-feature` or `./packages/api/specs/auth`)
+- **specName**: Spec name
 - Task index (0-based)
 - Context from .progress.md
 - The specific task block from tasks.md
 - (Optional) progressFile parameter for parallel execution
+
+Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 
 ## Parallel Execution: progressFile Parameter
 
@@ -60,13 +63,13 @@ When `progressFile` is provided (e.g., `.progress-task-1.md`), write ALL learnin
 4. The temp file follows same format as .progress.md
 
 **Example**: If invoked with `progressFile: .progress-task-2.md`:
-- Write to: `./specs/<spec>/.progress-task-2.md`
-- Skip: `./specs/<spec>/.progress.md`
-- Still update: `./specs/<spec>/tasks.md` (mark [x])
+- Write to: `<basePath>/.progress-task-2.md`
+- Skip: `<basePath>/.progress.md`
+- Still update: `<basePath>/tasks.md` (mark [x])
 
-**Commit includes**:
+**Commit includes** (use basePath from delegation):
 ```bash
-git add ./specs/<spec>/tasks.md ./specs/<spec>/.progress-task-N.md
+git add <basePath>/tasks.md <basePath>/.progress-task-N.md
 ```
 
 When progressFile is NOT provided, default behavior applies (write to .progress.md).
@@ -93,7 +96,7 @@ When progressFile is NOT provided, default behavior applies (write to .progress.
    |
 8. Stage and commit ALL changes:
    - Task files (from Files section)
-   - ./specs/<spec>/tasks.md
+   - <basePath>/tasks.md
    - Progress file (progressFile if provided, else .progress.md)
    |
 9. Output: TASK_COMPLETE
@@ -234,14 +237,14 @@ When you receive a task, first detect if it has [VERIFY] in the description:
    - Fix issues between retries based on failure details logged
 
 6. **Commit Rule for [VERIFY] Tasks**:
-   - Always include spec files in commits: `./specs/<spec>/tasks.md` and `./specs/<spec>/.progress.md`
+   - Always include spec files in commits: `<basePath>/tasks.md` and `<basePath>/.progress.md`
    - If qa-engineer made fixes, commit those files too
    - Use commit message from task or `chore(qa): pass quality checkpoint` if fixes made
 </mandatory>
 
 ## Progress Updates
 
-After completing task, update `./specs/<spec>/.progress.md`:
+After completing task, update `<basePath>/.progress.md` (basePath from delegation):
 
 ```markdown
 ## Completed Tasks
@@ -288,15 +291,15 @@ ALWAYS commit spec files with every task commit. This is NON-NEGOTIABLE.
 - Never commit failing code
 - Include task reference in commit body if helpful
 
-**CRITICAL: Always stage and commit these spec files with EVERY task:**
+**CRITICAL: Always stage and commit these spec files with EVERY task** (use basePath from delegation):
 ```bash
 # Standard (sequential) execution:
-git add ./specs/<spec>/tasks.md ./specs/<spec>/.progress.md
+git add <basePath>/tasks.md <basePath>/.progress.md
 
 # Parallel execution (when progressFile provided):
-git add ./specs/<spec>/tasks.md ./specs/<spec>/<progressFile>
+git add <basePath>/tasks.md <basePath>/<progressFile>
 ```
-- `./specs/<spec>/tasks.md` - task checkmarks updated
+- `<basePath>/tasks.md` - task checkmarks updated
 - Progress file - either .progress.md (default) or progressFile (parallel)
 
 Failure to commit spec files breaks progress tracking across sessions.
@@ -306,22 +309,22 @@ Failure to commit spec files breaks progress tracking across sessions.
 <mandatory>
 When running in parallel mode, multiple executors may try to update tasks.md simultaneously. Use flock to prevent race conditions.
 
-**tasks.md updates** (marking [x]):
+**tasks.md updates** (marking [x]) - use basePath from delegation:
 ```bash
 (
   flock -x 200
   # Read tasks.md, update checkmark, write back
-  sed -i 's/- \[ \] X.Y/- [x] X.Y/' "./specs/<spec>/tasks.md"
-) 200>"./specs/<spec>/.tasks.lock"
+  sed -i 's/- \[ \] X.Y/- [x] X.Y/' "<basePath>/tasks.md"
+) 200>"<basePath>/.tasks.lock"
 ```
 
-**git commit operations**:
+**git commit operations** (use basePath from delegation):
 ```bash
 (
   flock -x 200
   git add <files>
   git commit -m "<message>"
-) 200>"./specs/<spec>/.git-commit.lock"
+) 200>"<basePath>/.git-commit.lock"
 ```
 
 **Why flock**:

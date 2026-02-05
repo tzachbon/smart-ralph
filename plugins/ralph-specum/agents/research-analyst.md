@@ -18,6 +18,13 @@ You are a senior analyzer and researcher with a strict "verify-first, assume-nev
 
 ## When Invoked
 
+You receive via Task delegation:
+- **basePath**: Full path to spec directory (e.g., `./specs/my-feature` or `./packages/api/specs/auth`)
+- **specName**: Spec name
+- Context from coordinator
+
+Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
+
 1. **Understand the request** - Parse what's being asked, identify knowledge gaps
 2. **Research externally** - Use WebSearch for current information, standards, best practices
 3. **Research internally** - Read existing codebase, architecture, related implementations
@@ -28,7 +35,7 @@ You are a senior analyzer and researcher with a strict "verify-first, assume-nev
 ## Append Learnings
 
 <mandatory>
-After completing research, append any significant discoveries to `./specs/<spec>/.progress.md`:
+After completing research, append any significant discoveries to `<basePath>/.progress.md` (basePath from delegation):
 
 ```markdown
 ## Learnings
@@ -78,10 +85,10 @@ Read: specific files for detailed analysis
 ### Step 2.5: Related Specs Discovery
 
 <mandatory>
-Scan existing specs for relationships:
+Scan existing specs for relationships across all configured specs directories (from path resolver):
 </mandatory>
 
-1. List directories in `./specs/` (each is a spec)
+1. List specs using `ralph_list_specs()` output (covers all specs_dirs)
 2. For each spec (except current):
    a. Read `.progress.md` for Original Goal
    b. Read `research.md` Executive Summary if exists
@@ -179,7 +186,7 @@ Create research.md with findings.
 
 ## Output: research.md
 
-Create `<spec-path>/research.md` with:
+Create `<basePath>/research.md` with (basePath from delegation):
 
 ```markdown
 ---
@@ -257,8 +264,10 @@ Before completing, verify:
 As your FINAL action before completing, you MUST update the state file to signal that user approval is required before proceeding:
 
 ```bash
-jq '.awaitingApproval = true' ./specs/<spec>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json ./specs/<spec>/.ralph-state.json
+jq '.awaitingApproval = true' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
+
+Use `basePath` from Task delegation (e.g., `./specs/my-feature` or `./packages/api/specs/auth`).
 
 This tells the coordinator to stop and wait for user to run the next phase command.
 

@@ -17,6 +17,17 @@ if [ -z "$CWD" ]; then
     exit 0
 fi
 
+# Source path resolver for multi-directory support
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/path-resolver.sh" ]; then
+    export RALPH_CWD="$CWD"
+    # shellcheck source=path-resolver.sh
+    source "$SCRIPT_DIR/path-resolver.sh"
+else
+    # Fallback if path-resolver.sh not found
+    exit 0
+fi
+
 # Check for settings file to see if plugin is enabled
 SETTINGS_FILE="$CWD/.claude/ralph-specum.local.md"
 if [ -f "$SETTINGS_FILE" ]; then
@@ -28,21 +39,19 @@ if [ -f "$SETTINGS_FILE" ]; then
     fi
 fi
 
-# Check for active spec
-CURRENT_SPEC_FILE="$CWD/specs/.current-spec"
-if [ ! -f "$CURRENT_SPEC_FILE" ]; then
+# Resolve current spec using path resolver
+SPEC_RELATIVE_PATH=$(ralph_resolve_current 2>/dev/null)
+if [ -z "$SPEC_RELATIVE_PATH" ]; then
     exit 0
 fi
 
-SPEC_NAME=$(cat "$CURRENT_SPEC_FILE" 2>/dev/null | tr -d '[:space:]')
-if [ -z "$SPEC_NAME" ]; then
-    exit 0
-fi
-
-SPEC_PATH="$CWD/specs/$SPEC_NAME"
+SPEC_PATH="$CWD/$SPEC_RELATIVE_PATH"
 if [ ! -d "$SPEC_PATH" ]; then
     exit 0
 fi
+
+# Extract spec name from path (last component)
+SPEC_NAME=$(basename "$SPEC_RELATIVE_PATH")
 
 # Read state file if exists
 STATE_FILE="$SPEC_PATH/.ralph-state.json"

@@ -8,10 +8,13 @@ You are a QA engineer agent that executes [VERIFY] tasks. You run verification c
 
 ## When Invoked
 
-You receive a [VERIFY] task from spec-executor. The input includes:
-- Spec name and path
+You receive via Task delegation from spec-executor:
+- **basePath**: Full path to spec directory (e.g., `./specs/my-feature` or `./packages/api/specs/auth`)
+- **specName**: Spec name
 - Full task description (e.g., "V4 [VERIFY] Full local CI: pnpm lint && pnpm test")
 - Task body (Do/Verify/Done when sections)
+
+Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 
 Your job: Execute verification and output result signal.
 
@@ -52,7 +55,7 @@ VF (Verify Fix) tasks verify that the original issue was resolved. Detect via:
 
 For VF tasks:
 
-1. **Read BEFORE state** from `./specs/<spec>/.progress.md`:
+1. **Read BEFORE state** from `<basePath>/.progress.md` (basePath from delegation):
    - Find `## Reality Check (BEFORE)` section
    - Extract reproduction command
    - Extract original failure output
@@ -67,7 +70,7 @@ For VF tasks:
    - AFTER should pass (zero exit, no error output)
    - If AFTER still fails same way as BEFORE, issue not resolved
 
-4. **Document Reality Check (AFTER)** in `.progress.md`:
+4. **Document Reality Check (AFTER)** in `<basePath>/.progress.md`:
    ```markdown
    ## Reality Check (AFTER)
 
@@ -256,7 +259,7 @@ Tests verify real behavior, not mock behavior.
 
 For V6 [VERIFY] AC checklist tasks:
 
-1. Read `./specs/<spec>/requirements.md`
+1. Read `<basePath>/requirements.md` (basePath from delegation)
 2. Find all AC-* entries (e.g., AC-1.1, AC-2.3)
 3. For each AC:
    - Read the acceptance criterion text
@@ -329,7 +332,7 @@ VERIFICATION_PASS
 
 ## Progress Logging
 
-After verification, append results to `./specs/<spec>/.progress.md` Learnings section:
+After verification, append results to `<basePath>/.progress.md` Learnings section (basePath from delegation):
 
 ```markdown
 ## Learnings

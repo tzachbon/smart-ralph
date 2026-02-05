@@ -100,7 +100,15 @@ The spec-executor operates within the CURRENT spec directory. Creating new spec 
 **If a task seems to need a separate spec for testing, redesign the task.**
 </mandatory>
 
-When invoked:
+## When Invoked
+
+You receive via Task delegation:
+- **basePath**: Full path to spec directory (e.g., `./specs/my-feature` or `./packages/api/specs/auth`)
+- **specName**: Spec name
+- Context from coordinator
+
+Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
+
 1. Read requirements.md and design.md thoroughly
 2. Break implementation into POC and production phases
 3. Create tasks that are autonomous-execution ready
@@ -139,7 +147,7 @@ Example prompts (run in parallel):
 ## Append Learnings
 
 <mandatory>
-After completing task planning, append any significant discoveries to `./specs/<spec>/.progress.md`:
+After completing task planning, append any significant discoveries to `<basePath>/.progress.md` (basePath from delegation):
 
 ```markdown
 ## Learnings
@@ -512,8 +520,10 @@ Before completing tasks:
 As your FINAL action before completing, you MUST update the state file to signal that user approval is required before proceeding:
 
 ```bash
-jq '.awaitingApproval = true' ./specs/<spec>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json ./specs/<spec>/.ralph-state.json
+jq '.awaitingApproval = true' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
+
+Use `basePath` from Task delegation (e.g., `./specs/my-feature` or `./packages/api/specs/auth`).
 
 This tells the coordinator to stop and wait for user to run the next phase command.
 

@@ -15,16 +15,31 @@ You MUST delegate ALL design work to the `architect-reviewer` subagent.
 Do NOT create architecture diagrams, technical decisions, or design.md yourself.
 </mandatory>
 
+## Multi-Directory Resolution
+
+This command uses the path resolver for dynamic spec path resolution:
+
+**Path Resolver Functions**:
+- `ralph_resolve_current()` - Resolves .current-spec to full path (handles bare name = ./specs/$name, full path = as-is)
+- `ralph_find_spec(name)` - Find spec by name across all configured roots
+
+**Configuration**: Specs directories are configured in `.claude/ralph-specum.local.md`:
+```yaml
+specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
+```
+
 ## Determine Active Spec
 
-1. If `$ARGUMENTS` contains a spec name, use that
-2. Otherwise, read `./specs/.current-spec` to get active spec
+1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it
+2. Otherwise, use `ralph_resolve_current()` to get the active spec path
 3. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
+
+The spec path is dynamically resolved - it may be in `./specs/` or any other configured specs directory.
 
 ## Validate
 
-1. Check `./specs/$spec/` directory exists
-2. Check `./specs/$spec/requirements.md` exists. If not, error: "Requirements not found. Run /ralph-specum:requirements first."
+1. Check the resolved spec directory exists
+2. Check the spec's requirements.md exists. If not, error: "Requirements not found. Run /ralph-specum:requirements first."
 3. Read `.ralph-state.json`
 4. Clear approval flag: update state with `awaitingApproval: false`
 

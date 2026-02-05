@@ -18,6 +18,12 @@ if [ -z "$CWD" ]; then
     exit 0
 fi
 
+# Source path resolver for spec directory resolution
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RALPH_CWD="$CWD"
+export RALPH_CWD
+source "$SCRIPT_DIR/path-resolver.sh"
+
 # Check for settings file to see if plugin is enabled
 SETTINGS_FILE="$CWD/.claude/ralph-specum.local.md"
 if [ -f "$SETTINGS_FILE" ]; then
@@ -29,18 +35,16 @@ if [ -f "$SETTINGS_FILE" ]; then
     fi
 fi
 
-# Check for active spec
-CURRENT_SPEC_FILE="$CWD/specs/.current-spec"
-if [ ! -f "$CURRENT_SPEC_FILE" ]; then
+# Resolve current spec using path resolver (handles multi-directory support)
+SPEC_PATH=$(ralph_resolve_current 2>/dev/null)
+if [ -z "$SPEC_PATH" ]; then
     exit 0
 fi
 
-SPEC_NAME=$(cat "$CURRENT_SPEC_FILE" 2>/dev/null | tr -d '[:space:]')
-if [ -z "$SPEC_NAME" ]; then
-    exit 0
-fi
+# Extract spec name from path (last component)
+SPEC_NAME=$(basename "$SPEC_PATH")
 
-STATE_FILE="$CWD/specs/$SPEC_NAME/.ralph-state.json"
+STATE_FILE="$CWD/$SPEC_PATH/.ralph-state.json"
 if [ ! -f "$STATE_FILE" ]; then
     exit 0
 fi
@@ -68,7 +72,7 @@ fi
 
 # Cleanup orphaned temp progress files (from interrupted parallel batches)
 # Only remove files older than 60 minutes to avoid race conditions with active executors
-find "$CWD/specs/$SPEC_NAME" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
+find "$CWD/$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
 
 # Note: .progress.md and .ralph-state.json are preserved for loop continuation
 # Use /ralph-specum:cancel to explicitly stop execution and cleanup state

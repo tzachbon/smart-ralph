@@ -1,0 +1,104 @@
+{
+  "version": "1.0",
+  "updated": "2026-02-05T13:36:55Z",
+  "directories": [
+    {
+      "path": "./specs",
+      "specsCount": 13,
+      "isDefault": true
+    }
+  ],
+  "specs": [
+    {
+      "name": "add-skills-doc",
+      "path": "./specs/add-skills-doc",
+      "phase": "completed",
+      "taskIndex": 5,
+      "totalTasks": 5
+    },
+    {
+      "name": "plan-source-feature",
+      "path": "./specs/plan-source-feature",
+      "phase": "completed",
+      "taskIndex": 12,
+      "totalTasks": 12
+    },
+    {
+      "name": "implement-ralph-wiggum",
+      "path": "./specs/implement-ralph-wiggum",
+      "phase": "tasks",
+      "taskIndex": 27,
+      "totalTasks": 35
+    },
+    {
+      "name": "reality-verification-principle",
+      "path": "./specs/reality-verification-principle",
+      "phase": "tasks",
+      "taskIndex": 9,
+      "totalTasks": 11
+    },
+    {
+      "name": "qa-verification",
+      "path": "./specs/qa-verification",
+      "phase": "completed",
+      "taskIndex": 19,
+      "totalTasks": 19
+    },
+    {
+      "name": "ralph-speckit",
+      "path": "./specs/ralph-speckit",
+      "phase": "completed",
+      "taskIndex": 27,
+      "totalTasks": 27
+    },
+    {
+      "name": "multi-spec-dirs",
+      "path": "./specs/multi-spec-dirs",
+      "phase": "completed",
+      "taskIndex": 33,
+      "totalTasks": 33
+    },
+    {
+      "name": "parallel-task-execution",
+      "path": "./specs/parallel-task-execution",
+      "phase": "tasks",
+      "taskIndex": 24,
+      "totalTasks": 25
+    },
+    {
+      "name": "iterative-failure-recovery",
+      "path": "./specs/iterative-failure-recovery",
+      "phase": "tasks",
+      "taskIndex": 14,
+      "totalTasks": 20
+    },
+    {
+      "name": "goal-interview",
+      "path": "./specs/goal-interview",
+      "phase": "completed",
+      "taskIndex": 14,
+      "totalTasks": 14
+    },
+    {
+      "name": "adaptive-interview",
+      "path": "./specs/adaptive-interview",
+      "phase": "completed",
+      "taskIndex": 22,
+      "totalTasks": 22
+    },
+    {
+      "name": "improve-walkthrough-feature",
+      "path": "./specs/improve-walkthrough-feature",
+      "phase": "tasks",
+      "taskIndex": 13,
+      "totalTasks": 14
+    },
+    {
+      "name": "when-creating-worktree",
+      "path": "./specs/when-creating-worktree",
+      "phase": "completed",
+      "taskIndex": 7,
+      "totalTasks": 7
+    }
+  ]
+}

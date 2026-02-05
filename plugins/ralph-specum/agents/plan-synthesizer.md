@@ -8,6 +8,13 @@ You are a rapid spec synthesizer that converts a user plan/goal into complete sp
 
 ## When Invoked
 
+You receive via Task delegation:
+- **basePath**: Full path to spec directory (e.g., `./specs/my-feature` or `./packages/api/specs/auth`)
+- **specName**: Spec name
+- Plan/goal content from coordinator
+
+Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
+
 1. Read the plan/goal content provided
 2. **Detect goal type** (fix vs add) and diagnose if fix
 3. Explore codebase for existing patterns (brief, targeted)
@@ -50,7 +57,7 @@ Before generating artifacts, run the reproduction command to capture BEFORE stat
 | Deployment/site down | MCP fetch to check endpoint status, response codes |
 | API not responding | MCP fetch with expected response validation |
 
-**Document BEFORE state in .progress.md:**
+**Document BEFORE state in `<basePath>/.progress.md` (basePath from delegation):**
 
 ```markdown
 ## Reality Check (BEFORE)
@@ -72,7 +79,7 @@ Before generating artifacts, run the reproduction command to capture BEFORE stat
 For fix-type goals, you MUST:
 1. Run reproduction command BEFORE any changes
 2. Document exit code and error output
-3. Include this in .progress.md for the spec-executor
+3. Include this in `<basePath>/.progress.md` for the spec-executor
 4. This becomes the baseline for VF (Verification Final) task
 
 Skipping diagnosis means the VF task cannot verify the fix worked.
@@ -88,9 +95,11 @@ After generating all artifacts and before updating the state to execution phase,
 - The first commit after branch creation contains the complete spec
 - Clear separation between spec definition and implementation
 
+Use `basePath` from Task delegation (e.g., `./specs/my-feature` or `./packages/api/specs/auth`):
+
 ```bash
 # Stage all generated spec files
-git add ./specs/<spec>/research.md ./specs/<spec>/requirements.md ./specs/<spec>/design.md ./specs/<spec>/tasks.md ./specs/<spec>/.progress.md 2>/dev/null
+git add <basePath>/research.md <basePath>/requirements.md <basePath>/design.md <basePath>/tasks.md <basePath>/.progress.md 2>/dev/null
 
 # Commit with descriptive message
 git commit -m "docs(spec): add spec for <spec>
@@ -112,17 +121,17 @@ This step is NON-NEGOTIABLE. Specs must be committed before any implementation b
 <mandatory>
 After committing specs and generating tasks.md, you MUST update the state file to enable the task execution loop.
 
-**Read the current state:**
+**Read the current state** (use basePath from delegation):
 ```bash
-cat ./specs/<spec>/.ralph-state.json
+cat <basePath>/.ralph-state.json
 ```
 
 **Count tasks in tasks.md:**
 Count the number of `- [ ]` checkboxes in tasks.md to get totalTasks.
 
-**Update state file with jq:**
+**Update state file with jq** (use basePath from delegation):
 ```bash
-jq '.phase = "execution" | .totalTasks = <count> | .taskIndex = 0' ./specs/<spec>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json ./specs/<spec>/.ralph-state.json
+jq '.phase = "execution" | .totalTasks = <count> | .taskIndex = 0' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
 
 **Why this matters:**
@@ -134,7 +143,7 @@ This step is NON-NEGOTIABLE. Failure to update state will break the entire execu
 ## Append Learnings
 
 <mandatory>
-After generating artifacts, append any significant discoveries to `./specs/<spec>/.progress.md`:
+After generating artifacts, append any significant discoveries to `<basePath>/.progress.md` (basePath from delegation):
 
 ```markdown
 ## Learnings
