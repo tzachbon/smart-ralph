@@ -562,6 +562,137 @@ After all specs generated:
 3. List all components and external resources
 4. Write to `specs/.index/index.md`
 
+## Index Summary Builder
+
+Build the `specs/.index/index.md` summary file using the index-summary template.
+
+### Template Variables
+
+Collect data from all generated specs to fill template:
+
+| Variable | Description | Source |
+|----------|-------------|--------|
+| `TIMESTAMP` | When index was generated | Current ISO timestamp (e.g., `2026-02-05T10:30:00Z`) |
+| `CATEGORIES` | Array of category summaries | Aggregated from component specs |
+| `TOTAL` | Total component count | Sum of all category counts |
+| `CONTROLLERS` | Array of controller specs | From `specs/.index/components/controller-*.md` |
+| `SERVICES` | Array of service specs | From `specs/.index/components/service-*.md` |
+| `MODELS` | Array of model specs | From `specs/.index/components/model-*.md` |
+| `HELPERS` | Array of helper specs | From `specs/.index/components/helper-*.md` |
+| `MIGRATIONS` | Array of migration specs | From `specs/.index/components/migration-*.md` |
+| `EXTERNAL` | Array of external resource specs | From `specs/.index/external/*.md` |
+| `EXCLUDES` | Excluded patterns used | From `parsedArgs.exclude` (joined with `, `) |
+| `PATHS` | Indexed paths | From `parsedArgs.path` or "Project root" |
+
+### CATEGORIES Structure
+
+Build CATEGORIES array with counts per category:
+
+```text
+CATEGORIES = [
+  { name: "Controllers", count: 5, lastUpdated: "2026-02-05T10:30:00Z" },
+  { name: "Services", count: 8, lastUpdated: "2026-02-05T10:30:00Z" },
+  { name: "Models", count: 12, lastUpdated: "2026-02-05T10:30:00Z" },
+  { name: "Helpers", count: 3, lastUpdated: "2026-02-05T10:30:00Z" },
+  { name: "Migrations", count: 2, lastUpdated: "2026-02-05T10:30:00Z" }
+]
+
+Count calculation:
+1. Glob: specs/.index/components/controller-*.md -> count Controllers
+2. Glob: specs/.index/components/service-*.md -> count Services
+3. Glob: specs/.index/components/model-*.md -> count Models
+4. Glob: specs/.index/components/helper-*.md -> count Helpers
+5. Glob: specs/.index/components/migration-*.md -> count Migrations
+```
+
+### Component Arrays Structure
+
+For each category, build array of component entries:
+
+```text
+CONTROLLERS = [
+  { name: "UsersController", file: "controller-users.md", purpose: "User management" },
+  { name: "AuthController", file: "controller-auth.md", purpose: "Authentication" }
+]
+
+Fields extracted from component spec:
+- name: From {{COMPONENT_NAME}} in spec frontmatter
+- file: Filename of the generated spec
+- purpose: From {{AUTO_GENERATED_SUMMARY}} or first line of Purpose section
+```
+
+### EXTERNAL Structure
+
+Build EXTERNAL array from external resource specs:
+
+```text
+EXTERNAL = [
+  { name: "API Documentation", file: "url-api-docs.md", type: "url", fetched: "2026-02-05T10:30:00Z" },
+  { name: "Slack MCP", file: "mcp-slack.md", type: "mcp-server", fetched: "2026-02-05T10:30:00Z" },
+  { name: "Start Command", file: "skill-ralph-specum-start.md", type: "skill", fetched: "2026-02-05T10:30:00Z" }
+]
+
+Fields extracted from external spec:
+- name: From {{RESOURCE_NAME}} in spec frontmatter
+- file: Filename of the generated spec
+- type: From {{SOURCE_TYPE}} in spec frontmatter (url, mcp-server, skill)
+- fetched: From {{FETCH_TIMESTAMP}} in spec frontmatter
+```
+
+### Index Summary Generation Process
+
+```text
+Build Index Summary:
+1. Calculate TIMESTAMP as current ISO timestamp
+2. Count components per category using Glob:
+   - Glob "specs/.index/components/controller-*.md" -> count
+   - Glob "specs/.index/components/service-*.md" -> count
+   - (etc. for each category)
+3. Build CATEGORIES array with name, count, lastUpdated
+4. Calculate TOTAL as sum of all category counts
+5. For each category, build component array:
+   - Read each spec file to extract name, purpose
+   - Store filename for linking
+6. Glob "specs/.index/external/*.md" for external resources
+7. Read each external spec to extract name, type, fetched timestamp
+8. Get EXCLUDES from parsedArgs.exclude (default excludes if not specified)
+9. Get PATHS from parsedArgs.path ("Project root" if not specified)
+10. Load templates/index-summary.md
+11. Fill template with all collected data
+12. Write to specs/.index/index.md
+```
+
+### Index State Update
+
+After writing index summary, update `specs/.index/.index-state.json`:
+
+```json
+{
+  "lastIndexed": "2026-02-05T10:30:00Z",
+  "componentCount": 30,
+  "externalCount": 3,
+  "categories": {
+    "controllers": 5,
+    "services": 8,
+    "models": 12,
+    "helpers": 3,
+    "migrations": 2
+  },
+  "excludes": ["node_modules", "dist", "..."],
+  "paths": ["src/"],
+  "hashes": { ... },
+  "interviewResponses": { ... }
+}
+```
+
+### Dry Run Handling
+
+If `--dry-run` is set, do NOT write `specs/.index/index.md`. Instead include it in the dry-run preview table:
+
+```text
+| index.md | Summary | - | Updated |
+```
+
 ## Dry Run Mode
 
 If `--dry-run` is set:

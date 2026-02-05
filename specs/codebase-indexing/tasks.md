@@ -174,7 +174,7 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-21, FR-22, FR-23, AC-9.5, AC-9.6, AC-9.7_
   - _Design: Interview Flow > Post-Scan Review Questions_
 
-- [ ] 1.13 Add index summary builder to index command
+- [x] 1.13 Add index summary builder to index command
   - **Do**:
     1. Add index builder section that creates specs/.index/index.md
     2. Use index-summary template with counts by category
