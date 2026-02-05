@@ -199,7 +199,7 @@ In quick mode (`--quick`), execution uses Ralph Wiggum for autonomous task compl
 After generating spec artifacts in quick mode, invoke ralph-wiggum:
 ```text
 Skill: ralph-wiggum:ralph-loop
-Args: Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
+Args: Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output <promise>ALL_TASKS_COMPLETE</promise> when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
 ```
 
 <mandatory>
