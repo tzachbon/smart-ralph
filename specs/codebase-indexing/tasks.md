@@ -220,13 +220,13 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-6, AC-3.1, AC-3.2, AC-3.3, AC-3.4_
   - _Design: Components > 6. Spec Scanner Enhancement_
 
-- [ ] 1.17 [VERIFY] Quality checkpoint: start.md modifications
+- [x] 1.17 [VERIFY] Quality checkpoint: start.md modifications
   - **Do**: Verify start.md has both hint and scanner enhancement
   - **Verify**: `grep -q "ralph-specum:index" plugins/ralph-specum/commands/start.md && grep -q "specs/.index/components" plugins/ralph-specum/commands/start.md && echo "OK"`
   - **Done when**: Both modifications present in start.md
   - **Commit**: None (verification only)
 
-- [ ] 1.18 POC Checkpoint - End-to-end validation
+- [x] 1.18 POC Checkpoint - End-to-end validation
   - **Do**:
     1. Create test directory structure: `mkdir -p /tmp/test-index/src/controllers /tmp/test-index/src/services`
     2. Create sample files: `echo "export function login() {}" > /tmp/test-index/src/controllers/auth.ts`
