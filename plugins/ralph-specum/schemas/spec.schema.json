@@ -237,6 +237,114 @@
         "task": { "type": "string", "pattern": "^[0-9]+/[0-9]+$" },
         "updated": { "type": "string", "format": "date-time" }
       }
+    },
+
+    "indexState": {
+      "type": "object",
+      "description": "State for codebase indexing tracking",
+      "properties": {
+        "indexed": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of last indexing run"
+        },
+        "componentCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of component specs generated"
+        },
+        "externalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of external resource specs generated"
+        },
+        "excludes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Patterns excluded during indexing"
+        },
+        "paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths that were indexed"
+        },
+        "categories": {
+          "type": "object",
+          "description": "Component counts by category",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+
+    "componentSpec": {
+      "type": "object",
+      "description": "Frontmatter for component spec files in specs/.index/components/",
+      "required": ["type", "generated", "source", "hash", "category", "indexed"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "component-spec",
+          "description": "Spec type identifier"
+        },
+        "generated": {
+          "type": "boolean",
+          "const": true,
+          "description": "Indicates auto-generated spec"
+        },
+        "source": {
+          "type": "string",
+          "description": "Source file path relative to repo root"
+        },
+        "hash": {
+          "type": "string",
+          "description": "Content hash for change detection"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["controllers", "services", "models", "helpers", "migrations", "other"],
+          "description": "Component category"
+        },
+        "indexed": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when indexed"
+        }
+      }
+    },
+
+    "externalSpec": {
+      "type": "object",
+      "description": "Frontmatter for external resource spec files in specs/.index/external/",
+      "required": ["type", "generated", "source-type", "source-id", "fetched"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "external-spec",
+          "description": "Spec type identifier"
+        },
+        "generated": {
+          "type": "boolean",
+          "const": true,
+          "description": "Indicates auto-generated spec"
+        },
+        "source-type": {
+          "type": "string",
+          "enum": ["url", "mcp", "skill"],
+          "description": "Type of external resource"
+        },
+        "source-id": {
+          "type": "string",
+          "description": "URL, MCP server name, or skill identifier"
+        },
+        "fetched": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when resource was fetched"
+        }
+      }
     }
   }
 }

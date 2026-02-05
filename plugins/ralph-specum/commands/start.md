@@ -677,6 +677,46 @@ The only exception is `--quick` mode, which skips approval between phases.
 11. Invoke research-analyst agent with goal interview context
 12. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
 
+## Index Hint
+
+Before starting a new spec, check if codebase indexing exists. If not, show a helpful hint.
+
+<mandatory>
+**Skip index hint if --quick flag detected in $ARGUMENTS.**
+</mandatory>
+
+### Check Index Status
+
+```bash
+# Session guard (skip if already shown in this session)
+if [ -z "${RALPH_SPECUM_INDEX_HINT_SHOWN:-}" ]; then
+  # Check if specs/.index/ exists and has content
+  if [ ! -d "./specs/.index" ] || [ -z "$(ls -A ./specs/.index 2>/dev/null)" ]; then
+    # Index is empty or missing - show hint
+    SHOW_INDEX_HINT=true
+  else
+    # Index has content - don't show hint
+    SHOW_INDEX_HINT=false
+  fi
+else
+  # Already shown in this session - don't show again
+  SHOW_INDEX_HINT=false
+fi
+```
+
+### Display Hint
+
+If `SHOW_INDEX_HINT` is true, display the following hint before continuing and set `RALPH_SPECUM_INDEX_HINT_SHOWN=true` for this session:
+
+```text
+Tip: Run /ralph-specum:index to scan your codebase and create indexed specs.
+This helps the research phase find relevant existing code patterns and components.
+```
+
+After displaying the hint, export the session guard: `export RALPH_SPECUM_INDEX_HINT_SHOWN=1`
+
+**Note**: Only show this hint once per session. After displaying, continue with Spec Scanner.
+
 ## Spec Scanner
 
 Before conducting the Goal Interview, scan existing specs to find related work. This helps surface prior context and avoid duplicate effort.
@@ -692,6 +732,15 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
    - Returns "name|path" pairs for each spec
    - Searches all directories in ralph_get_specs_dirs()
    - Exclude the current spec being created (if known)
+   - Exclude .index directory (handled separately in step 1b)
+   |
+1b. Scan indexed specs (if ./specs/.index/ exists):
+   - List component specs: ls ./specs/.index/components/*.md 2>/dev/null
+   - List external specs: ls ./specs/.index/external/*.md 2>/dev/null
+   - For each indexed spec:
+     - Read the file and extract "## Purpose" section (component) or "## Summary" section (external)
+     - Use the purpose/summary as the match text
+     - Mark as "indexed" type for display differentiation
    |
 2. For each spec found (name|path pair):
    - Read $path/.progress.md (using the full path from ralph_list_specs)
@@ -702,19 +751,29 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
    - Extract keywords from current goal (split by spaces, lowercase)
    - Remove common words: "the", "a", "an", "to", "for", "with", "and", "or"
    - For each existing spec, count matching keywords with its Original Goal
+   - For each indexed spec, count matching keywords with its Purpose/Summary
    - Score = number of matching keywords
    |
 4. Rank and filter:
-   - Sort specs by score (descending)
-   - Take top 3 specs with score > 0
+   - Sort ALL specs (regular + indexed) by score (descending)
+   - Take top 5 specs with score > 0 (increased from 3 to accommodate indexed specs)
    - If no matches found, skip display step
+   - Classify relevance: High (score >= 5), Medium (score 3-4), Low (score 1-2)
    |
 5. Display related specs (if any found):
    |
    Related specs found:
-   - spec-name-1: [first 50 chars of Original Goal]... [dir-path if non-default]
-   - spec-name-2: [first 50 chars of Original Goal]... [dir-path if non-default]
-   - spec-name-3: [first 50 chars of Original Goal]... [dir-path if non-default]
+
+   Feature specs:
+   - spec-name-1 [High]: [first 50 chars of Original Goal]... [dir-path if non-default]
+   - spec-name-2 [Medium]: [first 50 chars of Original Goal]... [dir-path if non-default]
+
+   Indexed components (from specs/.index/components):
+   - auth-controller [High]: Handles authentication and session management...
+   - user-service [Medium]: User CRUD operations and validation...
+
+   Indexed external (from specs/.index/external):
+   - api-docs [Low]: External API documentation for...
    |
    This context may inform the interview questions.
    |
@@ -723,9 +782,10 @@ Before conducting the Goal Interview, scan existing specs to find related work. 
      {
        ...existing state,
        "relatedSpecs": [
-         {"name": "spec-name-1", "path": "full/path", "goal": "Original Goal text", "score": N},
-         {"name": "spec-name-2", "path": "full/path", "goal": "Original Goal text", "score": N},
-         {"name": "spec-name-3", "path": "full/path", "goal": "Original Goal text", "score": N}
+         {"name": "spec-name-1", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "High"},
+         {"name": "spec-name-2", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "Medium"},
+         {"name": "auth-controller", "path": "specs/.index/components", "goal": "Purpose text", "score": N, "type": "indexed-component", "relevance": "High"},
+         {"name": "api-docs", "path": "specs/.index/external", "goal": "Summary text", "score": N, "type": "indexed-external", "relevance": "Low"}
        ]
      }
 ```
@@ -779,6 +839,10 @@ This context may inform the interview questions.
 After scanning, if related specs were found, you may reference them when asking clarifying questions. For example:
 - "I noticed you have a spec 'user-auth' for authentication. Does this new feature relate to or depend on that work?"
 - "There's an existing 'api-refactor' spec. Should this work integrate with those changes?"
+
+**For indexed specs**, reference them to understand existing codebase patterns:
+- "The indexed auth-controller component handles authentication. Should this feature extend that controller or create a new one?"
+- "I found an indexed external spec for your API documentation. Does this feature need to follow the patterns described there?"
 
 ## Goal Interview (Pre-Research)
 
