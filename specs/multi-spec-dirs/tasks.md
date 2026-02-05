@@ -26,7 +26,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: FR-4_
   - _Design: path-resolver.sh Implementation_
 
-- [ ] 1.2 Update settings-template.md with specs_dirs documentation
+- [x] 1.2 Update settings-template.md with specs_dirs documentation
   - **Do**:
     1. Read current `plugins/ralph-specum/templates/settings-template.md`
     2. Add `specs_dirs: ["./specs"]` to frontmatter
