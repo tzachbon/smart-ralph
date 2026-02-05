@@ -1,9 +1,9 @@
 #!/bin/bash
 # Stop Hook for Ralph Specum
-# Logging-only watcher - does NOT control loop execution
+# Loop controller that manages task execution continuation
 # 1. Logs current execution state to stderr
-# 2. Cleans up orphaned temp progress files (>60min old)
-# Note: Ralph Loop plugin manages loop continuation
+# 2. Outputs continuation prompt when more tasks remain (phase=execution, taskIndex < totalTasks)
+# 3. Cleans up orphaned temp progress files (>60min old)
 # Note: .progress.md and .ralph-state.json are preserved
 
 # Read hook input from stdin
@@ -63,10 +63,22 @@ if [ "$CORRUPT_STATE" = false ]; then
     TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
     TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 
-    # Log current state (logging only - Ralph Loop manages continuation)
+    # Log current state
     if [ "$PHASE" = "execution" ]; then
         echo "[ralph-specum] Session stopped during spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
-        echo "[ralph-specum] Ralph Loop will resume execution on next iteration" >&2
+    fi
+
+    # Loop control: output continuation prompt if more tasks remain
+    if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
+        cat <<EOF
+Continue executing spec: $SPEC_NAME
+
+Read $SPEC_PATH/.ralph-state.json for current state.
+Read $SPEC_PATH/tasks.md to find task at taskIndex.
+Delegate task to spec-executor via Task tool.
+After completion, update state and check if more tasks remain.
+Output ALL_TASKS_COMPLETE when taskIndex >= totalTasks.
+EOF
     fi
 fi
 

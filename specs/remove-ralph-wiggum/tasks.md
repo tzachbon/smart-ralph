@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Get loop control working in stop-hook. Skip tests.
 
-- [ ] 1.1 Add loop control logic to stop-watcher.sh
+- [x] 1.1 Add loop control logic to stop-watcher.sh
   - **Do**: Modify stop-watcher.sh to output continuation prompt when taskIndex < totalTasks
     1. After existing state reading section, add loop control logic
     2. Check if phase == "execution" and taskIndex < totalTasks
