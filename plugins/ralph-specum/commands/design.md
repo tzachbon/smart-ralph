@@ -164,6 +164,41 @@ Include:
 - Test strategy
 ```
 
+## Walkthrough (Before Review)
+
+<mandatory>
+**WALKTHROUGH IS REQUIRED - DO NOT SKIP THIS SECTION.**
+
+After design.md is created, you MUST display a concise walkthrough BEFORE asking review questions.
+
+1. Read `./specs/$spec/design.md`
+2. Display the walkthrough below with actual content from the file
+
+### Display Format
+
+```
+Design complete for '$spec'.
+Output: ./specs/$spec/design.md
+
+## What I Designed
+
+**Approach**: [1-2 sentences from Overview - the core approach]
+
+**Components**:
+- [Component A]: [brief purpose]
+- [Component B]: [brief purpose]
+[list main components]
+
+**Key Decisions**:
+- [Decision 1]: [choice made]
+- [Decision 2]: [choice made]
+
+**Files**: [X] to create, [Y] to modify
+```
+
+Keep it scannable. User will open the file if they want details.
+</mandatory>
+
 ## Review & Feedback Loop
 
 <mandatory>
@@ -176,79 +211,24 @@ If NOT quick mode, conduct design review using AskUserQuestion after design is c
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
 
-### Design Review Questions
+### Design Review Question
 
-After the design has been created by the architect-reviewer agent, ask the user to review it and provide feedback.
+After displaying the walkthrough, ask ONE simple question:
 
-**Review Question Flow:**
+| Question | Key | Options |
+|----------|-----|---------|
+| Does this look right? | `designApproval` | Approve (Recommended) / Need changes / Other |
 
-1. **Read the generated design.md** to understand what was created
-2. **Ask initial review questions** to confirm the design meets their expectations:
+### Handle Response
 
-| # | Question | Key | Options |
-|---|----------|-----|---------|
-| 1 | Does the architecture approach align with your expectations? | `architectureApproval` | Yes, looks good / Needs changes / I have questions / Walk me through them / Other |
-| 2 | Are the technical decisions appropriate for your needs? | `technicalDecisionsApproval` | Yes, approved / Some concerns / Need changes / Walk me through them / Other |
-| 3 | Is the component structure clear and suitable? | `componentStructureApproval` | Yes, clear / Needs refinement / Major changes needed / Walk me through them / Other |
-| 4 | Any other feedback on the design? (or say 'approved' to proceed) | `designFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
+**If "Approve"**: Skip to "Update State"
 
-### Store Design Review Responses
-
-After review questions, append to `.progress.md` under a new section:
-
-```markdown
-### Design Review (from design.md)
-- Architecture approval: [responses.architectureApproval]
-- Technical decisions approval: [responses.technicalDecisionsApproval]
-- Component structure approval: [responses.componentStructureApproval]
-- Design feedback: [responses.designFeedback]
-[Any follow-up responses from "Other" selections]
-```
-
-### Update Design Based on Feedback
-
-<mandatory>
-If the user provided feedback requiring changes (any answer other than "Yes, looks good", "Yes, approved", "Yes, clear", or "Approved, let's proceed"), you MUST:
-
-1. Collect specific change requests from the user
-2. Invoke architect-reviewer again with update instructions
-3. Repeat the review questions after updates
-4. Continue loop until user approves
-</mandatory>
-
-**Update Flow:**
-
-If changes are needed:
-
-1. **Ask for specific changes:**
-   ```
-   What specific changes would you like to see in the design?
-   ```
-
-2. **Invoke architect-reviewer with update prompt:**
-   ```
-   You are updating the technical design for spec: $spec
-   Spec path: ./specs/$spec/
-
-   Current design: ./specs/$spec/design.md
-
-   User feedback:
-   $user_feedback
-
-   Your task:
-   1. Read the existing design.md
-   2. Understand the user's feedback and concerns
-   3. Update the design to address the feedback
-   4. Maintain consistency with requirements
-   5. Update design.md with the changes
-   6. Append update notes to .progress.md explaining what changed
-
-   Focus on addressing the specific feedback while maintaining the overall design quality.
-   ```
-
-3. **After update, repeat review questions** (go back to "Design Review Questions")
-
-4. **Continue until approved:** Loop until user responds with approval
+**If "Need changes" or "Other"**:
+1. Ask: "What would you like changed?"
+2. Invoke architect-reviewer again with the feedback
+3. Re-display walkthrough
+4. Ask approval question again
+5. Loop until approved
 
 ## Update State
 
@@ -288,57 +268,17 @@ If `commitSpec` is true:
 
 If commit or push fails, display warning but continue (don't block the workflow).
 
-## Output
+## Stop
 
-After design.md is created and approved, read the generated file and extract key information for the walkthrough.
+<mandatory>
+**STOP HERE. DO NOT PROCEED TO TASKS.**
 
-### Extract from design.md
+(This does not apply in `--quick` mode, which auto-generates all artifacts without stopping.)
 
-1. **Overview Summary**: Read the first 2-3 sentences from `## Overview`
-2. **Components**: Extract from `## Architecture` / `### Components` section:
-   - List each component name and its purpose
-3. **Technical Decisions**: Extract from `## Technical Decisions` table:
-   - List each decision and the choice made with brief rationale
-4. **File Structure**: Extract from `## File Structure` table:
-   - Count files to create vs modify
-   - List key files
+After the review is approved and state is updated, you MUST:
+1. Display: `→ Next: Run /ralph-specum:tasks`
+2. End your response immediately
+3. Wait for user to explicitly run `/ralph-specum:tasks`
 
-### Display Walkthrough
-
-```text
-Design phase complete for '$spec'.
-
-Output: ./specs/$spec/design.md
-[If commitSpec: "Spec committed and pushed."]
-
-## Walkthrough
-
-### Key Points
-- **Overview**: [First 2-3 sentences from Overview section]
-- **Components**:
-  | Component | Purpose |
-  |-----------|---------|
-  | [Component A] | [Purpose from design] |
-  | [Component B] | [Purpose from design] |
-- **Technical Decisions**:
-  | Decision | Choice | Rationale |
-  |----------|--------|-----------|
-  | [Decision 1] | [Choice] | [Brief rationale] |
-  | [Decision 2] | [Choice] | [Brief rationale] |
-
-### Metrics
-| Metric | Value |
-|--------|-------|
-| Files to Create | [count] |
-| Files to Modify | [count] |
-| Key Files | [list of 3-5 most important] |
-
-### Review Focus
-- Verify architecture approach fits the requirements
-- Check technical decisions align with project constraints
-- Review file structure for completeness
-
-Next: Review design.md, then run /ralph-specum:tasks
-```
-
-**Error handling**: If design.md cannot be read, display warning "Warning: Could not read design.md for walkthrough" and skip the Walkthrough section entirely - still show "Design phase complete" and the output path. If design.md exists but is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.
+DO NOT automatically invoke the task-planner or run the tasks phase.
+</mandatory>

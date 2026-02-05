@@ -551,6 +551,37 @@ After ALL parallel subagent tasks complete, YOU must merge results into a single
 
 4. **Quality check**: Ensure no duplicate information, consistent formatting
 
+## Walkthrough (Before Review)
+
+<mandatory>
+**WALKTHROUGH IS REQUIRED - DO NOT SKIP THIS SECTION.**
+
+After research.md is created, you MUST display a concise walkthrough BEFORE asking review questions.
+
+1. Read `./specs/$spec/research.md`
+2. Display the walkthrough below with actual content from the file
+
+### Display Format
+
+```
+Research complete for '$spec'.
+Output: ./specs/$spec/research.md
+
+## What I Found
+
+**Summary**: [1-2 sentences from Executive Summary - the core finding]
+
+**Key Recommendations**:
+1. [First recommendation]
+2. [Second recommendation]
+3. [Third recommendation]
+
+**Feasibility**: [High/Medium/Low] | **Risk**: [High/Medium/Low] | **Effort**: [S/M/L/XL]
+```
+
+Keep it scannable. User will open the file if they want details.
+</mandatory>
+
 ## Review & Feedback Loop
 
 <mandatory>
@@ -563,59 +594,24 @@ If NOT quick mode, conduct research review using AskUserQuestion after research 
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
 
-### Research Review Questions
+### Research Review Question
 
-After the research has been created and merged by the subagents, ask the user to review it and provide feedback.
+After displaying the walkthrough, ask ONE simple question:
 
-**Review Question Flow:**
+| Question | Key | Options |
+|----------|-----|---------|
+| Does this look right? | `researchApproval` | Approve (Recommended) / Need changes / Other |
 
-1. **Read the generated research.md** to understand what was found
-2. **Ask initial review questions** to confirm the research meets their expectations:
+### Handle Response
 
-| # | Question | Key | Options |
-|---|----------|-----|---------|
-| 1 | Does the research cover all the areas you expected? | `researchCoverage` | Yes, comprehensive / Missing some areas / Need more depth / Walk me through them / Other |
-| 2 | Are the findings and recommendations helpful? | `findingsQuality` | Yes, very helpful / Somewhat helpful / Need more details / Walk me through them / Other |
-| 3 | Are there any specific areas you'd like researched further? | `additionalResearch` | No, looks complete / Yes, I have specific areas / Walk me through them / Other |
-| 4 | Any other feedback on the research? (or say 'approved' to proceed) | `researchFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
+**If "Approve"**: Skip to "Update State"
 
-### Store Research Review Responses
-
-After review questions, append to `.progress.md` under a new section:
-
-```markdown
-### Research Review (from research.md)
-- Research coverage: [responses.researchCoverage]
-- Findings quality: [responses.findingsQuality]
-- Additional research needed: [responses.additionalResearch]
-- Research feedback: [responses.researchFeedback]
-[Any follow-up responses from "Other" selections]
-```
-
-### Update Research Based on Feedback
-
-<mandatory>
-If the user provided feedback requiring changes (any answer other than "Yes, comprehensive", "Yes, very helpful", "No, looks complete", or "Approved, let's proceed"), you MUST:
-
-1. Collect specific change requests from the user
-2. Invoke appropriate subagents again with additional research instructions
-3. Merge updated results
-4. Repeat the review questions after updates
-5. Continue loop until user approves
-</mandatory>
-
-**Update Flow:**
-
-If changes are needed:
-
-1. **Ask for specific changes:**
-   ```
-   What specific areas would you like researched further or what changes would you like to see?
-   ```
-
-2. **Invoke appropriate subagents with update prompt:**
-   - Use `research-analyst` for additional web research
-   - Use `Explore` for additional codebase analysis
+**If "Need changes" or "Other"**:
+1. Ask: "What would you like changed?"
+2. Invoke appropriate subagents with the feedback
+3. Re-display walkthrough
+4. Ask approval question again
+5. Loop until approved
 
    Example prompt:
    ```
@@ -680,55 +676,6 @@ If `commitSpec` is true:
 
 If commit or push fails, display warning but continue (don't block the workflow).
 
-## Output
-
-After research.md is created and merged, read the generated file and extract key information for the walkthrough.
-
-### Extract from research.md
-
-1. **Executive Summary**: Read the first 2-3 sentences from `## Executive Summary`
-2. **Feasibility Assessment**: Extract values from `## Feasibility Assessment` table:
-   - Overall feasibility (High/Medium/Low)
-   - Risk level (High/Medium/Low)
-   - Estimated effort (S/M/L/XL)
-3. **Key Recommendations**: Extract numbered list from `## Recommendations for Requirements`
-4. **Related Specs**: Extract spec names and relevance from `## Related Specs` table
-
-### Display Walkthrough
-
-```text
-Research phase complete for '$spec'.
-
-Output: ./specs/$spec/research.md
-[If commitSpec: "Spec committed and pushed."]
-
-## Walkthrough
-
-### Key Points
-- **Summary**: [First 2-3 sentences from Executive Summary]
-- **Recommendations**:
-  1. [First recommendation from Recommendations section]
-  2. [Second recommendation]
-  3. [Third recommendation]
-- **Related Specs**: [List spec names with relevance, or "None found"]
-
-### Metrics
-| Metric | Value |
-|--------|-------|
-| Feasibility | [High/Medium/Low] |
-| Risk Level | [High/Medium/Low] |
-| Effort | [S/M/L/XL] |
-
-### Review Focus
-- Verify feasibility assessment matches your expectations
-- Check if recommendations align with project constraints
-- Review any related specs that may need updates
-
-Next: Review research.md, then run /ralph-specum:requirements
-```
-
-**Error handling**: If research.md cannot be read, display warning "Warning: Could not read research.md for walkthrough" and skip the Walkthrough section entirely - still show "Research phase complete" and the output path. If research.md exists but is missing sections or metrics cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.
-
 ## Stop
 
 <mandatory>
@@ -736,11 +683,10 @@ Next: Review research.md, then run /ralph-specum:requirements
 
 (This does not apply in `--quick` mode, which auto-generates all artifacts without stopping.)
 
-After displaying the output above, you MUST:
-1. End your response immediately
-2. Wait for the user to review research.md
-3. Only proceed to requirements when user explicitly runs `/ralph-specum:requirements`
+After the review is approved and state is updated, you MUST:
+1. Display: `→ Next: Run /ralph-specum:requirements`
+2. End your response immediately
+3. Wait for user to explicitly run `/ralph-specum:requirements`
 
 DO NOT automatically invoke the product-manager or run the requirements phase.
-The user needs time to review research findings before proceeding.
 </mandatory>

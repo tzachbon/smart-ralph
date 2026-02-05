@@ -157,6 +157,38 @@ Focus on:
 - Risk identification
 ```
 
+## Walkthrough (Before Review)
+
+<mandatory>
+**WALKTHROUGH IS REQUIRED - DO NOT SKIP THIS SECTION.**
+
+After requirements.md is created, you MUST display a concise walkthrough BEFORE asking review questions.
+
+1. Read `./specs/$spec/requirements.md`
+2. Display the walkthrough below with actual content from the file
+
+### Display Format
+
+```
+Requirements complete for '$spec'.
+Output: ./specs/$spec/requirements.md
+
+## What I Created
+
+**Goal**: [1 sentence summary of the goal]
+
+**User Stories** ([count] total):
+- US-1: [title]
+- US-2: [title]
+- US-3: [title]
+[list all, keep titles brief]
+
+**Requirements**: [X] functional, [Y] non-functional
+```
+
+Keep it scannable. User will open the file if they want details.
+</mandatory>
+
 ## Review & Feedback Loop
 
 <mandatory>
@@ -169,54 +201,24 @@ If NOT quick mode, conduct requirements review using AskUserQuestion after requi
 
 Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
 
-### Requirements Review Questions
+### Requirements Review Question
 
-After the requirements have been created by the product-manager agent, ask the user to review them and provide feedback.
+After displaying the walkthrough, ask ONE simple question:
 
-**Review Question Flow:**
+| Question | Key | Options |
+|----------|-----|---------|
+| Does this look right? | `requirementsApproval` | Approve (Recommended) / Need changes / Other |
 
-1. **Read the generated requirements.md** to understand what was created
-2. **Ask initial review questions** to confirm the requirements meet their expectations:
+### Handle Response
 
-| # | Question | Key | Options |
-|---|----------|-----|---------|
-| 1 | Do the user stories capture your intended functionality? | `userStoriesApproval` | Yes, complete / Missing some stories / Need refinement / Walk me through them / Other |
-| 2 | Are the acceptance criteria clear and testable? | `acceptanceCriteriaApproval` | Yes, clear / Need more details / Some are unclear / Walk me through them / Other |
-| 3 | Are the priorities and scope appropriate? | `prioritiesApproval` | Yes, appropriate / Need adjustment / Missing items / Walk me through them / Other |
-| 4 | Any other feedback on the requirements? (or say 'approved' to proceed) | `requirementsFeedback` | Approved, let's proceed / Yes, I have feedback / Walk me through them / Other |
+**If "Approve"**: Skip to "Update State"
 
-### Store Requirements Review Responses
-
-After review questions, append to `.progress.md` under a new section:
-
-```markdown
-### Requirements Review (from requirements.md)
-- User stories approval: [responses.userStoriesApproval]
-- Acceptance criteria approval: [responses.acceptanceCriteriaApproval]
-- Priorities approval: [responses.prioritiesApproval]
-- Requirements feedback: [responses.requirementsFeedback]
-[Any follow-up responses from "Other" selections]
-```
-
-### Update Requirements Based on Feedback
-
-<mandatory>
-If the user provided feedback requiring changes (any answer other than "Yes, complete", "Yes, clear", "Yes, appropriate", or "Approved, let's proceed"), you MUST:
-
-1. Collect specific change requests from the user
-2. Invoke product-manager again with update instructions
-3. Repeat the review questions after updates
-4. Continue loop until user approves
-</mandatory>
-
-**Update Flow:**
-
-If changes are needed:
-
-1. **Ask for specific changes:**
-   ```
-   What specific changes would you like to see in the requirements?
-   ```
+**If "Need changes" or "Other"**:
+1. Ask: "What would you like changed?"
+2. Invoke product-manager again with the feedback
+3. Re-display walkthrough
+4. Ask approval question again
+5. Loop until approved
 
 2. **Invoke product-manager with update prompt:**
    ```
@@ -281,55 +283,17 @@ If `commitSpec` is true:
 
 If commit or push fails, display warning but continue (don't block the workflow).
 
-## Output
+## Stop
 
-After requirements.md is created, read the generated file and extract key information for the walkthrough.
+<mandatory>
+**STOP HERE. DO NOT PROCEED TO DESIGN.**
 
-### Extract from requirements.md
+(This does not apply in `--quick` mode, which auto-generates all artifacts without stopping.)
 
-1. **Goal Summary**: Read the project goal from `## Goal` or `## Overview` section
-2. **User Stories**: Extract from `## User Stories` section:
-   - Count total user stories (US-*)
-   - List each story ID and title
-   - Count acceptance criteria per story
-3. **Functional Requirements**: Extract from `## Functional Requirements` section:
-   - Count total FRs
-   - Count by priority (High/Medium/Low)
-4. **Non-Functional Requirements**: Extract from `## Non-Functional Requirements` section:
-   - Count total NFRs
+After the review is approved and state is updated, you MUST:
+1. Display: `→ Next: Run /ralph-specum:design`
+2. End your response immediately
+3. Wait for user to explicitly run `/ralph-specum:design`
 
-### Display Walkthrough
-
-```text
-Requirements phase complete for '$spec'.
-
-Output: ./specs/$spec/requirements.md
-[If commitSpec: "Spec committed and pushed."]
-
-## Walkthrough
-
-### Key Points
-- **Goal**: [Goal summary from requirements]
-- **User Stories**:
-  | ID | Title | ACs |
-  |----|-------|-----|
-  | US-1 | [title] | [count] |
-  | US-2 | [title] | [count] |
-  [... for each user story]
-
-### Metrics
-| Metric | Value |
-|--------|-------|
-| User Stories | [count] |
-| Functional Requirements | [count] (High: [n], Med: [n], Low: [n]) |
-| Non-Functional Requirements | [count] |
-
-### Review Focus
-- Verify all user needs captured in user stories
-- Check acceptance criteria are testable
-- Confirm priority levels match business needs
-
-Next: Review requirements.md, then run /ralph-specum:design
-```
-
-**Error handling**: If requirements.md cannot be read, display warning "Warning: Could not read requirements.md for walkthrough" and skip the Walkthrough section entirely - still show "Requirements phase complete" and the output path. If requirements.md exists but is missing sections or metrics cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.
+DO NOT automatically invoke the architect-reviewer or run the design phase.
+</mandatory>
