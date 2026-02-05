@@ -312,7 +312,7 @@ After POC validated, clean up code and improve consistency.
   - _Requirements: AC-1.1, AC-1.2, AC-1.3, AC-5.1, AC-5.2_
   - _Design: Test Strategy - Unit Tests_
 
-- [ ] 3.2 Create integration tests for multi-dir workflow
+- [x] 3.2 Create integration tests for multi-dir workflow
   - **Do**:
     1. Create test script at `plugins/ralph-specum/hooks/scripts/test-multi-dir-integration.sh`
     2. Test: create spec in default dir, verify .current-spec content
