@@ -297,7 +297,7 @@ After POC validated, clean up code and improve consistency.
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Create unit tests for path-resolver.sh functions
+- [x] 3.1 Create unit tests for path-resolver.sh functions
   - **Do**:
     1. Create test script at `plugins/ralph-specum/hooks/scripts/test-path-resolver.sh`
     2. Test `ralph_get_specs_dirs()` with: no settings, empty array, single dir, multiple dirs
