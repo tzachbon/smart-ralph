@@ -44,25 +44,45 @@ If `$ARGUMENTS` is empty:
 
 1. Use `ralph_list_specs()` pattern to gather all specs from all roots
 2. Read current active spec using `ralph_resolve_current()` pattern
-3. Group specs by their root directory
+3. Group specs by their root directory with numbered options
 4. Show list with current marked and directory context
+5. If no specs found, guide user to create one
+
+**With specs found:**
 
 ```
 Available specs:
 
-./specs:
-- feature-a [ACTIVE]
-- feature-b
+./specs (default):
+  1. feature-a [ACTIVE]
+  2. feature-b
 
 ./packages/api/specs:
-- api-auth
-- api-users
+  3. api-auth
+  4. api-users
 
 ./packages/web/specs:
-- web-login
+  5. web-login
 
-Run: /ralph-specum:switch <spec-name>
-Or for disambiguation: /ralph-specum:switch ./packages/api/specs/api-auth
+Examples:
+  /ralph-specum:switch feature-b
+  /ralph-specum:switch api-auth
+  /ralph-specum:switch ./packages/api/specs/api-auth  (full path for disambiguation)
+```
+
+**No specs found:**
+
+```
+No specs found in configured directories.
+
+Searched:
+  - ./specs (default)
+  - ./packages/api/specs
+  - ./packages/web/specs
+
+To create a new spec:
+  /ralph-specum:new my-feature
+  /ralph-specum:new my-feature --specs-dir ./packages/api/specs
 ```
 
 ## Handle Disambiguation
@@ -70,14 +90,38 @@ Or for disambiguation: /ralph-specum:switch ./packages/api/specs/api-auth
 If spec name exists in multiple roots (exit code 2 from find):
 
 ```
-Multiple specs named '$name' found:
-1. ./specs/$name
-2. ./packages/api/specs/$name
+Multiple specs named 'api-auth' found:
 
-Specify: /ralph-specum:switch ./packages/api/specs/$name
+1. ./specs/api-auth
+   Location: default specs directory
+   Run: /ralph-specum:switch ./specs/api-auth
+
+2. ./packages/api/specs/api-auth
+   Location: packages/api
+   Run: /ralph-specum:switch ./packages/api/specs/api-auth
+
+Select by running the command for your desired spec.
 ```
 
-Do NOT automatically select one. User must specify the full path.
+Do NOT automatically select one. User must specify the full path with the exact command shown.
+
+## Handle Not Found
+
+If spec name does not exist (exit code 1 from find):
+
+```
+No spec named 'my-feature' found.
+
+Searched directories:
+  - ./specs (default)
+  - ./packages/api/specs
+  - ./packages/web/specs
+
+To see available specs: /ralph-specum:switch
+To create a new spec: /ralph-specum:new my-feature
+```
+
+List all configured specs_dirs that were searched, helping user understand where to create the spec.
 
 ## Execute Switch
 

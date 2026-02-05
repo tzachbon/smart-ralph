@@ -266,13 +266,13 @@ After POC validated, clean up code and improve consistency.
   - **Commit**: `refactor(ralph-specum): add error handling to path-resolver.sh`
   - _Design: Error Handling_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: Shell scripts and commands
+- [x] 2.3 [VERIFY] Quality checkpoint: Shell scripts and commands
   - **Do**: Run syntax validation on all shell scripts and verify command structure
   - **Verify**: `for f in plugins/ralph-specum/hooks/scripts/*.sh; do bash -n "$f" || exit 1; done && echo "All shell scripts OK"`
   - **Done when**: All shell scripts pass syntax validation
   - **Commit**: `chore(ralph-specum): fix shell script issues` (only if fixes needed)
 
-- [ ] 2.4 Improve disambiguation UX in switch command
+- [x] 2.4 Improve disambiguation UX in switch command
   - **Do**:
     1. Format disambiguation output clearly with numbered options
     2. Show full paths with directory context
