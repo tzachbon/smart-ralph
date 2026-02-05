@@ -39,7 +39,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: FR-10_
   - _Design: Settings Extension_
 
-- [ ] 1.3 Update load-spec-context.sh to use path resolver
+- [x] 1.3 Update load-spec-context.sh to use path resolver
   - **Do**:
     1. Source path-resolver.sh at start of script
     2. Replace hardcoded `CURRENT_SPEC_FILE="$CWD/specs/.current-spec"` with resolver
