@@ -567,6 +567,38 @@ The only exception is `--quick` mode, which skips approval between phases.
 8. Invoke research-analyst agent with goal interview context
 9. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
 
+## Index Hint
+
+Before starting a new spec, check if codebase indexing exists. If not, show a helpful hint.
+
+<mandatory>
+**Skip index hint if --quick flag detected in $ARGUMENTS.**
+</mandatory>
+
+### Check Index Status
+
+```bash
+# Check if specs/.index/ exists and has content
+if [ ! -d "./specs/.index" ] || [ -z "$(ls -A ./specs/.index 2>/dev/null)" ]; then
+  # Index is empty or missing - show hint
+  SHOW_INDEX_HINT=true
+else
+  # Index has content - don't show hint
+  SHOW_INDEX_HINT=false
+fi
+```
+
+### Display Hint
+
+If `SHOW_INDEX_HINT` is true, display the following hint before continuing:
+
+```text
+Tip: Run /ralph-specum:index to scan your codebase and create indexed specs.
+This helps the research phase find relevant existing code patterns and components.
+```
+
+**Note**: Only show this hint once per session. After displaying, continue with Spec Scanner.
+
 ## Spec Scanner
 
 Before conducting the Goal Interview, scan existing specs to find related work. This helps surface prior context and avoid duplicate effort.

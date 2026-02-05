@@ -187,13 +187,13 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-14, AC-8.1, AC-8.2, AC-8.3, AC-8.4_
   - _Design: Components > 5. Index Builder_
 
-- [ ] 1.14 [VERIFY] Quality checkpoint: complete index command
+- [x] 1.14 [VERIFY] Quality checkpoint: complete index command
   - **Do**: Verify index command has all major sections complete
   - **Verify**: `wc -l < plugins/ralph-specum/commands/index.md | xargs test 200 -lt && echo "OK: Command has substantial content"`
   - **Done when**: Index command is feature-complete (200+ lines)
   - **Commit**: None (verification only)
 
-- [ ] 1.15 Add index hint to start command
+- [x] 1.15 Add index hint to start command
   - **Do**:
     1. Locate the appropriate position in start.md (before Spec Scanner section, around line 571)
     2. Add conditional check: if `specs/.index/` is empty/missing, show hint
