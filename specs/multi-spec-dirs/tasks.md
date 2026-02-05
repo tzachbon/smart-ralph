@@ -173,7 +173,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: FR-5_
   - _Design: Command Updates Pattern_
 
-- [ ] 1.14 Update help.md to document multi-dir functionality
+- [x] 1.14 Update help.md to document multi-dir functionality
   - **Do**:
     1. Add section explaining specs_dirs configuration
     2. Document --specs-dir flag for start/new commands
