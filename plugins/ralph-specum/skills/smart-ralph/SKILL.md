@@ -79,7 +79,7 @@ When `commitSpec` is false:
 - Files remain uncommitted
 - User can manually commit later
 
-## Ralph Loop Integration
+## Ralph Wiggum Integration
 
 All Ralph plugins use Ralph Wiggum plugin for task execution. See `references/ralph-wiggum-integration.md` for details.
 

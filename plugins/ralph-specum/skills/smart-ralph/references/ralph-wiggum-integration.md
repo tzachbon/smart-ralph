@@ -1,10 +1,10 @@
-# Ralph Loop Integration
+# Ralph Wiggum Integration
 
 Ralph Specum uses the Ralph Wiggum plugin for autonomous task execution.
 
 ## Dependency
 
-Install Ralph Loop plugin:
+Install Ralph Wiggum plugin:
 ```bash
 /plugin install ralph-wiggum@claude-plugins-official
 ```
@@ -14,7 +14,7 @@ Install Ralph Loop plugin:
 ```text
 Skill: ralph-wiggum:ralph-loop
 Args: Read <coordinator-prompt-path> and follow instructions.
-      Output ALL_TASKS_COMPLETE when done.
+      Output <promise>ALL_TASKS_COMPLETE</promise> when done.
       --max-iterations <calculated>
       --completion-promise ALL_TASKS_COMPLETE
 ```

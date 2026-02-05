@@ -54,7 +54,7 @@ Write `.ralph-state.json`:
 }
 ```
 
-## Invoke Ralph Loop
+## Invoke Ralph Wiggum
 
 Calculate max iterations: `max(5, min(10, ceil(totalTasks / 5)))`
 
@@ -69,7 +69,7 @@ Write the ENTIRE coordinator prompt (from section below) to `./specs/$spec/.coor
 
 This file contains the full instructions for task execution. Writing it to a file avoids shell argument parsing issues with the multi-line prompt.
 
-### Step 2: Invoke Ralph Loop Skill
+### Step 2: Invoke Ralph Wiggum Skill
 
 Use the Skill tool to invoke `ralph-wiggum:ralph-loop` with args:
 
@@ -1096,7 +1096,7 @@ Before outputting:
 3. Keep .progress.md (preserve learnings and history)
 4. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
 
-This signal terminates the Ralph Loop loop.
+This signal terminates the Ralph Wiggum loop.
 
 **PR Link Output**: If a PR was created during execution, output the PR URL after `<promise>ALL_TASKS_COMPLETE</promise>`:
 ```text

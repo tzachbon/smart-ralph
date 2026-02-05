@@ -74,7 +74,7 @@ Ends with: `awaitingApproval: true`
 ### 5. Execution Phase
 
 **Command**: `/ralph-specum:implement`
-**Agent**: spec-executor (via Ralph Loop)
+**Agent**: spec-executor (via Ralph Wiggum)
 **State**: `phase: "execution"`
 
 Activities:

@@ -192,7 +192,7 @@ In `--quick` mode, still perform branch check but skip the user prompt for non-d
 - If on default branch: auto-create feature branch in current directory (no worktree prompt in quick mode)
 - If on non-default branch: stay on current branch (no prompt, quick mode is non-interactive)
 
-## Quick Mode Uses Ralph Loop
+## Quick Mode Uses Ralph Wiggum
 
 In quick mode (`--quick`), execution uses Ralph Wiggum for autonomous task completion.
 
