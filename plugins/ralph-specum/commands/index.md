@@ -762,6 +762,246 @@ Index file: specs/.index/index.md
 Next: Run /ralph-specum:start to create specs that reference indexed components.
 ```
 
+## Edge Case Handling
+
+Handle these edge cases per design specification.
+
+### Empty Codebase
+
+When no indexable components are found after scanning:
+
+```text
+Detection:
+1. After component scanning completes
+2. Check if total component count is 0
+3. Check if all categories are empty
+
+Handling:
+1. Do NOT treat as error (scanning succeeded, just nothing found)
+2. Display informative message with suggestions
+3. Still create specs/.index/ directory
+4. Create minimal index.md noting empty scan
+
+Output:
+No indexable components found.
+
+This could be because:
+- The codebase uses different naming conventions
+- The --path or --type filters are too restrictive
+- Source files are in excluded directories
+
+Suggestions:
+- Try `/ralph-specum:index --path=src/` to target source directory
+- Run with `--dry-run` first to see what would be detected
+- Check if files match patterns: controllers/, services/, models/, helpers/, migrations/
+- Verify excludes aren't filtering desired directories
+
+No specs were generated, but the index directory was created.
+You can run `/ralph-specum:index --force` after adjusting parameters.
+```
+
+### Monorepo Support
+
+When indexing a monorepo with multiple packages/services:
+
+```text
+Detection:
+1. Check for monorepo indicators:
+   - packages/ or apps/ directory exists
+   - Multiple package.json files at different depths
+   - Workspace configuration (lerna.json, pnpm-workspace.yaml, etc.)
+
+Handling:
+1. Respect --path filter if provided (allows targeting single package)
+2. If no --path, scan entire repo (default full scan)
+3. Preserve package context in component specs (path shows which package)
+4. Group components by package/app in index summary if monorepo detected
+
+Monorepo-aware output:
+For monorepo codebases, component paths include package context:
+  packages/auth-service/src/controllers/auth.ts -> controller-packages-auth-service-auth.md
+  packages/api-gateway/src/services/routing.ts -> service-packages-api-gateway-routing.md
+
+Tip: Use --path=packages/auth-service to index a single package.
+```
+
+### No Git Repository
+
+When --changed flag is used but git is not available:
+
+```text
+Detection (run before scanning):
+1. Execute: git rev-parse --git-dir 2>/dev/null
+2. If command fails (non-zero exit), git is not available
+
+Handling:
+1. If --changed flag is set:
+   - Fail immediately with helpful error
+   - Suggest --force as alternative
+   - Exit cleanly (do not attempt scanning)
+2. For other modes (no --changed flag):
+   - Proceed normally, git not required
+   - Hash-based change detection still works
+
+Output (when --changed used without git):
+Error: Git required for --changed flag.
+
+This directory is not a git repository or git is not installed.
+The --changed flag uses `git diff` to detect modified files.
+
+Alternatives:
+- Use `/ralph-specum:index --force` to regenerate all specs
+- Initialize git with `git init` if this should be a repository
+- Use `/ralph-specum:index` without flags to use hash-based change detection
+```
+
+### Mixed Language Support
+
+The scanner handles multiple languages in the same codebase:
+
+```text
+Supported Languages:
+- TypeScript/JavaScript: .ts, .js, .tsx, .jsx
+- Python: .py
+- Go: .go
+
+Detection Patterns Work Across Languages:
+| Category | TS/JS | Python | Go |
+|----------|-------|--------|-----|
+| Controllers | `*Controller.ts` | `*controller.py` | `*controller.go` |
+| Services | `*Service.ts` | `*service.py` | `*service.go` |
+| Models | `*Model.ts` | `*model.py` | `*model.go` |
+
+Metadata Extraction by Language:
+- TypeScript/JavaScript: export, import, class, function patterns
+- Python: def, class, from/import patterns
+- Go: func, type, import patterns
+
+Handling:
+1. Run all glob patterns (they include {ts,js,py,go} suffixes)
+2. Detect file language from extension
+3. Apply language-specific regex patterns for metadata extraction
+4. All languages output to same component spec format
+```
+
+### Very Large Codebase
+
+For codebases with many files, batch processing with progress indicator:
+
+```text
+Large Codebase Detection:
+1. After initial glob, count total matching files
+2. If file count > 100, enable progress indicator
+3. If file count > 1000, enable batch processing
+
+Progress Indicator:
+Display progress during scanning:
+  Scanning components... [=====>        ] 45/100 files (45%)
+  Processing: src/services/auth-service.ts
+
+Update frequency: Every 10 files or every 5 seconds (whichever comes first)
+
+Batch Processing:
+1. Process files in batches of 50
+2. Write specs incrementally (allows Ctrl+C resume)
+3. Update .index-state.json after each batch
+4. If interrupted, partial index is valid
+
+Memory Management:
+1. Do not hold all file contents in memory
+2. Read, process, write, then release each file
+3. Aggregate counts only (not full content)
+
+Respect Excludes:
+1. Apply exclude patterns BEFORE counting files
+2. Default excludes remove node_modules, build/, dist/, etc.
+3. This significantly reduces file count for typical codebases
+
+Output for large scans:
+Scanning large codebase (1,247 files detected)...
+This may take a few minutes.
+
+[Progress indicator during scan]
+
+Scan complete in 2m 34s.
+```
+
+### Existing Index
+
+When specs/.index/ already exists:
+
+```text
+Detection:
+1. Check if specs/.index/ directory exists
+2. Check if specs/.index/.index-state.json exists
+3. Read existing hashes from state file
+
+Handling by Mode:
+
+Default (no flags):
+1. Compare source file hash with stored hash
+2. If hash matches: skip file (unchanged)
+3. If hash differs: regenerate spec
+4. Track "unchanged" count for summary
+
+--force flag:
+1. Ignore all existing specs and hashes
+2. Regenerate everything from scratch
+3. Overwrite all spec files
+4. Rebuild .index-state.json completely
+
+--changed flag:
+1. Get list of git-changed files
+2. Only regenerate specs for those files
+3. Others remain unchanged (even if hash differs)
+
+Output (default mode with existing index):
+Existing index found at specs/.index/
+Using incremental update (hash-based change detection).
+
+To force full regeneration, use: /ralph-specum:index --force
+To update only git-changed files, use: /ralph-specum:index --changed
+
+Summary will show:
+| Status | Count |
+|--------|-------|
+| Updated | 5 |
+| Unchanged | 45 |
+| New | 2 |
+```
+
+### Interrupted Indexing
+
+Handle interrupted scans gracefully:
+
+```text
+Partial Index is Valid:
+- If indexing is interrupted (Ctrl+C, crash, etc.), existing specs are valid
+- Each spec is written atomically (write-then-rename pattern)
+- .index-state.json is updated after each batch
+- No cleanup needed after interruption
+
+Resume Strategy:
+1. Run /ralph-specum:index again (normal mode)
+2. Hash comparison will skip already-indexed files
+3. Only new/changed files get processed
+4. Or use --force to start completely fresh
+
+Detection of Incomplete Index:
+1. Check .index-state.json for lastIndexed timestamp
+2. Compare with component file mtimes
+3. If specs exist without state entry, add to state on next run
+
+Output (when resuming):
+Resuming incomplete index...
+Found 25 existing specs in specs/.index/
+Scanning for new or changed components...
+
+[Progress indicator]
+
+Resume complete. Added 5 new specs.
+```
+
 ## Error Handling
 
 Handle errors gracefully with warnings and fallbacks. Never abort the entire indexing process for recoverable errors.
