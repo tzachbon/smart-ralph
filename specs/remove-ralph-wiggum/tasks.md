@@ -181,7 +181,7 @@ Add bats-core tests.
   - **Commit**: `ci: add GitHub Actions workflow for bats tests`
   - _Requirements: FR-9, AC-4.1, AC-4.2, AC-4.3, AC-4.4_
 
-- [ ] 4.3 Run shellcheck on all scripts
+- [x] 4.3 Run shellcheck on all scripts
   - **Do**: Lint all shell scripts
     1. Run shellcheck on hooks/scripts/*.sh
     2. Fix any warnings/errors
