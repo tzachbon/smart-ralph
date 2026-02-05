@@ -39,7 +39,7 @@ Focus: Get implement.md working with ralph-wiggum API. Skip tests.
   - _Requirements: FR-2_
   - _Design: Error Handling_
 
-- [ ] 1.4 [VERIFY] POC Checkpoint
+- [x] 1.4 [VERIFY] POC Checkpoint
   - **Do**: Verify implement.md has correct ralph-wiggum integration
   - **Done when**: All three POC changes verified
   - **Verify**: Run all grep checks from 1.1-1.3
@@ -48,7 +48,7 @@ Focus: Get implement.md working with ralph-wiggum API. Skip tests.
 
 Clean up and update documentation.
 
-- [ ] 2.1 Update CLAUDE.md dependency reference
+- [x] 2.1 Update CLAUDE.md dependency reference
   - **Do**: Change all references from `ralph-loop` to `ralph-wiggum` in CLAUDE.md. Update install commands, description text, and any mentions of "Ralph Loop"
   - **Files**: CLAUDE.md
   - **Done when**: No references to ralph-loop remain (except historical context if any)
