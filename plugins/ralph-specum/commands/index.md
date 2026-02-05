@@ -1182,3 +1182,204 @@ Warnings:
 
 Run with --force to regenerate all specs.
 ```
+
+## Testing
+
+Test fixtures for integration testing are located at `specs/codebase-indexing/.test-fixtures/`.
+
+### Integration Test Scenarios
+
+#### Full Scan
+
+Run index on the test fixtures directory to verify spec generation.
+
+```text
+Test: Full scan generates specs for all detected components
+
+Setup:
+1. Ensure test fixtures exist at specs/codebase-indexing/.test-fixtures/
+2. Fixtures include sample controllers, services, models
+
+Command:
+/ralph-specum:index --path=specs/codebase-indexing/.test-fixtures/ --quick
+
+Expected Output:
+- specs/.index/components/ contains spec files for each fixture component
+- specs/.index/index.md summary lists all components
+- .index-state.json records component hashes
+
+Verification:
+1. Count generated specs matches fixture count
+2. Each spec has correct frontmatter (type, source, hash, category)
+3. Index summary shows accurate category counts
+```
+
+#### External URL Fetch
+
+Verify external URL processing creates valid spec files.
+
+```text
+Test: External URL fetch creates spec with extracted content
+
+Setup:
+1. Have a reachable documentation URL (e.g., public API docs)
+2. Run index with interview to provide URL
+
+Command:
+/ralph-specum:index
+(During interview, provide: "https://example.com/docs")
+
+Expected Output:
+- specs/.index/external/url-example-com-docs.md created
+- Spec contains:
+  - Frontmatter: type: external-spec, source-type: url
+  - Summary section with extracted content
+  - Key sections from page headings
+  - Keywords for searchability
+
+Verification:
+1. External spec file exists
+2. Frontmatter fields populated correctly
+3. Content summary is non-empty
+4. Keywords extracted from content
+```
+
+#### Dry Run
+
+Verify dry-run mode previews without writing files.
+
+```text
+Test: Dry run shows preview without creating files
+
+Setup:
+1. Clear specs/.index/ if exists
+2. Run with --dry-run flag
+
+Command:
+/ralph-specum:index --path=specs/codebase-indexing/.test-fixtures/ --quick --dry-run
+
+Expected Output:
+Dry Run - Would generate:
+
+| File | Category | Source | Status |
+|------|----------|--------|--------|
+| components/controller-users.md | Controllers | .test-fixtures/controllers/users.ts | New |
+| components/service-auth.md | Services | .test-fixtures/services/auth.ts | New |
+| index.md | Summary | - | Updated |
+
+Summary:
+- New: N files
+- Changed: 0 files
+- Unchanged: 0 files
+
+Total would write: N files
+
+Verification:
+1. No files created in specs/.index/
+2. Output table lists all detected components
+3. Status column shows "New" for first run
+```
+
+#### Force Regenerate
+
+Verify force mode overwrites existing specs.
+
+```text
+Test: Force regenerate overwrites existing specs
+
+Setup:
+1. Run initial index to create specs
+2. Modify a source file (add comment)
+3. Run index again without --force (should skip)
+4. Run index with --force
+
+Command:
+/ralph-specum:index --path=specs/codebase-indexing/.test-fixtures/ --quick --force
+
+Expected Output:
+Index complete.
+
+| Status | Count |
+|--------|-------|
+| Generated | N |
+| Unchanged | 0 |
+| Skipped | 0 |
+
+(All specs regenerated, none skipped)
+
+Verification:
+1. All spec files have updated timestamps
+2. Hash values recalculated in .index-state.json
+3. No "unchanged" count (force ignores hashes)
+```
+
+#### Changed Only
+
+Verify changed mode only regenerates git-modified files.
+
+```text
+Test: Changed only regenerates git-modified files
+
+Setup:
+1. Run initial index to create specs
+2. Modify one source file
+3. Stage the change (git add)
+4. Run index with --changed
+
+Command:
+/ralph-specum:index --path=specs/codebase-indexing/.test-fixtures/ --quick --changed
+
+Expected Output:
+Index complete.
+
+| Status | Count |
+|--------|-------|
+| Updated | 1 |
+| Unchanged | N-1 |
+
+(Only modified file regenerated)
+
+Verification:
+1. Only changed file's spec updated
+2. Other specs unchanged (same hash, same timestamp)
+3. Index summary reflects current state
+
+Error Case (No Git):
+If run in non-git directory:
+Error: Git required for --changed flag.
+  This directory is not a git repository or git is not installed.
+Alternative: Use --force to regenerate all specs instead.
+```
+
+### Test Fixtures Structure
+
+```text
+specs/codebase-indexing/.test-fixtures/
+├── controllers/
+│   └── users.ts          # Sample controller with exports
+├── services/
+│   └── auth.ts           # Sample service with methods
+├── models/
+│   └── user.ts           # Sample model with interface
+├── helpers/
+│   └── utils.ts          # Sample helper utilities
+└── README.md             # Fixture documentation
+```
+
+### Running Tests
+
+Since this is a pure markdown plugin with no build step, testing is manual verification:
+
+```text
+1. Verify command loads:
+   - Start Claude Code with plugin
+   - Type /ralph-specum:index --help (should show argument hints)
+
+2. Verify full flow:
+   - Run /ralph-specum:index --path=<test-dir> --quick --dry-run
+   - Check output matches expected format
+
+3. Verify integration:
+   - Run /ralph-specum:start <test-spec>
+   - Verify indexed specs appear in "Related Specs" section
+```

@@ -311,7 +311,7 @@ Add unit and integration tests.
   - **Commit**: `test(index): add test fixtures for manual verification`
   - _Design: Test Strategy > Unit Tests_
 
-- [ ] 3.2 Document integration test scenarios
+- [x] 3.2 Document integration test scenarios
   - **Do**:
     1. Add "## Testing" section to index.md command
     2. Document test scenarios: full scan, external URL fetch, dry run, force regenerate, changed only
