@@ -133,7 +133,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: AC-2.3_
   - _Design: Command Updates Pattern_
 
-- [ ] 1.11 Update cancel.md for multi-root search
+- [x] 1.11 Update cancel.md for multi-root search
   - **Do**:
     1. Update spec finding to use `ralph_find_spec()` instead of hardcoded path
     2. Handle disambiguation if spec name exists in multiple roots
