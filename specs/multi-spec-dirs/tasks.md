@@ -218,7 +218,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: FR-7_
   - _Design: Agents section_
 
-- [ ] 1.17 POC Checkpoint: Validate end-to-end multi-dir workflow
+- [x] 1.17 POC Checkpoint: Validate end-to-end multi-dir workflow
   - **Do**:
     1. Create test settings file with specs_dirs config
     2. Verify path-resolver.sh functions work correctly
