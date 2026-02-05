@@ -60,7 +60,7 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-5, AC-2.3, AC-2.7_
   - _Design: Templates > External Resource Spec Template_
 
-- [ ] 1.3 Create index-summary template
+- [x] 1.3 Create index-summary template
   - **Do**:
     1. Create template file with frontmatter (type, generated, indexed)
     2. Include sections: Overview table (Category, Count, Last Updated), Components by category, External Resources table, Index Settings
