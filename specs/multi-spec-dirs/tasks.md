@@ -328,13 +328,13 @@ After POC validated, clean up code and improve consistency.
   - _Requirements: AC-2.1, AC-2.2, AC-4.1, AC-4.2, AC-5.3, AC-5.4_
   - _Design: Test Strategy - Integration Tests_
 
-- [ ] 3.3 [VERIFY] Quality checkpoint: All tests pass
+- [x] 3.3 [VERIFY] Quality checkpoint: All tests pass
   - **Do**: Run all test scripts and verify they pass
   - **Verify**: `bash plugins/ralph-specum/hooks/scripts/test-path-resolver.sh && bash plugins/ralph-specum/hooks/scripts/test-multi-dir-integration.sh && echo "All tests passed"`
   - **Done when**: Both unit and integration tests pass
   - **Commit**: `chore(ralph-specum): fix test failures` (only if fixes needed)
 
-- [ ] 3.4 Add backward compatibility tests
+- [x] 3.4 Add backward compatibility tests
   - **Do**:
     1. Add test cases to integration test for:
        - No settings file -> defaults to ./specs/

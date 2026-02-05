@@ -481,6 +481,202 @@ test_trailing_slash_normalization() {
 }
 
 # =============================================================================
+# Integration Test 11: Backward compat - all functions work without config
+# =============================================================================
+
+test_all_functions_work_without_config() {
+    echo ""
+    echo "=== test_all_functions_work_without_config ==="
+    setup
+
+    # Create default specs directory, NO settings file at all
+    mkdir -p "$TEST_TMPDIR/specs/feature-x"
+    mkdir -p "$TEST_TMPDIR/specs/feature-y"
+    echo "feature-x" > "$TEST_TMPDIR/specs/.current-spec"
+
+    # Ensure no settings file exists
+    rm -f "$RALPH_SETTINGS_FILE"
+    rmdir "$TEST_TMPDIR/.claude" 2>/dev/null || true
+
+    # Test ralph_get_specs_dirs works without config
+    local dirs
+    dirs=$(ralph_get_specs_dirs)
+    assert_eq "./specs" "$dirs" "No config: ralph_get_specs_dirs returns ./specs"
+
+    # Test ralph_get_default_dir works without config
+    local default_dir
+    default_dir=$(ralph_get_default_dir)
+    assert_eq "./specs" "$default_dir" "No config: ralph_get_default_dir returns ./specs"
+
+    # Test ralph_resolve_current works without config
+    local resolved
+    resolved=$(ralph_resolve_current)
+    assert_eq "./specs/feature-x" "$resolved" "No config: ralph_resolve_current works"
+
+    # Test ralph_find_spec works without config
+    local found
+    found=$(ralph_find_spec "feature-y")
+    local exit_code=$?
+    assert_exit 0 "$exit_code" "No config: ralph_find_spec finds spec"
+    assert_eq "./specs/feature-y" "$found" "No config: ralph_find_spec returns correct path"
+
+    # Test ralph_list_specs works without config
+    local list
+    list=$(ralph_list_specs)
+    assert_line_count 2 "$list" "No config: ralph_list_specs lists both specs"
+    assert_contains "$list" "feature-x|./specs/feature-x" "No config: list contains feature-x"
+    assert_contains "$list" "feature-y|./specs/feature-y" "No config: list contains feature-y"
+
+    cleanup
+}
+
+# =============================================================================
+# Integration Test 12: Backward compat - no warnings for users without config
+# =============================================================================
+
+test_no_warnings_without_config() {
+    echo ""
+    echo "=== test_no_warnings_without_config ==="
+    setup
+
+    # Create default specs directory, NO settings file
+    mkdir -p "$TEST_TMPDIR/specs/my-spec"
+    echo "my-spec" > "$TEST_TMPDIR/specs/.current-spec"
+
+    # Ensure no settings file exists
+    rm -f "$RALPH_SETTINGS_FILE"
+    rmdir "$TEST_TMPDIR/.claude" 2>/dev/null || true
+
+    # Capture stderr for all functions to ensure no warnings
+    local stderr_output
+    local result
+
+    # Test ralph_get_specs_dirs - no warnings
+    stderr_output=$(ralph_get_specs_dirs 2>&1 >/dev/null)
+    if [ -z "$stderr_output" ]; then
+        echo -e "${GREEN}PASS${NC}: No config: ralph_get_specs_dirs produces no warnings"
+        PASS_COUNT=$((PASS_COUNT + 1))
+    else
+        echo -e "${RED}FAIL${NC}: No config: ralph_get_specs_dirs produced warning: $stderr_output"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+
+    # Test ralph_get_default_dir - no warnings
+    stderr_output=$(ralph_get_default_dir 2>&1 >/dev/null)
+    if [ -z "$stderr_output" ]; then
+        echo -e "${GREEN}PASS${NC}: No config: ralph_get_default_dir produces no warnings"
+        PASS_COUNT=$((PASS_COUNT + 1))
+    else
+        echo -e "${RED}FAIL${NC}: No config: ralph_get_default_dir produced warning: $stderr_output"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+
+    # Test ralph_resolve_current - no warnings
+    stderr_output=$(ralph_resolve_current 2>&1 >/dev/null)
+    if [ -z "$stderr_output" ]; then
+        echo -e "${GREEN}PASS${NC}: No config: ralph_resolve_current produces no warnings"
+        PASS_COUNT=$((PASS_COUNT + 1))
+    else
+        echo -e "${RED}FAIL${NC}: No config: ralph_resolve_current produced warning: $stderr_output"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+
+    # Test ralph_find_spec - no warnings
+    stderr_output=$(ralph_find_spec "my-spec" 2>&1 >/dev/null)
+    if [ -z "$stderr_output" ]; then
+        echo -e "${GREEN}PASS${NC}: No config: ralph_find_spec produces no warnings"
+        PASS_COUNT=$((PASS_COUNT + 1))
+    else
+        echo -e "${RED}FAIL${NC}: No config: ralph_find_spec produced warning: $stderr_output"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+
+    # Test ralph_list_specs - no warnings
+    stderr_output=$(ralph_list_specs 2>&1 >/dev/null)
+    if [ -z "$stderr_output" ]; then
+        echo -e "${GREEN}PASS${NC}: No config: ralph_list_specs produces no warnings"
+        PASS_COUNT=$((PASS_COUNT + 1))
+    else
+        echo -e "${RED}FAIL${NC}: No config: ralph_list_specs produced warning: $stderr_output"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+    fi
+
+    cleanup
+}
+
+# =============================================================================
+# Integration Test 13: Backward compat - empty settings file same as no settings
+# =============================================================================
+
+test_empty_settings_file() {
+    echo ""
+    echo "=== test_empty_settings_file ==="
+    setup
+
+    # Create default specs directory
+    mkdir -p "$TEST_TMPDIR/specs/test-feature"
+    echo "test-feature" > "$TEST_TMPDIR/specs/.current-spec"
+
+    # Create empty settings file (no specs_dirs defined)
+    mkdir -p "$TEST_TMPDIR/.claude"
+    cat > "$RALPH_SETTINGS_FILE" << 'EOF'
+---
+# Empty settings - no specs_dirs
+---
+EOF
+
+    # Verify defaults to ./specs like no file at all
+    local default_dir
+    default_dir=$(ralph_get_default_dir)
+    assert_eq "./specs" "$default_dir" "Empty settings: defaults to ./specs"
+
+    local dirs
+    dirs=$(ralph_get_specs_dirs)
+    assert_eq "./specs" "$dirs" "Empty settings: specs_dirs returns ./specs"
+
+    local resolved
+    resolved=$(ralph_resolve_current)
+    assert_eq "./specs/test-feature" "$resolved" "Empty settings: resolve works"
+
+    cleanup
+}
+
+# =============================================================================
+# Integration Test 14: Backward compat - settings with other keys, no specs_dirs
+# =============================================================================
+
+test_settings_without_specs_dirs() {
+    echo ""
+    echo "=== test_settings_without_specs_dirs ==="
+    setup
+
+    # Create default specs directory
+    mkdir -p "$TEST_TMPDIR/specs/another-feature"
+    echo "another-feature" > "$TEST_TMPDIR/specs/.current-spec"
+
+    # Create settings file with other keys but no specs_dirs
+    mkdir -p "$TEST_TMPDIR/.claude"
+    cat > "$RALPH_SETTINGS_FILE" << 'EOF'
+---
+some_other_setting: true
+another_key: "value"
+---
+# Settings without specs_dirs
+EOF
+
+    # Verify defaults to ./specs
+    local default_dir
+    default_dir=$(ralph_get_default_dir)
+    assert_eq "./specs" "$default_dir" "Settings without specs_dirs: defaults to ./specs"
+
+    local resolved
+    resolved=$(ralph_resolve_current)
+    assert_eq "./specs/another-feature" "$resolved" "Settings without specs_dirs: resolve works"
+
+    cleanup
+}
+
+# =============================================================================
 # Run all tests
 # =============================================================================
 
@@ -517,6 +713,18 @@ test_complete_workflow
 
 # Test 10: Trailing slash normalization
 test_trailing_slash_normalization
+
+# Test 11: Backward compat - all functions work without config
+test_all_functions_work_without_config
+
+# Test 12: Backward compat - no warnings for users without config
+test_no_warnings_without_config
+
+# Test 13: Backward compat - empty settings file
+test_empty_settings_file
+
+# Test 14: Backward compat - settings without specs_dirs key
+test_settings_without_specs_dirs
 
 # Summary
 echo ""
