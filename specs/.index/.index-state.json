@@ -1,0 +1,50 @@
+{
+  "lastIndexed": "2026-02-05T15:28:01+02:00",
+  "componentCount": 9,
+  "externalCount": 6,
+  "categories": {
+    "agents": 6,
+    "commands": 2,
+    "hooks": 1,
+    "controllers": 0,
+    "services": 0,
+    "models": 0,
+    "helpers": 0,
+    "migrations": 0
+  },
+  "excludes": [
+    "node_modules",
+    "vendor",
+    "dist",
+    "build",
+    ".git",
+    "__pycache__",
+    "*.test.*",
+    "*.spec.*",
+    "*_test.*",
+    "test/",
+    "tests/",
+    "spec/",
+    "specs/"
+  ],
+  "paths": [
+    "Project root"
+  ],
+  "hashes": {
+    "plugins/ralph-specum/agents/spec-executor.md": "1fdc67dd",
+    "plugins/ralph-specum/agents/research-analyst.md": "94281fc2",
+    "plugins/ralph-specum/agents/architect-reviewer.md": "8b2c4e3a",
+    "plugins/ralph-specum/agents/product-manager.md": "7d3b5c2f",
+    "plugins/ralph-specum/agents/task-planner.md": "4e8f2a1b",
+    "plugins/ralph-specum/agents/qa-engineer.md": "3c9d7e5a",
+    "plugins/ralph-specum/commands/implement.md": "19181307",
+    "plugins/ralph-specum/commands/start.md": "7fefcdda",
+    "plugins/ralph-specum/hooks/scripts/stop-watcher.sh": "a1b2c3d4"
+  },
+  "interviewResponses": {
+    "externalUrls": "Claude Code docs, Plugin development, https://awesomeclaude.ai/ralph-wiggum, https://ghuntley.com/loop/, https://github.com/anthropics/claude-code/blob/main/plugins/ralph-wiggum/.claude-plugin/plugin.json, https://www.aihero.dev/getting-started-with-ralph",
+    "externalTools": "https://www.aihero.dev/getting-started-with-ralph, https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html, https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/, https://github.com/github/spec-kit/blob/main/spec-driven.md",
+    "focusAreas": "Index everything",
+    "sparseAreas": "Plugin agents, Plugin commands, Hook scripts"
+  }
+}

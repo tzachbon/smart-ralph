@@ -119,6 +119,7 @@ claude --plugin-dir ./smart-ralph/plugins/ralph-specum
 | `/ralph-specum:design` | Generate technical design |
 | `/ralph-specum:tasks` | Break design into executable tasks |
 | `/ralph-specum:implement` | Execute tasks one-by-one |
+| `/ralph-specum:index` | Scan codebase and generate component specs |
 | `/ralph-specum:status` | Show all specs and progress |
 | `/ralph-specum:switch <name>` | Change active spec |
 | `/ralph-specum:cancel` | Cancel loop, cleanup state |
@@ -180,6 +181,123 @@ Tasks follow a 4-phase structure:
 2. **Refactoring** - Clean up the code
 3. **Testing** - Unit, integration, e2e tests
 4. **Quality Gates** - Lint, types, CI checks
+
+---
+
+## Codebase Indexing
+
+Starting with v2.12.0, Smart Ralph can scan existing codebases and auto-generate component specs, making legacy code discoverable during new feature research.
+
+### Why Index?
+
+When starting a new feature on an existing codebase, the **research phase benefits from knowing what's already built**. Without indexing, the research agent has limited visibility into your codebase structure.
+
+The `/ralph-specum:index` command:
+
+- Scans your codebase for controllers, services, models, helpers, and migrations
+- Generates searchable specs for each component
+- Indexes external resources (URLs, MCP servers, installed skills)
+- Makes existing code discoverable in `/ralph-specum:start`
+
+### Quick Start
+
+```bash
+# Full interactive indexing (recommended for first-time)
+/ralph-specum:index
+
+# Quick mode - skip interviews, batch scan only
+/ralph-specum:index --quick
+
+# Dry run - preview what would be indexed
+/ralph-specum:index --dry-run
+
+# Index specific directory
+/ralph-specum:index --path=src/api/
+
+# Force regenerate all specs
+/ralph-specum:index --force
+```
+
+### How It Works
+
+```text
+     /ralph-specum:index
+             |
+             v
+  +---------------------+
+  |  Pre-Scan Interview |  <- External URLs? Focus areas? Sparse areas?
+  +---------------------+
+             |
+             v
+  +---------------------+
+  |  Component Scanner  |  <- Detects controllers, services, models...
+  +---------------------+
+             |
+             v
+  +---------------------+
+  | External Resources  |  <- Fetches URLs, queries MCP, introspects skills
+  +---------------------+
+             |
+             v
+  +---------------------+
+  |  Post-Scan Review   |  <- Validates findings with user
+  +---------------------+
+             |
+             v
+      specs/.index/
+       ├── index.md          # Summary dashboard
+       ├── components/       # Code component specs
+       └── external/         # External resource specs
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--path=<dir>` | Limit indexing to specific directory |
+| `--type=<types>` | Filter by type: controllers, services, models, helpers, migrations |
+| `--exclude=<patterns>` | Patterns to exclude (e.g., test, mock) |
+| `--dry-run` | Preview without writing files |
+| `--force` | Regenerate all specs (overwrites existing) |
+| `--changed` | Regenerate only git-changed files |
+| `--quick` | Skip interviews, batch scan only |
+
+### Recommended: Index Before Research
+
+**For best results, run `/ralph-specum:index` before starting new features on an existing codebase.**
+
+The research phase searches indexed specs to discover relevant existing components. Without an index, you may miss important context about what's already built.
+
+```bash
+# First time on a codebase? Index it first
+/ralph-specum:index
+
+# Then start your feature
+/ralph-specum:start my-feature Add user authentication
+```
+
+When you run `/ralph-specum:start`:
+
+1. If no index exists, you'll see a hint suggesting to run `/ralph-specum:index`
+2. The spec scanner searches both regular specs AND indexed specs
+3. Indexed components appear in "Related Specs" during research
+
+### What Gets Indexed
+
+**Components** (detected by path/name patterns):
+- Controllers: `**/controllers/**/*.{ts,js,py,go}`
+- Services: `**/services/**/*.{ts,js,py,go}`
+- Models: `**/models/**/*.{ts,js,py,go}`
+- Helpers: `**/helpers/**/*.{ts,js,py,go}`
+- Migrations: `**/migrations/**/*.{ts,js,sql}`
+
+**External Resources** (discovered via interview):
+- URLs (fetched via WebFetch)
+- MCP servers (queried for tools/resources)
+- Installed skills (commands/agents documented)
+
+**Default Excludes**:
+`node_modules`, `vendor`, `dist`, `build`, `.git`, `__pycache__`, test files
 
 ---
 
