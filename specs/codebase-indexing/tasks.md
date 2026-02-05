@@ -323,13 +323,13 @@ Add unit and integration tests.
   - **Commit**: `test(index): document integration test scenarios`
   - _Design: Test Strategy > Integration Tests_
 
-- [ ] 3.3 [VERIFY] Quality checkpoint: test documentation
+- [x] 3.3 [VERIFY] Quality checkpoint: test documentation
   - **Do**: Verify testing documentation exists in command file
   - **Verify**: `grep -q "Testing\\|Test" plugins/ralph-specum/commands/index.md && echo "OK"`
   - **Done when**: Test documentation present
   - **Commit**: None (verification only)
 
-- [ ] 3.4 Clean up test fixtures
+- [x] 3.4 Clean up test fixtures
   - **Do**:
     1. Remove test fixtures directory after validation
     2. Ensure no test artifacts remain in specs directory
