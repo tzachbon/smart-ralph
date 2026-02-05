@@ -186,13 +186,13 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: FR-11_
   - _Design: File Structure_
 
-- [ ] 1.15 [VERIFY] Quality checkpoint: All commands updated
+- [x] 1.15 [VERIFY] Quality checkpoint: All commands updated
   - **Do**: Verify all 12 commands reference resolver or dynamic paths
   - **Verify**: `for f in plugins/ralph-specum/commands/*.md; do grep -l "ralph_resolve_current\|specs_dirs\|dynamic path\|path resolver\|--specs-dir" "$f" >/dev/null || echo "Missing: $f"; done | grep -c "Missing:" | xargs test 0 -eq && echo "All commands updated"`
   - **Done when**: All commands have dynamic path references
   - **Commit**: `chore(ralph-specum): ensure all commands use dynamic paths` (only if fixes needed)
 
-- [ ] 1.16 Update agents to use dynamic paths from delegation
+- [x] 1.16 Update agents to use dynamic paths from delegation
   - **Do**:
     1. Update `agents/research-analyst.md` - replace `./specs/` refs with dynamic path from delegation context
     2. Update `agents/product-manager.md` - use basePath from delegation
