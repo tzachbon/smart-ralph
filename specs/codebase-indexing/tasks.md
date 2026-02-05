@@ -265,13 +265,13 @@ After POC validated, clean up code and add proper error handling.
   - **Commit**: `refactor(index): add edge case handling`
   - _Design: Edge Cases section_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: error handling coverage
+- [x] 2.3 [VERIFY] Quality checkpoint: error handling coverage
   - **Do**: Verify error handling and edge cases are documented in command
   - **Verify**: `grep -c "Warning\\|Error\\|skip" plugins/ralph-specum/commands/index.md | xargs test 3 -lt && echo "OK: Has error/warning handling"`
   - **Done when**: Command has comprehensive error handling
   - **Commit**: None (verification only)
 
-- [ ] 2.4 Update schema with index state definitions
+- [x] 2.4 Update schema with index state definitions
   - **Do**:
     1. Add indexState definition to spec.schema.json
     2. Include fields: indexed timestamp, component count, external count, excludes, paths
