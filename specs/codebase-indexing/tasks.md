@@ -36,7 +36,7 @@ This spec is not complete until ALL criteria are met:
 
 Focus: Validate the indexing idea works end-to-end. Create templates first, then command, then integration.
 
-- [ ] 1.1 Create component-spec template
+- [x] 1.1 Create component-spec template
   - **Do**:
     1. Create template file with frontmatter (type, generated, source, hash, category, indexed)
     2. Include sections: Purpose, Location, Public Interface (Exports, Methods), Dependencies, AI Context
