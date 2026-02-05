@@ -48,7 +48,7 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-4, AC-1.3_
   - _Design: Templates > Component Spec Template_
 
-- [ ] 1.2 Create external-spec template
+- [x] 1.2 Create external-spec template
   - **Do**:
     1. Create template file with frontmatter (type, generated, source-type, source-id, fetched)
     2. Include sections: Source, Summary, Key Sections, AI Context
