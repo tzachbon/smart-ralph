@@ -75,7 +75,7 @@ Clean up and update documentation.
 
 Manual verification of the integration.
 
-- [ ] 3.1 Verify skill lookup works
+- [x] 3.1 Verify skill lookup works
   - **Do**: Check that ralph-wiggum:ralph-wiggum skill exists in available skills. Create a simple test by running skill search
   - **Files**: None (verification only)
   - **Done when**: Skill exists and can be found
