@@ -71,7 +71,7 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: FR-6_
   - _Design: Hooks section_
 
-- [ ] 1.6 Update status.md command for multi-root listing
+- [x] 1.6 Update status.md command for multi-root listing
   - **Do**:
     1. Replace hardcoded `./specs/` enumeration with `ralph_list_specs()` usage
     2. Update .current-spec reading to use `ralph_resolve_current()`

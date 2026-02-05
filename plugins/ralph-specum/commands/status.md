@@ -6,13 +6,26 @@ allowed-tools: [Read, Bash, Glob, Task]
 
 # Spec Status
 
-You are showing the status of all specifications.
+You are showing the status of all specifications across all configured specs directories.
+
+## Multi-Directory Resolution
+
+This command uses the path resolver to discover specs from all configured directories.
+
+**Path Resolver Functions**:
+- `ralph_list_specs()` - Returns all specs as `name|path` pairs
+- `ralph_resolve_current()` - Resolves .current-spec to full path
+
+**Configuration**: Specs directories are configured in `.claude/ralph-specum.local.md`:
+```yaml
+specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
+```
 
 ## Gather Information
 
-1. Check if `./specs/` directory exists
-2. Read `./specs/.current-spec` to identify active spec
-3. List all subdirectories in `./specs/` (each is a spec)
+1. Use `ralph_list_specs()` to enumerate all specs from all configured directories
+2. Use `ralph_resolve_current()` to identify the active spec path
+3. Group specs by their root directory
 
 ## For Each Spec
 
@@ -39,6 +52,8 @@ For each spec directory found:
 
 ## Output Format
 
+Group specs by their root directory. Show `[dir-path]` suffix for specs NOT in the default `./specs` directory.
+
 ```
 # Ralph Specum Status
 
@@ -59,6 +74,16 @@ Progress: <completed>/<total> tasks
 Files: [research] [requirements] [design] [tasks]
 Related: <none or list>
 
+### api-auth [packages/api/specs]
+Phase: design
+Progress: 0/0 tasks
+Files: [x] research [x] requirements [x] design [ ] tasks
+
+### web-login [packages/web/specs]
+Phase: research
+Progress: 0/0 tasks
+Files: [x] research [ ] requirements [ ] design [ ] tasks
+
 ---
 
 Commands:
@@ -66,6 +91,11 @@ Commands:
 - /ralph-specum:new <name> - Create new spec
 - /ralph-specum:<phase> - Run phase for active spec
 ```
+
+**Directory Context Rules**:
+- Specs in default `./specs/` directory: No suffix
+- Specs in other directories: Show `[dir-path]` suffix (e.g., `[packages/api/specs]`)
+- Active spec: Always shows `[ACTIVE]` tag regardless of directory
 
 ## Phase Display
 
