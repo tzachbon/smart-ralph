@@ -124,7 +124,7 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-2, FR-3, AC-1.1, AC-1.2_
   - _Design: Components > 2. Component Scanner_
 
-- [ ] 1.9 Add spec generation to index command
+- [x] 1.9 Add spec generation to index command
   - **Do**:
     1. Add spec generation section that creates component specs from template
     2. Implement hash calculation for change detection

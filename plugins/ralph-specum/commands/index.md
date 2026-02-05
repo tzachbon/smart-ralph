@@ -212,13 +212,164 @@ For MCP servers mentioned in `externalTools`:
 
 Generate spec files from scanned data.
 
-### Component Specs
+### Directory Structure
 
-For each component found:
-1. Load `templates/component-spec.md`
-2. Fill template with extracted data
-3. Calculate content hash
-4. Write to `specs/.index/components/<category>-<name>.md`
+Ensure output directories exist before writing specs:
+
+```text
+specs/.index/
+├── components/       # Component spec files
+│   ├── controller-users.md
+│   ├── service-auth.md
+│   └── ...
+├── external/         # External resource specs
+│   └── url-api-docs.md
+├── index.md          # Summary dashboard
+└── .index-state.json # Index state and hashes
+```
+
+Create directories using Bash:
+```bash
+mkdir -p specs/.index/components specs/.index/external
+```
+
+### Hash Calculation
+
+Calculate content hash for change detection:
+
+```text
+Hash Algorithm:
+1. Read source file content
+2. Calculate SHA-256 hash of content
+3. Take first 8 characters as short hash
+4. Store in spec frontmatter and .index-state.json
+
+Example hash calculation (Bash):
+  shasum -a 256 <file> | cut -c1-8
+
+Purpose:
+- Skip unchanged files on re-index
+- Track which files need regeneration
+- Enable --force to override
+```
+
+### Hash Storage
+
+Store hashes in `specs/.index/.index-state.json`:
+
+```json
+{
+  "lastIndexed": "2026-02-05T10:30:00Z",
+  "hashes": {
+    "src/controllers/users.ts": "a1b2c3d4",
+    "src/services/auth.ts": "e5f6g7h8"
+  },
+  "interviewResponses": { ... }
+}
+```
+
+### Component Spec Generation
+
+For each scanned component:
+
+```text
+Generation Process:
+1. Check if --dry-run: if true, skip to dry-run preview
+2. Check if spec exists at specs/.index/components/<category>-<name>.md
+3. If exists and NOT --force:
+   a. Calculate current source hash
+   b. Compare with stored hash in .index-state.json
+   c. If hash unchanged: skip (add to "unchanged" count)
+   d. If hash changed: regenerate
+4. If NOT exists OR --force:
+   a. Calculate source hash
+   b. Load templates/component-spec.md
+   c. Fill template values (see Template Population)
+   d. Write to specs/.index/components/<category>-<name>.md
+   e. Update hash in .index-state.json
+```
+
+### Template Population
+
+Fill component-spec.md template with extracted data:
+
+| Template Variable | Source |
+|-------------------|--------|
+| `{{SOURCE_PATH}}` | Relative path to source file |
+| `{{CONTENT_HASH}}` | 8-char SHA-256 hash of source |
+| `{{CATEGORY}}` | Detected category (controllers, services, etc.) |
+| `{{TIMESTAMP}}` | Current ISO timestamp |
+| `{{COMPONENT_NAME}}` | Derived from filename (e.g., `UsersController`) |
+| `{{AUTO_GENERATED_SUMMARY}}` | First comment block or "Auto-generated spec" |
+| `{{EXPORTS}}` | Array from export extraction |
+| `{{METHODS}}` | Array of {name, params, description} from method extraction |
+| `{{DEPENDENCIES}}` | Array from dependency extraction |
+| `{{KEYWORDS}}` | Category + filename words (space-separated) |
+| `{{RELATED_FILES}}` | Files in same directory |
+
+### Spec File Naming
+
+Generate spec filename from source:
+
+```text
+Pattern: <category>-<basename>.md
+
+Examples:
+  src/controllers/users.ts -> controller-users.md
+  src/services/auth-service.ts -> service-auth-service.md
+  lib/models/User.py -> model-user.md
+  pkg/helpers/utils.go -> helper-utils.md
+
+Rules:
+1. Use singular category prefix (controller, service, model, helper, migration)
+2. Take basename without extension
+3. Lowercase all characters
+4. Replace spaces/special chars with hyphens
+```
+
+### Dry-Run Mode
+
+If `parsedArgs.dryRun` is true:
+
+```text
+Dry-Run Behavior:
+1. Do NOT create directories
+2. Do NOT write any files
+3. Do NOT update .index-state.json
+4. Display preview table of what WOULD be generated:
+
+Output Format:
+---
+Dry Run - Would generate:
+
+| File | Category | Source | Status |
+|------|----------|--------|--------|
+| components/controller-users.md | Controllers | src/controllers/users.ts | New |
+| components/service-auth.md | Services | src/services/auth.ts | Changed |
+| external/url-api-docs.md | URL | https://api.example.com | New |
+| index.md | Summary | - | Updated |
+
+Summary:
+- New: 2 files
+- Changed: 1 file
+- Unchanged: 5 files (skipped)
+
+Total would write: 4 files
+---
+```
+
+### Force Mode
+
+If `parsedArgs.force` is true:
+
+```text
+Force Behavior:
+1. Ignore all existing specs
+2. Ignore hash comparisons
+3. Regenerate ALL matching components
+4. Overwrite all spec files
+5. Rebuild .index-state.json hashes from scratch
+```
 
 ### External Specs
 
