@@ -132,7 +132,7 @@ Scan codebase using detection patterns.
    - Filter out `parsedArgs.exclude` patterns
    - For each matched file:
      - Read file content
-     - Extract metadata (exports, functions, dependencies)
+     - Extract metadata using regex patterns (see Metadata Extraction below)
      - Generate component spec using template
 
 2. If `--changed` flag:
@@ -142,6 +142,52 @@ Scan codebase using detection patterns.
 3. If not `--force` and spec exists:
    - Compare content hash
    - Skip if unchanged
+
+### Metadata Extraction
+
+Use Grep tool with regex patterns to extract code metadata from matched files.
+
+#### Export Extraction
+
+| Language | Regex Pattern | Example Match |
+|----------|--------------|---------------|
+| TypeScript/JavaScript | `export\s+(const\|function\|class\|interface\|type)\s+(\w+)` | `export function login` |
+| TypeScript/JavaScript | `export\s+default\s+(\w+)` | `export default UserService` |
+| Python | `^def\s+(\w+)\s*\(` (at module level) | `def authenticate(` |
+| Python | `^class\s+(\w+)` | `class UserModel` |
+| Go | `^func\s+(\w+)\s*\(` (capitalized = exported) | `func HandleRequest(` |
+
+#### Method Extraction
+
+| Language | Regex Pattern | Example Match |
+|----------|--------------|---------------|
+| TypeScript/JavaScript | `(async\s+)?(public\|private\|protected)?\s*(static\s+)?(\w+)\s*\([^)]*\)\s*[:{]` | `async getUserById(id: string)` |
+| Python | `def\s+(\w+)\s*\(self[^)]*\)` | `def get_user(self, id)` |
+| Go | `func\s+\(\w+\s+\*?(\w+)\)\s+(\w+)\s*\(` | `func (s *Service) GetUser(` |
+
+#### Dependency Extraction
+
+| Language | Regex Pattern | Example Match |
+|----------|--------------|---------------|
+| TypeScript/JavaScript | `import\s+.*from\s+['"]([^'"]+)['"]` | `import { User } from './models/user'` |
+| TypeScript/JavaScript | `require\s*\(['"]([^'"]+)['"]\)` | `require('express')` |
+| Python | `^import\s+(\w+)` | `import os` |
+| Python | `^from\s+(\S+)\s+import` | `from flask import Flask` |
+| Go | `import\s+"([^"]+)"` | `import "net/http"` |
+
+#### Extraction Process
+
+For each matched file:
+
+```text
+1. Detect language from file extension (.ts, .js, .py, .go)
+2. Apply language-specific regex patterns using Grep tool
+3. Collect results:
+   - exports: Array of exported names
+   - methods: Array of {name, params, description}
+   - dependencies: Array of import paths (deduplicated)
+4. Store extracted data for template filling
+```
 
 ## External Resource Fetcher
 

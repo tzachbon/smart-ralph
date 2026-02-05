@@ -104,13 +104,13 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-17, FR-18, FR-19, FR-20, AC-9.1, AC-9.2, AC-9.3, AC-9.4_
   - _Design: Interview Flow > Pre-Scan Interview Questions_
 
-- [ ] 1.7 [VERIFY] Quality checkpoint: command structure
+- [x] 1.7 [VERIFY] Quality checkpoint: command structure
   - **Do**: Verify index command has proper frontmatter and basic structure
   - **Verify**: `grep -q "^---$" plugins/ralph-specum/commands/index.md && grep -q "description:" plugins/ralph-specum/commands/index.md && grep -q "allowed-tools:" plugins/ralph-specum/commands/index.md && echo "OK"`
   - **Done when**: Command has valid plugin command structure
   - **Commit**: None (verification only)
 
-- [ ] 1.8 Add component scanner to index command
+- [x] 1.8 Add component scanner to index command
   - **Do**:
     1. Add component scanner section that uses Glob patterns from design
     2. Implement detection patterns for: controllers, services, models, helpers, migrations
