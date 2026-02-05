@@ -72,13 +72,13 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-14, AC-8.1, AC-8.2, AC-8.3, AC-8.4_
   - _Design: Templates > Index Summary Template_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: template validation
+- [x] 1.4 [VERIFY] Quality checkpoint: template validation
   - **Do**: Verify all 3 templates have valid frontmatter and required sections
   - **Verify**: `for f in plugins/ralph-specum/templates/component-spec.md plugins/ralph-specum/templates/external-spec.md plugins/ralph-specum/templates/index-summary.md; do test -f "$f" || exit 1; done && echo "All templates exist"`
   - **Done when**: All template files exist and are valid markdown
   - **Commit**: None (verification only)
 
-- [ ] 1.5 Create index command - argument parsing
+- [x] 1.5 Create index command - argument parsing
   - **Do**:
     1. Create command file with frontmatter (description, argument-hint, allowed-tools)
     2. Implement argument parsing section: --path, --type, --exclude, --dry-run, --force, --changed, --quick
