@@ -578,24 +578,32 @@ Before starting a new spec, check if codebase indexing exists. If not, show a he
 ### Check Index Status
 
 ```bash
-# Check if specs/.index/ exists and has content
-if [ ! -d "./specs/.index" ] || [ -z "$(ls -A ./specs/.index 2>/dev/null)" ]; then
-  # Index is empty or missing - show hint
-  SHOW_INDEX_HINT=true
+# Session guard (skip if already shown in this session)
+if [ -z "${RALPH_SPECUM_INDEX_HINT_SHOWN:-}" ]; then
+  # Check if specs/.index/ exists and has content
+  if [ ! -d "./specs/.index" ] || [ -z "$(ls -A ./specs/.index 2>/dev/null)" ]; then
+    # Index is empty or missing - show hint
+    SHOW_INDEX_HINT=true
+  else
+    # Index has content - don't show hint
+    SHOW_INDEX_HINT=false
+  fi
 else
-  # Index has content - don't show hint
+  # Already shown in this session - don't show again
   SHOW_INDEX_HINT=false
 fi
 ```
 
 ### Display Hint
 
-If `SHOW_INDEX_HINT` is true, display the following hint before continuing:
+If `SHOW_INDEX_HINT` is true, display the following hint before continuing and set `RALPH_SPECUM_INDEX_HINT_SHOWN=true` for this session:
 
 ```text
 Tip: Run /ralph-specum:index to scan your codebase and create indexed specs.
 This helps the research phase find relevant existing code patterns and components.
 ```
+
+After displaying the hint, export the session guard: `export RALPH_SPECUM_INDEX_HINT_SHOWN=1`
 
 **Note**: Only show this hint once per session. After displaying, continue with Spec Scanner.
 

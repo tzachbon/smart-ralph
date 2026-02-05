@@ -313,8 +313,10 @@ Skill Introspection Process:
    - RELATED_COMPONENTS: None (external)
 5. Generate external spec using template
 6. Write to specs/.index/external/skill-<plugin>-<command>.md
+```
 
 Plugin Manifest Extraction:
+
 ```json
 {
   "name": "plugin-name",
@@ -325,6 +327,7 @@ Plugin Manifest Extraction:
 }
 ```
 
+```text
 Error Handling:
 - Plugin not found: Warning and skip
 - Manifest invalid: Warning and skip
@@ -581,7 +584,7 @@ Collect data from all generated specs to fill template:
 | `HELPERS` | Array of helper specs | From `specs/.index/components/helper-*.md` |
 | `MIGRATIONS` | Array of migration specs | From `specs/.index/components/migration-*.md` |
 | `EXTERNAL` | Array of external resource specs | From `specs/.index/external/*.md` |
-| `EXCLUDES` | Excluded patterns used | From `parsedArgs.exclude` (joined with `, `) |
+| `EXCLUDES` | Excluded patterns used | From `parsedArgs.exclude` (joined with `,`) |
 | `PATHS` | Indexed paths | From `parsedArgs.path` or "Project root" |
 
 ### CATEGORIES Structure

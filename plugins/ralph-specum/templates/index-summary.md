@@ -10,9 +10,11 @@ indexed: {{TIMESTAMP}}
 
 | Category | Count | Last Updated |
 |----------|-------|--------------|
+<!-- markdownlint-disable MD055 MD056 -->
 {{#each CATEGORIES}}
 | {{name}} | {{count}} | {{lastUpdated}} |
 {{/each}}
+<!-- markdownlint-enable MD055 MD056 -->
 | **Total** | **{{TOTAL}}** | {{TIMESTAMP}} |
 
 ## Components
@@ -46,9 +48,11 @@ indexed: {{TIMESTAMP}}
 
 | Resource | Type | Fetched |
 |----------|------|---------|
+<!-- markdownlint-disable MD055 MD056 -->
 {{#each EXTERNAL}}
 | [{{name}}](external/{{file}}) | {{type}} | {{fetched}} |
 {{/each}}
+<!-- markdownlint-enable MD055 MD056 -->
 
 ## Index Settings
 

@@ -23,11 +23,14 @@ indexed: {{TIMESTAMP}}
 {{/each}}
 
 ### Methods
+
 | Method | Parameters | Description |
 |--------|------------|-------------|
+<!-- markdownlint-disable MD055 MD056 -->
 {{#each METHODS}}
 | {{name}} | {{params}} | {{description}} |
 {{/each}}
+<!-- markdownlint-enable MD055 MD056 -->
 
 ## Dependencies
 {{#each DEPENDENCIES}}
