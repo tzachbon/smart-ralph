@@ -371,7 +371,7 @@ Add unit and integration tests.
   - **Verify**: `grep -o '"version": "[0-9.]*"' plugins/ralph-specum/.claude-plugin/plugin.json | grep -v "2.11.1" && echo "OK: Version bumped"`
   - **Commit**: `chore(ralph-specum): bump version to 2.12.0`
 
-- [ ] 4.4 Create PR and verify CI
+- [x] 4.4 Create PR and verify CI
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user
