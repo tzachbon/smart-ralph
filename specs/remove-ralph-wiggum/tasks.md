@@ -201,7 +201,7 @@ Add bats-core tests.
   - **Done when**: All commands exit 0
   - **Commit**: `fix: address any final quality issues` (if needed)
 
-- [ ] 4.5 Create PR and verify CI
+- [x] 4.5 Create PR and verify CI
   - **Do**: Push branch, create PR
     1. Ensure not on main branch
     2. Push branch: `git push -u origin HEAD`
