@@ -139,13 +139,13 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-4, AC-1.4, AC-1.5, AC-6.1, AC-6.2, AC-6.3, AC-7.1, AC-7.3_
   - _Design: Components > 4. Spec Generator_
 
-- [ ] 1.10 [VERIFY] Quality checkpoint: core indexing flow
+- [x] 1.10 [VERIFY] Quality checkpoint: core indexing flow
   - **Do**: Verify index command has complete core flow (parse args -> interview -> scan -> generate)
   - **Verify**: `grep -q "Parse Arguments" plugins/ralph-specum/commands/index.md && grep -q "Interview" plugins/ralph-specum/commands/index.md && grep -q "Scanner" plugins/ralph-specum/commands/index.md && grep -q "Generate" plugins/ralph-specum/commands/index.md && echo "OK"`
   - **Done when**: Core indexing flow is complete in command
   - **Commit**: None (verification only)
 
-- [ ] 1.11 Add external resource fetcher to index command
+- [x] 1.11 Add external resource fetcher to index command
   - **Do**:
     1. Add external resource fetcher section
     2. Implement URL fetching via WebFetch with 30s timeout

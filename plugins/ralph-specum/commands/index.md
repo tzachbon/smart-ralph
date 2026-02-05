@@ -10,6 +10,8 @@ You are running the codebase indexing command. This scans the repository to gene
 
 ## Argument Parsing
 
+### Step 1: Parse Arguments
+
 Parse the following arguments from `$ARGUMENTS`:
 
 ### Available Options
@@ -191,22 +193,196 @@ For each matched file:
 
 ## External Resource Fetcher
 
-Process external resources from interview responses.
+Process external resources from interview responses. Handles three resource types: URLs, MCP servers, and skills.
+
+### Resource Type Detection
+
+From `externalTools` interview response, detect resource types:
+
+```text
+Resource Classification:
+1. URL: Starts with "http://" or "https://" -> URL processing
+2. MCP Server: Matches "mcp-*" or "mcp_*" or contains "MCP" -> MCP processing
+3. Skill: Starts with "/" or contains "skill" -> Skill processing
+4. Unknown: Ask for clarification or skip with warning
+```
 
 ### URL Processing
 
 For each URL provided in `externalUrls`:
-1. Use WebFetch to get content
-2. Extract key sections
-3. Generate external spec using template
-4. Store in `specs/.index/external/`
+
+```text
+URL Fetch Process:
+1. Validate URL format (must be HTTP/HTTPS)
+2. Use WebFetch with 30s timeout:
+   - WebFetch: url=<url>, prompt="Extract key sections, API endpoints, configuration options, and usage examples"
+3. Parse fetched content:
+   - RESOURCE_NAME: Extract from page title or URL path
+   - SOURCE_TYPE: "url"
+   - SOURCE_ID: Full URL
+   - FETCH_TIMESTAMP: Current ISO timestamp
+   - CONTENT_SUMMARY: First 500 chars or description meta tag
+   - SECTIONS: Array of {title, content} from headings
+   - KEYWORDS: Extract from content (APIs, endpoints, config terms)
+   - RELATED_COMPONENTS: Match against scanned component names
+4. Generate external spec using template
+5. Write to specs/.index/external/url-<sanitized-name>.md
+
+Timeout Handling:
+- If WebFetch times out after 30s, log warning and skip
+- Warning: "Could not fetch {{url}} within 30s - skipping"
+
+Error Handling:
+- 404/500 errors: Warning and skip
+- Invalid URL: Warning and skip
+- No content: Generate minimal spec with "Content unavailable" summary
+```
 
 ### MCP Server Processing
 
 For MCP servers mentioned in `externalTools`:
-1. Use ListMcpResourcesTool to query server
-2. Document available tools and resources
-3. Generate external spec using template
+
+```text
+MCP Discovery Process:
+1. Use ListMcpResourcesTool to query available servers:
+   - ListMcpResourcesTool: server=<server-name> (if specific server)
+   - ListMcpResourcesTool: (no args to list all servers)
+2. For each server found, collect:
+   - Server name
+   - Available tools (name, description)
+   - Available resources (uri, name, description)
+3. Generate spec data:
+   - RESOURCE_NAME: Server name (e.g., "MCP Slack Server")
+   - SOURCE_TYPE: "mcp-server"
+   - SOURCE_ID: Server name/identifier
+   - FETCH_TIMESTAMP: Current ISO timestamp
+   - CONTENT_SUMMARY: "MCP server providing <N> tools and <M> resources"
+   - SECTIONS:
+     - "Available Tools" section listing each tool
+     - "Available Resources" section listing each resource
+   - KEYWORDS: Tool names, resource types
+   - RELATED_COMPONENTS: Components that use this MCP server
+4. Generate external spec using template
+5. Write to specs/.index/external/mcp-<server-name>.md
+
+MCP Tool Documentation Format:
+| Tool | Description |
+|------|-------------|
+| tool_name_1 | Brief description from tool metadata |
+| tool_name_2 | Brief description from tool metadata |
+
+MCP Resource Documentation Format:
+| Resource URI | Name | Description |
+|--------------|------|-------------|
+| resource://path | Resource Name | Brief description |
+
+Error Handling:
+- Server not responding: Warning and skip
+- No tools/resources: Generate minimal spec noting empty server
+```
+
+### Skill Processing
+
+For skills mentioned in `externalTools`:
+
+```text
+Skill Introspection Process:
+1. Locate plugin manifests:
+   - Glob: plugins/*/.claude-plugin/plugin.json
+   - Also check: .claude-plugin/plugin.json (root plugin)
+2. For each manifest, read and extract:
+   - Plugin name, description, version
+   - Commands (from commands/*.md)
+   - Agents (from agents/*.md)
+   - Hooks (from hooks/*.md)
+3. If specific skill requested (e.g., "/ralph-specum:start"):
+   - Parse skill name: plugin="ralph-specum", command="start"
+   - Find matching plugin and command file
+   - Extract command description from frontmatter
+4. Generate spec data:
+   - RESOURCE_NAME: Skill/command name
+   - SOURCE_TYPE: "skill"
+   - SOURCE_ID: Full skill path (e.g., "/ralph-specum:start")
+   - FETCH_TIMESTAMP: Current ISO timestamp
+   - CONTENT_SUMMARY: Command description from frontmatter
+   - SECTIONS:
+     - "Commands" - list of available commands
+     - "Agents" - list of available agents
+     - "Usage" - extracted from command file
+   - KEYWORDS: Command names, agent names
+   - RELATED_COMPONENTS: None (external)
+5. Generate external spec using template
+6. Write to specs/.index/external/skill-<plugin>-<command>.md
+
+Plugin Manifest Extraction:
+```json
+{
+  "name": "plugin-name",
+  "description": "Plugin description",
+  "version": "1.0.0",
+  "commands": ["command1.md", "command2.md"],
+  "agents": ["agent1.md"]
+}
+```
+
+Error Handling:
+- Plugin not found: Warning and skip
+- Manifest invalid: Warning and skip
+- Command file missing: Note in spec as "undocumented"
+```
+
+### External Spec Generation
+
+Apply external-spec template to collected data:
+
+```text
+Template Population:
+1. Load templates/external-spec.md
+2. Fill variables:
+   - {{SOURCE_TYPE}}: "url" | "mcp-server" | "skill"
+   - {{SOURCE_ID}}: URL, server name, or skill path
+   - {{FETCH_TIMESTAMP}}: ISO timestamp of fetch
+   - {{RESOURCE_NAME}}: Human-readable name
+   - {{CONTENT_SUMMARY}}: Brief summary (max 500 chars)
+   - {{SECTIONS}}: Array of {title, content} sections
+   - {{KEYWORDS}}: Space-separated keywords for search
+   - {{RELATED_COMPONENTS}}: Links to related component specs
+3. Write to specs/.index/external/<type>-<name>.md
+```
+
+### External Spec File Naming
+
+```text
+Pattern: <type>-<sanitized-name>.md
+
+Sanitization Rules:
+1. Lowercase all characters
+2. Replace non-alphanumeric with hyphens
+3. Remove consecutive hyphens
+4. Trim to 50 characters max
+
+Examples:
+  URL: https://api.example.com/docs -> url-api-example-com-docs.md
+  MCP: mcp-slack -> mcp-slack.md
+  Skill: /ralph-specum:start -> skill-ralph-specum-start.md
+```
+
+### External Resource Summary
+
+After processing all external resources, output summary:
+
+```text
+External Resources Processed:
+| Type | Name | Status |
+|------|------|--------|
+| URL | API Docs | Success |
+| URL | Auth Guide | Failed (timeout) |
+| MCP | slack | Success (5 tools, 2 resources) |
+| Skill | /ralph-specum:start | Success |
+
+Total: 3 successful, 1 failed
+Output: specs/.index/external/
+```
 
 ## Spec Generator
 
