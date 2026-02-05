@@ -11,7 +11,7 @@ created: 2026-02-05
 
 Focus: Validate path resolution works end-to-end. Skip tests, accept minimal implementation.
 
-- [ ] 1.1 Create path-resolver.sh with core functions
+- [x] 1.1 Create path-resolver.sh with core functions
   - **Do**:
     1. Create `plugins/ralph-specum/hooks/scripts/path-resolver.sh`
     2. Implement `ralph_get_specs_dirs()` - parse specs_dirs from settings, default to `["./specs"]`
