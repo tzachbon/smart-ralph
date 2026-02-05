@@ -12,7 +12,7 @@ Install Ralph Loop plugin:
 ## Invocation
 
 ```text
-Skill: ralph-loop:ralph-loop
+Skill: ralph-wiggum:ralph-loop
 Args: Read <coordinator-prompt-path> and follow instructions.
       Output ALL_TASKS_COMPLETE when done.
       --max-iterations <calculated>

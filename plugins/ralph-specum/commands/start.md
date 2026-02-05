@@ -194,11 +194,11 @@ In `--quick` mode, still perform branch check but skip the user prompt for non-d
 
 ## Quick Mode Uses Ralph Loop
 
-In quick mode (`--quick`), execution uses `/ralph-loop` for autonomous task completion.
+In quick mode (`--quick`), execution uses Ralph Wiggum for autonomous task completion.
 
-After generating spec artifacts in quick mode, invoke ralph-loop:
+After generating spec artifacts in quick mode, invoke ralph-wiggum:
 ```text
-Skill: ralph-loop:ralph-loop
+Skill: ralph-wiggum:ralph-loop
 Args: Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
 ```
 

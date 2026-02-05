@@ -30,8 +30,8 @@ If state file exists, read and display:
 
 1. Stop Ralph loop (if running):
    ```text
-   Use the Skill tool to invoke ralph-loop:cancel-ralph
-   This stops any active Ralph loop iteration
+   Use the Skill tool to invoke ralph-wiggum:cancel-ralph
+   This stops any active Ralph Wiggum loop iteration
    ```
 
 2. Delete state file:
@@ -60,7 +60,7 @@ State before cancellation:
 - Iterations: <globalIteration>
 
 Cleanup:
-- [x] Stopped Ralph loop (/ralph-loop:cancel-ralph)
+- [x] Stopped Ralph Wiggum loop (/ralph-wiggum:cancel-ralph)
 - [x] Removed .ralph-state.json
 - [x] Removed spec directory (./specs/$spec)
 - [x] Cleared current spec marker
