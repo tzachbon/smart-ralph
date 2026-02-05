@@ -145,13 +145,13 @@ Focus: Validate path resolution works end-to-end. Skip tests, accept minimal imp
   - _Requirements: FR-5_
   - _Design: Command Updates Pattern_
 
-- [ ] 1.12 [VERIFY] Quality checkpoint: Shell syntax and command frontmatter
+- [x] 1.12 [VERIFY] Quality checkpoint: Shell syntax and command frontmatter
   - **Do**: Validate all shell scripts and command files
   - **Verify**: `for f in plugins/ralph-specum/hooks/scripts/*.sh; do bash -n "$f" || exit 1; done && for f in plugins/ralph-specum/commands/*.md; do head -1 "$f" | grep -q "^---$" || exit 1; done && echo "All OK"`
   - **Done when**: All shell scripts and commands pass validation
   - **Commit**: `chore(ralph-specum): fix validation issues` (only if fixes needed)
 
-- [ ] 1.13 Update remaining commands to use resolver (research, requirements, design, tasks, implement, refactor)
+- [x] 1.13 Update remaining commands to use resolver (research, requirements, design, tasks, implement, refactor)
   - **Do**:
     1. Update `commands/research.md` - replace hardcoded spec path with resolver usage
     2. Update `commands/requirements.md` - replace hardcoded spec path with resolver usage

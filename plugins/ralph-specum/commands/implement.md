@@ -18,15 +18,30 @@ If the Skill tool fails with "skill not found" or similar error for `ralph-loop:
 
 This is a hard dependency. The command cannot function without Ralph Loop.
 
+## Multi-Directory Resolution
+
+This command uses the path resolver for dynamic spec path resolution:
+
+**Path Resolver Functions**:
+- `ralph_resolve_current()` - Resolves .current-spec to full path (handles bare name = ./specs/$name, full path = as-is)
+- `ralph_find_spec(name)` - Find spec by name across all configured roots
+
+**Configuration**: Specs directories are configured in `.claude/ralph-specum.local.md`:
+```yaml
+specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
+```
+
 ## Determine Active Spec
 
-1. Read `./specs/.current-spec` to get active spec name
-2. If file missing or empty: error "No active spec. Run /ralph-specum:new <name> first."
+1. Use `ralph_resolve_current()` to get the active spec path
+2. If resolution fails or no active spec: error "No active spec. Run /ralph-specum:new <name> first."
+
+The spec path is dynamically resolved - it may be in `./specs/` or any other configured specs directory.
 
 ## Validate Prerequisites
 
-1. Check `./specs/$spec/` directory exists
-2. Check `./specs/$spec/tasks.md` exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
+1. Check the resolved spec directory exists
+2. Check the spec's tasks.md exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
 
 ## Parse Arguments
 
