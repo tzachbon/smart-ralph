@@ -1,6 +1,6 @@
 # Ralph Loop Integration
 
-Ralph Specum uses the Ralph Wiggum loop (ralph-loop) for autonomous task execution.
+Ralph Specum uses the Ralph Wiggum plugin for autonomous task execution.
 
 ## Dependency
 
@@ -40,7 +40,7 @@ Write coordinator prompt to file before invoking Ralph loop:
 
 | Signal | Meaning |
 |--------|---------|
-| `ALL_TASKS_COMPLETE` | All tasks done, end loop |
+| `<promise>ALL_TASKS_COMPLETE</promise>` | All tasks done, end loop |
 
 ## Max Iterations Calculation
 

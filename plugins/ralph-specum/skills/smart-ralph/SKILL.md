@@ -81,7 +81,7 @@ When `commitSpec` is false:
 
 ## Ralph Loop Integration
 
-All Ralph plugins use Ralph Wiggum loop for task execution. See `references/ralph-loop-integration.md` for details.
+All Ralph plugins use Ralph Wiggum plugin for task execution. See `references/ralph-wiggum-integration.md` for details.
 
 Key signals:
 - `TASK_COMPLETE` - executor finished task
