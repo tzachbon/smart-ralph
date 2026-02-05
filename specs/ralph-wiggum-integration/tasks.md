@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Get implement.md working with ralph-wiggum API. Skip tests.
 
-- [ ] 1.1 Update skill invocation path in implement.md
+- [x] 1.1 Update skill invocation path in implement.md
   - **Do**: Change `ralph-loop:ralph-loop` to `ralph-wiggum:ralph-wiggum` in implement.md skill invocation section
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: Skill invocation references ralph-wiggum

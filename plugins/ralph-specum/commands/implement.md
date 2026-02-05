@@ -71,7 +71,7 @@ This file contains the full instructions for task execution. Writing it to a fil
 
 ### Step 2: Invoke Ralph Loop Skill
 
-Use the Skill tool to invoke `ralph-loop:ralph-loop` with args:
+Use the Skill tool to invoke `ralph-wiggum:ralph-loop` with args:
 
 ```
 Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
