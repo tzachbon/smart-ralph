@@ -18,15 +18,31 @@ If the Skill tool fails with "skill not found" or similar error for `ralph-loop:
 
 This is a hard dependency. The command cannot function without Ralph Loop.
 
+## Multi-Directory Resolution
+
+This command uses the path resolver for dynamic spec path resolution:
+
+**Path Resolver Functions**:
+- `ralph_resolve_current()` - Resolves .current-spec to full path (handles bare name = ./specs/$name, full path = as-is)
+- `ralph_find_spec(name)` - Find spec by name across all configured roots
+
+**Configuration**: Specs directories are configured in `.claude/ralph-specum.local.md`:
+```yaml
+specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
+```
+
 ## Determine Active Spec
 
-1. Read `./specs/.current-spec` to get active spec name
-2. If file missing or empty: error "No active spec. Run /ralph-specum:new <name> first."
+1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it
+2. Otherwise, use `ralph_resolve_current()` to get the active spec path
+3. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
+
+The spec path is dynamically resolved - it may be in `./specs/` or any other configured specs directory.
 
 ## Validate Prerequisites
 
-1. Check `./specs/$spec/` directory exists
-2. Check `./specs/$spec/tasks.md` exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
+1. Check the resolved spec directory exists
+2. Check the spec's tasks.md exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
 
 ## Parse Arguments
 
@@ -1094,7 +1110,11 @@ Before outputting:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup execution state)
 3. Keep .progress.md (preserve learnings and history)
-4. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
+4. **Update Spec Index** (marks spec as completed):
+   ```bash
+   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
+   ```
+5. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
 
 This signal terminates the Ralph Loop loop.
 
