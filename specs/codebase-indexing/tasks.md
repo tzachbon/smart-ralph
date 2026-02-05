@@ -160,7 +160,7 @@ Focus: Validate the indexing idea works end-to-end. Create templates first, then
   - _Requirements: FR-5, AC-2.2, AC-2.3, AC-2.4, AC-2.5, AC-2.8_
   - _Design: Components > 3. External Resource Fetcher_
 
-- [ ] 1.12 Add post-scan review to index command
+- [x] 1.12 Add post-scan review to index command
   - **Do**:
     1. Add post-scan review section using AskUserQuestion
     2. Show summary of findings (component counts by category, external resources)
