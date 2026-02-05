@@ -30,7 +30,7 @@ Focus: Get implement.md working with ralph-wiggum API. Skip tests.
   - _Requirements: FR-2_
   - _Design: Component B_
 
-- [ ] 1.3 Update error handling to not output promise on errors
+- [x] 1.3 Update error handling to not output promise on errors
   - **Do**: Ensure all "Do NOT output ALL_TASKS_COMPLETE" statements also say not to output the promise format. Search for "Do NOT output ALL_TASKS_COMPLETE" and update to mention promise format
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: Error cases explicitly say not to output promise tags

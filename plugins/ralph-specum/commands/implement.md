@@ -116,7 +116,7 @@ If state file missing or corrupt (invalid JSON, missing required fields):
 1. Output error: "ERROR: State file missing or corrupt at ./specs/$spec/.ralph-state.json"
 2. Suggest: "Run /ralph-specum:implement to reinitialize execution state"
 3. Do NOT continue execution
-4. Do NOT output ALL_TASKS_COMPLETE
+4. Do NOT output `<promise>ALL_TASKS_COMPLETE</promise>`
 
 ### 3. Check Completion
 
@@ -136,7 +136,7 @@ If tasks.md does not exist:
 1. Output error: "ERROR: Tasks file missing at ./specs/$spec/tasks.md"
 2. Suggest: "Run /ralph-specum:tasks to generate task list"
 3. Do NOT continue execution
-4. Do NOT output ALL_TASKS_COMPLETE
+4. Do NOT output `<promise>ALL_TASKS_COMPLETE</promise>`
 
 **ERROR: Missing Spec Directory**
 
@@ -144,7 +144,7 @@ If spec directory does not exist (./specs/$spec/):
 1. Output error: "ERROR: Spec directory missing at ./specs/$spec/"
 2. Suggest: "Run /ralph-specum:new <spec-name> to create a new spec"
 3. Do NOT continue execution
-4. Do NOT output ALL_TASKS_COMPLETE
+4. Do NOT output `<promise>ALL_TASKS_COMPLETE</promise>`
 
 Tasks follow this format:
 ```markdown
@@ -382,7 +382,7 @@ Before generating a fix task:
 3. If limit reached:
    - Output error: "ERROR: Max fix attempts ($maxFixTasksPerOriginal) reached for task $taskId"
    - Show fix history: "Fix attempts: $fixTaskMap[taskId].fixTaskIds"
-   - Do NOT output ALL_TASKS_COMPLETE
+   - Do NOT output `<promise>ALL_TASKS_COMPLETE</promise>`
    - STOP execution
 
 **Generate Fix Task Markdown**:
@@ -667,7 +667,7 @@ currentAttempts = fixTaskMap[taskId].attempts || 0
 If currentAttempts >= maxFixTasksPerOriginal:
   - Output ERROR: "Max fix attempts ($max) reached for task $taskId"
   - Show fix history: fixTaskMap[taskId].fixTaskIds
-  - Do NOT output ALL_TASKS_COMPLETE
+  - Do NOT output `<promise>ALL_TASKS_COMPLETE</promise>`
   - STOP execution
 ```
 
@@ -940,7 +940,7 @@ If taskIteration exceeds maxTaskIterations:
 3. Suggest: "Review .progress.md Learnings section for failure details"
 4. Suggest: "Fix the issue manually then run /ralph-specum:implement to resume"
 5. Do NOT continue execution
-6. Do NOT output ALL_TASKS_COMPLETE
+6. Do NOT output `<promise>ALL_TASKS_COMPLETE</promise>`
 
 ### 7. Verification Layers
 
@@ -1078,7 +1078,7 @@ If any parallel task failed (no TASK_COMPLETE in its output):
 1. Read tasks.md to detect Phase 5 tasks (look for "Phase 5: PR Lifecycle" section)
 2. If Phase 5 exists AND taskIndex >= totalTasks:
    - Enter PR Lifecycle Loop (section 11)
-   - Do NOT output ALL_TASKS_COMPLETE yet
+   - Do NOT output `<promise>ALL_TASKS_COMPLETE</promise>` yet
 3. If NO Phase 5 OR Phase 5 complete:
    - Proceed with standard completion
 
@@ -1105,7 +1105,7 @@ This signal terminates the Ralph Loop loop.
 PR: https://github.com/owner/repo/pull/123
 ```
 
-Do NOT output ALL_TASKS_COMPLETE if tasks remain incomplete.
+Do NOT output `<promise>ALL_TASKS_COMPLETE</promise>` if tasks remain incomplete.
 Do NOT output TASK_COMPLETE (that's for spec-executor only).
 
 ### 11. PR Lifecycle Loop (Phase 5)
