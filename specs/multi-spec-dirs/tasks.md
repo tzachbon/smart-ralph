@@ -284,7 +284,7 @@ After POC validated, clean up code and improve consistency.
   - **Commit**: `refactor(ralph-specum): improve disambiguation UX in switch`
   - _Design: Disambiguation Flow_
 
-- [ ] 2.5 Bump plugin version
+- [x] 2.5 Bump plugin version
   - **Do**:
     1. Update version in `plugins/ralph-specum/.claude-plugin/plugin.json` (2.11.1 -> 2.12.0)
     2. Update version in `.claude-plugin/marketplace.json` for ralph-specum entry (2.11.1 -> 2.12.0)
