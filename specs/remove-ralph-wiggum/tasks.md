@@ -130,7 +130,7 @@ Add bats-core tests.
   - **Commit**: `test: add bats-core test infrastructure`
   - _Requirements: AC-3.1_
 
-- [ ] 3.2 Add stop-hook unit tests
+- [x] 3.2 Add stop-hook unit tests
   - **Do**: Write bats tests for stop-hook logic
     1. Test: exits silently when no state file
     2. Test: exits silently when phase != execution

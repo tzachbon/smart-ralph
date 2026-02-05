@@ -3,8 +3,9 @@
 # Common setup/teardown functions and fixture helpers
 
 # Path to the stop-watcher script under test
-STOP_WATCHER_SCRIPT="${BATS_TEST_DIRNAME}/../../plugins/ralph-specum/hooks/scripts/stop-watcher.sh"
-PATH_RESOLVER_SCRIPT="${BATS_TEST_DIRNAME}/../../plugins/ralph-specum/hooks/scripts/path-resolver.sh"
+# BATS_TEST_DIRNAME is the directory containing the .bats file (tests/)
+STOP_WATCHER_SCRIPT="${BATS_TEST_DIRNAME}/../plugins/ralph-specum/hooks/scripts/stop-watcher.sh"
+PATH_RESOLVER_SCRIPT="${BATS_TEST_DIRNAME}/../plugins/ralph-specum/hooks/scripts/path-resolver.sh"
 
 # Test workspace directory (created fresh for each test)
 TEST_WORKSPACE=""
@@ -19,8 +20,9 @@ setup() {
     mkdir -p "$TEST_WORKSPACE/specs/test-spec"
     mkdir -p "$TEST_WORKSPACE/.claude"
 
-    # Set up .current-spec to point to our test spec
-    echo "specs/test-spec" > "$TEST_WORKSPACE/specs/.current-spec"
+    # Set up .current-spec with just the spec name (bare name)
+    # ralph_resolve_current() will prepend the default dir (./specs)
+    echo "test-spec" > "$TEST_WORKSPACE/specs/.current-spec"
 }
 
 # Teardown: Clean up test workspace
