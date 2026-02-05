@@ -350,7 +350,7 @@ After POC validated, clean up code and improve consistency.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Local quality check
+- [x] 4.1 Local quality check
   - **Do**: Run ALL quality checks locally
   - **Verify**: All commands must pass:
     - Shell syntax: `for f in plugins/ralph-specum/hooks/scripts/*.sh; do bash -n "$f" || exit 1; done`
@@ -359,7 +359,7 @@ After POC validated, clean up code and improve consistency.
   - **Done when**: All commands pass with no errors
   - **Commit**: `fix(ralph-specum): address quality issues` (if fixes needed)
 
-- [ ] 4.2 Create PR and verify CI
+- [x] 4.2 Create PR and verify CI
   - **Do**:
     1. Verify current branch is feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user
@@ -371,7 +371,7 @@ After POC validated, clean up code and improve consistency.
 
 ## Phase 5: PR Lifecycle
 
-- [ ] 5.1 Monitor CI and fix failures
+- [x] 5.1 Monitor CI and fix failures
   - **Do**:
     1. Check CI status: `gh pr checks`
     2. If failures: read logs, fix issues, push fixes
