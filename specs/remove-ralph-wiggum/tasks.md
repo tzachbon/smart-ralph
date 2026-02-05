@@ -65,7 +65,7 @@ Focus: Get loop control working in stop-hook. Skip tests.
   - _Requirements: AC-1.4_
   - _Design: Migration Notes_
 
-- [ ] 1.5 POC Checkpoint
+- [x] 1.5 POC Checkpoint
   - **Do**: Verify loop control works end-to-end
     1. Create test spec with 2 simple tasks
     2. Run /ralph-specum:implement
