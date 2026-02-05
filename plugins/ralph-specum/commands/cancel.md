@@ -76,6 +76,11 @@ If state file exists, read and display:
    rm -f ./specs/.current-spec
    ```
 
+5. Update Spec Index (removes deleted spec from index):
+   ```bash
+   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
+   ```
+
 ## Output
 
 ```

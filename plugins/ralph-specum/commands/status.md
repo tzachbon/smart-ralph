@@ -1,12 +1,32 @@
 ---
 description: Show all specs and their current status
-argument-hint:
+argument-hint: [--update-index]
 allowed-tools: [Read, Bash, Glob, Task]
 ---
 
 # Spec Status
 
 You are showing the status of all specifications across all configured specs directories.
+
+## Parse Arguments
+
+From `$ARGUMENTS`:
+- **--update-index**: Regenerate the spec index files before showing status
+
+### Update Index Flag
+
+If `--update-index` is present in `$ARGUMENTS`:
+
+```bash
+# Regenerate spec index files
+./plugins/ralph-specum/hooks/scripts/update-spec-index.sh
+```
+
+This updates:
+- `./specs/.index/index-state.json` - Machine-readable state
+- `./specs/.index/index.md` - Human-readable summary
+
+The index is also updated automatically when specs are created, completed, or deleted.
 
 ## Multi-Directory Resolution
 
@@ -86,10 +106,13 @@ Files: [x] research [ ] requirements [ ] design [ ] tasks
 
 ---
 
+Index: ./specs/.index/index.md (run with --update-index to refresh)
+
 Commands:
 - /ralph-specum:switch <name> - Switch active spec
 - /ralph-specum:new <name> - Create new spec
 - /ralph-specum:<phase> - Run phase for active spec
+- /ralph-specum:status --update-index - Refresh spec index
 ```
 
 **Directory Context Rules**:

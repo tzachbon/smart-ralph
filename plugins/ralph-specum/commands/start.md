@@ -622,10 +622,12 @@ The only exception is `--quick` mode, which skips approval between phases.
    - "What should we call this spec?" (validates kebab-case)
 2. If no goal provided, ask:
    - "What is the goal? Describe what you want to build."
-3. Determine spec directory using path resolver:
+3. Determine spec directory using path resolver and interview response:
    ```text
-   # Resolve target directory
-   specsDir = (--specs-dir value if provided and valid) OR ralph_get_default_dir()
+   # Resolve target directory (priority order)
+   specsDir = (--specs-dir value if provided and valid)
+              OR (interview response specsDir if multi-dir was asked)
+              OR ralph_get_default_dir()
    basePath = "$specsDir/$name"
    ```
 4. Create spec directory: `mkdir -p "$basePath"`
@@ -666,9 +668,14 @@ The only exception is `--quick` mode, which skips approval between phases.
    }
    ```
 8. Create `.progress.md` with goal
-9. **Goal Interview** (skip if --quick in $ARGUMENTS)
-10. Invoke research-analyst agent with goal interview context
-11. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
+9. **Update Spec Index**:
+   ```bash
+   # Update the spec index after creating the spec
+   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
+   ```
+10. **Goal Interview** (skip if --quick in $ARGUMENTS)
+11. Invoke research-analyst agent with goal interview context
+12. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
 
 ## Spec Scanner
 
@@ -957,6 +964,64 @@ This phase initializes the interview context. Later phases (research, requiremen
 | 2 | Any constraints or must-haves for this feature? | Required | `constraints` | No special constraints / Must integrate with existing code / Performance is critical / Other |
 | 3 | How will you know this feature is successful? | Required | `success` | Tests pass and code works / Users can complete specific workflow / Performance meets target metrics / Other |
 | 4 | Any other context you'd like to share? (or say 'done' to proceed) | Optional | `additionalContext` | No, let's proceed / Yes, I have more details / Other |
+| 5 | Where should this spec be stored? | Conditional | `specsDir` | [dynamically from specs_dirs] |
+
+### Spec Location Interview
+
+After the standard Goal Interview questions, determine where the spec should be stored:
+
+```text
+Spec Location Logic:
+
+1. Check if --specs-dir already provided in $ARGUMENTS
+   → SKIP spec location question entirely, use provided value
+
+2. Get configured directories: dirs = ralph_get_specs_dirs()
+
+3. If dirs.length > 1 (multiple directories configured):
+   → ASK using AskUserQuestion:
+     Question: "Where should this spec be stored?"
+     Options: [each configured directory as an option]
+   → Store response as specsDir
+
+4. If dirs.length == 1 (only default directory):
+   → OUTPUT awareness message (non-blocking, just inform):
+     "Spec will be created in ./specs/
+      Tip: You can organize specs in multiple directories.
+      See /ralph-specum:help for multi-directory setup."
+   → Use default directory as specsDir
+   → Continue immediately without waiting for response
+
+5. Store specsDir for use in spec creation
+```
+
+**Multi-Directory Question Format:**
+
+When multiple directories are configured, use AskUserQuestion with dynamic options:
+
+```text
+Question: "Where should this spec be stored?"
+Header: "Location"
+Options: [
+  { label: "./specs (Recommended)", description: "Default specs directory" },
+  { label: "./packages/api/specs", description: "API-related specs" },
+  ... additional configured directories
+]
+```
+
+**Awareness Message Format:**
+
+When only the default directory is configured, output this informational message:
+
+```text
+Spec will be created in ./specs/
+
+Tip: You can organize specs in multiple directories by configuring
+specs_dirs in .claude/ralph-specum.local.md. See /ralph-specum:help
+for multi-directory setup instructions.
+```
+
+This is NOT a blocking question - continue immediately after displaying.
 
 ### Store Goal Context
 
@@ -980,6 +1045,7 @@ After interview, update `.progress.md` with Interview Format, Intent Classificat
 - Constraints: [responses.constraints]
 - Success criteria: [responses.success]
 - Additional context: [responses.additionalContext]
+- Spec location: [responses.specsDir] (if multi-dir was asked)
 [Any follow-up responses from "Other" selections]
 ```
 
@@ -1045,9 +1111,13 @@ Triggered when `--quick` flag detected. Skips all spec phases and auto-generates
 7. Update `.current-spec` based on root:
    - If specsDir == default: write bare name
    - If specsDir != default: write full path "$basePath"
-8. Invoke plan-synthesizer agent to generate all artifacts
-9. After generation: update state `phase: "execution"`, read task count
-10. Invoke spec-executor for task 1
+8. **Update Spec Index**:
+   ```bash
+   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
+   ```
+9. Invoke plan-synthesizer agent to generate all artifacts
+10. After generation: update state `phase: "execution"`, read task count
+11. Invoke spec-executor for task 1
 
 ## Status Display (on resume)
 

@@ -1110,7 +1110,11 @@ Before outputting:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup execution state)
 3. Keep .progress.md (preserve learnings and history)
-4. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
+4. **Update Spec Index** (marks spec as completed):
+   ```bash
+   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
+   ```
+5. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
 
 This signal terminates the Ralph Loop loop.
 
