@@ -164,6 +164,41 @@ Include:
 - Test strategy
 ```
 
+## Walkthrough (Before Review)
+
+<mandatory>
+**WALKTHROUGH IS REQUIRED - DO NOT SKIP THIS SECTION.**
+
+After design.md is created, you MUST display a concise walkthrough BEFORE asking review questions.
+
+1. Read `./specs/$spec/design.md`
+2. Display the walkthrough below with actual content from the file
+
+### Display Format
+
+```
+Design complete for '$spec'.
+Output: ./specs/$spec/design.md
+
+## What I Designed
+
+**Approach**: [1-2 sentences from Overview - the core approach]
+
+**Components**:
+- [Component A]: [brief purpose]
+- [Component B]: [brief purpose]
+[list main components]
+
+**Key Decisions**:
+- [Decision 1]: [choice made]
+- [Decision 2]: [choice made]
+
+**Files**: [X] to create, [Y] to modify
+```
+
+Keep it scannable. User will open the file if they want details.
+</mandatory>
+
 ## Review & Feedback Loop
 
 <mandatory>
@@ -288,57 +323,17 @@ If `commitSpec` is true:
 
 If commit or push fails, display warning but continue (don't block the workflow).
 
-## Output
+## Stop
 
-After design.md is created and approved, read the generated file and extract key information for the walkthrough.
+<mandatory>
+**STOP HERE. DO NOT PROCEED TO TASKS.**
 
-### Extract from design.md
+(This does not apply in `--quick` mode, which auto-generates all artifacts without stopping.)
 
-1. **Overview Summary**: Read the first 2-3 sentences from `## Overview`
-2. **Components**: Extract from `## Architecture` / `### Components` section:
-   - List each component name and its purpose
-3. **Technical Decisions**: Extract from `## Technical Decisions` table:
-   - List each decision and the choice made with brief rationale
-4. **File Structure**: Extract from `## File Structure` table:
-   - Count files to create vs modify
-   - List key files
+After the review is approved and state is updated, you MUST:
+1. Display: `→ Next: Run /ralph-specum:tasks`
+2. End your response immediately
+3. Wait for user to explicitly run `/ralph-specum:tasks`
 
-### Display Walkthrough
-
-```text
-Design phase complete for '$spec'.
-
-Output: ./specs/$spec/design.md
-[If commitSpec: "Spec committed and pushed."]
-
-## Walkthrough
-
-### Key Points
-- **Overview**: [First 2-3 sentences from Overview section]
-- **Components**:
-  | Component | Purpose |
-  |-----------|---------|
-  | [Component A] | [Purpose from design] |
-  | [Component B] | [Purpose from design] |
-- **Technical Decisions**:
-  | Decision | Choice | Rationale |
-  |----------|--------|-----------|
-  | [Decision 1] | [Choice] | [Brief rationale] |
-  | [Decision 2] | [Choice] | [Brief rationale] |
-
-### Metrics
-| Metric | Value |
-|--------|-------|
-| Files to Create | [count] |
-| Files to Modify | [count] |
-| Key Files | [list of 3-5 most important] |
-
-### Review Focus
-- Verify architecture approach fits the requirements
-- Check technical decisions align with project constraints
-- Review file structure for completeness
-
-Next: Review design.md, then run /ralph-specum:tasks
-```
-
-**Error handling**: If design.md cannot be read, display warning "Warning: Could not read design.md for walkthrough" and skip the Walkthrough section entirely - still show "Design phase complete" and the output path. If design.md exists but is missing sections or data cannot be extracted, show "N/A" for those fields and continue with available information. The command must complete successfully regardless of walkthrough extraction errors.
+DO NOT automatically invoke the task-planner or run the tasks phase.
+</mandatory>
