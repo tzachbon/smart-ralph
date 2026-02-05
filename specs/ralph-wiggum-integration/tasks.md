@@ -83,14 +83,14 @@ Manual verification of the integration.
   - **Commit**: None (verification task)
   - _Requirements: AC-1.1_
 
-- [ ] 3.2 [VERIFY] Integration test checkpoint
+- [x] 3.2 [VERIFY] Integration test checkpoint
   - **Do**: Verify the full integration is correct by reviewing implement.md structure
   - **Done when**: All patterns correct
   - **Verify**: Read implement.md and verify skill name and promise format
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Bump plugin version
+- [x] 4.1 Bump plugin version
   - **Do**: Increment version from 2.11.3 to 2.11.4 in both plugin.json and marketplace.json
   - **Files**: plugins/ralph-specum/.claude-plugin/plugin.json, .claude-plugin/marketplace.json
   - **Done when**: Both files have version 2.11.4
