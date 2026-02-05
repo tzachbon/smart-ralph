@@ -298,7 +298,7 @@ After POC validated, clean up code and add proper error handling.
 
 Add unit and integration tests.
 
-- [ ] 3.1 Create test fixtures for indexing
+- [x] 3.1 Create test fixtures for indexing
   - **Do**:
     1. Create test fixture directory: `specs/codebase-indexing/.test-fixtures/`
     2. Create sample controller: `sample-controller.ts` with exports and methods
