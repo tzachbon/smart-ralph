@@ -192,7 +192,7 @@ Add bats-core tests.
   - **Commit**: `fix: address shellcheck warnings`
   - _Requirements: NFR-2_
 
-- [ ] 4.4 [VERIFY] Local quality check
+- [x] 4.4 [VERIFY] Local quality check
   - **Do**: Run all quality checks locally
     1. Run bats tests: `bats tests/`
     2. Run shellcheck: `shellcheck plugins/ralph-specum/hooks/scripts/*.sh`
