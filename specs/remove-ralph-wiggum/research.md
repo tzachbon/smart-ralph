@@ -39,10 +39,8 @@ Removing ralph-wiggum/ralph-loop plugin dependency is feasible. The stop-hook al
   "taskIndex": 0,
   "totalTasks": 10,
   "taskIteration": 1,
-  "maxTaskIterations": 5,
-  "recoveryMode": false,
-  "maxFixTasksPerOriginal": 3,
-  "fixTaskMap": {}
+  "specName": "my-spec",
+  "specPath": "specs/my-spec"
 }
 ```
 
@@ -103,6 +101,6 @@ New workflow needed for bats-core tests running on push/PR.
 
 1. **Inline coordinator prompt** directly in implement.md output (no external file)
 2. **Stop-hook becomes loop controller** - reads state, outputs continuation prompt if more tasks
-3. **Simplify cancel.md** - just `rm` state files, no skill invocation
+3. **Simplify cancel.md** - deletes `.ralph-state.json`, removes spec directory via `rm -rf $spec_path` (which removes `.progress.md` as a side effect), clears `.current-spec` marker, and updates the Spec Index; no skill invocation required
 4. **Add bats-core tests** for stop-hook state machine
 5. **Bump to v3.0.0** - removing external dependency is breaking change

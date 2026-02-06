@@ -5,7 +5,7 @@
 # Path to the stop-watcher script under test
 # BATS_TEST_DIRNAME is the directory containing the .bats file (tests/)
 STOP_WATCHER_SCRIPT="${BATS_TEST_DIRNAME}/../plugins/ralph-specum/hooks/scripts/stop-watcher.sh"
-PATH_RESOLVER_SCRIPT="${BATS_TEST_DIRNAME}/../plugins/ralph-specum/hooks/scripts/path-resolver.sh"
+export PATH_RESOLVER_SCRIPT="${BATS_TEST_DIRNAME}/../plugins/ralph-specum/hooks/scripts/path-resolver.sh"
 
 # Test workspace directory (created fresh for each test)
 TEST_WORKSPACE=""

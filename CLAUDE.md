@@ -59,7 +59,7 @@ plugins/ralph-specum/
 ├── .claude-plugin/plugin.json   # Plugin manifest
 ├── agents/                      # Sub-agent definitions (markdown)
 ├── commands/                    # Slash command definitions (markdown)
-├── hooks/                       # Stop watcher (logging only, Ralph Loop handles loop)
+├── hooks/                       # Stop watcher (controls execution loop continuation)
 ├── templates/                   # Spec file templates
 └── schemas/                     # JSON schema for spec validation
 ```
@@ -108,7 +108,7 @@ Ralph Specum v3.0.0+ is self-contained with no external plugin dependencies. The
 
 - `commands/implement.md` - Thin wrapper + coordinator prompt for Ralph Loop
 - `commands/cancel.md` - Dual cleanup (cancel-ralph + state file deletion)
-- `hooks/scripts/stop-watcher.sh` - Logging/validation watcher (does NOT control loop)
+- `hooks/scripts/stop-watcher.sh` - Execution loop controller (outputs continuation prompts)
 - `agents/spec-executor.md` - Task execution rules, commit discipline
 - `agents/task-planner.md` - Task format, quality checkpoint rules, POC workflow
 - `templates/*.md` - Spec file templates with structure requirements

@@ -67,6 +67,7 @@ As a developer, I want GitHub Actions CI running bats tests so that PRs are vali
 | FR-8 | bats-core tests cover stop-hook state machine | Must | US-3 |
 | FR-9 | GitHub Actions workflow runs bats tests | Must | US-4 |
 | FR-10 | Plugin version bumped to 3.0.0 in both plugin.json and marketplace.json | Must | Breaking |
+| FR-11 | Stop-hook deletes `./specs/<name>/.ralph-state.json` when `ALL_TASKS_COMPLETE` detected | Must | US-1 |
 
 ## Non-Functional Requirements
 
