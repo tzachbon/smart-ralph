@@ -28,7 +28,7 @@ As a plugin user, I want the execution loop to work without installing ralph-loo
 As a plugin user, I want `/ralph-specum:cancel` to cleanly stop execution so that I can abort specs without external dependencies.
 
 **Acceptance Criteria**:
-- AC-2.1: Cancel deletes `.ralph-state.json` and `.progress.md`
+- AC-2.1: Cancel deletes `.ralph-state.json` directly (Step 1), and `.progress.md` is removed as a side effect of `rm -rf $spec_path` (Step 2)
 - AC-2.2: Cancel clears `.current-spec` marker
 - AC-2.3: No skill invocation required
 - AC-2.4: Works even if state file missing

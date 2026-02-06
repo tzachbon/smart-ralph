@@ -5,11 +5,15 @@ on:
     paths:
       - 'plugins/**/*.sh'
       - 'tests/**/*.bats'
+      - 'tests/helpers/**'
+      - 'tests/fixtures/**'
       - '.github/workflows/bats-tests.yml'
   pull_request:
     paths:
       - 'plugins/**/*.sh'
       - 'tests/**/*.bats'
+      - 'tests/helpers/**'
+      - 'tests/fixtures/**'
       - '.github/workflows/bats-tests.yml'
 
 jobs:

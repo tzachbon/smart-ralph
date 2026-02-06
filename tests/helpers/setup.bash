@@ -33,7 +33,8 @@ teardown() {
 }
 
 # Create a .ralph-state.json file with specified values
-# Usage: create_state_file [phase] [taskIndex] [totalTasks] [taskIteration]
+# Usage: create_state_file [phase] [taskIndex] [totalTasks] [taskIteration] [spec_dir]
+# Note: specName is derived from spec_dir (basename of the directory)
 create_state_file() {
     local phase="${1:-execution}"
     local task_index="${2:-0}"
@@ -41,14 +42,19 @@ create_state_file() {
     local task_iteration="${4:-1}"
     local spec_dir="${5:-$TEST_WORKSPACE/specs/test-spec}"
 
+    # Derive specName from spec_dir (basename)
+    local spec_name
+    spec_name=$(basename "$spec_dir")
+    local spec_path="specs/$spec_name"
+
     cat > "$spec_dir/.ralph-state.json" <<EOF
 {
   "phase": "$phase",
   "taskIndex": $task_index,
   "totalTasks": $total_tasks,
   "taskIteration": $task_iteration,
-  "specName": "test-spec",
-  "specPath": "specs/test-spec"
+  "specName": "$spec_name",
+  "specPath": "$spec_path"
 }
 EOF
 }

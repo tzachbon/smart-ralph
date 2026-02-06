@@ -18,7 +18,7 @@ Removing ralph-wiggum/ralph-loop plugin dependency is feasible. The stop-hook al
 | Component | Current Behavior | New Behavior |
 |-----------|-----------------|--------------|
 | `implement.md` | Writes `.coordinator-prompt.md`, invokes `ralph-loop:ralph-loop` skill | Writes `.ralph-state.json`, outputs coordinator prompt directly |
-| `cancel.md` | Invokes `ralph-loop:cancel-ralph`, deletes state files, removes spec | Deletes state files only (`.ralph-state.json`, `.progress.md`) |
+| `cancel.md` | Invokes `ralph-loop:cancel-ralph`, deletes state files, removes spec | Deletes `.ralph-state.json`, removes spec dir via `rm -rf $spec_path` (which removes `.progress.md`), clears `.current-spec`, updates Spec Index |
 | `stop-watcher.sh` | Logs state, cleans orphaned temp files, does NOT control loop | Becomes loop controller: checks state, outputs continuation prompt |
 
 ### Key Files
