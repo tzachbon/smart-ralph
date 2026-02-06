@@ -77,7 +77,7 @@ load 'helpers/setup.bash'
     run run_stop_watcher
     [ "$status" -eq 0 ]
     assert_output_contains "Continue executing spec: test-spec"
-    assert_output_contains ".ralph-state.json for current state"
+    assert_output_contains ".ralph-state.json for full state"
     assert_output_contains "Delegate task to spec-executor"
     assert_output_contains "ALL_TASKS_COMPLETE"
 }
@@ -111,14 +111,14 @@ load 'helpers/setup.bash'
     assert_output_not_contains "Continue executing spec"
 }
 
-@test "logs warning for corrupt JSON to stderr" {
+@test "outputs error message for corrupt JSON" {
     create_corrupt_state_file
 
-    # Capture stderr separately
-    local stderr_output
-    stderr_output=$(run_stop_watcher 2>&1 >/dev/null || true)
-
-    [[ "$stderr_output" == *"WARNING: Corrupt .ralph-state.json"* ]]
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    # New behavior: outputs structured error to stdout with recovery options
+    assert_output_contains "ERROR: Corrupt state file"
+    assert_output_contains "Recovery options"
 }
 
 # =============================================================================
