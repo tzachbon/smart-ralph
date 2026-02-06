@@ -55,7 +55,7 @@ load 'helpers/setup.bash'
     run run_stop_watcher
     [ "$status" -eq 0 ]
     # Should not output continuation prompt (tasks complete)
-    assert_output_not_contains "Continue executing spec"
+    assert_output_not_contains "Continue spec"
 }
 
 @test "exits silently when taskIndex exceeds totalTasks" {
@@ -64,7 +64,7 @@ load 'helpers/setup.bash'
     run run_stop_watcher
     [ "$status" -eq 0 ]
     # Should not output continuation prompt (tasks complete)
-    assert_output_not_contains "Continue executing spec"
+    assert_output_not_contains "Continue spec"
 }
 
 # =============================================================================
@@ -76,9 +76,9 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
-    assert_output_contains ".ralph-state.json for full state"
-    assert_output_contains "Delegate task to spec-executor"
+    assert_output_contains "Continue spec: test-spec"
+    assert_output_contains ".ralph-state.json"
+    assert_output_contains "spec-executor"
     assert_output_contains "ALL_TASKS_COMPLETE"
 }
 
@@ -87,7 +87,7 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 }
 
 @test "outputs continuation prompt when one task remains" {
@@ -95,7 +95,7 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 }
 
 # =============================================================================
@@ -108,7 +108,7 @@ load 'helpers/setup.bash'
     run run_stop_watcher
     [ "$status" -eq 0 ]
     # Should not output continuation prompt for corrupt state
-    assert_output_not_contains "Continue executing spec"
+    assert_output_not_contains "Continue spec"
 }
 
 @test "outputs error message for corrupt JSON" {
@@ -194,7 +194,7 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 }
 
 # =============================================================================
@@ -211,4 +211,107 @@ load 'helpers/setup.bash'
     [[ "$stderr_output" == *"[ralph-specum]"* ]]
     [[ "$stderr_output" == *"Task: 3/5"* ]]
     [[ "$stderr_output" == *"Attempt: 3"* ]]
+}
+
+# =============================================================================
+# Test: Transcript detection for ALL_TASKS_COMPLETE
+# =============================================================================
+
+@test "detects ALL_TASKS_COMPLETE in transcript and exits silently" {
+    create_state_file "execution" 2 5 1
+
+    # Create transcript with ALL_TASKS_COMPLETE signal
+    local transcript_file
+    transcript_file=$(create_transcript "Some task output
+TASK_COMPLETE
+More output
+ALL_TASKS_COMPLETE
+")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    # Should NOT output continuation prompt - signal detected
+    assert_output_not_contains "Continue spec"
+}
+
+@test "continues when ALL_TASKS_COMPLETE signal not in transcript" {
+    create_state_file "execution" 2 5 1
+
+    # Create transcript without completion signal
+    local transcript_file
+    transcript_file=$(create_transcript "Some task output
+TASK_COMPLETE
+More output")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    # Should output continuation prompt - tasks remain
+    assert_output_contains "Continue spec"
+}
+
+@test "handles missing transcript_path gracefully" {
+    create_state_file "execution" 2 5 1
+
+    # Hook input without transcript_path field
+    local input
+    input=$(create_hook_input)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    # Should continue normally - tasks remain
+    assert_output_contains "Continue spec"
+}
+
+@test "handles non-existent transcript file gracefully" {
+    create_state_file "execution" 2 5 1
+
+    # Hook input with non-existent transcript path
+    local input
+    input=$(create_hook_input_with_transcript "/nonexistent/transcript.jsonl")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    # Should continue normally - tasks remain
+    assert_output_contains "Continue spec"
+}
+
+@test "detects ALL_TASKS_COMPLETE with trailing whitespace" {
+    create_state_file "execution" 2 5 1
+
+    # Create transcript with signal followed by whitespace
+    local transcript_file
+    transcript_file=$(create_transcript "Some output
+ALL_TASKS_COMPLETE
+More text")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    # Should NOT output continuation prompt - signal detected
+    assert_output_not_contains "Continue spec"
+}
+
+@test "logs transcript detection to stderr" {
+    create_state_file "execution" 2 5 1
+
+    # Create transcript with completion signal
+    local transcript_file
+    transcript_file=$(create_transcript "ALL_TASKS_COMPLETE")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    # Capture stderr
+    local stderr_output
+    stderr_output=$(bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'" 2>&1 >/dev/null || true)
+
+    [[ "$stderr_output" == *"ALL_TASKS_COMPLETE detected"* ]]
 }

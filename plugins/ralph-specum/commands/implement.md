@@ -1,6 +1,6 @@
 ---
 description: Start task execution loop
-argument-hint: [--max-task-iterations 5]
+argument-hint: [--max-task-iterations 5] [--max-global-iterations 100] [--recovery-mode]
 allowed-tools: [Read, Write, Edit, Task, Bash, Skill]
 ---
 
@@ -38,6 +38,7 @@ The spec path is dynamically resolved - it may be in `./specs/` or any other con
 
 From `$ARGUMENTS`:
 - **--max-task-iterations**: Max retries per task (default: 5)
+- **--max-global-iterations**: Max total loop iterations (default: 100). Safety limit to prevent infinite execution loops.
 - **--recovery-mode**: Enable iterative failure recovery (default: false). When enabled, failed tasks trigger automatic fix task generation instead of stopping.
 
 ## Initialize Execution State
@@ -58,15 +59,28 @@ Write `.ralph-state.json`:
   "maxFixTasksPerOriginal": 3,
   "maxFixTaskDepth": 3,
   "globalIteration": 1,
-  "maxGlobalIterations": 100,
+  "maxGlobalIterations": <parsed from --max-global-iterations or default 100>,
   "fixTaskMap": {}
 }
 ```
+
+**Backwards Compatibility Note:**
+State files from earlier versions may lack new fields. The system handles this gracefully:
+- `globalIteration`: Defaults to 1 if missing
+- `maxGlobalIterations`: Defaults to 100 if missing
+- `maxFixTaskDepth`: Defaults to 3 if missing
 
 ## Start Execution
 
 After writing the state file, output the coordinator prompt below. This starts the execution loop.
 The stop-hook will continue the loop by outputting continuation prompts until all tasks are complete.
+
+**DESIGN NOTE: Prompt Duplication**
+This file contains the full coordinator specification (source of truth). The stop-watcher.sh
+outputs an abbreviated resume prompt for loop continuation. This is intentional design:
+- implement.md = comprehensive specification for initial execution
+- stop-watcher.sh = minimal context for efficient loop resumption
+The duplication is by design to balance completeness vs. token efficiency.
 
 ## Coordinator Prompt
 

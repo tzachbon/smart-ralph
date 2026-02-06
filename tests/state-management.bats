@@ -291,7 +291,7 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec"
+    assert_output_contains "Continue spec"
 }
 
 @test "stop hook silent when taskIndex equals totalTasks" {
@@ -300,7 +300,7 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_not_contains "Continue executing spec"
+    assert_output_not_contains "Continue spec"
 }
 
 @test "stop hook reads phase from state file" {
@@ -317,5 +317,51 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec"
+    assert_output_contains "Continue"
+}
+
+# =============================================================================
+# Test: maxGlobalIterations field (--max-global-iterations flag)
+# =============================================================================
+
+@test "maxGlobalIterations defaults to 100 when missing" {
+    create_state_file "execution" 2 5 1
+
+    local state_file="$TEST_WORKSPACE/specs/test-spec/.ralph-state.json"
+
+    # State file created by helper doesn't include maxGlobalIterations
+    # Stop hook should use default of 100
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    # Should continue (globalIteration 1 < default 100)
+    assert_output_contains "Continue"
+}
+
+@test "stop hook enforces maxGlobalIterations limit" {
+    create_state_file "execution" 2 5 1
+
+    local state_file="$TEST_WORKSPACE/specs/test-spec/.ralph-state.json"
+
+    # Set globalIteration to match maxGlobalIterations (at limit)
+    jq '.globalIteration = 100 | .maxGlobalIterations = 100' "$state_file" > "$state_file.tmp" && mv "$state_file.tmp" "$state_file"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    # Should output error about max iterations reached
+    assert_output_contains "Maximum global iterations"
+    assert_output_not_contains "Continue"
+}
+
+@test "stop hook allows execution when under maxGlobalIterations" {
+    create_state_file "execution" 2 5 1
+
+    local state_file="$TEST_WORKSPACE/specs/test-spec/.ralph-state.json"
+
+    # Set globalIteration below maxGlobalIterations
+    jq '.globalIteration = 50 | .maxGlobalIterations = 100' "$state_file" > "$state_file.tmp" && mv "$state_file.tmp" "$state_file"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    # Should continue (50 < 100)
+    assert_output_contains "Continue"
 }

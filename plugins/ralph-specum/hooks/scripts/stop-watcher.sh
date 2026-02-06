@@ -70,11 +70,16 @@ fi
 # Use specific pattern to avoid false positives from code/comments containing the phrase
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || true)
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-    # Match only standalone ALL_TASKS_COMPLETE (not in code blocks or quotes)
-    if tail -100 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '^ALL_TASKS_COMPLETE$|^ALL_TASKS_COMPLETE[[:space:]]'; then
+    # Primary: 500 lines covers most sessions for reliable detection
+    if tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '^ALL_TASKS_COMPLETE$|^ALL_TASKS_COMPLETE[[:space:]]'; then
         echo "[ralph-specum] ALL_TASKS_COMPLETE detected in transcript" >&2
         # Note: State file cleanup is handled by the coordinator (implement.md Section 10)
         # Do not delete here to avoid race condition
+        exit 0
+    fi
+    # Fallback: check last 20 lines for edge cases (very recent signal)
+    if tail -20 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '^ALL_TASKS_COMPLETE$'; then
+        echo "[ralph-specum] ALL_TASKS_COMPLETE detected in transcript (tail-end)" >&2
         exit 0
     fi
 fi
@@ -128,48 +133,30 @@ EOF
         RECOVERY_MODE=$(jq -r '.recoveryMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
         MAX_TASK_ITER=$(jq -r '.maxTaskIterations // 5' "$STATE_FILE" 2>/dev/null || echo "5")
 
+        # DESIGN NOTE: Prompt Duplication
+        # This continuation prompt is intentionally abbreviated compared to implement.md.
+        # - implement.md = full specification (source of truth for coordinator behavior)
+        # - stop-watcher.sh = abbreviated resume prompt (minimal context for loop continuation)
+        # This is an intentional design choice, not accidental duplication. The full
+        # specification lives in implement.md; this prompt provides just enough context
+        # for the coordinator to resume execution efficiently.
+
         cat <<EOF
-Continue executing spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iteration $GLOBAL_ITERATION)
+Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
 
-You are the execution COORDINATOR. You MUST delegate tasks via Task tool - do NOT implement yourself.
+## State
+Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE
 
-## Current State
-- Spec path: $SPEC_PATH
-- Task index: $TASK_INDEX (0-based)
-- Total tasks: $TOTAL_TASKS
-- Task iteration: $TASK_ITERATION
-- Max task iterations: $MAX_TASK_ITER
-- Recovery mode: $RECOVERY_MODE
-- Global iteration: $GLOBAL_ITERATION
+## Resume
+1. Read $SPEC_PATH/.ralph-state.json and $SPEC_PATH/tasks.md
+2. Delegate task $TASK_INDEX to spec-executor (or qa-engineer for [VERIFY])
+3. On TASK_COMPLETE: verify, update state, advance
+4. If taskIndex >= totalTasks: delete state file, output ALL_TASKS_COMPLETE
 
-## Instructions
-
-1. Read $SPEC_PATH/.ralph-state.json for full state
-2. Read $SPEC_PATH/tasks.md and find task at index $TASK_INDEX
-3. Check task markers:
-   - [P] = parallel task (batch with adjacent [P] tasks)
-   - [VERIFY] = delegate to qa-engineer instead of spec-executor
-   - No marker = sequential task
-4. Delegate task to spec-executor (or qa-engineer for [VERIFY]) via Task tool
-5. Wait for TASK_COMPLETE (or VERIFICATION_PASS for [VERIFY] tasks)
-6. Run verification layers before advancing:
-   - No contradiction phrases with completion claim
-   - Spec files committed (git status check)
-   - Checkmark count matches expected
-   - Explicit completion signal present
-7. Update state: increment taskIndex, reset taskIteration to 1, increment globalIteration
-8. If taskIndex >= totalTasks: delete state file, output ALL_TASKS_COMPLETE
-
-## On Task Failure
-- Increment taskIteration in state
-- If taskIteration > $MAX_TASK_ITER: output ERROR and STOP
-- If recoveryMode=true: generate fix task per implement.md Section 6c
-- Otherwise: retry same task
-
-## Critical Rules
-- NEVER implement tasks yourself - always delegate via Task tool
-- NEVER output ALL_TASKS_COMPLETE if tasks remain incomplete
-- NEVER skip verification layers
+## Critical
+- Delegate via Task tool - do NOT implement yourself
+- Verify all 4 layers before advancing (see implement.md Section 7)
+- On failure: increment taskIteration, retry or generate fix task if recoveryMode
 EOF
     fi
 fi

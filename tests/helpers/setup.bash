@@ -156,3 +156,29 @@ assert_stderr_contains() {
         return 1
     fi
 }
+
+# Create a mock transcript file with specified content
+# Usage: create_transcript [content]
+create_transcript() {
+    local content="${1:-}"
+    local transcript_file="$TEST_WORKSPACE/transcript.jsonl"
+
+    echo "$content" > "$transcript_file"
+    echo "$transcript_file"
+}
+
+# Create hook input JSON with transcript_path
+# Usage: create_hook_input_with_transcript [transcript_path] [cwd]
+create_hook_input_with_transcript() {
+    local transcript_path="${1:-}"
+    local cwd="${2:-$TEST_WORKSPACE}"
+
+    cat <<EOF
+{
+  "cwd": "$cwd",
+  "stop_hook_active": true,
+  "session_id": "test-session",
+  "transcript_path": "$transcript_path"
+}
+EOF
+}

@@ -16,7 +16,7 @@ load 'helpers/setup.bash'
     # Iteration 1: taskIndex=0, should output continuation
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 
     # Simulate coordinator completing task 0, advancing to task 1
     create_state_file "execution" 1 2 1
@@ -24,7 +24,7 @@ load 'helpers/setup.bash'
     # Iteration 2: taskIndex=1, still has tasks, should continue
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 
     # Simulate coordinator completing task 1, advancing to task 2 (done)
     create_state_file "execution" 2 2 1
@@ -32,7 +32,7 @@ load 'helpers/setup.bash'
     # Iteration 3: taskIndex=2, totalTasks=2, should be silent (complete)
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_not_contains "Continue executing spec"
+    assert_output_not_contains "Continue spec"
 }
 
 @test "integration: loop handles task retry scenario" {
@@ -43,7 +43,7 @@ load 'helpers/setup.bash'
     # Should still continue (retry in progress)
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 
     # Simulate retry succeeding, advance to task 2
     create_state_file "execution" 2 3 1
@@ -51,7 +51,7 @@ load 'helpers/setup.bash'
     # Should continue to next task
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 }
 
 @test "integration: loop terminates on state file deletion (cancel)" {
@@ -62,7 +62,7 @@ load 'helpers/setup.bash'
     # Verify loop would continue
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 
     # Simulate cancel: delete state file
     rm "$TEST_WORKSPACE/specs/test-spec/.ralph-state.json"
@@ -80,7 +80,7 @@ load 'helpers/setup.bash'
     # Verify loop would continue
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 
     # Simulate phase change (e.g., user interrupted)
     create_state_file "paused" 2 5 1
@@ -102,7 +102,7 @@ load 'helpers/setup.bash'
     # First spec continues
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 
     # Create second spec
     mkdir -p "$TEST_WORKSPACE/specs/other-spec"
@@ -114,7 +114,7 @@ load 'helpers/setup.bash'
     # Should now continue other-spec
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: other-spec"
+    assert_output_contains "Continue spec: other-spec"
 }
 
 # =============================================================================
@@ -129,7 +129,7 @@ load 'helpers/setup.bash'
     # Should continue for task 0
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue executing spec: test-spec"
+    assert_output_contains "Continue spec: test-spec"
 
     # Complete the single task
     create_state_file "execution" 1 1 1
@@ -137,7 +137,7 @@ load 'helpers/setup.bash'
     # Should be silent (complete)
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_not_contains "Continue executing spec"
+    assert_output_not_contains "Continue spec"
 }
 
 # =============================================================================
