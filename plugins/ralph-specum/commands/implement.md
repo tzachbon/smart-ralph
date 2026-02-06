@@ -56,6 +56,9 @@ Write `.ralph-state.json`:
   "maxTaskIterations": <parsed from --max-task-iterations or default 5>,
   "recoveryMode": <true if --recovery-mode flag present, false otherwise>,
   "maxFixTasksPerOriginal": 3,
+  "maxFixTaskDepth": 3,
+  "globalIteration": 1,
+  "maxGlobalIterations": 100,
   "fixTaskMap": {}
 }
 ```
@@ -108,7 +111,10 @@ If state file missing or corrupt (invalid JSON, missing required fields):
 
 If taskIndex >= totalTasks:
 1. Verify all tasks marked [x] in tasks.md
-2. Delete .ralph-state.json (cleanup)
+2. Delete state file explicitly:
+   ```bash
+   rm -f "$SPEC_PATH/.ralph-state.json"
+   ```
 3. Output: ALL_TASKS_COMPLETE
 4. STOP - do not delegate any task
 
@@ -368,6 +374,19 @@ Before generating a fix task:
 3. If limit reached:
    - Output error: "ERROR: Max fix attempts ($maxFixTasksPerOriginal) reached for task $taskId"
    - Show fix history: "Fix attempts: $fixTaskMap[taskId].fixTaskIds"
+   - Do NOT output ALL_TASKS_COMPLETE
+   - STOP execution
+
+**Check Fix Task Depth**:
+
+Before generating a fix task, verify nesting depth is within limits:
+1. Count dots in task ID: `DEPTH=$(echo "$TASK_ID" | tr -cd '.' | wc -c)`
+2. FIX_DEPTH = DEPTH - 1 (e.g., "1.3.1.1" = 3 dots - 1 = depth 2)
+3. Read `maxFixTaskDepth` from .ralph-state.json (default: 3)
+4. If FIX_DEPTH >= maxFixTaskDepth:
+   - Output error: "ERROR: Max fix task depth ($maxFixTaskDepth) exceeded for task $taskId"
+   - Show lineage: "Fix task chain: [parent task IDs from task ID dots]"
+   - Suggest: "The fix chain has become too deep. Manual intervention required."
    - Do NOT output ALL_TASKS_COMPLETE
    - STOP execution
 
@@ -1006,13 +1025,15 @@ After successful completion (TASK_COMPLETE for sequential or all parallel tasks 
 1. Read current .ralph-state.json
 2. Increment taskIndex by 1
 3. Reset taskIteration to 1
-4. Write updated state
+4. Increment globalIteration by 1
+5. Write updated state
 
 **Parallel Batch Update**:
 1. Read current .ralph-state.json
 2. Set taskIndex to parallelGroup.endIndex + 1 (jump past entire batch)
 3. Reset taskIteration to 1
-4. Write updated state
+4. Increment globalIteration by 1
+5. Write updated state
 
 State structure:
 ```json
@@ -1021,6 +1042,7 @@ State structure:
   "taskIndex": <next task after current/batch>,
   "totalTasks": <unchanged>,
   "taskIteration": 1,
+  "globalIteration": <previous + 1>,
   "maxTaskIterations": <unchanged>
 }
 ```
