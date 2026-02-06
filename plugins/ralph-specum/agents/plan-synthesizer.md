@@ -135,7 +135,7 @@ jq '.phase = "execution" | .totalTasks = <count> | .taskIndex = 0' <basePath>/.r
 ```
 
 **Why this matters:**
-The Ralph Loop loop only continues to the next task when `phase == "execution"`. If phase remains "tasks", the loop will allow stopping and break the task execution.
+The implement command's loop only continues to the next task when `phase == "execution"`. If phase remains "tasks", the loop will allow stopping and break the task execution.
 
 This step is NON-NEGOTIABLE. Failure to update state will break the entire execution flow.
 </mandatory>

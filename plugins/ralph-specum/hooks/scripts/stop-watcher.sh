@@ -1,9 +1,9 @@
 #!/bin/bash
 # Stop Hook for Ralph Specum
-# Logging-only watcher - does NOT control loop execution
+# Loop controller that manages task execution continuation
 # 1. Logs current execution state to stderr
-# 2. Cleans up orphaned temp progress files (>60min old)
-# Note: Ralph Loop plugin manages loop continuation
+# 2. Outputs continuation prompt when more tasks remain (phase=execution, taskIndex < totalTasks)
+# 3. Cleans up orphaned temp progress files (>60min old)
 # Note: .progress.md and .ralph-state.json are preserved
 
 # Read hook input from stdin
@@ -49,11 +49,52 @@ if [ ! -f "$STATE_FILE" ]; then
     exit 0
 fi
 
+# Race condition safeguard: if state file was modified in last 2 seconds, wait briefly
+# This allows the coordinator to finish writing before we read
+if command -v stat >/dev/null 2>&1; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS stat
+        MTIME=$(stat -f %m "$STATE_FILE" 2>/dev/null || echo "0")
+    else
+        # Linux stat
+        MTIME=$(stat -c %Y "$STATE_FILE" 2>/dev/null || echo "0")
+    fi
+    NOW=$(date +%s)
+    AGE=$((NOW - MTIME))
+    if [ "$AGE" -lt 2 ]; then
+        sleep 1
+    fi
+fi
+
+# Check for ALL_TASKS_COMPLETE in transcript (backup termination detection)
+# Use specific pattern to avoid false positives from code/comments containing the phrase
+TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || true)
+if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
+    # Primary: 500 lines covers most sessions for reliable detection
+    if tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '^ALL_TASKS_COMPLETE$|^ALL_TASKS_COMPLETE[[:space:]]'; then
+        echo "[ralph-specum] ALL_TASKS_COMPLETE detected in transcript" >&2
+        # Note: State file cleanup is handled by the coordinator (implement.md Section 10)
+        # Do not delete here to avoid race condition
+        exit 0
+    fi
+    # Fallback: check last 20 lines for edge cases (very recent signal)
+    if tail -20 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '^ALL_TASKS_COMPLETE$'; then
+        echo "[ralph-specum] ALL_TASKS_COMPLETE detected in transcript (tail-end)" >&2
+        exit 0
+    fi
+fi
+
 # Validate state file is readable JSON
 CORRUPT_STATE=false
 if ! jq empty "$STATE_FILE" 2>/dev/null; then
-    echo "WARNING: Corrupt .ralph-state.json detected for spec: $SPEC_NAME" >&2
-    CORRUPT_STATE=true
+    cat <<EOF
+ERROR: Corrupt state file at $SPEC_PATH/.ralph-state.json
+
+Recovery options:
+1. Reset state: /ralph-specum:implement (reinitializes from tasks.md)
+2. Cancel spec: /ralph-specum:cancel
+EOF
+    exit 0
 fi
 
 # Read state for logging (guard all jq calls)
@@ -63,10 +104,60 @@ if [ "$CORRUPT_STATE" = false ]; then
     TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
     TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 
-    # Log current state (logging only - Ralph Loop manages continuation)
+    # Check global iteration limit
+    GLOBAL_ITERATION=$(jq -r '.globalIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
+    MAX_GLOBAL=$(jq -r '.maxGlobalIterations // 100' "$STATE_FILE" 2>/dev/null || echo "100")
+
+    if [ "$GLOBAL_ITERATION" -ge "$MAX_GLOBAL" ]; then
+        cat <<EOF
+ERROR: Maximum global iterations ($MAX_GLOBAL) reached.
+
+This safety limit prevents infinite execution loops.
+
+Recovery options:
+1. Review .progress.md for failure patterns
+2. Fix issues manually, then run: /ralph-specum:implement
+3. Cancel and restart: /ralph-specum:cancel
+EOF
+        exit 0
+    fi
+
+    # Log current state
     if [ "$PHASE" = "execution" ]; then
         echo "[ralph-specum] Session stopped during spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
-        echo "[ralph-specum] Ralph Loop will resume execution on next iteration" >&2
+    fi
+
+    # Loop control: output continuation prompt if more tasks remain
+    if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
+        # Read recovery mode for prompt customization
+        RECOVERY_MODE=$(jq -r '.recoveryMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+        MAX_TASK_ITER=$(jq -r '.maxTaskIterations // 5' "$STATE_FILE" 2>/dev/null || echo "5")
+
+        # DESIGN NOTE: Prompt Duplication
+        # This continuation prompt is intentionally abbreviated compared to implement.md.
+        # - implement.md = full specification (source of truth for coordinator behavior)
+        # - stop-watcher.sh = abbreviated resume prompt (minimal context for loop continuation)
+        # This is an intentional design choice, not accidental duplication. The full
+        # specification lives in implement.md; this prompt provides just enough context
+        # for the coordinator to resume execution efficiently.
+
+        cat <<EOF
+Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
+
+## State
+Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE
+
+## Resume
+1. Read $SPEC_PATH/.ralph-state.json and $SPEC_PATH/tasks.md
+2. Delegate task $TASK_INDEX to spec-executor (or qa-engineer for [VERIFY])
+3. On TASK_COMPLETE: verify, update state, advance
+4. If taskIndex >= totalTasks: delete state file, output ALL_TASKS_COMPLETE
+
+## Critical
+- Delegate via Task tool - do NOT implement yourself
+- Verify all 4 layers before advancing (see implement.md Section 7)
+- On failure: increment taskIteration, retry or generate fix task if recoveryMode
+EOF
     fi
 fi
 

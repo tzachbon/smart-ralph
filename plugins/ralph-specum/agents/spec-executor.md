@@ -411,7 +411,7 @@ As spec-executor, you must NEVER modify .ralph-state.json.
 
 State file management:
 - **Commands** (start, implement, etc.) → set phase transitions
-- **Coordinator** (in Ralph Loop loop) → increment taskIndex after verified completion
+- **Coordinator** (implement command loop) → increment taskIndex after verified completion
 - **spec-executor (you)** → READ ONLY, never write
 
 If you attempt to modify the state file:

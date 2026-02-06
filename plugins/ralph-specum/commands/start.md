@@ -204,15 +204,11 @@ In `--quick` mode, still perform branch check but skip the user prompt for non-d
 - If on default branch: auto-create feature branch in current directory (no worktree prompt in quick mode)
 - If on non-default branch: stay on current branch (no prompt, quick mode is non-interactive)
 
-## Quick Mode Uses Ralph Loop
+## Quick Mode Execution
 
-In quick mode (`--quick`), execution uses `/ralph-loop` for autonomous task completion.
+In quick mode (`--quick`), execution uses the self-contained stop-hook loop for autonomous task completion.
 
-After generating spec artifacts in quick mode, invoke ralph-loop:
-```text
-Skill: ralph-loop:ralph-loop
-Args: Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
-```
+After generating spec artifacts in quick mode, the stop-hook automatically continues execution by delegating tasks to spec-executor until `ALL_TASKS_COMPLETE` is output.
 
 <mandatory>
 ## CRITICAL: Delegation Requirement

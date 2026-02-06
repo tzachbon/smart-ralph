@@ -1,22 +1,12 @@
 ---
 description: Start task execution loop
-argument-hint: [--max-task-iterations 5]
+argument-hint: [--max-task-iterations 5] [--max-global-iterations 100] [--recovery-mode]
 allowed-tools: [Read, Write, Edit, Task, Bash, Skill]
 ---
 
 # Start Execution
 
 You are starting the task execution loop.
-
-## Ralph Loop Dependency Check
-
-**BEFORE proceeding**, verify Ralph Loop plugin is installed by attempting to invoke the skill.
-
-If the Skill tool fails with "skill not found" or similar error for `ralph-loop:ralph-loop`:
-1. Output error: "ERROR: Ralph Loop plugin not found. Install with: /plugin install ralph-wiggum@claude-plugins-official"
-2. STOP execution immediately. Do NOT continue.
-
-This is a hard dependency. The command cannot function without Ralph Loop.
 
 ## Multi-Directory Resolution
 
@@ -48,6 +38,7 @@ The spec path is dynamically resolved - it may be in `./specs/` or any other con
 
 From `$ARGUMENTS`:
 - **--max-task-iterations**: Max retries per task (default: 5)
+- **--max-global-iterations**: Max total loop iterations (default: 100). Safety limit to prevent infinite execution loops.
 - **--recovery-mode**: Enable iterative failure recovery (default: false). When enabled, failed tasks trigger automatic fix task generation instead of stopping.
 
 ## Initialize Execution State
@@ -66,38 +57,34 @@ Write `.ralph-state.json`:
   "maxTaskIterations": <parsed from --max-task-iterations or default 5>,
   "recoveryMode": <true if --recovery-mode flag present, false otherwise>,
   "maxFixTasksPerOriginal": 3,
+  "maxFixTaskDepth": 3,
+  "globalIteration": 1,
+  "maxGlobalIterations": <parsed from --max-global-iterations or default 100>,
   "fixTaskMap": {}
 }
 ```
 
-## Invoke Ralph Loop
+**Backwards Compatibility Note:**
+State files from earlier versions may lack new fields. The system handles this gracefully:
+- `globalIteration`: Defaults to 1 if missing
+- `maxGlobalIterations`: Defaults to 100 if missing
+- `maxFixTaskDepth`: Defaults to 3 if missing
 
-Calculate max iterations: `max(5, min(10, ceil(totalTasks / 5)))`
+## Start Execution
 
-This formula:
-- Minimum 5 iterations (safety floor for small specs)
-- Maximum 10 iterations (prevents runaway loops)
-- Scales with task count: 5 tasks = 5 iterations, 50 tasks = 10 iterations
+After writing the state file, output the coordinator prompt below. This starts the execution loop.
+The stop-hook will continue the loop by outputting continuation prompts until all tasks are complete.
 
-### Step 1: Write Coordinator Prompt to File
-
-Write the ENTIRE coordinator prompt (from section below) to `./specs/$spec/.coordinator-prompt.md`.
-
-This file contains the full instructions for task execution. Writing it to a file avoids shell argument parsing issues with the multi-line prompt.
-
-### Step 2: Invoke Ralph Loop Skill
-
-Use the Skill tool to invoke `ralph-loop:ralph-loop` with args:
-
-```
-Read ./specs/$spec/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
-```
-
-Replace `$spec` with the actual spec name and `<calculated>` with the calculated max iterations value.
+**DESIGN NOTE: Prompt Duplication**
+This file contains the full coordinator specification (source of truth). The stop-watcher.sh
+outputs an abbreviated resume prompt for loop continuation. This is intentional design:
+- implement.md = comprehensive specification for initial execution
+- stop-watcher.sh = minimal context for efficient loop resumption
+The duplication is by design to balance completeness vs. token efficiency.
 
 ## Coordinator Prompt
 
-Write this prompt to `./specs/$spec/.coordinator-prompt.md`:
+Output this prompt directly to start execution:
 
 ```text
 You are the execution COORDINATOR for spec: $spec
@@ -138,7 +125,10 @@ If state file missing or corrupt (invalid JSON, missing required fields):
 
 If taskIndex >= totalTasks:
 1. Verify all tasks marked [x] in tasks.md
-2. Delete .ralph-state.json (cleanup)
+2. Delete state file explicitly:
+   ```bash
+   rm -f "$SPEC_PATH/.ralph-state.json"
+   ```
 3. Output: ALL_TASKS_COMPLETE
 4. STOP - do not delegate any task
 
@@ -398,6 +388,19 @@ Before generating a fix task:
 3. If limit reached:
    - Output error: "ERROR: Max fix attempts ($maxFixTasksPerOriginal) reached for task $taskId"
    - Show fix history: "Fix attempts: $fixTaskMap[taskId].fixTaskIds"
+   - Do NOT output ALL_TASKS_COMPLETE
+   - STOP execution
+
+**Check Fix Task Depth**:
+
+Before generating a fix task, verify nesting depth is within limits:
+1. Count dots in task ID: `DEPTH=$(echo "$TASK_ID" | tr -cd '.' | wc -c)`
+2. FIX_DEPTH = DEPTH - 1 (e.g., "1.3.1.1" = 3 dots - 1 = depth 2)
+3. Read `maxFixTaskDepth` from .ralph-state.json (default: 3)
+4. If FIX_DEPTH >= maxFixTaskDepth:
+   - Output error: "ERROR: Max fix task depth ($maxFixTaskDepth) exceeded for task $taskId"
+   - Show lineage: "Fix task chain: [parent task IDs from task ID dots]"
+   - Suggest: "The fix chain has become too deep. Manual intervention required."
    - Do NOT output ALL_TASKS_COMPLETE
    - STOP execution
 
@@ -1036,13 +1039,15 @@ After successful completion (TASK_COMPLETE for sequential or all parallel tasks 
 1. Read current .ralph-state.json
 2. Increment taskIndex by 1
 3. Reset taskIteration to 1
-4. Write updated state
+4. Increment globalIteration by 1
+5. Write updated state
 
 **Parallel Batch Update**:
 1. Read current .ralph-state.json
 2. Set taskIndex to parallelGroup.endIndex + 1 (jump past entire batch)
 3. Reset taskIteration to 1
-4. Write updated state
+4. Increment globalIteration by 1
+5. Write updated state
 
 State structure:
 ```json
@@ -1051,6 +1056,7 @@ State structure:
   "taskIndex": <next task after current/batch>,
   "totalTasks": <unchanged>,
   "taskIteration": 1,
+  "globalIteration": <previous + 1>,
   "maxTaskIterations": <unchanged>
 }
 ```

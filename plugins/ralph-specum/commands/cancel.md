@@ -55,28 +55,22 @@ If state file exists, read and display:
 
 ## Cleanup
 
-1. Stop Ralph loop (if running):
-   ```text
-   Use the Skill tool to invoke ralph-loop:cancel-ralph
-   This stops any active Ralph loop iteration
-   ```
-
-2. Delete state file:
+1. Delete state file:
    ```bash
    rm $spec_path/.ralph-state.json
    ```
 
-3. Remove spec directory:
+2. Remove spec directory:
    ```bash
    rm -rf $spec_path
    ```
 
-4. Clear current spec marker:
+3. Clear current spec marker:
    ```bash
    rm -f ./specs/.current-spec
    ```
 
-5. Update Spec Index (removes deleted spec from index):
+4. Update Spec Index (removes deleted spec from index):
    ```bash
    ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
    ```
@@ -93,7 +87,6 @@ State before cancellation:
 - Iterations: <globalIteration>
 
 Cleanup:
-- [x] Stopped Ralph loop (/ralph-loop:cancel-ralph)
 - [x] Removed .ralph-state.json
 - [x] Removed spec directory ($spec_path)
 - [x] Cleared current spec marker

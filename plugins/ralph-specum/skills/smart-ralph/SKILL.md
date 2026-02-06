@@ -79,9 +79,9 @@ When `commitSpec` is false:
 - Files remain uncommitted
 - User can manually commit later
 
-## Ralph Loop Integration
+## Task Execution Loop
 
-All Ralph plugins use Ralph Wiggum loop for task execution. See `references/ralph-loop-integration.md` for details.
+Ralph Specum v3.0.0+ has a self-contained execution loop via the stop-hook. No external dependencies required.
 
 Key signals:
 - `TASK_COMPLETE` - executor finished task

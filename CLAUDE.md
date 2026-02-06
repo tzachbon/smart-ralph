@@ -59,7 +59,7 @@ plugins/ralph-specum/
 ├── .claude-plugin/plugin.json   # Plugin manifest
 ├── agents/                      # Sub-agent definitions (markdown)
 ├── commands/                    # Slash command definitions (markdown)
-├── hooks/                       # Stop watcher (logging only, Ralph Loop handles loop)
+├── hooks/                       # Stop watcher (controls execution loop continuation)
 ├── templates/                   # Spec file templates
 └── schemas/                     # JSON schema for spec validation
 ```
@@ -67,7 +67,7 @@ plugins/ralph-specum/
 ### Execution Flow
 
 1. **Spec Phases**: Each command (`/ralph-specum:research`, `:requirements`, `:design`, `:tasks`) invokes a specialized agent to generate corresponding markdown in `./specs/<spec-name>/`
-2. **Ralph Loop**: During execution (`/ralph-specum:implement`), the command invokes `/ralph-loop` from the Ralph Loop plugin. The coordinator prompt reads `.ralph-state.json`, delegates tasks to spec-executor via Task tool, and outputs `ALL_TASKS_COMPLETE` when done.
+2. **Execution Loop**: During execution (`/ralph-specum:implement`), the stop-hook reads `.ralph-state.json`, delegates tasks to spec-executor via Task tool, and outputs `ALL_TASKS_COMPLETE` when done. The loop is self-contained (no external plugin required).
 3. **Fresh Context**: Each task runs in isolation via Task tool. Progress persists in `.progress.md` and task checkmarks in `tasks.md`
 
 ### State Files
@@ -102,19 +102,13 @@ Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinato
 
 ### Dependencies
 
-Requires Ralph Loop plugin: `/plugin install ralph-loop@claude-plugins-official`
-
-**Note:** If you see "marketplace not found" errors, first add the official marketplace:
-```bash
-/plugin marketplace add anthropics/claude-code
-/plugin install ralph-loop@claude-plugins-official
-```
+Ralph Specum v3.0.0+ is self-contained with no external plugin dependencies. The execution loop is handled by the stop-hook.
 
 ## Key Files
 
 - `commands/implement.md` - Thin wrapper + coordinator prompt for Ralph Loop
 - `commands/cancel.md` - Dual cleanup (cancel-ralph + state file deletion)
-- `hooks/scripts/stop-watcher.sh` - Logging/validation watcher (does NOT control loop)
+- `hooks/scripts/stop-watcher.sh` - Execution loop controller (outputs continuation prompts)
 - `agents/spec-executor.md` - Task execution rules, commit discipline
 - `agents/task-planner.md` - Task format, quality checkpoint rules, POC workflow
 - `templates/*.md` - Spec file templates with structure requirements
