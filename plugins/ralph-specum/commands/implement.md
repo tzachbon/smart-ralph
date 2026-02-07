@@ -47,7 +47,12 @@ From `$ARGUMENTS`:
 2. Count already completed tasks (lines matching `- [x]`)
 3. Set taskIndex to first incomplete task
 
-Write `.ralph-state.json`:
+**CRITICAL: Merge into existing state — do NOT overwrite the file.**
+
+Read the existing `.ralph-state.json` first, then **merge** the execution fields into it.
+This preserves fields set by earlier phases (e.g., `source`, `name`, `basePath`, `commitSpec`, `relatedSpecs`).
+
+Update `.ralph-state.json` by merging these fields into the existing object:
 ```json
 {
   "phase": "execution",
@@ -63,6 +68,39 @@ Write `.ralph-state.json`:
   "fixTaskMap": {}
 }
 ```
+
+Use a jq merge pattern to preserve existing fields:
+```bash
+jq --argjson taskIndex <first_incomplete> \
+   --argjson totalTasks <count> \
+   --argjson maxTaskIter <parsed or 5> \
+   --argjson recoveryMode <true|false> \
+   --argjson maxGlobalIter <parsed or 100> \
+   '
+   . + {
+     phase: "execution",
+     taskIndex: $taskIndex,
+     totalTasks: $totalTasks,
+     taskIteration: 1,
+     maxTaskIterations: $maxTaskIter,
+     recoveryMode: $recoveryMode,
+     maxFixTasksPerOriginal: 3,
+     maxFixTaskDepth: 3,
+     globalIteration: 1,
+     maxGlobalIterations: $maxGlobalIter,
+     fixTaskMap: {},
+     awaitingApproval: false
+   }
+   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
+   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+```
+
+**Preserved fields** (set by earlier phases, must NOT be removed):
+- `source` — "plan" or "spec" (set at creation)
+- `name` — spec name (set at creation)
+- `basePath` — spec directory path (set at creation)
+- `commitSpec` — commit behavior flag (set at creation)
+- `relatedSpecs` — related specs array (set during research)
 
 **Backwards Compatibility Note:**
 State files from earlier versions may lack new fields. The system handles this gracefully:
@@ -1035,29 +1073,28 @@ Only after all verifications pass, proceed to State Update (section 8).
 
 After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
 
+**CRITICAL: Always use jq merge pattern to preserve all existing fields (source, name, basePath, commitSpec, relatedSpecs, etc.). Never write a new object from scratch.**
+
 **Sequential Update**:
 1. Read current .ralph-state.json
 2. Increment taskIndex by 1
 3. Reset taskIteration to 1
 4. Increment globalIteration by 1
-5. Write updated state
+5. Write updated state (merge, preserving all existing fields)
 
 **Parallel Batch Update**:
 1. Read current .ralph-state.json
 2. Set taskIndex to parallelGroup.endIndex + 1 (jump past entire batch)
 3. Reset taskIteration to 1
 4. Increment globalIteration by 1
-5. Write updated state
+5. Write updated state (merge, preserving all existing fields)
 
-State structure:
+Updated fields (all other fields preserved as-is):
 ```json
 {
-  "phase": "execution",
   "taskIndex": <next task after current/batch>,
-  "totalTasks": <unchanged>,
   "taskIteration": 1,
-  "globalIteration": <previous + 1>,
-  "maxTaskIterations": <unchanged>
+  "globalIteration": <previous + 1>
 }
 ```
 
