@@ -202,6 +202,22 @@ Output: ./specs/$spec/requirements.md
 ```
 
 Keep it scannable. User will open the file if they want details.
+
+### View with mdview (Recommended)
+
+After displaying the walkthrough summary, check if `mdview` is installed and offer enhanced terminal viewing:
+
+1. Run `command -v mdview >/dev/null 2>&1` using Bash to check availability
+2. **If installed**: Run `mdview ./specs/$spec/requirements.md` using Bash to render the document beautifully in the terminal
+3. **If NOT installed**: Display this recommendation:
+   ```
+   Tip: Install mdview for beautiful terminal rendering of spec documents:
+   curl -fsSL https://raw.githubusercontent.com/tzachbon/mdview/main/install.sh | sh
+
+   Then view with: mdview ./specs/$spec/requirements.md
+   ```
+
+mdview is optional but highly recommended for reviewing spec documents. Do not block the workflow if it's not installed.
 </mandatory>
 
 ## Review & Feedback Loop

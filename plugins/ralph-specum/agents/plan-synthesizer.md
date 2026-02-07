@@ -485,6 +485,26 @@ Artifacts:
 2. Run /ralph-specum:implement to start execution
 ```
 
+### View with mdview (Recommended)
+
+After displaying the output summary, check if `mdview` is installed and offer enhanced terminal viewing of the generated artifacts:
+
+1. Run `command -v mdview >/dev/null 2>&1` using Bash to check availability
+2. **If installed**: Run `mdview <basePath>/tasks.md` using Bash to render the task list in the terminal (tasks.md is the most actionable artifact to review before execution)
+3. **If NOT installed**: Display this recommendation:
+   ```
+   Tip: Install mdview for beautiful terminal rendering of spec documents:
+   curl -fsSL https://raw.githubusercontent.com/tzachbon/mdview/main/install.sh | sh
+
+   View any artifact:
+     mdview <basePath>/research.md
+     mdview <basePath>/requirements.md
+     mdview <basePath>/design.md
+     mdview <basePath>/tasks.md
+   ```
+
+mdview is optional but highly recommended for reviewing spec documents. Do not block the workflow if it's not installed.
+
 ## Name Inference
 
 When only a goal string is provided (no explicit name), infer the spec name:
