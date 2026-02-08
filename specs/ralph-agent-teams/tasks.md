@@ -90,7 +90,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-3.6, AC-5.1 through AC-5.3, FR-5_
   - _Design: Components - New Team-Based Skills section_
 
-- [ ] 1.6 Modify research.md for team integration
+- [x] 1.6 Modify research.md for team integration
   - **Do**:
     1. Read `plugins/ralph-specum/commands/research.md`
     2. Find the section after topic analysis (around line 100-200)
@@ -105,7 +105,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-1.1, AC-1.5, AC-1.6, FR-1_
   - _Design: Modified Existing Commands - research.md section_
 
-- [ ] 1.7 Modify implement.md for team integration
+- [x] 1.7 Modify implement.md for team integration
   - **Do**:
     1. Read `plugins/ralph-specum/commands/implement.md`
     2. Find parallel group detection section (around line 237)
@@ -119,7 +119,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-2.1, AC-2.3, AC-2.6, FR-2_
   - _Design: Modified Existing Commands - implement.md section_
 
-- [ ] 1.8 Modify cancel.md for team cleanup
+- [x] 1.8 Modify cancel.md for team cleanup
   - **Do**:
     1. Read `plugins/ralph-specum/commands/cancel.md`
     2. Find state file reading section (after line 50)
@@ -134,7 +134,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-4.1 through AC-4.6, FR-6_
   - _Design: Modified Existing Commands - cancel.md section_
 
-- [ ] 1.9 Modify status.md for team display
+- [x] 1.9 Modify status.md for team display
   - **Do**:
     1. Read `plugins/ralph-specum/commands/status.md`
     2. Find status output section
