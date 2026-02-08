@@ -100,6 +100,8 @@ claude --plugin-dir ./smart-ralph/plugins/ralph-specum
 | `/ralph-specum:status` | Show all specs and progress |
 | `/ralph-specum:switch <name>` | Change active spec |
 | `/ralph-specum:cancel` | Cancel loop, cleanup state |
+| `/ralph-specum:team-status` | Show active agent teams (experimental) |
+| `/ralph-specum:cleanup-teams` | Clean up orphaned teams (experimental) |
 | `/ralph-specum:help` | Show help |
 
 ---
@@ -158,6 +160,70 @@ Tasks follow a 4-phase structure:
 2. **Refactoring** - Clean up the code
 3. **Testing** - Unit, integration, e2e tests
 4. **Quality Gates** - Lint, types, CI checks
+
+---
+
+## Agent Teams (Experimental)
+
+Starting with v3.2.0, Smart Ralph supports Claude Code's experimental agent teams feature for parallel research and task execution during certain workflow phases.
+
+### Enabling Agent Teams
+
+Agent teams require an environment variable and experimental mode:
+
+```bash
+# Enable agent teams in your shell
+export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+
+# Or add to your ~/.bashrc or ~/.zshrc
+echo 'export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### How Teams Work
+
+Smart Ralph uses agent teams in two phases:
+
+**Research Phase** (`/ralph-specum:research`)
+- Creates a team of 3-5 specialized research agents
+- Each agent investigates different aspects in parallel (codebase patterns, web research, external resources)
+- Team shares a task list and coordinates via inter-agent messaging
+- Automatically shuts down after research completes
+
+**Execution Phase** (`/ralph-specum:implement`)
+- Creates a team for parallel task execution (when tasks have dependencies)
+- 2-3 teammates work on independent tasks simultaneously
+- Shared progress tracking across team members
+- Graceful shutdown after all tasks complete
+
+### Team Management Commands
+
+| Command | What it does |
+|---------|--------------|
+| `/ralph-specum:team-status` | Show active agent teams and teammates |
+| `/ralph-specum:cleanup-teams` | Clean up orphaned teams from crashed sessions |
+
+### Lifecycle
+
+Teams follow a strict lifecycle to prevent resource leaks:
+
+```text
+TeamCreate → Spawn Teammates → Delegate Work → Shutdown → TeamDelete
+```
+
+The stop-hook automatically detects orphaned teams (older than 1 hour) and warns you to run `/ralph-specum:cleanup-teams`.
+
+### Benefits
+
+- **Parallel execution**: Research and tasks run faster with multiple agents
+- **Shared context**: Teammates share task lists and coordinate automatically
+- **Graceful degradation**: Falls back to single-agent mode if team creation fails
+
+### Limitations
+
+- Experimental feature (may change in future Claude Code releases)
+- One team per session limitation (teams created/destroyed per phase)
+- Token cost scales with team size (similar to current parallel Task pattern)
 
 ---
 
