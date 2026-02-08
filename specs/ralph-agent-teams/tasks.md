@@ -23,7 +23,7 @@ created: 2025-02-07T19:00:00Z
 
 Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values.
 
-- [ ] 1.1 [VERIFY] Extend state schema for team tracking
+- [x] 1.1 [VERIFY] Extend state schema for team tracking
   - **Do**:
     1. Read `plugins/ralph-specum/schemas/spec.schema.json`
     2. Add teamName (string, optional), teammateNames (array of strings, optional), teamPhase (enum: research|execution, optional) to definitions.state.properties
