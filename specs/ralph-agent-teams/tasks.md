@@ -35,7 +35,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-3.1, AC-3.5, FR-3_
   - _Design: State File Extension section_
 
-- [ ] 1.2 Bump plugin version to 3.2.0
+- [x] 1.2 Bump plugin version to 3.2.0
   - **Do**:
     1. Update `plugins/ralph-specum/.claude-plugin/plugin.json` version from "3.1.2" to "3.2.0"
     2. Update `.claude-plugin/marketplace.json` ralph-specum version to "3.2.0"
