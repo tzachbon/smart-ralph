@@ -52,6 +52,35 @@ If state file exists, read and display:
 - Current phase
 - Task progress (taskIndex/totalTasks)
 - Iteration count
+- **Team name** (if teamName field exists)
+- **Teammate count** (if teammateNames field exists)
+
+## Team Shutdown Protocol
+
+<mandatory>
+**If active team detected in state** (teamName field exists):
+1. Send shutdown_request to all teammates via SendMessage
+2. Wait up to 10 seconds for graceful shutdown approvals
+3. If all teammates approve: Delete team with TeamDelete
+4. If timeout or unresponsive: Force TeamDelete after 10s
+5. Clear team fields from state (teamName: null, teammateNames: [], teamPhase: null)
+</mandatory>
+
+**Shutdown Request Pattern**:
+```text
+For each teammate in teammateNames:
+  SendMessage:
+    type: shutdown_request
+    recipient: <teammate-name>
+    content: "Canceling spec execution, shutting down team"
+```
+
+**Forced Cleanup Fallback**:
+If teammates don't respond within 10 seconds:
+- Log warning: "Team did not shut down gracefully, forcing cleanup"
+- Execute TeamDelete with team directory path
+- Proceed with spec cleanup regardless of team deletion success
+- Log team directory path for manual cleanup if TeamDelete fails
 
 ## Cleanup
 

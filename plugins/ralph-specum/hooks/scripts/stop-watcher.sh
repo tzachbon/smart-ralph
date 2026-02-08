@@ -165,6 +165,57 @@ fi
 # Only remove files older than 60 minutes to avoid race conditions with active executors
 find "$CWD/$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
 
+# Orphaned team detection: scan for teams older than 1 hour not referenced in any state file
+TEAMS_DIR="$HOME/.claude/teams"
+if [ -d "$TEAMS_DIR" ]; then
+    # Collect all active team IDs from state files across all specs
+    ACTIVE_TEAMS=""
+    if [ -d "$CWD/specs" ]; then
+        while IFS= read -r -d '' state_file; do
+            # Extract teamName from state file (if present)
+            team_id=$(jq -r '.teamName // empty' "$state_file" 2>/dev/null || true)
+            if [ -n "$team_id" ]; then
+                ACTIVE_TEAMS="$ACTIVE_TEAMS$team_id\n"
+            fi
+        done < <(find "$CWD/specs" -name ".ralph-state.json" -print0 2>/dev/null)
+    fi
+
+    # Check each team directory older than 1 hour
+    ONE_HOUR_AGO=$(date +%s --date='1 hour ago' 2>/dev/null || echo "$(($(date +%s) - 3600))")
+
+    for team_dir in "$TEAMS_DIR"/*; do
+        [ -d "$team_dir" ] || continue
+
+        # Get team name from directory path
+        team_name=$(basename "$team_dir")
+
+        # Check if team has a config file (valid team directory)
+        config_file="$team_dir/config.json"
+        [ -f "$config_file" ] || continue
+
+        # Get creation/modification time
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS stat
+            team_time=$(stat -f %m "$config_file" 2>/dev/null || echo "0")
+        else
+            # Linux stat
+            team_time=$(stat -c %Y "$config_file" 2>/dev/null || echo "0")
+        fi
+
+        # Skip if team is newer than 1 hour
+        if [ "$team_time" -ge "$ONE_HOUR_AGO" ]; then
+            continue
+        fi
+
+        # Check if team is in active teams list
+        if ! echo -e "$ACTIVE_TEAMS" | grep -q "^${team_name}$"; then
+            # Team is orphaned - output warning
+            timestamp=$(date -d "@$team_time" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "$team_time" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "unknown")
+            echo "[ralph-specum] Warning: Orphaned team $team_name detected from $timestamp. Run /ralph-specum:cleanup-teams" >&2
+        fi
+    done
+fi
+
 # Note: .progress.md and .ralph-state.json are preserved for loop continuation
 # Use /ralph-specum:cancel to explicitly stop execution and cleanup state
 

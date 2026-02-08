@@ -213,6 +213,33 @@ Research topics identified for parallel execution:
 - Example: "Add OAuth with rate limiting" → 3 research-analyst agents (OAuth patterns, rate limiting strategies, security best practices)
 - DO NOT combine multiple external topics into one research-analyst agent
 
+### Team Integration Check
+
+<mandatory>
+**Before spawning agents, check if agent teams are available and appropriate**:
+1. Check if CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS environment variable is set
+2. Count the number of research topics identified (TOPIC_COUNT)
+3. If both conditions met: `$CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` is set AND `$TOPIC_COUNT >= 3`
+4. Then use team-research skill for parallel execution with teammates
+5. Otherwise, fall through to Step 2 (standard Task tool delegation)
+</mandatory>
+
+**Team Workflow**:
+When agent teams are available and appropriate:
+- Set context to invoke team-research skill
+- Research phase messaging: "Researching with N teammates..."
+- Team name pattern: `research-{specName}-{timestamp}`
+- Spawn 3-5 teammates for parallel research
+- Each teammate focuses on a distinct research topic
+- Merge findings from all teammates
+- Shutdown team and clean up state after research completes
+
+**Fallback to Task Tool**:
+If teams are unavailable ($CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS not set OR TOPIC_COUNT < 3):
+- Proceed to Step 2 (Spawn ALL Agents in ONE Message)
+- Use existing Task tool delegation pattern
+- No team creation or state updates
+
 ### Step 2: Spawn ALL Agents in ONE Message (REQUIRED)
 
 **CRITICAL**: You MUST include ALL Task tool calls in a SINGLE response message to ensure true parallel execution.
@@ -658,17 +685,29 @@ After displaying the walkthrough, ask ONE simple question:
 After research completes and is approved:
 
 1. Parse "Related Specs" table from research.md
-2. Update `.ralph-state.json`:
+2. **Clear team state** if agent teams were used:
+   - Remove teamName, teammateNames, teamPhase from state
+   - This indicates team has been shut down and cleaned up
+3. Update `.ralph-state.json`:
    ```json
    {
      "phase": "research",
      "awaitingApproval": true,
      "relatedSpecs": [
        {"name": "...", "relevance": "high", "reason": "...", "mayNeedUpdate": true}
-     ]
+     ],
+     "teamName": null,
+     "teammateNames": [],
+     "teamPhase": null
    }
    ```
-3. Update `.progress.md` with research completion
+4. Update `.progress.md` with research completion
+
+**Team State Cleanup**:
+If team-research skill was invoked:
+- Team should be deleted before state update
+- Team fields set to null/empty to confirm cleanup
+- No orphaned teams should remain after completion
 
 ## Commit Spec (if enabled)
 

@@ -236,6 +236,40 @@ If no [P] marker on current task, set:
 }
 ```
 
+### 5b. Team Integration Check for Parallel Execution
+
+<mandatory>
+**Before delegating parallel tasks, check if agent teams are available**:
+1. Check if CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS environment variable is set
+2. Check if parallelGroup.isParallel is true AND parallelGroup.taskIndices.length > 1
+3. If both conditions met:
+   - Set context to invoke team-execution skill
+   - Team name pattern: `exec-{specName}-{timestamp}`
+   - Spawn 2-3 teammates for parallel task execution
+   - Each teammate claims and executes a task from the parallel group
+   - Monitor for idle teammates and task completion
+   - Shutdown team after all tasks complete
+   - Update state to clear team fields
+4. Otherwise:
+   - Proceed to section 6 (standard Task tool delegation)
+   - Use existing parallel batch execution pattern
+</mandatory>
+
+**Team Workflow for Execution**:
+When agent teams are available for parallel tasks:
+- Execution phase messaging: "Executing N parallel tasks with teammates..."
+- Team lifecycle: TeamCreate → delegate tasks → monitor → shutdown → TeamDelete
+- Each teammate uses TaskList to claim available tasks
+- TaskUpdate with owner field tracks task assignment
+- Team deleted after all parallel tasks marked [x]
+
+**Fallback to Task Tool**:
+If teams unavailable:
+- Use existing parallel Task tool delegation (multiple Task calls in one message)
+- Each Task call gets unique progressFile: `.progress-task-$taskIndex.md`
+- Merge progress files after completion
+- No team creation or state updates
+
 ### 6. Task Delegation
 
 **[VERIFY] Task Detection**:
@@ -1151,15 +1185,26 @@ Output exactly `ALL_TASKS_COMPLETE` when:
 
 Before outputting:
 1. Verify all tasks marked [x] in tasks.md
-2. Delete .ralph-state.json (cleanup execution state)
-3. Keep .progress.md (preserve learnings and history)
-4. **Update Spec Index** (marks spec as completed):
+2. **Clear team state** if agent team was used during execution:
+   - Ensure teamName is null
+   - Ensure teammateNames is empty array
+   - Ensure teamPhase is null
+   - This confirms team was properly shut down
+3. Delete .ralph-state.json (cleanup execution state)
+4. Keep .progress.md (preserve learnings and history)
+5. **Update Spec Index** (marks spec as completed):
    ```bash
    ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
    ```
-5. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
+6. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
 
 This signal terminates the Ralph Loop loop.
+
+**Team State Cleanup Verification**:
+If team-execution skill was invoked:
+- Team should be deleted before completion signal
+- Team fields in state should be null/empty
+- No orphaned teams should remain after ALL_TASKS_COMPLETE
 
 **PR Link Output**: If a PR was created during execution, output the PR URL after ALL_TASKS_COMPLETE:
 ```text
