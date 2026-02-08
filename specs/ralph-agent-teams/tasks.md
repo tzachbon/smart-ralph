@@ -46,7 +46,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: FR-15_
   - _Design: Plugin Metadata section_
 
-- [ ] 1.3 Create team-research skill
+- [x] 1.3 Create team-research skill
   - **Do**:
     1. Create directory `plugins/ralph-specum/skills/team-research/`
     2. Create SKILL.md with frontmatter (name: team-research, description: auto-invoked research team management)
@@ -61,7 +61,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-1.1 through AC-1.7, FR-1, FR-13_
   - _Design: Components - New Team-Based Skills section_
 
-- [ ] 1.4 Create team-execution skill
+- [x] 1.4 Create team-execution skill
   - **Do**:
     1. Create directory `plugins/ralph-specum/skills/team-execution/`
     2. Create SKILL.md with frontmatter (name: team-execution, description: auto-invoked execution team for parallel tasks)
@@ -76,7 +76,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-2.1 through AC-2.7, FR-2_
   - _Design: Components - New Team-Based Skills section_
 
-- [ ] 1.5 Create team-management skill
+- [x] 1.5 Create team-management skill
   - **Do**:
     1. Create directory `plugins/ralph-specum/skills/team-management/`
     2. Create SKILL.md with frontmatter (name: team-management, description: team status and cleanup utilities)
