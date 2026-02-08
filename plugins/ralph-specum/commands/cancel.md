@@ -114,13 +114,19 @@ State before cancellation:
 - Phase: <phase>
 - Progress: <taskIndex>/<totalTasks> tasks
 - Iterations: <globalIteration>
+- Team: <teamName or "none">
+- Teammates: <teammateNames or "none">
 
 Cleanup:
 - [x] Removed .ralph-state.json
 - [x] Removed spec directory ($spec_path)
 - [x] Cleared current spec marker
+- [x] Shutdown team: <teamName or "N/A">
+- [x] Deleted team directory: <status>
 
 The spec and all its files have been permanently removed.
+<If team was active, add:>
+All teammates have been notified and the team has been shut down.
 
 To start a new spec:
 - Run /ralph-specum:new <name>

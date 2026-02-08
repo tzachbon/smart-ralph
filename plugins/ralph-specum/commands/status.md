@@ -55,6 +55,9 @@ For each spec directory found:
    - Current phase
    - Task progress (taskIndex/totalTasks)
    - Iteration count
+   - **Team name** (teamName field, if present)
+   - **Teammate names** (teammateNames array, if present)
+   - **Team phase** (teamPhase field: "research" or "execution", if present)
 
 2. Check which files exist:
    - research.md
@@ -69,6 +72,12 @@ For each spec directory found:
 4. If `.ralph-state.json` has `relatedSpecs`:
    - List related specs with relevance
    - Mark those with `mayNeedUpdate: true` with asterisk
+
+5. **If active team detected** (teamName field exists):
+   - Display team name and phase
+   - Display teammate count
+   - If available, query TaskList for each teammate's status
+   - Show idle/working state for each teammate
 
 ## Output Format
 
@@ -85,24 +94,34 @@ Active spec: <name from .current-spec> (or "none")
 Phase: <phase>
 Progress: <completed>/<total> tasks (<percentage>%)
 Files: [research] [requirements] [design] [tasks]
+Team: <teamName or "none">
+<If team active:>
+Teammates: N active (<list of names>)
+Status: <teammate-1>: idle | <teammate-2>: working on task X.Y
 Related: auth-system (HIGH*), api-middleware (MEDIUM)
          * = may need update
+         Use Shift+Up/Down to message teammates directly
 
 ### <spec-name-2>
 Phase: <phase>
 Progress: <completed>/<total> tasks
 Files: [research] [requirements] [design] [tasks]
+Team: <teamName or "none">
 Related: <none or list>
 
 ### api-auth [packages/api/specs]
 Phase: design
 Progress: 0/0 tasks
 Files: [x] research [x] requirements [x] design [ ] tasks
+Team: research-api-auth-1234567890 (research phase)
+Teammates: 3 active (analyst-1, analyst-2, code-explorer)
+Status: analyst-1: idle | analyst-2: working | code-explorer: idle
 
 ### web-login [packages/web/specs]
 Phase: research
 Progress: 0/0 tasks
 Files: [x] research [ ] requirements [ ] design [ ] tasks
+Team: none
 
 ---
 
@@ -113,6 +132,7 @@ Commands:
 - /ralph-specum:new <name> - Create new spec
 - /ralph-specum:<phase> - Run phase for active spec
 - /ralph-specum:status --update-index - Refresh spec index
+- /ralph-specum:team-status [spec-name] - Show team details
 ```
 
 **Directory Context Rules**:
