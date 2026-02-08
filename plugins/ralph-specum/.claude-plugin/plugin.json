@@ -1,7 +1,7 @@
 {
   "name": "ralph-specum",
   "version": "3.2.0",
-  "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, and autonomous implementation with fresh context per task.",
+  "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, and autonomous implementation with fresh context per task. Includes agent teams support for parallel research and execution phases.",
   "author": {
     "name": "tzachbon"
   },
