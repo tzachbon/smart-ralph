@@ -144,6 +144,20 @@
             },
             "required": ["attempts", "fixTaskIds"]
           }
+        },
+        "teamName": {
+          "type": "string",
+          "description": "Active agent team name (if any)"
+        },
+        "teammateNames": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of active teammates in the team"
+        },
+        "teamPhase": {
+          "type": "string",
+          "enum": ["research", "execution"],
+          "description": "Phase for which team is active"
         }
       }
     },
