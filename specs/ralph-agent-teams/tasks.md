@@ -149,7 +149,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-5.1 through AC-5.5, FR-7, FR-8_
   - _Design: Modified Existing Commands - status.md section_
 
-- [ ] 1.10 [VERIFY] Quality checkpoint: plugin lint check
+- [x] 1.10 [VERIFY] Quality checkpoint: plugin lint check [QA-VERIFIED-PASS]
   - **Do**: Run validation on all modified plugin files
   - **Verify**: Check JSON syntax for schema and plugin.json files: `jq empty plugins/ralph-specum/schemas/spec.schema.json && jq empty plugins/ralph-specum/.claude-plugin/plugin.json && jq empty .claude-plugin/marketplace.json` - all exit 0
   - **Done when**: All JSON files parse correctly, markdown files have valid frontmatter
@@ -182,7 +182,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-3.6, FR-5_
   - _Design: New Commands - cleanup-teams.md section_
 
-- [ ] 1.13 [VERIFY] Quality checkpoint: command file validation
+- [x] 1.13 [VERIFY] Quality checkpoint: command file validation [QA-VERIFIED-PASS]
   - **Do**: Validate all command files have proper frontmatter and structure
   - **Verify**: Check all modified/new commands have required frontmatter: `for f in plugins/ralph-specum/commands/*.md; do echo "=== $f ==="; head -5 "$f"; done | grep -E "^(description:|argument-hint:|===)"` shows all commands have frontmatter
   - **Done when**: All command files have valid frontmatter structure
@@ -231,7 +231,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-1.4, AC-5.5, FR-1_
   - _Design: Modified Existing Commands - research.md section_
 
-- [ ] 1.17 [VERIFY] Quality checkpoint: skill and agent file validation
+- [x] 1.17 [VERIFY] Quality checkpoint: skill and agent file validation [QA-VERIFIED-PASS]
   - **Do**: Validate all new skills and modified agents have proper structure
   - **Verify**: Check skill files exist and have frontmatter: `for f in plugins/ralph-specum/skills/*/SKILL.md; do echo "=== $f ==="; head -10 "$f" | grep -E "^(name:|description:)"; done` shows all skills have frontmatter. Check agents modified: `grep -l "teammate\|team" plugins/ralph-specum/agents/*.md` returns spec-executor.md and research-analyst.md
   - **Done when**: All skill and agent files properly structured
