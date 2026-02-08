@@ -1,14 +1,21 @@
 {
   "version": "1.0",
-  "updated": "2026-02-05T13:36:55Z",
+  "updated": "2026-02-08T00:04:38Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 13,
+      "specsCount": 16,
       "isDefault": true
     }
   ],
   "specs": [
+    {
+      "name": "adaptive-interview",
+      "path": "./specs/adaptive-interview",
+      "phase": "completed",
+      "taskIndex": 22,
+      "totalTasks": 22
+    },
     {
       "name": "add-skills-doc",
       "path": "./specs/add-skills-doc",
@@ -17,11 +24,18 @@
       "totalTasks": 5
     },
     {
-      "name": "plan-source-feature",
-      "path": "./specs/plan-source-feature",
+      "name": "codebase-indexing",
+      "path": "./specs/codebase-indexing",
       "phase": "completed",
-      "taskIndex": 12,
-      "totalTasks": 12
+      "taskIndex": 39,
+      "totalTasks": 39
+    },
+    {
+      "name": "goal-interview",
+      "path": "./specs/goal-interview",
+      "phase": "completed",
+      "taskIndex": 14,
+      "totalTasks": 14
     },
     {
       "name": "implement-ralph-wiggum",
@@ -31,11 +45,39 @@
       "totalTasks": 35
     },
     {
-      "name": "reality-verification-principle",
-      "path": "./specs/reality-verification-principle",
+      "name": "improve-walkthrough-feature",
+      "path": "./specs/improve-walkthrough-feature",
       "phase": "tasks",
-      "taskIndex": 9,
-      "totalTasks": 11
+      "taskIndex": 13,
+      "totalTasks": 14
+    },
+    {
+      "name": "iterative-failure-recovery",
+      "path": "./specs/iterative-failure-recovery",
+      "phase": "tasks",
+      "taskIndex": 14,
+      "totalTasks": 20
+    },
+    {
+      "name": "multi-spec-dirs",
+      "path": "./specs/multi-spec-dirs",
+      "phase": "tasks",
+      "taskIndex": 30,
+      "totalTasks": 33
+    },
+    {
+      "name": "parallel-task-execution",
+      "path": "./specs/parallel-task-execution",
+      "phase": "tasks",
+      "taskIndex": 24,
+      "totalTasks": 25
+    },
+    {
+      "name": "plan-source-feature",
+      "path": "./specs/plan-source-feature",
+      "phase": "completed",
+      "taskIndex": 12,
+      "totalTasks": 12
     },
     {
       "name": "qa-verification",
@@ -52,46 +94,18 @@
       "totalTasks": 27
     },
     {
-      "name": "multi-spec-dirs",
-      "path": "./specs/multi-spec-dirs",
-      "phase": "completed",
-      "taskIndex": 33,
-      "totalTasks": 33
-    },
-    {
-      "name": "parallel-task-execution",
-      "path": "./specs/parallel-task-execution",
+      "name": "reality-verification-principle",
+      "path": "./specs/reality-verification-principle",
       "phase": "tasks",
-      "taskIndex": 24,
-      "totalTasks": 25
+      "taskIndex": 9,
+      "totalTasks": 11
     },
     {
-      "name": "iterative-failure-recovery",
-      "path": "./specs/iterative-failure-recovery",
-      "phase": "tasks",
-      "taskIndex": 14,
-      "totalTasks": 20
-    },
-    {
-      "name": "goal-interview",
-      "path": "./specs/goal-interview",
+      "name": "remove-ralph-wiggum",
+      "path": "./specs/remove-ralph-wiggum",
       "phase": "completed",
-      "taskIndex": 14,
-      "totalTasks": 14
-    },
-    {
-      "name": "adaptive-interview",
-      "path": "./specs/adaptive-interview",
-      "phase": "completed",
-      "taskIndex": 22,
-      "totalTasks": 22
-    },
-    {
-      "name": "improve-walkthrough-feature",
-      "path": "./specs/improve-walkthrough-feature",
-      "phase": "tasks",
-      "taskIndex": 13,
-      "totalTasks": 14
+      "taskIndex": 16,
+      "totalTasks": 16
     },
     {
       "name": "when-creating-worktree",
@@ -99,6 +113,11 @@
       "phase": "completed",
       "taskIndex": 7,
       "totalTasks": 7
+    },
+    {
+      "name": "ralph-agent-teams",
+      "path": "./specs/ralph-agent-teams",
+      "phase": "research"
     }
   ]
 }
