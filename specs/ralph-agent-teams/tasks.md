@@ -156,7 +156,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - **Commit**: `chore(plugin): fix lint issues if any`
   - _Requirements: NFR-8_
 
-- [ ] 1.11 Create team-status command
+- [x] 1.11 Create team-status command
   - **Do**:
     1. Create `plugins/ralph-specum/commands/team-status.md`
     2. Add command frontmatter (description: display active agent teams, argument-hint: [spec-name])
@@ -169,7 +169,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-5.1 through AC-5.3, FR-7_
   - _Design: New Commands - team-status.md section_
 
-- [ ] 1.12 Create cleanup-teams command
+- [x] 1.12 Create cleanup-teams command
   - **Do**:
     1. Create `plugins/ralph-specum/commands/cleanup-teams.md`
     2. Add command frontmatter (description: safely remove orphaned team directories)
@@ -189,7 +189,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - **Commit**: `chore(commands): fix frontmatter issues if any`
   - _Requirements: NFR-8_
 
-- [ ] 1.14 Modify stop-watcher.sh for orphaned team detection
+- [x] 1.14 Modify stop-watcher.sh for orphaned team detection
   - **Do**:
     1. Read `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. Find the section where state files are checked
@@ -204,7 +204,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-3.6, FR-5_
   - _Design: File Structure - Hooks section_
 
-- [ ] 1.15 Update spec-executor agent for team-aware execution
+- [x] 1.15 Update spec-executor agent for team-aware execution
   - **Do**:
     1. Read `plugins/ralph-specum/agents/spec-executor.md`
     2. Find task claiming instructions
@@ -218,7 +218,7 @@ Focus: Validate agent teams work end-to-end. Skip tests, accept hardcoded values
   - _Requirements: AC-2.3, AC-2.4, AC-2.5, FR-2_
   - _Design: Modified Existing Commands - implement.md section_
 
-- [ ] 1.16 Update research-analyst agent for teammate messaging
+- [x] 1.16 Update research-analyst agent for teammate messaging
   - **Do**:
     1. Read `plugins/ralph-specum/agents/research-analyst.md`
     2. Add SendMessage tool usage guidance for cross-team discoveries
