@@ -28,7 +28,7 @@ Focus: Get the self-contained loop controller working end-to-end. Skip tests, ac
   - _Requirements: FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-8, FR-15_
   - _Design: Component A_
 
-- [ ] 1.2 Update implement.md to remove ralph-loop dependency
+- [x] 1.2 Update implement.md to remove ralph-loop dependency
   - **Do**: Modify implement.md to output the coordinator prompt directly:
     1. Remove "Ralph Loop Dependency Check" section (lines 13-19)
     2. Remove "Invoke Ralph Loop" section — specifically: Step 1 (write .coordinator-prompt.md) and Step 2 (invoke ralph-loop skill)

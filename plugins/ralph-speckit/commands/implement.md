@@ -8,16 +8,6 @@ allowed-tools: [Read, Write, Edit, Task, Bash, Skill]
 
 You are starting the task execution loop.
 
-## Ralph Loop Dependency Check
-
-**BEFORE proceeding**, verify Ralph Loop plugin is installed by attempting to invoke the skill.
-
-If the Skill tool fails with "skill not found" or similar error for `ralph-loop:ralph-loop`:
-1. Output error: "ERROR: Ralph Loop plugin not found. Install with: /plugin install ralph-loop@claude-plugins-official"
-2. STOP execution immediately. Do NOT continue.
-
-This is a hard dependency. The command cannot function without Ralph Loop.
-
 ## Determine Active Feature
 
 1. Read `.specify/.current-feature` to get active feature (format: `<id>-<name>`)
@@ -77,29 +67,21 @@ Write `.specify/specs/$feature/.speckit-state.json`:
 }
 ```
 
-## Invoke Ralph Loop
+## Start Execution
 
-Calculate max iterations: `totalTasks * maxTaskIterations * 2`
+After writing the state file, output the coordinator prompt below. This starts the execution loop.
+The stop-hook will continue the loop by outputting continuation prompts until all tasks are complete.
 
-### Step 1: Write Coordinator Prompt to File
-
-Write the ENTIRE coordinator prompt (from section below) to `.specify/specs/$feature/.coordinator-prompt.md`.
-
-This file contains the full instructions for task execution. Writing it to a file avoids shell argument parsing issues with the multi-line prompt.
-
-### Step 2: Invoke Ralph Loop Skill
-
-Use the Skill tool to invoke `ralph-loop:ralph-loop` with args:
-
-```
-Read .specify/specs/$feature/.coordinator-prompt.md and follow those instructions exactly. Output ALL_TASKS_COMPLETE when done. --max-iterations <calculated> --completion-promise ALL_TASKS_COMPLETE
-```
-
-Replace `$feature` with the actual feature name and `<calculated>` with the calculated max iterations value.
+**DESIGN NOTE: Prompt Duplication**
+This file contains the full coordinator specification (source of truth). The stop-watcher.sh
+outputs an abbreviated resume prompt for loop continuation. This is intentional design:
+- implement.md = comprehensive specification for initial execution
+- stop-watcher.sh = minimal context for efficient loop resumption
+The duplication is by design to balance completeness vs. token efficiency.
 
 ## Coordinator Prompt
 
-Write this prompt to `.specify/specs/$feature/.coordinator-prompt.md`:
+Output this prompt directly to start execution:
 
 ```text
 You are the execution COORDINATOR for feature: $feature
