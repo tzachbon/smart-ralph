@@ -43,7 +43,7 @@ Focus: Get the self-contained loop controller working end-to-end. Skip tests, ac
   - _Requirements: FR-9, FR-10, FR-11_
   - _Design: Component B_
 
-- [ ] 1.3 Update cancel.md for self-contained cancellation
+- [x] 1.3 Update cancel.md for self-contained cancellation
   - **Do**: Remove external skill dependency from cancel.md:
     1. Remove the `ralph-wiggum:cancel-ralph` skill invocation (line 33-34 area)
     2. Replace cleanup step 1 with just: "Delete state file" (direct `rm`)

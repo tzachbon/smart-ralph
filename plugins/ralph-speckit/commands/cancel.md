@@ -28,20 +28,14 @@ If state file exists, read and display:
 
 ## Cleanup
 
-1. Stop Ralph Loop loop (if running):
-   ```
-   Use the Skill tool to invoke ralph-wiggum:cancel-ralph
-   This stops any active Ralph Loop loop iteration
-   ```
-
-2. Delete state file:
+1. Delete state file:
    ```bash
    rm .specify/specs/$feature/.speckit-state.json
    ```
 
-3. Optionally clear current-feature pointer (ask user or skip if they specified feature directly)
+2. Optionally clear current-feature pointer (ask user or skip if they specified feature directly)
 
-4. Keep `.progress.md` as it contains valuable context
+3. Keep `.progress.md` as it contains valuable context
 
 ## Output
 
@@ -54,7 +48,6 @@ State before cancellation:
 - Iterations: <globalIteration>
 
 Cleanup:
-- [x] Stopped Ralph Loop loop (/cancel-ralph)
 - [x] Removed .speckit-state.json
 - [ ] Kept .progress.md (contains history)
 
