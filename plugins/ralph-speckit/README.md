@@ -5,7 +5,7 @@ Spec-driven development plugin for Claude Code using the [GitHub spec-kit](https
 ## Features
 
 - **Constitution-First Approach**: Establish project principles before any feature work
-- **Autonomous Execution**: Ralph Loop integration for continuous task execution
+- **Autonomous Execution**: Built-in stop-hook for continuous task execution
 - **Parallel Task Execution**: Tasks marked `[P]` run simultaneously
 - **4-Layer Verification**: Contradiction detection, uncommitted files check, checkmark verification, and completion signals
 - **QA Engineer Agent**: Specialized agent for `[VERIFY]` quality checkpoint tasks
@@ -16,10 +16,6 @@ Spec-driven development plugin for Claude Code using the [GitHub spec-kit](https
 ## Prerequisites
 
 - [Claude Code](https://claude.com/claude-code) installed and configured
-- **Ralph Loop Plugin** (required for autonomous execution):
-  ```bash
-  /plugin install ralph-wiggum@claude-plugins-official
-  ```
 
 ## Installation
 
@@ -97,7 +93,7 @@ claude --plugin-dir /path/to/ralph-speckit
                     └────────┬────────┘
                              │
                     ┌────────▼────────┐
-                    │   implement     │  Execute via Ralph Loop
+                    │   implement     │  Execute via stop-hook loop
                     └────────┬────────┘
                              │
                     ┌────────▼────────┐
@@ -187,13 +183,6 @@ The execution coordinator validates each task completion:
 
 ## Troubleshooting
 
-### "Ralph Loop plugin not found"
-
-Install the required dependency:
-```bash
-/plugin install ralph-wiggum@claude-plugins-official
-```
-
 ### "No constitution found"
 
 Run constitution command first:
@@ -231,13 +220,7 @@ rm .specify/specs/<feature>/.speckit-state.json
 
 ## Dependencies
 
-This plugin requires the **Ralph Loop** plugin for autonomous execution loops.
-
-Ralph Loop provides:
-- `/ralph-loop:ralph-loop` - Continuous execution loop
-- `/ralph-loop:cancel-ralph` - Cancel running loop
-
-Without Ralph Loop, `/speckit:implement` will fail with an error.
+This plugin is self-contained. Autonomous execution is handled by the built-in stop-hook, which controls the execution loop continuation. No external plugins are required.
 
 ## License
 
