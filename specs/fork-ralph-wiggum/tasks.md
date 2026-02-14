@@ -242,7 +242,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - _Requirements: FR-7, AC-3.1, AC-3.2, AC-6.4_
   - _Design: New Tests Required_
 
-- [ ] 3.5 Update integration.bats assertions to JSON
+- [x] 3.5 Update integration.bats assertions to JSON
   - **Do**:
     1. Open `tests/integration.bats`
     2. Replace ALL `assert_output_contains "Continue spec: test-spec"` with `assert_json_block` + `assert_json_reason_contains "Continue spec: test-spec"`. Affected tests:
