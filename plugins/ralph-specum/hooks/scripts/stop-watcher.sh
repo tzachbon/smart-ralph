@@ -153,6 +153,13 @@ EOF
         RECOVERY_MODE=$(jq -r '.recoveryMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
         MAX_TASK_ITER=$(jq -r '.maxTaskIterations // 5' "$STATE_FILE" 2>/dev/null || echo "5")
 
+        # Guard: skip if already in stop-hook continuation to prevent infinite loop
+        STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
+        if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
+            echo "[ralph-specum] stop_hook_active=true, skipping continuation to prevent re-invocation loop" >&2
+            exit 0
+        fi
+
         # DESIGN NOTE: Prompt Duplication
         # This continuation prompt is intentionally abbreviated compared to implement.md.
         # - implement.md = full specification (source of truth for coordinator behavior)
@@ -161,7 +168,7 @@ EOF
         # specification lives in implement.md; this prompt provides just enough context
         # for the coordinator to resume execution efficiently.
 
-        cat <<EOF
+        REASON=$(cat <<EOF
 Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
 
 ## State
@@ -178,6 +185,18 @@ Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITE
 - Verify all 4 layers before advancing (see implement.md Section 7)
 - On failure: increment taskIteration, retry or generate fix task if recoveryMode
 EOF
+)
+
+        SYSTEM_MSG="Ralph-specum iteration $GLOBAL_ITERATION | Task $((TASK_INDEX + 1))/$TOTAL_TASKS"
+
+        jq -n \
+          --arg reason "$REASON" \
+          --arg msg "$SYSTEM_MSG" \
+          '{
+            "decision": "block",
+            "reason": $reason,
+            "systemMessage": $msg
+          }'
     fi
 fi
 

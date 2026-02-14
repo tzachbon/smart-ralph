@@ -98,7 +98,7 @@ Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON fo
   - **Done when**: Corrupt state and max iterations tests produce JSON output (even if assertions need updating)
   - **Commit**: `chore(stop-hook): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.6 Add stop_hook_active guard and convert continuation prompt to JSON
+- [x] 1.6 Add stop_hook_active guard and convert continuation prompt to JSON
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. Inside the `if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]` block (after line 134 where `MAX_TASK_ITER` is read), add the `stop_hook_active` guard from design.md Component 4:
