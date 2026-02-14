@@ -87,13 +87,23 @@ fi
 # Validate state file is readable JSON
 CORRUPT_STATE=false
 if ! jq empty "$STATE_FILE" 2>/dev/null; then
-    cat <<EOF
+    REASON=$(cat <<EOF
 ERROR: Corrupt state file at $SPEC_PATH/.ralph-state.json
 
 Recovery options:
 1. Reset state: /ralph-specum:implement (reinitializes from tasks.md)
 2. Cancel spec: /ralph-specum:cancel
 EOF
+)
+
+    jq -n \
+      --arg reason "$REASON" \
+      --arg msg "Ralph-specum: corrupt state file" \
+      '{
+        "decision": "block",
+        "reason": $reason,
+        "systemMessage": $msg
+      }'
     exit 0
 fi
 

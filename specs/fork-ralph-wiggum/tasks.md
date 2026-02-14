@@ -64,7 +64,7 @@ Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON fo
   - _Requirements: FR-7, AC-3.1_
   - _Design: Component 6_
 
-- [ ] 1.3 Convert corrupt state error to JSON output
+- [x] 1.3 Convert corrupt state error to JSON output
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. Replace lines 90-97 (the `cat <<EOF ... EOF` block for corrupt state) with:
