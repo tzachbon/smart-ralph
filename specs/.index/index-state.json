@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-02-05T13:36:55Z",
+  "updated": "2026-02-14T16:37:35Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 13,
+      "specsCount": 17,
       "isDefault": true
     }
   ],
@@ -24,11 +24,21 @@
       "totalTasks": 12
     },
     {
+      "name": "return-ralph-wrigum",
+      "path": "./specs/return-ralph-wrigum",
+      "phase": "new"
+    },
+    {
       "name": "implement-ralph-wiggum",
       "path": "./specs/implement-ralph-wiggum",
       "phase": "tasks",
       "taskIndex": 27,
       "totalTasks": 35
+    },
+    {
+      "name": "fork-ralph-wiggum",
+      "path": "./specs/fork-ralph-wiggum",
+      "phase": "research"
     },
     {
       "name": "reality-verification-principle",
@@ -54,9 +64,16 @@
     {
       "name": "multi-spec-dirs",
       "path": "./specs/multi-spec-dirs",
-      "phase": "completed",
-      "taskIndex": 33,
+      "phase": "tasks",
+      "taskIndex": 30,
       "totalTasks": 33
+    },
+    {
+      "name": "codebase-indexing",
+      "path": "./specs/codebase-indexing",
+      "phase": "completed",
+      "taskIndex": 39,
+      "totalTasks": 39
     },
     {
       "name": "parallel-task-execution",
@@ -85,6 +102,13 @@
       "phase": "completed",
       "taskIndex": 22,
       "totalTasks": 22
+    },
+    {
+      "name": "remove-ralph-wiggum",
+      "path": "./specs/remove-ralph-wiggum",
+      "phase": "completed",
+      "taskIndex": 16,
+      "totalTasks": 16
     },
     {
       "name": "improve-walkthrough-feature",

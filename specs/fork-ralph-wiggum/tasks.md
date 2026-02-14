@@ -92,7 +92,7 @@ Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON fo
   - _Requirements: FR-6, AC-4.2, AC-4.3_
   - _Design: Component 3_
 
-- [ ] 1.5 [VERIFY] Quality checkpoint: bats tests (partial)
+- [x] 1.5 [VERIFY] Quality checkpoint: bats tests (partial)
   - **Do**: Run bats tests to check current state. Some tests will fail due to output format change -- that is expected. Verify error-path tests produce valid JSON.
   - **Verify**: `bash -c 'echo "{ invalid json here" | jq empty 2>/dev/null; echo $?'` returns non-zero (sanity check jq validates). Then run `bats tests/stop-hook.bats` and note which tests pass/fail. Error tests ("corrupt JSON", "max iterations") should now produce JSON output.
   - **Done when**: Corrupt state and max iterations tests produce JSON output (even if assertions need updating)
@@ -116,7 +116,7 @@ Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON fo
   - _Requirements: FR-1, FR-2, FR-3, FR-7, AC-1.1, AC-1.2, AC-1.3, AC-3.1, AC-3.2_
   - _Design: Components 1 and 4_
 
-- [ ] 1.7 POC Checkpoint: verify JSON output end-to-end
+- [x] 1.7 POC Checkpoint: verify JSON output end-to-end
   - **Do**:
     1. Create a temp test workspace and state file
     2. Pipe hook input with `stop_hook_active: false` through stop-watcher.sh
@@ -196,7 +196,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - _Requirements: FR-10, AC-6.2_
   - _Design: Test Strategy - stop-hook.bats Changes_
 
-- [ ] 3.3 [VERIFY] Quality checkpoint: bats stop-hook tests
+- [x] 3.3 [VERIFY] Quality checkpoint: bats stop-hook tests
   - **Do**: Run stop-hook.bats to verify all updated assertions pass
   - **Verify**: `bats tests/stop-hook.bats` exits 0 with all tests passing
   - **Done when**: All 24+ stop-hook tests pass (18 existing + updated assertions)
@@ -286,7 +286,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - _Requirements: FR-10, AC-6.1_
   - _Design: Test Strategy - state-management.bats Changes_
 
-- [ ] 3.7 [VERIFY] Quality checkpoint: all bats tests pass
+- [x] 3.7 [VERIFY] Quality checkpoint: all bats tests pass
   - **Do**: Run all bats test files to verify zero regressions
   - **Verify**: `bats tests/*.bats` exits 0 with all tests passing
   - **Done when**: All tests pass (18+ existing + 5 new = 23+ total across all files)
@@ -297,13 +297,13 @@ Update all bats tests to assert JSON format instead of plain text.
 
 > **IMPORTANT**: NEVER push directly to the default branch. Branch management handled at startup. Should already be on `feat/fork-ralph-wiggum`.
 
-- [ ] 4.1 [VERIFY] Full local CI: bats tests/*.bats
+- [x] 4.1 [VERIFY] Full local CI: bats tests/*.bats
   - **Do**: Run complete local CI suite (bats is the only quality command for this project)
   - **Verify**: `bats tests/*.bats` exits 0
   - **Done when**: All tests pass, zero regressions
   - **Commit**: `chore(stop-hook): pass local CI` (only if fixes needed)
 
-- [ ] 4.2 Create PR and verify CI
+- [x] 4.2 Create PR and verify CI
   - **Do**:
     1. Verify current branch: `git branch --show-current` (expect `feat/fork-ralph-wiggum`)
     2. If on default branch, STOP and alert user
@@ -317,7 +317,7 @@ Update all bats tests to assert JSON format instead of plain text.
 
 > Autonomous loop: continues until ALL completion criteria met.
 
-- [ ] 5.1 Monitor CI and fix failures
+- [x] 5.1 Monitor CI and fix failures
   - **Do**:
     1. Wait 3 minutes for CI to start
     2. Check status: `gh pr checks`
@@ -330,7 +330,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - **Done when**: All CI checks passing
   - **Commit**: `fix(stop-hook): address CI failures` (as needed)
 
-- [ ] 5.2 Address code review comments
+- [x] 5.2 Address code review comments
   - **Do**:
     1. Fetch reviews: `gh pr view --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED")'`
     2. For inline comments: `gh api repos/{owner}/{repo}/pulls/{number}/comments`
@@ -341,7 +341,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - **Done when**: All review comments resolved
   - **Commit**: `fix(stop-hook): address review - {summary}` (per comment)
 
-- [ ] 5.3 [VERIFY] AC checklist
+- [x] 5.3 [VERIFY] AC checklist
   - **Do**: Programmatically verify each acceptance criterion:
     1. AC-1.1: `bats tests/stop-hook.bats` passes (JSON with decision:block when tasks remain)
     2. AC-1.2: `grep -c 'assert_json_reason_contains.*Continue spec' tests/stop-hook.bats` > 0
