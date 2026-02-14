@@ -83,7 +83,7 @@ Focus: Get implement.md invoking /ralph-loop and stop-watcher.sh passive. Skip t
 
 Clean up code, update documentation, bump version.
 
-- [ ] 2.1 Bump version to 4.0.0 in both manifests
+- [x] 2.1 Bump version to 4.0.0 in both manifests
   - **Do**: Update version in plugin.json and marketplace.json
     1. Update `plugins/ralph-specum/.claude-plugin/plugin.json` version from "3.1.1" to "4.0.0"
     2. Update `.claude-plugin/marketplace.json` ralph-specum version from "3.1.1" to "4.0.0"
@@ -109,7 +109,7 @@ Clean up code, update documentation, bump version.
   - _Requirements: FR-7, AC-4.1, AC-4.2_
   - _Design: Component 4_
 
-- [ ] 2.3 Update CLAUDE.md with dependency information
+- [x] 2.3 Update CLAUDE.md with dependency information
   - **Do**: Update the project CLAUDE.md to reflect Ralph Wiggum dependency.
     1. Update the "Dependencies" section to list Ralph Wiggum as required
     2. Update the "Execution Flow" section description to mention ralph-loop
