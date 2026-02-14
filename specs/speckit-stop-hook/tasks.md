@@ -1,7 +1,7 @@
 ---
 spec: speckit-stop-hook
 phase: tasks
-total_tasks: 14
+total_tasks: 12
 created: 2026-02-14
 generated: auto
 ---
@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Get the self-contained loop controller working end-to-end. Skip tests, accept direct port approach.
 
-- [ ] 1.1 Rewrite stop-watcher.sh as self-contained loop controller
+- [x] 1.1 Rewrite stop-watcher.sh as self-contained loop controller
   - **Do**: Replace the current 56-line passive watcher with a full loop controller. Port the logic from `plugins/ralph-specum/hooks/scripts/stop-watcher.sh` with these adaptations:
     1. Remove path-resolver sourcing (lines 22-25 of specum) — use fixed `.specify/` path instead
     2. Read `.specify/.current-feature` instead of calling `ralph_resolve_current`
