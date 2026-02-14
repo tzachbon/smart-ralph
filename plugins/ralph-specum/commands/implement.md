@@ -34,6 +34,18 @@ The spec path is dynamically resolved - it may be in `./specs/` or any other con
 1. Check the resolved spec directory exists
 2. Check the spec's tasks.md exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
 
+## Check Ralph Wiggum Dependency
+
+Before proceeding, verify that the Ralph Wiggum plugin is installed and the `/ralph-loop` command is available.
+
+1. Attempt to invoke the Skill tool with skill name `ralph-loop` to check if it exists
+2. If the `/ralph-loop` command is NOT found:
+   - Output error: "ERROR: Ralph Wiggum plugin is required but not installed."
+   - Output install command: "Install it with: `/plugin install ralph-wiggum@claude-plugins-official`"
+   - Do NOT proceed with state initialization or any further execution
+   - STOP here
+3. If the `/ralph-loop` command is found, continue to Parse Arguments
+
 ## Parse Arguments
 
 From `$ARGUMENTS`:

@@ -25,7 +25,7 @@ Focus: Get implement.md invoking /ralph-loop and stop-watcher.sh passive. Skip t
   - _Requirements: FR-4, FR-5, AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5_
   - _Design: Component 2_
 
-- [ ] 1.2 Add Ralph Wiggum dependency check to implement.md
+- [x] 1.2 Add Ralph Wiggum dependency check to implement.md
   - **Do**: Add a dependency check section to implement.md before state initialization.
     1. Add section "## Check Ralph Wiggum Dependency" after "## Validate Prerequisites"
     2. Include instructions to verify `/ralph-loop` command exists (attempt Skill tool invocation)
