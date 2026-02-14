@@ -291,7 +291,7 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "stop hook silent when taskIndex equals totalTasks" {
@@ -317,7 +317,7 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue"
+    assert_json_reason_contains "Continue"
 }
 
 # =============================================================================
@@ -334,7 +334,7 @@ load 'helpers/setup.bash'
     run run_stop_watcher
     [ "$status" -eq 0 ]
     # Should continue (globalIteration 1 < default 100)
-    assert_output_contains "Continue"
+    assert_json_reason_contains "Continue"
 }
 
 @test "stop hook enforces maxGlobalIterations limit" {
@@ -348,7 +348,8 @@ load 'helpers/setup.bash'
     run run_stop_watcher
     [ "$status" -eq 0 ]
     # Should output error about max iterations reached
-    assert_output_contains "Maximum global iterations"
+    assert_json_block
+    assert_json_reason_contains "Maximum global iterations"
     assert_output_not_contains "Continue"
 }
 
@@ -363,5 +364,5 @@ load 'helpers/setup.bash'
     run run_stop_watcher
     [ "$status" -eq 0 ]
     # Should continue (50 < 100)
-    assert_output_contains "Continue"
+    assert_json_reason_contains "Continue"
 }

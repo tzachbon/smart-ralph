@@ -265,7 +265,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - _Requirements: FR-10, AC-6.1_
   - _Design: Test Strategy - integration.bats Changes_
 
-- [ ] 3.6 Update state-management.bats assertions to JSON
+- [x] 3.6 Update state-management.bats assertions to JSON
   - **Do**:
     1. Open `tests/state-management.bats`
     2. Update "stop hook uses taskIndex for continuation check" (line 294):
