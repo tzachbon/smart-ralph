@@ -186,6 +186,9 @@ Store this context to include in the Task delegation prompt.
 
 ## Execute Research
 
+**Note**: `/ralph-specum:start` uses Claude Code Teams for parallel research.
+This command uses multi-Task parallelism for the same result. Both achieve parallel execution.
+
 <mandatory>
 **PARALLEL EXECUTION IS MANDATORY - NO EXCEPTIONS**
 
