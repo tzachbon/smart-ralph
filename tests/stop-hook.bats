@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 # Stop Hook Unit Tests
-# Tests the loop control logic in stop-watcher.sh
+# Tests the passive behavior of stop-watcher.sh (no loop control output)
+
+bats_require_minimum_version 1.5.0
 
 load 'helpers/setup.bash'
 
@@ -52,50 +54,45 @@ load 'helpers/setup.bash'
 @test "exits silently when taskIndex equals totalTasks" {
     create_state_file "execution" 5 5 1
 
-    run run_stop_watcher
+    run --separate-stderr run_stop_watcher
     [ "$status" -eq 0 ]
-    # Should not output continuation prompt (tasks complete)
-    assert_output_not_contains "Continue spec"
+    [ -z "$output" ]
 }
 
 @test "exits silently when taskIndex exceeds totalTasks" {
     create_state_file "execution" 10 5 1
 
-    run run_stop_watcher
+    run --separate-stderr run_stop_watcher
     [ "$status" -eq 0 ]
-    # Should not output continuation prompt (tasks complete)
-    assert_output_not_contains "Continue spec"
+    [ -z "$output" ]
 }
 
 # =============================================================================
-# Test: Valid execution state -> outputs continuation prompt
+# Test: Valid execution state -> passive (no stdout output)
 # =============================================================================
 
-@test "outputs continuation prompt when tasks remain (taskIndex=0)" {
+@test "outputs nothing to stdout when tasks remain (taskIndex=0)" {
     create_state_file "execution" 0 5 1
 
-    run run_stop_watcher
+    run --separate-stderr run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
-    assert_output_contains ".ralph-state.json"
-    assert_output_contains "spec-executor"
-    assert_output_contains "ALL_TASKS_COMPLETE"
+    [ -z "$output" ]
 }
 
-@test "outputs continuation prompt when tasks remain (midway)" {
+@test "outputs nothing to stdout when tasks remain (midway)" {
     create_state_file "execution" 2 5 1
 
-    run run_stop_watcher
+    run --separate-stderr run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    [ -z "$output" ]
 }
 
-@test "outputs continuation prompt when one task remains" {
+@test "outputs nothing to stdout when one task remains" {
     create_state_file "execution" 4 5 1
 
-    run run_stop_watcher
+    run --separate-stderr run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    [ -z "$output" ]
 }
 
 # =============================================================================
@@ -188,13 +185,13 @@ load 'helpers/setup.bash'
     [ -z "$output" ]
 }
 
-@test "continues normally when plugin is enabled via settings" {
+@test "outputs nothing to stdout when plugin is enabled via settings" {
     create_state_file "execution" 0 5 1
     create_settings_file "true"
 
-    run run_stop_watcher
+    run --separate-stderr run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    [ -z "$output" ]
 }
 
 # =============================================================================
@@ -237,7 +234,7 @@ ALL_TASKS_COMPLETE
     assert_output_not_contains "Continue spec"
 }
 
-@test "continues when ALL_TASKS_COMPLETE signal not in transcript" {
+@test "outputs nothing when ALL_TASKS_COMPLETE signal not in transcript" {
     create_state_file "execution" 2 5 1
 
     # Create transcript without completion signal
@@ -249,10 +246,10 @@ More output")
     local input
     input=$(create_hook_input_with_transcript "$transcript_file")
 
-    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    run --separate-stderr bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
-    # Should output continuation prompt - tasks remain
-    assert_output_contains "Continue spec"
+    # Passive: no stdout output even when tasks remain
+    [ -z "$output" ]
 }
 
 @test "handles missing transcript_path gracefully" {
@@ -262,10 +259,10 @@ More output")
     local input
     input=$(create_hook_input)
 
-    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    run --separate-stderr bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
-    # Should continue normally - tasks remain
-    assert_output_contains "Continue spec"
+    # Passive: no stdout output
+    [ -z "$output" ]
 }
 
 @test "handles non-existent transcript file gracefully" {
@@ -275,10 +272,10 @@ More output")
     local input
     input=$(create_hook_input_with_transcript "/nonexistent/transcript.jsonl")
 
-    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    run --separate-stderr bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
-    # Should continue normally - tasks remain
-    assert_output_contains "Continue spec"
+    # Passive: no stdout output
+    [ -z "$output" ]
 }
 
 @test "detects ALL_TASKS_COMPLETE with trailing whitespace" {

@@ -131,7 +131,7 @@ Clean up code, update documentation, bump version.
 
 Update bats tests for passive stop-watcher behavior.
 
-- [ ] 3.1 Update stop-hook.bats for passive behavior
+- [x] 3.1 Update stop-hook.bats for passive behavior
   - **Do**: Modify stop-hook tests to verify stop-watcher.sh is passive (no loop control output).
     1. Read current tests/stop-hook.bats to understand existing test structure
     2. Update tests that check for continuation prompt output to instead verify NO output
