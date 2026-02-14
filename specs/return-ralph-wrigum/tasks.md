@@ -60,7 +60,7 @@ Focus: Get implement.md invoking /ralph-loop and stop-watcher.sh passive. Skip t
   - **Done when**: Frontmatter present, ralph-loop invocation present, coordinator logic present
   - **Commit**: (none unless fixes needed)
 
-- [ ] 1.5 Update cancel.md to call /cancel-ralph
+- [x] 1.5 Update cancel.md to call /cancel-ralph
   - **Do**: Add Ralph Wiggum loop cancellation before existing file cleanup.
     1. Add step to invoke `/cancel-ralph` via Skill tool BEFORE deleting state files
     2. Add note that /cancel-ralph may fail silently if no active Ralph loop (this is OK)

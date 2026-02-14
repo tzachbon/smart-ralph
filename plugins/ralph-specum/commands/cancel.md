@@ -1,7 +1,7 @@
 ---
 description: Cancel active execution loop, cleanup state, and remove spec
 argument-hint: [spec-name-or-path]
-allowed-tools: [Read, Bash, Task]
+allowed-tools: [Read, Bash, Task, Skill]
 ---
 
 # Cancel Execution
@@ -53,6 +53,14 @@ If state file exists, read and display:
 - Task progress (taskIndex/totalTasks)
 - Iteration count
 
+## Stop Ralph Loop
+
+Before cleaning up files, stop any active Ralph Wiggum loop:
+
+1. Invoke `/cancel-ralph` via the Skill tool
+2. This may fail silently if no active Ralph loop is running — this is expected and OK
+3. Proceed with file cleanup regardless of whether /cancel-ralph succeeded
+
 ## Cleanup
 
 1. Delete state file:
@@ -87,6 +95,7 @@ State before cancellation:
 - Iterations: <globalIteration>
 
 Cleanup:
+- [x] Stopped Ralph loop (via /cancel-ralph)
 - [x] Removed .ralph-state.json
 - [x] Removed spec directory ($spec_path)
 - [x] Cleared current spec marker
@@ -107,6 +116,7 @@ No active execution loop found for spec: $spec_name
 
 Location: $spec_path
 Cleanup:
+- [x] Stopped Ralph loop (via /cancel-ralph, if active)
 - [x] Removed spec directory ($spec_path)
 - [x] Cleared current spec marker
 
