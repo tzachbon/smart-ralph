@@ -107,7 +107,7 @@ After POC validated, ensure code quality and consistency.
   - **Commit**: `refactor(speckit): align stop-watcher comments and structure`
   - _Design: Architecture_
 
-- [ ] 2.2 Verify implement.md coordinator prompt consistency
+- [x] 2.2 Verify implement.md coordinator prompt consistency
   - **Do**: Ensure the coordinator prompt in implement.md is internally consistent:
     1. All references use `.specify/specs/$feature/` paths (not `./specs/`)
     2. State file references use `.speckit-state.json` (not `.ralph-state.json`)
