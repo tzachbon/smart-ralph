@@ -136,7 +136,7 @@ Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON fo
 
 After POC validated, clean up configuration and version.
 
-- [ ] 2.1 Remove ralph-wiggum from settings and bump version
+- [x] 2.1 Remove ralph-wiggum from settings and bump version
   - **Do**:
     1. Open `.claude/settings.json`
     2. Remove the `"ralph-wiggum@claude-plugins-official": true` line from `enabledPlugins`
