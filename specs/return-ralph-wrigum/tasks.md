@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Get implement.md invoking /ralph-loop and stop-watcher.sh passive. Skip test updates.
 
-- [ ] 1.1 Strip loop control output from stop-watcher.sh
+- [x] 1.1 Strip loop control output from stop-watcher.sh
   - **Do**: Remove the continuation prompt output block from stop-watcher.sh while keeping all logging, cleanup, and validation logic.
     1. Remove the `if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]` block that outputs the `cat <<EOF` continuation prompt (approximately lines 131-161)
     2. Remove the `RECOVERY_MODE` and `MAX_TASK_ITER` reads that only served the continuation prompt

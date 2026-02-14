@@ -1,9 +1,9 @@
 #!/bin/bash
-# Stop Hook for Ralph Specum
-# Loop controller that manages task execution continuation
+# Stop Hook for Ralph Specum (passive mode)
+# Monitors execution state and performs cleanup - does NOT control the loop
 # 1. Logs current execution state to stderr
-# 2. Outputs continuation prompt when more tasks remain (phase=execution, taskIndex < totalTasks)
-# 3. Cleans up orphaned temp progress files (>60min old)
+# 2. Cleans up orphaned temp progress files (>60min old)
+# Note: Loop control is handled by Ralph Wiggum's stop hook
 # Note: .progress.md and .ralph-state.json are preserved
 
 # Read hook input from stdin
@@ -127,38 +127,8 @@ EOF
         echo "[ralph-specum] Session stopped during spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
     fi
 
-    # Loop control: output continuation prompt if more tasks remain
-    if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
-        # Read recovery mode for prompt customization
-        RECOVERY_MODE=$(jq -r '.recoveryMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
-        MAX_TASK_ITER=$(jq -r '.maxTaskIterations // 5' "$STATE_FILE" 2>/dev/null || echo "5")
-
-        # DESIGN NOTE: Prompt Duplication
-        # This continuation prompt is intentionally abbreviated compared to implement.md.
-        # - implement.md = full specification (source of truth for coordinator behavior)
-        # - stop-watcher.sh = abbreviated resume prompt (minimal context for loop continuation)
-        # This is an intentional design choice, not accidental duplication. The full
-        # specification lives in implement.md; this prompt provides just enough context
-        # for the coordinator to resume execution efficiently.
-
-        cat <<EOF
-Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
-
-## State
-Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE
-
-## Resume
-1. Read $SPEC_PATH/.ralph-state.json and $SPEC_PATH/tasks.md
-2. Delegate task $TASK_INDEX to spec-executor (or qa-engineer for [VERIFY])
-3. On TASK_COMPLETE: verify, update state, advance
-4. If taskIndex >= totalTasks: delete state file, output ALL_TASKS_COMPLETE
-
-## Critical
-- Delegate via Task tool - do NOT implement yourself
-- Verify all 4 layers before advancing (see implement.md Section 7)
-- On failure: increment taskIteration, retry or generate fix task if recoveryMode
-EOF
-    fi
+    # Note: Loop control is handled by Ralph Wiggum's stop hook
+    # This script is passive - no continuation prompts are output to stdout
 fi
 
 # Cleanup orphaned temp progress files (from interrupted parallel batches)
