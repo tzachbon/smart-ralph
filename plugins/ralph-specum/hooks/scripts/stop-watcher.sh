@@ -119,7 +119,7 @@ if [ "$CORRUPT_STATE" = false ]; then
     MAX_GLOBAL=$(jq -r '.maxGlobalIterations // 100' "$STATE_FILE" 2>/dev/null || echo "100")
 
     if [ "$GLOBAL_ITERATION" -ge "$MAX_GLOBAL" ]; then
-        cat <<EOF
+        REASON=$(cat <<EOF
 ERROR: Maximum global iterations ($MAX_GLOBAL) reached.
 
 This safety limit prevents infinite execution loops.
@@ -129,6 +129,16 @@ Recovery options:
 2. Fix issues manually, then run: /ralph-specum:implement
 3. Cancel and restart: /ralph-specum:cancel
 EOF
+)
+
+        jq -n \
+          --arg reason "$REASON" \
+          --arg msg "Ralph-specum: max iterations ($MAX_GLOBAL) reached" \
+          '{
+            "decision": "block",
+            "reason": $reason,
+            "systemMessage": $msg
+          }'
         exit 0
     fi
 

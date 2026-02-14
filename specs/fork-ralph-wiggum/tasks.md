@@ -78,7 +78,7 @@ Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON fo
   - _Requirements: FR-5, AC-4.1, AC-4.3_
   - _Design: Component 2_
 
-- [ ] 1.4 Convert max iterations error to JSON output
+- [x] 1.4 Convert max iterations error to JSON output
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. Replace lines 112-122 (the `cat <<EOF ... EOF` block for max iterations) with:
