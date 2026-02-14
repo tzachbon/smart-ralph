@@ -84,19 +84,29 @@ State files from earlier versions may lack new fields. The system handles this g
 
 ## Start Execution
 
-After writing the state file, output the coordinator prompt below. This starts the execution loop.
-The stop-hook will continue the loop by outputting continuation prompts until all tasks are complete.
+After writing the state file, invoke `/ralph-loop` with the coordinator prompt below. This starts the execution loop.
+Ralph Wiggum re-injects the coordinator prompt each iteration, replacing the previous stop-watcher continuation mechanism.
+
+**Calculate max iterations**:
+```
+maxIterations = totalTasks * maxTaskIterations * 2
+```
+
+**Invoke ralph-loop**: Call `/ralph-loop "<coordinator-prompt>" --max-iterations $maxIterations --completion-promise "ALL_TASKS_COMPLETE"` using the Skill tool.
+
+Where `<coordinator-prompt>` is the entire Coordinator Prompt section below (all orchestration logic from section 1 through section 11).
 
 **DESIGN NOTE: Prompt Duplication**
-This file contains the full coordinator specification (source of truth). The stop-watcher.sh
-outputs an abbreviated resume prompt for loop continuation. This is intentional design:
-- implement.md = comprehensive specification for initial execution
-- stop-watcher.sh = minimal context for efficient loop resumption
-The duplication is by design to balance completeness vs. token efficiency.
+This file contains the full coordinator specification (source of truth). Ralph Wiggum's
+`/ralph-loop` re-injects this prompt each iteration, replacing the previous stop-watcher.sh
+continuation mechanism. There is no longer a separate abbreviated resume prompt:
+- implement.md = comprehensive specification passed to ralph-loop
+- ralph-loop = handles re-injection and iteration control
+- stop-watcher.sh = passive (logging/cleanup only, no stdout output)
 
 ## Coordinator Prompt
 
-Output this prompt directly to start execution:
+Pass this prompt to `/ralph-loop` as the first argument:
 
 ```text
 You are the execution COORDINATOR for spec: $spec
@@ -1256,17 +1266,3 @@ When all Step 4 criteria met:
 - Document all failures in .progress.md Learnings
 ```
 
-## Output on Start
-
-```text
-Starting execution for '$spec'
-
-Tasks: $completed/$total completed
-Starting from task $taskIndex
-
-The execution loop will:
-- Execute one task at a time
-- Continue until all tasks complete or max iterations reached
-
-Beginning execution...
-```

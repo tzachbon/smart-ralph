@@ -38,7 +38,7 @@ Focus: Get implement.md invoking /ralph-loop and stop-watcher.sh passive. Skip t
   - _Requirements: FR-6, AC-4.3_
   - _Design: Component 1, Dependency Check_
 
-- [ ] 1.3 Modify implement.md to invoke /ralph-loop instead of outputting prompt directly
+- [x] 1.3 Modify implement.md to invoke /ralph-loop instead of outputting prompt directly
   - **Do**: Change the execution start mechanism from direct prompt output to Ralph Wiggum invocation.
     1. In the "## Start Execution" section, replace the instruction to "output the coordinator prompt below" with instructions to invoke `/ralph-loop`
     2. Add max-iterations calculation: `maxIterations = totalTasks * maxTaskIterations * 2`
