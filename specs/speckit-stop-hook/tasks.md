@@ -122,7 +122,7 @@ After POC validated, ensure code quality and consistency.
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Create speckit test helper setup.bash
+- [x] 3.1 Create speckit test helper setup.bash
   - **Do**: Create `tests/speckit-helpers/setup.bash` adapted from `tests/helpers/setup.bash`:
     1. Point STOP_WATCHER_SCRIPT to `plugins/ralph-speckit/hooks/scripts/stop-watcher.sh`
     2. Remove PATH_RESOLVER_SCRIPT export (speckit doesn't use it)
