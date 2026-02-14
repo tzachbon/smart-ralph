@@ -994,6 +994,8 @@ If output is non-empty (uncommitted changes):
 
 All spec file changes must be committed before task is considered complete.
 
+**IMPORTANT**: The coordinator is responsible for committing spec tracking files (.progress.md, tasks.md, .index/) after each state update (section 8) and at completion (section 10). Never leave spec files uncommitted between tasks.
+
 **Layer 3: Checkmark Verification**
 
 Count completed tasks in tasks.md:
@@ -1041,6 +1043,10 @@ After successful completion (TASK_COMPLETE for sequential or all parallel tasks 
 3. Reset taskIteration to 1
 4. Increment globalIteration by 1
 5. Write updated state
+6. Commit all spec file changes:
+   ```bash
+   git add ./specs/$spec/tasks.md ./specs/$spec/.progress.md ./specs/.index/ && git commit -m "chore(spec): update progress for task $taskIndex"
+   ```
 
 **Parallel Batch Update**:
 1. Read current .ralph-state.json
@@ -1048,6 +1054,10 @@ After successful completion (TASK_COMPLETE for sequential or all parallel tasks 
 3. Reset taskIteration to 1
 4. Increment globalIteration by 1
 5. Write updated state
+6. Commit all spec file changes:
+   ```bash
+   git add ./specs/$spec/tasks.md ./specs/$spec/.progress.md ./specs/.index/ && git commit -m "chore(spec): update progress for parallel batch"
+   ```
 
 State structure:
 ```json
@@ -1073,6 +1083,7 @@ Check if all tasks complete:
 2. Extract completed task entries and learnings
 3. Append to main .progress.md in task index order
 4. Delete temp files after merge
+5. Commit merged progress (handled by State Update step 6 above)
 
 Merge format in .progress.md:
 ```markdown
@@ -1120,7 +1131,12 @@ Before outputting:
    ```bash
    ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
    ```
-5. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
+5. **Commit all remaining spec changes** (progress, tasks, index):
+   ```bash
+   git add ./specs/$spec/ ./specs/.index/ && git commit -m "chore(spec): final progress update for $spec"
+   ```
+   Only commit if there are staged changes (skip if working tree is clean for these paths).
+6. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
 
 This signal terminates the Ralph Loop loop.
 
