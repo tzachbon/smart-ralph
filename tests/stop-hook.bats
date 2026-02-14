@@ -110,8 +110,9 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    # Should not output continuation prompt for corrupt state
-    assert_output_not_contains "Continue spec"
+    # Should output JSON error, not continuation prompt
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt"
 }
 
 @test "outputs error message for corrupt JSON" {
@@ -119,9 +120,10 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    # New behavior: outputs structured error to stdout with recovery options
-    assert_output_contains "ERROR: Corrupt state file"
-    assert_output_contains "Recovery options"
+    # New behavior: outputs structured JSON error to stdout with recovery options
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt state file"
+    assert_json_reason_contains "Recovery options"
 }
 
 # =============================================================================

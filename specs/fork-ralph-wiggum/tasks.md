@@ -181,7 +181,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - _Requirements: FR-10, AC-6.1_
   - _Design: Test Strategy - stop-hook.bats Changes_
 
-- [ ] 3.2 Update stop-hook.bats error assertions to JSON
+- [x] 3.2 Update stop-hook.bats error assertions to JSON
   - **Do**:
     1. Open `tests/stop-hook.bats`
     2. Update test "outputs error message for corrupt JSON" (lines 114-122):
