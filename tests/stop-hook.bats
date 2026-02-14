@@ -204,6 +204,69 @@ load 'helpers/setup.bash'
 }
 
 # =============================================================================
+# Test: stop_hook_active guard
+# =============================================================================
+
+@test "exits silently when stop_hook_active is true" {
+    create_state_file "execution" 0 5 1
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" true)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT' 2>/dev/null"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "outputs JSON when stop_hook_active is false" {
+    create_state_file "execution" 0 5 1
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" false)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+}
+
+@test "JSON output has all three required fields" {
+    create_state_file "execution" 0 5 1
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+    assert_json_system_message_contains "Ralph-specum"
+}
+
+@test "max iterations error is JSON format" {
+    create_state_file "execution" 2 5 1
+    # Set globalIteration to match maxGlobalIterations to trigger the error
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.globalIteration = 100 | .maxGlobalIterations = 100' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Maximum global iterations"
+}
+
+@test "corrupt state error still fires when stop_hook_active is true" {
+    create_corrupt_state_file
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" true)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt"
+}
+
+# =============================================================================
 # Test: Stderr logging for execution phase
 # =============================================================================
 

@@ -202,7 +202,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - **Done when**: All 24+ stop-hook tests pass (18 existing + updated assertions)
   - **Commit**: `chore(stop-hook): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.4 Add new stop_hook_active guard tests
+- [x] 3.4 Add new stop_hook_active guard tests
   - **Do**:
     1. Open `tests/stop-hook.bats`
     2. Add new test section after the "Plugin disabled" tests (after line 198):
