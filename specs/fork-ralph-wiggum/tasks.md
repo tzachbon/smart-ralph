@@ -35,7 +35,7 @@ This spec is not complete until ALL criteria are met:
 
 Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON format. Add `stop_hook_active` guard. Prove the JSON output works via bats.
 
-- [ ] 1.1 Add JSON assertion helpers to test setup
+- [x] 1.1 Add JSON assertion helpers to test setup
   - **Do**:
     1. Open `tests/helpers/setup.bash`
     2. Add three new helper functions after the existing `assert_stderr_contains` function (after line 158):

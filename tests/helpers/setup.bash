@@ -157,6 +157,46 @@ assert_stderr_contains() {
     fi
 }
 
+# Assert output is valid JSON with decision="block"
+assert_json_block() {
+    if ! echo "$output" | jq empty 2>/dev/null; then
+        echo "Expected valid JSON output"
+        echo "Actual output: $output"
+        return 1
+    fi
+    local decision
+    decision=$(echo "$output" | jq -r '.decision')
+    if [ "$decision" != "block" ]; then
+        echo "Expected decision='block', got: $decision"
+        echo "Full output: $output"
+        return 1
+    fi
+}
+
+# Assert JSON reason field contains expected text
+assert_json_reason_contains() {
+    local expected="$1"
+    local reason
+    reason=$(echo "$output" | jq -r '.reason // empty')
+    if [[ "$reason" != *"$expected"* ]]; then
+        echo "Expected JSON reason to contain: $expected"
+        echo "Actual reason: $reason"
+        return 1
+    fi
+}
+
+# Assert JSON systemMessage field contains expected text
+assert_json_system_message_contains() {
+    local expected="$1"
+    local msg
+    msg=$(echo "$output" | jq -r '.systemMessage // empty')
+    if [[ "$msg" != *"$expected"* ]]; then
+        echo "Expected JSON systemMessage to contain: $expected"
+        echo "Actual systemMessage: $msg"
+        return 1
+    fi
+}
+
 # Create a mock transcript file with specified content
 # Usage: create_transcript [content]
 create_transcript() {
