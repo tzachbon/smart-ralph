@@ -50,7 +50,7 @@ Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON fo
   - _Requirements: FR-10, AC-6.3_
   - _Design: Component 5_
 
-- [ ] 1.2 Parameterize hook input helpers with stop_hook_active
+- [x] 1.2 Parameterize hook input helpers with stop_hook_active
   - **Do**:
     1. Open `tests/helpers/setup.bash`
     2. Modify `create_hook_input()` (lines 64-74): add second parameter `stop_hook_active` defaulting to `false`, use `$stop_hook_active` (no quotes) in JSON output

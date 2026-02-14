@@ -60,14 +60,14 @@ EOF
 }
 
 # Create hook input JSON (simulates what Claude sends to stop hooks)
-# Usage: create_hook_input [cwd]
+# Usage: create_hook_input [cwd] [stop_hook_active]
 create_hook_input() {
     local cwd="${1:-$TEST_WORKSPACE}"
-
+    local stop_hook_active="${2:-false}"
     cat <<EOF
 {
   "cwd": "$cwd",
-  "stop_hook_active": true,
+  "stop_hook_active": $stop_hook_active,
   "session_id": "test-session"
 }
 EOF
@@ -208,15 +208,15 @@ create_transcript() {
 }
 
 # Create hook input JSON with transcript_path
-# Usage: create_hook_input_with_transcript [transcript_path] [cwd]
+# Usage: create_hook_input_with_transcript [transcript_path] [cwd] [stop_hook_active]
 create_hook_input_with_transcript() {
     local transcript_path="${1:-}"
     local cwd="${2:-$TEST_WORKSPACE}"
-
+    local stop_hook_active="${3:-false}"
     cat <<EOF
 {
   "cwd": "$cwd",
-  "stop_hook_active": true,
+  "stop_hook_active": $stop_hook_active,
   "session_id": "test-session",
   "transcript_path": "$transcript_path"
 }
