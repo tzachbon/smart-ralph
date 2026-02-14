@@ -67,7 +67,7 @@ plugins/ralph-specum/
 ### Execution Flow
 
 1. **Spec Phases**: Each command (`/ralph-specum:research`, `:requirements`, `:design`, `:tasks`) invokes a specialized agent to generate corresponding markdown in `./specs/<spec-name>/`
-2. **Execution Loop**: During execution (`/ralph-specum:implement`), the stop-hook reads `.ralph-state.json`, delegates tasks to spec-executor via Task tool, and outputs `ALL_TASKS_COMPLETE` when done. The loop is self-contained (no external plugin required).
+2. **Execution Loop**: During execution (`/ralph-specum:implement`), the command invokes `/ralph-loop` (from Ralph Wiggum plugin) with the coordinator prompt. Ralph Wiggum handles prompt re-injection each turn. The coordinator reads `.ralph-state.json`, delegates tasks to spec-executor via Task tool, and outputs `ALL_TASKS_COMPLETE` when done. The stop-watcher.sh hook is passive (logging/cleanup only).
 3. **Fresh Context**: Each task runs in isolation via Task tool. Progress persists in `.progress.md` and task checkmarks in `tasks.md`
 
 ### State Files
@@ -102,7 +102,11 @@ Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinato
 
 ### Dependencies
 
-Ralph Specum v3.0.0+ is self-contained with no external plugin dependencies. The execution loop is handled by the stop-hook.
+Ralph Specum v4.0.0+ requires the **Ralph Wiggum** plugin (`ralph-wiggum`) for execution loop control. Install it via:
+```
+/plugin install ralph-wiggum@claude-plugins-official
+```
+Ralph Wiggum provides `/ralph-loop` (persistent prompt re-injection) and `/cancel-ralph` (loop termination). The stop-watcher.sh hook remains but is passive (logging only, no loop control output).
 
 ## Key Files
 
@@ -112,3 +116,5 @@ Ralph Specum v3.0.0+ is self-contained with no external plugin dependencies. The
 - `agents/spec-executor.md` - Task execution rules, commit discipline
 - `agents/task-planner.md` - Task format, quality checkpoint rules, POC workflow
 - `templates/*.md` - Spec file templates with structure requirements
+
+> **Dependency note**: `implement.md` invokes `/ralph-loop` and `cancel.md` invokes `/cancel-ralph`, both provided by the `ralph-wiggum` plugin. The plugin must be installed for execution to work.
