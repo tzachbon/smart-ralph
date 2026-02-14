@@ -177,7 +177,7 @@ Update bats tests for passive stop-watcher behavior.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Run shellcheck on all scripts
+- [x] 4.1 Run shellcheck on all scripts
   - **Do**: Lint all shell scripts for quality.
     1. Run shellcheck on hooks/scripts/*.sh
     2. Fix any warnings/errors introduced by changes
