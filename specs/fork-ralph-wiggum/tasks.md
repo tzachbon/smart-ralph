@@ -125,7 +125,7 @@ Focus: Convert all 3 output blocks in stop-watcher.sh from plain text to JSON fo
     5. Verify `systemMessage` field is present
     6. Test with `stop_hook_active: true` and verify no output
   - **Verify**: Run inline bash validation:
-    ```
+    ```bash
     cd /tmp && mkdir -p poc-test/specs/test-spec/.claude && echo "test-spec" > poc-test/specs/.current-spec && echo '{"phase":"execution","taskIndex":0,"totalTasks":3,"taskIteration":1}' > poc-test/specs/test-spec/.ralph-state.json && echo '{"cwd":"/tmp/poc-test","stop_hook_active":false,"session_id":"test"}' | bash plugins/ralph-specum/hooks/scripts/stop-watcher.sh | jq -e '.decision == "block"' && echo "POC PASS" && rm -rf /tmp/poc-test
     ```
   - **Done when**: JSON output validates via jq, `stop_hook_active` guard works
@@ -206,7 +206,7 @@ Update all bats tests to assert JSON format instead of plain text.
   - **Do**:
     1. Open `tests/stop-hook.bats`
     2. Add new test section after the "Plugin disabled" tests (after line 198):
-       ```
+       ```bash
        # =============================================================================
        # Test: stop_hook_active guard
        # =============================================================================
@@ -365,7 +365,7 @@ Update all bats tests to assert JSON format instead of plain text.
 
 ## Dependencies
 
-```
+```bash
 1.1 (helpers) -> 1.2 (parameterize) -> 1.3-1.4 (error JSON) -> 1.6 (guard + continuation JSON) -> 1.7 (POC checkpoint)
 2.1 (settings/version) - independent of Phase 1
 3.1-3.6 (test updates) - depend on Phase 1 completion

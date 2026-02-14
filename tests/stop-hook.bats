@@ -240,7 +240,7 @@ load 'helpers/setup.bash'
     assert_json_system_message_contains "Ralph-specum"
 }
 
-@test "max iterations error is JSON format" {
+@test "max iterations error exits cleanly with stderr message" {
     create_state_file "execution" 2 5 1
     # Set globalIteration to match maxGlobalIterations to trigger the error
     local spec_dir="$TEST_WORKSPACE/specs/test-spec"
@@ -248,10 +248,11 @@ load 'helpers/setup.bash'
     tmp=$(jq '.globalIteration = 100 | .maxGlobalIterations = 100' "$spec_dir/.ralph-state.json")
     echo "$tmp" > "$spec_dir/.ralph-state.json"
 
-    run run_stop_watcher
-    [ "$status" -eq 0 ]
-    assert_json_block
-    assert_json_reason_contains "Maximum global iterations"
+    # Max iterations now exits cleanly (no JSON block) to allow Claude to stop
+    # Capture stderr separately to verify error message
+    local stderr_output
+    stderr_output=$(run_stop_watcher 2>&1 >/dev/null || true)
+    [[ "$stderr_output" == *"Maximum global iterations"* ]]
 }
 
 @test "corrupt state error still fires when stop_hook_active is true" {

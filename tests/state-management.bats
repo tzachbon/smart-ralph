@@ -345,12 +345,14 @@ load 'helpers/setup.bash'
     # Set globalIteration to match maxGlobalIterations (at limit)
     jq '.globalIteration = 100 | .maxGlobalIterations = 100' "$state_file" > "$state_file.tmp" && mv "$state_file.tmp" "$state_file"
 
-    run run_stop_watcher
-    [ "$status" -eq 0 ]
-    # Should output error about max iterations reached
-    assert_json_block
-    assert_json_reason_contains "Maximum global iterations"
-    assert_output_not_contains "Continue"
+    # Max iterations now exits cleanly (no JSON block) to allow Claude to stop
+    # Capture stderr separately to verify error message
+    local stderr_output
+    local stdout_output
+    stdout_output=$(run_stop_watcher 2>/tmp/test_stderr || true)
+    stderr_output=$(cat /tmp/test_stderr)
+    [[ "$stderr_output" == *"Maximum global iterations"* ]]
+    [[ "$stdout_output" != *"Continue"* ]]
 }
 
 @test "stop hook allows execution when under maxGlobalIterations" {

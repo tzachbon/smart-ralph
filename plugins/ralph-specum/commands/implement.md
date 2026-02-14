@@ -1043,9 +1043,10 @@ After successful completion (TASK_COMPLETE for sequential or all parallel tasks 
 3. Reset taskIteration to 1
 4. Increment globalIteration by 1
 5. Write updated state
-6. Commit all spec file changes:
+6. Commit all spec file changes (skip if nothing staged):
    ```bash
-   git add ./specs/$spec/tasks.md ./specs/$spec/.progress.md ./specs/.index/ && git commit -m "chore(spec): update progress for task $taskIndex"
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git diff --cached --quiet || git commit -m "chore(spec): update progress for task $taskIndex"
    ```
 
 **Parallel Batch Update**:
@@ -1054,9 +1055,10 @@ After successful completion (TASK_COMPLETE for sequential or all parallel tasks 
 3. Reset taskIteration to 1
 4. Increment globalIteration by 1
 5. Write updated state
-6. Commit all spec file changes:
+6. Commit all spec file changes (skip if nothing staged):
    ```bash
-   git add ./specs/$spec/tasks.md ./specs/$spec/.progress.md ./specs/.index/ && git commit -m "chore(spec): update progress for parallel batch"
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git diff --cached --quiet || git commit -m "chore(spec): update progress for parallel batch"
    ```
 
 State structure:
@@ -1083,7 +1085,11 @@ Check if all tasks complete:
 2. Extract completed task entries and learnings
 3. Append to main .progress.md in task index order
 4. Delete temp files after merge
-5. Commit merged progress (handled by State Update step 6 above)
+5. Commit merged progress:
+   ```bash
+   git add "$SPEC_PATH/.progress.md" && git diff --cached --quiet || git commit -m "chore(spec): merge parallel progress"
+   ```
+   Note: This runs after merge, separate from State Update step 6.
 
 Merge format in .progress.md:
 ```markdown
@@ -1133,9 +1139,9 @@ Before outputting:
    ```
 5. **Commit all remaining spec changes** (progress, tasks, index):
    ```bash
-   git add ./specs/$spec/ ./specs/.index/ && git commit -m "chore(spec): final progress update for $spec"
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git diff --cached --quiet || git commit -m "chore(spec): final progress update for $spec"
    ```
-   Only commit if there are staged changes (skip if working tree is clean for these paths).
 6. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
 
 This signal terminates the Ralph Loop loop.

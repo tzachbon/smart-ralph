@@ -85,7 +85,6 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
 fi
 
 # Validate state file is readable JSON
-CORRUPT_STATE=false
 if ! jq empty "$STATE_FILE" 2>/dev/null; then
     REASON=$(cat <<EOF
 ERROR: Corrupt state file at $SPEC_PATH/.ralph-state.json
@@ -107,68 +106,54 @@ EOF
     exit 0
 fi
 
-# Read state for logging (guard all jq calls)
-if [ "$CORRUPT_STATE" = false ]; then
-    PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
-    TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-    TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-    TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
+# Read state for logging
+PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
+TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 
-    # Check global iteration limit
-    GLOBAL_ITERATION=$(jq -r '.globalIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
-    MAX_GLOBAL=$(jq -r '.maxGlobalIterations // 100' "$STATE_FILE" 2>/dev/null || echo "100")
+# Check global iteration limit
+GLOBAL_ITERATION=$(jq -r '.globalIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
+MAX_GLOBAL=$(jq -r '.maxGlobalIterations // 100' "$STATE_FILE" 2>/dev/null || echo "100")
 
-    if [ "$GLOBAL_ITERATION" -ge "$MAX_GLOBAL" ]; then
-        REASON=$(cat <<EOF
-ERROR: Maximum global iterations ($MAX_GLOBAL) reached.
+if [ "$GLOBAL_ITERATION" -ge "$MAX_GLOBAL" ]; then
+    echo "[ralph-specum] ERROR: Maximum global iterations ($MAX_GLOBAL) reached. Review .progress.md for failure patterns." >&2
+    echo "[ralph-specum] Recovery: fix issues manually, then run /ralph-specum:implement or /ralph-specum:cancel" >&2
+    exit 0
+fi
 
-This safety limit prevents infinite execution loops.
+# Log current state
+if [ "$PHASE" = "execution" ]; then
+    echo "[ralph-specum] Session stopped during spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
+fi
 
-Recovery options:
-1. Review .progress.md for failure patterns
-2. Fix issues manually, then run: /ralph-specum:implement
-3. Cancel and restart: /ralph-specum:cancel
-EOF
-)
+# Loop control: output continuation prompt if more tasks remain
+if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
+    # Read recovery mode for prompt customization
+    RECOVERY_MODE=$(jq -r '.recoveryMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+    MAX_TASK_ITER=$(jq -r '.maxTaskIterations // 5' "$STATE_FILE" 2>/dev/null || echo "5")
 
-        jq -n \
-          --arg reason "$REASON" \
-          --arg msg "Ralph-specum: max iterations ($MAX_GLOBAL) reached" \
-          '{
-            "decision": "block",
-            "reason": $reason,
-            "systemMessage": $msg
-          }'
+    # Safety guard: prevent infinite re-invocation loop
+    # If a stop event fires while already processing a stop-hook continuation,
+    # re-blocking would cause infinite loops. Allow Claude to stop; the next
+    # session start will detect remaining tasks via .ralph-state.json.
+    # Note: Claude Code does not currently set stop_hook_active in hook input,
+    # so this guard is defensive-only and never fires in normal operation.
+    STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
+    if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
+        echo "[ralph-specum] stop_hook_active=true, skipping continuation to prevent re-invocation loop" >&2
         exit 0
     fi
 
-    # Log current state
-    if [ "$PHASE" = "execution" ]; then
-        echo "[ralph-specum] Session stopped during spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
-    fi
+    # DESIGN NOTE: Prompt Duplication
+    # This continuation prompt is intentionally abbreviated compared to implement.md.
+    # - implement.md = full specification (source of truth for coordinator behavior)
+    # - stop-watcher.sh = abbreviated resume prompt (minimal context for loop continuation)
+    # This is an intentional design choice, not accidental duplication. The full
+    # specification lives in implement.md; this prompt provides just enough context
+    # for the coordinator to resume execution efficiently.
 
-    # Loop control: output continuation prompt if more tasks remain
-    if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
-        # Read recovery mode for prompt customization
-        RECOVERY_MODE=$(jq -r '.recoveryMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
-        MAX_TASK_ITER=$(jq -r '.maxTaskIterations // 5' "$STATE_FILE" 2>/dev/null || echo "5")
-
-        # Guard: skip if already in stop-hook continuation to prevent infinite loop
-        STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
-        if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
-            echo "[ralph-specum] stop_hook_active=true, skipping continuation to prevent re-invocation loop" >&2
-            exit 0
-        fi
-
-        # DESIGN NOTE: Prompt Duplication
-        # This continuation prompt is intentionally abbreviated compared to implement.md.
-        # - implement.md = full specification (source of truth for coordinator behavior)
-        # - stop-watcher.sh = abbreviated resume prompt (minimal context for loop continuation)
-        # This is an intentional design choice, not accidental duplication. The full
-        # specification lives in implement.md; this prompt provides just enough context
-        # for the coordinator to resume execution efficiently.
-
-        REASON=$(cat <<EOF
+    REASON=$(cat <<EOF
 Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
 
 ## State
@@ -187,17 +172,16 @@ Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITE
 EOF
 )
 
-        SYSTEM_MSG="Ralph-specum iteration $GLOBAL_ITERATION | Task $((TASK_INDEX + 1))/$TOTAL_TASKS"
+    SYSTEM_MSG="Ralph-specum iteration $GLOBAL_ITERATION | Task $((TASK_INDEX + 1))/$TOTAL_TASKS"
 
-        jq -n \
-          --arg reason "$REASON" \
-          --arg msg "$SYSTEM_MSG" \
-          '{
-            "decision": "block",
-            "reason": $reason,
-            "systemMessage": $msg
-          }'
-    fi
+    jq -n \
+      --arg reason "$REASON" \
+      --arg msg "$SYSTEM_MSG" \
+      '{
+        "decision": "block",
+        "reason": $reason,
+        "systemMessage": $msg
+      }'
 fi
 
 # Cleanup orphaned temp progress files (from interrupted parallel batches)
