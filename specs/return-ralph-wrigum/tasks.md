@@ -95,7 +95,7 @@ Clean up code, update documentation, bump version.
   - _Requirements: FR-9, AC-6.1, AC-6.2, AC-6.3_
   - _Design: Component 4_
 
-- [ ] 2.2 Update README.md with Ralph Wiggum dependency
+- [x] 2.2 Update README.md with Ralph Wiggum dependency
   - **Do**: Update README to document the Ralph Wiggum dependency and breaking change.
     1. Update the description line from "Self-contained execution loop. No external dependencies." to mention Ralph Wiggum dependency
     2. Add "Requirements" subsection in Installation listing Ralph Wiggum as a required dependency

@@ -12,7 +12,7 @@
 
 **Spec-driven development for Claude Code. Task-by-task execution with fresh context per task.**
 
-Self-contained execution loop. No external dependencies.
+Execution loop powered by [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum). Requires Ralph Wiggum plugin.
 
 [Quick Start](#-quick-start) | [Commands](#-commands) | [How It Works](#-how-it-works) | [Troubleshooting](#-troubleshooting)
 
@@ -39,12 +39,19 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ## Installation
 
+### Requirements
+
+- [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) plugin (provides `/ralph-loop` execution loop)
+
 ```bash
-# Install Smart Ralph
+# 1. Install Ralph Wiggum (required dependency)
+/plugin install ralph-wiggum@claude-plugins-official
+
+# 2. Install Smart Ralph
 /plugin marketplace add tzachbon/smart-ralph
 /plugin install ralph-specum@smart-ralph
 
-# Restart Claude Code
+# 3. Restart Claude Code
 ```
 
 <details>
@@ -285,7 +292,7 @@ smart-ralph/
 ├── .claude-plugin/
 │   └── marketplace.json
 ├── plugins/
-│   ├── ralph-specum/           # Spec workflow (self-contained)
+│   ├── ralph-specum/           # Spec workflow (requires Ralph Wiggum)
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   ├── agents/             # Sub-agent definitions
@@ -398,11 +405,18 @@ Specs live in `./specs/` in your project:
 
 ## Troubleshooting
 
+**"Ralph Wiggum not found" error?**
+Smart Ralph v4.0.0+ requires the Ralph Wiggum plugin. Install it:
+```bash
+/plugin install ralph-wiggum@claude-plugins-official
+```
+Then restart Claude Code and retry `/ralph-specum:implement`.
+
 **Task keeps failing?**
 After max iterations, the loop stops. Check `.progress.md` for errors. Fix manually, then `/ralph-specum:implement` to resume.
 
 **Want to start over?**
-`/ralph-specum:cancel` cleans up state files. Then start fresh.
+`/ralph-specum:cancel` cleans up state files and stops any active Ralph loop. Then start fresh.
 
 **Resume existing spec?**
 Just `/ralph-specum:start` - it auto-detects and continues where you left off.
@@ -412,6 +426,29 @@ Just `/ralph-specum:start` - it auto-detects and continues where you left off.
 ---
 
 ## Breaking Changes
+
+### v4.0.0
+
+**Ralph Wiggum dependency required**
+
+Starting with v4.0.0, Smart Ralph delegates execution loop control to the [Ralph Wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) plugin. You must install Ralph Wiggum before using `/ralph-specum:implement`.
+
+**Migration from v3.x:**
+1. Install Ralph Wiggum: `/plugin install ralph-wiggum@claude-plugins-official`
+2. Update Smart Ralph to v4.0.0+
+3. Restart Claude Code
+4. Existing specs continue working. No spec file changes needed.
+
+**What changed:**
+- Execution loop now powered by Ralph Wiggum (`/ralph-loop`)
+- Stop-hook is passive (logging only, no loop control output)
+- `/implement` invokes `/ralph-loop` with the coordinator prompt
+- `/cancel` calls `/cancel-ralph` before cleaning up state files
+
+**Why:**
+- Better loop reliability via dedicated loop plugin
+- Cleaner separation of concerns (loop control vs. task orchestration)
+- Shared loop infrastructure across plugins
 
 ### v3.0.0
 
