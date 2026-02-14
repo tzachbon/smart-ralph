@@ -29,12 +29,13 @@ if [ -f "$SETTINGS_FILE" ]; then
     fi
 fi
 
-# Read .current-feature to find active feature (fixed .specify/ path, no path resolver needed)
+# Resolve current feature (fixed .specify/ path, no path resolver needed unlike specum)
 CURRENT_FEATURE_FILE="$CWD/.specify/.current-feature"
 if [ ! -f "$CURRENT_FEATURE_FILE" ]; then
     exit 0
 fi
 
+# Extract feature name and derive spec path
 FEATURE_NAME=$(cat "$CURRENT_FEATURE_FILE" 2>/dev/null | tr -d '[:space:]')
 if [ -z "$FEATURE_NAME" ]; then
     exit 0
@@ -70,7 +71,7 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     # Primary: 500 lines covers most sessions for reliable detection
     if tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '^ALL_TASKS_COMPLETE$|^ALL_TASKS_COMPLETE[[:space:]]'; then
         echo "[ralph-speckit] ALL_TASKS_COMPLETE detected in transcript" >&2
-        # Note: State file cleanup is handled by the coordinator (implement.md)
+        # Note: State file cleanup is handled by the coordinator (implement.md Section 10)
         # Do not delete here to avoid race condition
         exit 0
     fi

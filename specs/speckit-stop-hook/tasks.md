@@ -94,7 +94,7 @@ Focus: Get the self-contained loop controller working end-to-end. Skip tests, ac
 
 After POC validated, ensure code quality and consistency.
 
-- [ ] 2.1 Align stop-watcher comments and structure with specum
+- [x] 2.1 Align stop-watcher comments and structure with specum
   - **Do**: Review the new stop-watcher.sh and ensure:
     1. Header comment matches specum pattern (describes all 3 responsibilities)
     2. Section comments are clear (settings check, race condition, transcript detection, etc.)
