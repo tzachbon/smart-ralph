@@ -158,7 +158,7 @@ Update bats tests for passive stop-watcher behavior.
   - **Commit**: `test(state): update state management tests for Ralph Wiggum integration`
   - _Requirements: AC-5.3_
 
-- [ ] 3.3 Run all bats tests
+- [x] 3.3 Run all bats tests
   - **Do**: Execute full test suite to verify no regressions.
     1. Run `bats tests/` to execute all test files
     2. If any tests fail, fix the issues
