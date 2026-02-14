@@ -76,10 +76,11 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
-    assert_output_contains ".ralph-state.json"
-    assert_output_contains "spec-executor"
-    assert_output_contains "ALL_TASKS_COMPLETE"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
+    assert_json_reason_contains ".ralph-state.json"
+    assert_json_reason_contains "spec-executor"
+    assert_json_reason_contains "ALL_TASKS_COMPLETE"
 }
 
 @test "outputs continuation prompt when tasks remain (midway)" {
@@ -87,7 +88,8 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
 }
 
 @test "outputs continuation prompt when one task remains" {
@@ -95,7 +97,8 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
 }
 
 # =============================================================================
@@ -194,7 +197,8 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
 }
 
 # =============================================================================
@@ -252,7 +256,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should output continuation prompt - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "handles missing transcript_path gracefully" {
@@ -265,7 +269,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should continue normally - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "handles non-existent transcript file gracefully" {
@@ -278,7 +282,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should continue normally - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "detects ALL_TASKS_COMPLETE with trailing whitespace" {

@@ -154,7 +154,7 @@ After POC validated, clean up configuration and version.
 
 Update all bats tests to assert JSON format instead of plain text.
 
-- [ ] 3.1 Update stop-hook.bats continuation assertions to JSON
+- [x] 3.1 Update stop-hook.bats continuation assertions to JSON
   - **Do**:
     1. Open `tests/stop-hook.bats`
     2. Update test "outputs continuation prompt when tasks remain (taskIndex=0)" (lines 74-83):
