@@ -146,7 +146,7 @@ Update bats tests for passive stop-watcher behavior.
   - _Requirements: FR-8, AC-5.1, AC-5.2_
   - _Design: Component 2_
 
-- [ ] 3.2 Update state-management.bats if needed
+- [x] 3.2 Update state-management.bats if needed
   - **Do**: Review and update state management tests for compatibility.
     1. Read current tests/state-management.bats
     2. Verify tests do not depend on stop-watcher loop control

@@ -285,22 +285,25 @@ load 'helpers/setup.bash'
 # Test: Stop hook relies on state file correctly
 # =============================================================================
 
-@test "stop hook uses taskIndex for continuation check" {
+@test "stop hook is passive when tasks remain" {
     # Tasks remaining (taskIndex < totalTasks)
+    # Passive stop-watcher does not output continuation prompts
+    # (loop control is Ralph Wiggum's job; only stderr logging occurs)
     create_state_file "execution" 2 5 1
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec"
+    assert_output_not_contains "Continue"
 }
 
 @test "stop hook silent when taskIndex equals totalTasks" {
     # No tasks remaining (taskIndex == totalTasks)
+    # Passive stop-watcher does not output continuation prompts regardless
     create_state_file "execution" 5 5 1
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_not_contains "Continue spec"
+    assert_output_not_contains "Continue"
 }
 
 @test "stop hook reads phase from state file" {
@@ -311,13 +314,14 @@ load 'helpers/setup.bash'
     [ "$status" -eq 0 ]
     [ -z "$output" ]
 
-    # Change to execution phase
+    # Change to execution phase - passive stop-watcher does not output continuation prompts
+    # (loop control is handled by Ralph Wiggum; only stderr logging occurs)
     local state_file="$TEST_WORKSPACE/specs/test-spec/.ralph-state.json"
     jq '.phase = "execution"' "$state_file" > "$state_file.tmp" && mv "$state_file.tmp" "$state_file"
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue"
+    assert_output_not_contains "Continue"
 }
 
 # =============================================================================
@@ -331,10 +335,10 @@ load 'helpers/setup.bash'
 
     # State file created by helper doesn't include maxGlobalIterations
     # Stop hook should use default of 100
+    # Passive stop-watcher does not output continuation prompts (globalIteration 1 < default 100)
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    # Should continue (globalIteration 1 < default 100)
-    assert_output_contains "Continue"
+    assert_output_not_contains "Continue"
 }
 
 @test "stop hook enforces maxGlobalIterations limit" {
@@ -360,8 +364,8 @@ load 'helpers/setup.bash'
     # Set globalIteration below maxGlobalIterations
     jq '.globalIteration = 50 | .maxGlobalIterations = 100' "$state_file" > "$state_file.tmp" && mv "$state_file.tmp" "$state_file"
 
+    # Passive stop-watcher does not output continuation prompts (50 < 100, no error)
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    # Should continue (50 < 100)
-    assert_output_contains "Continue"
+    assert_output_not_contains "Continue"
 }
