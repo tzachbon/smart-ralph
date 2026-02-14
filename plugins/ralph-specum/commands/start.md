@@ -1,7 +1,7 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
 argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>]
-allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Start
@@ -227,7 +227,7 @@ You MUST delegate ALL substantive work to subagents. This is NON-NEGOTIABLE rega
 **ALWAYS delegate to the appropriate subagent:**
 | Work Type | Subagent |
 |-----------|----------|
-| Research | `research-analyst` |
+| Research | Research Team (multiple parallel teammates) |
 | Requirements | `product-manager` |
 | Design | `architect-reviewer` |
 | Task Planning | `task-planner` |
@@ -581,7 +581,7 @@ Rollback Procedure:
 
 | Phase | Action |
 |-------|--------|
-| research | Invoke research-analyst agent |
+| research | Create research team, spawn parallel teammates, merge results |
 | requirements | Invoke product-manager agent |
 | design | Invoke architect-reviewer agent |
 | tasks | Invoke task-planner agent |
@@ -670,8 +670,8 @@ The only exception is `--quick` mode, which skips approval between phases.
    ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
    ```
 10. **Goal Interview** (skip if --quick in $ARGUMENTS)
-11. Invoke research-analyst agent with goal interview context
-12. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
+11. **Team Research Phase** - Create research team, spawn parallel teammates, merge results (see "Team Research Phase" section below)
+12. **STOP** - After merge and state update (awaitingApproval=true), display walkthrough and wait for user to run `/ralph-specum:requirements`
 
 ## Index Hint
 
@@ -1109,12 +1109,12 @@ After interview, update `.progress.md` with Interview Format, Intent Classificat
 [Any follow-up responses from "Other" selections]
 ```
 
-### Pass Context to Research
+### Pass Context to Research Team
 
-Include goal interview context when invoking research-analyst:
+Include goal interview context in each research teammate's task description:
 
 ```text
-Task delegation prompt should include:
+Each TaskCreate description should include:
 
 Goal Interview Context:
 - Problem: [response]
@@ -1123,6 +1123,311 @@ Goal Interview Context:
 
 Use this context to focus research on relevant areas.
 ```
+
+## Team Research Phase
+
+<mandatory>
+**This section implements step 11 of the New Flow.**
+
+Research uses Claude Code Teams to spawn multiple parallel researcher teammates in both normal and quick mode. The only difference: in quick mode, skip the walkthrough display (step 11k) and do NOT wait for user response - proceed directly to the next phase.
+</mandatory>
+
+### 11a: Analyze Research Topics
+
+Break the goal into 2-5 distinct research topics based on the goal interview context. Classify each topic by agent type:
+
+```text
+Topic Analysis:
+
+1. Parse the goal and interview responses from .progress.md
+2. Identify distinct research areas:
+   - External/web topics (best practices, libraries, APIs) → research-analyst teammate
+   - Codebase analysis topics (existing patterns, dependencies) → Explore teammate
+   - Quality commands discovery → Explore teammate
+   - Related specs discovery → Explore teammate
+3. Output topic list:
+
+   Research topics identified:
+   1. [Topic A] → research-analyst
+   2. [Topic B] → research-analyst
+   3. Codebase patterns → Explore
+   4. Quality commands → Explore
+   ...
+
+Minimum: 2 topics (1 research-analyst + 1 Explore)
+Maximum: 5 topics
+```
+
+### 11b: Create Research Team
+
+```text
+1. Check if team "research-$name" already exists:
+   - Read ~/.claude/teams/research-$name/config.json
+   - If exists: TeamDelete() first to clean up orphaned team
+
+2. Create team:
+   TeamCreate(team_name: "research-$name", description: "Parallel research for spec $name")
+```
+
+### 11c: Create Research Tasks
+
+Create one TaskCreate per topic with detailed descriptions and output file paths:
+
+```text
+For each topic identified in 11a:
+
+TaskCreate(
+  subject: "[Topic name] research",
+  description: "Research topic: [topic]
+    Spec: $name
+    Spec path: $basePath
+    Output file: $basePath/.research-[topic-slug].md
+
+    Goal Interview Context:
+    - Problem: [from .progress.md]
+    - Constraints: [from .progress.md]
+    - Success criteria: [from .progress.md]
+
+    Instructions:
+    [topic-specific research instructions]
+
+    Write all findings to the output file.",
+  activeForm: "Researching [topic]"
+)
+```
+
+**Output file naming convention:**
+- External topics: `.research-[topic-slug].md` (e.g., `.research-oauth-patterns.md`)
+- Codebase analysis: `.research-codebase.md`
+- Quality commands: `.research-quality.md`
+- Related specs: `.research-related-specs.md`
+
+### 11d: Spawn Teammates
+
+<mandatory>
+**ALL Task calls MUST be in ONE message to ensure true parallel execution.**
+
+Spawn one teammate per task. Use the appropriate subagent_type:
+- `research-analyst` for web/external research topics
+- `Explore` for codebase analysis topics
+
+Each Task call should include:
+- `team_name: "research-$name"` to join the team
+- `name: "researcher-N"` or `"explorer-N"` for identification
+- The full task description with spec path, output file, and context
+</mandatory>
+
+```text
+Example - 4 topics spawn 4 teammates in ONE message:
+
+Task(
+  subagent_type: research-analyst,
+  team_name: "research-$name",
+  name: "researcher-1",
+  prompt: "You are a research teammate...
+    Topic: OAuth authentication patterns
+    Output: $basePath/.research-oauth.md
+    [goal context]
+    Research best practices, libraries, pitfalls.
+    Write findings to output file.
+    When done, mark your task complete via TaskUpdate."
+)
+
+Task(
+  subagent_type: research-analyst,
+  team_name: "research-$name",
+  name: "researcher-2",
+  prompt: "You are a research teammate...
+    Topic: Rate limiting strategies
+    Output: $basePath/.research-rate-limiting.md
+    [goal context]
+    Research strategies, algorithms, implementations.
+    Write findings to output file.
+    When done, mark your task complete via TaskUpdate."
+)
+
+Task(
+  subagent_type: Explore,
+  team_name: "research-$name",
+  name: "explorer-1",
+  prompt: "Analyze codebase for spec: $name
+    Output: $basePath/.research-codebase.md
+    Find existing patterns, dependencies, constraints.
+    Write findings to output file."
+)
+
+Task(
+  subagent_type: Explore,
+  team_name: "research-$name",
+  name: "explorer-2",
+  prompt: "Discover quality commands for spec: $name
+    Output: $basePath/.research-quality.md
+    Check package.json scripts, Makefile, CI workflows.
+    Write findings to output file."
+)
+```
+
+### 11e: Wait for Completion
+
+Monitor teammate progress via TaskList and automatic teammate messages:
+
+```text
+1. Teammates send messages automatically when they complete tasks or need help
+2. Messages are delivered automatically to you (no polling needed)
+3. Use TaskList periodically to check overall progress
+4. Wait until ALL tasks show status: "completed"
+5. If a teammate reports an error, note it for the merge step
+```
+
+### 11f: Shutdown Teammates
+
+After all tasks complete, gracefully shut down each teammate:
+
+```text
+For each teammate:
+  SendMessage(
+    type: "shutdown_request",
+    recipient: "[teammate-name]",
+    content: "Research complete, shutting down"
+  )
+```
+
+### 11g: Merge Results
+
+<mandatory>
+After all teammates complete, merge partial research files into a single research.md.
+</mandatory>
+
+```text
+1. Read all .research-*.md files from $basePath:
+   - .research-[topic-slug].md files (from research-analyst teammates)
+   - .research-codebase.md (from Explore teammates)
+   - .research-quality.md (from Explore teammates)
+   - .research-related-specs.md (from Explore teammates)
+   - Handle missing files gracefully (note gaps in merge)
+
+2. Create unified $basePath/research.md with standard structure:
+
+   # Research: $name
+
+   ## Executive Summary
+   [Synthesize key findings from ALL teammates - 2-3 sentences]
+
+   ## External Research
+   [Merge from all .research-[topic].md files]
+   ### Best Practices
+   ### Prior Art
+   ### Pitfalls to Avoid
+
+   ## Codebase Analysis
+   [From .research-codebase.md]
+   ### Existing Patterns
+   ### Dependencies
+   ### Constraints
+
+   ## Related Specs
+   [From .research-related-specs.md if exists]
+
+   ## Quality Commands
+   [From .research-quality.md if exists]
+
+   ## Feasibility Assessment
+   [Synthesize from all sources]
+
+   ## Recommendations for Requirements
+   [Consolidated recommendations]
+
+   ## Open Questions
+   [Consolidated from all teammates]
+
+   ## Sources
+   [All URLs and file paths from all teammates]
+
+3. Delete partial research files after successful merge:
+   rm $basePath/.research-*.md
+
+4. Quality check: Ensure no duplicate information, consistent formatting
+```
+
+### 11h: Clean Up Team
+
+```text
+TeamDelete()
+```
+
+This removes the team directory and task list for `research-$name`.
+
+### 11i: Update State
+
+```text
+1. Update $basePath/.ralph-state.json:
+   - Normal mode:
+     {
+       ...existing state,
+       "phase": "research",
+       "awaitingApproval": true
+     }
+   - Quick mode:
+     {
+       ...existing state,
+       "phase": "research"
+     }
+     (Do NOT set awaitingApproval - proceed directly to next phase)
+
+2. Update $basePath/.progress.md with research completion:
+   - Add "## Research Phase" section
+   - Note: parallel team research completed
+   - List topics researched and teammate count
+```
+
+### 11j: Commit Spec
+
+Read `commitSpec` from `.ralph-state.json`.
+
+If `commitSpec` is true:
+```bash
+git add $basePath/research.md
+git commit -m "spec($name): add research findings"
+git push -u origin $(git branch --show-current)
+```
+
+If commit or push fails, display warning but continue.
+
+### 11k: Display Walkthrough
+
+<mandatory>
+**WALKTHROUGH IS REQUIRED IN NORMAL MODE - DO NOT SKIP.**
+
+**Quick mode (`--quick`)**: Skip the walkthrough display. Do NOT stop or wait for user response. Proceed directly to the next phase (requirements via plan-synthesizer).
+
+**Normal mode**: After research.md is created, display a concise walkthrough:
+
+```
+Research complete for '$name'.
+Output: $basePath/research.md
+
+## What I Found
+
+**Summary**: [1-2 sentences from Executive Summary]
+
+**Key Recommendations**:
+1. [First recommendation]
+2. [Second recommendation]
+3. [Third recommendation]
+
+**Feasibility**: [High/Medium/Low] | **Risk**: [High/Medium/Low] | **Effort**: [S/M/L/XL]
+```
+
+Then STOP. Output: `→ Next: Run /ralph-specum:requirements`
+End response immediately. Wait for user to run `/ralph-specum:requirements`.
+</mandatory>
+
+### Edge Cases
+
+- **Orphaned team on session interrupt**: Step 11b checks if team `research-$name` already exists and cleans it up first
+- **Teammate failure**: Merge step (11g) handles missing `.research-*.md` files gracefully, notes gaps in the merged research.md
+- **Quick mode**: Runs Team Research Phase but skips walkthrough and does not wait for user response - proceeds directly to next phase
+- **Team name conflicts**: Uses `research-$name` where spec names are unique within a project
 
 ## Quick Mode Flow
 
