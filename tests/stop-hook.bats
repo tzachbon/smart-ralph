@@ -76,10 +76,11 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
-    assert_output_contains ".ralph-state.json"
-    assert_output_contains "spec-executor"
-    assert_output_contains "ALL_TASKS_COMPLETE"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
+    assert_json_reason_contains ".ralph-state.json"
+    assert_json_reason_contains "spec-executor"
+    assert_json_reason_contains "ALL_TASKS_COMPLETE"
 }
 
 @test "outputs continuation prompt when tasks remain (midway)" {
@@ -87,7 +88,8 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
 }
 
 @test "outputs continuation prompt when one task remains" {
@@ -95,7 +97,8 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
 }
 
 # =============================================================================
@@ -107,8 +110,9 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    # Should not output continuation prompt for corrupt state
-    assert_output_not_contains "Continue spec"
+    # Should output JSON error, not continuation prompt
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt"
 }
 
 @test "outputs error message for corrupt JSON" {
@@ -116,9 +120,10 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    # New behavior: outputs structured error to stdout with recovery options
-    assert_output_contains "ERROR: Corrupt state file"
-    assert_output_contains "Recovery options"
+    # New behavior: outputs structured JSON error to stdout with recovery options
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt state file"
+    assert_json_reason_contains "Recovery options"
 }
 
 # =============================================================================
@@ -194,7 +199,72 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
+}
+
+# =============================================================================
+# Test: stop_hook_active guard
+# =============================================================================
+
+@test "exits silently when stop_hook_active is true" {
+    create_state_file "execution" 0 5 1
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" true)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT' 2>/dev/null"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "outputs JSON when stop_hook_active is false" {
+    create_state_file "execution" 0 5 1
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" false)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+}
+
+@test "JSON output has all three required fields" {
+    create_state_file "execution" 0 5 1
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+    assert_json_system_message_contains "Ralph-specum"
+}
+
+@test "max iterations error exits cleanly with stderr message" {
+    create_state_file "execution" 2 5 1
+    # Set globalIteration to match maxGlobalIterations to trigger the error
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.globalIteration = 100 | .maxGlobalIterations = 100' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    # Max iterations now exits cleanly (no JSON block) to allow Claude to stop
+    # Capture stderr separately to verify error message
+    local stderr_output
+    stderr_output=$(run_stop_watcher 2>&1 >/dev/null || true)
+    [[ "$stderr_output" == *"Maximum global iterations"* ]]
+}
+
+@test "corrupt state error still fires when stop_hook_active is true" {
+    create_corrupt_state_file
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" true)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt"
 }
 
 # =============================================================================
@@ -252,7 +322,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should output continuation prompt - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "handles missing transcript_path gracefully" {
@@ -265,7 +335,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should continue normally - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "handles non-existent transcript file gracefully" {
@@ -278,7 +348,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should continue normally - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "detects ALL_TASKS_COMPLETE with trailing whitespace" {

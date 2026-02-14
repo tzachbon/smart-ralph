@@ -60,14 +60,14 @@ EOF
 }
 
 # Create hook input JSON (simulates what Claude sends to stop hooks)
-# Usage: create_hook_input [cwd]
+# Usage: create_hook_input [cwd] [stop_hook_active]
 create_hook_input() {
     local cwd="${1:-$TEST_WORKSPACE}"
-
+    local stop_hook_active="${2:-false}"
     cat <<EOF
 {
   "cwd": "$cwd",
-  "stop_hook_active": true,
+  "stop_hook_active": $stop_hook_active,
   "session_id": "test-session"
 }
 EOF
@@ -157,6 +157,57 @@ assert_stderr_contains() {
     fi
 }
 
+# Extract JSON portion from output (filters out stderr lines mixed in by bats run)
+_extract_json_from_output() {
+    echo "$output" | grep -v '^\[ralph-specum\]' | jq -s 'last'
+}
+
+# Assert output is valid JSON with decision="block"
+assert_json_block() {
+    local json
+    json=$(_extract_json_from_output 2>/dev/null)
+    if [ -z "$json" ] || [ "$json" = "null" ]; then
+        echo "Expected valid JSON output"
+        echo "Actual output: $output"
+        return 1
+    fi
+    local decision
+    decision=$(echo "$json" | jq -r '.decision')
+    if [ "$decision" != "block" ]; then
+        echo "Expected decision='block', got: $decision"
+        echo "Full output: $output"
+        return 1
+    fi
+}
+
+# Assert JSON reason field contains expected text
+assert_json_reason_contains() {
+    local expected="$1"
+    local json
+    json=$(_extract_json_from_output 2>/dev/null)
+    local reason
+    reason=$(echo "$json" | jq -r '.reason // empty')
+    if [[ "$reason" != *"$expected"* ]]; then
+        echo "Expected JSON reason to contain: $expected"
+        echo "Actual reason: $reason"
+        return 1
+    fi
+}
+
+# Assert JSON systemMessage field contains expected text
+assert_json_system_message_contains() {
+    local expected="$1"
+    local json
+    json=$(_extract_json_from_output 2>/dev/null)
+    local msg
+    msg=$(echo "$json" | jq -r '.systemMessage // empty')
+    if [[ "$msg" != *"$expected"* ]]; then
+        echo "Expected JSON systemMessage to contain: $expected"
+        echo "Actual systemMessage: $msg"
+        return 1
+    fi
+}
+
 # Create a mock transcript file with specified content
 # Usage: create_transcript [content]
 create_transcript() {
@@ -168,15 +219,15 @@ create_transcript() {
 }
 
 # Create hook input JSON with transcript_path
-# Usage: create_hook_input_with_transcript [transcript_path] [cwd]
+# Usage: create_hook_input_with_transcript [transcript_path] [cwd] [stop_hook_active]
 create_hook_input_with_transcript() {
     local transcript_path="${1:-}"
     local cwd="${2:-$TEST_WORKSPACE}"
-
+    local stop_hook_active="${3:-false}"
     cat <<EOF
 {
   "cwd": "$cwd",
-  "stop_hook_active": true,
+  "stop_hook_active": $stop_hook_active,
   "session_id": "test-session",
   "transcript_path": "$transcript_path"
 }
