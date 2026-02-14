@@ -69,7 +69,7 @@ Focus: Get the self-contained loop controller working end-to-end. Skip tests, ac
   - _Requirements: FR-13_
   - _Design: Component D_
 
-- [ ] 1.5 Bump version to 1.0.0
+- [x] 1.5 Bump version to 1.0.0
   - **Do**: Update version in both manifest files:
     1. `plugins/ralph-speckit/.claude-plugin/plugin.json`: change `"version": "0.4.0"` to `"version": "1.0.0"`
     2. `.claude-plugin/marketplace.json`: change ralph-speckit entry `"version": "0.4.0"` to `"version": "1.0.0"`
