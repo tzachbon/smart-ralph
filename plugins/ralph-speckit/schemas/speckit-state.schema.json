@@ -60,6 +60,22 @@
       "type": "boolean",
       "default": false,
       "description": "True if execution is paused waiting for user approval"
+    },
+    "recoveryMode": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable iterative failure recovery"
+    },
+    "maxFixTasksPerOriginal": {
+      "type": "integer",
+      "default": 3,
+      "minimum": 1,
+      "description": "Max fix tasks per original failed task"
+    },
+    "fixTaskMap": {
+      "type": "object",
+      "default": {},
+      "description": "Tracks fix task attempts per original task"
     }
   },
   "required": [
@@ -75,5 +91,5 @@
     "maxGlobalIterations",
     "awaitingApproval"
   ],
-  "additionalProperties": false
+  "additionalProperties": true
 }

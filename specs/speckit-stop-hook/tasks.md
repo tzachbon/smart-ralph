@@ -56,7 +56,7 @@ Focus: Get the self-contained loop controller working end-to-end. Skip tests, ac
   - _Requirements: FR-12_
   - _Design: Component C_
 
-- [ ] 1.4 Update state schema for forward compatibility
+- [x] 1.4 Update state schema for forward compatibility
   - **Do**: Modify speckit-state.schema.json:
     1. Change `"additionalProperties": false` to `"additionalProperties": true`
     2. Add `recoveryMode` property: `{"type": "boolean", "default": false, "description": "Enable iterative failure recovery"}`
