@@ -139,7 +139,7 @@ After POC validated, ensure code quality and consistency.
   - _Requirements: NFR-4_
   - _Design: Component G_
 
-- [ ] 3.2 Create speckit-stop-hook.bats test suite
+- [x] 3.2 Create speckit-stop-hook.bats test suite
   - **Do**: Create `tests/speckit-stop-hook.bats` mirroring `tests/stop-hook.bats`:
     1. Load `speckit-helpers/setup.bash`
     2. Port all test cases, adapting for speckit paths:
