@@ -26,7 +26,7 @@ Focus: Get SKILL.md portability working end-to-end. Validate that a user can dis
   - _Requirements: FR-4, AC-2.1_
   - _Design: Component B_
 
-- [ ] 1.2 Create start SKILL.md
+- [x] 1.2 Create start SKILL.md
   - **Do**:
     1. Create directory `plugins/ralph-specum/skills/workflow/start/`
     2. Create `SKILL.md` with progressive disclosure:
