@@ -189,7 +189,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
   - _Requirements: FR-6, FR-10, AC-4.1, AC-4.2, AC-4.3_
   - _Design: Component E_
 
-- [ ] 2.4 Create configuration bridge
+- [x] 2.4 Create configuration bridge
   - **Do**:
     1. Create `adapters/config/` directory
     2. Create `adapters/config/ralph-config.schema.json`:
