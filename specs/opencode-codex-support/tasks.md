@@ -168,7 +168,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
   - _Requirements: FR-5, FR-10, AC-3.1, AC-3.2, AC-3.3, AC-3.4_
   - _Design: Component D_
 
-- [ ] 2.3 Create Codex CLI adapter
+- [x] 2.3 Create Codex CLI adapter
   - **Do**:
     1. Create `adapters/codex/` directory structure
     2. Create `adapters/codex/skills/ralph-implement/SKILL.md`:
