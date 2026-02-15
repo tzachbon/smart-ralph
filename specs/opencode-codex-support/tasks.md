@@ -149,7 +149,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
   - _Requirements: FR-7, AC-5.1, AC-5.2, AC-5.3_
   - _Design: Component C_
 
-- [ ] 2.2 Create OpenCode execution loop adapter
+- [x] 2.2 Create OpenCode execution loop adapter
   - **Do**:
     1. Create `adapters/opencode/` directory structure
     2. Create `adapters/opencode/hooks/execution-loop.ts`:
