@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+#
+# generate-agents-md.sh
+#
+# Generates an AGENTS.md file at the project root by extracting
+# architecture, conventions, file structure, and key decisions
+# from a spec's design.md.
+#
+# Usage:
+#   bash generate-agents-md.sh --spec-path <path-to-spec-directory> [--force] [--output <path>]
+#
+# Options:
+#   --spec-path <path>   Path to the spec directory containing design.md (required)
+#   --force              Overwrite existing AGENTS.md without prompting
+#   --output <path>      Output path for AGENTS.md (default: ./AGENTS.md)
+#   --help               Show this help message
+
+set -euo pipefail
+
+# Defaults
+SPEC_PATH=""
+OUTPUT_PATH="./AGENTS.md"
+FORCE=false
+
+# --- Argument parsing ---
+
+usage() {
+  printf "Usage: %s --spec-path <path> [--force] [--output <path>]\n" "$(basename "$0")"
+  printf "\nOptions:\n"
+  printf "  --spec-path <path>   Path to spec directory containing design.md (required)\n"
+  printf "  --force              Overwrite existing AGENTS.md without prompting\n"
+  printf "  --output <path>      Output path for AGENTS.md (default: ./AGENTS.md)\n"
+  printf "  --help               Show this help message\n"
+  exit 0
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --spec-path)
+      SPEC_PATH="$2"
+      shift 2
+      ;;
+    --force)
+      FORCE=true
+      shift
+      ;;
+    --output)
+      OUTPUT_PATH="$2"
+      shift 2
+      ;;
+    --help)
+      usage
+      ;;
+    *)
+      printf "Error: Unknown option: %s\n" "$1" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$SPEC_PATH" ]; then
+  printf "Error: --spec-path is required\n" >&2
+  exit 1
+fi
+
+DESIGN_FILE="${SPEC_PATH}/design.md"
+
+if [ ! -f "$DESIGN_FILE" ]; then
+  printf "Error: design.md not found at %s\n" "$DESIGN_FILE" >&2
+  exit 1
+fi
+
+# Check for existing AGENTS.md
+if [ -f "$OUTPUT_PATH" ] && [ "$FORCE" = false ]; then
+  printf "Error: %s already exists. Use --force to overwrite.\n" "$OUTPUT_PATH" >&2
+  exit 1
+fi
+
+# Derive spec name from directory basename
+SPEC_NAME="$(basename "$SPEC_PATH")"
+
+# --- Section extraction ---
+
+# extract_section <file> <heading>
+# Extracts content between a ## heading and the next ## heading (or EOF).
+# The heading line itself is excluded from the output.
+# Skips headings that appear inside fenced code blocks (``` ... ```).
+extract_section() {
+  local file="$1"
+  local heading="$2"
+
+  awk -v target="$heading" '
+    BEGIN { in_section = 0; in_fence = 0 }
+
+    # Track fenced code blocks
+    /^```/ { in_fence = !in_fence; if (in_section) print; next }
+
+    # Only match headings outside code fences
+    !in_fence && /^## / {
+      if (in_section) exit
+      if (index($0, "## " target) == 1) { in_section = 1; next }
+    }
+
+    in_section { print }
+  ' "$file" | awk '
+    # Trim trailing blank lines
+    { lines[NR] = $0 }
+    END {
+      last = NR
+      while (last > 0 && lines[last] ~ /^[[:space:]]*$/) last--
+      for (i = 1; i <= last; i++) print lines[i]
+    }
+  '
+}
+
+# --- Extract sections from design.md ---
+
+architecture="$(extract_section "$DESIGN_FILE" "Architecture")"
+components="$(extract_section "$DESIGN_FILE" "Components")"
+technical_decisions="$(extract_section "$DESIGN_FILE" "Technical Decisions")"
+file_structure="$(extract_section "$DESIGN_FILE" "File Structure")"
+existing_patterns="$(extract_section "$DESIGN_FILE" "Existing Patterns to Follow")"
+
+# --- Build Coding Conventions from components + existing patterns ---
+
+coding_conventions=""
+if [ -n "$existing_patterns" ]; then
+  coding_conventions="$existing_patterns"
+fi
+
+# If components section has content, append a summary
+if [ -n "$components" ]; then
+  if [ -n "$coding_conventions" ]; then
+    coding_conventions="${coding_conventions}
+
+### Component Responsibilities
+
+${components}"
+  else
+    coding_conventions="### Component Responsibilities
+
+${components}"
+  fi
+fi
+
+# --- Generate AGENTS.md ---
+
+{
+  printf "# AGENTS.md\n\n"
+  printf "> Generated from spec: %s\n\n" "$SPEC_NAME"
+
+  # Architecture section
+  printf "## Architecture\n\n"
+  if [ -n "$architecture" ]; then
+    printf "%s\n\n" "$architecture"
+  else
+    printf "_No architecture section found in design.md_\n\n"
+  fi
+
+  # Coding Conventions section
+  printf "## Coding Conventions\n\n"
+  if [ -n "$coding_conventions" ]; then
+    printf "%s\n\n" "$coding_conventions"
+  else
+    printf "_No coding conventions found in design.md_\n\n"
+  fi
+
+  # File Structure section
+  printf "## File Structure\n\n"
+  if [ -n "$file_structure" ]; then
+    printf "%s\n\n" "$file_structure"
+  else
+    printf "_No file structure section found in design.md_\n\n"
+  fi
+
+  # Key Decisions section
+  printf "## Key Decisions\n\n"
+  if [ -n "$technical_decisions" ]; then
+    printf "%s\n\n" "$technical_decisions"
+  else
+    printf "_No technical decisions found in design.md_\n\n"
+  fi
+
+  printf -- "---\n"
+  printf "*Generated by Ralph Specum from %s*\n" "$DESIGN_FILE"
+
+} > "$OUTPUT_PATH"
+
+printf "AGENTS.md generated at %s\n" "$OUTPUT_PATH"

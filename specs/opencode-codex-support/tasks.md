@@ -130,7 +130,7 @@ Focus: Get SKILL.md portability working end-to-end. Validate that a user can dis
 
 After SKILL.md portability validated, add tool-specific adapters and AGENTS.md generation.
 
-- [ ] 2.1 Create AGENTS.md generator
+- [x] 2.1 Create AGENTS.md generator
   - **Do**:
     1. Add AGENTS.md generation logic to the plan-synthesizer agent or as a standalone script
     2. The generator reads design.md and extracts:
