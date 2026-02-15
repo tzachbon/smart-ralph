@@ -58,7 +58,7 @@ Focus: Get SKILL.md portability working end-to-end. Validate that a user can dis
   - _Requirements: FR-1, FR-2, AC-1.1_
   - _Design: Component A_
 
-- [ ] 1.4 Create requirements, design, and tasks SKILL.md files
+- [x] 1.4 Create requirements, design, and tasks SKILL.md files
   - **Do**:
     1. Create directories: `plugins/ralph-specum/skills/workflow/requirements/`, `design/`, `tasks/`
     2. Create each SKILL.md with progressive disclosure following the same pattern as research:
