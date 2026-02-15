@@ -357,7 +357,7 @@ More output")
     # Create transcript with signal followed by whitespace
     local transcript_file
     transcript_file=$(create_transcript "Some output
-ALL_TASKS_COMPLETE
+ALL_TASKS_COMPLETE   
 More text")
 
     local input

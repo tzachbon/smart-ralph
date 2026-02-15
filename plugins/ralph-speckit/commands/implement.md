@@ -1099,7 +1099,7 @@ Before outputting:
 2. Delete .speckit-state.json (cleanup execution state)
 3. Keep .progress.md (preserve learnings and history)
 
-This signal terminates the Ralph Loop loop.
+This signal terminates the execution loop.
 
 Do NOT output ALL_TASKS_COMPLETE if tasks remain incomplete.
 Do NOT output TASK_COMPLETE (that's for spec-executor only).
