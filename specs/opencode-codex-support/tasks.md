@@ -222,7 +222,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Test SKILL.md discoverability
+- [x] 3.1 Test SKILL.md discoverability
   - **Do**:
     1. Create test script `tests/test-skill-discovery.sh`
     2. Test that all 8 SKILL.md files are discoverable:
