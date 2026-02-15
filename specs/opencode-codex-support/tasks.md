@@ -100,7 +100,7 @@ Focus: Get SKILL.md portability working end-to-end. Validate that a user can dis
   - _Requirements: FR-1, FR-6, AC-1.1, AC-4.1, AC-4.2, AC-4.3_
   - _Design: Component A, Component E_
 
-- [ ] 1.6 Create status and cancel SKILL.md files
+- [x] 1.6 Create status and cancel SKILL.md files
   - **Do**:
     1. Create directories: `plugins/ralph-specum/skills/workflow/status/`, `cancel/`
     2. **status/SKILL.md**: Read all spec directories, show phase/progress/files for each. List available commands.
