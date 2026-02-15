@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-02-14T16:37:35Z",
+  "updated": "2026-02-15T09:14:07Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 17,
+      "specsCount": 18,
       "isDefault": true
     }
   ],
@@ -17,16 +17,16 @@
       "totalTasks": 5
     },
     {
+      "name": "opencode-codex-support",
+      "path": "./specs/opencode-codex-support",
+      "phase": "tasks"
+    },
+    {
       "name": "plan-source-feature",
       "path": "./specs/plan-source-feature",
       "phase": "completed",
       "taskIndex": 12,
       "totalTasks": 12
-    },
-    {
-      "name": "return-ralph-wiggum",
-      "path": "./specs/return-ralph-wiggum",
-      "phase": "new"
     },
     {
       "name": "implement-ralph-wiggum",
@@ -38,7 +38,9 @@
     {
       "name": "fork-ralph-wiggum",
       "path": "./specs/fork-ralph-wiggum",
-      "phase": "research"
+      "phase": "completed",
+      "taskIndex": 21,
+      "totalTasks": 21
     },
     {
       "name": "reality-verification-principle",
@@ -46,6 +48,13 @@
       "phase": "tasks",
       "taskIndex": 9,
       "totalTasks": 11
+    },
+    {
+      "name": "speckit-stop-hook",
+      "path": "./specs/speckit-stop-hook",
+      "phase": "tasks",
+      "taskIndex": 9,
+      "totalTasks": 12
     },
     {
       "name": "qa-verification",

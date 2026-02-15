@@ -19,14 +19,20 @@ fail() {
 }
 
 # ---------------------------------------------------------------------------
-# Test 1: plugin.json unchanged from main
+# Test 1: plugin.json unchanged from main (version bump allowed)
 # ---------------------------------------------------------------------------
-echo "Test 1: plugin.json unchanged from main..."
+echo "Test 1: plugin.json unchanged from main (version bump allowed)..."
 DIFF_LINES=$(git diff main -- "$PLUGIN_DIR/.claude-plugin/plugin.json" | grep -c "^[+-][^+-]" 2>/dev/null || true)
 if [ "$DIFF_LINES" -eq 0 ]; then
   pass "plugin.json unchanged"
 else
-  fail "plugin.json has $DIFF_LINES changed lines"
+  # Check if only the version line changed (version bumps are required per CLAUDE.md)
+  NON_VERSION_CHANGES=$(git diff main -- "$PLUGIN_DIR/.claude-plugin/plugin.json" | grep "^[+-][^+-]" | grep -cv '"version"' 2>/dev/null || true)
+  if [ "$NON_VERSION_CHANGES" -eq 0 ]; then
+    pass "plugin.json only has version bump (allowed per CLAUDE.md)"
+  else
+    fail "plugin.json has $NON_VERSION_CHANGES non-version changed lines"
+  fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -150,7 +156,17 @@ for cf in "${CORE_FILES[@]}"; do
   elif [ "$MAIN_HASH" = "$HEAD_HASH" ]; then
     pass "$BASENAME blob hash matches main ($MAIN_HASH)"
   else
-    fail "$BASENAME blob hash differs (main=$MAIN_HASH, HEAD=$HEAD_HASH)"
+    # For plugin.json, allow version-only changes (required per CLAUDE.md)
+    if [ "$BASENAME" = "plugin.json" ]; then
+      NON_VERSION_CHANGES=$(git diff main -- "$cf" | grep "^[+-][^+-]" | grep -cv '"version"' 2>/dev/null || true)
+      if [ "$NON_VERSION_CHANGES" -eq 0 ]; then
+        pass "$BASENAME blob hash differs but only version bump (allowed)"
+      else
+        fail "$BASENAME blob hash differs with non-version changes (main=$MAIN_HASH, HEAD=$HEAD_HASH)"
+      fi
+    else
+      fail "$BASENAME blob hash differs (main=$MAIN_HASH, HEAD=$HEAD_HASH)"
+    fi
   fi
 done
 
@@ -179,17 +195,19 @@ fi
 # ---------------------------------------------------------------------------
 # Test 10: Only additions in plugin directory (no unexpected modifications)
 # ---------------------------------------------------------------------------
-echo "Test 10: Plugin changes are additions only (except allowed template tweak)..."
+echo "Test 10: Plugin changes are additions only (except allowed modifications)..."
 MODIFIED_FILES=$(git diff main --diff-filter=M --name-only -- "$PLUGIN_DIR/" 2>/dev/null || true)
 UNEXPECTED=""
 for mf in $MODIFIED_FILES; do
+  BASENAME=$(basename "$mf")
   # settings-template.md modification from task 1.1 is acceptable
-  if [ "$(basename "$mf")" != "settings-template.md" ]; then
+  # plugin.json version bump is required per CLAUDE.md for any plugin change
+  if [ "$BASENAME" != "settings-template.md" ] && [ "$BASENAME" != "plugin.json" ]; then
     UNEXPECTED="$UNEXPECTED $mf"
   fi
 done
 if [ -z "$UNEXPECTED" ]; then
-  pass "Only allowed modifications (settings-template.md or none)"
+  pass "Only allowed modifications (settings-template.md, plugin.json version, or none)"
 else
   fail "Unexpected modifications:$UNEXPECTED"
 fi
