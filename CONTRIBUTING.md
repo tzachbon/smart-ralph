@@ -159,6 +159,36 @@ How you tested it
 - Use kebab-case for files: `spec-executor.md`, `task-planner.md`
 - Use descriptive names that indicate purpose
 
+## Cross-Tool Testing
+
+Smart Ralph supports Claude Code, OpenCode, and Codex CLI. When making changes, verify cross-tool compatibility:
+
+### Run the test suite
+
+```bash
+# SKILL.md discoverability (frontmatter, progressive disclosure, tool-agnosticism)
+bash tests/test-skill-discovery.sh
+
+# Spec artifact portability (templates, state files, schemas)
+bash tests/test-artifact-portability.sh
+
+# Claude Code zero-regression (plugin.json, hooks, commands, agents unchanged)
+bash tests/test-claude-code-regression.sh
+```
+
+### What to check
+
+- **SKILL.md changes**: Ensure no Claude Code-specific references leak in (no "Task tool", "AskUserQuestion", "TeamCreate", "allowed-tools", "subagent_type")
+- **Template/schema changes**: Run `test-artifact-portability.sh` to verify tool-agnosticism
+- **Plugin core changes**: Run `test-claude-code-regression.sh` to verify zero regression
+- **Adapter changes**: Test with the target tool if available, otherwise verify file structure and content
+
+### Adapter directories
+
+- `adapters/opencode/` - OpenCode execution loop hooks (TypeScript)
+- `adapters/codex/` - Codex CLI SKILL.md adapter (no code, pure guidance)
+- `adapters/config/` - Configuration bridge script
+
 ## Getting Help
 
 Stuck? Have questions?

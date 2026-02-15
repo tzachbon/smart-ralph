@@ -282,7 +282,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Documentation update
+- [x] 4.1 Documentation update
   - **Do**:
     1. Update `README.md` with cross-tool support section:
        - Tool support matrix

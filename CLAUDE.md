@@ -100,6 +100,25 @@ Quality checkpoints inserted every 2-3 tasks throughout all phases.
 
 Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinator outputs `ALL_TASKS_COMPLETE` to end the Ralph Loop. If task fails, retries up to 5 times then blocks with error.
 
+### Cross-Tool Adapters
+
+```
+adapters/
+├── opencode/              # OpenCode execution loop adapter (TS hooks)
+│   ├── hooks/execution-loop.ts
+│   └── README.md
+├── codex/                 # Codex CLI SKILL.md adapter (hook-free)
+│   ├── skills/ralph-implement/SKILL.md
+│   ├── AGENTS.md.template
+│   └── README.md
+└── config/                # Configuration bridge (multi-tool setup)
+    ├── ralph-config.schema.json
+    ├── generate-config.sh
+    └── README.md
+```
+
+Universal SKILL.md files live in `plugins/ralph-specum/skills/workflow/` and work across all three tools (Claude Code, OpenCode, Codex CLI).
+
 ### Dependencies
 
 Ralph Specum v3.0.0+ is self-contained with no external plugin dependencies. The execution loop is handled by the stop-hook.
