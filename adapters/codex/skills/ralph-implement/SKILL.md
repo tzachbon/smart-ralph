@@ -328,7 +328,7 @@ Every task in `tasks.md` follows this structure:
 
 ### Why Manual Re-invocation?
 
-Codex CLI does not support hooks, stop events, or automatic continuation. The state file (``.ralph-state.json``) acts as the coordination mechanism:
+Codex CLI does not support hooks, stop events, or automatic continuation. The state file (`.ralph-state.json`) acts as the coordination mechanism:
 
 1. Each invocation reads the state, executes one task, writes updated state.
 2. Between invocations, the state file persists on disk.

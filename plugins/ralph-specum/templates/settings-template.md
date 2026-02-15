@@ -36,7 +36,11 @@ When a spec name exists in multiple directories, commands will prompt for disamb
 
 ## Usage
 
-Create this file at your tool's configuration directory (e.g., `.claude/ralph-specum.local.md` for Claude Code) in your project root to customize plugin behavior.
+Create this file in the appropriate location for your tool:
+
+- **Claude Code**: `.claude/ralph-specum.local.md`
+- **OpenCode**: `opencode.json` (see `adapters/opencode/README.md`)
+- **Codex CLI**: `ralph-config.json` (see `adapters/config/README.md`)
 
 ## Example
 

@@ -23,7 +23,6 @@ set -euo pipefail
 CONFIG_PATH="./ralph-config.json"
 DRY_RUN=false
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # --- Colors (if terminal supports them) ---
 
@@ -105,25 +104,10 @@ cfg() {
   fi
 }
 
-cfg_bool() {
-  local path="$1"
-  local default="$2"
-  local val
-  val="$(printf '%s' "$CONFIG" | jq -r "$path // empty")"
-  if [ -z "$val" ]; then
-    printf '%s' "$default"
-  else
-    printf '%s' "$val"
-  fi
-}
-
 # --- Read shared settings ---
 
 SPEC_DIRS="$(printf '%s' "$CONFIG" | jq -r '.spec_dirs // ["./specs"] | .[]')"
 DEFAULT_BRANCH="$(cfg '.default_branch' 'main')"
-COMMIT_SPEC="$(cfg_bool '.commit_spec' 'true')"
-MAX_ITERATIONS="$(cfg '.max_iterations' '100')"
-MAX_TASK_ITERATIONS="$(cfg '.max_task_iterations' '5')"
 
 log_info "Config: $CONFIG_PATH"
 log_info "Spec dirs: $(printf '%s' "$SPEC_DIRS" | tr '\n' ', ')"
@@ -152,7 +136,7 @@ write_file() {
 
 configure_claude_code() {
   local enabled
-  enabled="$(cfg_bool '.tools.claude_code.enabled' 'true')"
+  enabled="$(cfg '.tools.claude_code.enabled' 'true')"
   if [ "$enabled" != "true" ]; then
     log_info "Claude Code: disabled, skipping"
     return
@@ -176,7 +160,7 @@ configure_claude_code() {
 
 configure_opencode() {
   local enabled
-  enabled="$(cfg_bool '.tools.opencode.enabled' 'true')"
+  enabled="$(cfg '.tools.opencode.enabled' 'true')"
   if [ "$enabled" != "true" ]; then
     log_info "OpenCode: disabled, skipping"
     return
@@ -257,7 +241,7 @@ configure_opencode() {
 
 configure_codex() {
   local enabled
-  enabled="$(cfg_bool '.tools.codex.enabled' 'true')"
+  enabled="$(cfg '.tools.codex.enabled' 'true')"
   if [ "$enabled" != "true" ]; then
     log_info "Codex CLI: disabled, skipping"
     return
@@ -266,7 +250,7 @@ configure_codex() {
   local skills_dir
   skills_dir="$(cfg '.tools.codex.skills_dir' './.agents/skills')"
   local gen_agents
-  gen_agents="$(cfg_bool '.tools.codex.generate_agents_md' 'true')"
+  gen_agents="$(cfg '.tools.codex.generate_agents_md' 'true')"
   local generated_count=0
 
   # Create skills directory

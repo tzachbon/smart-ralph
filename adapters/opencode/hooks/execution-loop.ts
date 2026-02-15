@@ -7,6 +7,11 @@
  * Fires on `session.idle` and `tool.execute.after` events. When a Ralph spec
  * is in the execution phase with remaining tasks, outputs a continuation prompt
  * so the session keeps processing tasks until all are complete.
+ *
+ * NOTE: The HookContext/HookResult interfaces and hook export shape below are
+ * based on expected OpenCode plugin conventions. They have not been verified
+ * against a released OpenCode API. You may need to adjust the types and export
+ * structure to match OpenCode's actual plugin contract once available.
  */
 
 import * as fs from "node:fs";
@@ -61,34 +66,48 @@ const STATE_FILE_NAME = ".ralph-state.json";
 // ---------------------------------------------------------------------------
 
 /**
- * Read the configured specs directories from the settings file.
- * Falls back to DEFAULT_SPECS_DIR when no settings exist.
+ * Read the configured specs directories from available config files.
+ * Checks (in order): ralph-config.json, .claude/ralph-specum.local.md.
+ * Falls back to DEFAULT_SPECS_DIR when no config exists.
  */
 function getSpecsDirs(cwd: string): string[] {
+  // 1. Try ralph-config.json (tool-agnostic, preferred)
+  const ralphConfigPath = path.join(cwd, "ralph-config.json");
+  if (fs.existsSync(ralphConfigPath)) {
+    try {
+      const raw = fs.readFileSync(ralphConfigPath, "utf-8");
+      const config = JSON.parse(raw);
+      if (Array.isArray(config.spec_dirs) && config.spec_dirs.length > 0) {
+        return config.spec_dirs;
+      }
+    } catch {
+      // Fall through to next source
+    }
+  }
+
+  // 2. Try .claude/ralph-specum.local.md (Claude Code settings)
   const settingsPath = path.join(cwd, ".claude", "ralph-specum.local.md");
-
-  if (!fs.existsSync(settingsPath)) {
-    return [DEFAULT_SPECS_DIR];
+  if (fs.existsSync(settingsPath)) {
+    try {
+      const content = fs.readFileSync(settingsPath, "utf-8");
+      // Extract specs_dirs from YAML frontmatter
+      const frontmatter = content.match(/^---\n([\s\S]*?)\n---/);
+      if (frontmatter) {
+        const match = frontmatter[1].match(/^specs_dirs:\s*\[([^\]]*)\]/m);
+        if (match) {
+          const dirs = match[1]
+            .split(",")
+            .map((d) => d.trim().replace(/^["']|["']$/g, ""))
+            .filter(Boolean);
+          if (dirs.length > 0) return dirs;
+        }
+      }
+    } catch {
+      // Fall through to default
+    }
   }
 
-  try {
-    const content = fs.readFileSync(settingsPath, "utf-8");
-    // Extract specs_dirs from YAML frontmatter
-    const frontmatter = content.match(/^---\n([\s\S]*?)\n---/);
-    if (!frontmatter) return [DEFAULT_SPECS_DIR];
-
-    const match = frontmatter[1].match(/^specs_dirs:\s*\[([^\]]*)\]/m);
-    if (!match) return [DEFAULT_SPECS_DIR];
-
-    const dirs = match[1]
-      .split(",")
-      .map((d) => d.trim().replace(/^["']|["']$/g, ""))
-      .filter(Boolean);
-
-    return dirs.length > 0 ? dirs : [DEFAULT_SPECS_DIR];
-  } catch {
-    return [DEFAULT_SPECS_DIR];
-  }
+  return [DEFAULT_SPECS_DIR];
 }
 
 /**

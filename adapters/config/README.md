@@ -134,6 +134,14 @@ Set `enabled: false` for any tool you don't use:
 }
 ```
 
+## Keeping Config in Sync
+
+The generator copies SKILL.md files from the plugin source to tool-specific locations. These copies can become stale if the source files are updated. **Re-run the generator after updating workflow SKILL.md files** to propagate changes:
+
+```bash
+bash adapters/config/generate-config.sh
+```
+
 ## Idempotency
 
 The generator is safe to re-run. It:
