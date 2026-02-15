@@ -256,7 +256,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
   - **Commit**: `test(portability): add spec artifact portability tests`
   - _Requirements: AC-2.1, AC-2.2, AC-2.3_
 
-- [ ] 3.3 Test zero regression for Claude Code plugin
+- [x] 3.3 Test zero regression for Claude Code plugin
   - **Do**:
     1. Create test script `tests/test-claude-code-regression.sh`
     2. Verify plugin.json is unchanged from main branch
