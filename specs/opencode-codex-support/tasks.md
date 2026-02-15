@@ -73,7 +73,7 @@ Focus: Get SKILL.md portability working end-to-end. Validate that a user can dis
   - _Requirements: FR-1, FR-2, AC-1.1_
   - _Design: Component A_
 
-- [ ] 1.5 Create implement SKILL.md (with Codex-compatible task progression)
+- [x] 1.5 Create implement SKILL.md (with Codex-compatible task progression)
   - **Do**:
     1. Create directory `plugins/ralph-specum/skills/workflow/implement/`
     2. Create `SKILL.md` with progressive disclosure:
