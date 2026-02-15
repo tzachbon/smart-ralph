@@ -313,7 +313,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
   - **Done when**: All quality checks pass with no errors
   - **Commit**: `fix(quality): address any remaining issues` (only if fixes needed)
 
-- [ ] 4.4 Create PR and verify CI
+- [x] 4.4 Create PR and verify CI
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. Push branch: `git push -u origin $(git branch --show-current)`
