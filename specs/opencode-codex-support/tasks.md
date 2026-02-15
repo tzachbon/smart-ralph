@@ -240,7 +240,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
   - **Commit**: `test(skills): add SKILL.md discoverability tests`
   - _Requirements: AC-1.1, AC-1.2, AC-1.3_
 
-- [ ] 3.2 Test spec artifact portability
+- [x] 3.2 Test spec artifact portability
   - **Do**:
     1. Create test script `tests/test-artifact-portability.sh`
     2. Test that spec artifacts are tool-agnostic:
