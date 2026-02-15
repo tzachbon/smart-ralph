@@ -396,6 +396,81 @@ Specs live in `./specs/` in your project:
 
 ---
 
+## Cross-Tool Support
+
+Smart Ralph works across multiple AI coding tools. The spec-driven workflow (research, requirements, design, tasks, execute) is portable via universal SKILL.md files.
+
+### Tool Support Matrix
+
+| Feature | Claude Code | OpenCode | Codex CLI |
+|---------|------------|----------|-----------|
+| Spec workflow (research through tasks) | Full (plugin commands) | Full (SKILL.md) | Full (SKILL.md) |
+| Execution loop | Automatic (stop-hook) | Automatic (TS hooks) | Manual (re-invoke skill) |
+| Parallel research | TeamCreate | Subagents | Sequential |
+| AGENTS.md generation | Optional | Recommended | Recommended |
+
+### Quick Start: Claude Code
+
+Already works via the plugin system. No additional setup needed.
+
+```bash
+/plugin marketplace add tzachbon/smart-ralph
+/plugin install ralph-specum@smart-ralph
+# Restart Claude Code, then:
+/ralph-specum:start my-feature Add a cool feature
+```
+
+### Quick Start: OpenCode
+
+Copy the adapter files and configure `opencode.json` to use the execution loop hooks.
+
+```bash
+# 1. Copy adapter hooks
+cp -r adapters/opencode/hooks/ .opencode/hooks/
+
+# 2. Copy workflow SKILL.md files
+cp -r plugins/ralph-specum/skills/workflow/ .opencode/commands/
+
+# 3. Configure opencode.json (add plugin entry)
+# See adapters/opencode/README.md for full config
+
+# 4. Use workflow skills: $ralph:start, $ralph:research, etc.
+```
+
+See [adapters/opencode/README.md](adapters/opencode/README.md) for full setup instructions.
+
+### Quick Start: Codex CLI
+
+Copy SKILL.md files to `.agents/skills/` and use skill discovery to drive the workflow.
+
+```bash
+# 1. Copy workflow skills
+mkdir -p .agents/skills/
+cp -r plugins/ralph-specum/skills/workflow/ .agents/skills/ralph/
+
+# 2. Copy Codex-specific implement skill (overrides default)
+cp adapters/codex/skills/ralph-implement/SKILL.md .agents/skills/ralph/implement/SKILL.md
+
+# 3. (Optional) Generate AGENTS.md from a spec's design.md
+bash plugins/ralph-specum/scripts/generate-agents-md.sh --spec-path ./specs/my-feature
+
+# 4. Invoke skills manually: "use the ralph start skill", etc.
+```
+
+See [adapters/codex/README.md](adapters/codex/README.md) for full setup instructions.
+
+### Configuration Bridge
+
+Use the configuration bridge to generate tool-specific configs from a single `ralph-config.json`:
+
+```bash
+bash adapters/config/generate-config.sh
+```
+
+See [adapters/config/README.md](adapters/config/README.md) for config format and options.
+
+---
+
 ## Troubleshooting
 
 **Task keeps failing?**

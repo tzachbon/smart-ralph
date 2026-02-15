@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/smart-ralph/ralph-config.schema.json",
+  "title": "Ralph Configuration",
+  "description": "Tool-agnostic configuration for Smart Ralph spec-driven development. Defines shared settings and per-tool options for Claude Code, OpenCode, and Codex CLI.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference (ignored at runtime)"
+    },
+    "spec_dirs": {
+      "type": "array",
+      "description": "Directories where specs are stored. Supports monorepo layouts with multiple spec roots.",
+      "items": {
+        "type": "string"
+      },
+      "default": ["./specs"],
+      "minItems": 1
+    },
+    "default_branch": {
+      "type": "string",
+      "description": "Default git branch name used for PR targets and regression comparisons.",
+      "default": "main"
+    },
+    "commit_spec": {
+      "type": "boolean",
+      "description": "Whether to commit spec artifacts (tasks.md, .progress.md) alongside task commits.",
+      "default": true
+    },
+    "max_iterations": {
+      "type": "integer",
+      "description": "Global maximum number of execution loop iterations before stopping. Prevents runaway loops.",
+      "minimum": 1,
+      "default": 100
+    },
+    "max_task_iterations": {
+      "type": "integer",
+      "description": "Maximum retry attempts per individual task before marking it as blocked.",
+      "minimum": 1,
+      "default": 5
+    },
+    "tools": {
+      "type": "object",
+      "description": "Per-tool configuration. Each tool can be enabled/disabled and has tool-specific settings.",
+      "properties": {
+        "claude_code": {
+          "type": "object",
+          "description": "Claude Code plugin settings.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether to generate Claude Code configuration.",
+              "default": true
+            },
+            "plugin_dir": {
+              "type": "string",
+              "description": "Path to the Ralph plugin directory for Claude Code.",
+              "default": "./plugins/ralph-specum"
+            }
+          },
+          "additionalProperties": false
+        },
+        "opencode": {
+          "type": "object",
+          "description": "OpenCode plugin settings.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether to generate OpenCode configuration.",
+              "default": true
+            },
+            "hooks_dir": {
+              "type": "string",
+              "description": "Path to the OpenCode hooks directory.",
+              "default": "./adapters/opencode/hooks"
+            }
+          },
+          "additionalProperties": false
+        },
+        "codex": {
+          "type": "object",
+          "description": "Codex CLI settings.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether to generate Codex CLI configuration.",
+              "default": true
+            },
+            "skills_dir": {
+              "type": "string",
+              "description": "Directory where Codex discovers SKILL.md files.",
+              "default": "./.agents/skills"
+            },
+            "generate_agents_md": {
+              "type": "boolean",
+              "description": "Whether to generate AGENTS.md from the most recent spec's design.md.",
+              "default": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
