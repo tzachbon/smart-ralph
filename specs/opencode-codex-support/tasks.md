@@ -1,7 +1,7 @@
 ---
 spec: opencode-codex-support
 phase: tasks
-total_tasks: 25
+total_tasks: 20
 created: 2026-02-15
 generated: auto
 ---
@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Get SKILL.md portability working end-to-end. Validate that a user can discover and follow the Ralph workflow via SKILL.md files in any tool.
 
-- [ ] 1.1 Audit templates and schemas for Claude Code-specific references
+- [x] 1.1 Audit templates and schemas for Claude Code-specific references
   - **Do**:
     1. Read all files in `plugins/ralph-specum/templates/` and `plugins/ralph-specum/schemas/spec.schema.json`
     2. Search for Claude Code-specific references: "Task tool", "AskUserQuestion", "TeamCreate", "SendMessage", "Stop hook", "allowed-tools", "subagent_type", "claude", "plugin.json"
