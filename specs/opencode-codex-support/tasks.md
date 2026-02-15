@@ -295,7 +295,7 @@ After SKILL.md portability validated, add tool-specific adapters and AGENTS.md g
   - **Verify**: `grep -q "OpenCode" README.md && grep -q "Codex" README.md && echo "PASS"`
   - **Commit**: `docs: add cross-tool support documentation`
 
-- [ ] 4.2 Version bump
+- [x] 4.2 Version bump
   - **Do**:
     1. Bump version in `plugins/ralph-specum/.claude-plugin/plugin.json` (minor version bump, e.g., 3.3.3 -> 3.4.0)
     2. Update version in `.claude-plugin/marketplace.json` if it exists
