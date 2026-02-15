@@ -43,7 +43,7 @@ Focus: Get SKILL.md portability working end-to-end. Validate that a user can dis
   - _Requirements: FR-1, FR-2, AC-1.1, AC-1.2, AC-1.3_
   - _Design: Component A_
 
-- [ ] 1.3 Create research SKILL.md
+- [x] 1.3 Create research SKILL.md
   - **Do**:
     1. Create directory `plugins/ralph-specum/skills/workflow/research/`
     2. Create `SKILL.md` with progressive disclosure:
