@@ -111,14 +111,29 @@ State files from earlier versions may lack new fields. The system handles this g
 ## Start Execution
 
 After writing the state file, output the coordinator prompt below. This starts the execution loop.
-The stop-hook will continue the loop by outputting continuation prompts until all tasks are complete.
+The stop-hook will continue the loop by blocking stops and prompting the coordinator to check state.
 
-**DESIGN NOTE: Prompt Duplication**
-This file contains the full coordinator specification (source of truth). The stop-watcher.sh
-outputs an abbreviated resume prompt for loop continuation. This is intentional design:
-- implement.md = comprehensive specification for initial execution
-- stop-watcher.sh = minimal context for efficient loop resumption
-The duplication is by design to balance completeness vs. token efficiency.
+**DESIGN NOTE: Prompt-Based Stop Hook Architecture (v3.4.0)**
+The stop hook uses `"type": "prompt"` (Haiku-based) instead of `"type": "command"` (shell-based).
+This avoids `posix_spawn '/bin/sh' ENOENT` errors in sandboxed environments where `/bin/sh` is unavailable.
+- **Stop hook (Haiku)**: Lightweight trigger that ALWAYS blocks stops. Cannot read files.
+- **Coordinator (main model)**: Receives the block reason as a continuation prompt, reads state files,
+  and decides whether to continue execution or stop normally.
+- The stop hook is intentionally conservative: every stop gets blocked, the coordinator checks state,
+  finds nothing if not executing, and stops. Cost: ~1-2 extra Read calls per non-Ralph stop.
+
+## Self-Continuation Protocol
+
+The prompt-based stop hook cannot read files from disk. It always blocks stops with a `[RALPH-CONTINUE]` prompt.
+When you receive this continuation prompt:
+
+1. Read `specs/.current-spec` to get the active spec name
+2. Read `specs/<spec-name>/.ralph-state.json` to check execution state
+3. **If active execution** (phase=execution, taskIndex < totalTasks): continue the coordinator loop below
+4. **If no active execution** (no state file, no .current-spec, phase != execution): stop normally — do not fabricate state
+5. **If ALL_TASKS_COMPLETE was already output**: stop normally
+
+You are the source of truth for execution state, not the stop hook. The hook is only a trigger.
 
 ## Coordinator Prompt
 
@@ -136,6 +151,14 @@ You are a COORDINATOR, NOT an implementer. Your job is to:
 
 CRITICAL: You MUST delegate via Task tool. Do NOT implement tasks yourself.
 You are fully autonomous. NEVER ask questions or wait for user input.
+
+### 1b. Integrity Rules
+
+- NEVER lie about completion — verify actual state before claiming done
+- NEVER remove tasks — if tasks fail, ADD fix tasks; total task count only increases
+- NEVER skip verification layers (all 4 in Section 7 must pass)
+- NEVER trust sub-agent claims without independent verification
+- If a continuation prompt fires but no active execution is found: stop cleanly, do not fabricate state
 
 ### 2. Read State
 
@@ -1170,16 +1193,20 @@ Before outputting:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup execution state)
 3. Keep .progress.md (preserve learnings and history)
-4. **Update Spec Index** (marks spec as completed):
+4. **Cleanup orphaned temp progress files** (from interrupted parallel batches):
+   ```bash
+   find "$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
+   ```
+5. **Update Spec Index** (marks spec as completed):
    ```bash
    ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
    ```
-5. **Commit all remaining spec changes** (progress, tasks, index):
+6. **Commit all remaining spec changes** (progress, tasks, index):
    ```bash
    git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
    git diff --cached --quiet || git commit -m "chore(spec): final progress update for $spec"
    ```
-6. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
+7. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
 
 This signal terminates the Ralph Loop loop.
 
