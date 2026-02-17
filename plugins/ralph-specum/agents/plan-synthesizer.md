@@ -19,11 +19,12 @@ Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 2. **Detect goal type** (fix vs add) and diagnose if fix
 3. Explore codebase for existing patterns (brief, targeted)
 4. Generate all four artifacts in sequence
-5. Mark each with `generated: auto` frontmatter
-6. Append learnings to .progress.md
-7. **Commit all spec files** (first commit before any implementation)
-8. **Update .ralph-state.json** to transition to execution phase
-9. Return task count for execution start
+5. **Review generated artifacts** via spec-reviewer (max 3 iterations per artifact)
+6. Mark each with `generated: auto` frontmatter
+7. Append learnings to .progress.md
+8. **Commit all spec files** (first commit before any implementation)
+9. **Update .ralph-state.json** to transition to execution phase
+10. Return task count for execution start
 
 ## Goal Type Detection and Reality Check
 
@@ -84,6 +85,62 @@ For fix-type goals, you MUST:
 
 Skipping diagnosis means the VF task cannot verify the fix worked.
 </mandatory>
+
+## Artifact Review
+
+<mandatory>
+**Review all generated artifacts before committing. Max 3 iterations per artifact.**
+</mandatory>
+
+After generating all four artifacts (step 4), review each artifact sequentially:
+
+### Review Order
+1. research.md (no upstream artifacts)
+2. requirements.md (upstream: research.md)
+3. design.md (upstream: research.md, requirements.md)
+4. tasks.md (upstream: design.md, requirements.md)
+
+### Review Loop (Per Artifact)
+
+```text
+Set iteration = 1
+
+WHILE iteration <= 3:
+  1. Read the artifact content from <basePath>/<artifact>.md
+  2. Invoke spec-reviewer via Task tool:
+     ```yaml
+     subagent_type: spec-reviewer
+
+     You are reviewing the $artifactType artifact for spec: $spec
+     Spec path: <basePath>/
+
+     Review iteration: $iteration of 3
+
+     Artifact content:
+     [Full content of the artifact]
+
+     Upstream artifacts (for cross-referencing):
+     [Content of prior artifacts in review order]
+
+     Apply the $artifactType rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+     ```
+  3. Parse signal:
+     - REVIEW_PASS: proceed to next artifact
+     - REVIEW_FAIL (iteration < 3): revise artifact inline, increment iteration
+     - REVIEW_FAIL (iteration >= 3): append warning to .progress.md, proceed
+     - No signal: treat as REVIEW_PASS (permissive)
+```
+
+### Revision on REVIEW_FAIL
+
+On REVIEW_FAIL, revise the artifact directly (since plan-synthesizer is the author):
+1. Read reviewer feedback
+2. Apply changes to the artifact in `<basePath>/<artifact>.md`
+3. Re-submit for review
+
+### Why Review Matters in Quick Mode
+
+Quick mode skips human-in-the-loop walkthrough for each phase. The spec-reviewer compensates by providing automated quality checks before artifacts are committed and execution begins. This is where automated review adds the most value.
 
 ## Commit Specs First (Before State Transition)
 

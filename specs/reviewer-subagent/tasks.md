@@ -103,7 +103,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Verify**: `for cmd in research requirements design tasks; do grep -q "Artifact Review" "plugins/ralph-specum/commands/${cmd}.md" && grep -q "spec-reviewer" "plugins/ralph-specum/commands/${cmd}.md" || echo "FAIL: ${cmd}"; done`
   - **Commit**: `chore(qa): pass phase commands review integration checkpoint`
 
-- [ ] 2.5 Add execution review to implement.md coordinator
+- [x] 2.5 Add execution review to implement.md coordinator
   - **Do**: Modify `plugins/ralph-specum/commands/implement.md`:
     1. In Section 7 "Verification Layers", after Layer 4 (TASK_COMPLETE signal verification), add Layer 5: "Artifact Review"
     2. Layer 5: invoke spec-reviewer with artifactType="execution", pass changed files from task, design.md, requirements.md
@@ -120,7 +120,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-6_
   - _Design: Component C_
 
-- [ ] 2.6 Add review step to plan-synthesizer.md for quick mode
+- [x] 2.6 Add review step to plan-synthesizer.md for quick mode
   - **Do**: Modify `plugins/ralph-specum/agents/plan-synthesizer.md`:
     1. After "Generate all four artifacts in sequence" step (step 4) and before "Append learnings" (step 6), add step: "Review generated artifacts"
     2. Review step: for each artifact (research, requirements, design, tasks), invoke spec-reviewer via Task tool
