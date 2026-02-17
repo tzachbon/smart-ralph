@@ -223,7 +223,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 [VERIFY] Full pattern consistency check
+- [x] 4.1 [VERIFY] Full pattern consistency check
   - **Do**: Verify all files follow plugin conventions:
     1. spec-reviewer.md has correct frontmatter (name, description, model: inherit)
     2. All modified commands maintain existing structure (no broken sections)
@@ -234,7 +234,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Verify**: `grep -q "model: inherit" plugins/ralph-specum/agents/spec-reviewer.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/research.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/requirements.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/design.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/tasks.md`
   - **Commit**: `chore(qa): pass full pattern consistency check`
 
-- [ ] 4.2 [VERIFY] AC checklist verification
+- [x] 4.2 [VERIFY] AC checklist verification
   - **Do**: Verify all acceptance criteria from requirements.md are met:
     - AC-1.1 through AC-1.7 (phase reviews)
     - AC-2.1 through AC-2.5 (execution reviews)
