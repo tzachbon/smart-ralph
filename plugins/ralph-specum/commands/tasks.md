@@ -187,6 +187,115 @@ Critical rules:
 - POC phase allows shortcuts, later phases clean up
 ```
 
+## Artifact Review
+
+<mandatory>
+**Review loop must complete before walkthrough. Max 3 iterations.**
+
+**Skip review if `--quick` flag detected in `$ARGUMENTS`.** If `--quick` is present, skip directly to "Walkthrough (Before Review)".
+</mandatory>
+
+After task-planner completes tasks.md and before presenting the walkthrough, invoke the `spec-reviewer` agent to validate the artifact.
+
+### Review Loop
+
+```text
+Set iteration = 1
+
+WHILE iteration <= 3:
+  1. Read ./specs/$spec/tasks.md content
+  2. Invoke spec-reviewer via Task tool (see delegation prompt below)
+  3. Parse the last line of spec-reviewer output for signal:
+     - If output contains "REVIEW_PASS": break loop, proceed to Walkthrough
+     - If output contains "REVIEW_FAIL" AND iteration < 3:
+       a. Extract "Feedback for Revision" from reviewer output
+       b. Re-invoke task-planner with revision prompt (see below)
+       c. Re-read updated tasks.md
+       d. iteration = iteration + 1
+       e. Continue loop
+     - If output contains "REVIEW_FAIL" AND iteration >= 3:
+       a. Append warnings to .progress.md (see Graceful Degradation below)
+       b. Break loop, proceed to Walkthrough
+     - If output contains NEITHER signal (reviewer error):
+       a. Treat as REVIEW_PASS (permissive)
+       b. Break loop, proceed to Walkthrough
+```
+
+### Review Delegation Prompt
+
+Invoke spec-reviewer via Task tool:
+
+```yaml
+subagent_type: spec-reviewer
+
+You are reviewing the tasks artifact for spec: $spec
+Spec path: ./specs/$spec/
+
+Review iteration: $iteration of 3
+
+Artifact content:
+[Full content of ./specs/$spec/tasks.md]
+
+Upstream artifacts (for cross-referencing):
+- Design: [Full content of ./specs/$spec/design.md]
+- Requirements: [Full content of ./specs/$spec/requirements.md]
+
+$priorFindings
+
+Apply the tasks rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+
+If REVIEW_FAIL, provide specific, actionable feedback for revision. Reference line numbers or sections.
+```
+
+Where `$priorFindings` is empty on iteration 1, or on subsequent iterations:
+```text
+Prior findings (from iteration $prevIteration):
+[Full findings output from previous spec-reviewer invocation]
+```
+
+### Revision Delegation Prompt
+
+On REVIEW_FAIL, re-invoke task-planner with feedback:
+
+```yaml
+subagent_type: task-planner
+
+You are revising the tasks for spec: $spec
+Spec path: ./specs/$spec/
+
+Current artifact: ./specs/$spec/tasks.md
+
+Reviewer feedback (iteration $iteration):
+$reviewerFindings
+
+Context:
+- Requirements: [include requirements.md content]
+- Design: [include design.md content]
+
+Your task:
+1. Read the current tasks.md
+2. Address each finding from the reviewer
+3. Update the artifact to resolve all issues
+4. Write the revised content to ./specs/$spec/tasks.md
+
+Focus on the specific issues flagged. Do not rewrite sections that passed review.
+```
+
+After the task-planner returns, re-read `./specs/$spec/tasks.md` (now updated) and loop back to invoke spec-reviewer again.
+
+### Graceful Degradation
+
+If max iterations (3) reached without REVIEW_PASS, append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review Warning: tasks
+- Max iterations (3) reached without REVIEW_PASS
+- Proceeding with best available version
+- Outstanding issues: [list from last REVIEW_FAIL findings]
+```
+
+Then proceed to Walkthrough.
+
 ## Walkthrough (Before Review)
 
 <mandatory>

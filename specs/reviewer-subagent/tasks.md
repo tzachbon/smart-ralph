@@ -69,7 +69,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-3_
   - _Design: Component B_
 
-- [ ] 2.2 Add review loop to design.md command
+- [x] 2.2 Add review loop to design.md command
   - **Do**: Modify `plugins/ralph-specum/commands/design.md`:
     1. After "Execute Design" section (after architect-reviewer Task completes) and before "Walkthrough (Before Review)", add "## Artifact Review" section
     2. Invoke spec-reviewer with artifactType="design", pass design.md + requirements.md + research.md as upstream
