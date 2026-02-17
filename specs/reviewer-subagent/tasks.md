@@ -29,7 +29,7 @@ Focus: Create the reviewer agent and wire it into one phase command to validate 
   - _Requirements: FR-1_
   - _Design: Component A_
 
-- [ ] 1.2 Add review loop to research.md command (POC integration)
+- [x] 1.2 Add review loop to research.md command (POC integration)
   - **Do**: Modify `plugins/ralph-specum/commands/research.md` to add a review loop section:
     1. After the "Merge Results" section and before "Walkthrough (Before Review)", add a new section "## Artifact Review"
     2. Section should: read research.md content, invoke spec-reviewer via Task tool with artifactType="research", parse REVIEW_PASS/REVIEW_FAIL response
