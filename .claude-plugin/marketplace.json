@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "ralph-specum",
-      "description": "Spec-driven development with research, requirements, design, tasks, and autonomous execution. Fresh context per task.",
-      "version": "3.4.0",
+      "description": "Spec-driven development with research, requirements, design, tasks, and autonomous execution with artifact review. Fresh context per task and reviewer sub-agent quality gates.",
+      "version": "3.5.0",
       "author": {
         "name": "tzachbon"
       },

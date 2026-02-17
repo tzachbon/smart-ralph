@@ -1,7 +1,7 @@
 {
   "name": "ralph-specum",
-  "version": "3.4.0",
-  "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, and autonomous implementation with fresh context per task.",
+  "version": "3.5.0",
+  "description": "Spec-driven development with task-by-task execution and artifact review. Research, requirements, design, tasks, and autonomous implementation with fresh context per task and reviewer sub-agent quality gates.",
   "author": {
     "name": "tzachbon"
   },

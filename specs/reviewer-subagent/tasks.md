@@ -167,7 +167,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
 
 ## Phase 3: Refinement and Version Bump
 
-- [ ] 3.1 Bump version in plugin.json
+- [x] 3.1 Bump version in plugin.json
   - **Do**: Update `plugins/ralph-specum/.claude-plugin/plugin.json`:
     1. Change version from "3.4.0" to "3.5.0"
     2. Update description to mention reviewer capability
@@ -178,7 +178,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-11_
   - _Design: File Structure_
 
-- [ ] 3.2 Bump version in marketplace.json
+- [x] 3.2 Bump version in marketplace.json
   - **Do**: Update `.claude-plugin/marketplace.json`:
     1. Change ralph-specum version from "3.4.0" to "3.5.0"
     2. Update description to mention reviewer capability
