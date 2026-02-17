@@ -55,7 +55,7 @@ Focus: Create the reviewer agent and wire it into one phase command to validate 
 
 After POC validated, wire reviewer into all remaining phase commands and execution flow.
 
-- [ ] 2.1 Add review loop to requirements.md command
+- [x] 2.1 Add review loop to requirements.md command
   - **Do**: Modify `plugins/ralph-specum/commands/requirements.md`:
     1. After "Execute Requirements" section (after product-manager Task completes) and before "Walkthrough (Before Review)", add "## Artifact Review" section
     2. Same pattern as research.md: invoke spec-reviewer with artifactType="requirements", pass requirements.md content + research.md as upstream
@@ -83,7 +83,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-4_
   - _Design: Component B_
 
-- [ ] 2.3 Add review loop to tasks.md command
+- [x] 2.3 Add review loop to tasks.md command
   - **Do**: Modify `plugins/ralph-specum/commands/tasks.md`:
     1. After "Execute Tasks Generation" section (after task-planner Task completes) and before "Walkthrough (Before Review)", add "## Artifact Review" section
     2. Invoke spec-reviewer with artifactType="tasks", pass tasks.md + design.md + requirements.md as upstream
