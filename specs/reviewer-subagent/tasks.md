@@ -247,7 +247,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
 
 ## Phase 5: PR Lifecycle
 
-- [ ] 5.1 Create PR and verify CI
+- [x] 5.1 Create PR and verify CI
   - **Do**: Push branch, create PR with gh CLI
   - **Verify**: `gh pr checks --watch` all green
   - **Done when**: PR created and CI passes
