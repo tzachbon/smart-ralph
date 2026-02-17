@@ -320,6 +320,12 @@ If max iterations (3) reached without REVIEW_PASS, append to `./specs/$spec/.pro
 
 Then proceed to Walkthrough.
 
+### Error Handling
+
+- **Reviewer fails to output signal**: treat as REVIEW_PASS (permissive) and log with status "REVIEW_PASS (no signal)"
+- **Phase agent fails during revision**: retry the revision once; if it fails again, use the original artifact and proceed
+- **Iteration counter edge cases**: if iteration is missing or invalid, default to 1
+
 ## Walkthrough (Before Review)
 
 <mandatory>

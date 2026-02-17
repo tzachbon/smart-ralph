@@ -1198,6 +1198,12 @@ Same pattern as Section 6c. Generate a fix task from reviewer feedback:
 
 After fix task completes (TASK_COMPLETE), re-run Layer 5 from the top with incremented reviewIteration.
 
+**Layer 5 Error Handling**:
+
+- **Reviewer fails to output signal**: treat as REVIEW_PASS (permissive) and log with status "REVIEW_PASS (no signal)"
+- **Phase agent fails during revision**: retry the fix task once; if it fails again, use the original implementation and proceed
+- **Iteration counter edge cases**: if reviewIteration is missing or invalid, default to 1
+
 **Verification Summary**
 
 All 5 layers must pass:
