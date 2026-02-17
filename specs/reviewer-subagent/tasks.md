@@ -215,7 +215,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Commit**: `refactor(reviewer): add consistent error handling to review loops`
   - _Design: Error Handling_
 
-- [ ] 3.5 [VERIFY] Refinement checkpoint
+- [x] 3.5 [VERIFY] Refinement checkpoint
   - **Do**: Verify version bumps and refinements
   - **Done when**: Version is 3.5.0 in both files, rubrics refined, error handling consistent
   - **Verify**: `grep -q '"3.5.0"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -q '"3.5.0"' .claude-plugin/marketplace.json && grep -q "treat as REVIEW_PASS" plugins/ralph-specum/commands/research.md`
