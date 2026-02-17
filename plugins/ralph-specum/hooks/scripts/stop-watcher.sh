@@ -1,4 +1,10 @@
 #!/bin/bash
+# LEGACY — No longer used by the prompt-based Stop hook (v3.4.0+)
+# Retained for reference. The Stop hook was converted from "type": "command"
+# to "type": "prompt" to fix posix_spawn '/bin/sh' ENOENT errors in sandboxed
+# environments. See hooks.json and implement.md for the current architecture.
+#
+# Original description:
 # Stop Hook for Ralph Specum
 # Loop controller that manages task execution continuation
 # 1. Logs current execution state to stderr
