@@ -45,7 +45,7 @@ Focus: Create the reviewer agent and wire it into one phase command to validate 
   - _Requirements: FR-2, FR-8, FR-9_
   - _Design: Component B_
 
-- [ ] 1.3 [VERIFY] POC checkpoint - reviewer agent and research integration
+- [x] 1.3 [VERIFY] POC checkpoint - reviewer agent and research integration
   - **Do**: Verify the spec-reviewer agent and research.md review loop are correctly wired
   - **Done when**: spec-reviewer.md exists with all required sections, research.md has review loop, patterns match existing agent/command conventions
   - **Verify**: `grep -q "name: spec-reviewer" plugins/ralph-specum/agents/spec-reviewer.md && grep -q "model: inherit" plugins/ralph-specum/agents/spec-reviewer.md && grep -q "Artifact Review" plugins/ralph-specum/commands/research.md && grep -q "iteration" plugins/ralph-specum/commands/research.md`
@@ -97,7 +97,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-5_
   - _Design: Component B_
 
-- [ ] 2.4 [VERIFY] Phase commands integration checkpoint
+- [x] 2.4 [VERIFY] Phase commands integration checkpoint
   - **Do**: Verify all four phase commands have review loops with consistent patterns
   - **Done when**: All four commands (research, requirements, design, tasks) contain Artifact Review section, spec-reviewer delegation, REVIEW_PASS/FAIL handling, iteration limits, quick mode skip
   - **Verify**: `for cmd in research requirements design tasks; do grep -q "Artifact Review" "plugins/ralph-specum/commands/${cmd}.md" && grep -q "spec-reviewer" "plugins/ralph-specum/commands/${cmd}.md" || echo "FAIL: ${cmd}"; done`
