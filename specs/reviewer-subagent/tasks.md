@@ -159,7 +159,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-10_
   - _Design: Component B_
 
-- [ ] 2.8 [VERIFY] Full integration checkpoint
+- [x] 2.8 [VERIFY] Full integration checkpoint
   - **Do**: Verify complete reviewer integration across all components
   - **Done when**: spec-reviewer.md agent exists, all 4 phase commands have review loops, implement.md has Layer 5, plan-synthesizer has review step, progress logging in all loops
   - **Verify**: `test -f plugins/ralph-specum/agents/spec-reviewer.md && for cmd in research requirements design tasks; do grep -q "Artifact Review" "plugins/ralph-specum/commands/${cmd}.md" || echo "FAIL: ${cmd}"; done && grep -q "Layer 5" plugins/ralph-specum/commands/implement.md && grep -q "spec-reviewer" plugins/ralph-specum/agents/plan-synthesizer.md`
