@@ -1,7 +1,7 @@
 ---
 spec: reviewer-subagent
 phase: tasks
-total_tasks: 21
+total_tasks: 19
 created: 2026-02-17
 generated: auto
 ---
@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Create the reviewer agent and wire it into one phase command to validate the concept end-to-end.
 
-- [ ] 1.1 Create spec-reviewer.md agent definition
+- [x] 1.1 Create spec-reviewer.md agent definition
   - **Do**: Create `plugins/ralph-specum/agents/spec-reviewer.md` with:
     1. Frontmatter: name=spec-reviewer, description including trigger phrases ("review artifact", "validate spec output", "check quality"), model=inherit
     2. Core role: read-only reviewer that validates artifacts against rubrics
