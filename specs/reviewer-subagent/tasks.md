@@ -135,7 +135,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-7, FR-12_
   - _Design: Component D_
 
-- [ ] 2.7 Add review logging to .progress.md
+- [x] 2.7 Add review logging to .progress.md
   - **Do**: Update review loop sections in all modified commands to log review findings:
     1. In each review loop (research, requirements, design, tasks commands + implement.md), after each review iteration, append to .progress.md:
        ```markdown

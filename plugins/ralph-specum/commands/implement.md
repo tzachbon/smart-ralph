@@ -1096,30 +1096,54 @@ WHILE reviewIteration <= 3:
   2. Read ./specs/$spec/design.md and ./specs/$spec/requirements.md
   3. Invoke spec-reviewer via Task tool (see delegation prompt below)
   4. Parse the last line of spec-reviewer output for signal:
-     - If output contains "REVIEW_PASS": break loop, proceed to State Update (section 8)
+     - If output contains "REVIEW_PASS":
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Break loop, proceed to State Update (section 8)
      - If output contains "REVIEW_FAIL" AND reviewIteration < 3:
-       a. Extract "Feedback for Revision" from reviewer output
-       b. Coordinator can:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Extract "Feedback for Revision" from reviewer output
+       c. Coordinator can:
           - Add fix tasks to tasks.md (same pattern as Section 6c fix task generator):
             Generate a fix task from the reviewer feedback, insert after current task,
             delegate to spec-executor, and on TASK_COMPLETE re-run Layer 5
           - Log suggested spec updates in .progress.md for manual review:
             Append reviewer suggestions under "## Review Suggestions" section
-       c. reviewIteration = reviewIteration + 1
-       d. Continue loop
+       d. reviewIteration = reviewIteration + 1
+       e. Continue loop
      - If output contains "REVIEW_FAIL" AND reviewIteration >= 3:
-       a. Log warnings to .progress.md:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Log warnings to .progress.md:
           ```markdown
           ### Review Warning: execution (Task $taskIndex)
-          - Max review iterations (3) reached without REVIEW_PASS
+          - Max iterations (3) reached without REVIEW_PASS
           - Proceeding with best available implementation
           - Outstanding issues: [findings from last REVIEW_FAIL]
           ```
-       b. Break loop, proceed to State Update (section 8)
+       c. Break loop, proceed to State Update (section 8)
      - If output contains NEITHER signal (reviewer error):
        a. Treat as REVIEW_PASS (permissive)
-       b. Break loop, proceed to State Update (section 8)
+       b. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
+       c. Break loop, proceed to State Update (section 8)
 ```
+
+### Review Iteration Logging
+
+After each review iteration in Layer 5 (regardless of outcome), append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review: execution (Task $taskIndex, Iteration $reviewIteration)
+- Status: REVIEW_PASS or REVIEW_FAIL
+- Findings: [summary of key findings from spec-reviewer output]
+- Action: [fix task added / warnings appended / proceeded]
+```
+
+Where:
+- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
+- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
+- **Action**: What was done in response:
+  - "fix task added" if REVIEW_FAIL and reviewIteration < 3 (fix task generated)
+  - "warnings appended, proceeded" if REVIEW_FAIL and reviewIteration >= 3 (graceful degradation)
+  - "proceeded" if REVIEW_PASS
 
 **Review Delegation Prompt**:
 

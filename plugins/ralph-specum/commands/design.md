@@ -198,20 +198,44 @@ WHILE iteration <= 3:
   1. Read ./specs/$spec/design.md content
   2. Invoke spec-reviewer via Task tool (see delegation prompt below)
   3. Parse the last line of spec-reviewer output for signal:
-     - If output contains "REVIEW_PASS": break loop, proceed to Walkthrough
-     - If output contains "REVIEW_FAIL" AND iteration < 3:
-       a. Extract "Feedback for Revision" from reviewer output
-       b. Re-invoke architect-reviewer with revision prompt (see below)
-       c. Re-read design.md (now updated)
-       d. iteration = iteration + 1
-       e. Continue loop
-     - If output contains "REVIEW_FAIL" AND iteration >= 3:
-       a. Append warnings to .progress.md (see Graceful Degradation below)
+     - If output contains "REVIEW_PASS":
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
        b. Break loop, proceed to Walkthrough
+     - If output contains "REVIEW_FAIL" AND iteration < 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Extract "Feedback for Revision" from reviewer output
+       c. Re-invoke architect-reviewer with revision prompt (see below)
+       d. Re-read design.md (now updated)
+       e. iteration = iteration + 1
+       f. Continue loop
+     - If output contains "REVIEW_FAIL" AND iteration >= 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Append warnings to .progress.md (see Graceful Degradation below)
+       c. Break loop, proceed to Walkthrough
      - If output contains NEITHER signal (reviewer error):
        a. Treat as REVIEW_PASS (permissive)
-       b. Break loop, proceed to Walkthrough
+       b. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
+       c. Break loop, proceed to Walkthrough
 ```
+
+### Review Iteration Logging
+
+After each review iteration (regardless of outcome), append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review: design (Iteration $iteration)
+- Status: REVIEW_PASS or REVIEW_FAIL
+- Findings: [summary of key findings from spec-reviewer output]
+- Action: [revision applied / warnings appended / proceeded]
+```
+
+Where:
+- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
+- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
+- **Action**: What was done in response:
+  - "revision applied" if REVIEW_FAIL and iteration < 3 (re-invoked architect-reviewer)
+  - "warnings appended, proceeded" if REVIEW_FAIL and iteration >= 3 (graceful degradation)
+  - "proceeded" if REVIEW_PASS
 
 ### Review Delegation Prompt
 
