@@ -189,7 +189,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-11_
   - _Design: File Structure_
 
-- [ ] 3.3 Review and refine spec-reviewer rubrics
+- [x] 3.3 Review and refine spec-reviewer rubrics
   - **Do**: Re-read spec-reviewer.md and refine rubrics:
     1. Ensure each rubric dimension has clear pass/fail criteria (not vague)
     2. Add examples of PASS and FAIL for each dimension
