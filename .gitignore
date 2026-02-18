@@ -1,3 +1,6 @@
+# Generated files (created by generate-agents-md.sh / config bridge)
+AGENTS.md
+
 # State files (created at runtime in user's spec directory)
 .ralph-state.json
 **/.progress.md
