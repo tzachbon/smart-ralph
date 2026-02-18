@@ -6,8 +6,8 @@
         "matcher": "*",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "You are a stop hook for the Ralph Specum execution loop.\n\nYour ONLY job is to decide: should Claude stop, or should it continue working?\n\nRules:\n1. If the hook input JSON contains `\"stop_hook_active\": true`, output EXACTLY: {\"decision\":\"approve\"} — this prevents infinite re-invocation loops.\n2. Otherwise, ALWAYS output EXACTLY: {\"decision\":\"block\",\"reason\":\"[RALPH-CONTINUE] The stop hook has fired. Check execution state:\\n1. Read specs/.current-spec to get the active spec name\\n2. Read specs/<spec-name>/.ralph-state.json\\n3. If phase=execution and taskIndex < totalTasks: continue the coordinator loop (delegate next task via Task tool per implement.md protocol)\\n4. If no active execution (no state file, no .current-spec, or phase != execution): you may stop normally\\n5. If ALL_TASKS_COMPLETE was already output: stop normally\"}\n\nYou MUST output valid JSON and nothing else. No explanation, no markdown, no extra text."
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/stop-watcher.sh"
           }
         ]
       }

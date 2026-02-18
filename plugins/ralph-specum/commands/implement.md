@@ -113,28 +113,6 @@ State files from earlier versions may lack new fields. The system handles this g
 After writing the state file, output the coordinator prompt below. This starts the execution loop.
 The stop-hook will continue the loop by blocking stops and prompting the coordinator to check state.
 
-**DESIGN NOTE: Prompt-Based Stop Hook Architecture (v3.4.0)**
-The stop hook uses `"type": "prompt"` (Haiku-based) instead of `"type": "command"` (shell-based).
-This avoids `posix_spawn '/bin/sh' ENOENT` errors in sandboxed environments where `/bin/sh` is unavailable.
-- **Stop hook (Haiku)**: Lightweight trigger that ALWAYS blocks stops. Cannot read files.
-- **Coordinator (main model)**: Receives the block reason as a continuation prompt, reads state files,
-  and decides whether to continue execution or stop normally.
-- The stop hook is intentionally conservative: every stop gets blocked, the coordinator checks state,
-  finds nothing if not executing, and stops. Cost: ~1-2 extra Read calls per non-Ralph stop.
-
-## Self-Continuation Protocol
-
-The prompt-based stop hook cannot read files from disk. It always blocks stops with a `[RALPH-CONTINUE]` prompt.
-When you receive this continuation prompt:
-
-1. Read `specs/.current-spec` to get the active spec name
-2. Read `specs/<spec-name>/.ralph-state.json` to check execution state
-3. **If active execution** (phase=execution, taskIndex < totalTasks): continue the coordinator loop below
-4. **If no active execution** (no state file, no .current-spec, phase != execution): stop normally — do not fabricate state
-5. **If ALL_TASKS_COMPLETE was already output**: stop normally
-
-You are the source of truth for execution state, not the stop hook. The hook is only a trigger.
-
 ## Coordinator Prompt
 
 Output this prompt directly to start execution:
