@@ -132,7 +132,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Done when**: plan-synthesizer has review step after artifact generation with bounded iteration loop
   - **Verify**: `grep -q "spec-reviewer" plugins/ralph-specum/agents/plan-synthesizer.md && grep -q "REVIEW_PASS" plugins/ralph-specum/agents/plan-synthesizer.md && grep -q "Artifact Review" plugins/ralph-specum/agents/plan-synthesizer.md`
   - **Commit**: `feat(reviewer): add review step to plan-synthesizer quick mode`
-  - _Requirements: FR-7, FR-12_
+  - _Requirements: FR-7_
   - _Design: Component D_
 
 - [x] 2.7 Add review logging to .progress.md
@@ -167,6 +167,8 @@ After POC validated, wire reviewer into all remaining phase commands and executi
 
 ## Phase 3: Testing
 
+> **Note**: This plugin has no build/test step (markdown-only). Tasks 3.1-3.3 (version bumps) and 3.4-3.5 (rubric refinement, error handling) are grouped here as pre-quality-gate preparation rather than traditional testing.
+
 - [x] 3.1 Bump version in plugin.json
   - **Do**: Update `plugins/ralph-specum/.claude-plugin/plugin.json`:
     1. Change version from "3.4.0" to "3.5.0"
@@ -189,13 +191,13 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-11_
   - _Design: File Structure_
 
-- [x] 3.2a [VERIFY] Version bump checkpoint
+- [x] 3.3 [VERIFY] Version bump checkpoint
   - **Do**: Verify version bumps are correct in both files
   - **Done when**: Both plugin.json and marketplace.json show version "3.5.0"
   - **Verify**: `grep -q '"3.5.0"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -q '"3.5.0"' .claude-plugin/marketplace.json`
   - **Commit**: `chore(qa): pass version bump checkpoint`
 
-- [x] 3.3 Review and refine spec-reviewer rubrics
+- [x] 3.4 Review and refine spec-reviewer rubrics
   - **Do**: Re-read spec-reviewer.md and refine rubrics:
     1. Ensure each rubric dimension has clear pass/fail criteria (not vague)
     2. Add examples of PASS and FAIL for each dimension
@@ -209,7 +211,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - _Requirements: FR-1_
   - _Design: Component A_
 
-- [x] 3.4 Ensure error handling in all review loops
+- [x] 3.5 Ensure error handling in all review loops
   - **Do**: Review all modified commands for error handling:
     1. Reviewer fails to output signal -> treat as REVIEW_PASS
     2. Phase agent fails during revision -> retry once, then use original artifact
@@ -221,13 +223,13 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Commit**: `refactor(reviewer): add consistent error handling to review loops`
   - _Design: Error Handling_
 
-- [x] 3.5 [VERIFY] Refinement checkpoint
+- [x] 3.6 [VERIFY] Refinement checkpoint
   - **Do**: Verify version bumps and refinements
   - **Done when**: Version is 3.5.0 in both files, rubrics refined, error handling consistent
   - **Verify**: `grep -q '"3.5.0"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -q '"3.5.0"' .claude-plugin/marketplace.json && grep -q "treat as REVIEW_PASS" plugins/ralph-specum/commands/research.md`
   - **Commit**: `chore(qa): pass refinement checkpoint`
 
-## Phase 4: Quality Gates & PR Lifecycle
+## Phase 4: Quality Gates
 
 - [x] 4.1 [VERIFY] Full pattern consistency check
   - **Do**: Verify all files follow plugin conventions:

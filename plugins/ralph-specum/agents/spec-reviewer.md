@@ -71,13 +71,13 @@ You receive via Task delegation from a coordinator (phase command or implement.m
 
 | Dimension | PASS Criteria | FAIL Criteria |
 |-----------|--------------|---------------|
-| Completeness | User stories have acceptance criteria (AC-*); FRs have priorities (P0/P1/P2) | User stories missing ACs; FRs missing priority levels |
+| Completeness | User stories have acceptance criteria (AC-*); FRs have priorities (Must/Should/Could) | User stories missing ACs; FRs missing priority levels |
 | Testability | Acceptance criteria are specific, measurable, and automatable (e.g., "grep -q X file.md") | ACs are vague (e.g., "works correctly", "is good") or not verifiable |
 | Traceability | Every FR traces back to at least one user story | FRs exist without connection to any user story |
 | Scope | Requirements match the stated goal; no out-of-scope features included | Requirements include features not related to the original goal |
 
 **Examples**:
-- Completeness PASS: "US-1 ... AC-1.1: grep -q 'REVIEW_PASS' agents/spec-reviewer.md exits 0" and "FR-1 (P0): Create reviewer agent".
+- Completeness PASS: "US-1 ... AC-1.1: grep -q 'REVIEW_PASS' agents/spec-reviewer.md exits 0" and "FR-1 (Must): Create reviewer agent".
 - Completeness FAIL: "US-1: As a developer I want reviews" with no AC-* items listed, or "FR-1: Add reviewer" with no priority.
 - Testability PASS: "AC-2.1: Running `grep -q 'Layer 5' commands/implement.md` exits 0."
 - Testability FAIL: "AC-2.1: The implementation should work correctly and be high quality."

@@ -102,7 +102,7 @@ After generating all four artifacts (step 4), review each artifact sequentially:
 
 ### Review Loop (Per Artifact)
 
-```text
+````text
 Set iteration = 1
 
 WHILE iteration <= 3:
@@ -137,7 +137,7 @@ WHILE iteration <= 3:
      - No signal:
        a. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
        b. Treat as REVIEW_PASS (permissive)
-```
+````
 
 ### Review Iteration Logging
 

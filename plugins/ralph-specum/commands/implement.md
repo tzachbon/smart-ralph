@@ -1102,14 +1102,17 @@ WHILE reviewIteration <= 3:
      - If output contains "REVIEW_FAIL" AND reviewIteration < 3:
        a. Log review iteration to .progress.md (see Review Iteration Logging below)
        b. Extract "Feedback for Revision" from reviewer output
-       c. Coordinator can:
-          - Add fix tasks to tasks.md (same pattern as Section 6c fix task generator):
+       c. Coordinator decides which path to take:
+          - **Path A: Add fix tasks** (code-level issues that can be fixed):
             Generate a fix task from the reviewer feedback, insert after current task,
-            delegate to spec-executor, and on TASK_COMPLETE re-run Layer 5
-          - Log suggested spec updates in .progress.md for manual review:
-            Append reviewer suggestions under "## Review Suggestions" section
-       d. reviewIteration = reviewIteration + 1
-       e. Continue loop
+            delegate to spec-executor, and on TASK_COMPLETE re-run Layer 5.
+            reviewIteration = reviewIteration + 1
+            Continue loop
+          - **Path B: Log suggested spec updates** (spec-level or manual issues):
+            Append reviewer suggestions under "## Review Suggestions" section in .progress.md.
+            Do NOT increment reviewIteration. Do NOT re-invoke the reviewer.
+            Break the review loop (mark review as deferred).
+            Proceed to State Update (section 8).
      - If output contains "REVIEW_FAIL" AND reviewIteration >= 3:
        a. Log review iteration to .progress.md (see Review Iteration Logging below)
        b. Log warnings to .progress.md:
