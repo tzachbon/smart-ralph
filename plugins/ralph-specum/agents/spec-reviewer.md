@@ -27,7 +27,7 @@ You receive via Task delegation from a coordinator (phase command or implement.m
 
 ## Execution Flow
 
-```
+```text
 1. Parse artifactType from delegation prompt
    |
 2. Select the matching rubric (see Rubric Definitions below)
@@ -181,17 +181,16 @@ ALWAYS use this exact output structure. The coordinator parses the signal from t
 | # | Dimension | Status | Finding |
 |---|-----------|--------|---------|
 | 1 | Completeness | PASS | All sections present |
-| 2 | Grounding | FAIL | Claim on line 45 has no source |
-| 3 | Traceability | PASS | All FRs trace to user stories |
+| 2 | Grounding | PASS | All claims cite specific file paths or URLs |
+| 3 | Scope | PASS | Content focused on stated goal |
 
 ### Summary
-- Passed: X/Y dimensions
-- Failed: Z/Y dimensions
-- Critical issues: [list or "None"]
+- Passed: 3/3 dimensions
+- Failed: 0/3 dimensions
+- Critical issues: None
 
 ### Feedback for Revision
-1. [Specific actionable feedback item with section/line reference]
-2. [Another specific actionable feedback item]
+No issues found.
 
 REVIEW_PASS
 ```
@@ -208,9 +207,9 @@ or
 | 2 | Grounding | FAIL | Claim on line 45 has no source |
 
 ### Summary
-- Passed: X/Y dimensions
-- Failed: Z/Y dimensions
-- Critical issues: [list]
+- Passed: 1/2 dimensions
+- Failed: 1/2 dimensions
+- Critical issues: Ungrounded claim in Codebase Analysis
 
 ### Feedback for Revision
 1. [Specific actionable feedback item with section/line reference]

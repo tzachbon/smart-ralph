@@ -125,11 +125,38 @@ WHILE iteration <= 3:
      Apply the $artifactType rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
      ```
   3. Parse signal:
-     - REVIEW_PASS: proceed to next artifact
-     - REVIEW_FAIL (iteration < 3): revise artifact inline, increment iteration
-     - REVIEW_FAIL (iteration >= 3): append warning to .progress.md, proceed
-     - No signal: treat as REVIEW_PASS (permissive)
+     - REVIEW_PASS:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Proceed to next artifact
+     - REVIEW_FAIL (iteration < 3):
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Revise artifact inline, increment iteration
+     - REVIEW_FAIL (iteration >= 3):
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Append warning to .progress.md, proceed
+     - No signal:
+       a. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
+       b. Treat as REVIEW_PASS (permissive)
 ```
+
+### Review Iteration Logging
+
+After each review iteration (regardless of outcome), append to `<basePath>/.progress.md`:
+
+```markdown
+### Review: $artifactType (Iteration $iteration)
+- Status: REVIEW_PASS or REVIEW_FAIL
+- Findings: [summary of key findings from spec-reviewer output]
+- Action: [revision applied / warnings appended / proceeded]
+```
+
+Where:
+- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
+- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
+- **Action**: What was done in response:
+  - "revision applied" if REVIEW_FAIL and iteration < 3 (revised artifact inline)
+  - "warnings appended, proceeded" if REVIEW_FAIL and iteration >= 3 (graceful degradation)
+  - "proceeded" if REVIEW_PASS
 
 ### Revision on REVIEW_FAIL
 

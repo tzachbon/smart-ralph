@@ -1,7 +1,7 @@
 ---
 spec: reviewer-subagent
 phase: tasks
-total_tasks: 19
+total_tasks: 20
 created: 2026-02-17
 generated: auto
 ---
@@ -51,7 +51,7 @@ Focus: Create the reviewer agent and wire it into one phase command to validate 
   - **Verify**: `grep -q "name: spec-reviewer" plugins/ralph-specum/agents/spec-reviewer.md && grep -q "model: inherit" plugins/ralph-specum/agents/spec-reviewer.md && grep -q "Artifact Review" plugins/ralph-specum/commands/research.md && grep -q "iteration" plugins/ralph-specum/commands/research.md`
   - **Commit**: `chore(qa): pass POC quality checkpoint`
 
-## Phase 2: Complete Integration
+## Phase 2: Refactoring
 
 After POC validated, wire reviewer into all remaining phase commands and execution flow.
 
@@ -165,7 +165,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Verify**: `test -f plugins/ralph-specum/agents/spec-reviewer.md && for cmd in research requirements design tasks; do grep -q "Artifact Review" "plugins/ralph-specum/commands/${cmd}.md" || echo "FAIL: ${cmd}"; done && grep -q "Layer 5" plugins/ralph-specum/commands/implement.md && grep -q "spec-reviewer" plugins/ralph-specum/agents/plan-synthesizer.md`
   - **Commit**: `chore(qa): pass full reviewer integration checkpoint`
 
-## Phase 3: Refinement and Version Bump
+## Phase 3: Testing
 
 - [x] 3.1 Bump version in plugin.json
   - **Do**: Update `plugins/ralph-specum/.claude-plugin/plugin.json`:
@@ -188,6 +188,12 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Commit**: `chore(plugin): bump marketplace version to 3.5.0`
   - _Requirements: FR-11_
   - _Design: File Structure_
+
+- [x] 3.2a [VERIFY] Version bump checkpoint
+  - **Do**: Verify version bumps are correct in both files
+  - **Done when**: Both plugin.json and marketplace.json show version "3.5.0"
+  - **Verify**: `grep -q '"3.5.0"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -q '"3.5.0"' .claude-plugin/marketplace.json`
+  - **Commit**: `chore(qa): pass version bump checkpoint`
 
 - [x] 3.3 Review and refine spec-reviewer rubrics
   - **Do**: Re-read spec-reviewer.md and refine rubrics:
@@ -221,7 +227,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Verify**: `grep -q '"3.5.0"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -q '"3.5.0"' .claude-plugin/marketplace.json && grep -q "treat as REVIEW_PASS" plugins/ralph-specum/commands/research.md`
   - **Commit**: `chore(qa): pass refinement checkpoint`
 
-## Phase 4: Quality Gates
+## Phase 4: Quality Gates & PR Lifecycle
 
 - [x] 4.1 [VERIFY] Full pattern consistency check
   - **Do**: Verify all files follow plugin conventions:
@@ -245,9 +251,7 @@ After POC validated, wire reviewer into all remaining phase commands and executi
   - **Verify**: `test -f plugins/ralph-specum/agents/spec-reviewer.md && grep -q "Layer 5" plugins/ralph-specum/commands/implement.md && grep -q "spec-reviewer" plugins/ralph-specum/agents/plan-synthesizer.md && grep -q '"3.5.0"' plugins/ralph-specum/.claude-plugin/plugin.json`
   - **Commit**: `chore(qa): pass AC checklist verification`
 
-## Phase 5: PR Lifecycle
-
-- [x] 5.1 Create PR and verify CI
+- [x] 4.3 Create PR and verify CI
   - **Do**: Push branch, create PR with gh CLI
   - **Verify**: `gh pr checks --watch` all green
   - **Done when**: PR created and CI passes

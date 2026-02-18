@@ -1126,6 +1126,8 @@ WHILE reviewIteration <= 3:
        c. Break loop, proceed to State Update (section 8)
 ```
 
+**Note on Parallel Batches**: When Layer 5 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description in the delegation prompt.
+
 ### Review Iteration Logging
 
 After each review iteration in Layer 5 (regardless of outcome), append to `./specs/$spec/.progress.md`:

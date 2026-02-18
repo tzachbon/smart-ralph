@@ -83,7 +83,7 @@ As a plugin developer, I want the spec-reviewer defined as a markdown agent foll
 | FR-9 | Implement graceful degradation (proceed with warnings) on max iterations | Must | US-3 |
 | FR-10 | Log review findings in .progress.md per iteration | Must | US-3 |
 | FR-11 | Bump version in plugin.json and marketplace.json | Must | US-5 |
-| FR-12 | Add review step in start.md for quick mode flow | Should | US-4 |
+| FR-12 | Add review step in plan-synthesizer.md for quick mode flow | Should | US-4 |
 
 ## Non-Functional Requirements
 

@@ -281,14 +281,18 @@ Spec path: ./specs/$spec/
 
 Current artifact: ./specs/$spec/design.md
 
+Upstream context:
+[Full content of ./specs/$spec/requirements.md]
+
 Reviewer feedback (iteration $iteration):
 $reviewerFindings
 
 Your task:
 1. Read the current design.md
-2. Address each finding from the reviewer
-3. Update the artifact to resolve all issues
-4. Write the revised content to ./specs/$spec/design.md
+2. Read requirements.md for upstream context
+3. Address each finding from the reviewer
+4. Update the artifact to resolve all issues
+5. Write the revised content to ./specs/$spec/design.md
 
 Focus on the specific issues flagged. Do not rewrite sections that passed review.
 ```

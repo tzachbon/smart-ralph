@@ -595,7 +595,7 @@ WHILE iteration <= 3:
        a. Log review iteration to .progress.md (see Review Iteration Logging below)
        b. Extract "Feedback for Revision" from reviewer output
        c. Re-invoke research-analyst with revision prompt (see below)
-       d. Re-merge results into research.md
+       d. Re-read research.md (now updated by research-analyst)
        e. iteration = iteration + 1
        f. Continue loop
      - If output contains "REVIEW_FAIL" AND iteration >= 3:
