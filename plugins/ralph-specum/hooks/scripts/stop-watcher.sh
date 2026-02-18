@@ -1,16 +1,6 @@
-#!/bin/bash
-# LEGACY — No longer used by the prompt-based Stop hook (v3.4.0+)
-# Retained for reference. The Stop hook was converted from "type": "command"
-# to "type": "prompt" to fix posix_spawn '/bin/sh' ENOENT errors in sandboxed
-# environments. See hooks.json and implement.md for the current architecture.
-#
-# Original description:
-# Stop Hook for Ralph Specum
-# Loop controller that manages task execution continuation
-# 1. Logs current execution state to stderr
-# 2. Outputs continuation prompt when more tasks remain (phase=execution, taskIndex < totalTasks)
-# 3. Cleans up orphaned temp progress files (>60min old)
-# Note: .progress.md and .ralph-state.json are preserved
+#!/usr/bin/env bash
+# Stop Hook for Ralph Specum — Loop controller for task execution continuation
+# Exits silently (code 0) when no active spec, outputs block JSON when tasks remain.
 
 # Read hook input from stdin
 INPUT=$(cat)
@@ -143,8 +133,8 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
     # If a stop event fires while already processing a stop-hook continuation,
     # re-blocking would cause infinite loops. Allow Claude to stop; the next
     # session start will detect remaining tasks via .ralph-state.json.
-    # Note: Claude Code does not currently set stop_hook_active in hook input,
-    # so this guard is defensive-only and never fires in normal operation.
+    # Claude Code sets stop_hook_active: true in Stop hook input when a stop
+    # fires during an existing stop-hook continuation.
     STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
     if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
         echo "[ralph-specum] stop_hook_active=true, skipping continuation to prevent re-invocation loop" >&2
