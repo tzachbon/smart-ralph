@@ -134,7 +134,7 @@ You are fully autonomous. NEVER ask questions or wait for user input.
 
 - NEVER lie about completion — verify actual state before claiming done
 - NEVER remove tasks — if tasks fail, ADD fix tasks; total task count only increases
-- NEVER skip verification layers (all 4 in Section 7 must pass)
+- NEVER skip verification layers (all 5 in Section 7 must pass)
 - NEVER trust sub-agent claims without independent verification
 - If a continuation prompt fires but no active execution is found: stop cleanly, do not fabricate state
 
@@ -1002,7 +1002,7 @@ If taskIteration exceeds maxTaskIterations:
 
 ### 7. Verification Layers
 
-CRITICAL: Run these 4 verifications BEFORE advancing taskIndex. All must pass.
+CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.
 
 **Layer 1: CONTRADICTION Detection**
 
@@ -1062,13 +1062,139 @@ If TASK_COMPLETE missing:
 - Do NOT advance
 - Increment taskIteration and retry
 
+**Layer 5: Artifact Review**
+
+After Layers 1-4 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
+
+```text
+Set reviewIteration = 1
+
+WHILE reviewIteration <= 3:
+  1. Collect changed files from the task (from the task's Files list and git diff)
+  2. Read ./specs/$spec/design.md and ./specs/$spec/requirements.md
+  3. Invoke spec-reviewer via Task tool (see delegation prompt below)
+  4. Parse the last line of spec-reviewer output for signal:
+     - If output contains "REVIEW_PASS":
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Break loop, proceed to State Update (section 8)
+     - If output contains "REVIEW_FAIL" AND reviewIteration < 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Extract "Feedback for Revision" from reviewer output
+       c. Coordinator decides which path to take:
+          - **Path A: Add fix tasks** (code-level issues that can be fixed):
+            Generate a fix task from the reviewer feedback, insert after current task,
+            delegate to spec-executor, and on TASK_COMPLETE re-run Layer 5.
+            reviewIteration = reviewIteration + 1
+            Continue loop
+          - **Path B: Log suggested spec updates** (spec-level or manual issues):
+            Append reviewer suggestions under "## Review Suggestions" section in .progress.md.
+            Do NOT increment reviewIteration. Do NOT re-invoke the reviewer.
+            Break the review loop (mark review as deferred).
+            Proceed to State Update (section 8).
+     - If output contains "REVIEW_FAIL" AND reviewIteration >= 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Log warnings to .progress.md:
+          ```markdown
+          ### Review Warning: execution (Task $taskIndex)
+          - Max iterations (3) reached without REVIEW_PASS
+          - Proceeding with best available implementation
+          - Outstanding issues: [findings from last REVIEW_FAIL]
+          ```
+       c. Break loop, proceed to State Update (section 8)
+     - If output contains NEITHER signal (reviewer error):
+       a. Treat as REVIEW_PASS (permissive)
+       b. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
+       c. Break loop, proceed to State Update (section 8)
+```
+
+**Note on Parallel Batches**: When Layer 5 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description in the delegation prompt.
+
+### Review Iteration Logging
+
+After each review iteration in Layer 5 (regardless of outcome), append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review: execution (Task $taskIndex, Iteration $reviewIteration)
+- Status: REVIEW_PASS or REVIEW_FAIL
+- Findings: [summary of key findings from spec-reviewer output]
+- Action: [fix task added / warnings appended / proceeded]
+```
+
+Where:
+- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
+- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
+- **Action**: What was done in response:
+  - "fix task added" if REVIEW_FAIL and reviewIteration < 3 (fix task generated)
+  - "warnings appended, proceeded" if REVIEW_FAIL and reviewIteration >= 3 (graceful degradation)
+  - "proceeded" if REVIEW_PASS
+
+**Review Delegation Prompt**:
+
+Invoke spec-reviewer via Task tool:
+
+```yaml
+subagent_type: spec-reviewer
+
+You are reviewing the execution artifact for spec: $spec
+Spec path: ./specs/$spec/
+
+Review iteration: $reviewIteration of 3
+
+Task description:
+[Full task block from tasks.md]
+
+Changed files:
+[Content of each file listed in the task's Files section]
+
+Upstream artifacts (for cross-referencing):
+[Full content of ./specs/$spec/design.md]
+[Full content of ./specs/$spec/requirements.md]
+
+$priorFindings
+
+Apply the execution rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+
+If REVIEW_FAIL, provide specific, actionable feedback for revision. Reference file names and line numbers.
+```
+
+Where `$priorFindings` is empty on reviewIteration 1, or on subsequent iterations:
+```text
+Prior findings (from iteration $prevIteration):
+[Full findings output from previous spec-reviewer invocation]
+```
+
+**Fix Task Generation on REVIEW_FAIL** (reviewIteration < 3):
+
+Same pattern as Section 6c. Generate a fix task from reviewer feedback:
+
+```markdown
+- [ ] $taskId.$fixN [FIX $taskId] Fix: $reviewerFindingSummary
+  - **Do**: Address reviewer finding: $reviewerFinding
+    1. Review the finding details
+    2. Implement the suggested fix
+    3. Verify alignment with design.md
+  - **Files**: $originalTask.files
+  - **Done when**: Reviewer finding "$reviewerFindingSummary" addressed
+  - **Verify**: $originalTask.verify
+  - **Commit**: `fix($scope): address review finding from task $taskId`
+```
+
+After fix task completes (TASK_COMPLETE), re-run Layer 5 from the top with incremented reviewIteration.
+
+**Layer 5 Error Handling**:
+
+- **Reviewer fails to output signal**: treat as REVIEW_PASS (permissive) and log with status "REVIEW_PASS (no signal)"
+- **Phase agent fails during revision**: retry the fix task once; if it fails again, use the original implementation and proceed
+- **Iteration counter edge cases**: if reviewIteration is missing or invalid, default to 1
+
 **Verification Summary**
 
-All 4 layers must pass:
+All 5 layers must pass:
 1. No contradiction phrases with completion claim
 2. Spec files committed (no uncommitted changes)
 3. Checkmark count matches expected taskIndex + 1
 4. Explicit TASK_COMPLETE signal present
+5. Artifact review passes (spec-reviewer REVIEW_PASS or max iterations with graceful degradation)
 
 Only after all verifications pass, proceed to State Update (section 8).
 

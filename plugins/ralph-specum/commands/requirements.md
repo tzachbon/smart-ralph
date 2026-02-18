@@ -172,6 +172,140 @@ Focus on:
 - Risk identification
 ```
 
+## Artifact Review
+
+<mandatory>
+**Review loop must complete before walkthrough. Max 3 iterations.**
+
+**Skip review if `--quick` flag detected in `$ARGUMENTS`.** If `--quick` is present, skip directly to "Walkthrough (Before Review)".
+</mandatory>
+
+After the product-manager generates requirements.md and before presenting the walkthrough, invoke the `spec-reviewer` agent to validate the artifact.
+
+### Review Loop
+
+```text
+Set iteration = 1
+
+WHILE iteration <= 3:
+  1. Read ./specs/$spec/requirements.md content
+  2. Invoke spec-reviewer via Task tool (see delegation prompt below)
+  3. Parse the last line of spec-reviewer output for signal:
+     - If output contains "REVIEW_PASS":
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Break loop, proceed to Walkthrough
+     - If output contains "REVIEW_FAIL" AND iteration < 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Extract "Feedback for Revision" from reviewer output
+       c. Re-invoke product-manager with revision prompt (see below)
+       d. Re-read updated requirements.md
+       e. iteration = iteration + 1
+       f. Continue loop
+     - If output contains "REVIEW_FAIL" AND iteration >= 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Append warnings to .progress.md (see Graceful Degradation below)
+       c. Break loop, proceed to Walkthrough
+     - If output contains NEITHER signal (reviewer error):
+       a. Treat as REVIEW_PASS (permissive)
+       b. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
+       c. Break loop, proceed to Walkthrough
+```
+
+### Review Iteration Logging
+
+After each review iteration (regardless of outcome), append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review: requirements (Iteration $iteration)
+- Status: REVIEW_PASS or REVIEW_FAIL
+- Findings: [summary of key findings from spec-reviewer output]
+- Action: [revision applied / warnings appended / proceeded]
+```
+
+Where:
+- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
+- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
+- **Action**: What was done in response:
+  - "revision applied" if REVIEW_FAIL and iteration < 3 (re-invoked product-manager)
+  - "warnings appended, proceeded" if REVIEW_FAIL and iteration >= 3 (graceful degradation)
+  - "proceeded" if REVIEW_PASS
+
+### Review Delegation Prompt
+
+Invoke spec-reviewer via Task tool:
+
+```yaml
+subagent_type: spec-reviewer
+
+You are reviewing the requirements artifact for spec: $spec
+Spec path: ./specs/$spec/
+
+Review iteration: $iteration of 3
+
+Artifact content:
+[Full content of ./specs/$spec/requirements.md]
+
+Upstream artifacts (for cross-referencing):
+[Full content of ./specs/$spec/research.md]
+
+$priorFindings
+
+Apply the requirements rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+
+If REVIEW_FAIL, provide specific, actionable feedback for revision. Reference line numbers or sections.
+```
+
+Where `$priorFindings` is empty on iteration 1, or on subsequent iterations:
+```text
+Prior findings (from iteration $prevIteration):
+[Full findings output from previous spec-reviewer invocation]
+```
+
+### Revision Delegation Prompt
+
+On REVIEW_FAIL, re-invoke product-manager with feedback:
+
+```yaml
+subagent_type: product-manager
+
+You are revising the requirements for spec: $spec
+Spec path: ./specs/$spec/
+
+Current artifact: ./specs/$spec/requirements.md
+
+Reviewer feedback (iteration $iteration):
+$reviewerFindings
+
+Your task:
+1. Read the current requirements.md
+2. Address each finding from the reviewer
+3. Update the artifact to resolve all issues
+4. Write the revised content to ./specs/$spec/requirements.md
+
+Focus on the specific issues flagged. Do not rewrite sections that passed review.
+```
+
+After the product-manager returns, re-read `./specs/$spec/requirements.md` (now updated) and loop back to invoke spec-reviewer again.
+
+### Graceful Degradation
+
+If max iterations (3) reached without REVIEW_PASS, append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review Warning: requirements
+- Max iterations (3) reached without REVIEW_PASS
+- Proceeding with best available version
+- Outstanding issues: [list from last REVIEW_FAIL findings]
+```
+
+Then proceed to Walkthrough.
+
+### Error Handling
+
+- **Reviewer fails to output signal**: treat as REVIEW_PASS (permissive) and log with status "REVIEW_PASS (no signal)"
+- **Phase agent fails during revision**: retry the revision once; if it fails again, use the original artifact and proceed
+- **Iteration counter edge cases**: if iteration is missing or invalid, default to 1
+
 ## Walkthrough (Before Review)
 
 <mandatory>
@@ -184,7 +318,7 @@ After requirements.md is created, you MUST display a concise walkthrough BEFORE 
 
 ### Display Format
 
-```
+```text
 Requirements complete for '$spec'.
 Output: ./specs/$spec/requirements.md
 
