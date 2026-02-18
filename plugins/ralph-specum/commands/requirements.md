@@ -318,7 +318,7 @@ After requirements.md is created, you MUST display a concise walkthrough BEFORE 
 
 ### Display Format
 
-```
+```text
 Requirements complete for '$spec'.
 Output: ./specs/$spec/requirements.md
 
