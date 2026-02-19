@@ -256,7 +256,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-9, AC-5.3_
   - _Design: Component F_
 
-- [ ] 1.21 Add maxModificationsPerTask and maxModificationDepth to spec.schema.json
+- [x] 1.21 Add maxModificationsPerTask and maxModificationDepth to spec.schema.json
   - **Do**:
     1. After modificationMap in the state properties, add `maxModificationsPerTask` (integer, min 1, default 3) and `maxModificationDepth` (integer, min 1, default 2)
     2. Use exact schema from design.md Component F lines 457-469

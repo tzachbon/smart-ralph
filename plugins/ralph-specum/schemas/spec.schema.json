@@ -167,6 +167,18 @@
             },
             "required": ["count", "modifications"]
           }
+        },
+        "maxModificationsPerTask": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Max modification requests allowed per original task"
+        },
+        "maxModificationDepth": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 2,
+          "description": "Max nesting depth for modification task IDs"
         }
       }
     },
