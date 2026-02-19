@@ -388,6 +388,21 @@ TASK_MODIFICATION_REQUEST
 ```
 ```
 
+**Modification types:**
+
+| Type | When | Effect |
+|------|------|--------|
+| `SPLIT_TASK` | Current task too complex, needs 2+ sub-tasks | Original marked [x], sub-tasks inserted after |
+| `ADD_PREREQUISITE` | Missing dependency/setup discovered | New task inserted before current, current retried after |
+| `ADD_FOLLOWUP` | Task reveals needed cleanup/extension | New task inserted after current |
+
+**Rules:**
+- Max 3 modification requests per original task (coordinator enforces)
+- Proposed tasks must follow standard task format (Do/Files/Done when/Verify/Commit)
+- Each proposed task must satisfy sizing rules (max 4 Do steps, max 3 files)
+- After outputting TASK_MODIFICATION_REQUEST, also output TASK_COMPLETE (for SPLIT_TASK and ADD_FOLLOWUP where current task is done)
+- For ADD_PREREQUISITE, do NOT output TASK_COMPLETE (task blocked, needs prereq first)
+
 ## Karpathy Rules
 
 <mandatory>

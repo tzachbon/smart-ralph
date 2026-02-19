@@ -212,7 +212,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - **Done when**: All 3 modification types referenced at least once
   - **Commit**: `chore(spec-executor): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.17 Add modification types table and rules to spec-executor.md
+- [x] 1.17 Add modification types table and rules to spec-executor.md
   - **Do**:
     1. After the signal format, add the "Modification types" table (3 rows: SPLIT_TASK, ADD_PREREQUISITE, ADD_FOLLOWUP with When/Effect columns)
     2. Add the "Rules" section: max 3 per task, standard format required, sizing rules apply, TASK_COMPLETE behavior per type
