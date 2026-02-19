@@ -75,6 +75,23 @@ GOOD:
   - **Done when**: `import { track } from '@/lib/analytics'` resolves without error
   - **Verify**: `pnpm check-types`
 
+**Example 3: Refactoring (overloaded vs. focused)**
+
+BAD:
+- [ ] 3.1 Refactor and test the auth module
+  - **Do**: Extract auth logic, add error handling, write unit tests, run linter, fix types
+  - **Files**: src/auth.ts, src/utils/token.ts, tests/auth.test.ts, src/types.ts
+
+GOOD:
+- [ ] 3.1 Extract token validation into utility
+  - **Do**:
+    1. Create `src/utils/token.ts` with `validateToken(token: string): TokenPayload | null`
+    2. Move JWT verify logic from `src/auth.ts` lines 45-62 into new file
+    3. Update `src/auth.ts` to import and call `validateToken`
+  - **Files**: src/utils/token.ts, src/auth.ts
+  - **Done when**: Existing auth flow works identically after extraction
+  - **Verify**: `pnpm check-types && pnpm test -- --grep auth`
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.

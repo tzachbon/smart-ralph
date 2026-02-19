@@ -89,7 +89,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - **Done when**: All 3 grep checks pass
   - **Commit**: `chore(templates): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.5 Add Bad vs Good Example 3 (Refactoring) to templates/tasks.md
+- [x] 1.5 Add Bad vs Good Example 3 (Refactoring) to templates/tasks.md
   - **Do**:
     1. After Example 2, add Example 3 "Refactoring (overloaded vs. focused)"
     2. Use exact content from design.md Component B lines 171-186
