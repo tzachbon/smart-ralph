@@ -1,7 +1,7 @@
 ---
 description: Generate implementation tasks from design
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Tasks Phase
@@ -131,61 +131,252 @@ Interview Context:
 
 Store this context to include in the Task delegation prompt.
 
-## Execute Tasks Generation
+## Execute Tasks Generation (Team-Based)
 
 <mandatory>
-Use the Task tool with `subagent_type: task-planner` to generate tasks.
+**Tasks generation uses Claude Code Teams for execution, matching the standard team lifecycle pattern.**
+
+You MUST follow the full team lifecycle below. Use `task-planner` as the teammate subagent type.
 ALL specs MUST follow POC-first workflow.
 </mandatory>
 
-Invoke task-planner agent with prompt:
+### Step 1: Check for Orphaned Team
 
 ```text
-You are creating implementation tasks for spec: $spec
+1. Read ~/.claude/teams/tasks-$spec/config.json
+2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
+```
+
+### Step 2: Create Team
+
+```text
+TeamCreate(team_name: "tasks-$spec", description: "Task planning for $spec")
+```
+
+**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call, skipping Steps 3-6 and 8.
+
+### Step 3: Create Tasks
+
+```text
+TaskCreate(
+  subject: "Generate implementation tasks for $spec",
+  description: "Task-planner generates tasks.md from requirements and design. See Step 4 for full prompt.",
+  activeForm: "Generating tasks"
+)
+```
+
+### Step 4: Spawn Teammates
+
+```text
+Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1",
+  prompt: "You are a task planning teammate for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Requirements: [include requirements.md content]
+    - Design: [include design.md content]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Read requirements and design thoroughly
+    2. Break implementation into POC-first phases:
+       - Phase 1: Make It Work (POC) - validate idea, skip tests
+       - Phase 2: Refactoring - clean up code
+       - Phase 3: Testing - unit, integration, e2e
+       - Phase 4: Quality Gates - lint, types, CI
+    3. Create atomic, autonomous-ready tasks
+    4. Each task MUST include:
+       - **Do**: Exact implementation steps
+       - **Files**: Exact file paths to create/modify
+       - **Done when**: Explicit success criteria
+       - **Verify**: Command to verify completion
+       - **Commit**: Conventional commit message
+       - _Requirements: references_
+       - _Design: references_
+    5. Count total tasks
+    6. Output to ./specs/$spec/tasks.md
+    7. Include interview responses in an 'Execution Context' section of tasks.md
+
+    Use the tasks.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: tasks
+    total_tasks: <count>
+    created: <timestamp>
+    ---
+
+    Critical rules:
+    - Tasks must be executable without human interaction
+    - Each task = one commit
+    - Verify command must be runnable
+    - POC phase allows shortcuts, later phases clean up
+
+    When done, mark your task complete via TaskUpdate.")
+```
+
+### Step 5: Wait for Completion
+
+Wait for teammate message or task status "completed" via TaskList. **Timeout**: If stalled, retry with a direct Task call.
+
+### Step 6: Shutdown Teammates
+
+```text
+SendMessage(type: "shutdown_request", recipient: "planner-1", content: "Tasks complete, shutting down")
+```
+
+### Step 7: Collect Results
+
+Read `./specs/$spec/tasks.md` from teammate output.
+
+### Step 8: Clean Up Team
+
+```text
+TeamDelete()
+```
+
+If TeamDelete fails, log warning. Orphaned teams are cleaned up in Step 1 on next invocation.
+
+## Artifact Review
+
+<mandatory>
+**Review loop must complete before walkthrough. Max 3 iterations.**
+
+**Skip review if `--quick` flag detected in `$ARGUMENTS`.** If `--quick` is present, skip directly to "Walkthrough (Before Review)".
+</mandatory>
+
+After task-planner completes tasks.md and before presenting the walkthrough, invoke the `spec-reviewer` agent to validate the artifact.
+
+### Review Loop
+
+```text
+Set iteration = 1
+
+WHILE iteration <= 3:
+  1. Read ./specs/$spec/tasks.md content
+  2. Invoke spec-reviewer via Task tool (see delegation prompt below)
+  3. Parse the last line of spec-reviewer output for signal:
+     - If output contains "REVIEW_PASS":
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Break loop, proceed to Walkthrough
+     - If output contains "REVIEW_FAIL" AND iteration < 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Extract "Feedback for Revision" from reviewer output
+       c. Re-invoke task-planner with revision prompt (see below)
+       d. Re-read updated tasks.md
+       e. iteration = iteration + 1
+       f. Continue loop
+     - If output contains "REVIEW_FAIL" AND iteration >= 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Append warnings to .progress.md (see Graceful Degradation below)
+       c. Break loop, proceed to Walkthrough
+     - If output contains NEITHER signal (reviewer error):
+       a. Treat as REVIEW_PASS (permissive)
+       b. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
+       c. Break loop, proceed to Walkthrough
+```
+
+### Review Iteration Logging
+
+After each review iteration (regardless of outcome), append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review: tasks (Iteration $iteration)
+- Status: REVIEW_PASS or REVIEW_FAIL
+- Findings: [summary of key findings from spec-reviewer output]
+- Action: [revision applied / warnings appended / proceeded]
+```
+
+Where:
+- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
+- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
+- **Action**: What was done in response:
+  - "revision applied" if REVIEW_FAIL and iteration < 3 (re-invoked task-planner)
+  - "warnings appended, proceeded" if REVIEW_FAIL and iteration >= 3 (graceful degradation)
+  - "proceeded" if REVIEW_PASS
+
+### Review Delegation Prompt
+
+Invoke spec-reviewer via Task tool:
+
+```yaml
+subagent_type: spec-reviewer
+
+You are reviewing the tasks artifact for spec: $spec
 Spec path: ./specs/$spec/
+
+Review iteration: $iteration of 3
+
+Artifact content:
+[Full content of ./specs/$spec/tasks.md]
+
+Upstream artifacts (for cross-referencing):
+- Design: [Full content of ./specs/$spec/design.md]
+- Requirements: [Full content of ./specs/$spec/requirements.md]
+
+$priorFindings
+
+Apply the tasks rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+
+If REVIEW_FAIL, provide specific, actionable feedback for revision. Reference line numbers or sections.
+```
+
+Where `$priorFindings` is empty on iteration 1, or on subsequent iterations:
+```text
+Prior findings (from iteration $prevIteration):
+[Full findings output from previous spec-reviewer invocation]
+```
+
+### Revision Delegation Prompt
+
+On REVIEW_FAIL, re-invoke task-planner with feedback:
+
+```yaml
+subagent_type: task-planner
+
+You are revising the tasks for spec: $spec
+Spec path: ./specs/$spec/
+
+Current artifact: ./specs/$spec/tasks.md
+
+Reviewer feedback (iteration $iteration):
+$reviewerFindings
 
 Context:
 - Requirements: [include requirements.md content]
 - Design: [include design.md content]
 
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
-
 Your task:
-1. Read requirements and design thoroughly
-2. Break implementation into POC-first phases:
-   - Phase 1: Make It Work (POC) - validate idea, skip tests
-   - Phase 2: Refactoring - clean up code
-   - Phase 3: Testing - unit, integration, e2e
-   - Phase 4: Quality Gates - lint, types, CI
-3. Create atomic, autonomous-ready tasks
-4. Each task MUST include:
-   - **Do**: Exact implementation steps
-   - **Files**: Exact file paths to create/modify
-   - **Done when**: Explicit success criteria
-   - **Verify**: Command to verify completion
-   - **Commit**: Conventional commit message
-   - _Requirements: references_
-   - _Design: references_
-5. Count total tasks
-6. Output to ./specs/$spec/tasks.md
-7. Include interview responses in an "Execution Context" section of tasks.md
+1. Read the current tasks.md
+2. Address each finding from the reviewer
+3. Update the artifact to resolve all issues
+4. Write the revised content to ./specs/$spec/tasks.md
 
-Use the tasks.md template with frontmatter:
----
-spec: $spec
-phase: tasks
-total_tasks: <count>
-created: <timestamp>
----
-
-Critical rules:
-- Tasks must be executable without human interaction
-- Each task = one commit
-- Verify command must be runnable
-- POC phase allows shortcuts, later phases clean up
+Focus on the specific issues flagged. Do not rewrite sections that passed review.
 ```
+
+After the task-planner returns, re-read `./specs/$spec/tasks.md` (now updated) and loop back to invoke spec-reviewer again.
+
+### Graceful Degradation
+
+If max iterations (3) reached without REVIEW_PASS, append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review Warning: tasks
+- Max iterations (3) reached without REVIEW_PASS
+- Proceeding with best available version
+- Outstanding issues: [list from last REVIEW_FAIL findings]
+```
+
+Then proceed to Walkthrough.
+
+### Error Handling
+
+- **Reviewer fails to output signal**: treat as REVIEW_PASS (permissive) and log with status "REVIEW_PASS (no signal)"
+- **Phase agent fails during revision**: retry the revision once; if it fails again, use the original artifact and proceed
+- **Iteration counter edge cases**: if iteration is missing or invalid, default to 1
 
 ## Walkthrough (Before Review)
 
@@ -245,10 +436,31 @@ After displaying the walkthrough, ask ONE simple question:
 
 **If "Need changes" or "Other"**:
 1. Ask: "What would you like changed?"
-2. Invoke task-planner again with the feedback
+2. Re-invoke task-planner using the team pattern (cleanup-and-recreate)
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
+
+<mandatory>
+**Feedback Loop Team Pattern: Cleanup-and-Recreate**
+
+When the user requests changes, do NOT reuse the existing team or send messages to completed teammates.
+Instead, use the cleanup-and-recreate approach for each feedback iteration:
+
+1. `TeamDelete()` the current team (cleanup previous session)
+2. `TeamCreate()` a new team with the same name (fresh team for re-invocation)
+3. `TaskCreate` with updated prompt including user feedback
+4. Spawn new teammate, wait for completion, shutdown, `TeamDelete`
+
+This is simpler and more reliable than trying to reuse teams or message completed teammates.
+Each feedback iteration gets a completely fresh team context.
+</mandatory>
+
+**Re-invoke task-planner**: Repeat Steps 1-8 above with the following changes:
+- Step 3 subject: "Update tasks for $spec"
+- Step 4 prompt: include current tasks.md content, user feedback (`$user_feedback`), and instruct the planner to address the specific feedback while maintaining consistency with requirements/design. Append update notes to .progress.md.
+
+**After update, repeat review questions.** Loop until user approves.
 
 ## Update State
 

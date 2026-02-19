@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-02-14T16:37:35Z",
+  "updated": "2026-02-19T20:30:30Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 17,
+      "specsCount": 21,
       "isDefault": true
     }
   ],
@@ -17,6 +17,13 @@
       "totalTasks": 5
     },
     {
+      "name": "enforce-teams-instead",
+      "path": "./specs/enforce-teams-instead",
+      "phase": "tasks",
+      "taskIndex": 14,
+      "totalTasks": 14
+    },
+    {
       "name": "plan-source-feature",
       "path": "./specs/plan-source-feature",
       "phase": "completed",
@@ -24,8 +31,15 @@
       "totalTasks": 12
     },
     {
-      "name": "return-ralph-wiggum",
-      "path": "./specs/return-ralph-wiggum",
+      "name": "return-ralph-wrigum",
+      "path": "./specs/return-ralph-wrigum",
+      "phase": "complete",
+      "taskIndex": 19,
+      "totalTasks": 19
+    },
+    {
+      "name": "refactor-plugins",
+      "path": "./specs/refactor-plugins",
       "phase": "new"
     },
     {
@@ -38,7 +52,9 @@
     {
       "name": "fork-ralph-wiggum",
       "path": "./specs/fork-ralph-wiggum",
-      "phase": "research"
+      "phase": "completed",
+      "taskIndex": 21,
+      "totalTasks": 21
     },
     {
       "name": "reality-verification-principle",
@@ -46,6 +62,13 @@
       "phase": "tasks",
       "taskIndex": 9,
       "totalTasks": 11
+    },
+    {
+      "name": "speckit-stop-hook",
+      "path": "./specs/speckit-stop-hook",
+      "phase": "tasks",
+      "taskIndex": 9,
+      "totalTasks": 12
     },
     {
       "name": "qa-verification",
@@ -67,6 +90,11 @@
       "phase": "tasks",
       "taskIndex": 30,
       "totalTasks": 33
+    },
+    {
+      "name": "add-walk-through-of",
+      "path": "./specs/add-walk-through-of",
+      "phase": "new"
     },
     {
       "name": "codebase-indexing",

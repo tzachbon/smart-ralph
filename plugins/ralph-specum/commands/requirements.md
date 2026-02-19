@@ -1,7 +1,7 @@
 ---
 description: Generate requirements from goal and research
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Requirements Phase
@@ -129,48 +129,236 @@ Interview Context:
 
 Store this context to include in the Task delegation prompt.
 
-## Execute Requirements
+## Execute Requirements (Team-Based)
 
 <mandatory>
-Use the Task tool with `subagent_type: product-manager` to generate requirements.
+**Requirements uses Claude Code Teams for execution, matching the standard team lifecycle pattern.**
+
+You MUST follow the full team lifecycle below. Use `product-manager` as the teammate subagent type.
 </mandatory>
 
-Invoke product-manager agent with prompt:
+### Step 1: Check for Orphaned Team
 
 ```text
-You are generating requirements for spec: $spec
+1. Read ~/.claude/teams/requirements-$spec/config.json
+2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
+```
+
+### Step 2: Create Team
+
+```text
+TeamCreate(team_name: "requirements-$spec", description: "Requirements for $spec")
+```
+
+**Fallback**: If TeamCreate fails, log a warning and fall back to a direct `Task(subagent_type: product-manager)` call without a team. Skip Steps 3-6 and 8, and delegate directly via bare Task call.
+
+### Step 3: Create Tasks
+
+```text
+TaskCreate(
+  subject: "Generate requirements for $spec",
+  description: "Product-manager generates requirements.md from research and interview context. See Step 4 for full prompt.",
+  activeForm: "Generating requirements"
+)
+```
+
+### Step 4: Spawn Teammates
+
+```yaml
+Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1",
+  prompt: "You are a requirements teammate for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Research: [include research.md content if exists]
+    - Original goal: [from conversation or progress]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Analyze the goal and research findings
+    2. Create user stories with acceptance criteria
+    3. Define functional requirements (FR-*) with priorities
+    4. Define non-functional requirements (NFR-*)
+    5. Document glossary, out-of-scope items, dependencies
+    6. Output to ./specs/$spec/requirements.md
+    7. Include interview responses in a 'User Decisions' section of requirements.md
+
+    Use the requirements.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: requirements
+    created: <timestamp>
+    ---
+
+    Focus on:
+    - Testable acceptance criteria
+    - Clear priority levels
+    - Explicit success criteria
+    - Risk identification
+
+    When done, mark your task complete via TaskUpdate.")
+```
+
+### Step 5: Wait for Completion
+
+Wait for teammate message or TaskList showing status: "completed".
+
+**Timeout**: If stalled, check TaskList and retry with a direct Task call.
+
+### Step 6: Shutdown Teammates
+
+```text
+SendMessage(
+  type: "shutdown_request",
+  recipient: "pm-1",
+  content: "Requirements complete, shutting down"
+)
+```
+
+### Step 7: Collect Results
+
+Read `./specs/$spec/requirements.md` from the teammate.
+
+### Step 8: Clean Up Team
+
+`TeamDelete()` — If it fails, log a warning; Step 1 will clean up on next invocation.
+
+## Artifact Review
+
+<mandatory>
+**Review loop must complete before walkthrough. Max 3 iterations.**
+
+**Skip review if `--quick` flag detected in `$ARGUMENTS`.** If `--quick` is present, skip directly to "Walkthrough (Before Review)".
+</mandatory>
+
+After the product-manager generates requirements.md and before presenting the walkthrough, invoke the `spec-reviewer` agent to validate the artifact.
+
+### Review Loop
+
+```text
+Set iteration = 1
+
+WHILE iteration <= 3:
+  1. Read ./specs/$spec/requirements.md content
+  2. Invoke spec-reviewer via Task tool (see delegation prompt below)
+  3. Parse the last line of spec-reviewer output for signal:
+     - If output contains "REVIEW_PASS":
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Break loop, proceed to Walkthrough
+     - If output contains "REVIEW_FAIL" AND iteration < 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Extract "Feedback for Revision" from reviewer output
+       c. Re-invoke product-manager with revision prompt (see below)
+       d. Re-read updated requirements.md
+       e. iteration = iteration + 1
+       f. Continue loop
+     - If output contains "REVIEW_FAIL" AND iteration >= 3:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Append warnings to .progress.md (see Graceful Degradation below)
+       c. Break loop, proceed to Walkthrough
+     - If output contains NEITHER signal (reviewer error):
+       a. Treat as REVIEW_PASS (permissive)
+       b. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
+       c. Break loop, proceed to Walkthrough
+```
+
+### Review Iteration Logging
+
+After each review iteration (regardless of outcome), append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review: requirements (Iteration $iteration)
+- Status: REVIEW_PASS or REVIEW_FAIL
+- Findings: [summary of key findings from spec-reviewer output]
+- Action: [revision applied / warnings appended / proceeded]
+```
+
+Where:
+- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
+- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
+- **Action**: What was done in response:
+  - "revision applied" if REVIEW_FAIL and iteration < 3 (re-invoked product-manager)
+  - "warnings appended, proceeded" if REVIEW_FAIL and iteration >= 3 (graceful degradation)
+  - "proceeded" if REVIEW_PASS
+
+### Review Delegation Prompt
+
+Invoke spec-reviewer via Task tool:
+
+```yaml
+subagent_type: spec-reviewer
+
+You are reviewing the requirements artifact for spec: $spec
 Spec path: ./specs/$spec/
 
-Context:
-- Research: [include research.md content if exists]
-- Original goal: [from conversation or progress]
+Review iteration: $iteration of 3
 
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
+Artifact content:
+[Full content of ./specs/$spec/requirements.md]
+
+Upstream artifacts (for cross-referencing):
+[Full content of ./specs/$spec/research.md]
+
+$priorFindings
+
+Apply the requirements rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+
+If REVIEW_FAIL, provide specific, actionable feedback for revision. Reference line numbers or sections.
+```
+
+Where `$priorFindings` is empty on iteration 1, or on subsequent iterations:
+```text
+Prior findings (from iteration $prevIteration):
+[Full findings output from previous spec-reviewer invocation]
+```
+
+### Revision Delegation Prompt
+
+On REVIEW_FAIL, re-invoke product-manager with feedback:
+
+```yaml
+subagent_type: product-manager
+
+You are revising the requirements for spec: $spec
+Spec path: ./specs/$spec/
+
+Current artifact: ./specs/$spec/requirements.md
+
+Reviewer feedback (iteration $iteration):
+$reviewerFindings
 
 Your task:
-1. Analyze the goal and research findings
-2. Create user stories with acceptance criteria
-3. Define functional requirements (FR-*) with priorities
-4. Define non-functional requirements (NFR-*)
-5. Document glossary, out-of-scope items, dependencies
-6. Output to ./specs/$spec/requirements.md
-7. Include interview responses in a "User Decisions" section of requirements.md
+1. Read the current requirements.md
+2. Address each finding from the reviewer
+3. Update the artifact to resolve all issues
+4. Write the revised content to ./specs/$spec/requirements.md
 
-Use the requirements.md template with frontmatter:
----
-spec: $spec
-phase: requirements
-created: <timestamp>
----
-
-Focus on:
-- Testable acceptance criteria
-- Clear priority levels
-- Explicit success criteria
-- Risk identification
+Focus on the specific issues flagged. Do not rewrite sections that passed review.
 ```
+
+After the product-manager returns, re-read `./specs/$spec/requirements.md` (now updated) and loop back to invoke spec-reviewer again.
+
+### Graceful Degradation
+
+If max iterations (3) reached without REVIEW_PASS, append to `./specs/$spec/.progress.md`:
+
+```markdown
+### Review Warning: requirements
+- Max iterations (3) reached without REVIEW_PASS
+- Proceeding with best available version
+- Outstanding issues: [list from last REVIEW_FAIL findings]
+```
+
+Then proceed to Walkthrough.
+
+### Error Handling
+
+- **Reviewer fails to output signal**: treat as REVIEW_PASS (permissive) and log with status "REVIEW_PASS (no signal)"
+- **Phase agent fails during revision**: retry the revision once; if it fails again, use the original artifact and proceed
+- **Iteration counter edge cases**: if iteration is missing or invalid, default to 1
 
 ## Walkthrough (Before Review)
 
@@ -184,7 +372,7 @@ After requirements.md is created, you MUST display a concise walkthrough BEFORE 
 
 ### Display Format
 
-```
+```text
 Requirements complete for '$spec'.
 Output: ./specs/$spec/requirements.md
 
@@ -230,35 +418,23 @@ After displaying the walkthrough, ask ONE simple question:
 
 **If "Need changes" or "Other"**:
 1. Ask: "What would you like changed?"
-2. Invoke product-manager again with the feedback
+2. Re-invoke product-manager using the team pattern (cleanup-and-recreate)
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
 
-2. **Invoke product-manager with update prompt:**
-   ```
-   You are updating the requirements for spec: $spec
-   Spec path: ./specs/$spec/
+<mandatory>
+**Feedback Loop Team Pattern: Cleanup-and-Recreate**
 
-   Current requirements: ./specs/$spec/requirements.md
+When the user requests changes, do NOT reuse the existing team. Instead, repeat Steps 1-8 from "Execute Requirements" above with these modifications:
+- Step 3 description: "Update requirements based on user feedback"
+- Step 4 prompt: Include `$user_feedback` and instruct the product-manager to read existing requirements.md, address feedback, maintain consistency with research, and append update notes to .progress.md
+- All other steps remain the same
+</mandatory>
 
-   User feedback:
-   $user_feedback
+**After update, repeat review questions** (go back to "Requirements Review Question")
 
-   Your task:
-   1. Read the existing requirements.md
-   2. Understand the user's feedback and concerns
-   3. Update the requirements to address the feedback
-   4. Maintain consistency with research findings
-   5. Update requirements.md with the changes
-   6. Append update notes to .progress.md explaining what changed
-
-   Focus on addressing the specific feedback while maintaining requirements quality.
-   ```
-
-3. **After update, repeat review questions** (go back to "Requirements Review Questions")
-
-4. **Continue until approved:** Loop until user responds with approval
+**Continue until approved:** Loop until user responds with approval
 
 ## Update State
 

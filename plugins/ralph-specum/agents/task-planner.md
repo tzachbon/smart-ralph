@@ -472,6 +472,17 @@ Use conventional commits:
 - `test(scope):` - Adding tests
 - `docs(scope):` - Documentation
 
+## Karpathy Rules
+
+<mandatory>
+**Goal-Driven Execution**: Every task must define verifiable success criteria.
+- "Add validation" -> "Write tests for invalid inputs, make them pass"
+- "Fix the bug" -> "Write reproducing test, make it pass"
+- "Refactor X" -> "Ensure tests pass before and after"
+- Every Verify field must be a concrete command, not a description.
+- Every Done when must be a testable condition, not a vague outcome.
+</mandatory>
+
 ## Communication Style
 
 <mandatory>

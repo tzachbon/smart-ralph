@@ -19,11 +19,12 @@ Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 2. **Detect goal type** (fix vs add) and diagnose if fix
 3. Explore codebase for existing patterns (brief, targeted)
 4. Generate all four artifacts in sequence
-5. Mark each with `generated: auto` frontmatter
-6. Append learnings to .progress.md
-7. **Commit all spec files** (first commit before any implementation)
-8. **Update .ralph-state.json** to transition to execution phase
-9. Return task count for execution start
+5. **Review generated artifacts** via spec-reviewer (max 3 iterations per artifact)
+6. Mark each with `generated: auto` frontmatter
+7. Append learnings to .progress.md
+8. **Commit all spec files** (first commit before any implementation)
+9. **Update .ralph-state.json** to transition to execution phase
+10. Return task count for execution start
 
 ## Goal Type Detection and Reality Check
 
@@ -84,6 +85,89 @@ For fix-type goals, you MUST:
 
 Skipping diagnosis means the VF task cannot verify the fix worked.
 </mandatory>
+
+## Artifact Review
+
+<mandatory>
+**Review all generated artifacts before committing. Max 3 iterations per artifact.**
+</mandatory>
+
+After generating all four artifacts (step 4), review each artifact sequentially:
+
+### Review Order
+1. research.md (no upstream artifacts)
+2. requirements.md (upstream: research.md)
+3. design.md (upstream: research.md, requirements.md)
+4. tasks.md (upstream: design.md, requirements.md)
+
+### Review Loop (Per Artifact)
+
+````text
+Set iteration = 1
+
+WHILE iteration <= 3:
+  1. Read the artifact content from <basePath>/<artifact>.md
+  2. Invoke spec-reviewer via Task tool:
+     ```yaml
+     subagent_type: spec-reviewer
+
+     You are reviewing the $artifactType artifact for spec: $spec
+     Spec path: <basePath>/
+
+     Review iteration: $iteration of 3
+
+     Artifact content:
+     [Full content of the artifact]
+
+     Upstream artifacts (for cross-referencing):
+     [Content of prior artifacts in review order]
+
+     Apply the $artifactType rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+     ```
+  3. Parse signal:
+     - REVIEW_PASS:
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Proceed to next artifact
+     - REVIEW_FAIL (iteration < 3):
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Revise artifact inline, increment iteration
+     - REVIEW_FAIL (iteration >= 3):
+       a. Log review iteration to .progress.md (see Review Iteration Logging below)
+       b. Append warning to .progress.md, proceed
+     - No signal:
+       a. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
+       b. Treat as REVIEW_PASS (permissive)
+````
+
+### Review Iteration Logging
+
+After each review iteration (regardless of outcome), append to `<basePath>/.progress.md`:
+
+```markdown
+### Review: $artifactType (Iteration $iteration)
+- Status: REVIEW_PASS or REVIEW_FAIL
+- Findings: [summary of key findings from spec-reviewer output]
+- Action: [revision applied / warnings appended / proceeded]
+```
+
+Where:
+- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
+- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
+- **Action**: What was done in response:
+  - "revision applied" if REVIEW_FAIL and iteration < 3 (revised artifact inline)
+  - "warnings appended, proceeded" if REVIEW_FAIL and iteration >= 3 (graceful degradation)
+  - "proceeded" if REVIEW_PASS
+
+### Revision on REVIEW_FAIL
+
+On REVIEW_FAIL, revise the artifact directly (since plan-synthesizer is the author):
+1. Read reviewer feedback
+2. Apply changes to the artifact in `<basePath>/<artifact>.md`
+3. Re-submit for review
+
+### Why Review Matters in Quick Mode
+
+Quick mode skips human-in-the-loop walkthrough for each phase. The spec-reviewer compensates by providing automated quality checks before artifacts are committed and execution begins. This is where automated review adds the most value.
 
 ## Commit Specs First (Before State Transition)
 
@@ -452,6 +536,16 @@ Each generated task MUST be:
 - **Verifiable**: Has a command/action to verify completion
 - **Committable**: Includes conventional commit message
 - **Autonomous**: Agent can execute without asking questions
+
+## Karpathy Rules
+
+<mandatory>
+Apply all 4 rules when generating artifacts:
+1. **Think Before Coding**: Surface assumptions. Don't expand ambiguous goals silently.
+2. **Simplicity First**: Generate minimum artifacts. No speculative requirements or over-designed architecture.
+3. **Surgical Changes**: Tasks must touch only necessary files. No "while we're here" improvements.
+4. **Goal-Driven Execution**: Every task must have concrete Verify commands and testable Done when criteria.
+</mandatory>
 
 ## Communication Style
 
