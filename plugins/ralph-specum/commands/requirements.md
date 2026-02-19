@@ -1,7 +1,7 @@
 ---
 description: Generate requirements from goal and research
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Requirements Phase
@@ -129,48 +129,102 @@ Interview Context:
 
 Store this context to include in the Task delegation prompt.
 
-## Execute Requirements
+## Execute Requirements (Team-Based)
 
 <mandatory>
-Use the Task tool with `subagent_type: product-manager` to generate requirements.
+**Requirements uses Claude Code Teams for execution, matching the standard team lifecycle pattern.**
+
+You MUST follow the full team lifecycle below. Use `product-manager` as the teammate subagent type.
 </mandatory>
 
-Invoke product-manager agent with prompt:
+### Step 1: Check for Orphaned Team
 
 ```text
-You are generating requirements for spec: $spec
-Spec path: ./specs/$spec/
-
-Context:
-- Research: [include research.md content if exists]
-- Original goal: [from conversation or progress]
-
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
-
-Your task:
-1. Analyze the goal and research findings
-2. Create user stories with acceptance criteria
-3. Define functional requirements (FR-*) with priorities
-4. Define non-functional requirements (NFR-*)
-5. Document glossary, out-of-scope items, dependencies
-6. Output to ./specs/$spec/requirements.md
-7. Include interview responses in a "User Decisions" section of requirements.md
-
-Use the requirements.md template with frontmatter:
----
-spec: $spec
-phase: requirements
-created: <timestamp>
----
-
-Focus on:
-- Testable acceptance criteria
-- Clear priority levels
-- Explicit success criteria
-- Risk identification
+1. Read ~/.claude/teams/requirements-$spec/config.json
+2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
+
+### Step 2: Create Team
+
+```text
+TeamCreate(team_name: "requirements-$spec", description: "Requirements for $spec")
+```
+
+**Fallback**: If TeamCreate fails, log a warning and fall back to a direct `Task(subagent_type: product-manager)` call without a team. Skip Steps 3-6 and 8, and delegate directly via bare Task call.
+
+### Step 3: Create Tasks
+
+```text
+TaskCreate(
+  subject: "Generate requirements for $spec",
+  description: "Product-manager generates requirements.md from research and interview context. See Step 4 for full prompt.",
+  activeForm: "Generating requirements"
+)
+```
+
+### Step 4: Spawn Teammates
+
+```yaml
+Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1",
+  prompt: "You are a requirements teammate for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Research: [include research.md content if exists]
+    - Original goal: [from conversation or progress]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Analyze the goal and research findings
+    2. Create user stories with acceptance criteria
+    3. Define functional requirements (FR-*) with priorities
+    4. Define non-functional requirements (NFR-*)
+    5. Document glossary, out-of-scope items, dependencies
+    6. Output to ./specs/$spec/requirements.md
+    7. Include interview responses in a 'User Decisions' section of requirements.md
+
+    Use the requirements.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: requirements
+    created: <timestamp>
+    ---
+
+    Focus on:
+    - Testable acceptance criteria
+    - Clear priority levels
+    - Explicit success criteria
+    - Risk identification
+
+    When done, mark your task complete via TaskUpdate.")
+```
+
+### Step 5: Wait for Completion
+
+Wait for teammate message or TaskList showing status: "completed".
+
+**Timeout**: If stalled, check TaskList and retry with a direct Task call.
+
+### Step 6: Shutdown Teammates
+
+```text
+SendMessage(
+  type: "shutdown_request",
+  recipient: "pm-1",
+  content: "Requirements complete, shutting down"
+)
+```
+
+### Step 7: Collect Results
+
+Read `./specs/$spec/requirements.md` from the teammate.
+
+### Step 8: Clean Up Team
+
+`TeamDelete()` — If it fails, log a warning; Step 1 will clean up on next invocation.
 
 ## Artifact Review
 
@@ -364,35 +418,23 @@ After displaying the walkthrough, ask ONE simple question:
 
 **If "Need changes" or "Other"**:
 1. Ask: "What would you like changed?"
-2. Invoke product-manager again with the feedback
+2. Re-invoke product-manager using the team pattern (cleanup-and-recreate)
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
 
-2. **Invoke product-manager with update prompt:**
-   ```
-   You are updating the requirements for spec: $spec
-   Spec path: ./specs/$spec/
+<mandatory>
+**Feedback Loop Team Pattern: Cleanup-and-Recreate**
 
-   Current requirements: ./specs/$spec/requirements.md
+When the user requests changes, do NOT reuse the existing team. Instead, repeat Steps 1-8 from "Execute Requirements" above with these modifications:
+- Step 3 description: "Update requirements based on user feedback"
+- Step 4 prompt: Include `$user_feedback` and instruct the product-manager to read existing requirements.md, address feedback, maintain consistency with research, and append update notes to .progress.md
+- All other steps remain the same
+</mandatory>
 
-   User feedback:
-   $user_feedback
+**After update, repeat review questions** (go back to "Requirements Review Question")
 
-   Your task:
-   1. Read the existing requirements.md
-   2. Understand the user's feedback and concerns
-   3. Update the requirements to address the feedback
-   4. Maintain consistency with research findings
-   5. Update requirements.md with the changes
-   6. Append update notes to .progress.md explaining what changed
-
-   Focus on addressing the specific feedback while maintaining requirements quality.
-   ```
-
-3. **After update, repeat review questions** (go back to "Requirements Review Questions")
-
-4. **Continue until approved:** Loop until user responds with approval
+**Continue until approved:** Loop until user responds with approval
 
 ## Update State
 

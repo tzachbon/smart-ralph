@@ -1,7 +1,7 @@
 ---
 description: Generate implementation tasks from design
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Tasks Phase
@@ -131,61 +131,113 @@ Interview Context:
 
 Store this context to include in the Task delegation prompt.
 
-## Execute Tasks Generation
+## Execute Tasks Generation (Team-Based)
 
 <mandatory>
-Use the Task tool with `subagent_type: task-planner` to generate tasks.
+**Tasks generation uses Claude Code Teams for execution, matching the standard team lifecycle pattern.**
+
+You MUST follow the full team lifecycle below. Use `task-planner` as the teammate subagent type.
 ALL specs MUST follow POC-first workflow.
 </mandatory>
 
-Invoke task-planner agent with prompt:
+### Step 1: Check for Orphaned Team
 
 ```text
-You are creating implementation tasks for spec: $spec
-Spec path: ./specs/$spec/
-
-Context:
-- Requirements: [include requirements.md content]
-- Design: [include design.md content]
-
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
-
-Your task:
-1. Read requirements and design thoroughly
-2. Break implementation into POC-first phases:
-   - Phase 1: Make It Work (POC) - validate idea, skip tests
-   - Phase 2: Refactoring - clean up code
-   - Phase 3: Testing - unit, integration, e2e
-   - Phase 4: Quality Gates - lint, types, CI
-3. Create atomic, autonomous-ready tasks
-4. Each task MUST include:
-   - **Do**: Exact implementation steps
-   - **Files**: Exact file paths to create/modify
-   - **Done when**: Explicit success criteria
-   - **Verify**: Command to verify completion
-   - **Commit**: Conventional commit message
-   - _Requirements: references_
-   - _Design: references_
-5. Count total tasks
-6. Output to ./specs/$spec/tasks.md
-7. Include interview responses in an "Execution Context" section of tasks.md
-
-Use the tasks.md template with frontmatter:
----
-spec: $spec
-phase: tasks
-total_tasks: <count>
-created: <timestamp>
----
-
-Critical rules:
-- Tasks must be executable without human interaction
-- Each task = one commit
-- Verify command must be runnable
-- POC phase allows shortcuts, later phases clean up
+1. Read ~/.claude/teams/tasks-$spec/config.json
+2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
+
+### Step 2: Create Team
+
+```text
+TeamCreate(team_name: "tasks-$spec", description: "Task planning for $spec")
+```
+
+**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call, skipping Steps 3-6 and 8.
+
+### Step 3: Create Tasks
+
+```text
+TaskCreate(
+  subject: "Generate implementation tasks for $spec",
+  description: "Task-planner generates tasks.md from requirements and design. See Step 4 for full prompt.",
+  activeForm: "Generating tasks"
+)
+```
+
+### Step 4: Spawn Teammates
+
+```text
+Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1",
+  prompt: "You are a task planning teammate for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Requirements: [include requirements.md content]
+    - Design: [include design.md content]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Read requirements and design thoroughly
+    2. Break implementation into POC-first phases:
+       - Phase 1: Make It Work (POC) - validate idea, skip tests
+       - Phase 2: Refactoring - clean up code
+       - Phase 3: Testing - unit, integration, e2e
+       - Phase 4: Quality Gates - lint, types, CI
+    3. Create atomic, autonomous-ready tasks
+    4. Each task MUST include:
+       - **Do**: Exact implementation steps
+       - **Files**: Exact file paths to create/modify
+       - **Done when**: Explicit success criteria
+       - **Verify**: Command to verify completion
+       - **Commit**: Conventional commit message
+       - _Requirements: references_
+       - _Design: references_
+    5. Count total tasks
+    6. Output to ./specs/$spec/tasks.md
+    7. Include interview responses in an 'Execution Context' section of tasks.md
+
+    Use the tasks.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: tasks
+    total_tasks: <count>
+    created: <timestamp>
+    ---
+
+    Critical rules:
+    - Tasks must be executable without human interaction
+    - Each task = one commit
+    - Verify command must be runnable
+    - POC phase allows shortcuts, later phases clean up
+
+    When done, mark your task complete via TaskUpdate.")
+```
+
+### Step 5: Wait for Completion
+
+Wait for teammate message or task status "completed" via TaskList. **Timeout**: If stalled, retry with a direct Task call.
+
+### Step 6: Shutdown Teammates
+
+```text
+SendMessage(type: "shutdown_request", recipient: "planner-1", content: "Tasks complete, shutting down")
+```
+
+### Step 7: Collect Results
+
+Read `./specs/$spec/tasks.md` from teammate output.
+
+### Step 8: Clean Up Team
+
+```text
+TeamDelete()
+```
+
+If TeamDelete fails, log warning. Orphaned teams are cleaned up in Step 1 on next invocation.
 
 ## Artifact Review
 
@@ -384,10 +436,31 @@ After displaying the walkthrough, ask ONE simple question:
 
 **If "Need changes" or "Other"**:
 1. Ask: "What would you like changed?"
-2. Invoke task-planner again with the feedback
+2. Re-invoke task-planner using the team pattern (cleanup-and-recreate)
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
+
+<mandatory>
+**Feedback Loop Team Pattern: Cleanup-and-Recreate**
+
+When the user requests changes, do NOT reuse the existing team or send messages to completed teammates.
+Instead, use the cleanup-and-recreate approach for each feedback iteration:
+
+1. `TeamDelete()` the current team (cleanup previous session)
+2. `TeamCreate()` a new team with the same name (fresh team for re-invocation)
+3. `TaskCreate` with updated prompt including user feedback
+4. Spawn new teammate, wait for completion, shutdown, `TeamDelete`
+
+This is simpler and more reliable than trying to reuse teams or message completed teammates.
+Each feedback iteration gets a completely fresh team context.
+</mandatory>
+
+**Re-invoke task-planner**: Repeat Steps 1-8 above with the following changes:
+- Step 3 subject: "Update tasks for $spec"
+- Step 4 prompt: include current tasks.md content, user feedback (`$user_feedback`), and instruct the planner to address the specific feedback while maintaining consistency with requirements/design. Append update notes to .progress.md.
+
+**After update, repeat review questions.** Loop until user approves.
 
 ## Update State
 

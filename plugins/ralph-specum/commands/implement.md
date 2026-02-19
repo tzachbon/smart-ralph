@@ -301,34 +301,37 @@ Instructions:
 
 Wait for spec-executor to complete. It will output TASK_COMPLETE on success.
 
-**Parallel Execution** (parallelGroup.isParallel = true):
+**Parallel Execution** (parallelGroup.isParallel = true, Team-Based):
 
-CRITICAL: Spawn MULTIPLE Task tool calls in ONE message. This enables true parallelism.
+Use team lifecycle for parallel batches.
 
-For each task index in parallelGroup.taskIndices, create a Task tool call with:
-- Unique progressFile: `.progress-task-$taskIndex.md`
-- Full task block from tasks.md
-- Same instructions as sequential but writing to temp progress file
+**Step 1: Check for Orphaned Team**
+Read `~/.claude/teams/exec-$spec/config.json`. If exists, call `TeamDelete()` to clean up.
 
-Example for parallel batch of tasks 3, 4, 5:
-```text
-[Task tool call 1]
-Task: Execute task 3 for spec $spec
-progressFile: .progress-task-3.md
-...
+**Step 2: Create Team**
+`TeamCreate(team_name: "exec-$spec", description: "Parallel execution batch")`
 
-[Task tool call 2]
-Task: Execute task 4 for spec $spec
-progressFile: .progress-task-4.md
-...
+**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: spec-executor)` calls in one message (skip Steps 3, 6, 7).
 
-[Task tool call 3]
-Task: Execute task 5 for spec $spec
-progressFile: .progress-task-5.md
-...
-```
+**Step 3: Create Tasks**
+For each taskIndex in parallelGroup.taskIndices:
+`TaskCreate(subject: "Execute task $taskIndex", description: "Task $taskIndex for $spec. progressFile: .progress-task-$taskIndex.md", activeForm: "Executing task $taskIndex")`
 
-All parallel tasks execute simultaneously. Wait for ALL to complete.
+**Step 4: Spawn Teammates**
+ALL Task calls in ONE message for true parallelism:
+`Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec\nprogressFile: .progress-task-$taskIndex.md\n[full task block and context]")`
+
+**Step 5: Wait for Completion**
+Monitor via TaskList. Wait for all teammates to report done. On timeout, proceed with completed tasks and handle failures via Section 9.
+
+**Step 6: Shutdown Teammates**
+`SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex", content: "Execution complete, shutting down")` for each teammate.
+
+**Step 7: Collect Results**
+Proceed to progress merge (Section 9) and state update (Section 8).
+
+**Step 8: Clean Up Team**
+`TeamDelete()`. If fails, cleaned up on next invocation via Step 1.
 
 **After Delegation**:
 
