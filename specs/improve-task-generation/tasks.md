@@ -380,7 +380,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-10, AC-5.6, AC-4.7_
   - _Design: Component E_
 
-- [ ] 1.33 Add Insertion Algorithm to Section 6e
+- [x] 1.33 Add Insertion Algorithm to Section 6e
   - **Do**:
     1. After the state update pattern, add "Insertion Algorithm" subsection with 6 steps: read tasks.md, locate target task, find block end, insert position logic, use Edit tool
     2. Use content from design.md Component E lines 416-423

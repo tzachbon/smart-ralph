@@ -1089,6 +1089,15 @@ jq --arg taskId "$TASK_ID" \
    mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
 ```
 
+**Insertion Algorithm** (same pattern as Section 6c fix task insertion):
+
+1. Read tasks.md
+2. Locate target task by ID pattern: `- [ ] $taskId` or `- [x] $taskId`
+3. Find task block end (next `- [ ]`, `- [x]`, `## Phase`, or EOF)
+4. For ADD_PREREQUISITE: insert before task block start
+5. For SPLIT_TASK/ADD_FOLLOWUP: insert after task block end
+6. Use Edit tool with old_string/new_string
+
 ### 7. Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.
