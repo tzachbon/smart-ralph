@@ -513,7 +513,7 @@ Focus: Automated validation that all changes are correct and no regressions.
   - **Commit**: `test(templates): verify no manual verification patterns`
   - _Requirements: FR-6, AC-3.3_
 
-- [ ] 3.2 Verify spec.schema.json is valid JSON with all required fields
+- [x] 3.2 Verify spec.schema.json is valid JSON with all required fields
   - **Do**:
     1. Run `jq empty` on schema file
     2. Verify all 3 new properties exist: modificationMap, maxModificationsPerTask, maxModificationDepth
