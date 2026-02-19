@@ -247,35 +247,18 @@ TeamCreate(team_name: "research-$spec", description: "Parallel research for $spe
 
 ### Step 3: Create Tasks
 
-Create one TaskCreate per topic identified in the Pre-Step:
+Create one TaskCreate per topic identified in the Pre-Step. Keep these brief — full prompts go in Step 4.
 
 ```text
 For each topic:
   TaskCreate(
     subject: "[Topic name] research",
-    description: "Research topic: [topic]
-      Spec: $spec
-      Spec path: ./specs/$spec/
-      Output file: ./specs/$spec/.research-[topic-slug].md
-
-      Goal Interview Context:
-      - Problem: [from .progress.md]
-      - Constraints: [from .progress.md]
-      - Success criteria: [from .progress.md]
-
-      Instructions:
-      [topic-specific research instructions]
-
-      Write all findings to the output file.",
+    description: "Research [topic] for $spec. Output: ./specs/$spec/.research-[topic-slug].md",
     activeForm: "Researching [topic]"
   )
 ```
 
-**Output file naming convention:**
-- External topics: `.research-[topic-slug].md` (e.g., `.research-oauth-patterns.md`)
-- Codebase analysis: `.research-codebase.md`
-- Quality commands: `.research-quality.md`
-- Related specs: `.research-related-specs.md`
+**Output file naming**: `.research-[topic-slug].md` (e.g., `.research-oauth-patterns.md`, `.research-codebase.md`, `.research-quality.md`, `.research-related-specs.md`)
 
 ### Step 4: Spawn Teammates
 
@@ -307,143 +290,54 @@ Before spawning teammates, verify you have:
 
 If all boxes are checked, proceed with spawning all teammates in ONE message.
 
-### Teammate Spawning Patterns
+### Teammate Spawning Pattern
 
-#### Minimum Parallel Pattern (Always Use)
+Spawn all teammates in ONE message. Scale count by goal complexity (2 minimum, 5+ for complex goals). Each research-analyst handles ONE external topic; each Explore handles ONE codebase concern.
 
-Even for simple goals, spawn at least 2 teammates in parallel:
+**Example** (2 teammates — adapt and add more as needed):
 
 ```text
 Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-1",
-  prompt: "You are a research teammate...
-    Topic: [External best practices]
+  prompt: "You are a research teammate.
+    Topic: [External best practices for topic]
+    Spec: $spec | Path: ./specs/$spec/
     Output: ./specs/$spec/.research-[topic].md
-    [goal context]
-    Research best practices, libraries, pitfalls.
-    Write findings to output file.
+
+    Goal context: [problem, constraints, success criteria from .progress.md]
+
+    Instructions:
+    1. WebSearch for best practices, industry standards, common pitfalls
+    2. Research relevant libraries/frameworks
+    3. Write findings to output file
+    Do NOT explore codebase — Explore teammates handle that.
     When done, mark your task complete via TaskUpdate.")
 
 Task(subagent_type: Explore, team_name: "research-$spec", name: "explorer-1",
   prompt: "Analyze codebase for spec: $spec
     Output: ./specs/$spec/.research-codebase.md
-    Find existing patterns, dependencies, constraints.
-    Write findings to output file.")
+    Find existing patterns, dependencies, constraints related to [goal].
+    Write findings to output file with sections: Existing Patterns, Dependencies, Constraints, Recommendations.")
 ```
 
-#### Standard Parallel Pattern (Recommended)
-
-For most goals with diverse topics, spawn 3-4 teammates in ONE message.
-
-**CRITICAL: If the goal involves multiple external topics, spawn MULTIPLE research-analyst teammates (one per topic).**
-
-Example: "Add authentication with email notifications"
-- researcher-1: Authentication patterns (research-analyst)
-- researcher-2: Email service best practices (research-analyst)
-- explorer-1: Existing auth/email code (Explore)
-- explorer-2: Quality commands (Explore)
-
-```text
-Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-1",
-  prompt: "You are a research teammate...
-    Topic: Authentication patterns
-    Output: ./specs/$spec/.research-auth.md
-    Focus ONLY on web research for THIS specific topic:
-    1. WebSearch for best practices, industry standards
-    2. WebSearch for common pitfalls and gotchas
-    3. Research relevant libraries/frameworks
-    4. Document findings in output file
-    Do NOT explore codebase - Explore teammates handle that in parallel.
-    Do NOT research other topics - other research-analyst teammates handle those.
-    When done, mark your task complete via TaskUpdate.")
-
-Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-2",
-  prompt: "You are a research teammate...
-    Topic: Email service best practices
-    Output: ./specs/$spec/.research-email.md
-    Focus ONLY on web research for THIS specific topic:
-    1. WebSearch for best practices for this topic
-    2. WebSearch for common pitfalls
-    3. Research relevant libraries/tools
-    4. Document findings in output file
-    Do NOT explore codebase - Explore teammates handle that in parallel.
-    Do NOT research other topics - other research-analyst teammates handle those.
-    When done, mark your task complete via TaskUpdate.")
-
-Task(subagent_type: Explore, team_name: "research-$spec", name: "explorer-1",
-  prompt: "Analyze codebase for spec: $spec
-    Output: ./specs/$spec/.research-codebase.md
-    Tasks:
-    1. Find existing patterns related to [goal]
-    2. Identify dependencies and constraints
-    3. Check for similar implementations
-    4. Document architectural patterns used
-    Write findings to the output file with sections:
-    - Existing Patterns (with file paths)
-    - Dependencies
-    - Constraints
-    - Recommendations")
-
-Task(subagent_type: Explore, team_name: "research-$spec", name: "explorer-2",
-  prompt: "Discover quality commands for spec: $spec
-    Output: ./specs/$spec/.research-quality.md
-    Tasks:
-    1. Read package.json scripts section
-    2. Check for Makefile targets
-    3. Scan .github/workflows/*.yml for CI commands
-    4. Document lint, test, build, typecheck commands
-    Write findings as table: | Type | Command | Source |")
-```
-
-#### Complex Goal Pattern (5+ Teammates)
-
-Spawn 5 teammates in ONE message (2 research-analyst + 3 Explore):
-
-| Teammate | Type | Focus | Output File |
-|----------|------|-------|-------------|
-| researcher-1 | research-analyst | Topic A (web) | .research-[topic-a].md |
-| researcher-2 | research-analyst | Topic B (web) | .research-[topic-b].md |
-| explorer-1 | Explore | Existing patterns (code) | .research-codebase.md |
-| explorer-2 | Explore | Quality commands | .research-quality.md |
-| explorer-3 | Explore | Related specs | .research-related-specs.md |
+For more topics, add more `researcher-N` (web) and `explorer-N` (code/quality/related-specs) teammates in the same message.
 
 ### Step 5: Wait for Completion
 
-Monitor teammate progress via TaskList and automatic teammate messages:
+Wait for automatic teammate messages. Use TaskList to check progress. Proceed when ALL tasks are completed.
 
-```text
-1. Teammates send messages automatically when they complete tasks or need help
-2. Messages are delivered automatically to you (no polling needed)
-3. Use TaskList periodically to check overall progress
-4. Wait until ALL tasks show status: "completed"
-5. If a teammate reports an error, note it for the merge step
-```
-
-**Timeout**: If a teammate does not complete within a reasonable period, check TaskList status and log the error. Proceed with partial results from completed teammates and note incomplete topics in the merge step.
+**Timeout**: If a teammate stalls, proceed with partial results and note incomplete topics in the merge step.
 
 ### Step 6: Shutdown Teammates
 
-After all tasks complete, gracefully shut down each teammate:
-
-```text
-For each teammate:
-  SendMessage(
-    type: "shutdown_request",
-    recipient: "[teammate-name]",
-    content: "Research complete, shutting down"
-  )
-```
+Send `shutdown_request` to each teammate via SendMessage after all tasks complete.
 
 ### Step 7: Collect Results
 
-Proceed to the "Merge Results" section below to synthesize all teammate outputs into a single research.md.
+Proceed to "Merge Results" below to synthesize all teammate outputs into research.md.
 
 ### Step 8: Clean Up Team
 
-```text
-TeamDelete()
-```
-
-This removes the team directory and task list for `research-$spec`. If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
+Call `TeamDelete()`. If it fails, log a warning — orphaned teams are cleaned up in Step 1 on next run.
 
 ## Merge Results (After Parallel Research)
 
