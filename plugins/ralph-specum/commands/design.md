@@ -365,21 +365,21 @@ Each feedback iteration gets a completely fresh team context.
 **Re-invoke architect-reviewer with team lifecycle (cleanup-and-recreate):**
 
 ```text
-Step A: Check for orphaned team
+Step 1: Check for Orphaned Team
   Read ~/.claude/teams/design-$spec/config.json
   If exists: TeamDelete() to clean up
 
-Step B: Create new team
+Step 2: Create Team
   TeamCreate(team_name: "design-$spec", description: "Design update for $spec")
 
-Step C: Create task
+Step 3: Create Tasks
   TaskCreate(
     subject: "Update design for $spec",
     description: "Update design based on user feedback...",
     activeForm: "Updating design"
   )
 
-Step D: Spawn teammate
+Step 4: Spawn Teammates
   Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1",
     prompt: "You are updating the technical design for spec: $spec
       Spec path: ./specs/$spec/
@@ -400,11 +400,16 @@ Step D: Spawn teammate
       Focus on addressing the specific feedback while maintaining design quality.
       When done, mark your task complete via TaskUpdate.")
 
-Step E: Wait for completion
+Step 5: Wait for Completion
   Monitor via TaskList and automatic messages
 
-Step F: Shutdown & cleanup
+Step 6: Shutdown Teammates
   SendMessage(type: "shutdown_request", recipient: "architect-1", content: "Update complete")
+
+Step 7: Collect Results
+  Read updated ./specs/$spec/design.md
+
+Step 8: Clean Up Team
   TeamDelete()
 ```
 

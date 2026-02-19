@@ -68,7 +68,7 @@ Focus: Convert each phase command to use teams. Validate that the team lifecycle
 
 After POC validated, clean up and standardize the team patterns across files.
 
-- [ ] 2.1 Standardize team lifecycle documentation across all command files
+- [x] 2.1 Standardize team lifecycle documentation across all command files
   - **Do**: Ensure all 5 command files use the exact same team lifecycle structure: same step numbering, same section headers ("Step 1: Check for Orphaned Team", "Step 2: Create Team", etc.), same cleanup pattern. Extract any inconsistencies introduced during POC and make them uniform. Ensure the mandatory/critical blocks wrap the team sections properly.
   - **Files**: `plugins/ralph-specum/commands/research.md`, `plugins/ralph-specum/commands/requirements.md`, `plugins/ralph-specum/commands/design.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/commands/implement.md`
   - **Done when**: All team lifecycle sections follow identical structure and naming conventions

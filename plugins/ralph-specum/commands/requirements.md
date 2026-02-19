@@ -349,21 +349,21 @@ Each feedback iteration gets a completely fresh team context.
 **Re-invoke product-manager with team lifecycle (cleanup-and-recreate):**
 
 ```text
-Step A: Check for orphaned team
+Step 1: Check for Orphaned Team
   Read ~/.claude/teams/requirements-$spec/config.json
   If exists: TeamDelete() to clean up
 
-Step B: Create new team
+Step 2: Create Team
   TeamCreate(team_name: "requirements-$spec", description: "Requirements update for $spec")
 
-Step C: Create task
+Step 3: Create Tasks
   TaskCreate(
     subject: "Update requirements for $spec",
     description: "Update requirements based on user feedback...",
     activeForm: "Updating requirements"
   )
 
-Step D: Spawn teammate
+Step 4: Spawn Teammates
   Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1",
     prompt: "You are updating the requirements for spec: $spec
       Spec path: ./specs/$spec/
@@ -384,11 +384,16 @@ Step D: Spawn teammate
       Focus on addressing the specific feedback while maintaining requirements quality.
       When done, mark your task complete via TaskUpdate.")
 
-Step E: Wait for completion
+Step 5: Wait for Completion
   Monitor via TaskList and automatic messages
 
-Step F: Shutdown & cleanup
+Step 6: Shutdown Teammates
   SendMessage(type: "shutdown_request", recipient: "pm-1", content: "Update complete")
+
+Step 7: Collect Results
+  Read updated ./specs/$spec/requirements.md
+
+Step 8: Clean Up Team
   TeamDelete()
 ```
 
