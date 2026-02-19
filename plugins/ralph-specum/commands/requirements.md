@@ -164,7 +164,7 @@ TaskCreate(
 
 ### Step 4: Spawn Teammates
 
-```text
+```yaml
 Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1",
   prompt: "You are a requirements teammate for spec: $spec
     Spec path: ./specs/$spec/

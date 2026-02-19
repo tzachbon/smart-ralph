@@ -18,7 +18,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | add-skills-doc | ./specs | completed | done |
 | enforce-teams-instead | ./specs | tasks |  |
 | plan-source-feature | ./specs | completed | done |
-| return-ralph-wrigum | ./specs | complete |  |
+| return-ralph-wrigum | ./specs | completed |  |
 | refactor-plugins | ./specs | new |  |
 | implement-ralph-wiggum | ./specs | tasks | 27/35 tasks |
 | fork-ralph-wiggum | ./specs | completed | done |

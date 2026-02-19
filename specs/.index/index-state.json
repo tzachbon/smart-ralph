@@ -19,7 +19,9 @@
     {
       "name": "enforce-teams-instead",
       "path": "./specs/enforce-teams-instead",
-      "phase": "tasks"
+      "phase": "tasks",
+      "taskIndex": 14,
+      "totalTasks": 14
     },
     {
       "name": "plan-source-feature",

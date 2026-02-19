@@ -325,7 +325,7 @@ ALL Task calls in ONE message for true parallelism:
 Monitor via TaskList. Wait for all teammates to report done. On timeout, proceed with completed tasks and handle failures via Section 9.
 
 **Step 6: Shutdown Teammates**
-`SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex")` for each teammate.
+`SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex", content: "Execution complete, shutting down")` for each teammate.
 
 **Step 7: Collect Results**
 Proceed to progress merge (Section 9) and state update (Section 8).

@@ -595,6 +595,8 @@ After displaying the walkthrough, ask ONE simple question:
 **If "Approve"**: Skip to "Update State"
 
 **If "Need changes" or "Other"**:
+<!-- NOTE: Research feedback uses direct Task calls intentionally.
+     Only requirements/design/tasks use the cleanup-and-recreate team pattern for re-invocations. -->
 1. Ask: "What would you like changed?"
 2. Invoke appropriate subagents with the feedback
 3. Re-display walkthrough

@@ -40,7 +40,6 @@ graph TB
     end
 
     R --> TC --> TK --> RA
-    R --> TK --> RA
     REQ --> TC --> TK --> PM
     D --> TC --> TK --> AR
     T --> TC --> TK --> TP
@@ -55,7 +54,7 @@ graph TB
 
 Every phase follows this lifecycle:
 
-```
+```text
 1. Check for orphaned team: Read ~/.claude/teams/$phase-$spec/config.json
    - If exists: TeamDelete() to clean up
 2. TeamCreate(team_name: "$phase-$spec")
