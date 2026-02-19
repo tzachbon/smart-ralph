@@ -92,6 +92,25 @@ GOOD:
   - **Done when**: Existing auth flow works identically after extraction
   - **Verify**: `pnpm check-types && pnpm test -- --grep auth`
 
+**Example 4: Goal-Driven (imperative command vs. success criteria)**
+
+BAD:
+- [ ] 4.1 Add input validation
+  - **Do**: Add validation to the form fields. Check email format, required fields, password strength.
+  - **Files**: src/components/SignupForm.tsx
+  - **Done when**: Validation is added
+  - **Verify**: Manually check the form
+
+GOOD:
+- [ ] 4.1 Add signup form validation with error states
+  - **Do**:
+    1. Add validation rules to `src/components/SignupForm.tsx`: email (regex), password (min 8, 1 uppercase, 1 number), name (required)
+    2. Display inline error messages below each field on blur -> verify: error messages render
+    3. Disable submit button until all fields valid -> verify: button disabled state toggles
+  - **Files**: src/components/SignupForm.tsx
+  - **Done when**: Form rejects invalid inputs with visible error messages; submit disabled until valid
+  - **Verify**: `pnpm test -- --grep SignupForm` (write test first if missing: invalid email shows "Invalid email", short password shows "Min 8 characters")
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
