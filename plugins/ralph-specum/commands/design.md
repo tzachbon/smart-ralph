@@ -151,51 +151,14 @@ You MUST follow the full team lifecycle below. Use `architect-reviewer` as the t
 TeamCreate(team_name: "design-$spec", description: "Design for $spec")
 ```
 
-**Fallback**: If TeamCreate fails, log a warning and fall back to a direct `Task(subagent_type: architect-reviewer)` call without a team. Skip Steps 3-6 and 8, and delegate directly via bare Task call.
+**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: architect-reviewer)` call, skipping Steps 3-6 and 8.
 
 ### Step 3: Create Tasks
 
 ```text
 TaskCreate(
   subject: "Generate technical design for $spec",
-  description: "Generate technical design for spec: $spec
-    Spec path: ./specs/$spec/
-
-    Context:
-    - Requirements: [include requirements.md content]
-    - Research: [include research.md if exists]
-
-    [If interview was conducted, include:]
-    Interview Context:
-    $interview_context
-
-    Your task:
-    1. Read and understand all requirements
-    2. Explore the codebase for existing patterns to follow
-    3. Design architecture with mermaid diagrams
-    4. Define component responsibilities and interfaces
-    5. Document technical decisions with rationale
-    6. Plan file structure (create/modify)
-    7. Define error handling and edge cases
-    8. Create test strategy
-    9. Output to ./specs/$spec/design.md
-    10. Include interview responses in a 'Design Inputs' section of design.md
-
-    Use the design.md template with frontmatter:
-    ---
-    spec: $spec
-    phase: design
-    created: <timestamp>
-    ---
-
-    Include:
-    - Architecture diagram (mermaid)
-    - Data flow diagram (mermaid sequence)
-    - Technical decisions table
-    - File structure matrix
-    - TypeScript interfaces
-    - Error handling table
-    - Test strategy",
+  description: "Architect-reviewer generates design.md from requirements and research. See Step 4 for full prompt.",
   activeForm: "Generating design"
 )
 ```
@@ -248,30 +211,19 @@ Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "archit
 
 ### Step 5: Wait for Completion
 
-Monitor teammate progress via TaskList and automatic teammate messages:
+Wait for teammate message or check TaskList until task status is "completed".
 
-```text
-1. Teammate sends a message automatically when task is complete or needs help
-2. Messages are delivered automatically to you (no polling needed)
-3. Use TaskList to check progress if needed
-4. Wait until the task shows status: "completed"
-```
-
-**Timeout**: If the teammate does not complete within a reasonable period, check TaskList status and log the error. Consider retrying with a direct Task call if the team-based approach stalls.
+**Timeout**: If stalled, retry with a direct Task call.
 
 ### Step 6: Shutdown Teammates
 
 ```text
-SendMessage(
-  type: "shutdown_request",
-  recipient: "architect-1",
-  content: "Design complete, shutting down"
-)
+SendMessage(type: "shutdown_request", recipient: "architect-1", content: "Design complete")
 ```
 
 ### Step 7: Collect Results
 
-Read the generated `./specs/$spec/design.md` output from the teammate.
+Read `./specs/$spec/design.md`.
 
 ### Step 8: Clean Up Team
 
@@ -279,7 +231,7 @@ Read the generated `./specs/$spec/design.md` output from the teammate.
 TeamDelete()
 ```
 
-This removes the team directory and task list for `design-$spec`. If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
+If TeamDelete fails, log warning. Orphaned teams are cleaned up via Step 1 on next invocation.
 
 ## Artifact Review
 
@@ -503,54 +455,9 @@ Each feedback iteration gets a completely fresh team context.
 
 **Re-invoke architect-reviewer with team lifecycle (cleanup-and-recreate):**
 
-```text
-Step 1: Check for Orphaned Team
-  Read ~/.claude/teams/design-$spec/config.json
-  If exists: TeamDelete() to clean up
-
-Step 2: Create Team
-  TeamCreate(team_name: "design-$spec", description: "Design update for $spec")
-
-Step 3: Create Tasks
-  TaskCreate(
-    subject: "Update design for $spec",
-    description: "Update design based on user feedback...",
-    activeForm: "Updating design"
-  )
-
-Step 4: Spawn Teammates
-  Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1",
-    prompt: "You are updating the technical design for spec: $spec
-      Spec path: ./specs/$spec/
-
-      Current design: ./specs/$spec/design.md
-
-      User feedback:
-      $user_feedback
-
-      Your task:
-      1. Read the existing design.md
-      2. Understand the user's feedback and concerns
-      3. Update the design to address the feedback
-      4. Maintain consistency with requirements
-      5. Update design.md with the changes
-      6. Append update notes to .progress.md explaining what changed
-
-      Focus on addressing the specific feedback while maintaining design quality.
-      When done, mark your task complete via TaskUpdate.")
-
-Step 5: Wait for Completion
-  Monitor via TaskList and automatic messages
-
-Step 6: Shutdown Teammates
-  SendMessage(type: "shutdown_request", recipient: "architect-1", content: "Update complete")
-
-Step 7: Collect Results
-  Read updated ./specs/$spec/design.md
-
-Step 8: Clean Up Team
-  TeamDelete()
-```
+Repeat Steps 1-8 from "Execute Design" above, with these changes:
+- Step 3 subject: "Update design for $spec"
+- Step 4 prompt: Include `$user_feedback` and instruct the architect to read existing design.md, address the feedback, maintain consistency with requirements, update design.md, and append update notes to .progress.md.
 
 **After update, repeat review questions** (go back to "Design Review Question")
 
