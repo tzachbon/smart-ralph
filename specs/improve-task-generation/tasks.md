@@ -183,7 +183,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
 
 ### Component D: TASK_MODIFICATION_REQUEST Protocol (spec-executor.md)
 
-- [ ] 1.14 Add Task Modification Requests header and when-to-request rules to spec-executor.md
+- [x] 1.14 Add Task Modification Requests header and when-to-request rules to spec-executor.md
   - **Do**:
     1. Open `plugins/ralph-specum/agents/spec-executor.md`
     2. After the `## Error Handling` section's last line (line 359: `Lying about completion wastes iterations and breaks the spec workflow.`), before `## Communication Style`, insert `## Task Modification Requests` with the `<mandatory>` opening, think-first principle paragraph, and "When to request modification" bullet list
