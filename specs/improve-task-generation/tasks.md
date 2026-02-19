@@ -224,7 +224,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-7, AC-4.2, AC-4.5, AC-4.6_
   - _Design: Component D_
 
-- [ ] 1.18 Add ADD_PREREQUISITE example and closing tags to spec-executor.md
+- [x] 1.18 Add ADD_PREREQUISITE example and closing tags to spec-executor.md
   - **Do**:
     1. After the rules section, add the "Example: ADD_PREREQUISITE" section showing Redis caching scenario
     2. Add the closing `</mandatory>` tag

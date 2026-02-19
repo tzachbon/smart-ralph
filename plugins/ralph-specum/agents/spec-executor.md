@@ -403,6 +403,27 @@ TASK_MODIFICATION_REQUEST
 - After outputting TASK_MODIFICATION_REQUEST, also output TASK_COMPLETE (for SPLIT_TASK and ADD_FOLLOWUP where current task is done)
 - For ADD_PREREQUISITE, do NOT output TASK_COMPLETE (task blocked, needs prereq first)
 
+**Example: ADD_PREREQUISITE**
+
+You're executing task 2.3 "Add Redis caching" but Redis client isn't installed:
+
+```text
+TASK_MODIFICATION_REQUEST
+```json
+{
+  "type": "ADD_PREREQUISITE",
+  "originalTaskId": "2.3",
+  "reasoning": "Redis client package (ioredis) not installed. Need to add dependency before implementing caching.",
+  "proposedTasks": [
+    "- [ ] 2.3.P1 Install Redis client dependency\n  - **Do**:\n    1. Run `pnpm add ioredis`\n    2. Add Redis connection config to `src/config.ts`\n  - **Files**: package.json, src/config.ts\n  - **Done when**: `import Redis from 'ioredis'` resolves\n  - **Verify**: `pnpm check-types`\n  - **Commit**: `feat(deps): add ioredis for caching`"
+  ]
+}
+```
+```
+
+Do NOT output TASK_COMPLETE — task 2.3 is blocked until prerequisite completes.
+</mandatory>
+
 ## Karpathy Rules
 
 <mandatory>
