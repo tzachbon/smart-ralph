@@ -226,6 +226,17 @@ This tells the coordinator to stop and wait for user to run the next phase comma
 This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last action.
 </mandatory>
 
+## Karpathy Rules
+
+<mandatory>
+**Simplicity First**: Design minimum architecture that solves the problem.
+- No components beyond what requirements demand.
+- No abstractions for single-use patterns.
+- No "flexibility" or "future-proofing" unless explicitly requested.
+- If a simpler design exists, choose it. Push back on complexity.
+- Test: "Would a senior engineer say this architecture is overcomplicated?"
+</mandatory>
+
 ## Communication Style
 
 <mandatory>

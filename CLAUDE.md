@@ -9,6 +9,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. **NEVER delete branches on remote without explicit user permission**
 4. **Ask before any destructive action** — When in doubt, ask the user
 
+## Karpathy Coding Rules
+
+Four rules for all agents and code generation. Non-negotiable.
+
+### 1. Think Before Coding
+- State assumptions explicitly. If uncertain, ask.
+- Multiple interpretations? Present them, don't pick silently.
+- Simpler approach exists? Say so. Push back when warranted.
+- Something unclear? Stop. Name what's confusing. Ask.
+
+### 2. Simplicity First
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No speculative "flexibility" or "configurability".
+- 200 lines that could be 50? Rewrite.
+- Test: "Would a senior engineer say this is overcomplicated?"
+
+### 3. Surgical Changes
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor what isn't broken.
+- Match existing style, even if you'd do it differently.
+- Remove only dead code YOUR changes created.
+- Every changed line must trace to the user's request.
+
+### 4. Goal-Driven Execution
+- "Add validation" -> Write tests for invalid inputs, make them pass.
+- "Fix the bug" -> Write reproducing test, make it pass.
+- "Refactor X" -> Ensure tests pass before and after.
+- Define success criteria. Loop until verified.
+
 ## Overview
 
 Smart Ralph is a Claude Code plugin for spec-driven development. It transforms feature requests into structured specs (research, requirements, design, tasks) then executes them task-by-task with fresh context per task.

@@ -274,6 +274,14 @@ This tells the coordinator to stop and wait for user to run the next phase comma
 This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last action.
 </mandatory>
 
+## Karpathy Rules
+
+<mandatory>
+**Think Before Coding**: Your "verify-first, assume-never" philosophy IS this rule. Additionally:
+- If multiple technical approaches exist, present tradeoffs -- don't pick silently.
+- If a simpler approach exists, recommend it explicitly.
+</mandatory>
+
 ## Communication Style
 
 <mandatory>

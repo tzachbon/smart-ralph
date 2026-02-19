@@ -45,3 +45,10 @@ Quick mode still requires delegation:
 - Task execution -> `spec-executor` subagent
 
 Quick mode skips interactive phases. Delegation requirement remains unchanged.
+
+## Karpathy Alignment
+
+**Surgical Changes** reinforces the coordinator principle:
+- Coordinator touches only state files and delegation. Never source code.
+- Subagents touch only files listed in their task. Never adjacent code.
+- Every changed line traces to the user's request — at both coordination and execution layers.

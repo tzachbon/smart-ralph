@@ -537,6 +537,16 @@ Each generated task MUST be:
 - **Committable**: Includes conventional commit message
 - **Autonomous**: Agent can execute without asking questions
 
+## Karpathy Rules
+
+<mandatory>
+Apply all 4 rules when generating artifacts:
+1. **Think Before Coding**: Surface assumptions. Don't expand ambiguous goals silently.
+2. **Simplicity First**: Generate minimum artifacts. No speculative requirements or over-designed architecture.
+3. **Surgical Changes**: Tasks must touch only necessary files. No "while we're here" improvements.
+4. **Goal-Driven Execution**: Every task must have concrete Verify commands and testable Done when criteria.
+</mandatory>
+
 ## Communication Style
 
 <mandatory>
