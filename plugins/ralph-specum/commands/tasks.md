@@ -153,57 +153,14 @@ ALL specs MUST follow POC-first workflow.
 TeamCreate(team_name: "tasks-$spec", description: "Task planning for $spec")
 ```
 
-**Fallback**: If TeamCreate fails, log a warning and fall back to a direct `Task(subagent_type: task-planner)` call without a team. Skip Steps 3-6 and 8, and delegate directly via bare Task call.
+**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call, skipping Steps 3-6 and 8.
 
 ### Step 3: Create Tasks
 
 ```text
 TaskCreate(
   subject: "Generate implementation tasks for $spec",
-  description: "Generate implementation tasks for spec: $spec
-    Spec path: ./specs/$spec/
-
-    Context:
-    - Requirements: [include requirements.md content]
-    - Design: [include design.md content]
-
-    [If interview was conducted, include:]
-    Interview Context:
-    $interview_context
-
-    Your task:
-    1. Read requirements and design thoroughly
-    2. Break implementation into POC-first phases:
-       - Phase 1: Make It Work (POC) - validate idea, skip tests
-       - Phase 2: Refactoring - clean up code
-       - Phase 3: Testing - unit, integration, e2e
-       - Phase 4: Quality Gates - lint, types, CI
-    3. Create atomic, autonomous-ready tasks
-    4. Each task MUST include:
-       - **Do**: Exact implementation steps
-       - **Files**: Exact file paths to create/modify
-       - **Done when**: Explicit success criteria
-       - **Verify**: Command to verify completion
-       - **Commit**: Conventional commit message
-       - _Requirements: references_
-       - _Design: references_
-    5. Count total tasks
-    6. Output to ./specs/$spec/tasks.md
-    7. Include interview responses in an 'Execution Context' section of tasks.md
-
-    Use the tasks.md template with frontmatter:
-    ---
-    spec: $spec
-    phase: tasks
-    total_tasks: <count>
-    created: <timestamp>
-    ---
-
-    Critical rules:
-    - Tasks must be executable without human interaction
-    - Each task = one commit
-    - Verify command must be runnable
-    - POC phase allows shortcuts, later phases clean up",
+  description: "Task-planner generates tasks.md from requirements and design. See Step 4 for full prompt.",
   activeForm: "Generating tasks"
 )
 ```
@@ -262,30 +219,17 @@ Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1",
 
 ### Step 5: Wait for Completion
 
-Monitor teammate progress via TaskList and automatic teammate messages:
-
-```text
-1. Teammate sends a message automatically when task is complete or needs help
-2. Messages are delivered automatically to you (no polling needed)
-3. Use TaskList to check progress if needed
-4. Wait until the task shows status: "completed"
-```
-
-**Timeout**: If the teammate does not complete within a reasonable period, check TaskList status and log the error. Consider retrying with a direct Task call if the team-based approach stalls.
+Wait for teammate message or task status "completed" via TaskList. **Timeout**: If stalled, retry with a direct Task call.
 
 ### Step 6: Shutdown Teammates
 
 ```text
-SendMessage(
-  type: "shutdown_request",
-  recipient: "planner-1",
-  content: "Tasks complete, shutting down"
-)
+SendMessage(type: "shutdown_request", recipient: "planner-1", content: "Tasks complete, shutting down")
 ```
 
 ### Step 7: Collect Results
 
-Read the generated `./specs/$spec/tasks.md` output from the teammate.
+Read `./specs/$spec/tasks.md` from teammate output.
 
 ### Step 8: Clean Up Team
 
@@ -293,7 +237,7 @@ Read the generated `./specs/$spec/tasks.md` output from the teammate.
 TeamDelete()
 ```
 
-This removes the team directory and task list for `tasks-$spec`. If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
+If TeamDelete fails, log warning. Orphaned teams are cleaned up in Step 1 on next invocation.
 
 ## Artifact Review
 
@@ -512,60 +456,11 @@ This is simpler and more reliable than trying to reuse teams or message complete
 Each feedback iteration gets a completely fresh team context.
 </mandatory>
 
-**Re-invoke task-planner with team lifecycle (cleanup-and-recreate):**
+**Re-invoke task-planner**: Repeat Steps 1-8 above with the following changes:
+- Step 3 subject: "Update tasks for $spec"
+- Step 4 prompt: include current tasks.md content, user feedback (`$user_feedback`), and instruct the planner to address the specific feedback while maintaining consistency with requirements/design. Append update notes to .progress.md.
 
-```text
-Step 1: Check for Orphaned Team
-  Read ~/.claude/teams/tasks-$spec/config.json
-  If exists: TeamDelete() to clean up
-
-Step 2: Create Team
-  TeamCreate(team_name: "tasks-$spec", description: "Tasks update for $spec")
-
-Step 3: Create Tasks
-  TaskCreate(
-    subject: "Update tasks for $spec",
-    description: "Update tasks based on user feedback...",
-    activeForm: "Updating tasks"
-  )
-
-Step 4: Spawn Teammates
-  Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1",
-    prompt: "You are updating the implementation tasks for spec: $spec
-      Spec path: ./specs/$spec/
-
-      Current tasks: ./specs/$spec/tasks.md
-
-      User feedback:
-      $user_feedback
-
-      Your task:
-      1. Read the existing tasks.md
-      2. Understand the user's feedback and concerns
-      3. Update the tasks to address the feedback
-      4. Maintain consistency with requirements and design
-      5. Update tasks.md with the changes
-      6. Append update notes to .progress.md explaining what changed
-
-      Focus on addressing the specific feedback while maintaining task quality.
-      When done, mark your task complete via TaskUpdate.")
-
-Step 5: Wait for Completion
-  Monitor via TaskList and automatic messages
-
-Step 6: Shutdown Teammates
-  SendMessage(type: "shutdown_request", recipient: "planner-1", content: "Update complete")
-
-Step 7: Collect Results
-  Read updated ./specs/$spec/tasks.md
-
-Step 8: Clean Up Team
-  TeamDelete()
-```
-
-**After update, repeat review questions** (go back to "Tasks Review Question")
-
-**Continue until approved:** Loop until user responds with approval
+**After update, repeat review questions.** Loop until user approves.
 
 ## Update State
 
