@@ -699,7 +699,7 @@ Focus: Automated validation that all changes are correct and no regressions.
   - **Done when**: All review comments resolved
   - **Commit**: `fix: address review - <summary>` (per comment)
 
-- [ ] 5.3 Final validation
+- [x] 5.3 Final validation
   - **Do**: Verify ALL completion criteria:
     1. All tasks marked [x] in tasks.md
     2. CI all green: `gh pr checks`
