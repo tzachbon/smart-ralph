@@ -466,7 +466,7 @@ Focus: Cross-file consistency, wording alignment, remove contradictions.
   - **Verify**: `grep "Max 4" plugins/ralph-specum/agents/task-planner.md && grep "max 3 files" plugins/ralph-specum/templates/tasks.md`
   - **Commit**: `refactor(improve-task-gen): align sizing rules across files`
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: cross-file consistency
+- [x] 2.3 [VERIFY] Quality checkpoint: cross-file consistency
   - **Do**: Verify consistency across all modified files
   - **Verify**: `! grep -ri "manual test" plugins/ralph-specum/templates/ && grep -q "TASK_MODIFICATION_REQUEST" plugins/ralph-specum/agents/spec-executor.md && grep -q "TASK_MODIFICATION_REQUEST" plugins/ralph-specum/commands/implement.md && grep -q "TASK_MODIFICATION_REQUEST" plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
   - **Done when**: Signal name consistent across executor, coordinator, and stop-watcher
