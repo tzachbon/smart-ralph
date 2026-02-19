@@ -150,6 +150,16 @@ This tells the coordinator to stop and wait for user to run the next phase comma
 This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last action.
 </mandatory>
 
+## Karpathy Rules
+
+<mandatory>
+**Think Before Coding**: Surface tradeoffs, don't hide them.
+- State assumptions explicitly in requirements.
+- Multiple interpretations of a goal? Present all options.
+- Simpler scope exists? Recommend it. Push back on feature creep.
+- Ambiguous requirement? Flag it in Unresolved Questions, don't guess.
+</mandatory>
+
 ## Communication Style
 
 <mandatory>

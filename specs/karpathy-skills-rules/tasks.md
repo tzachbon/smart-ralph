@@ -60,7 +60,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
   - _Requirements: FR-4, AC-2.3_
   - _Design: architect-reviewer template_
 
-- [ ] 1.5 Add Karpathy rules to product-manager, research-analyst, plan-synthesizer agents
+- [x] 1.5 Add Karpathy rules to product-manager, research-analyst, plan-synthesizer agents
   - **Do**:
     1. Open `plugins/ralph-specum/agents/product-manager.md` -- insert `## Karpathy Rules` section before `## Communication Style` (before line 153). Use product-manager template (Think Before Coding).
     2. Open `plugins/ralph-specum/agents/research-analyst.md` -- insert `## Karpathy Rules` section before `## Communication Style` (before line 279). Use research-analyst template (Think reference).
