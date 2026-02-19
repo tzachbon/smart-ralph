@@ -99,7 +99,7 @@ BAD:
   - **Do**: Add validation to the form fields. Check email format, required fields, password strength.
   - **Files**: src/components/SignupForm.tsx
   - **Done when**: Validation is added
-  - **Verify**: Manually check the form
+  - **Verify**: Open the form and check by hand
 
 GOOD:
 - [ ] 4.1 Add signup form validation with error states
@@ -119,7 +119,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Do**: {{Exact steps to implement}}
   - **Files**: {{Exact file paths to create/modify}}
   - **Done when**: {{Explicit success criteria}}
-  - **Verify**: {{Command to verify, e.g., "manually test X does Y"}}
+  - **Verify**: {{Command to verify, e.g., `curl localhost:3000/api | jq .status`}}
   - **Commit**: `feat(scope): {{task description}}`
   - _Requirements: FR-1, AC-1.1_
   - _Design: Component A_
@@ -285,7 +285,7 @@ After POC validated, clean up code.
 
 - [ ] 4.3 Merge after approval (optional - only if explicitly requested)
   - **Do**: Merge PR after approval and CI green
-  - **Verify**: `gh pr merge --auto` or manual merge
+  - **Verify**: `gh pr merge --auto` or merge via GitHub UI
   - **Done when**: Changes in main branch
   - **Note**: Do NOT auto-merge unless user explicitly requests it
 

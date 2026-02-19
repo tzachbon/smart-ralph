@@ -502,7 +502,7 @@ Focus: Cross-file consistency, wording alignment, remove contradictions.
 
 Focus: Automated validation that all changes are correct and no regressions.
 
-- [ ] 3.1 Verify no manual verification in templates (automated grep test)
+- [x] 3.1 Verify no manual verification in templates (automated grep test)
   - **Do**:
     1. Run comprehensive grep across all template files for forbidden patterns
     2. Check for: "manual", "manually", "visually", "ask user", "check by hand" in Verify-context lines
