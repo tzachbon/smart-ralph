@@ -30,7 +30,7 @@ Focus: Convert each phase command to use teams. Validate that the team lifecycle
   - _Requirements: FR-2_
   - _Design: Component B_
 
-- [ ] 1.3 Add team lifecycle to design.md
+- [x] 1.3 Add team lifecycle to design.md
   - **Do**: Replace the "Execute Design" section in `plugins/ralph-specum/commands/design.md` with the same team-based wrapper pattern used in requirements.md. Team name: `design-$spec`. Teammate name: `architect-1`. Use `architect-reviewer` subagent type. Keep all review/feedback/walkthrough sections unchanged.
   - **Files**: `plugins/ralph-specum/commands/design.md`
   - **Done when**: design.md Execute Design section uses team lifecycle with architect-reviewer as a teammate
@@ -39,7 +39,7 @@ Focus: Convert each phase command to use teams. Validate that the team lifecycle
   - _Requirements: FR-3_
   - _Design: Component C_
 
-- [ ] 1.4 Add team lifecycle to tasks.md command
+- [x] 1.4 Add team lifecycle to tasks.md command
   - **Do**: Replace the "Execute Tasks Generation" section in `plugins/ralph-specum/commands/tasks.md` with the team-based wrapper pattern. Team name: `tasks-$spec`. Teammate name: `planner-1`. Use `task-planner` subagent type. Keep all review/feedback/walkthrough sections unchanged.
   - **Files**: `plugins/ralph-specum/commands/tasks.md`
   - **Done when**: tasks.md Execute Tasks Generation section uses team lifecycle with task-planner as a teammate

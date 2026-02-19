@@ -1,7 +1,7 @@
 ---
 description: Generate technical design from requirements
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Design Phase
@@ -130,54 +130,144 @@ Interview Context:
 
 Store this context to include in the Task delegation prompt.
 
-## Execute Design
+## Execute Design (Team-Based)
 
 <mandatory>
-Use the Task tool with `subagent_type: architect-reviewer` to generate design.
+**Design uses Claude Code Teams for execution, matching the standard team lifecycle pattern.**
+
+You MUST follow the full team lifecycle below. Use `architect-reviewer` as the teammate subagent type.
 </mandatory>
 
-Invoke architect-reviewer agent with prompt:
+### Step 1: Check for Orphaned Team
 
+```text
+1. Read ~/.claude/teams/design-$spec/config.json
+2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
-You are creating technical design for spec: $spec
-Spec path: ./specs/$spec/
 
-Context:
-- Requirements: [include requirements.md content]
-- Research: [include research.md if exists]
+### Step 2: Create Design Team
 
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
-
-Your task:
-1. Read and understand all requirements
-2. Explore the codebase for existing patterns to follow
-3. Design architecture with mermaid diagrams
-4. Define component responsibilities and interfaces
-5. Document technical decisions with rationale
-6. Plan file structure (create/modify)
-7. Define error handling and edge cases
-8. Create test strategy
-9. Output to ./specs/$spec/design.md
-10. Include interview responses in a "Design Inputs" section of design.md
-
-Use the design.md template with frontmatter:
----
-spec: $spec
-phase: design
-created: <timestamp>
----
-
-Include:
-- Architecture diagram (mermaid)
-- Data flow diagram (mermaid sequence)
-- Technical decisions table
-- File structure matrix
-- TypeScript interfaces
-- Error handling table
-- Test strategy
+```text
+TeamCreate(team_name: "design-$spec", description: "Design for $spec")
 ```
+
+### Step 3: Create Task
+
+```text
+TaskCreate(
+  subject: "Generate technical design for $spec",
+  description: "Generate technical design for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Requirements: [include requirements.md content]
+    - Research: [include research.md if exists]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Read and understand all requirements
+    2. Explore the codebase for existing patterns to follow
+    3. Design architecture with mermaid diagrams
+    4. Define component responsibilities and interfaces
+    5. Document technical decisions with rationale
+    6. Plan file structure (create/modify)
+    7. Define error handling and edge cases
+    8. Create test strategy
+    9. Output to ./specs/$spec/design.md
+    10. Include interview responses in a 'Design Inputs' section of design.md
+
+    Use the design.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: design
+    created: <timestamp>
+    ---
+
+    Include:
+    - Architecture diagram (mermaid)
+    - Data flow diagram (mermaid sequence)
+    - Technical decisions table
+    - File structure matrix
+    - TypeScript interfaces
+    - Error handling table
+    - Test strategy",
+  activeForm: "Generating design"
+)
+```
+
+### Step 4: Spawn Teammate
+
+```text
+Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1",
+  prompt: "You are creating technical design for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Requirements: [include requirements.md content]
+    - Research: [include research.md if exists]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Read and understand all requirements
+    2. Explore the codebase for existing patterns to follow
+    3. Design architecture with mermaid diagrams
+    4. Define component responsibilities and interfaces
+    5. Document technical decisions with rationale
+    6. Plan file structure (create/modify)
+    7. Define error handling and edge cases
+    8. Create test strategy
+    9. Output to ./specs/$spec/design.md
+    10. Include interview responses in a 'Design Inputs' section of design.md
+
+    Use the design.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: design
+    created: <timestamp>
+    ---
+
+    Include:
+    - Architecture diagram (mermaid)
+    - Data flow diagram (mermaid sequence)
+    - Technical decisions table
+    - File structure matrix
+    - TypeScript interfaces
+    - Error handling table
+    - Test strategy
+
+    When done, mark your task complete via TaskUpdate.")
+```
+
+### Step 5: Wait for Completion
+
+Monitor teammate progress via TaskList and automatic teammate messages:
+
+```text
+1. Teammate sends a message automatically when task is complete or needs help
+2. Messages are delivered automatically to you (no polling needed)
+3. Use TaskList to check progress if needed
+4. Wait until the task shows status: "completed"
+```
+
+### Step 6: Shutdown & Cleanup
+
+```text
+SendMessage(
+  type: "shutdown_request",
+  recipient: "architect-1",
+  content: "Design complete, shutting down"
+)
+
+TeamDelete()
+```
+
+This removes the team directory and task list for `design-$spec`.
 
 ## Walkthrough (Before Review)
 
@@ -240,10 +330,60 @@ After displaying the walkthrough, ask ONE simple question:
 
 **If "Need changes" or "Other"**:
 1. Ask: "What would you like changed?"
-2. Invoke architect-reviewer again with the feedback
+2. Re-invoke architect-reviewer using the team pattern (cleanup-and-recreate)
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
+
+**Re-invoke architect-reviewer with team lifecycle (cleanup-and-recreate):**
+
+```text
+Step A: Check for orphaned team
+  Read ~/.claude/teams/design-$spec/config.json
+  If exists: TeamDelete() to clean up
+
+Step B: Create new team
+  TeamCreate(team_name: "design-$spec", description: "Design update for $spec")
+
+Step C: Create task
+  TaskCreate(
+    subject: "Update design for $spec",
+    description: "Update design based on user feedback...",
+    activeForm: "Updating design"
+  )
+
+Step D: Spawn teammate
+  Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1",
+    prompt: "You are updating the technical design for spec: $spec
+      Spec path: ./specs/$spec/
+
+      Current design: ./specs/$spec/design.md
+
+      User feedback:
+      $user_feedback
+
+      Your task:
+      1. Read the existing design.md
+      2. Understand the user's feedback and concerns
+      3. Update the design to address the feedback
+      4. Maintain consistency with requirements
+      5. Update design.md with the changes
+      6. Append update notes to .progress.md explaining what changed
+
+      Focus on addressing the specific feedback while maintaining design quality.
+      When done, mark your task complete via TaskUpdate.")
+
+Step E: Wait for completion
+  Monitor via TaskList and automatic messages
+
+Step F: Shutdown & cleanup
+  SendMessage(type: "shutdown_request", recipient: "architect-1", content: "Update complete")
+  TeamDelete()
+```
+
+**After update, repeat review questions** (go back to "Design Review Question")
+
+**Continue until approved:** Loop until user responds with approval
 
 ## Update State
 
