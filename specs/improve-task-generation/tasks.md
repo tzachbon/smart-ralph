@@ -48,7 +48,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
 
 ### Component B: Bad/Good Examples (templates/tasks.md)
 
-- [ ] 1.1 Add Task Writing Guide header and principles to templates/tasks.md
+- [x] 1.1 Add Task Writing Guide header and principles to templates/tasks.md
   - **Do**:
     1. Open `plugins/ralph-specum/templates/tasks.md`
     2. After line 27 (the `> **Quality Checkpoints**:...` line, before `## Phase 1`), insert the first part of the Task Writing Guide: the `## Task Writing Guide` header, sizing rules summary, and `### Task Writing Principles` subsection (4 principles: Think First, Simplicity, Surgical, Goal-Driven)

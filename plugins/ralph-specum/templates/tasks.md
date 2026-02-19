@@ -26,6 +26,17 @@ This spec is not complete until ALL criteria are met:
 
 > **Quality Checkpoints**: Intermediate quality gate checks are inserted every 2-3 tasks to catch issues early. For small tasks, insert after 3 tasks. For medium/large tasks, insert after 2 tasks.
 
+## Task Writing Guide
+
+**Sizing rules**: Max 4 Do steps, max 3 files per task. Split if exceeded.
+
+### Task Writing Principles
+
+1. **Think First**: Tasks should surface what's unclear, not assume. If a task depends on an uncertain assumption (e.g., "config file exists at X"), state it explicitly in the Do section or add a verification step. Don't hide confusion in vague steps.
+2. **Simplicity**: Minimum steps to achieve the goal. No speculative features, no abstractions for single-use code. If the task can be done in 2 steps, don't write 4.
+3. **Surgical**: Each task touches only what it must. No drive-by refactors, no "while you're in there" improvements. Every file in the Files section traces directly to the task's goal.
+4. **Goal-Driven**: Emphasize **Done when** and **Verify** over **Do** steps. The Do is guidance; the Done when is the contract. Transform imperative commands into declarative success criteria. Instead of "Add validation" write "Done when: invalid inputs return 400 with error message."
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
