@@ -175,7 +175,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-11, AC-6.4_
   - _Design: Component C_
 
-- [ ] 1.13 [VERIFY] Quality checkpoint: task-planner.md fully updated
+- [x] 1.13 [VERIFY] Quality checkpoint: task-planner.md fully updated
   - **Do**: Verify task-planner.md has both new sections (sizing rules + expanded checklist)
   - **Verify**: `grep -q "## Task Sizing Rules" plugins/ralph-specum/agents/task-planner.md && grep -q "Total task count is 40+" plugins/ralph-specum/agents/task-planner.md && grep -q "50-60%" plugins/ralph-specum/agents/task-planner.md`
   - **Done when**: Both sections present with correct content
