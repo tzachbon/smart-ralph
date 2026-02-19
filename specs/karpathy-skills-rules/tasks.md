@@ -139,7 +139,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
   - **Done when**: All acceptance criteria from requirements.md confirmed
   - **Commit**: `fix(karpathy): address final review issues` (only if fixes needed)
 
-- [ ] 4.2 Create PR and verify CI
+- [x] 4.2 Create PR and verify CI
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. Push branch: `git push -u origin $(git branch --show-current)`
