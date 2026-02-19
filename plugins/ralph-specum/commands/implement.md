@@ -1072,6 +1072,23 @@ Extract the JSON payload:
 - Re-evaluate remaining [P] tasks as sequential after modification
 - This prevents inserting tasks mid-batch which would corrupt parallel execution
 
+**Update State (modificationMap)**:
+
+```bash
+jq --arg taskId "$TASK_ID" \
+   --arg modId "$MOD_TASK_ID" \
+   --arg reason "$REASONING" \
+   --arg type "$MOD_TYPE" \
+   '
+   .modificationMap //= {} |
+   .modificationMap[$taskId] //= {count: 0, modifications: []} |
+   .modificationMap[$taskId].count += 1 |
+   .modificationMap[$taskId].modifications += [{id: $modId, type: $type, reason: $reason}] |
+   .totalTasks += 1
+   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
+   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+```
+
 ### 7. Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.

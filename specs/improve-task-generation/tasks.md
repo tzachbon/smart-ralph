@@ -369,7 +369,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-8_
   - _Design: Component E_
 
-- [ ] 1.32 Add Update State (modificationMap) jq pattern to Section 6e
+- [x] 1.32 Add Update State (modificationMap) jq pattern to Section 6e
   - **Do**:
     1. After parallel batch rules, add "Update State (modificationMap)" subsection with the jq command pattern for updating modificationMap
     2. Use exact jq pattern from design.md Component E lines 399-414
