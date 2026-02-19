@@ -302,6 +302,17 @@ Every task MUST satisfy these constraints:
 - Both tasks touch the exact same file with trivially related changes
 - Neither task is meaningful alone (e.g., "create empty file" + "add content")
 
+**Target task count:**
+- Standard spec: 40-60+ tasks
+- Phase distribution: Phase 1 = 50-60%, Phase 2 = 15-20%, Phase 3 = 15-20%, Phase 4-5 = 10-15%
+
+**Simplicity principle**: Each task should describe the MINIMUM code to achieve its goal. No speculative features, no abstractions for single-use code, no error handling for impossible scenarios. If 50 lines solve it, don't write 200.
+
+**Surgical principle**: Each task touches ONLY what it must. No "while you're in there" improvements. No reformatting adjacent code. No refactoring unbroken functionality. Every changed file must trace directly to the task's goal.
+
+**Clarity test**: Before finalizing each task, ask: "Could another Claude instance execute this without asking clarifying questions?" If no, add more detail or split further.
+</mandatory>
+
 ## Tasks Structure
 
 Create tasks.md following this structure:

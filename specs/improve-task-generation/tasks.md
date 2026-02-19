@@ -144,7 +144,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-1, FR-2, AC-1.1, AC-1.2, AC-1.3, AC-2.2, AC-2.3_
   - _Design: Component A_
 
-- [ ] 1.10 Add target task count and principles to Task Sizing Rules
+- [x] 1.10 Add target task count and principles to Task Sizing Rules
   - **Do**:
     1. In the `## Task Sizing Rules` section just added, after the combine-if rules, add: target task count (40-60+), phase distribution ratios, simplicity principle, surgical principle, clarity test
     2. Use exact content from design.md Component A lines 101-110 (from `**Target task count:**` through `</mandatory>`)
