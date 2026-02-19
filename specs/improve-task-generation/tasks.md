@@ -83,7 +83,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-5, AC-3.1, AC-3.2_
   - _Design: Component B_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: grep validation of template structure
+- [x] 1.4 [VERIFY] Quality checkpoint: grep validation of template structure
   - **Do**: Verify templates/tasks.md has correct structure after Examples 1-2
   - **Verify**: `grep -c "### Bad vs. Good Examples" plugins/ralph-specum/templates/tasks.md | grep -q 1 && grep -c "Example 1:" plugins/ralph-specum/templates/tasks.md | grep -q 1 && grep -c "Example 2:" plugins/ralph-specum/templates/tasks.md | grep -q 1`
   - **Done when**: All 3 grep checks pass
