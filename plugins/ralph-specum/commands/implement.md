@@ -1020,6 +1020,26 @@ When spec-executor outputs `TASK_MODIFICATION_REQUEST`, parse and process the mo
 
 Check executor output for the literal string `TASK_MODIFICATION_REQUEST` followed by a JSON code block.
 
+**Parse Modification Request**:
+
+Extract the JSON payload:
+```json
+{
+  "type": "SPLIT_TASK" | "ADD_PREREQUISITE" | "ADD_FOLLOWUP",
+  "originalTaskId": "X.Y",
+  "reasoning": "...",
+  "proposedTasks": ["markdown task block", ...]
+}
+```
+
+**Validate Request**:
+
+1. Read `modificationMap` from .ralph-state.json
+2. Count: `modificationMap[originalTaskId].count` (default 0)
+3. If count >= 3: REJECT, log "Max modifications (3) reached for task $taskId" in .progress.md, skip modification
+4. Depth check: count dots in proposed task IDs. If dots > 3 (depth > 2 levels): REJECT
+5. Verify proposed tasks have required fields: Do, Files, Done when, Verify, Commit
+
 ### 7. Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.

@@ -302,7 +302,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-8, AC-5.1_
   - _Design: Component E_
 
-- [ ] 1.25 Add Parse and Validate subsections to Section 6e
+- [x] 1.25 Add Parse and Validate subsections to Section 6e
   - **Do**:
     1. After the Detection subsection, add "Parse Modification Request" showing JSON payload structure and "Validate Request" with 5 validation steps (read modificationMap, count check >=3, depth check >3 dots, field validation)
     2. Use content from design.md Component E lines 348-365
