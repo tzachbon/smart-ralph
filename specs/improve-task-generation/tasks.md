@@ -592,7 +592,7 @@ Focus: Automated validation that all changes are correct and no regressions.
   - **Commit**: `test(templates): verify all 4 bad/good example pairs`
   - _Requirements: FR-5, AC-3.1_
 
-- [ ] 3.9 Verify quality checklist expansion in task-planner.md
+- [x] 3.9 Verify quality checklist expansion in task-planner.md
   - **Do**:
     1. Verify checklist has 14+ items
     2. Verify new items: "All tasks have <= 4 Do steps", "All tasks touch <= 3 files", "Total task count is 40+", "meaningful Done when", "No speculative features", "No unrelated files", "Ambiguous tasks surface assumptions"
