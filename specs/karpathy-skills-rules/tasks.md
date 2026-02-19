@@ -36,7 +36,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
   - _Requirements: FR-2, AC-2.1_
   - _Design: spec-executor template_
 
-- [ ] 1.3 Add Karpathy rules to task-planner agent
+- [x] 1.3 Add Karpathy rules to task-planner agent
   - **Do**:
     1. Open `plugins/ralph-specum/agents/task-planner.md`
     2. Insert `## Karpathy Rules` section before the `## Communication Style` section (before line 477)
