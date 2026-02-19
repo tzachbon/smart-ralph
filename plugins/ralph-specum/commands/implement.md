@@ -1085,15 +1085,18 @@ jq --arg taskId "$TASK_ID" \
    --arg modId "$MOD_TASK_ID" \
    --arg reason "$REASONING" \
    --arg type "$MOD_TYPE" \
+   --argjson delta "$PROPOSED_COUNT" \
    '
    .modificationMap //= {} |
    .modificationMap[$taskId] //= {count: 0, modifications: []} |
    .modificationMap[$taskId].count += 1 |
    .modificationMap[$taskId].modifications += [{id: $modId, type: $type, reason: $reason}] |
-   .totalTasks += 1
+   .totalTasks += $delta
    ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
    mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
 ```
+
+> **Note**: Set `PROPOSED_COUNT` to the number of proposed tasks (e.g., `PROPOSED_COUNT=$(echo "$PROPOSED_TASKS" | jq 'length')`). For SPLIT_TASK this is N (the number of sub-tasks), for ADD_PREREQUISITE and ADD_FOLLOWUP this is 1.
 
 **Insertion Algorithm** (same pattern as Section 6c fix task insertion):
 

@@ -614,19 +614,19 @@ Focus: Automated validation that all changes are correct and no regressions.
 
 - [x] 4.1 Bump plugin version in plugin.json and marketplace.json
   - **Do**:
-    1. Open `plugins/ralph-specum/.claude-plugin/plugin.json`, change `"version": "3.4.1"` to `"version": "3.5.0"` (minor bump: new feature)
-    2. Open `.claude-plugin/marketplace.json`, change the ralph-specum entry `"version": "3.4.1"` to `"version": "3.5.0"`
+    1. Open `plugins/ralph-specum/.claude-plugin/plugin.json`, change version to `"version": "3.7.0"` (minor bump: new feature)
+    2. Open `.claude-plugin/marketplace.json`, change the ralph-specum entry to `"version": "3.7.0"`
   - **Files**: plugins/ralph-specum/.claude-plugin/plugin.json, .claude-plugin/marketplace.json
-  - **Done when**: Both files show version "3.5.0"
-  - **Verify**: `jq -r '.version' plugins/ralph-specum/.claude-plugin/plugin.json | grep -q "3.5.0" && jq -r '.plugins[0].version' .claude-plugin/marketplace.json | grep -q "3.5.0"`
-  - **Commit**: `chore(ralph-specum): bump version to 3.5.0`
+  - **Done when**: Both files show version "3.7.0"
+  - **Verify**: `jq -r '.version' plugins/ralph-specum/.claude-plugin/plugin.json | grep -q "3.7.0" && jq -r '.plugins[0].version' .claude-plugin/marketplace.json | grep -q "3.7.0"`
+  - **Commit**: `chore(ralph-specum): bump version to 3.7.0`
 
 - [x] 4.2 [VERIFY] Full local validation: schema + grep checks + version
   - **Do**: Run complete local validation suite
   - **Verify**: All commands must pass:
     - Schema valid: `jq empty plugins/ralph-specum/schemas/spec.schema.json`
     - No manual tests: `! grep -qi "manual test" plugins/ralph-specum/templates/tasks.md`
-    - Version bumped: `jq -r '.version' plugins/ralph-specum/.claude-plugin/plugin.json | grep -q "3.5.0"`
+    - Version bumped: `jq -r '.version' plugins/ralph-specum/.claude-plugin/plugin.json | grep -q "3.7.0"`
     - All components present: `grep -q "Task Sizing Rules" plugins/ralph-specum/agents/task-planner.md && grep -q "Task Modification Requests" plugins/ralph-specum/agents/spec-executor.md && grep -q "### 6e" plugins/ralph-specum/commands/implement.md`
   - **Done when**: All local validation commands pass with no errors
   - **Commit**: `fix(improve-task-gen): address quality issues` (if fixes needed)
@@ -689,7 +689,7 @@ Focus: Automated validation that all changes are correct and no regressions.
   - **Done when**: All CI checks passing
   - **Commit**: `fix: address CI failures` (as needed)
 
-- [ ] 5.2 Address code review comments
+- [x] 5.2 Address code review comments
   - **Do**:
     1. Fetch reviews: `gh pr view --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED")'`
     2. For inline comments: `gh api repos/{owner}/{repo}/pulls/{number}/comments`

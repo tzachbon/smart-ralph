@@ -161,7 +161,8 @@
                     "id": { "type": "string" },
                     "type": { "type": "string", "enum": ["SPLIT_TASK", "ADD_PREREQUISITE", "ADD_FOLLOWUP"] },
                     "reason": { "type": "string" }
-                  }
+                  },
+                  "required": ["id", "type"]
                 }
               }
             },
