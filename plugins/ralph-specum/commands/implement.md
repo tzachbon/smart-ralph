@@ -65,7 +65,10 @@ Update `.ralph-state.json` by merging these fields into the existing object:
   "maxFixTaskDepth": 3,
   "globalIteration": 1,
   "maxGlobalIterations": <parsed from --max-global-iterations or default 100>,
-  "fixTaskMap": {}
+  "fixTaskMap": {},
+  "modificationMap": {},
+  "maxModificationsPerTask": 3,
+  "maxModificationDepth": 2
 }
 ```
 
@@ -89,6 +92,9 @@ jq --argjson taskIndex <first_incomplete> \
      globalIteration: 1,
      maxGlobalIterations: $maxGlobalIter,
      fixTaskMap: {},
+     modificationMap: {},
+     maxModificationsPerTask: 3,
+     maxModificationDepth: 2,
      awaitingApproval: false
    }
    ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
@@ -107,6 +113,9 @@ State files from earlier versions may lack new fields. The system handles this g
 - `globalIteration`: Defaults to 1 if missing
 - `maxGlobalIterations`: Defaults to 100 if missing
 - `maxFixTaskDepth`: Defaults to 3 if missing
+- `modificationMap`: Defaults to {} if missing
+- `maxModificationsPerTask`: Defaults to 3 if missing
+- `maxModificationDepth`: Defaults to 2 if missing
 
 ## Start Execution
 
