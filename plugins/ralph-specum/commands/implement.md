@@ -1012,6 +1012,14 @@ If taskIteration exceeds maxTaskIterations:
 5. Do NOT continue execution
 6. Do NOT output ALL_TASKS_COMPLETE
 
+### 6e. Modification Request Handler
+
+When spec-executor outputs `TASK_MODIFICATION_REQUEST`, parse and process the modification before continuing.
+
+**Detection**:
+
+Check executor output for the literal string `TASK_MODIFICATION_REQUEST` followed by a JSON code block.
+
 ### 7. Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.
