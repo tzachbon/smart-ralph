@@ -303,72 +303,35 @@ Wait for spec-executor to complete. It will output TASK_COMPLETE on success.
 
 **Parallel Execution** (parallelGroup.isParallel = true, Team-Based):
 
-CRITICAL: Use team lifecycle for parallel batches. This provides coordinated parallel execution.
+Use team lifecycle for parallel batches.
 
 **Step 1: Check for Orphaned Team**
-
-Read `~/.claude/teams/exec-$spec/config.json`.
-If the file exists, an orphaned team from a previous interrupted session is present:
-- Call `TeamDelete()` to clean up before proceeding
+Read `~/.claude/teams/exec-$spec/config.json`. If exists, call `TeamDelete()` to clean up.
 
 **Step 2: Create Team**
+`TeamCreate(team_name: "exec-$spec", description: "Parallel execution batch")`
 
-```text
-TeamCreate(team_name: "exec-$spec", description: "Parallel execution batch")
-```
-
-**Fallback**: If TeamCreate fails, log a warning and fall back to direct `Task(subagent_type: spec-executor)` calls without a team. Skip Steps 3, 6, and 7, and spawn executors via bare Task calls in one message (the pre-team parallel pattern). Parallel execution still works via multiple Task calls in a single message.
+**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: spec-executor)` calls in one message (skip Steps 3, 6, 7).
 
 **Step 3: Create Tasks**
-
 For each taskIndex in parallelGroup.taskIndices:
-```text
-TaskCreate(
-  subject: "Execute task $taskIndex",
-  description: "Execute task $taskIndex for spec $spec. Full task block: [include full task block from tasks.md]. Context from .progress.md: [include relevant context]. progressFile: .progress-task-$taskIndex.md",
-  activeForm: "Executing task $taskIndex"
-)
-```
+`TaskCreate(subject: "Execute task $taskIndex", description: "Task $taskIndex for $spec. progressFile: .progress-task-$taskIndex.md", activeForm: "Executing task $taskIndex")`
 
 **Step 4: Spawn Teammates**
-
-ALL Task calls in ONE message to enable true parallelism:
-```text
-Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec
-progressFile: .progress-task-$taskIndex.md
-[full task block and context]")
-```
-
-Example for parallel batch of tasks 3, 4, 5 — three Task calls in a single message:
-- Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-3", ...)
-- Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-4", ...)
-- Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-5", ...)
+ALL Task calls in ONE message for true parallelism:
+`Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec\nprogressFile: .progress-task-$taskIndex.md\n[full task block and context]")`
 
 **Step 5: Wait for Completion**
-
-Monitor completion via TaskList. Check that all tasks in the team are marked completed.
-Teammates send automatic messages on completion — wait for all teammates to report done.
-
-**Timeout**: If a teammate does not complete within a reasonable period, check TaskList status and log the error. Proceed with completed tasks and handle failed tasks via the partial parallel batch failure flow in Section 9.
+Monitor via TaskList. Wait for all teammates to report done. On timeout, proceed with completed tasks and handle failures via Section 9.
 
 **Step 6: Shutdown Teammates**
-
-For each teammate in the batch:
-```text
-SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex")
-```
+`SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex")` for each teammate.
 
 **Step 7: Collect Results**
-
-After team cleanup, proceed to progress merge (Section 9) and state update (Section 8).
+Proceed to progress merge (Section 9) and state update (Section 8).
 
 **Step 8: Clean Up Team**
-
-```text
-TeamDelete()
-```
-
-If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
+`TeamDelete()`. If fails, cleaned up on next invocation via Step 1.
 
 **After Delegation**:
 
