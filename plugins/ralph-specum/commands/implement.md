@@ -1059,6 +1059,14 @@ Extract the JSON payload:
 6. After prereq completes: retry original task
 7. Log in .progress.md: "Added prerequisite $prereqId before $taskId. Reason: $reasoning"
 
+**ADD_FOLLOWUP**:
+1. Original task should already be marked [x] (executor outputs TASK_COMPLETE too)
+2. Insert proposedTask after current task block using Edit tool
+3. Update totalTasks += 1 in state
+4. Update modificationMap
+5. Normal advancement — followup will be picked up as next task
+6. Log in .progress.md: "Added followup $followupId after $taskId. Reason: $reasoning"
+
 ### 7. Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.

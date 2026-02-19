@@ -341,7 +341,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-8, AC-5.4_
   - _Design: Component E_
 
-- [ ] 1.29 Add ADD_FOLLOWUP handler to Section 6e
+- [x] 1.29 Add ADD_FOLLOWUP handler to Section 6e
   - **Do**:
     1. After ADD_PREREQUISITE handler, add the "ADD_FOLLOWUP" handler with 6 steps: original already [x], insert after current, update totalTasks, update modificationMap, normal advancement, log
     2. Use content from design.md Component E lines 386-392
