@@ -456,7 +456,7 @@ Focus: Cross-file consistency, wording alignment, remove contradictions.
   - **Commit**: `refactor(templates): eliminate all manual verification patterns`
   - _Requirements: FR-6, AC-3.3, AC-3.4_
 
-- [ ] 2.2 Verify sizing rules in task-planner.md align with template examples
+- [x] 2.2 Verify sizing rules in task-planner.md align with template examples
   - **Do**:
     1. Compare task-planner.md sizing rules (max 4 Do, max 3 files) with templates/tasks.md "Sizing rules" summary line
     2. Ensure identical thresholds stated in both files
