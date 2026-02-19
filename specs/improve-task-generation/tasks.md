@@ -612,7 +612,7 @@ Focus: Automated validation that all changes are correct and no regressions.
 
 > **IMPORTANT**: NEVER push directly to the default branch (main/master). Branch management is handled at startup via `/ralph-specum:start`. You should already be on a feature branch by this phase.
 
-- [ ] 4.1 Bump plugin version in plugin.json and marketplace.json
+- [x] 4.1 Bump plugin version in plugin.json and marketplace.json
   - **Do**:
     1. Open `plugins/ralph-specum/.claude-plugin/plugin.json`, change `"version": "3.4.1"` to `"version": "3.5.0"` (minor bump: new feature)
     2. Open `.claude-plugin/marketplace.json`, change the ralph-specum entry `"version": "3.4.1"` to `"version": "3.5.0"`
