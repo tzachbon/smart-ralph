@@ -206,7 +206,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-7, AC-4.1, AC-4.2, AC-4.3_
   - _Design: Component D_
 
-- [ ] 1.16 [VERIFY] Quality checkpoint: spec-executor signal format
+- [x] 1.16 [VERIFY] Quality checkpoint: spec-executor signal format
   - **Do**: Verify spec-executor.md has the modification request section with all 3 types
   - **Verify**: `grep -c "SPLIT_TASK\|ADD_PREREQUISITE\|ADD_FOLLOWUP" plugins/ralph-specum/agents/spec-executor.md | awk '{exit ($1 >= 3) ? 0 : 1}'`
   - **Done when**: All 3 modification types referenced at least once
