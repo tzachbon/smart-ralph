@@ -9,14 +9,15 @@ See [index-state.json](./index-state.json) for machine-readable data.
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 21 | Yes |
+| ./specs | 22 | Yes |
 
-## All Specs (21)
+## All Specs (22)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
 | add-skills-doc | ./specs | completed | done |
 | enforce-teams-instead | ./specs | tasks |  |
+| improve-task-generation | ./specs | tasks | 0/48 tasks |
 | plan-source-feature | ./specs | completed | done |
 | return-ralph-wrigum | ./specs | completed |  |
 | refactor-plugins | ./specs | new |  |
