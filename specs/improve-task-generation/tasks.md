@@ -602,7 +602,7 @@ Focus: Automated validation that all changes are correct and no regressions.
   - **Commit**: `test(task-planner): verify expanded quality checklist`
   - _Requirements: FR-11, AC-6.4_
 
-- [ ] 3.10 [VERIFY] Quality checkpoint: all integration tests pass
+- [x] 3.10 [VERIFY] Quality checkpoint: all integration tests pass
   - **Do**: Comprehensive verification of all changes across all 7 files (minus plugin.json version bump which is Phase 4)
   - **Verify**: `jq empty plugins/ralph-specum/schemas/spec.schema.json && ! grep -qi "manual test" plugins/ralph-specum/templates/tasks.md && grep -c "Example [1-4]:" plugins/ralph-specum/templates/tasks.md | grep -q 4 && grep -q "Task Sizing Rules" plugins/ralph-specum/agents/task-planner.md && grep -q "40-60+" plugins/ralph-specum/agents/task-planner.md && grep -q "Task Modification Requests" plugins/ralph-specum/agents/spec-executor.md && grep -q "### 6e" plugins/ralph-specum/commands/implement.md && grep -q "modificationMap" plugins/ralph-specum/commands/implement.md && grep -q "TASK_MODIFICATION_REQUEST" plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
   - **Done when**: All 7 files verified with correct content
