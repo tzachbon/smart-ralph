@@ -21,7 +21,7 @@ Focus: Convert each phase command to use teams. Validate that the team lifecycle
   - _Requirements: FR-1_
   - _Design: Component A_
 
-- [ ] 1.2 Add team lifecycle to requirements.md
+- [x] 1.2 Add team lifecycle to requirements.md
   - **Do**: Replace the "Execute Requirements" section in `plugins/ralph-specum/commands/requirements.md` with a team-based flow. Add: (1) orphaned team check for `requirements-$spec`, (2) TeamCreate, (3) TaskCreate with existing product-manager prompt, (4) spawn single teammate via Task with team_name, (5) wait for completion, (6) shutdown teammate, (7) TeamDelete. Keep the review/feedback loop -- if user requests changes, the re-invocation of product-manager should also use the team pattern (or spawn a new teammate in the existing team).
   - **Files**: `plugins/ralph-specum/commands/requirements.md`
   - **Done when**: requirements.md Execute Requirements section uses team lifecycle with product-manager as a teammate

@@ -1,7 +1,7 @@
 ---
 description: Generate requirements from goal and research
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Requirements Phase
@@ -129,48 +129,132 @@ Interview Context:
 
 Store this context to include in the Task delegation prompt.
 
-## Execute Requirements
+## Execute Requirements (Team-Based)
 
 <mandatory>
-Use the Task tool with `subagent_type: product-manager` to generate requirements.
+**Requirements uses Claude Code Teams for execution, matching the standard team lifecycle pattern.**
+
+You MUST follow the full team lifecycle below. Use `product-manager` as the teammate subagent type.
 </mandatory>
 
-Invoke product-manager agent with prompt:
+### Step 1: Check for Orphaned Team
 
 ```text
-You are generating requirements for spec: $spec
-Spec path: ./specs/$spec/
-
-Context:
-- Research: [include research.md content if exists]
-- Original goal: [from conversation or progress]
-
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
-
-Your task:
-1. Analyze the goal and research findings
-2. Create user stories with acceptance criteria
-3. Define functional requirements (FR-*) with priorities
-4. Define non-functional requirements (NFR-*)
-5. Document glossary, out-of-scope items, dependencies
-6. Output to ./specs/$spec/requirements.md
-7. Include interview responses in a "User Decisions" section of requirements.md
-
-Use the requirements.md template with frontmatter:
----
-spec: $spec
-phase: requirements
-created: <timestamp>
----
-
-Focus on:
-- Testable acceptance criteria
-- Clear priority levels
-- Explicit success criteria
-- Risk identification
+1. Read ~/.claude/teams/requirements-$spec/config.json
+2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
+
+### Step 2: Create Requirements Team
+
+```text
+TeamCreate(team_name: "requirements-$spec", description: "Requirements for $spec")
+```
+
+### Step 3: Create Task
+
+```text
+TaskCreate(
+  subject: "Generate requirements for $spec",
+  description: "Generate requirements for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Research: [include research.md content if exists]
+    - Original goal: [from conversation or progress]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Analyze the goal and research findings
+    2. Create user stories with acceptance criteria
+    3. Define functional requirements (FR-*) with priorities
+    4. Define non-functional requirements (NFR-*)
+    5. Document glossary, out-of-scope items, dependencies
+    6. Output to ./specs/$spec/requirements.md
+    7. Include interview responses in a 'User Decisions' section of requirements.md
+
+    Use the requirements.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: requirements
+    created: <timestamp>
+    ---
+
+    Focus on:
+    - Testable acceptance criteria
+    - Clear priority levels
+    - Explicit success criteria
+    - Risk identification",
+  activeForm: "Generating requirements"
+)
+```
+
+### Step 4: Spawn Teammate
+
+```text
+Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1",
+  prompt: "You are a requirements teammate for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Research: [include research.md content if exists]
+    - Original goal: [from conversation or progress]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Analyze the goal and research findings
+    2. Create user stories with acceptance criteria
+    3. Define functional requirements (FR-*) with priorities
+    4. Define non-functional requirements (NFR-*)
+    5. Document glossary, out-of-scope items, dependencies
+    6. Output to ./specs/$spec/requirements.md
+    7. Include interview responses in a 'User Decisions' section of requirements.md
+
+    Use the requirements.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: requirements
+    created: <timestamp>
+    ---
+
+    Focus on:
+    - Testable acceptance criteria
+    - Clear priority levels
+    - Explicit success criteria
+    - Risk identification
+
+    When done, mark your task complete via TaskUpdate.")
+```
+
+### Step 5: Wait for Completion
+
+Monitor teammate progress via TaskList and automatic teammate messages:
+
+```text
+1. Teammate sends a message automatically when task is complete or needs help
+2. Messages are delivered automatically to you (no polling needed)
+3. Use TaskList to check progress if needed
+4. Wait until the task shows status: "completed"
+```
+
+### Step 6: Shutdown & Cleanup
+
+```text
+SendMessage(
+  type: "shutdown_request",
+  recipient: "pm-1",
+  content: "Requirements complete, shutting down"
+)
+
+TeamDelete()
+```
+
+This removes the team directory and task list for `requirements-$spec`.
 
 ## Walkthrough (Before Review)
 
@@ -230,35 +314,60 @@ After displaying the walkthrough, ask ONE simple question:
 
 **If "Need changes" or "Other"**:
 1. Ask: "What would you like changed?"
-2. Invoke product-manager again with the feedback
+2. Re-invoke product-manager using the team pattern (cleanup-and-recreate)
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
 
-2. **Invoke product-manager with update prompt:**
-   ```
-   You are updating the requirements for spec: $spec
-   Spec path: ./specs/$spec/
+**Re-invoke product-manager with team lifecycle (cleanup-and-recreate):**
 
-   Current requirements: ./specs/$spec/requirements.md
+```text
+Step A: Check for orphaned team
+  Read ~/.claude/teams/requirements-$spec/config.json
+  If exists: TeamDelete() to clean up
 
-   User feedback:
-   $user_feedback
+Step B: Create new team
+  TeamCreate(team_name: "requirements-$spec", description: "Requirements update for $spec")
 
-   Your task:
-   1. Read the existing requirements.md
-   2. Understand the user's feedback and concerns
-   3. Update the requirements to address the feedback
-   4. Maintain consistency with research findings
-   5. Update requirements.md with the changes
-   6. Append update notes to .progress.md explaining what changed
+Step C: Create task
+  TaskCreate(
+    subject: "Update requirements for $spec",
+    description: "Update requirements based on user feedback...",
+    activeForm: "Updating requirements"
+  )
 
-   Focus on addressing the specific feedback while maintaining requirements quality.
-   ```
+Step D: Spawn teammate
+  Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1",
+    prompt: "You are updating the requirements for spec: $spec
+      Spec path: ./specs/$spec/
 
-3. **After update, repeat review questions** (go back to "Requirements Review Questions")
+      Current requirements: ./specs/$spec/requirements.md
 
-4. **Continue until approved:** Loop until user responds with approval
+      User feedback:
+      $user_feedback
+
+      Your task:
+      1. Read the existing requirements.md
+      2. Understand the user's feedback and concerns
+      3. Update the requirements to address the feedback
+      4. Maintain consistency with research findings
+      5. Update requirements.md with the changes
+      6. Append update notes to .progress.md explaining what changed
+
+      Focus on addressing the specific feedback while maintaining requirements quality.
+      When done, mark your task complete via TaskUpdate.")
+
+Step E: Wait for completion
+  Monitor via TaskList and automatic messages
+
+Step F: Shutdown & cleanup
+  SendMessage(type: "shutdown_request", recipient: "pm-1", content: "Update complete")
+  TeamDelete()
+```
+
+**After update, repeat review questions** (go back to "Requirements Review Question")
+
+**Continue until approved:** Loop until user responds with approval
 
 ## Update State
 
