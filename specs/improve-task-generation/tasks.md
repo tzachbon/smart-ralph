@@ -352,7 +352,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-8, AC-5.5_
   - _Design: Component E_
 
-- [ ] 1.30 [VERIFY] Quality checkpoint: all 3 modification handlers
+- [x] 1.30 [VERIFY] Quality checkpoint: all 3 modification handlers
   - **Do**: Verify implement.md has all 3 modification type handlers
   - **Verify**: `grep -q "SPLIT_TASK" plugins/ralph-specum/commands/implement.md && grep -q "ADD_PREREQUISITE" plugins/ralph-specum/commands/implement.md && grep -q "ADD_FOLLOWUP" plugins/ralph-specum/commands/implement.md`
   - **Done when**: All 3 handlers present in Section 6e
