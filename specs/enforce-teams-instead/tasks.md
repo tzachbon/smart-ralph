@@ -48,7 +48,7 @@ Focus: Convert each phase command to use teams. Validate that the team lifecycle
   - _Requirements: FR-4_
   - _Design: Component D_
 
-- [ ] 1.5 Convert parallel execution in implement.md to team-based
+- [x] 1.5 Convert parallel execution in implement.md to team-based
   - **Do**: Modify the "Parallel Execution" subsection of Section 6 "Task Delegation" in `plugins/ralph-specum/commands/implement.md`. Replace the current multi-Task parallel pattern with: (1) orphaned team check for `exec-$spec`, (2) TeamCreate, (3) TaskCreate per parallel task, (4) Task per executor with team_name, (5) wait via TaskList, (6) shutdown, (7) TeamDelete. Keep sequential execution and [VERIFY] task handling unchanged. Keep the stop-hook loop mechanism completely unchanged.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: Parallel [P] task execution in implement.md uses TeamCreate/TaskCreate/TeamDelete lifecycle; sequential tasks unchanged

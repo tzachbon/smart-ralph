@@ -301,34 +301,68 @@ Instructions:
 
 Wait for spec-executor to complete. It will output TASK_COMPLETE on success.
 
-**Parallel Execution** (parallelGroup.isParallel = true):
+**Parallel Execution** (parallelGroup.isParallel = true, Team-Based):
 
-CRITICAL: Spawn MULTIPLE Task tool calls in ONE message. This enables true parallelism.
+CRITICAL: Use team lifecycle for parallel batches. This provides coordinated parallel execution.
 
-For each task index in parallelGroup.taskIndices, create a Task tool call with:
-- Unique progressFile: `.progress-task-$taskIndex.md`
-- Full task block from tasks.md
-- Same instructions as sequential but writing to temp progress file
+**Step 1: Check for Orphaned Team**
 
-Example for parallel batch of tasks 3, 4, 5:
+Read `~/.claude/teams/exec-$spec/config.json`.
+If the file exists, an orphaned team from a previous interrupted session is present:
+- Call `TeamDelete()` to clean up before proceeding
+
+**Step 2: Create Execution Team**
+
 ```text
-[Task tool call 1]
-Task: Execute task 3 for spec $spec
-progressFile: .progress-task-3.md
-...
-
-[Task tool call 2]
-Task: Execute task 4 for spec $spec
-progressFile: .progress-task-4.md
-...
-
-[Task tool call 3]
-Task: Execute task 5 for spec $spec
-progressFile: .progress-task-5.md
-...
+TeamCreate(team_name: "exec-$spec", description: "Parallel execution batch")
 ```
 
-All parallel tasks execute simultaneously. Wait for ALL to complete.
+**Step 3: Create Tasks for Each Parallel Item**
+
+For each taskIndex in parallelGroup.taskIndices:
+```text
+TaskCreate(
+  subject: "Execute task $taskIndex",
+  description: "Execute task $taskIndex for spec $spec. Full task block: [include full task block from tasks.md]. Context from .progress.md: [include relevant context]. progressFile: .progress-task-$taskIndex.md",
+  activeForm: "Executing task $taskIndex"
+)
+```
+
+**Step 4: Spawn All Executors in ONE Message**
+
+ALL Task calls in ONE message to enable true parallelism:
+```text
+Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec
+progressFile: .progress-task-$taskIndex.md
+[full task block and context]")
+```
+
+Example for parallel batch of tasks 3, 4, 5 — three Task calls in a single message:
+- Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-3", ...)
+- Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-4", ...)
+- Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-5", ...)
+
+**Step 5: Wait for All Teammates to Complete**
+
+Monitor completion via TaskList. Check that all tasks in the team are marked completed.
+Teammates send automatic messages on completion — wait for all teammates to report done.
+
+**Step 6: Shutdown Teammates**
+
+For each teammate in the batch:
+```text
+SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex")
+```
+
+**Step 7: Clean Up Team**
+
+```text
+TeamDelete()
+```
+
+**Step 8: Proceed**
+
+After team cleanup, proceed to progress merge (Section 9) and state update (Section 8).
 
 **After Delegation**:
 
