@@ -244,7 +244,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
 
 ### Component F: State Schema Extension (spec.schema.json)
 
-- [ ] 1.20 Add modificationMap to spec.schema.json
+- [x] 1.20 Add modificationMap to spec.schema.json
   - **Do**:
     1. Open `plugins/ralph-specum/schemas/spec.schema.json`
     2. In the `definitions.state.properties` object, after the `fixTaskMap` property (ends around line 148), add the `modificationMap` property

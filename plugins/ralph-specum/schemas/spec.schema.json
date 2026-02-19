@@ -144,6 +144,29 @@
             },
             "required": ["attempts", "fixTaskIds"]
           }
+        },
+        "modificationMap": {
+          "type": "object",
+          "description": "Tracks modification requests per original task",
+          "default": {},
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "count": { "type": "integer", "minimum": 0 },
+              "modifications": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "type": { "type": "string", "enum": ["SPLIT_TASK", "ADD_PREREQUISITE", "ADD_FOLLOWUP"] },
+                    "reason": { "type": "string" }
+                  }
+                }
+              }
+            },
+            "required": ["count", "modifications"]
+          }
         }
       }
     },
