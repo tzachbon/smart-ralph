@@ -165,6 +165,7 @@ Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITE
 - Delegate via Task tool - do NOT implement yourself
 - Verify all 4 layers before advancing (see implement.md Section 7)
 - On failure: increment taskIteration, retry or generate fix task if recoveryMode
+- On TASK_MODIFICATION_REQUEST: validate, insert tasks, update state (see implement.md Section 6e)
 EOF
 )
 

@@ -411,7 +411,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
 
 ### Component G: Stop-Watcher Extension
 
-- [ ] 1.36 Add TASK_MODIFICATION_REQUEST line to stop-watcher.sh continuation prompt
+- [x] 1.36 Add TASK_MODIFICATION_REQUEST line to stop-watcher.sh continuation prompt
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. In the REASON heredoc (around line 167, after the line `- On failure: increment taskIteration, retry or generate fix task if recoveryMode`)
