@@ -580,7 +580,7 @@ Focus: Automated validation that all changes are correct and no regressions.
   - **Done when**: All component verifications pass
   - **Commit**: `chore(improve-task-gen): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.8 Verify templates/tasks.md has all 4 bad/good examples with correct structure
+- [x] 3.8 Verify templates/tasks.md has all 4 bad/good examples with correct structure
   - **Do**:
     1. Count examples: should be exactly 4
     2. Verify each has BAD and GOOD labels
