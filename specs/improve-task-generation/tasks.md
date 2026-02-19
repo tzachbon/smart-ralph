@@ -313,7 +313,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-8, FR-9, AC-5.2, AC-5.7_
   - _Design: Component E_
 
-- [ ] 1.26 [VERIFY] Quality checkpoint: Section 6e header and validation
+- [x] 1.26 [VERIFY] Quality checkpoint: Section 6e header and validation
   - **Do**: Verify implement.md has Section 6e with detection, parse, and validate subsections
   - **Verify**: `grep -q "### 6e" plugins/ralph-specum/commands/implement.md && grep -q "Validate Request" plugins/ralph-specum/commands/implement.md && grep -q "depth" plugins/ralph-specum/commands/implement.md`
   - **Done when**: All 3 subsections present
