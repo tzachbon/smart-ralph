@@ -150,6 +150,8 @@ You MUST follow the full team lifecycle below. Use `product-manager` as the team
 TeamCreate(team_name: "requirements-$spec", description: "Requirements for $spec")
 ```
 
+**Fallback**: If TeamCreate fails, log a warning and fall back to a direct `Task(subagent_type: product-manager)` call without a team. Skip Steps 3-6 and 8, and delegate directly via bare Task call.
+
 ### Step 3: Create Tasks
 
 ```text
@@ -242,6 +244,8 @@ Monitor teammate progress via TaskList and automatic teammate messages:
 4. Wait until the task shows status: "completed"
 ```
 
+**Timeout**: If the teammate does not complete within a reasonable period, check TaskList status and log the error. Consider retrying with a direct Task call if the team-based approach stalls.
+
 ### Step 6: Shutdown Teammates
 
 ```text
@@ -262,7 +266,7 @@ Read the generated `./specs/$spec/requirements.md` output from the teammate.
 TeamDelete()
 ```
 
-This removes the team directory and task list for `requirements-$spec`.
+This removes the team directory and task list for `requirements-$spec`. If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
 
 ## Walkthrough (Before Review)
 

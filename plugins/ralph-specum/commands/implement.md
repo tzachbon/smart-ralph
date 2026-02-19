@@ -311,13 +311,15 @@ Read `~/.claude/teams/exec-$spec/config.json`.
 If the file exists, an orphaned team from a previous interrupted session is present:
 - Call `TeamDelete()` to clean up before proceeding
 
-**Step 2: Create Execution Team**
+**Step 2: Create Team**
 
 ```text
 TeamCreate(team_name: "exec-$spec", description: "Parallel execution batch")
 ```
 
-**Step 3: Create Tasks for Each Parallel Item**
+**Fallback**: If TeamCreate fails, log a warning and fall back to direct `Task(subagent_type: spec-executor)` calls without a team. Skip Steps 3, 6, and 7, and spawn executors via bare Task calls in one message (the pre-team parallel pattern). Parallel execution still works via multiple Task calls in a single message.
+
+**Step 3: Create Tasks**
 
 For each taskIndex in parallelGroup.taskIndices:
 ```text
@@ -328,7 +330,7 @@ TaskCreate(
 )
 ```
 
-**Step 4: Spawn All Executors in ONE Message**
+**Step 4: Spawn Teammates**
 
 ALL Task calls in ONE message to enable true parallelism:
 ```text
@@ -342,10 +344,12 @@ Example for parallel batch of tasks 3, 4, 5 — three Task calls in a single mes
 - Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-4", ...)
 - Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-5", ...)
 
-**Step 5: Wait for All Teammates to Complete**
+**Step 5: Wait for Completion**
 
 Monitor completion via TaskList. Check that all tasks in the team are marked completed.
 Teammates send automatic messages on completion — wait for all teammates to report done.
+
+**Timeout**: If a teammate does not complete within a reasonable period, check TaskList status and log the error. Proceed with completed tasks and handle failed tasks via the partial parallel batch failure flow in Section 9.
 
 **Step 6: Shutdown Teammates**
 
@@ -354,15 +358,17 @@ For each teammate in the batch:
 SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex")
 ```
 
-**Step 7: Clean Up Team**
+**Step 7: Collect Results**
+
+After team cleanup, proceed to progress merge (Section 9) and state update (Section 8).
+
+**Step 8: Clean Up Team**
 
 ```text
 TeamDelete()
 ```
 
-**Step 8: Proceed**
-
-After team cleanup, proceed to progress merge (Section 9) and state update (Section 8).
+If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
 
 **After Delegation**:
 

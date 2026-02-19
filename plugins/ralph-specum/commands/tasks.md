@@ -147,13 +147,15 @@ ALL specs MUST follow POC-first workflow.
 2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
 
-### Step 2: Create Tasks Team
+### Step 2: Create Team
 
 ```text
 TeamCreate(team_name: "tasks-$spec", description: "Task planning for $spec")
 ```
 
-### Step 3: Create Task
+**Fallback**: If TeamCreate fails, log a warning and fall back to a direct `Task(subagent_type: task-planner)` call without a team. Skip Steps 3-6 and 8, and delegate directly via bare Task call.
+
+### Step 3: Create Tasks
 
 ```text
 TaskCreate(
@@ -206,7 +208,7 @@ TaskCreate(
 )
 ```
 
-### Step 4: Spawn Teammate
+### Step 4: Spawn Teammates
 
 ```text
 Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1",
@@ -269,7 +271,9 @@ Monitor teammate progress via TaskList and automatic teammate messages:
 4. Wait until the task shows status: "completed"
 ```
 
-### Step 6: Shutdown & Cleanup
+**Timeout**: If the teammate does not complete within a reasonable period, check TaskList status and log the error. Consider retrying with a direct Task call if the team-based approach stalls.
+
+### Step 6: Shutdown Teammates
 
 ```text
 SendMessage(
@@ -277,11 +281,19 @@ SendMessage(
   recipient: "planner-1",
   content: "Tasks complete, shutting down"
 )
+```
 
+### Step 7: Collect Results
+
+Read the generated `./specs/$spec/tasks.md` output from the teammate.
+
+### Step 8: Clean Up Team
+
+```text
 TeamDelete()
 ```
 
-This removes the team directory and task list for `tasks-$spec`.
+This removes the team directory and task list for `tasks-$spec`. If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
 
 ## Walkthrough (Before Review)
 

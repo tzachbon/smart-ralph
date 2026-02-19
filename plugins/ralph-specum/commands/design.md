@@ -151,6 +151,8 @@ You MUST follow the full team lifecycle below. Use `architect-reviewer` as the t
 TeamCreate(team_name: "design-$spec", description: "Design for $spec")
 ```
 
+**Fallback**: If TeamCreate fails, log a warning and fall back to a direct `Task(subagent_type: architect-reviewer)` call without a team. Skip Steps 3-6 and 8, and delegate directly via bare Task call.
+
 ### Step 3: Create Tasks
 
 ```text
@@ -255,7 +257,9 @@ Monitor teammate progress via TaskList and automatic teammate messages:
 4. Wait until the task shows status: "completed"
 ```
 
-### Step 6: Shutdown & Cleanup
+**Timeout**: If the teammate does not complete within a reasonable period, check TaskList status and log the error. Consider retrying with a direct Task call if the team-based approach stalls.
+
+### Step 6: Shutdown Teammates
 
 ```text
 SendMessage(
@@ -263,11 +267,19 @@ SendMessage(
   recipient: "architect-1",
   content: "Design complete, shutting down"
 )
+```
 
+### Step 7: Collect Results
+
+Read the generated `./specs/$spec/design.md` output from the teammate.
+
+### Step 8: Clean Up Team
+
+```text
 TeamDelete()
 ```
 
-This removes the team directory and task list for `design-$spec`.
+This removes the team directory and task list for `design-$spec`. If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
 
 ## Walkthrough (Before Review)
 

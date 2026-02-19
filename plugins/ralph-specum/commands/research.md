@@ -187,14 +187,14 @@ Store this context to include in the Task delegation prompt.
 ## Execute Research (Team-Based)
 
 <mandatory>
-**Research uses Claude Code Teams for parallel execution, matching the pattern in start.md (sections 11a-11h).**
+**Research uses Claude Code Teams for parallel execution, matching the standard team lifecycle pattern.**
 
 **PARALLEL EXECUTION IS MANDATORY - NO EXCEPTIONS.**
 
 You MUST follow the full team lifecycle below.
 </mandatory>
 
-### Step 1: Identify Research Topics (REQUIRED)
+### Pre-Step: Identify Research Topics (REQUIRED)
 
 Analyze the goal and list AT LEAST 2 distinct research topics. Output the list to the user:
 
@@ -230,22 +230,24 @@ If you think the goal is "too simple" for parallel research:
 **There are ZERO exceptions to the parallel requirement.**
 </mandatory>
 
-### Step 2: Check for Orphaned Team
+### Step 1: Check for Orphaned Team
 
 ```text
 1. Read ~/.claude/teams/research-$spec/config.json
 2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
 
-### Step 3: Create Research Team
+### Step 2: Create Team
 
 ```text
 TeamCreate(team_name: "research-$spec", description: "Parallel research for $spec")
 ```
 
-### Step 4: Create Research Tasks
+**Fallback**: If TeamCreate fails, log a warning and fall back to direct `Task(subagent_type: research-analyst)` and `Task(subagent_type: Explore)` calls without a team. Skip Steps 3-6 and 8, and proceed directly to spawning agents via bare Task calls (the pre-team parallel pattern). The research output is the same either way.
 
-Create one TaskCreate per topic identified in Step 1:
+### Step 3: Create Tasks
+
+Create one TaskCreate per topic identified in the Pre-Step:
 
 ```text
 For each topic:
@@ -275,7 +277,7 @@ For each topic:
 - Quality commands: `.research-quality.md`
 - Related specs: `.research-related-specs.md`
 
-### Step 5: Spawn Teammates
+### Step 4: Spawn Teammates
 
 <mandatory>
 **ALL Task calls MUST be in ONE message to ensure true parallel execution.**
@@ -404,7 +406,7 @@ Spawn 5 teammates in ONE message (2 research-analyst + 3 Explore):
 | explorer-2 | Explore | Quality commands | .research-quality.md |
 | explorer-3 | Explore | Related specs | .research-related-specs.md |
 
-### Step 6: Wait for Completion
+### Step 5: Wait for Completion
 
 Monitor teammate progress via TaskList and automatic teammate messages:
 
@@ -416,7 +418,9 @@ Monitor teammate progress via TaskList and automatic teammate messages:
 5. If a teammate reports an error, note it for the merge step
 ```
 
-### Step 7: Shutdown Teammates
+**Timeout**: If a teammate does not complete within a reasonable period, check TaskList status and log the error. Proceed with partial results from completed teammates and note incomplete topics in the merge step.
+
+### Step 6: Shutdown Teammates
 
 After all tasks complete, gracefully shut down each teammate:
 
@@ -429,17 +433,17 @@ For each teammate:
   )
 ```
 
-### Step 8: Merge Results
+### Step 7: Collect Results
 
-Proceed to the "Merge Results" section below.
+Proceed to the "Merge Results" section below to synthesize all teammate outputs into a single research.md.
 
-### Step 9: Clean Up Team
+### Step 8: Clean Up Team
 
 ```text
 TeamDelete()
 ```
 
-This removes the team directory and task list for `research-$spec`.
+This removes the team directory and task list for `research-$spec`. If TeamDelete fails, log a warning. Team files will be cleaned up on next invocation via the orphaned team check in Step 1.
 
 ## Merge Results (After Parallel Research)
 

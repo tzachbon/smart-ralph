@@ -76,7 +76,7 @@ After POC validated, clean up and standardize the team patterns across files.
   - **Commit**: `refactor(ralph-specum): standardize team lifecycle across phases`
   - _Design: Architecture_
 
-- [ ] 2.2 Add error handling for team operations
+- [x] 2.2 Add error handling for team operations
   - **Do**: Add fallback behavior to each command file: if TeamCreate fails, fall back to direct Task delegation (no team). Add this as a documented pattern in each Execute section: "If TeamCreate fails, log warning and fall back to direct Task(subagent_type: ...) call without team." Also add timeout notes for teammate completion waiting.
   - **Files**: `plugins/ralph-specum/commands/research.md`, `plugins/ralph-specum/commands/requirements.md`, `plugins/ralph-specum/commands/design.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/commands/implement.md`
   - **Done when**: Each command file documents fallback behavior for TeamCreate failure and teammate timeout
