@@ -131,7 +131,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
 
 ### Component A: Task Sizing Rules (task-planner.md)
 
-- [ ] 1.9 Add Task Sizing Rules section to task-planner.md
+- [x] 1.9 Add Task Sizing Rules section to task-planner.md
   - **Do**:
     1. Open `plugins/ralph-specum/agents/task-planner.md`
     2. After the `</mandatory>` closing tag of the `## [VERIFY] Task Format` section (line 281), insert the new `## Task Sizing Rules` section

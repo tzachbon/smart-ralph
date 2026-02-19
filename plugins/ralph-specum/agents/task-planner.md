@@ -280,6 +280,28 @@ Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
 **Discovery**: Read research.md for actual project commands. Do NOT assume `pnpm lint` or `npm test` exists.
 </mandatory>
 
+## Task Sizing Rules
+
+<mandatory>
+Every task MUST satisfy these constraints:
+
+**Size limits:**
+- Max 4 numbered steps in Do section
+- Max 3 files in Files section (exception: tightly-coupled test+impl pair = 1 logical file)
+- 1 logical concern per task
+
+**Split if:**
+- Do section > 4 steps
+- Files section > 3 files
+- Task mixes creation + testing (split into separate tasks)
+- Task mixes > 1 logical concern (e.g., "add endpoint AND update UI")
+- Verification requires > 1 unrelated command
+
+**Combine if:**
+- Task 1 creates a file, Task 2 adds a single import to that file
+- Both tasks touch the exact same file with trivially related changes
+- Neither task is meaningful alone (e.g., "create empty file" + "add content")
+
 ## Tasks Structure
 
 Create tasks.md following this structure:
