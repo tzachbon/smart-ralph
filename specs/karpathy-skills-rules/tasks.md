@@ -94,7 +94,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
   - _Requirements: FR-10, AC-4.1, AC-4.2_
   - _Design: Version bump_
 
-- [ ] 1.8 POC Checkpoint
+- [x] 1.8 POC Checkpoint
   - **Do**: Verify all files were updated correctly by spot-checking key content
   - **Done when**: All 11 files contain their expected Karpathy content
   - **Verify**: `grep -l "Karpathy" CLAUDE.md plugins/ralph-specum/agents/*.md plugins/ralph-specum/skills/*/SKILL.md | wc -l` returns 9 (CLAUDE.md + 6 agents + 2 skills)
