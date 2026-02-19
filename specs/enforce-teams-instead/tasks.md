@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Convert each phase command to use teams. Validate that the team lifecycle works end-to-end for each phase. Accept hardcoded values and skip tests.
 
-- [ ] 1.1 Convert research.md to team-based pattern
+- [x] 1.1 Convert research.md to team-based pattern
   - **Do**: Replace the "Execute Research" section in `plugins/ralph-specum/commands/research.md` with a team-based flow matching start.md's pattern. Add sections for: (1) orphaned team check, (2) TeamCreate, (3) TaskCreate per research topic, (4) spawn teammates via Task with team_name, (5) wait for completion via TaskList, (6) shutdown teammates, (7) merge results (keep existing merge logic), (8) TeamDelete. Keep all other sections (Interview, Walkthrough, Review, Update State, Commit, Stop) unchanged.
   - **Files**: `plugins/ralph-specum/commands/research.md`
   - **Done when**: research.md Execute Research section uses TeamCreate/TaskCreate/SendMessage/TeamDelete lifecycle instead of bare multi-Task calls

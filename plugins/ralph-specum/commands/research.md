@@ -1,7 +1,7 @@
 ---
 description: Run or re-run research phase for current spec
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Research Phase
@@ -184,15 +184,15 @@ Interview Context:
 
 Store this context to include in the Task delegation prompt.
 
-## Execute Research
-
-**Note**: `/ralph-specum:start` uses Claude Code Teams for parallel research.
-This command uses multi-Task parallelism for the same result. Both achieve parallel execution.
+## Execute Research (Team-Based)
 
 <mandatory>
-**PARALLEL EXECUTION IS MANDATORY - NO EXCEPTIONS**
+**Research uses Claude Code Teams for parallel execution, matching the pattern in start.md (sections 11a-11h).**
 
-You MUST follow this algorithm:
+**PARALLEL EXECUTION IS MANDATORY - NO EXCEPTIONS.**
+
+You MUST follow the full team lifecycle below.
+</mandatory>
 
 ### Step 1: Identify Research Topics (REQUIRED)
 
@@ -209,35 +209,12 @@ Research topics identified for parallel execution:
 **Minimum requirement**: 2 topics minimum
 - Topic 1: External/best practices (use research-analyst)
 - Topic 2: Codebase patterns (use Explore)
-- Additional topics: Domain-specific areas (spawn MULTIPLE research-analyst agents), quality commands (Explore), related specs (Explore)
+- Additional topics: Domain-specific areas (spawn MULTIPLE research-analyst teammates), quality commands (Explore), related specs (Explore)
 
-**IMPORTANT: Break external research into MULTIPLE research-analyst agents**
-- If the goal involves multiple external topics (e.g., "authentication + security"), spawn separate research-analyst agents for EACH topic
-- Example: "Add OAuth with rate limiting" → 3 research-analyst agents (OAuth patterns, rate limiting strategies, security best practices)
-- DO NOT combine multiple external topics into one research-analyst agent
-
-### Step 2: Spawn ALL Agents in ONE Message (REQUIRED)
-
-**CRITICAL**: You MUST include ALL Task tool calls in a SINGLE response message to ensure true parallel execution.
-
-Use the appropriate subagent type for each topic:
-- `subagent_type: Explore` - For codebase analysis (fast, read-only, Haiku model)
-- `subagent_type: research-analyst` - For web research (needs WebSearch/WebFetch)
-
-**If you spawn agents one at a time (separate messages), they run sequentially - THIS IS WRONG.**
-**If you spawn all agents in one message (multiple Task calls), they run in parallel - THIS IS CORRECT.**
-
-### Pre-Execution Checklist (REQUIRED)
-
-Before spawning agents, verify you have:
-- [ ] Listed at least 2 distinct research topics
-- [ ] Assigned appropriate agent type (Explore or research-analyst) to each topic
-- [ ] Prepared unique output file path for each agent (.research-*.md)
-- [ ] Prepared all Task tool calls in your response (ready to send in ONE message)
-- [ ] NOT written any code/searches yourself (you are a coordinator, not a researcher)
-
-If all boxes are checked, proceed with Step 2 (spawn all agents in ONE message).
-</mandatory>
+**IMPORTANT: Break external research into MULTIPLE research-analyst teammates**
+- If the goal involves multiple external topics (e.g., "authentication + security"), spawn separate research-analyst teammates for EACH topic
+- Example: "Add OAuth with rate limiting" → 3 research-analyst teammates (OAuth patterns, rate limiting strategies, security best practices)
+- DO NOT combine multiple external topics into one research-analyst teammate
 
 ### Fail-Safe: "But This Goal is Simple..."
 
@@ -245,263 +222,224 @@ If all boxes are checked, proceed with Step 2 (spawn all agents in ONE message).
 **Even trivial goals require parallel research.**
 
 If you think the goal is "too simple" for parallel research:
-- You're wrong - spawn at least 2 agents anyway
+- You're wrong - spawn at least 2 teammates anyway
 - Minimum: 1 Explore (codebase) + 1 research-analyst (web)
 - Parallel execution is about SPEED, not complexity
-- 2 agents in parallel = 2x faster than sequential
+- 2 teammates in parallel = 2x faster than sequential
 
 **There are ZERO exceptions to the parallel requirement.**
 </mandatory>
 
-### Minimum Parallel Pattern (Always Use)
-
-Even for simple goals, spawn at least 2 agents in parallel:
+### Step 2: Check for Orphaned Team
 
 ```text
-Task 1 (research-analyst - web): Search for best practices
-Task 2 (Explore - codebase): Analyze existing patterns
+1. Read ~/.claude/teams/research-$spec/config.json
+2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
 
-**Example output before spawning:**
-```
-Research topics identified for parallel execution:
-1. External best practices - research-analyst
-2. Codebase analysis - Explore
-
-Now spawning 2 research agents in parallel...
-```
-
-### Multi-Topic Pattern (Common Case)
-
-For goals with multiple external topics, spawn MULTIPLE research-analyst agents:
+### Step 3: Create Research Team
 
 ```text
-Task 1 (research-analyst): OAuth authentication patterns
-Task 2 (research-analyst): Rate limiting strategies
-Task 3 (research-analyst): Security best practices
-Task 4 (Explore): Existing auth implementation
-Task 5 (Explore): Quality commands discovery
+TeamCreate(team_name: "research-$spec", description: "Parallel research for $spec")
 ```
 
-**Example output before spawning:**
+### Step 4: Create Research Tasks
+
+Create one TaskCreate per topic identified in Step 1:
+
+```text
+For each topic:
+  TaskCreate(
+    subject: "[Topic name] research",
+    description: "Research topic: [topic]
+      Spec: $spec
+      Spec path: ./specs/$spec/
+      Output file: ./specs/$spec/.research-[topic-slug].md
+
+      Goal Interview Context:
+      - Problem: [from .progress.md]
+      - Constraints: [from .progress.md]
+      - Success criteria: [from .progress.md]
+
+      Instructions:
+      [topic-specific research instructions]
+
+      Write all findings to the output file.",
+    activeForm: "Researching [topic]"
+  )
 ```
-Research topics identified for parallel execution:
-1. OAuth patterns - research-analyst
-2. Rate limiting - research-analyst
-3. Security practices - research-analyst
-4. Existing auth code - Explore
-5. Quality commands - Explore
 
-Now spawning 5 research agents in parallel (3 research-analyst + 2 Explore)...
+**Output file naming convention:**
+- External topics: `.research-[topic-slug].md` (e.g., `.research-oauth-patterns.md`)
+- Codebase analysis: `.research-codebase.md`
+- Quality commands: `.research-quality.md`
+- Related specs: `.research-related-specs.md`
+
+### Step 5: Spawn Teammates
+
+<mandatory>
+**ALL Task calls MUST be in ONE message to ensure true parallel execution.**
+
+Spawn one teammate per task. Use the appropriate subagent_type:
+- `research-analyst` for web/external research topics
+- `Explore` for codebase analysis topics
+
+Each Task call should include:
+- `team_name: "research-$spec"` to join the team
+- `name: "researcher-N"` or `"explorer-N"` for identification
+- The full task description with spec path, output file, and context
+
+**If you spawn teammates one at a time (separate messages), they run sequentially - THIS IS WRONG.**
+**If you spawn all teammates in one message (multiple Task calls), they run in parallel - THIS IS CORRECT.**
+</mandatory>
+
+### Pre-Execution Checklist (REQUIRED)
+
+Before spawning teammates, verify you have:
+- [ ] Listed at least 2 distinct research topics
+- [ ] Assigned appropriate agent type (Explore or research-analyst) to each topic
+- [ ] Created TaskCreate for each topic
+- [ ] Prepared unique output file path for each teammate (.research-*.md)
+- [ ] Prepared all Task tool calls in your response (ready to send in ONE message)
+- [ ] NOT written any code/searches yourself (you are a coordinator, not a researcher)
+
+If all boxes are checked, proceed with spawning all teammates in ONE message.
+
+### Teammate Spawning Patterns
+
+#### Minimum Parallel Pattern (Always Use)
+
+Even for simple goals, spawn at least 2 teammates in parallel:
+
+```text
+Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-1",
+  prompt: "You are a research teammate...
+    Topic: [External best practices]
+    Output: ./specs/$spec/.research-[topic].md
+    [goal context]
+    Research best practices, libraries, pitfalls.
+    Write findings to output file.
+    When done, mark your task complete via TaskUpdate.")
+
+Task(subagent_type: Explore, team_name: "research-$spec", name: "explorer-1",
+  prompt: "Analyze codebase for spec: $spec
+    Output: ./specs/$spec/.research-codebase.md
+    Find existing patterns, dependencies, constraints.
+    Write findings to output file.")
 ```
 
-### Parallel Execution: Correct vs Incorrect
+#### Standard Parallel Pattern (Recommended)
 
-**WRONG (Sequential)** - Each Task call in separate message:
-```
-Message 1: Task(subagent_type: research-analyst, topic: best practices)
-[wait for result]
-Message 2: Task(subagent_type: Explore, topic: codebase)
-[wait for result]
-```
-Result: Agents run one after another = SLOW
+For most goals with diverse topics, spawn 3-4 teammates in ONE message.
 
-**CORRECT (Parallel)** - All Task calls in ONE message:
-```
-Message 1:
-  Task(subagent_type: research-analyst, topic: best practices)
-  Task(subagent_type: Explore, topic: codebase)
-  Task(subagent_type: Explore, topic: quality commands)
-[all agents start simultaneously]
-```
-Result: Agents run at the same time = FAST (2-3x faster)
-
-### Standard Parallel Pattern (Recommended)
-
-For most goals with diverse topics, spawn 3-4 agents in ONE message.
-
-**CRITICAL: If the goal involves multiple external topics, spawn MULTIPLE research-analyst agents (one per topic).**
+**CRITICAL: If the goal involves multiple external topics, spawn MULTIPLE research-analyst teammates (one per topic).**
 
 Example: "Add authentication with email notifications"
-- research-analyst #1: Authentication patterns
-- research-analyst #2: Email service best practices
-- Explore #1: Existing auth/email code
-- Explore #2: Quality commands
+- researcher-1: Authentication patterns (research-analyst)
+- researcher-2: Email service best practices (research-analyst)
+- explorer-1: Existing auth/email code (Explore)
+- explorer-2: Quality commands (Explore)
 
-**Task 1 - External Research Topic A (research-analyst #1):**
-```yaml
-subagent_type: research-analyst
+```text
+Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-1",
+  prompt: "You are a research teammate...
+    Topic: Authentication patterns
+    Output: ./specs/$spec/.research-auth.md
+    Focus ONLY on web research for THIS specific topic:
+    1. WebSearch for best practices, industry standards
+    2. WebSearch for common pitfalls and gotchas
+    3. Research relevant libraries/frameworks
+    4. Document findings in output file
+    Do NOT explore codebase - Explore teammates handle that in parallel.
+    Do NOT research other topics - other research-analyst teammates handle those.
+    When done, mark your task complete via TaskUpdate.")
 
-You are researching for spec: $spec
-Spec path: ./specs/$spec/
-Topic: [FIRST EXTERNAL TOPIC - e.g., Authentication patterns]
+Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-2",
+  prompt: "You are a research teammate...
+    Topic: Email service best practices
+    Output: ./specs/$spec/.research-email.md
+    Focus ONLY on web research for THIS specific topic:
+    1. WebSearch for best practices for this topic
+    2. WebSearch for common pitfalls
+    3. Research relevant libraries/tools
+    4. Document findings in output file
+    Do NOT explore codebase - Explore teammates handle that in parallel.
+    Do NOT research other topics - other research-analyst teammates handle those.
+    When done, mark your task complete via TaskUpdate.")
 
-Focus ONLY on web research for THIS specific topic:
-1. WebSearch for best practices, industry standards
-2. WebSearch for common pitfalls and gotchas
-3. Research relevant libraries/frameworks
-4. Document findings in ./specs/$spec/.research-[topic-name].md
+Task(subagent_type: Explore, team_name: "research-$spec", name: "explorer-1",
+  prompt: "Analyze codebase for spec: $spec
+    Output: ./specs/$spec/.research-codebase.md
+    Tasks:
+    1. Find existing patterns related to [goal]
+    2. Identify dependencies and constraints
+    3. Check for similar implementations
+    4. Document architectural patterns used
+    Write findings to the output file with sections:
+    - Existing Patterns (with file paths)
+    - Dependencies
+    - Constraints
+    - Recommendations")
 
-Do NOT explore codebase - Explore agents handle that in parallel.
-Do NOT research other topics - other research-analyst agents handle those.
+Task(subagent_type: Explore, team_name: "research-$spec", name: "explorer-2",
+  prompt: "Discover quality commands for spec: $spec
+    Output: ./specs/$spec/.research-quality.md
+    Tasks:
+    1. Read package.json scripts section
+    2. Check for Makefile targets
+    3. Scan .github/workflows/*.yml for CI commands
+    4. Document lint, test, build, typecheck commands
+    Write findings as table: | Type | Command | Source |")
 ```
 
-**Task 2 - External Research Topic B (research-analyst #2):**
-```yaml
-subagent_type: research-analyst
+#### Complex Goal Pattern (5+ Teammates)
 
-You are researching for spec: $spec
-Spec path: ./specs/$spec/
-Topic: [SECOND EXTERNAL TOPIC - e.g., Email service patterns]
+Spawn 5 teammates in ONE message (2 research-analyst + 3 Explore):
 
-Focus ONLY on web research for THIS specific topic:
-1. WebSearch for best practices for this topic
-2. WebSearch for common pitfalls
-3. Research relevant libraries/tools
-4. Document findings in ./specs/$spec/.research-[topic-name].md
+| Teammate | Type | Focus | Output File |
+|----------|------|-------|-------------|
+| researcher-1 | research-analyst | Topic A (web) | .research-[topic-a].md |
+| researcher-2 | research-analyst | Topic B (web) | .research-[topic-b].md |
+| explorer-1 | Explore | Existing patterns (code) | .research-codebase.md |
+| explorer-2 | Explore | Quality commands | .research-quality.md |
+| explorer-3 | Explore | Related specs | .research-related-specs.md |
 
-Do NOT explore codebase - Explore agents handle that in parallel.
-Do NOT research other topics - other research-analyst agents handle those.
+### Step 6: Wait for Completion
+
+Monitor teammate progress via TaskList and automatic teammate messages:
+
+```text
+1. Teammates send messages automatically when they complete tasks or need help
+2. Messages are delivered automatically to you (no polling needed)
+3. Use TaskList periodically to check overall progress
+4. Wait until ALL tasks show status: "completed"
+5. If a teammate reports an error, note it for the merge step
 ```
 
-**Task 3 - Codebase Analysis (Explore - fast):**
-```yaml
-subagent_type: Explore
-thoroughness: very thorough
+### Step 7: Shutdown Teammates
 
-Analyze codebase for spec: $spec
-Output file: ./specs/$spec/.research-codebase.md
+After all tasks complete, gracefully shut down each teammate:
 
-Tasks:
-1. Find existing patterns related to [goal]
-2. Identify dependencies and constraints
-3. Check for similar implementations
-4. Document architectural patterns used
-
-Write findings to the output file with sections:
-- Existing Patterns (with file paths)
-- Dependencies
-- Constraints
-- Recommendations
+```text
+For each teammate:
+  SendMessage(
+    type: "shutdown_request",
+    recipient: "[teammate-name]",
+    content: "Research complete, shutting down"
+  )
 ```
 
-**Task 4 - Quality Commands Discovery (Explore - fast):**
-```yaml
-subagent_type: Explore
-thoroughness: quick
+### Step 8: Merge Results
 
-Discover quality commands for spec: $spec
-Output file: ./specs/$spec/.research-quality.md
+Proceed to the "Merge Results" section below.
 
-Tasks:
-1. Read package.json scripts section
-2. Check for Makefile targets
-3. Scan .github/workflows/*.yml for CI commands
-4. Document lint, test, build, typecheck commands
+### Step 9: Clean Up Team
 
-Write findings as table: | Type | Command | Source |
+```text
+TeamDelete()
 ```
 
-**Task 5 - Related Specs Discovery (Explore - fast):**
-```yaml
-subagent_type: Explore
-thoroughness: medium
-
-Scan related specs for: $spec
-Output file: ./specs/$spec/.research-related-specs.md
-
-Tasks:
-1. List all directories in ./specs/ (each is a spec)
-2. For each spec, read .progress.md for Original Goal
-3. Read research.md/requirements.md summaries if exist
-4. Identify overlaps, conflicts, specs needing updates
-
-Write findings as table: | Name | Relevance | Relationship | mayNeedUpdate |
-```
-
-### Complex Goal Pattern (5+ Agents)
-
-**Example: Goal involves "Add GraphQL API with caching"**
-
-**CRITICAL: This goal has TWO distinct external topics (GraphQL + Caching), so spawn TWO research-analyst agents (one per topic).**
-
-Spawn 5 agents in ONE message (2 research-analyst + 3 Explore):
-
-| Agent # | Type | Focus | Output File |
-|---------|------|-------|-------------|
-| 1 | research-analyst | GraphQL best practices (web) | .research-graphql.md |
-| 2 | research-analyst | Caching strategies (web) | .research-caching.md |
-| 3 | Explore | Existing API patterns (code) | .research-codebase.md |
-| 4 | Explore | Quality commands | .research-quality.md |
-| 5 | Explore | Related specs | .research-related-specs.md |
-
-**Task 1 - GraphQL Best Practices (research-analyst):**
-```yaml
-subagent_type: research-analyst
-
-Topic: GraphQL API best practices
-Output: ./specs/$spec/.research-graphql.md
-
-1. WebSearch: "GraphQL schema design best practices 2024"
-2. WebSearch: "GraphQL resolvers performance patterns"
-3. Research popular GraphQL libraries (Apollo, Yoga, etc.)
-4. Document best practices, patterns, pitfalls
-```
-
-**Task 2 - Caching Strategies (research-analyst):**
-```yaml
-subagent_type: research-analyst
-
-Topic: Caching strategies for GraphQL
-Output: ./specs/$spec/.research-caching.md
-
-1. WebSearch: "GraphQL caching strategies 2024"
-2. WebSearch: "DataLoader patterns best practices"
-3. Research cache invalidation approaches
-4. Document caching patterns and recommendations
-```
-
-**Task 3 - Codebase Analysis (Explore):**
-```yaml
-subagent_type: Explore
-thoroughness: very thorough
-
-Topic: Existing API and caching patterns in codebase
-Output: ./specs/$spec/.research-codebase.md
-
-1. Search for existing API implementations
-2. Find any caching code or patterns
-3. Identify relevant dependencies
-4. Document patterns with file paths
-```
-
-**Task 4 - Quality Commands (Explore):**
-```yaml
-subagent_type: Explore
-thoroughness: quick
-
-Topic: Quality commands discovery
-Output: ./specs/$spec/.research-quality.md
-
-1. Check package.json scripts
-2. Check Makefile if exists
-3. Check CI workflow commands
-4. Output as table: Type | Command | Source
-```
-
-**Task 5 - Related Specs (Explore):**
-```yaml
-subagent_type: Explore
-thoroughness: medium
-
-Topic: Related specs discovery
-Output: ./specs/$spec/.research-related-specs.md
-
-1. Scan ./specs/ for existing specs
-2. Read each spec's progress and requirements
-3. Identify overlaps with GraphQL/caching goal
-4. Output as table: Name | Relevance | Relationship | mayNeedUpdate
-```
+This removes the team directory and task list for `research-$spec`.
 
 ## Merge Results (After Parallel Research)
 
