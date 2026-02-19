@@ -102,7 +102,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
 
 ## Phase 2: Refactoring
 
-- [ ] 2.1 Review consistency across all Karpathy sections
+- [x] 2.1 Review consistency across all Karpathy sections
   - **Do**:
     1. Read all added Karpathy sections across the 9 files
     2. Ensure consistent formatting: all use `<mandatory>` tags, all use bullet format, all bold rule names
