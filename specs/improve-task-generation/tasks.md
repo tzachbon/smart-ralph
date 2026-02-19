@@ -195,7 +195,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-7, AC-4.1_
   - _Design: Component D_
 
-- [ ] 1.15 Add TASK_MODIFICATION_REQUEST signal format to spec-executor.md
+- [x] 1.15 Add TASK_MODIFICATION_REQUEST signal format to spec-executor.md
   - **Do**:
     1. After the "When to request modification" bullets, add the "Signal format" section with the JSON structure showing type, originalTaskId, reasoning, proposedTasks
     2. Use exact content from design.md Component D lines 278-291

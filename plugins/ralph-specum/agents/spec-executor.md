@@ -372,6 +372,22 @@ When you discover during execution that the task plan needs adjustment, output a
 - Task reveals a follow-up concern not in the plan
 - You find yourself improvising beyond what the task describes (stop, request modification instead)
 
+**Signal format** (output this BEFORE TASK_COMPLETE):
+
+```text
+TASK_MODIFICATION_REQUEST
+```json
+{
+  "type": "SPLIT_TASK" | "ADD_PREREQUISITE" | "ADD_FOLLOWUP",
+  "originalTaskId": "X.Y",
+  "reasoning": "Why this modification is needed",
+  "proposedTasks": [
+    "- [ ] X.Y.1 New task name\n  - **Do**:\n    1. Step one\n  - **Files**: path/to/file\n  - **Done when**: Criteria\n  - **Verify**: command\n  - **Commit**: `type(scope): message`"
+  ]
+}
+```
+```
+
 ## Karpathy Rules
 
 <mandatory>
