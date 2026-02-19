@@ -12,7 +12,7 @@ generated: auto
 
 Focus: Add Karpathy rules to all target files. Validate content reads correctly.
 
-- [ ] 1.1 Add Karpathy rules section to CLAUDE.md
+- [x] 1.1 Add Karpathy rules section to CLAUDE.md
   - **Do**:
     1. Open `CLAUDE.md`
     2. Insert new `## Karpathy Coding Rules` section after the `## ⛔ CRITICAL SAFETY RULES` section (after line 10) and before `## Overview` (line 12)
