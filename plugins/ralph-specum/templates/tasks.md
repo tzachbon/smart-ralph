@@ -57,6 +57,24 @@ GOOD:
   - **Done when**: POST /register returns 201 for valid input, 400 for invalid
   - **Verify**: `curl -X POST localhost:3000/register -d '{"email":"a@b.com","password":"12345678"}' -w '%{http_code}' | grep 201`
 
+**Example 2: Integration (bundled vs. atomic)**
+
+BAD:
+- [ ] 2.1 Add analytics tracking
+  - **Do**: Install PostHog, create wrapper, add to all pages, write tests
+  - **Files**: src/analytics.ts, src/pages/*.tsx, tests/analytics.test.ts
+  - **Verify**: Tests pass
+
+GOOD:
+- [ ] 2.1 Install PostHog SDK and create wrapper
+  - **Do**:
+    1. Add posthog-js: `pnpm add posthog-js`
+    2. Create `src/lib/analytics.ts` exporting `track(event, props)` and `identify(userId)`
+    3. Initialize with env var `POSTHOG_KEY` in wrapper
+  - **Files**: src/lib/analytics.ts, package.json
+  - **Done when**: `import { track } from '@/lib/analytics'` resolves without error
+  - **Verify**: `pnpm check-types`
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.

@@ -72,7 +72,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-5, AC-3.1, AC-3.2_
   - _Design: Component B_
 
-- [ ] 1.3 Add Bad vs Good Example 2 (Integration) to templates/tasks.md
+- [x] 1.3 Add Bad vs Good Example 2 (Integration) to templates/tasks.md
   - **Do**:
     1. After Example 1 in templates/tasks.md, add Example 2 "Integration (bundled vs. atomic)"
     2. Use exact content from design.md Component B lines 153-169
