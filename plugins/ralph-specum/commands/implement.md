@@ -1067,6 +1067,11 @@ Extract the JSON payload:
 5. Normal advancement — followup will be picked up as next task
 6. Log in .progress.md: "Added followup $followupId after $taskId. Reason: $reasoning"
 
+**Parallel Batch Interaction**:
+- If current task is in a [P] batch and executor requests modification: break out of parallel batch
+- Re-evaluate remaining [P] tasks as sequential after modification
+- This prevents inserting tasks mid-batch which would corrupt parallel execution
+
 ### 7. Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.

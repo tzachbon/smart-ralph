@@ -358,7 +358,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - **Done when**: All 3 handlers present in Section 6e
   - **Commit**: `chore(coordinator): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.31 Add Parallel Batch Interaction rules to Section 6e
+- [x] 1.31 Add Parallel Batch Interaction rules to Section 6e
   - **Do**:
     1. After ADD_FOLLOWUP handler, add "Parallel Batch Interaction" subsection: if current task in [P] batch, break out of parallel batch, re-evaluate as sequential
     2. Use content from design.md Component E lines 394-397
