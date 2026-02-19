@@ -330,7 +330,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-8, AC-5.3_
   - _Design: Component E_
 
-- [ ] 1.28 Add ADD_PREREQUISITE handler to Section 6e
+- [x] 1.28 Add ADD_PREREQUISITE handler to Section 6e
   - **Do**:
     1. After SPLIT_TASK handler, add the "ADD_PREREQUISITE" handler with 7 steps: do NOT mark complete, insert before current task, update totalTasks, update modificationMap, delegate prerequisite, retry original after, log
     2. Use content from design.md Component E lines 378-384

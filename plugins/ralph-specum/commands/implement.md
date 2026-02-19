@@ -1050,6 +1050,15 @@ Extract the JSON payload:
 5. Set taskIndex to first inserted sub-task
 6. Log in .progress.md: "Split task $taskId into N sub-tasks: [ids]. Reason: $reasoning"
 
+**ADD_PREREQUISITE**:
+1. Do NOT mark original task complete
+2. Insert proposedTask BEFORE current task block using Edit tool
+3. Update totalTasks += 1 in state
+4. Update modificationMap
+5. Delegate prerequisite task to spec-executor
+6. After prereq completes: retry original task
+7. Log in .progress.md: "Added prerequisite $prereqId before $taskId. Reason: $reasoning"
+
 ### 7. Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.
