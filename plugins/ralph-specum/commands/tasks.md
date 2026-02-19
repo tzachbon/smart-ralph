@@ -346,6 +346,21 @@ After displaying the walkthrough, ask ONE simple question:
 4. Ask approval question again
 5. Loop until approved
 
+<mandatory>
+**Feedback Loop Team Pattern: Cleanup-and-Recreate**
+
+When the user requests changes, do NOT reuse the existing team or send messages to completed teammates.
+Instead, use the cleanup-and-recreate approach for each feedback iteration:
+
+1. `TeamDelete()` the current team (cleanup previous session)
+2. `TeamCreate()` a new team with the same name (fresh team for re-invocation)
+3. `TaskCreate` with updated prompt including user feedback
+4. Spawn new teammate, wait for completion, shutdown, `TeamDelete`
+
+This is simpler and more reliable than trying to reuse teams or message completed teammates.
+Each feedback iteration gets a completely fresh team context.
+</mandatory>
+
 **Re-invoke task-planner with team lifecycle (cleanup-and-recreate):**
 
 ```text

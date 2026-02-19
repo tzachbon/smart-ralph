@@ -145,13 +145,13 @@ You MUST follow the full team lifecycle below. Use `architect-reviewer` as the t
 2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
 
-### Step 2: Create Design Team
+### Step 2: Create Team
 
 ```text
 TeamCreate(team_name: "design-$spec", description: "Design for $spec")
 ```
 
-### Step 3: Create Task
+### Step 3: Create Tasks
 
 ```text
 TaskCreate(
@@ -198,7 +198,7 @@ TaskCreate(
 )
 ```
 
-### Step 4: Spawn Teammate
+### Step 4: Spawn Teammates
 
 ```text
 Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1",
@@ -334,6 +334,21 @@ After displaying the walkthrough, ask ONE simple question:
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
+
+<mandatory>
+**Feedback Loop Team Pattern: Cleanup-and-Recreate**
+
+When the user requests changes, do NOT reuse the existing team or send messages to completed teammates.
+Instead, use the cleanup-and-recreate approach for each feedback iteration:
+
+1. `TeamDelete()` the current team (cleanup previous session)
+2. `TeamCreate()` a new team with the same name (fresh team for re-invocation)
+3. `TaskCreate` with updated prompt including user feedback
+4. Spawn new teammate, wait for completion, shutdown, `TeamDelete`
+
+This is simpler and more reliable than trying to reuse teams or message completed teammates.
+Each feedback iteration gets a completely fresh team context.
+</mandatory>
 
 **Re-invoke architect-reviewer with team lifecycle (cleanup-and-recreate):**
 

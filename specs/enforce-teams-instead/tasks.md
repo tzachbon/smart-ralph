@@ -84,7 +84,7 @@ After POC validated, clean up and standardize the team patterns across files.
   - **Commit**: `refactor(ralph-specum): add error handling for team operations`
   - _Design: Error Handling_
 
-- [ ] 2.3 Update review/feedback loops to work with teams
+- [x] 2.3 Update review/feedback loops to work with teams
   - **Do**: In requirements.md, design.md, and tasks.md, update the "Handle Response" sections for when user requests changes. When the user says "Need changes", the re-invocation of the subagent should either: (a) spawn a new teammate in the existing team, or (b) create a new team for the re-invocation. Choose option (b) for simplicity -- cleanup and recreate team for each feedback iteration. Document this clearly.
   - **Files**: `plugins/ralph-specum/commands/requirements.md`, `plugins/ralph-specum/commands/design.md`, `plugins/ralph-specum/commands/tasks.md`
   - **Done when**: Feedback loops document team creation/cleanup for re-invocations

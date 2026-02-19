@@ -144,13 +144,13 @@ You MUST follow the full team lifecycle below. Use `product-manager` as the team
 2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
 
-### Step 2: Create Requirements Team
+### Step 2: Create Team
 
 ```text
 TeamCreate(team_name: "requirements-$spec", description: "Requirements for $spec")
 ```
 
-### Step 3: Create Task
+### Step 3: Create Tasks
 
 ```text
 TaskCreate(
@@ -191,7 +191,7 @@ TaskCreate(
 )
 ```
 
-### Step 4: Spawn Teammate
+### Step 4: Spawn Teammates
 
 ```text
 Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1",
@@ -242,7 +242,7 @@ Monitor teammate progress via TaskList and automatic teammate messages:
 4. Wait until the task shows status: "completed"
 ```
 
-### Step 6: Shutdown & Cleanup
+### Step 6: Shutdown Teammates
 
 ```text
 SendMessage(
@@ -250,7 +250,15 @@ SendMessage(
   recipient: "pm-1",
   content: "Requirements complete, shutting down"
 )
+```
 
+### Step 7: Collect Results
+
+Read the generated `./specs/$spec/requirements.md` output from the teammate.
+
+### Step 8: Clean Up Team
+
+```text
 TeamDelete()
 ```
 
@@ -318,6 +326,21 @@ After displaying the walkthrough, ask ONE simple question:
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
+
+<mandatory>
+**Feedback Loop Team Pattern: Cleanup-and-Recreate**
+
+When the user requests changes, do NOT reuse the existing team or send messages to completed teammates.
+Instead, use the cleanup-and-recreate approach for each feedback iteration:
+
+1. `TeamDelete()` the current team (cleanup previous session)
+2. `TeamCreate()` a new team with the same name (fresh team for re-invocation)
+3. `TaskCreate` with updated prompt including user feedback
+4. Spawn new teammate, wait for completion, shutdown, `TeamDelete`
+
+This is simpler and more reliable than trying to reuse teams or message completed teammates.
+Each feedback iteration gets a completely fresh team context.
+</mandatory>
 
 **Re-invoke product-manager with team lifecycle (cleanup-and-recreate):**
 
