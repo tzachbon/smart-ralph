@@ -48,7 +48,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
   - _Requirements: FR-3, AC-2.2_
   - _Design: task-planner template_
 
-- [ ] 1.4 Add Karpathy rules to architect-reviewer agent
+- [x] 1.4 Add Karpathy rules to architect-reviewer agent
   - **Do**:
     1. Open `plugins/ralph-specum/agents/architect-reviewer.md`
     2. Insert `## Karpathy Rules` section before the `## Communication Style` section (before line 229)
