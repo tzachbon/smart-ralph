@@ -37,6 +37,26 @@ This spec is not complete until ALL criteria are met:
 3. **Surgical**: Each task touches only what it must. No drive-by refactors, no "while you're in there" improvements. Every file in the Files section traces directly to the task's goal.
 4. **Goal-Driven**: Emphasize **Done when** and **Verify** over **Do** steps. The Do is guidance; the Done when is the contract. Transform imperative commands into declarative success criteria. Instead of "Add validation" write "Done when: invalid inputs return 400 with error message."
 
+### Bad vs. Good Examples
+
+**Example 1: File Creation (too vague vs. precise)**
+
+BAD:
+- [ ] 1.1 Set up the API module
+  - **Do**: Create the API module with routes and handlers
+  - **Files**: src/api/
+  - **Verify**: Code compiles
+
+GOOD:
+- [ ] 1.1 Create user registration endpoint
+  - **Do**:
+    1. Create `src/api/routes/auth.ts` with POST /register route
+    2. Add request body validation: email (valid format), password (min 8 chars)
+    3. Return 201 with `{ id, email }` on success, 400 with `{ error }` on validation fail
+  - **Files**: src/api/routes/auth.ts
+  - **Done when**: POST /register returns 201 for valid input, 400 for invalid
+  - **Verify**: `curl -X POST localhost:3000/register -d '{"email":"a@b.com","password":"12345678"}' -w '%{http_code}' | grep 201`
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.

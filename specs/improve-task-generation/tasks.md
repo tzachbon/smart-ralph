@@ -60,7 +60,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-5, AC-3.1, AC-6.2_
   - _Design: Component B_
 
-- [ ] 1.2 Add Bad vs Good Example 1 (File Creation) to templates/tasks.md
+- [x] 1.2 Add Bad vs Good Example 1 (File Creation) to templates/tasks.md
   - **Do**:
     1. In `plugins/ralph-specum/templates/tasks.md`, after the Task Writing Principles subsection, add `### Bad vs. Good Examples` header
     2. Add Example 1 "File Creation (too vague vs. precise)" with BAD and GOOD blocks
