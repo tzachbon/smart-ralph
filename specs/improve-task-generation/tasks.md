@@ -472,7 +472,7 @@ Focus: Cross-file consistency, wording alignment, remove contradictions.
   - **Done when**: Signal name consistent across executor, coordinator, and stop-watcher
   - **Commit**: `chore(improve-task-gen): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.4 Verify modification protocol consistency between executor and coordinator
+- [x] 2.4 Verify modification protocol consistency between executor and coordinator
   - **Do**:
     1. Confirm spec-executor.md JSON payload fields (type, originalTaskId, reasoning, proposedTasks) match what implement.md Section 6e expects to parse
     2. Confirm SPLIT_TASK/ADD_PREREQUISITE/ADD_FOLLOWUP naming matches exactly in both files
