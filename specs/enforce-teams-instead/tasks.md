@@ -110,7 +110,7 @@ After POC validated, clean up and standardize the team patterns across files.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Bump plugin version
+- [x] 4.1 Bump plugin version
   - **Do**: Increment the minor version in both `plugins/ralph-specum/.claude-plugin/plugin.json` (e.g., 3.4.1 -> 3.5.0) and `.claude-plugin/marketplace.json` (update the ralph-specum entry version to match). This is required per CLAUDE.md for any plugin file changes.
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Done when**: Both files have matching updated version numbers
