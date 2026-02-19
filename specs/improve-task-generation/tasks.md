@@ -423,7 +423,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-8_
   - _Design: Component G_
 
-- [ ] 1.37 [VERIFY] Quality checkpoint: all 7 files modified
+- [x] 1.37 [VERIFY] Quality checkpoint: all 7 files modified
   - **Do**: Verify all 7 target files have been modified with new content
   - **Verify**: `grep -q "Task Writing Guide" plugins/ralph-specum/templates/tasks.md && grep -q "Task Sizing Rules" plugins/ralph-specum/agents/task-planner.md && grep -q "Task Modification Requests" plugins/ralph-specum/agents/spec-executor.md && grep -q "6e. Modification Request Handler" plugins/ralph-specum/commands/implement.md && grep -q "TASK_MODIFICATION_REQUEST" plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q "modificationMap" plugins/ralph-specum/schemas/spec.schema.json && jq empty plugins/ralph-specum/schemas/spec.schema.json`
   - **Done when**: All 7 files contain their expected new content
