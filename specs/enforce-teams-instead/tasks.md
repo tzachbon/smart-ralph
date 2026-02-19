@@ -57,7 +57,7 @@ Focus: Convert each phase command to use teams. Validate that the team lifecycle
   - _Requirements: FR-5_
   - _Design: Component E_
 
-- [ ] 1.6 POC Checkpoint
+- [x] 1.6 POC Checkpoint
   - **Do**: Review all 5 modified command files to verify: (a) each has consistent team lifecycle pattern, (b) team naming follows `$phase-$spec` convention, (c) orphaned team cleanup is present in each, (d) no syntax errors in markdown structure, (e) existing non-team sections are preserved
   - **Files**: `plugins/ralph-specum/commands/research.md`, `plugins/ralph-specum/commands/requirements.md`, `plugins/ralph-specum/commands/design.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/commands/implement.md`
   - **Done when**: All 5 files have consistent team lifecycle and the rest of each file is unchanged
