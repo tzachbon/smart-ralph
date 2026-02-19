@@ -1,7 +1,7 @@
 ---
 description: Generate implementation tasks from design
 argument-hint: [spec-name]
-allowed-tools: [Read, Write, Task, Bash, AskUserQuestion]
+allowed-tools: "*"
 ---
 
 # Tasks Phase
@@ -131,61 +131,157 @@ Interview Context:
 
 Store this context to include in the Task delegation prompt.
 
-## Execute Tasks Generation
+## Execute Tasks Generation (Team-Based)
 
 <mandatory>
-Use the Task tool with `subagent_type: task-planner` to generate tasks.
+**Tasks generation uses Claude Code Teams for execution, matching the standard team lifecycle pattern.**
+
+You MUST follow the full team lifecycle below. Use `task-planner` as the teammate subagent type.
 ALL specs MUST follow POC-first workflow.
 </mandatory>
 
-Invoke task-planner agent with prompt:
+### Step 1: Check for Orphaned Team
 
 ```text
-You are creating implementation tasks for spec: $spec
-Spec path: ./specs/$spec/
-
-Context:
-- Requirements: [include requirements.md content]
-- Design: [include design.md content]
-
-[If interview was conducted, include:]
-Interview Context:
-$interview_context
-
-Your task:
-1. Read requirements and design thoroughly
-2. Break implementation into POC-first phases:
-   - Phase 1: Make It Work (POC) - validate idea, skip tests
-   - Phase 2: Refactoring - clean up code
-   - Phase 3: Testing - unit, integration, e2e
-   - Phase 4: Quality Gates - lint, types, CI
-3. Create atomic, autonomous-ready tasks
-4. Each task MUST include:
-   - **Do**: Exact implementation steps
-   - **Files**: Exact file paths to create/modify
-   - **Done when**: Explicit success criteria
-   - **Verify**: Command to verify completion
-   - **Commit**: Conventional commit message
-   - _Requirements: references_
-   - _Design: references_
-5. Count total tasks
-6. Output to ./specs/$spec/tasks.md
-7. Include interview responses in an "Execution Context" section of tasks.md
-
-Use the tasks.md template with frontmatter:
----
-spec: $spec
-phase: tasks
-total_tasks: <count>
-created: <timestamp>
----
-
-Critical rules:
-- Tasks must be executable without human interaction
-- Each task = one commit
-- Verify command must be runnable
-- POC phase allows shortcuts, later phases clean up
+1. Read ~/.claude/teams/tasks-$spec/config.json
+2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
 ```
+
+### Step 2: Create Tasks Team
+
+```text
+TeamCreate(team_name: "tasks-$spec", description: "Task planning for $spec")
+```
+
+### Step 3: Create Task
+
+```text
+TaskCreate(
+  subject: "Generate implementation tasks for $spec",
+  description: "Generate implementation tasks for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Requirements: [include requirements.md content]
+    - Design: [include design.md content]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Read requirements and design thoroughly
+    2. Break implementation into POC-first phases:
+       - Phase 1: Make It Work (POC) - validate idea, skip tests
+       - Phase 2: Refactoring - clean up code
+       - Phase 3: Testing - unit, integration, e2e
+       - Phase 4: Quality Gates - lint, types, CI
+    3. Create atomic, autonomous-ready tasks
+    4. Each task MUST include:
+       - **Do**: Exact implementation steps
+       - **Files**: Exact file paths to create/modify
+       - **Done when**: Explicit success criteria
+       - **Verify**: Command to verify completion
+       - **Commit**: Conventional commit message
+       - _Requirements: references_
+       - _Design: references_
+    5. Count total tasks
+    6. Output to ./specs/$spec/tasks.md
+    7. Include interview responses in an 'Execution Context' section of tasks.md
+
+    Use the tasks.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: tasks
+    total_tasks: <count>
+    created: <timestamp>
+    ---
+
+    Critical rules:
+    - Tasks must be executable without human interaction
+    - Each task = one commit
+    - Verify command must be runnable
+    - POC phase allows shortcuts, later phases clean up",
+  activeForm: "Generating tasks"
+)
+```
+
+### Step 4: Spawn Teammate
+
+```text
+Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1",
+  prompt: "You are a task planning teammate for spec: $spec
+    Spec path: ./specs/$spec/
+
+    Context:
+    - Requirements: [include requirements.md content]
+    - Design: [include design.md content]
+
+    [If interview was conducted, include:]
+    Interview Context:
+    $interview_context
+
+    Your task:
+    1. Read requirements and design thoroughly
+    2. Break implementation into POC-first phases:
+       - Phase 1: Make It Work (POC) - validate idea, skip tests
+       - Phase 2: Refactoring - clean up code
+       - Phase 3: Testing - unit, integration, e2e
+       - Phase 4: Quality Gates - lint, types, CI
+    3. Create atomic, autonomous-ready tasks
+    4. Each task MUST include:
+       - **Do**: Exact implementation steps
+       - **Files**: Exact file paths to create/modify
+       - **Done when**: Explicit success criteria
+       - **Verify**: Command to verify completion
+       - **Commit**: Conventional commit message
+       - _Requirements: references_
+       - _Design: references_
+    5. Count total tasks
+    6. Output to ./specs/$spec/tasks.md
+    7. Include interview responses in an 'Execution Context' section of tasks.md
+
+    Use the tasks.md template with frontmatter:
+    ---
+    spec: $spec
+    phase: tasks
+    total_tasks: <count>
+    created: <timestamp>
+    ---
+
+    Critical rules:
+    - Tasks must be executable without human interaction
+    - Each task = one commit
+    - Verify command must be runnable
+    - POC phase allows shortcuts, later phases clean up
+
+    When done, mark your task complete via TaskUpdate.")
+```
+
+### Step 5: Wait for Completion
+
+Monitor teammate progress via TaskList and automatic teammate messages:
+
+```text
+1. Teammate sends a message automatically when task is complete or needs help
+2. Messages are delivered automatically to you (no polling needed)
+3. Use TaskList to check progress if needed
+4. Wait until the task shows status: "completed"
+```
+
+### Step 6: Shutdown & Cleanup
+
+```text
+SendMessage(
+  type: "shutdown_request",
+  recipient: "planner-1",
+  content: "Tasks complete, shutting down"
+)
+
+TeamDelete()
+```
+
+This removes the team directory and task list for `tasks-$spec`.
 
 ## Walkthrough (Before Review)
 
@@ -245,10 +341,60 @@ After displaying the walkthrough, ask ONE simple question:
 
 **If "Need changes" or "Other"**:
 1. Ask: "What would you like changed?"
-2. Invoke task-planner again with the feedback
+2. Re-invoke task-planner using the team pattern (cleanup-and-recreate)
 3. Re-display walkthrough
 4. Ask approval question again
 5. Loop until approved
+
+**Re-invoke task-planner with team lifecycle (cleanup-and-recreate):**
+
+```text
+Step A: Check for orphaned team
+  Read ~/.claude/teams/tasks-$spec/config.json
+  If exists: TeamDelete() to clean up
+
+Step B: Create new team
+  TeamCreate(team_name: "tasks-$spec", description: "Tasks update for $spec")
+
+Step C: Create task
+  TaskCreate(
+    subject: "Update tasks for $spec",
+    description: "Update tasks based on user feedback...",
+    activeForm: "Updating tasks"
+  )
+
+Step D: Spawn teammate
+  Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1",
+    prompt: "You are updating the implementation tasks for spec: $spec
+      Spec path: ./specs/$spec/
+
+      Current tasks: ./specs/$spec/tasks.md
+
+      User feedback:
+      $user_feedback
+
+      Your task:
+      1. Read the existing tasks.md
+      2. Understand the user's feedback and concerns
+      3. Update the tasks to address the feedback
+      4. Maintain consistency with requirements and design
+      5. Update tasks.md with the changes
+      6. Append update notes to .progress.md explaining what changed
+
+      Focus on addressing the specific feedback while maintaining task quality.
+      When done, mark your task complete via TaskUpdate.")
+
+Step E: Wait for completion
+  Monitor via TaskList and automatic messages
+
+Step F: Shutdown & cleanup
+  SendMessage(type: "shutdown_request", recipient: "planner-1", content: "Update complete")
+  TeamDelete()
+```
+
+**After update, repeat review questions** (go back to "Tasks Review Question")
+
+**Continue until approved:** Loop until user responds with approval
 
 ## Update State
 
