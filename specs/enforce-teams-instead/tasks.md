@@ -101,7 +101,7 @@ After POC validated, clean up and standardize the team patterns across files.
   - **Verify**: `claude --plugin-dir ./plugins/ralph-specum --help` shows all ralph-specum commands
   - **Commit**: None (verification only)
 
-- [ ] 3.2 Verify markdown structure integrity
+- [x] 3.2 Verify markdown structure integrity
   - **Do**: For each modified command file, verify: (a) frontmatter is valid YAML between `---` markers, (b) all mandatory blocks have matching open/close tags, (c) code blocks are properly fenced, (d) heading hierarchy is correct (no skipped levels), (e) all original sections still present
   - **Files**: `plugins/ralph-specum/commands/research.md`, `plugins/ralph-specum/commands/requirements.md`, `plugins/ralph-specum/commands/design.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/commands/implement.md`
   - **Done when**: All files pass structural validation
