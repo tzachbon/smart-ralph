@@ -319,7 +319,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - **Done when**: All 3 subsections present
   - **Commit**: `chore(coordinator): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.27 Add SPLIT_TASK handler to Section 6e
+- [x] 1.27 Add SPLIT_TASK handler to Section 6e
   - **Do**:
     1. After the Validate subsection, add "Process by Type" header and the "SPLIT_TASK" handler with 6 steps: mark original [x], insert proposedTasks, update totalTasks, update modificationMap, set taskIndex, log in .progress.md
     2. Use content from design.md Component E lines 367-376

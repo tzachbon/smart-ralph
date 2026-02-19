@@ -1040,6 +1040,16 @@ Extract the JSON payload:
 4. Depth check: count dots in proposed task IDs. If dots > 3 (depth > 2 levels): REJECT
 5. Verify proposed tasks have required fields: Do, Files, Done when, Verify, Commit
 
+**Process by Type**:
+
+**SPLIT_TASK**:
+1. Mark original task [x] in tasks.md (executor completed what it could)
+2. Insert all proposedTasks after original task block using Edit tool
+3. Update totalTasks += proposedTasks.length in state
+4. Update modificationMap
+5. Set taskIndex to first inserted sub-task
+6. Log in .progress.md: "Split task $taskId into N sub-tasks: [ids]. Reason: $reasoning"
+
 ### 7. Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.
