@@ -344,6 +344,12 @@ Proceed to progress merge (Section 9) and state update (Section 8).
 
 **After Delegation**:
 
+If spec-executor output contains `TASK_MODIFICATION_REQUEST`:
+1. Process modification per Section 6e (Modification Request Handler)
+2. After processing, check if TASK_COMPLETE was also output (for SPLIT_TASK and ADD_FOLLOWUP)
+3. If TASK_COMPLETE present: proceed to verification layers (section 7)
+4. If no TASK_COMPLETE (ADD_PREREQUISITE): delegate prerequisite, then retry original task
+
 If spec-executor outputs TASK_COMPLETE (or qa-engineer outputs VERIFICATION_PASS):
 1. Run verification layers (section 7) before advancing
 2. If all verifications pass, proceed to state update

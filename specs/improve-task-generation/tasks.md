@@ -397,7 +397,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - **Done when**: All 4 key subsections of 6e verified
   - **Commit**: `chore(coordinator): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.35 Add modification detection to implement.md Section 6 delegation flow
+- [x] 1.35 Add modification detection to implement.md Section 6 delegation flow
   - **Do**:
     1. In implement.md's "After Delegation" subsection (after line 333 area, the section that checks for TASK_COMPLETE)
     2. Add a check: "If spec-executor output contains `TASK_MODIFICATION_REQUEST`: process modification per Section 6e before continuing"
