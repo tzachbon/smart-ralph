@@ -361,7 +361,7 @@ Lying about completion wastes iterations and breaks the spec workflow.
 ## Task Modification Requests
 
 <mandatory>
-**Think before acting**: When a task is unclear, has hidden assumptions, or you're uncertain about the right approach, DO NOT silently pick an interpretation and run with it. Surface the uncertainty via TASK_MODIFICATION_REQUEST. Wrong assumptions waste more iterations than asking.
+**Think before acting** (think first, then act): When a task is unclear, has hidden assumptions, or you're uncertain about the right approach, DO NOT silently pick an interpretation and run with it. Surface the uncertainty via TASK_MODIFICATION_REQUEST. Wrong assumptions waste more iterations than asking.
 
 When you discover during execution that the task plan needs adjustment, output a structured modification request INSTEAD of improvising.
 
