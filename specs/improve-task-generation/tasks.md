@@ -445,7 +445,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
 
 Focus: Cross-file consistency, wording alignment, remove contradictions.
 
-- [ ] 2.1 Ensure no "manual" verification patterns remain across all plugin files
+- [x] 2.1 Ensure no "manual" verification patterns remain across all plugin files
   - **Do**:
     1. Search all files in `plugins/ralph-specum/` for patterns: "manual test", "manually", "visually check", "ask user" in Verify-field contexts
     2. Replace any found instances with automated alternatives

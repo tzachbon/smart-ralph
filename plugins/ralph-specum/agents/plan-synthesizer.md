@@ -470,7 +470,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 - [ ] 1.X POC Checkpoint
   - **Do**: Verify feature works end-to-end
   - **Done when**: Feature can be demonstrated working
-  - **Verify**: Manual test of core flow
+  - **Verify**: Run automated end-to-end verification (e.g., `curl API | jq`, browser automation script, or test command)
   - **Commit**: `feat(scope): complete POC`
 
 ## Phase 2: Refactoring
