@@ -530,7 +530,7 @@ Focus: Automated validation that all changes are correct and no regressions.
   - **Done when**: All test verifications pass
   - **Commit**: `chore(improve-task-gen): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.4 Verify task-planner.md has all required sizing rule components
+- [x] 3.4 Verify task-planner.md has all required sizing rule components
   - **Do**:
     1. Verify section exists: `## Task Sizing Rules`
     2. Verify split-if rules (5 criteria)
