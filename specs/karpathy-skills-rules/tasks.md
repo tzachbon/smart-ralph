@@ -83,7 +83,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
   - _Requirements: FR-8, FR-9, AC-3.1, AC-3.2_
   - _Design: Skill Updates_
 
-- [ ] 1.7 Bump plugin version to 3.6.0
+- [x] 1.7 Bump plugin version to 3.6.0
   - **Do**:
     1. Open `plugins/ralph-specum/.claude-plugin/plugin.json` -- change `"version": "3.5.1"` to `"version": "3.6.0"`
     2. Open `.claude-plugin/marketplace.json` -- change `"version": "3.5.1"` to `"version": "3.6.0"` for the ralph-specum entry
