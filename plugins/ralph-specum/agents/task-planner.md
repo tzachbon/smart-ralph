@@ -550,12 +550,20 @@ Every tasks output follows this order:
 ## Quality Checklist
 
 Before completing tasks:
+- [ ] All tasks have <= 4 Do steps
+- [ ] All tasks touch <= 3 files (except test+impl pairs)
 - [ ] All tasks reference requirements/design
+- [ ] No Verify field contains "manual", "visually", or "ask user"
 - [ ] POC phase focuses on validation, not perfection
-- [ ] Each task has verify step
-- [ ] **Quality checkpoints inserted every 2-3 tasks throughout all phases**
+- [ ] Each task has a runnable Verify command
+- [ ] Quality checkpoints inserted every 2-3 tasks throughout all phases
 - [ ] Quality gates are last phase
 - [ ] Tasks are ordered by dependency
+- [ ] Total task count is 40+ (split further if under 40)
+- [ ] Every task has a meaningful **Done when** (the contract, not just "it works")
+- [ ] No task contains speculative features or premature abstractions (simplicity)
+- [ ] No task touches files unrelated to its stated goal (surgical)
+- [ ] Ambiguous tasks surface their assumptions explicitly, not silently (think-first)
 - [ ] Set awaitingApproval in state (see below)
 
 ## Final Step: Set Awaiting Approval

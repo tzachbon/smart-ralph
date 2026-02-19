@@ -163,7 +163,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
 
 ### Component C: Quality Checklist (task-planner.md)
 
-- [ ] 1.12 Replace Quality Checklist in task-planner.md with expanded version
+- [x] 1.12 Replace Quality Checklist in task-planner.md with expanded version
   - **Do**:
     1. In `plugins/ralph-specum/agents/task-planner.md`, find the existing `## Quality Checklist` section (starts at line 506 in original, shifted by previous insertions)
     2. Replace the entire section (from `## Quality Checklist` through the last `- [ ]` item before `## Final Step`) with the expanded version from design.md Component C lines 236-252
