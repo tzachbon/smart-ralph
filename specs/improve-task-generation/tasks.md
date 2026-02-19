@@ -429,7 +429,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - **Done when**: All 7 files contain their expected new content
   - **Commit**: `chore(improve-task-gen): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.38 POC Checkpoint
+- [x] 1.38 POC Checkpoint
   - **Do**: Verify all components work end-to-end using automated tools
     1. Verify templates/tasks.md: 4 bad/good examples, no manual test, task writing principles
     2. Verify task-planner.md: sizing rules, expanded checklist
