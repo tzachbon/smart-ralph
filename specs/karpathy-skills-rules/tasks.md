@@ -72,7 +72,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
   - _Requirements: FR-5, FR-6, FR-7, AC-2.4, AC-2.5, AC-2.6_
   - _Design: Per-agent templates_
 
-- [ ] 1.6 Update communication-style and delegation-principle skills
+- [x] 1.6 Update communication-style and delegation-principle skills
   - **Do**:
     1. Open `plugins/ralph-specum/skills/communication-style/SKILL.md` -- add `## Karpathy Alignment` subsection at end with note that Simplicity First complements the existing conciseness rules
     2. Open `plugins/ralph-specum/skills/delegation-principle/SKILL.md` -- add `## Karpathy Alignment` subsection at end noting Surgical Changes aligns with coordinator-not-implementer principle

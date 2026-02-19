@@ -102,3 +102,10 @@ Components:
 - Token generation: JWT with 24h expiry
 - Middleware: verify token on protected routes
 ```
+
+## Karpathy Alignment
+
+**Simplicity First** complements these conciseness rules:
+- Conciseness = fewer words. Simplicity = fewer concepts.
+- Both reject unnecessary complexity — in prose and in code.
+- If an explanation could be a table, use a table. If a feature could be skipped, skip it.
