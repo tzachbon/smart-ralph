@@ -150,9 +150,9 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Commit**: `feat(scope): {{description}}`
 
 - [ ] 1.5 POC Checkpoint
-  - **Do**: Verify feature works end-to-end
-  - **Done when**: Feature can be demonstrated working
-  - **Verify**: Manual test of core flow
+  - **Do**: Verify feature works end-to-end using automated tools (WebFetch, curl, browser automation, test runner)
+  - **Done when**: Feature can be demonstrated working via automated verification
+  - **Verify**: Run automated end-to-end verification (e.g., `curl API | jq`, browser automation script, or test command)
   - **Commit**: `feat(scope): complete POC`
 
 ## Phase 2: Refactoring

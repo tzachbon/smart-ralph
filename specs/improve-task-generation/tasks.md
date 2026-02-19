@@ -111,7 +111,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-5, AC-3.1, AC-3.2_
   - _Design: Component B_
 
-- [ ] 1.7 Fix POC Checkpoint manual verification in templates/tasks.md
+- [x] 1.7 Fix POC Checkpoint manual verification in templates/tasks.md
   - **Do**:
     1. Find the POC Checkpoint task block (currently at ~line 67-70 before our additions shifted lines)
     2. Replace the existing POC checkpoint block that has `**Verify**: Manual test of core flow` with the updated version from design.md lines 219-223
