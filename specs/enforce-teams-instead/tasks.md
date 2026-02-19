@@ -117,7 +117,7 @@ After POC validated, clean up and standardize the team patterns across files.
   - **Verify**: Read both files and confirm version numbers match and are incremented
   - **Commit**: `chore(ralph-specum): bump version to 3.5.0`
 
-- [ ] 4.2 Create PR and verify
+- [x] 4.2 Create PR and verify
   - **Do**: Push branch, create PR with `gh pr create` summarizing the team-based conversion across all phases. PR body should list all modified files and the team pattern applied.
   - **Verify**: `gh pr checks --watch` all green (or no CI configured)
   - **Done when**: PR created and ready for review
