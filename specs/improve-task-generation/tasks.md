@@ -155,7 +155,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-3, FR-4, AC-2.1, AC-2.4, AC-1.5_
   - _Design: Component A_
 
-- [ ] 1.11 [VERIFY] Quality checkpoint: task-planner sizing rules complete
+- [x] 1.11 [VERIFY] Quality checkpoint: task-planner sizing rules complete
   - **Do**: Verify task-planner.md has all sizing rules components
   - **Verify**: `grep -q "Max 4 numbered steps" plugins/ralph-specum/agents/task-planner.md && grep -q "Max 3 files" plugins/ralph-specum/agents/task-planner.md && grep -q "Simplicity principle" plugins/ralph-specum/agents/task-planner.md && grep -q "Surgical principle" plugins/ralph-specum/agents/task-planner.md`
   - **Done when**: All 4 sizing components verified
