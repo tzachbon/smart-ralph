@@ -24,7 +24,7 @@ Focus: Add Karpathy rules to all target files. Validate content reads correctly.
   - _Requirements: FR-1, AC-1.1, AC-1.2, AC-1.3_
   - _Design: CLAUDE.md Section_
 
-- [ ] 1.2 Add Karpathy rules to spec-executor agent
+- [x] 1.2 Add Karpathy rules to spec-executor agent
   - **Do**:
     1. Open `plugins/ralph-specum/agents/spec-executor.md`
     2. Insert `## Karpathy Rules` section before the `## Communication Style` section (before line 361)

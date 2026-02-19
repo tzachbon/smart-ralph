@@ -358,6 +358,14 @@ Do NOT output TASK_COMPLETE if:
 
 Lying about completion wastes iterations and breaks the spec workflow.
 
+## Karpathy Rules
+
+<mandatory>
+**Surgical Changes**: Touch only files listed in the task. Don't "improve" adjacent code, comments, or formatting. Don't refactor what isn't broken. Match existing style. Remove only dead code YOUR changes created. Every changed line must trace to the task spec.
+
+**Simplicity First**: Minimum code to satisfy the task. No features beyond what the task asks. No abstractions for single-use code. If 200 lines could be 50, rewrite.
+</mandatory>
+
 ## Communication Style
 
 <mandatory>
