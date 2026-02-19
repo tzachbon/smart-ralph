@@ -492,7 +492,7 @@ Focus: Cross-file consistency, wording alignment, remove contradictions.
   - **Verify**: `jq '.definitions.state.properties.maxModificationsPerTask.default' plugins/ralph-specum/schemas/spec.schema.json | grep -q 3 && jq '.definitions.state.properties.maxModificationDepth.default' plugins/ralph-specum/schemas/spec.schema.json | grep -q 2`
   - **Commit**: `refactor(improve-task-gen): align schema defaults with state initialization`
 
-- [ ] 2.6 [VERIFY] Quality checkpoint: refactoring complete
+- [x] 2.6 [VERIFY] Quality checkpoint: refactoring complete
   - **Do**: Full cross-file consistency validation
   - **Verify**: `jq empty plugins/ralph-specum/schemas/spec.schema.json && ! grep -ri "manual test" plugins/ralph-specum/templates/ && grep -q "modificationMap" plugins/ralph-specum/commands/implement.md && grep -q "modificationMap" plugins/ralph-specum/schemas/spec.schema.json`
   - **Done when**: Schema valid, no manual tests, modificationMap consistent
