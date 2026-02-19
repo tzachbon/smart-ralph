@@ -123,7 +123,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-6, AC-3.3, AC-3.4, AC-6.3_
   - _Design: Component B_
 
-- [ ] 1.8 [VERIFY] Quality checkpoint: full template validation
+- [x] 1.8 [VERIFY] Quality checkpoint: full template validation
   - **Do**: Verify templates/tasks.md has all 4 examples and no manual verification
   - **Verify**: `grep -c "Example [1-4]:" plugins/ralph-specum/templates/tasks.md | grep -q 4 && ! grep -qi "manual test" plugins/ralph-specum/templates/tasks.md && grep -q "Task Writing Principles" plugins/ralph-specum/templates/tasks.md`
   - **Done when**: 4 examples present, no manual test, principles section exists
