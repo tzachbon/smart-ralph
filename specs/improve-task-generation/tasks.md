@@ -267,7 +267,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
   - _Requirements: FR-9, AC-4.6_
   - _Design: Component F_
 
-- [ ] 1.22 [VERIFY] Quality checkpoint: schema validation
+- [x] 1.22 [VERIFY] Quality checkpoint: schema validation
   - **Do**: Verify spec.schema.json is valid JSON and has all new fields
   - **Verify**: `jq empty plugins/ralph-specum/schemas/spec.schema.json && jq '.definitions.state.properties | keys[]' plugins/ralph-specum/schemas/spec.schema.json | grep -q modificationMap`
   - **Done when**: Schema is valid JSON, modificationMap present
