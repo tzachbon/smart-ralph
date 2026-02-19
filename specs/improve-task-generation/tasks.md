@@ -621,7 +621,7 @@ Focus: Automated validation that all changes are correct and no regressions.
   - **Verify**: `jq -r '.version' plugins/ralph-specum/.claude-plugin/plugin.json | grep -q "3.5.0" && jq -r '.plugins[0].version' .claude-plugin/marketplace.json | grep -q "3.5.0"`
   - **Commit**: `chore(ralph-specum): bump version to 3.5.0`
 
-- [ ] 4.2 [VERIFY] Full local validation: schema + grep checks + version
+- [x] 4.2 [VERIFY] Full local validation: schema + grep checks + version
   - **Do**: Run complete local validation suite
   - **Verify**: All commands must pass:
     - Schema valid: `jq empty plugins/ralph-specum/schemas/spec.schema.json`
