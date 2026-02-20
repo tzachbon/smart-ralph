@@ -81,53 +81,43 @@ Context Reading:
 - GREENFIELD: 5-10 questions (full user and priority context)
 - MID_SIZED: 3-7 questions (balanced approach)
 
-### Requirements Interview (Single-Question Flow)
+### Brainstorming Dialogue
 
-**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+**Brainstorming Dialogue**: Apply adaptive dialogue from `skills/interview-framework/SKILL.md`
 
-### Phase-Specific Configuration
+The coordinator asks context-driven questions one at a time based on the exploration territory below and what's already in `.progress.md`. Questions adapt to prior answers. After enough understanding, propose approaches.
 
-- **Phase**: Requirements Interview
-- **Parameter Chain Mappings**: primaryUsers, priorityTradeoffs, successCriteria
-- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`
-- **Variables Not Yet Available**: `{users}`, `{priority}` (populated by this phase)
-- **Storage Section**: `### Requirements Interview (from requirements.md)`
+### Requirements Exploration Territory
 
-### Requirements Interview Question Pool
+Areas to probe during the UNDERSTAND phase (hints, not a script):
 
-| # | Question | Required | Key | Options |
-|---|----------|----------|-----|---------|
-| 1 | Who are the primary users of this feature? | Required | `primaryUsers` | Internal developers only / End users via UI / Both developers and end users / Other |
-| 2 | What priority tradeoffs should we consider for {goal}? | Required | `priorityTradeoffs` | Prioritize speed of delivery / Prioritize code quality and maintainability / Prioritize feature completeness / Other |
-| 3 | What defines success for this feature? | Required | `successCriteria` | Feature works as specified / High performance/reliability required / User satisfaction metrics / Other |
-| 4 | Any other requirements context? (or say 'done' to proceed) | Optional | `additionalReqContext` | No, let's proceed / Yes, I have more details / Other |
+- **Primary users** — who will use this feature? Developers, end users, specific roles, both?
+- **Priority tradeoffs** — speed of delivery vs code quality vs feature completeness
+- **Success criteria** — what does success look like? Metrics, behaviors, user outcomes
+- **Scope boundaries** — what is explicitly out of scope for this iteration?
+- **Compliance or regulatory needs** — any security, privacy, or regulatory considerations?
 
-### Store Requirements Interview Responses
+### Requirements Approach Proposals
 
-After interview, append to `.progress.md` under the "Interview Responses" section:
+After the dialogue, propose 2-3 scoping approaches tailored to the user's goal. Examples (illustrative only):
+
+- **(A)** Full feature set — comprehensive user stories covering all use cases
+- **(B)** MVP scope — core user stories only, defer edge cases to v2
+- **(C)** Phased delivery — essential stories now, planned expansion later
+
+### Store Interview & Approach
+
+After interview and approach selection, append to `.progress.md` under the "Interview Responses" section:
 
 ```markdown
 ### Requirements Interview (from requirements.md)
-- Primary users: [responses.primaryUsers]
-- Priority tradeoffs: [responses.priorityTradeoffs]
-- Success criteria: [responses.successCriteria]
-- Additional requirements context: [responses.additionalReqContext]
+- [Topic 1]: [response]
+- [Topic 2]: [response]
+- Chosen approach: [name] — [brief description]
 [Any follow-up responses from "Other" selections]
 ```
 
-### Interview Context Format
-
-Pass the combined context (prior + new responses) to the Task delegation prompt:
-
-```text
-Interview Context:
-- Primary users: [Answer]
-- Priority tradeoffs: [Answer]
-- Success criteria: [Answer]
-- Follow-up details: [Any additional clarifications]
-```
-
-Store this context to include in the Task delegation prompt.
+Pass the combined context (interview responses + chosen approach) to the Task delegation prompt as "Interview Context".
 
 ## Execute Requirements (Team-Based)
 
