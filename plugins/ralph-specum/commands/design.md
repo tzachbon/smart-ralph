@@ -83,52 +83,43 @@ Context Reading:
 - GREENFIELD: 5-10 questions (full architecture context)
 - MID_SIZED: 3-7 questions (balanced approach)
 
-### Design Interview (Single-Question Flow)
+### Brainstorming Dialogue
 
-**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+**Brainstorming Dialogue**: Apply adaptive dialogue from `skills/interview-framework/SKILL.md`
 
-### Phase-Specific Configuration
+The coordinator asks context-driven questions one at a time based on the exploration territory below and what's already in `.progress.md`. Questions adapt to prior answers. After enough understanding, propose approaches.
 
-- **Phase**: Design Interview
-- **Parameter Chain Mappings**: architectureStyle, techConstraints, integrationApproach
-- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`, `{users}`, `{priority}`
-- **Storage Section**: `### Design Interview (from design.md)`
+### Design Exploration Territory
 
-### Design Interview Question Pool
+Areas to probe during the UNDERSTAND phase (hints, not a script):
 
-| # | Question | Required | Key | Options |
-|---|----------|----------|-----|---------|
-| 1 | What architecture style fits this feature for {goal}? | Required | `architectureStyle` | Extend existing architecture (Recommended) / Create isolated module / Major refactor to support this / Other |
-| 2 | Any technology constraints for {goal}? | Required | `techConstraints` | No constraints / Must use specific library/framework / Must avoid certain dependencies / Other |
-| 3 | How should this integrate with existing systems? | Required | `integrationApproach` | Use existing APIs and interfaces / Create new integration layer / Minimal integration needed / Other |
-| 4 | Any other design context? (or say 'done' to proceed) | Optional | `additionalDesignContext` | No, let's proceed / Yes, I have more details / Other |
+- **Architecture fit** — should this extend the existing architecture, create an isolated module, or require a refactor?
+- **Technology constraints** — any required or forbidden libraries, frameworks, or patterns?
+- **Integration tightness** — how tightly should this integrate with existing systems?
+- **Failure modes** — what failure scenarios matter? Graceful degradation, retry logic, alerting?
+- **Deployment model** — feature flags, gradual rollout, migrations, or big-bang?
 
-### Store Design Interview Responses
+### Design Approach Proposals
 
-After interview, append to `.progress.md` under the "Interview Responses" section:
+After the dialogue, propose 2-3 architectural approaches tailored to the user's goal. Examples (illustrative only):
+
+- **(A)** Extend existing service/module layer — minimal new abstractions
+- **(B)** New isolated component — clean boundaries, own data layer
+- **(C)** Hybrid — new module with shared infrastructure and data layer
+
+### Store Interview & Approach
+
+After interview and approach selection, append to `.progress.md` under the "Interview Responses" section:
 
 ```markdown
 ### Design Interview (from design.md)
-- Architecture style: [responses.architectureStyle]
-- Technology constraints: [responses.techConstraints]
-- Integration approach: [responses.integrationApproach]
-- Additional design context: [responses.additionalDesignContext]
+- [Topic 1]: [response]
+- [Topic 2]: [response]
+- Chosen approach: [name] — [brief description]
 [Any follow-up responses from "Other" selections]
 ```
 
-### Interview Context Format
-
-Pass the combined context (prior + new responses) to the Task delegation prompt:
-
-```
-Interview Context:
-- Architecture style: [Answer]
-- Technology constraints: [Answer]
-- Integration approach: [Answer]
-- Follow-up details: [Any additional clarifications]
-```
-
-Store this context to include in the Task delegation prompt.
+Pass the combined context (interview responses + chosen approach) to the Task delegation prompt as "Interview Context".
 
 ## Execute Design (Team-Based)
 
