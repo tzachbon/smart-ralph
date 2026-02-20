@@ -1,7 +1,7 @@
 # Research Dispatch Template
 
 > Used by: research.md
-> Placeholders: {SPEC_NAME}, {GOAL}, {TOPIC}, {EXISTING_SPECS}, {CODEBASE_CONTEXT}
+> Placeholders: {SPEC_NAME}, {GOAL}, {TOPIC}, {TOPIC_SLUG}, {BASE_PATH}, {EXISTING_SPECS}, {CODEBASE_CONTEXT}
 
 ## Task Tool Parameters
 
@@ -32,7 +32,7 @@ Research the topic "{TOPIC}" in the context of the following goal:
 
 ## Output Format
 
-Write your findings to a temporary file `.research-{TOPIC}.md` with these sections:
+Write your findings to a temporary file `{BASE_PATH}/.research-{TOPIC_SLUG}.md` with these sections:
 
 ### Key Findings
 (Bulleted list of important discoveries)
