@@ -423,6 +423,8 @@ After insertion:
 2. On TASK_COMPLETE: retry original task
 3. On failure: loop back to fix task generation (new fix task for fix task)
 
+**Verification Layer Bypass**: When a fix task completes (TASK_COMPLETE), the coordinator MUST NOT run the 5 verification layers. Fix tasks are intermediate — only the original task's completion triggers full verification. After fix task TASK_COMPLETE, proceed directly to "Retry Original Task".
+
 **Retry Original Task**:
 
 After fix task completes:

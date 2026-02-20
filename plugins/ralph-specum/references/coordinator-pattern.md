@@ -217,6 +217,8 @@ Proceed to Progress Merge and State Update.
 
 ### After Delegation
 
+**Fix Task Bypass**: If the just-completed task is a fix task (task description contains `[FIX`), skip verification layers entirely and proceed directly to retry the original task per `${CLAUDE_PLUGIN_ROOT}/references/failure-recovery.md` "Execute Fix Task and Retry Original" section. Fix tasks are intermediate — only the original task's completion triggers full verification.
+
 If spec-executor output contains `TASK_MODIFICATION_REQUEST`:
 1. Process modification per the Modification Request Handler
 2. After processing, check if TASK_COMPLETE was also output (for SPLIT_TASK and ADD_FOLLOWUP)
