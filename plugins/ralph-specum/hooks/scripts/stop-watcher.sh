@@ -102,11 +102,12 @@ EOF
     exit 0
 fi
 
-# Read state for logging
+# Read state
 PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
 TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
+QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
 
 # Check global iteration limit
 GLOBAL_ITERATION=$(jq -r '.globalIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
@@ -118,9 +119,70 @@ if [ "$GLOBAL_ITERATION" -ge "$MAX_GLOBAL" ]; then
     exit 0
 fi
 
+# Quick mode guard: block stop during ANY phase when quickMode is active
+if [ "$QUICK_MODE" = "true" ] && [ "$PHASE" != "execution" ]; then
+    STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
+    if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
+        echo "[ralph-specum] stop_hook_active=true in quick mode, allowing stop to prevent loop" >&2
+        exit 0
+    fi
+
+    REASON=$(cat <<EOF
+Quick mode active — do NOT stop. Continue spec phase: $PHASE for $SPEC_NAME.
+
+You are running in quick mode. Do NOT stop, do NOT ask the user questions.
+Continue generating artifacts for the current phase ($PHASE) and proceed to the next phase.
+Make strong, opinionated decisions autonomously.
+EOF
+)
+    jq -n \
+      --arg reason "$REASON" \
+      --arg msg "Ralph-specum quick mode: continue $PHASE phase" \
+      '{
+        "decision": "block",
+        "reason": $reason,
+        "systemMessage": $msg
+      }'
+    exit 0
+fi
+
 # Log current state
 if [ "$PHASE" = "execution" ]; then
     echo "[ralph-specum] Session stopped during spec: $SPEC_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
+fi
+
+# Execution completion verification: cross-check state AND tasks.md
+if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -ge "$TOTAL_TASKS" ] && [ "$TOTAL_TASKS" -gt 0 ]; then
+    TASKS_FILE="$CWD/$SPEC_PATH/tasks.md"
+    if [ -f "$TASKS_FILE" ]; then
+        UNCHECKED=$(grep -c '^\s*- \[ \]' "$TASKS_FILE" 2>/dev/null || echo "0")
+        if [ "$UNCHECKED" -gt 0 ]; then
+            echo "[ralph-specum] State says complete but tasks.md has $UNCHECKED unchecked items" >&2
+            REASON=$(cat <<EOF
+Tasks incomplete: state index ($TASK_INDEX) reached total ($TOTAL_TASKS), but tasks.md has $UNCHECKED unchecked items.
+
+## Action Required
+1. Read $SPEC_PATH/tasks.md and find unchecked tasks (- [ ])
+2. Execute remaining unchecked tasks via spec-executor
+3. Update .ralph-state.json totalTasks to match actual count
+4. Only output ALL_TASKS_COMPLETE when every task in tasks.md is checked off
+5. Do NOT add new tasks — complete existing ones only
+EOF
+)
+            jq -n \
+              --arg reason "$REASON" \
+              --arg msg "Ralph-specum: $UNCHECKED unchecked tasks remain in tasks.md" \
+              '{
+                "decision": "block",
+                "reason": $reason,
+                "systemMessage": $msg
+              }'
+            exit 0
+        fi
+    fi
+    # All tasks verified complete — allow stop
+    echo "[ralph-specum] All tasks verified complete for $SPEC_NAME" >&2
+    exit 0
 fi
 
 # Loop control: output continuation prompt if more tasks remain
