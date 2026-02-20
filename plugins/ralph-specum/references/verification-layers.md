@@ -24,7 +24,7 @@ If TASK_COMPLETE appears alongside any contradiction phrase:
 Verify spec files are committed before advancing:
 
 ```bash
-git status --porcelain ./specs/$spec/tasks.md ./specs/$spec/.progress.md
+git status --porcelain $SPEC_PATH/tasks.md $SPEC_PATH/.progress.md
 ```
 
 If output is non-empty (uncommitted changes):
@@ -39,7 +39,7 @@ All spec file changes must be committed before a task is considered complete. Th
 Count completed tasks in tasks.md:
 
 ```bash
-grep -c '\- \[x\]' ./specs/$spec/tasks.md
+grep -c '\- \[x\]' $SPEC_PATH/tasks.md
 ```
 
 Expected checkmark count = taskIndex + 1 (0-based index, so task 0 complete = 1 checkmark).
@@ -72,7 +72,7 @@ Set reviewIteration = 1
 
 WHILE reviewIteration <= 3:
   1. Collect changed files from the task (from the task's Files list and git diff)
-  2. Read ./specs/$spec/design.md and ./specs/$spec/requirements.md
+  2. Read $SPEC_PATH/design.md and $SPEC_PATH/requirements.md
   3. Invoke spec-reviewer via Task tool
   4. Parse the last line of spec-reviewer output for signal:
      - REVIEW_PASS: log review iteration, proceed to State Update
@@ -105,7 +105,7 @@ WHILE reviewIteration <= 3:
 subagent_type: spec-reviewer
 
 You are reviewing the execution artifact for spec: $spec
-Spec path: ./specs/$spec/
+Spec path: $SPEC_PATH/
 Review iteration: $reviewIteration of 3
 
 Task description:
@@ -115,8 +115,8 @@ Changed files:
 [Content of each file listed in the task's Files section]
 
 Upstream artifacts (for cross-referencing):
-[Full content of ./specs/$spec/design.md]
-[Full content of ./specs/$spec/requirements.md]
+[Full content of $SPEC_PATH/design.md]
+[Full content of $SPEC_PATH/requirements.md]
 
 $priorFindings
 
@@ -150,7 +150,7 @@ After fix task completes (TASK_COMPLETE), re-run Layer 5 from the top with incre
 
 ### Review Iteration Logging
 
-After each review iteration (regardless of outcome), append to `./specs/$spec/.progress.md`:
+After each review iteration (regardless of outcome), append to `$SPEC_PATH/.progress.md`:
 
 ```markdown
 ### Review: execution (Task $taskIndex, Iteration $reviewIteration)

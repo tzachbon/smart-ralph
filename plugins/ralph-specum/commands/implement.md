@@ -37,6 +37,7 @@ specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
 **Validate**:
 1. Check the resolved spec directory exists
 2. Check the spec's tasks.md exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
+3. Set `$SPEC_PATH` to the resolved spec directory path. All references use this variable.
 
 ## Step 2: Parse Arguments
 
