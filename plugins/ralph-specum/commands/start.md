@@ -996,9 +996,9 @@ After classification, store the result in `.progress.md`:
 - Keywords matched: [list of matched keywords]
 ```
 
-### Question Count by Intent
+### Dialogue Depth by Intent
 
-Intent classification determines the question count range, not which questions to ask. All goals use the same Goal Interview Question Pool (defined below), but the number of questions varies by intent:
+Intent classification determines how deep the brainstorming dialogue goes — fewer questions for trivial goals, more thorough exploration for greenfield work:
 
 | Intent | Min Questions | Max Questions |
 |--------|---------------|---------------|
@@ -1007,104 +1007,39 @@ Intent classification determines the question count range, not which questions t
 | GREENFIELD | 5 | 10 |
 | MID_SIZED | 3 | 7 |
 
-**Question Selection Logic:**
+Use these ranges to calibrate the brainstorming dialogue below. TRIVIAL goals need minimal probing; GREENFIELD goals warrant full exploration of the territory.
 
-```text
-1. Get intent from Intent Classification step
-2. Intent determines question COUNT, not which pool to use
-3. All goals use the Goal Interview Question Pool
-4. Ask Required questions first, then Optional questions
-5. Stop when:
-   - User signals completion (after minRequired reached)
-   - All questions asked (maxAllowed reached)
-   - User selects "No, let's proceed" on optional question
-```
+### Brainstorming Dialogue
 
-### Question Classification
+**Brainstorming Dialogue**: Apply adaptive dialogue from `skills/interview-framework/SKILL.md`
 
-Before asking any question, classify it to determine the appropriate source for the answer.
-
-**Classification Matrix:**
-
-| Question Type | Source | Examples |
-|---------------|--------|----------|
-| Codebase fact | Explore agent | "What patterns exist?", "Where is X located?", "What dependencies are used?" |
-| User preference | AskUserQuestion | "What priority level?", "Which approach do you prefer?" |
-| Requirement | AskUserQuestion | "What must this feature do?", "What are the constraints?" |
-| Scope decision | AskUserQuestion | "Should this include X?", "What's in/out of scope?" |
-| Risk tolerance | AskUserQuestion | "How critical is backwards compatibility?" |
-| Constraint | AskUserQuestion | "Any performance requirements?", "Timeline constraints?" |
+The coordinator asks context-driven questions one at a time based on the exploration territory below and what's already known from the goal text. Questions adapt to prior answers. After enough understanding, propose approaches.
 
 <mandatory>
-**DO NOT ask user about codebase facts - use Explore agent instead.**
-
-Questions that should go to the user (AskUserQuestion):
-- Preference: "Which approach do you prefer?"
-- Requirement: "What must this feature accomplish?"
-- Scope: "Should this include feature X?"
-- Constraint: "Any performance/timeline constraints?"
-- Risk: "How important is backwards compatibility?"
-
-Questions that should use Explore agent (NOT AskUserQuestion):
-- Existing patterns: "How does the codebase handle X?"
-- File locations: "Where are the authentication modules?"
-- Dependencies: "What libraries are currently used for Y?"
-- Code conventions: "What naming patterns are used?"
-- Architecture: "How is the service layer structured?"
-
-**Before each interview question, check: Is this a codebase fact or user decision?**
+**Before asking any question, check: is this a codebase fact or a user decision?**
 - Codebase fact → Use Explore agent to find the answer automatically
 - User decision → Ask via AskUserQuestion
+
+Never ask the user about things you can discover from the code.
 </mandatory>
 
-### Question Piping
+### Goal Exploration Territory
 
-Before asking each question, replace `{var}` placeholders with values from `.progress.md` context.
+Areas to probe during the UNDERSTAND phase (hints, not a script — generate actual questions from these based on context):
 
-**Available Variables:**
-- `{goal}` - Original goal text from user
-- `{intent}` - Intent classification (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
-- `{problem}` - Problem description from Goal Interview
-- `{constraints}` - Constraints from Goal Interview
-- `{users}` - Primary users (not yet available in start.md, populated in later phases)
-- `{priority}` - Priority tradeoffs (not yet available in start.md, populated in later phases)
+- **Problem being solved** — what pain point or need is driving this goal?
+- **Constraints and must-haves** — performance, compatibility, timeline, integration requirements
+- **Success criteria** — how will the user know this feature works correctly?
+- **Scope boundaries** — what's explicitly in and out of scope?
+- **User's existing knowledge** — what does the user already know about the problem space vs what needs discovery?
 
-**Piping Instructions:**
-1. Before each AskUserQuestion, replace `{var}` with values from `.progress.md`
-2. If variable not found, use original question text (graceful fallback)
-3. Example: "What priority tradeoffs for {goal}?" becomes "What priority tradeoffs for Add user authentication?"
+### Goal Approach Proposals
 
-**Fallback Behavior:**
-- If `{goal}` not found → use "{goal}" literally (this should rarely happen since goal is always provided)
-- If `{intent}` not found → skip piping for that variable
-- Always prefer graceful degradation over errors
+After the dialogue, propose 2-3 high-level approaches tailored to the user's goal. Examples (illustrative only — approaches should be specific, not generic):
 
-### Goal Interview Questions (Single-Question Flow)
-
-**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
-
-### Parameter Chain Note
-
-**Note**: start.md is the first phase - no prior responses exist to check.
-
-This phase initializes the interview context. Later phases (research, requirements, design, tasks) use parameter chain to skip questions already answered here.
-
-### Phase-Specific Configuration
-
-- **Phase**: Goal Interview (first phase)
-- **Available Variables**: `{goal}`, `{intent}` (others populated in later phases)
-- **Storage Section**: `### Goal Interview (from start.md)`
-- **Semantic Keys**: problem, constraints, success, additionalContext
-
-### Goal Interview Question Pool
-
-| # | Question | Required | Key | Options |
-|---|----------|----------|-----|---------|
-| 1 | What problem are you solving with this feature? | Required | `problem` | Fixing a bug or issue / Adding new functionality / Improving existing behavior / Other |
-| 2 | Any constraints or must-haves for this feature? | Required | `constraints` | No special constraints / Must integrate with existing code / Performance is critical / Other |
-| 3 | How will you know this feature is successful? | Required | `success` | Tests pass and code works / Users can complete specific workflow / Performance meets target metrics / Other |
-| 4 | Any other context you'd like to share? (or say 'done' to proceed) | Optional | `additionalContext` | No, let's proceed / Yes, I have more details / Other |
-| 5 | Where should this spec be stored? | Conditional | `specsDir` | [dynamically from specs_dirs] |
+- **(A)** Extend existing system/module to support the new capability
+- **(B)** Build a new standalone module with clean boundaries
+- **(C)** Lightweight integration using existing primitives with minimal new code
 
 ### Spec Location Interview
 
@@ -1165,7 +1100,7 @@ This is NOT a blocking question - continue immediately after displaying.
 
 ### Store Goal Context
 
-After interview, update `.progress.md` with Interview Format, Intent Classification, and Interview Responses sections:
+After interview and approach selection, update `.progress.md` with Interview Format, Intent Classification, and Interview Responses sections:
 
 ```markdown
 ## Interview Format
@@ -1181,10 +1116,9 @@ After interview, update `.progress.md` with Interview Format, Intent Classificat
 ## Interview Responses
 
 ### Goal Interview (from start.md)
-- Problem: [responses.problem]
-- Constraints: [responses.constraints]
-- Success criteria: [responses.success]
-- Additional context: [responses.additionalContext]
+- [Topic 1]: [response]
+- [Topic 2]: [response]
+- Chosen approach: [name] — [one-line rationale]
 - Spec location: [responses.specsDir] (if multi-dir was asked)
 [Any follow-up responses from "Other" selections]
 ```
@@ -1197,9 +1131,8 @@ Include goal interview context in each research teammate's task description:
 Each TaskCreate description should include:
 
 Goal Interview Context:
-- Problem: [response]
-- Constraints: [response]
-- Success criteria: [response]
+[Include all topic-response pairs from the Goal Interview section of .progress.md]
+Chosen Approach: [name]
 
 Use this context to focus research on relevant areas.
 ```
