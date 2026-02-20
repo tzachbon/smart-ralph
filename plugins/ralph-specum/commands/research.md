@@ -136,53 +136,43 @@ Context Reading:
 - GREENFIELD: 5-10 questions (full technical context)
 - MID_SIZED: 3-7 questions (balanced approach)
 
-### Research Interview (Single-Question Flow)
+### Brainstorming Dialogue
 
-**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+**Brainstorming Dialogue**: Apply adaptive dialogue from `skills/interview-framework/SKILL.md`
 
-### Phase-Specific Configuration
+The coordinator asks context-driven questions one at a time based on the exploration territory below and what's already in `.progress.md`. Questions adapt to prior answers. After enough understanding, propose approaches.
 
-- **Phase**: Research Interview
-- **Parameter Chain Mappings**: technicalApproach, knownConstraints, integrationPoints
-- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`
-- **Variables Not Yet Available**: `{users}`, `{priority}` (populated in later phases)
-- **Storage Section**: `### Research Interview (from research.md)`
+### Research Exploration Territory
 
-### Research Interview Question Pool
+Areas to probe during the UNDERSTAND phase (hints, not a script — generate actual questions from these based on context):
 
-| # | Question | Required | Key | Options |
-|---|----------|----------|-----|---------|
-| 1 | What technical approach do you prefer for this feature? | Required | `technicalApproach` | Follow existing patterns in codebase (Recommended) / Introduce new patterns/frameworks / Hybrid - keep existing where possible / Other |
-| 2 | Are there any known constraints or limitations? | Required | `knownConstraints` | No known constraints / Must work with existing API / Performance critical / Other |
-| 3 | Are there specific integration points to consider? | Required | `integrationPoints` | Standard integration with existing services / New external dependencies required / Isolated component (minimal integration) / Other |
-| 4 | Any other technical context for research? (or say 'done' to proceed) | Optional | `additionalTechContext` | No, let's proceed / Yes, I have more details / Other |
+- **Technical approach preference** — does the user want to follow existing patterns or introduce new ones?
+- **Known constraints** — performance, compatibility, timeline, budget
+- **Integration surface area** — which systems, services, or APIs does this touch?
+- **Prior knowledge** — what does the user already know vs what needs discovery?
+- **Technologies to evaluate or avoid** — specific libraries, frameworks, or patterns
 
-### Store Research Interview Responses
+### Research Approach Proposals
 
-After interview, append to `.progress.md` under the "Interview Responses" section:
+After the dialogue, propose 2-3 research strategies tailored to the user's goal. Examples (illustrative only — approaches should be specific, not generic):
+
+- **(A)** Deep dive on specific technology/library comparison (e.g., library X vs Y)
+- **(B)** Focus on existing codebase patterns with minimal external research
+- **(C)** Broad survey across multiple alternatives before narrowing
+
+### Store Interview & Approach
+
+After interview and approach selection, append to `.progress.md` under the "Interview Responses" section:
 
 ```markdown
 ### Research Interview (from research.md)
-- Technical approach: [responses.technicalApproach]
-- Known constraints: [responses.knownConstraints]
-- Integration points: [responses.integrationPoints]
-- Additional technical context: [responses.additionalTechContext]
+- [Topic 1]: [response]
+- [Topic 2]: [response]
+- Chosen approach: [name] — [brief description]
 [Any follow-up responses from "Other" selections]
 ```
 
-### Interview Context Format
-
-Pass the combined context (prior + new responses) to the Task delegation prompt:
-
-```text
-Interview Context:
-- Technical approach: [Answer]
-- Known constraints: [Answer]
-- Integration points: [Answer]
-- Follow-up details: [Any additional clarifications]
-```
-
-Store this context to include in the Task delegation prompt.
+Pass the combined context (interview responses + chosen approach) to the Task delegation prompt as "Interview Context".
 
 ## Execute Research (Team-Based)
 
