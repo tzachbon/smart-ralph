@@ -1,7 +1,7 @@
 ---
 spec: improve-task-generation
 phase: tasks
-total_tasks: 48
+total_tasks: 60
 created: 2026-02-19
 ---
 
@@ -9,7 +9,7 @@ created: 2026-02-19
 
 ## Overview
 
-Total tasks: 48
+Total tasks: 60
 POC-first workflow with 5 phases:
 1. Phase 1: Make It Work (POC) - Add all content to all 7 files
 2. Phase 2: Refactoring - Cross-file consistency, wording polish
@@ -262,7 +262,7 @@ Focus: Insert all new content into the 7 target files. Follow design document co
     2. Use exact schema from design.md Component F lines 457-469
   - **Files**: plugins/ralph-specum/schemas/spec.schema.json
   - **Done when**: Both new properties exist in schema
-  - **Verify**: `jq '.definitions.state.properties | has("maxModificationsPerTask", "maxModificationDepth")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true`
+  - **Verify**: `jq '.definitions.state.properties | (has("maxModificationsPerTask") and has("maxModificationDepth"))' plugins/ralph-specum/schemas/spec.schema.json | grep -q true`
   - **Commit**: `feat(schema): add modification limits to state schema`
   - _Requirements: FR-9, AC-4.6_
   - _Design: Component F_
@@ -588,7 +588,7 @@ Focus: Automated validation that all changes are correct and no regressions.
     4. Verify all GOOD examples have <= 4 Do steps
   - **Files**: plugins/ralph-specum/templates/tasks.md
   - **Done when**: 4 examples with BAD/GOOD pairs, all compliant with sizing rules
-  - **Verify**: `grep -c "Example [1-4]:" plugins/ralph-specum/templates/tasks.md | grep -q 4 && grep -c "^BAD:" plugins/ralph-specum/templates/tasks.md | grep -q 4 && grep -c "^GOOD:" plugins/ralph-specum/templates/tasks.md | grep -q 4`
+  - **Verify**: `[ "$(grep -c 'Example [1-4]:' plugins/ralph-specum/templates/tasks.md)" -eq 4 ] && [ "$(grep -c 'BAD:' plugins/ralph-specum/templates/tasks.md)" -eq 4 ] && [ "$(grep -c 'GOOD:' plugins/ralph-specum/templates/tasks.md)" -eq 4 ]`
   - **Commit**: `test(templates): verify all 4 bad/good example pairs`
   - _Requirements: FR-5, AC-3.1_
 
@@ -721,7 +721,7 @@ Focus: Automated validation that all changes are correct and no regressions.
 
 ## Dependencies
 
-```
+```text
 Phase 1 (POC: all 7 files) -> Phase 2 (cross-file consistency) -> Phase 3 (automated tests) -> Phase 4 (version bump + PR) -> Phase 5 (CI + reviews)
 ```
 

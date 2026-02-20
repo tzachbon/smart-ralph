@@ -99,7 +99,7 @@ BAD:
   - **Do**: Add validation to the form fields. Check email format, required fields, password strength.
   - **Files**: src/components/SignupForm.tsx
   - **Done when**: Validation is added
-  - **Verify**: Open the form and check by hand
+  - **Verify**: Validation is added
 
 GOOD:
 - [ ] 4.1 Add signup form validation with error states

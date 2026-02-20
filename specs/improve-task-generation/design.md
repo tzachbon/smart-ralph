@@ -208,14 +208,14 @@ GOOD:
 Also fix the "Manual test" contradiction on line 70 of templates/tasks.md:
 
 **Change** (line 67-70):
-```
+```markdown
 - [ ] 1.5 POC Checkpoint
   - **Do**: Verify feature works end-to-end
   - **Done when**: Feature can be demonstrated working
   - **Verify**: Manual test of core flow
 ```
 **To**:
-```
+```markdown
 - [ ] 1.5 POC Checkpoint
   - **Do**: Verify feature works end-to-end using automated tools (WebFetch, curl, browser automation, test runner)
   - **Done when**: Feature can be demonstrated working via automated verification
@@ -288,7 +288,6 @@ TASK_MODIFICATION_REQUEST
   ]
 }
 ```
-```
 
 **Modification types:**
 
@@ -320,7 +319,6 @@ TASK_MODIFICATION_REQUEST
     "- [ ] 2.3.P1 Install Redis client dependency\n  - **Do**:\n    1. Run `pnpm add ioredis`\n    2. Add Redis connection config to `src/config.ts`\n  - **Files**: package.json, src/config.ts\n  - **Done when**: `import Redis from 'ioredis'` resolves\n  - **Verify**: `pnpm check-types`\n  - **Commit**: `feat(deps): add ioredis for caching`"
   ]
 }
-```
 ```
 
 Do NOT output TASK_COMPLETE — task 2.3 is blocked until prerequisite completes.
@@ -421,7 +419,6 @@ jq --arg taskId "$TASK_ID" \
 4. For ADD_PREREQUISITE: insert before task block start
 5. For SPLIT_TASK/ADD_FOLLOWUP: insert after task block end
 6. Use Edit tool with old_string/new_string
-```
 
 ### Component F: State Schema Extension (spec.schema.json + implement.md init)
 

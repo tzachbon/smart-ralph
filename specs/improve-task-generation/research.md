@@ -30,6 +30,7 @@ Every task has 4 required fields: `files` (exact paths), `action` (specific impl
 - **Maximum 2-3 tasks per plan** — each plan targets ~50% context budget
 
 #### Specificity Standard
+
 | TOO VAGUE | PRECISE |
 |-----------|---------|
 | "Add authentication" | "Create POST /api/auth/login accepting {email, password}, validate with bcrypt, return JWT in httpOnly cookie (15-min expiry)" |
