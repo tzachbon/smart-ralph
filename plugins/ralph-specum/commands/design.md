@@ -150,7 +150,12 @@ Ask ONE question: "Does this look right?" with options: Approve (Recommended) / 
 
 ### Update State
 
-1. Update `.ralph-state.json`: `{ "phase": "design", "awaitingApproval": true }`
+1. **Merge** into `.ralph-state.json` (preserve all existing fields):
+   ```bash
+   jq '. + {"phase": "design", "awaitingApproval": true}' \
+     "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
+     mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   ```
 2. Update `.progress.md`: mark requirements as implicitly approved, set current phase
 
 ### Commit Spec (if enabled)

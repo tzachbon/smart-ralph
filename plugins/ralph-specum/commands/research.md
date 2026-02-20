@@ -162,7 +162,13 @@ Ask ONE question: "Does this look right?" with options: Approve (Recommended) / 
 ### Update State
 
 1. Parse "Related Specs" table from research.md
-2. Update `.ralph-state.json`: `{ "phase": "research", "awaitingApproval": true, "relatedSpecs": [...] }`
+2. **Merge** into `.ralph-state.json` (preserve all existing fields):
+   ```bash
+   jq --argjson specs "$RELATED_SPECS_JSON" \
+     '. + {"phase": "research", "awaitingApproval": true, "relatedSpecs": $specs}' \
+     "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
+     mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   ```
 3. Update `.progress.md` with research completion
 
 ### Commit Spec (if enabled)
