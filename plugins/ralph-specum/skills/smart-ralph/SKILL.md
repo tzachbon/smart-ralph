@@ -54,9 +54,11 @@ else if "--quick" in args:
 
 ### Quick Mode (`--quick`)
 
-- Skips all interactive prompts and interviews
-- Auto-generates all artifacts in sequence
-- Immediately starts execution after generation
+- Skips all interactive prompts, interviews, and approval pauses
+- Runs the same phase agents (research, requirements, design, tasks) sequentially
+- Agents receive a "be more opinionated" directive since there's no user feedback
+- spec-reviewer validates each artifact (max 3 iterations)
+- Immediately starts execution after all phases complete
 - Does NOT commit by default (use `--commit` to override)
 - Still delegates to subagents (delegation is mandatory)
 

@@ -29,17 +29,21 @@ Smart entry point for ralph-specum. Detects whether to create a new spec or resu
 | Parse arguments | name, goal, --fresh, --quick, --commit-spec | Extract command options |
 | Detection logic | .current-spec, spec directory | Determine new vs resume flow |
 | Goal interview | AskUserQuestion | Gather context before research |
-| Quick mode | plan-synthesizer | Auto-generate all artifacts |
+| Quick mode | research-analyst, product-manager, architect-reviewer, task-planner | Auto-generate all artifacts via same phase agents |
 | Spec scanner | specs directory, .index | Find related existing specs |
 <!-- markdownlint-enable MD055 MD056 -->
 
 ## Dependencies
 - research-analyst agent for research phase
-- plan-synthesizer agent for quick mode
+- product-manager agent for requirements phase
+- architect-reviewer agent for design phase
+- task-planner agent for tasks phase
+- spec-reviewer agent for artifact review loops
+- spec-executor agent for task execution
 - AskUserQuestion tool for interviews
 - Git for branch management
 - .ralph-state.json for state tracking
 
 ## AI Context
 **Keywords**: start new-spec resume branch worktree quick-mode goal-interview spec-scanner intent-classification
-**Related files**: plugins/ralph-specum/commands/research.md, plugins/ralph-specum/agents/plan-synthesizer.md
+**Related files**: plugins/ralph-specum/commands/research.md, plugins/ralph-specum/agents/research-analyst.md, plugins/ralph-specum/agents/product-manager.md, plugins/ralph-specum/agents/architect-reviewer.md, plugins/ralph-specum/agents/task-planner.md

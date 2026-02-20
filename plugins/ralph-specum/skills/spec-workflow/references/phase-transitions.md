@@ -88,9 +88,10 @@ Ends with: State file deleted on completion
 ## Quick Mode
 
 With `--quick` flag:
-- All phases run automatically via plan-synthesizer
-- No `awaitingApproval` pauses
-- Transitions directly to execution
+- All phases run automatically using the same agents as normal mode
+- Interviews, walkthroughs, and awaitingApproval skipped
+- spec-reviewer validates each artifact (max 3 iterations)
+- Auto-transitions to execution
 
 ## State File Transitions
 

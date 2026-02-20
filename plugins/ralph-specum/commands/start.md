@@ -231,7 +231,7 @@ You MUST delegate ALL substantive work to subagents. This is NON-NEGOTIABLE rega
 | Requirements | `product-manager` |
 | Design | `architect-reviewer` |
 | Task Planning | `task-planner` |
-| Artifact Generation (quick mode) | `plan-synthesizer` |
+| Artifact Review | `spec-reviewer` |
 | Task Execution | `spec-executor` |
 
 Quick mode does NOT exempt you from delegation - it only skips interactive phases.
@@ -403,18 +403,31 @@ When kebab-case name provided without goal:
 ### Name Inference
 
 If no explicit name provided, infer from goal:
-1. Take first 3 words of goal
-2. Convert to kebab-case (lowercase, spaces to hyphens)
-3. Truncate to max 30 characters
-4. Strip non-alphanumeric except hyphens
 
-Example: "Build authentication with JWT tokens" -> "build-authentication-with"
+1. **Extract key terms**: Identify nouns and verbs from the goal
+   - Skip common words: a, an, the, to, for, with, and, or, in, on, by, from, is, be, that
+   - Prioritize: action verbs (add, build, create, fix, implement, update, remove, enable)
+   - Then: descriptive nouns (auth, api, user, config, endpoint, handler)
+2. **Build name**: Take up to 4 key terms, join with hyphens, convert to lowercase
+3. **Normalize**: Strip unicode to ASCII, remove special characters except hyphens, collapse multiple hyphens
+4. **Truncate**: Max 30 characters, truncate at word boundary (hyphen) when possible
+
+Examples:
+| Goal | Inferred Name |
+|------|---------------|
+| "Add user authentication with JWT" | add-user-authentication-jwt |
+| "Build a REST API for products" | build-rest-api-products |
+| "Fix the login bug where users can't reset password" | fix-login-bug-reset |
+| "Implement rate limiting" | implement-rate-limiting |
 
 ### Quick Mode Execution
 
 <mandatory>
 **REMINDER: Even in quick mode, you MUST delegate ALL work to subagents.**
-- Artifact generation → delegate to `plan-synthesizer` via Task tool
+- Research → delegate to Research Team (parallel teammates)
+- Requirements → delegate to `product-manager` via Task tool
+- Design → delegate to `architect-reviewer` via Task tool
+- Task planning → delegate to `task-planner` via Task tool
 - Task execution → delegate to `spec-executor` via Task tool
 - You only handle: directory creation, state file writes, and coordination
 </mandatory>
@@ -439,7 +452,7 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
      "source": "plan",
      "name": "$name",
      "basePath": "$basePath",
-     "phase": "tasks",
+     "phase": "research",
      "taskIndex": 0,
      "totalTasks": 0,
      "taskIteration": 1,
@@ -458,25 +471,90 @@ Example: "Build authentication with JWT tokens" -> "build-authentication-with"
    else:
        echo "$basePath" > "$defaultDir/.current-spec" # Full path for non-default root
    |
-8. Invoke plan-synthesizer agent via Task tool:
-   Task: plan-synthesizer
-   Input: goal="$goal", basePath="$basePath"
+8. Update Spec Index:
+   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
    |
-9. After generation completes:
-   - Update .ralph-state.json: phase="execution", taskIndex=0
-   - Read tasks.md to get totalTasks count
+9. Goal Type Detection:
+   - Classify goal as "fix" or "add" using regex indicators:
+     Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
+     Add: add|create|build|implement|new|enable|introduce (default)
+   - For fix goals: run reproduction command, document BEFORE state in .progress.md
    |
-9a. If commitSpec is true:
-   - Stage spec files: git add $basePath/research.md $basePath/requirements.md $basePath/design.md $basePath/tasks.md
-   - Commit: git commit -m "spec($name): add spec artifacts"
-   - Push: git push -u origin $(git branch --show-current)
+10. Research Phase:
+   - Run the SAME Team Research flow (steps 11a-11j from New Flow section)
+   - Skip walkthrough (step 11k) and do NOT wait for user response
+   - After research completes, explicitly clear awaitingApproval from state:
+     Update .ralph-state.json: set awaitingApproval = false
    |
-10. Display brief summary:
+11. Requirements Phase:
+   - Read $basePath/research.md for context
+   - Delegate to product-manager via Task tool with Quick Mode Directive (see below)
+   - After product-manager returns, run spec-reviewer review loop (max 3 iterations)
+   - Clear awaitingApproval from state:
+     Update .ralph-state.json: set awaitingApproval = false, phase = "requirements"
+   |
+12. Design Phase:
+   - Read $basePath/research.md + $basePath/requirements.md for context
+   - Delegate to architect-reviewer via Task tool with Quick Mode Directive (see below)
+   - After architect-reviewer returns, run spec-reviewer review loop (max 3 iterations)
+   - Clear awaitingApproval from state:
+     Update .ralph-state.json: set awaitingApproval = false, phase = "design"
+   |
+13. Tasks Phase:
+   - Read $basePath/requirements.md + $basePath/design.md for context
+   - Delegate to task-planner via Task tool with Quick Mode Directive (see below)
+   - After task-planner returns, run spec-reviewer review loop (max 3 iterations)
+   |
+14. Transition to Execution:
+   - Count total tasks from tasks.md (number of `- [ ]` checkboxes)
+   - Update .ralph-state.json: phase="execution", totalTasks=<count>, taskIndex=0
+   - If commitSpec is true:
+     - Stage spec files: git add $basePath/research.md $basePath/requirements.md $basePath/design.md $basePath/tasks.md
+     - Commit: git commit -m "spec($name): add spec artifacts"
+     - Push: git push -u origin $(git branch --show-current)
+   |
+15. Display brief summary:
    Quick mode: Created spec '$name' at $basePath
    [If commitSpec: "Spec committed and pushed."]
    Starting execution...
    |
-11. Invoke spec-executor for task 1
+16. Invoke spec-executor for task 1
+```
+
+### Quick Mode Directive
+
+Each agent delegation in steps 11-13 includes this directive in the Task prompt:
+
+```text
+Quick Mode Context:
+Running in quick mode with no user feedback. You MUST:
+- Make strong, opinionated decisions instead of deferring to user
+- Choose the simplest, most conventional approach
+- Be more critical of your own output
+- Prefer existing codebase patterns over novel approaches
+- Keep scope tight - interpret the goal strictly, do not expand
+- Add `generated: auto` to frontmatter of all artifacts you produce
+```
+
+### Quick Mode Review Loop (Per Artifact)
+
+After each phase agent returns in steps 11-13, run spec-reviewer to validate the artifact:
+
+```text
+Set iteration = 1
+
+WHILE iteration <= 3:
+  1. Read the artifact content from $basePath/<artifact>.md
+  2. Invoke spec-reviewer via Task tool:
+     subagent_type: spec-reviewer
+     Review the $artifactType artifact for spec: $name
+     Spec path: $basePath/
+     Review iteration: $iteration of 3
+  3. Parse signal:
+     - REVIEW_PASS: Proceed to next phase
+     - REVIEW_FAIL (iteration < 3): Revise artifact, increment iteration
+     - REVIEW_FAIL (iteration >= 3): Append warning to .progress.md, proceed
+     - No signal: Treat as REVIEW_PASS (permissive)
 ```
 
 ### Quick Mode Validation
@@ -520,7 +598,7 @@ On generation failure after spec directory created:
 Rollback Procedure:
 
 1. CAPTURE FAILURE
-   - plan-synthesizer agent returns error or times out
+   - Phase agent returns error or times out
 
 2. DELETE SPEC DIRECTORY
    - rm -rf "./specs/$name"
@@ -1398,7 +1476,7 @@ If commit or push fails, display warning but continue.
 <mandatory>
 **WALKTHROUGH IS REQUIRED IN NORMAL MODE - DO NOT SKIP.**
 
-**Quick mode (`--quick`)**: Skip the walkthrough display. Do NOT stop or wait for user response. Proceed directly to the next phase (requirements via plan-synthesizer).
+**Quick mode (`--quick`)**: Skip the walkthrough display. Do NOT stop or wait for user response. Proceed directly to the next phase (requirements).
 
 **Normal mode**: After research.md is created, display a concise walkthrough:
 
@@ -1429,9 +1507,9 @@ End response immediately. Wait for user to run `/ralph-specum:requirements`.
 - **Quick mode**: Runs Team Research Phase but skips walkthrough and does not wait for user response - proceeds directly to next phase
 - **Team name conflicts**: Uses `research-$name` where spec names are unique within a project
 
-## Quick Mode Flow
+## Quick Mode Flow (Summary)
 
-Triggered when `--quick` flag detected. Skips all spec phases and auto-generates artifacts.
+Triggered when `--quick` flag detected. Runs all spec phases sequentially using the same agents as normal mode, without interactive prompts.
 
 ```text
 1. Check if --quick flag present in $ARGUMENTS
@@ -1451,7 +1529,7 @@ Triggered when `--quick` flag detected. Skips all spec phases and auto-generates
 
 1. Parse args before `--quick`:
    - If two args: `name` = first arg (kebab-case), `goal` = second arg
-   - If one arg: `goal` = arg, `name` = infer from goal (first 3 words, kebab-case, max 30 chars)
+   - If one arg: `goal` = arg, `name` = infer from goal (up to 4 key terms, kebab-case, max 30 chars)
 2. Validate non-empty goal
 3. Determine spec directory using path resolver:
    - `specsDir` = (--specs-dir value if provided and valid) OR `ralph_get_default_dir()`
@@ -1463,26 +1541,34 @@ Triggered when `--quick` flag detected. Skips all spec phases and auto-generates
      "source": "plan",
      "name": "$name",
      "basePath": "$basePath",
-     "phase": "tasks",
+     "phase": "research",
      "taskIndex": 0,
      "totalTasks": 0,
      "taskIteration": 1,
      "maxTaskIterations": 5,
      "globalIteration": 1,
-     "maxGlobalIterations": 100
+     "maxGlobalIterations": 100,
+     "commitSpec": $commitSpec
    }
    ```
 6. Write `.progress.md` with goal
 7. Update `.current-spec` based on root:
    - If specsDir == default: write bare name
    - If specsDir != default: write full path "$basePath"
+4a. Ensure gitignore entries exist for spec state files:
+   - Add specs/.current-spec to .gitignore if not present
+   - Add **/.progress.md to .gitignore if not present
 8. **Update Spec Index**:
    ```bash
    ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
    ```
-9. Invoke plan-synthesizer agent to generate all artifacts
-10. After generation: update state `phase: "execution"`, read task count
-11. Invoke spec-executor for task 1
+9. Goal Type Detection: classify as "fix" or "add", run reproduction for fix goals
+10. Research Phase: run Team Research flow (skip walkthrough), clear awaitingApproval
+11. Requirements Phase: delegate to product-manager with quick mode directive, review, clear awaitingApproval
+12. Design Phase: delegate to architect-reviewer with quick mode directive, review, clear awaitingApproval
+13. Tasks Phase: delegate to task-planner with quick mode directive, review
+14. Transition: count tasks, update state phase="execution", optionally commit specs
+15. Invoke spec-executor for task 1
 
 ## Status Display (on resume)
 

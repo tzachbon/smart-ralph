@@ -40,11 +40,14 @@ The main agent is a **coordinator**, not an implementer. Delegate all work to su
 
 ## Quick Mode
 
-Quick mode still requires delegation:
-- Artifact generation -> `plan-synthesizer` subagent
+Quick mode still requires delegation — it uses the same agents as normal mode:
+- Research -> Research Team (parallel teammates)
+- Requirements -> `product-manager` subagent
+- Design -> `architect-reviewer` subagent
+- Task planning -> `task-planner` subagent
 - Task execution -> `spec-executor` subagent
 
-Quick mode skips interactive phases. Delegation requirement remains unchanged.
+Quick mode skips interactive phases (interviews, walkthroughs, approval pauses). Delegation requirement remains unchanged.
 
 ## Karpathy Alignment
 
