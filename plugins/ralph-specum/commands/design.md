@@ -78,7 +78,7 @@ Follow the full team lifecycle:
 1. **Check orphaned team**: Read `~/.claude/teams/design-$spec/config.json`. If exists, `TeamDelete()`.
 2. **Create team**: `TeamCreate(team_name: "design-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate technical design for $spec", activeForm: "Generating design")`
-4. **Spawn teammate**: Delegate to architect-reviewer with requirements, research, and interview context. Instruct to design architecture with mermaid diagrams, component responsibilities, technical decisions with rationale, file structure, error handling, test strategy. Output to `./specs/$spec/design.md`.
+4. **Spawn teammate**: `Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1")` — delegate with requirements, research, and interview context. Instruct to design architecture with mermaid diagrams, component responsibilities, technical decisions with rationale, file structure, error handling, test strategy. Output to `./specs/$spec/design.md`.
 5. **Wait for completion**: Monitor via TaskList.
 6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "architect-1")`
 7. **Collect results**: Read `./specs/$spec/design.md`.

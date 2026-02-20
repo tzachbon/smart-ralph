@@ -77,7 +77,7 @@ Follow the full team lifecycle:
 1. **Check orphaned team**: Read `~/.claude/teams/requirements-$spec/config.json`. If exists, `TeamDelete()`.
 2. **Create team**: `TeamCreate(team_name: "requirements-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate requirements for $spec", activeForm: "Generating requirements")`
-4. **Spawn teammate**: Delegate to product-manager with research context, goal, and interview context. Instruct to create user stories with acceptance criteria, functional requirements (FR-*), non-functional requirements (NFR-*), glossary, out-of-scope, dependencies. Output to `./specs/$spec/requirements.md`.
+4. **Spawn teammate**: `Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1")` — delegate with research context, goal, and interview context. Instruct to create user stories with acceptance criteria, functional requirements (FR-*), non-functional requirements (NFR-*), glossary, out-of-scope, dependencies. Output to `./specs/$spec/requirements.md`.
 5. **Wait for completion**: Monitor via TaskList.
 6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "pm-1")`
 7. **Collect results**: Read `./specs/$spec/requirements.md`.

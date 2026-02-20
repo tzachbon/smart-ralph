@@ -83,7 +83,7 @@ Follow the full team lifecycle:
 1. **Check orphaned team**: Read `~/.claude/teams/tasks-$spec/config.json`. If exists, `TeamDelete()`.
 2. **Create team**: `TeamCreate(team_name: "tasks-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate implementation tasks for $spec", activeForm: "Generating tasks")`
-4. **Spawn teammate**: Delegate to task-planner with requirements, design, and interview context. Instruct to:
+4. **Spawn teammate**: `Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1")` — delegate with requirements, design, and interview context. Instruct to:
    - Break implementation into POC-first phases (Phase 1-5 per phase-rules.md)
    - Create atomic, autonomous-ready tasks with Do/Files/Done when/Verify/Commit fields
    - Insert quality checkpoints per quality-checkpoints.md
