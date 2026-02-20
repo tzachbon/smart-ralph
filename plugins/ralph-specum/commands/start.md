@@ -170,12 +170,13 @@ Quick mode does NOT exempt you from delegation -- it only skips interactive phas
 <mandatory>
 ## CRITICAL: Stop After Each Subagent (Normal Mode)
 
-In normal mode (no `--quick` flag), you MUST STOP your response after each subagent completes.
+After ANY subagent returns in normal mode (no `--quick` flag):
 
-**After invoking a subagent via Task tool:**
 1. Wait for subagent to return
-2. Output a brief status message
-3. **END YOUR RESPONSE IMMEDIATELY**
+2. Read `$basePath/.ralph-state.json`
+3. If `awaitingApproval: true`: STOP IMMEDIATELY
+4. Output a brief status message
+5. **END YOUR RESPONSE**
 
 **DO NOT:**
 - Invoke another subagent in the same response
@@ -185,18 +186,6 @@ In normal mode (no `--quick` flag), you MUST STOP your response after each subag
 **The user must explicitly run the next command.** This gives them time to review artifacts.
 
 Exception: `--quick` mode runs all phases without stopping.
-</mandatory>
-
-<mandatory>
-## CRITICAL: Stop After Subagent Completes
-
-After ANY subagent returns, you MUST:
-
-1. **Read the state file**: `cat $basePath/.ralph-state.json`
-2. **Check awaitingApproval**: If `awaitingApproval: true`, STOP IMMEDIATELY
-3. **Do NOT invoke the next phase** -- user must explicitly run the next command
-
-The only exception is `--quick` mode, which skips approval between phases.
 </mandatory>
 
 ## Quick Mode Execution (Stop-Hook)
