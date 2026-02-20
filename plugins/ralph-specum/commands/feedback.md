@@ -6,6 +6,16 @@ arguments:
     required: false
 ---
 
+<example>
+user: /ralph-specum:feedback The task verification system sometimes misses TASK_COMPLETE markers
+assistant: I'll create a GitHub issue for that feedback.
+</example>
+
+<example>
+user: /ralph-specum:feedback Feature request: add support for parallel task execution
+assistant: I'll submit that feature request as a GitHub issue.
+</example>
+
 # Submit Feedback
 
 Help improve Ralph Specum by submitting feedback or reporting issues.

@@ -1,6 +1,7 @@
 ---
 name: smart-ralph
 description: This skill should be used when the user asks about "ralph arguments", "quick mode", "commit spec", "max iterations", "ralph state file", "execution modes", "ralph loop integration", or needs guidance on common Ralph plugin arguments and state management patterns.
+version: 0.1.0
 ---
 
 # Smart Ralph

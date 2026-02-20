@@ -6,380 +6,123 @@ allowed-tools: "*"
 
 # Tasks Phase
 
-You are generating implementation tasks for a specification. Running this command implicitly approves the design phase.
+Generate implementation tasks for the active spec. Running this command implicitly approves design. You are a **coordinator, not a task planner** -- delegate ALL work to the `task-planner` subagent.
 
-<mandatory>
-**YOU ARE A COORDINATOR, NOT A TASK PLANNER.**
+## Checklist
 
-You MUST delegate ALL task planning to the `task-planner` subagent.
-Do NOT write task breakdowns, verification steps, or tasks.md yourself.
-</mandatory>
+Create a task for each item and complete in order:
 
-## Multi-Directory Resolution
+1. **Gather context** -- resolve spec, read design, requirements, research
+2. **Interview** -- brainstorming dialogue (skip if `--quick`)
+3. **Execute task generation** -- dispatch task-planner via team
+4. **Artifact review** -- spec-reviewer validation loop (skip if `--quick`)
+5. **Walkthrough & approval** -- display summary, get user approval
+6. **Finalize** -- update state, commit, stop
 
-This command uses the path resolver for dynamic spec path resolution:
+## Step 1: Gather Context
 
-**Path Resolver Functions**:
-- `ralph_resolve_current()` - Resolves .current-spec to full path (handles bare name = ./specs/$name, full path = as-is)
-- `ralph_find_spec(name)` - Find spec by name across all configured roots
+1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it; otherwise use `ralph_resolve_current()`
+2. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
+3. Check the resolved spec directory exists
+4. Check `design.md` exists. If not, error: "Design not found. Run /ralph-specum:design first."
+5. Check `requirements.md` exists
+6. Read `.ralph-state.json`; clear approval flag: `awaitingApproval: false`
+7. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
 
-**Configuration**: Specs directories are configured in `.claude/ralph-specum.local.md`:
-```yaml
-specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
-```
+## Step 2: Interview (skip if --quick)
 
-## Determine Active Spec
-
-1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it
-2. Otherwise, use `ralph_resolve_current()` to get the active spec path
-3. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
-
-The spec path is dynamically resolved - it may be in `./specs/` or any other configured specs directory.
-
-## Validate
-
-1. Check the resolved spec directory exists
-2. Check the spec's design.md exists. If not, error: "Design not found. Run /ralph-specum:design first."
-3. Check the spec's requirements.md exists
-4. Read `.ralph-state.json`
-5. Clear approval flag: update state with `awaitingApproval: false`
-
-## Gather Context
-
-Read:
-- `./specs/$spec/requirements.md` (required)
-- `./specs/$spec/design.md` (required)
-- `./specs/$spec/research.md` (if exists)
-- `./specs/$spec/.progress.md`
-
-## Interview
-
-<mandatory>
-**Skip interview if --quick flag detected in $ARGUMENTS.**
-
-If NOT quick mode, conduct interview using AskUserQuestion before delegating to subagent.
-</mandatory>
-
-### Quick Mode Check
-
-Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Execute Tasks Generation".
+Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
 ### Read Context from .progress.md
 
-Before conducting the interview, read `.progress.md` to get:
-1. **Intent Classification** from start.md (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
-2. **All prior interview responses** to enable parameter chain (skip already-answered questions)
+Parse Intent Classification and all prior interview responses to skip already-answered questions.
 
-```text
-Context Reading:
-1. Read ./specs/$spec/.progress.md
-2. Parse "## Intent Classification" section for intent type and question counts
-3. Parse "## Interview Responses" section for prior answers (Goal Interview, Research Interview, Requirements Interview, Design Interview)
-4. Store parsed data for parameter chain checks
-```
-
-**Intent-Based Question Counts (same as start.md):**
-- TRIVIAL: 1-2 questions (minimal execution context needed)
-- REFACTOR: 3-5 questions (understand execution impact)
-- GREENFIELD: 5-10 questions (full execution context)
-- MID_SIZED: 3-7 questions (balanced approach)
+**Intent-Based Question Counts:**
+- TRIVIAL: 1-2 | REFACTOR: 3-5 | GREENFIELD: 5-10 | MID_SIZED: 3-7
 
 ### Brainstorming Dialogue
 
-**Brainstorming Dialogue**: Apply adaptive dialogue from `skills/interview-framework/SKILL.md`
+Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
 
-The coordinator asks context-driven questions one at a time based on the exploration territory below and what's already in `.progress.md`. Questions adapt to prior answers. After enough understanding, propose approaches.
-
-### Tasks Exploration Territory
-
-Areas to probe during the UNDERSTAND phase (hints, not a script):
-
-- **Testing thoroughness** — minimal POC-only tests, standard unit + integration, or comprehensive E2E?
-- **Deployment considerations** — feature flags, database migrations, backward compatibility, rollback plan?
-- **Execution priority** — ship fast with shortcuts, balanced pace, or quality-first from the start?
-- **Dependency ordering** — are there tasks that must complete before others can begin?
-- **Team workflow constraints** — PR review process, CI pipeline requirements, branch strategy?
+**Tasks Exploration Territory** (hints, not a script):
+- **Testing thoroughness** -- minimal POC-only tests, standard unit + integration, or comprehensive E2E?
+- **Deployment considerations** -- feature flags, database migrations, backward compatibility, rollback plan?
+- **Execution priority** -- ship fast with shortcuts, balanced pace, or quality-first from the start?
+- **Dependency ordering** -- are there tasks that must complete before others can begin?
+- **Team workflow constraints** -- PR review process, CI pipeline requirements, branch strategy?
 
 ### Tasks Approach Proposals
 
-After the dialogue, propose 2-3 execution strategies tailored to the user's goal. Examples (illustrative only):
-
-- **(A)** Aggressive POC — fewer tasks, ship in small increments, add polish later
-- **(B)** Thorough — more tasks with full test coverage and quality gates throughout
-- **(C)** Phased delivery — split into multiple PRs with clear milestones
+After dialogue, propose 2-3 execution strategies. Examples (illustrative only):
+- **(A)** Aggressive POC -- fewer tasks, ship in small increments, add polish later
+- **(B)** Thorough -- more tasks with full test coverage and quality gates throughout
+- **(C)** Phased delivery -- split into multiple PRs with clear milestones
 
 ### Store Interview & Approach
 
-After interview and approach selection, append to `.progress.md` under the "Interview Responses" section:
-
+Append to `.progress.md` under "Interview Responses":
 ```markdown
 ### Tasks Interview (from tasks.md)
 - [Topic 1]: [response]
-- [Topic 2]: [response]
-- Chosen approach: [name] — [brief description]
-[Any follow-up responses from "Other" selections]
+- Chosen approach: [name] -- [brief description]
 ```
 
-Pass the combined context (interview responses + chosen approach) to the Task delegation prompt as "Interview Context".
+Pass combined context to delegation prompt as "Interview Context".
 
-## Execute Tasks Generation (Team-Based)
+## Step 3: Execute Task Generation (Team-Based)
 
 <mandatory>
-**Tasks generation uses Claude Code Teams for execution, matching the standard team lifecycle pattern.**
+**Use Claude Code Teams with `task-planner` as the teammate subagent type.**
 
-You MUST follow the full team lifecycle below. Use `task-planner` as the teammate subagent type.
-ALL specs MUST follow POC-first workflow.
+ALL specs MUST follow POC-first workflow. Read `${CLAUDE_PLUGIN_ROOT}/references/phase-rules.md` for the mandatory 5-phase structure and phase distribution rules.
+
+Read `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` for checkpoint insertion rules (frequency, format, final verification sequence).
+
+Follow the full team lifecycle:
+
+1. **Check orphaned team**: Read `~/.claude/teams/tasks-$spec/config.json`. If exists, `TeamDelete()`.
+2. **Create team**: `TeamCreate(team_name: "tasks-$spec")`
+3. **Create task**: `TaskCreate(subject: "Generate implementation tasks for $spec", activeForm: "Generating tasks")`
+4. **Spawn teammate**: `Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1")` — delegate with requirements, design, and interview context. Instruct to:
+   - Break implementation into POC-first phases (Phase 1-5 per phase-rules.md)
+   - Create atomic, autonomous-ready tasks with Do/Files/Done when/Verify/Commit fields
+   - Insert quality checkpoints per quality-checkpoints.md
+   - Each task = one commit, tasks must be executable without human interaction
+   - Count total tasks, output to `./specs/$spec/tasks.md`
+5. **Wait for completion**: Monitor via TaskList.
+6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "planner-1")`
+7. **Collect results**: Read `./specs/$spec/tasks.md`.
+8. **Clean up**: `TeamDelete()`.
+
+**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call.
 </mandatory>
 
-### Step 1: Check for Orphaned Team
-
-```text
-1. Read ~/.claude/teams/tasks-$spec/config.json
-2. If exists: TeamDelete() to clean up orphaned team from a previous interrupted session
-```
-
-### Step 2: Create Team
-
-```text
-TeamCreate(team_name: "tasks-$spec", description: "Task planning for $spec")
-```
-
-**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call, skipping Steps 3-6 and 8.
-
-### Step 3: Create Tasks
-
-```text
-TaskCreate(
-  subject: "Generate implementation tasks for $spec",
-  description: "Task-planner generates tasks.md from requirements and design. See Step 4 for full prompt.",
-  activeForm: "Generating tasks"
-)
-```
-
-### Step 4: Spawn Teammates
-
-```text
-Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1",
-  prompt: "You are a task planning teammate for spec: $spec
-    Spec path: ./specs/$spec/
-
-    Context:
-    - Requirements: [include requirements.md content]
-    - Design: [include design.md content]
-
-    [If interview was conducted, include:]
-    Interview Context:
-    $interview_context
-
-    Your task:
-    1. Read requirements and design thoroughly
-    2. Break implementation into POC-first phases:
-       - Phase 1: Make It Work (POC) - validate idea, skip tests
-       - Phase 2: Refactoring - clean up code
-       - Phase 3: Testing - unit, integration, e2e
-       - Phase 4: Quality Gates - lint, types, CI
-    3. Create atomic, autonomous-ready tasks
-    4. Each task MUST include:
-       - **Do**: Exact implementation steps
-       - **Files**: Exact file paths to create/modify
-       - **Done when**: Explicit success criteria
-       - **Verify**: Command to verify completion
-       - **Commit**: Conventional commit message
-       - _Requirements: references_
-       - _Design: references_
-    5. Count total tasks
-    6. Output to ./specs/$spec/tasks.md
-    7. Include interview responses in an 'Execution Context' section of tasks.md
-
-    Use the tasks.md template with frontmatter:
-    ---
-    spec: $spec
-    phase: tasks
-    total_tasks: <count>
-    created: <timestamp>
-    ---
-
-    Critical rules:
-    - Tasks must be executable without human interaction
-    - Each task = one commit
-    - Verify command must be runnable
-    - POC phase allows shortcuts, later phases clean up
-
-    When done, mark your task complete via TaskUpdate.")
-```
-
-### Step 5: Wait for Completion
-
-Wait for teammate message or task status "completed" via TaskList. **Timeout**: If stalled, retry with a direct Task call.
-
-### Step 6: Shutdown Teammates
-
-```text
-SendMessage(type: "shutdown_request", recipient: "planner-1", content: "Tasks complete, shutting down")
-```
-
-### Step 7: Collect Results
-
-Read `./specs/$spec/tasks.md` from teammate output.
-
-### Step 8: Clean Up Team
-
-```text
-TeamDelete()
-```
-
-If TeamDelete fails, log warning. Orphaned teams are cleaned up in Step 1 on next invocation.
-
-## Artifact Review
+## Step 4: Artifact Review (skip if --quick)
 
 <mandatory>
 **Review loop must complete before walkthrough. Max 3 iterations.**
 
-**Skip review if `--quick` flag detected in `$ARGUMENTS`.** If `--quick` is present, skip directly to "Walkthrough (Before Review)".
+If `--quick`, skip to Step 5.
+
+Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
+- REVIEW_PASS: log to .progress.md, proceed
+- REVIEW_FAIL (iteration < 3): log, re-invoke task-planner with feedback + requirements + design context, loop
+- REVIEW_FAIL (iteration >= 3): graceful degradation, log warning, proceed
+- No signal: treat as REVIEW_PASS (permissive)
+
+**Review delegation**: Include full tasks.md content, iteration count, prior findings. Upstream: design.md + requirements.md.
+
+**Revision delegation**: Re-invoke task-planner with reviewer feedback and upstream context. Focus on specific issues.
+
+**Error handling**: Reviewer no signal = REVIEW_PASS. Agent failure = retry once, then use original.
 </mandatory>
 
-After task-planner completes tasks.md and before presenting the walkthrough, invoke the `spec-reviewer` agent to validate the artifact.
-
-### Review Loop
-
-```text
-Set iteration = 1
-
-WHILE iteration <= 3:
-  1. Read ./specs/$spec/tasks.md content
-  2. Invoke spec-reviewer via Task tool (see delegation prompt below)
-  3. Parse the last line of spec-reviewer output for signal:
-     - If output contains "REVIEW_PASS":
-       a. Log review iteration to .progress.md (see Review Iteration Logging below)
-       b. Break loop, proceed to Walkthrough
-     - If output contains "REVIEW_FAIL" AND iteration < 3:
-       a. Log review iteration to .progress.md (see Review Iteration Logging below)
-       b. Extract "Feedback for Revision" from reviewer output
-       c. Re-invoke task-planner with revision prompt (see below)
-       d. Re-read updated tasks.md
-       e. iteration = iteration + 1
-       f. Continue loop
-     - If output contains "REVIEW_FAIL" AND iteration >= 3:
-       a. Log review iteration to .progress.md (see Review Iteration Logging below)
-       b. Append warnings to .progress.md (see Graceful Degradation below)
-       c. Break loop, proceed to Walkthrough
-     - If output contains NEITHER signal (reviewer error):
-       a. Treat as REVIEW_PASS (permissive)
-       b. Log review iteration to .progress.md with status "REVIEW_PASS (no signal)"
-       c. Break loop, proceed to Walkthrough
-```
-
-### Review Iteration Logging
-
-After each review iteration (regardless of outcome), append to `./specs/$spec/.progress.md`:
-
-```markdown
-### Review: tasks (Iteration $iteration)
-- Status: REVIEW_PASS or REVIEW_FAIL
-- Findings: [summary of key findings from spec-reviewer output]
-- Action: [revision applied / warnings appended / proceeded]
-```
-
-Where:
-- **Status**: The actual signal from the reviewer (REVIEW_PASS or REVIEW_FAIL)
-- **Findings**: A brief summary of the reviewer's findings (2-3 bullet points max)
-- **Action**: What was done in response:
-  - "revision applied" if REVIEW_FAIL and iteration < 3 (re-invoked task-planner)
-  - "warnings appended, proceeded" if REVIEW_FAIL and iteration >= 3 (graceful degradation)
-  - "proceeded" if REVIEW_PASS
-
-### Review Delegation Prompt
-
-Invoke spec-reviewer via Task tool:
-
-```yaml
-subagent_type: spec-reviewer
-
-You are reviewing the tasks artifact for spec: $spec
-Spec path: ./specs/$spec/
-
-Review iteration: $iteration of 3
-
-Artifact content:
-[Full content of ./specs/$spec/tasks.md]
-
-Upstream artifacts (for cross-referencing):
-- Design: [Full content of ./specs/$spec/design.md]
-- Requirements: [Full content of ./specs/$spec/requirements.md]
-
-$priorFindings
-
-Apply the tasks rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
-
-If REVIEW_FAIL, provide specific, actionable feedback for revision. Reference line numbers or sections.
-```
-
-Where `$priorFindings` is empty on iteration 1, or on subsequent iterations:
-```text
-Prior findings (from iteration $prevIteration):
-[Full findings output from previous spec-reviewer invocation]
-```
-
-### Revision Delegation Prompt
-
-On REVIEW_FAIL, re-invoke task-planner with feedback:
-
-```yaml
-subagent_type: task-planner
-
-You are revising the tasks for spec: $spec
-Spec path: ./specs/$spec/
-
-Current artifact: ./specs/$spec/tasks.md
-
-Reviewer feedback (iteration $iteration):
-$reviewerFindings
-
-Context:
-- Requirements: [include requirements.md content]
-- Design: [include design.md content]
-
-Your task:
-1. Read the current tasks.md
-2. Address each finding from the reviewer
-3. Update the artifact to resolve all issues
-4. Write the revised content to ./specs/$spec/tasks.md
-
-Focus on the specific issues flagged. Do not rewrite sections that passed review.
-```
-
-After the task-planner returns, re-read `./specs/$spec/tasks.md` (now updated) and loop back to invoke spec-reviewer again.
-
-### Graceful Degradation
-
-If max iterations (3) reached without REVIEW_PASS, append to `./specs/$spec/.progress.md`:
-
-```markdown
-### Review Warning: tasks
-- Max iterations (3) reached without REVIEW_PASS
-- Proceeding with best available version
-- Outstanding issues: [list from last REVIEW_FAIL findings]
-```
-
-Then proceed to Walkthrough.
-
-### Error Handling
-
-- **Reviewer fails to output signal**: treat as REVIEW_PASS (permissive) and log with status "REVIEW_PASS (no signal)"
-- **Phase agent fails during revision**: retry the revision once; if it fails again, use the original artifact and proceed
-- **Iteration counter edge cases**: if iteration is missing or invalid, default to 1
-
-## Walkthrough (Before Review)
+## Step 5: Walkthrough & Approval
 
 <mandatory>
-**WALKTHROUGH IS REQUIRED - DO NOT SKIP THIS SECTION.**
+**WALKTHROUGH IS REQUIRED - DO NOT SKIP.**
 
-After tasks.md is created, you MUST display a concise walkthrough BEFORE asking review questions.
-
-1. Read `./specs/$spec/tasks.md`
-2. Display the walkthrough below with actual content from the file
-
-### Display Format
+Read `./specs/$spec/tasks.md` and display:
 
 ```
 Tasks complete for '$spec'.
@@ -397,114 +140,46 @@ Output: ./specs/$spec/tasks.md
 
 **POC Milestone**: Task [X.Y] - [brief description of what's working at that point]
 ```
-
-Keep it scannable. User will open the file if they want details.
 </mandatory>
 
-## Review & Feedback Loop
+### User Approval (skip if --quick)
 
-<mandatory>
-**Skip review if --quick flag detected in $ARGUMENTS.**
+If `--quick`, skip to Step 6.
 
-If NOT quick mode, conduct tasks review using AskUserQuestion after tasks are created.
-</mandatory>
+Ask ONE question: "Does this look right?" with options: Approve (Recommended) / Need changes / Other
 
-### Quick Mode Check
-
-Check if `--quick` appears anywhere in `$ARGUMENTS`. If present, skip directly to "Update State".
-
-### Tasks Review Question
-
-After displaying the walkthrough, ask ONE simple question:
-
-| Question | Key | Options |
-|----------|-----|---------|
-| Does this look right? | `tasksApproval` | Approve (Recommended) / Need changes / Other |
-
-### Handle Response
-
-**If "Approve"**: Skip to "Update State"
-
+**If "Approve"**: proceed to Step 6.
 **If "Need changes" or "Other"**:
-1. Ask: "What would you like changed?"
-2. Re-invoke task-planner using the team pattern (cleanup-and-recreate)
-3. Re-display walkthrough
-4. Ask approval question again
-5. Loop until approved
+1. Ask what to change
+2. Re-invoke task-planner using **cleanup-and-recreate** team pattern (TeamDelete old -> TeamCreate new -> spawn with feedback + current tasks.md -> wait -> shutdown -> TeamDelete)
+3. Re-display walkthrough, ask again. Loop until approved.
 
-<mandatory>
-**Feedback Loop Team Pattern: Cleanup-and-Recreate**
+## Step 6: Finalize
 
-When the user requests changes, do NOT reuse the existing team or send messages to completed teammates.
-Instead, use the cleanup-and-recreate approach for each feedback iteration:
-
-1. `TeamDelete()` the current team (cleanup previous session)
-2. `TeamCreate()` a new team with the same name (fresh team for re-invocation)
-3. `TaskCreate` with updated prompt including user feedback
-4. Spawn new teammate, wait for completion, shutdown, `TeamDelete`
-
-This is simpler and more reliable than trying to reuse teams or message completed teammates.
-Each feedback iteration gets a completely fresh team context.
-</mandatory>
-
-**Re-invoke task-planner**: Repeat Steps 1-8 above with the following changes:
-- Step 3 subject: "Update tasks for $spec"
-- Step 4 prompt: include current tasks.md content, user feedback (`$user_feedback`), and instruct the planner to address the specific feedback while maintaining consistency with requirements/design. Append update notes to .progress.md.
-
-**After update, repeat review questions.** Loop until user approves.
-
-## Update State
-
-After tasks complete and approved:
+### Update State
 
 1. Count total tasks from generated file
-2. Update `.ralph-state.json`:
-   ```json
-   {
-     "phase": "tasks",
-     "totalTasks": <count>,
-     "awaitingApproval": true,
-     ...
-   }
-   ```
+2. Update `.ralph-state.json`: `{ "phase": "tasks", "totalTasks": <count>, "awaitingApproval": true }`
+3. Update `.progress.md`: mark design as implicitly approved, set current phase, update task count
 
-3. Update `.progress.md`:
-   - Mark design as implicitly approved
-   - Set current phase to tasks
-   - Update task count
+### Commit Spec (if enabled)
 
-## Commit Spec (if enabled)
+Read `commitSpec` from `.ralph-state.json`. If true:
+```bash
+git add ./specs/$spec/tasks.md
+git commit -m "spec($spec): add implementation tasks"
+git push -u origin $(git branch --show-current)
+```
+If commit or push fails, display warning but continue.
 
-Read `commitSpec` from `.ralph-state.json` (set during `/ralph-specum:start`).
-
-If `commitSpec` is true:
-
-1. Stage tasks file:
-   ```bash
-   git add ./specs/$spec/tasks.md
-   ```
-2. Commit with message:
-   ```bash
-   git commit -m "spec($spec): add implementation tasks"
-   ```
-3. Push to current branch:
-   ```bash
-   git push -u origin $(git branch --show-current)
-   ```
-
-If commit or push fails, display warning but continue (don't block the workflow).
-
-## Stop
+### Stop
 
 <mandatory>
 **STOP HERE. DO NOT PROCEED TO IMPLEMENT.**
 
-(This does not apply in `--quick` mode, which auto-generates all artifacts without stopping.)
+(Does not apply in `--quick` mode.)
 
-After the review is approved and state is updated, you MUST:
-1. Display: `→ Next: Run /ralph-specum:implement to start execution`
+1. Display: `-> Next: Run /ralph-specum:implement to start execution`
 2. End your response immediately
 3. Wait for user to explicitly run `/ralph-specum:implement`
-
-DO NOT automatically start implementation.
 </mandatory>
