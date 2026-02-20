@@ -41,7 +41,7 @@ Parse Intent Classification and all prior interview responses to skip already-an
 
 ### Brainstorming Dialogue
 
-Apply adaptive dialogue from `skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
+Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
 
 **Design Exploration Territory** (hints, not a script):
 - **Architecture fit** -- extend existing architecture, create isolated module, or require refactor?

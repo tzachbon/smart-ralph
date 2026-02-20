@@ -43,7 +43,7 @@ Read `.progress.md` and parse:
 
 ### Brainstorming Dialogue
 
-Apply adaptive dialogue from `skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time, adapting to prior answers.
+Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time, adapting to prior answers.
 
 **Research Exploration Territory** (hints, not a script):
 - **Technical approach preference** -- follow existing patterns or introduce new ones?

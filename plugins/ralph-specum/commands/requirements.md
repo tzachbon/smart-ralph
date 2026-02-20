@@ -40,7 +40,7 @@ Parse Intent Classification and prior interview responses to skip already-answer
 
 ### Brainstorming Dialogue
 
-Apply adaptive dialogue from `skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
+Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
 
 **Requirements Exploration Territory** (hints, not a script):
 - **Primary users** -- who will use this feature? Developers, end users, specific roles?
