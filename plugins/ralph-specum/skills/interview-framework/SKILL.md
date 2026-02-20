@@ -1,108 +1,174 @@
 ---
 name: interview-framework
-description: Standard single-question adaptive interview loop used across all spec phases
+description: Adaptive brainstorming-style dialogue for all spec phases (Understand, Propose Approaches, Confirm & Store)
 ---
 
 # Interview Framework
 
-Canonical interview algorithm for all spec phases. Each phase references this skill instead of duplicating the ~50-line algorithm.
+Adaptive brainstorming dialogue algorithm for all spec phases. Each phase command references this skill and provides its own **exploration territory** (phase-specific areas to probe).
 
 ## Option Limit Rule
 
-Each question MUST have 2-4 options (max 4 for better UX). Keep most relevant options, combine similar ones.
+Each question MUST have 2-4 options (max 4). Keep the most relevant options, combine similar ones.
 
-## Single-Question Loop Structure
+## Intent-Based Depth Scaling
 
-```text
-Initialize:
-  askedCount = 0
-  responses = {}
-  intent = [from .progress.md Intent Classification]
-  minRequired = intent.minQuestions (phase-adjusted)
-  maxAllowed = intent.maxQuestions (phase-adjusted)
-  completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
+Read `.progress.md` for intent classification. Scale dialogue depth accordingly:
 
-Loop:
-  WHILE askedCount < maxAllowed:
-    |
-    +-- Select next question from phase-specific pool
-    |
-    +-- Apply question piping: replace {var} with values from .progress.md
-    |
-    +-- Check parameter chain: does answer exist in .progress.md?
-    |   |
-    |   +-- Yes: SKIP this question, continue to next
-    |   |       Log: "Skipping [question] - already answered in previous phase"
-    |   +-- No: Proceed to ask
-    |
-    +-- Ask single question:
-    |   AskUserQuestion:
-    |     question: "[Current question text with piped values]"
-    |     options:
-    |       - "[Option 1]"
-    |       - "[Option 2]"
-    |       - "[Option 3]"
-    |       - "Other"
-    |
-    +-- Store response in responses[questionKey]
-    |
-    +-- askedCount++
-    |
-    +-- Check completion conditions:
-    |   |
-    |   +-- If askedCount >= minRequired AND user response matches completionSignal:
-    |   |   -> EXIT loop (user signaled done)
-    |   |
-    |   +-- If askedCount >= minRequired AND currentQuestion == finalQuestion:
-    |   |   -> EXIT loop (reached final optional question)
-    |   |
-    |   +-- If user selected "Other":
-    |   |   -> Ask follow-up (see Adaptive Depth)
-    |   |   -> DO NOT increment toward maxAllowed
-    |   |
-    |   +-- Otherwise:
-    |       -> CONTINUE to next question
-```
+| Intent | Questions |
+|--------|-----------|
+| TRIVIAL | 1-2 |
+| REFACTOR | 3-5 |
+| MID_SIZED | 3-7 |
+| GREENFIELD | 5-10 |
 
 ## Completion Signal Detection
 
-After each response, check if user wants to end:
+After each response, check if user wants to end early:
 
 ```text
-userResponse = [last answer from AskUserQuestion]
+completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
+
 if askedCount >= minRequired:
   for signal in completionSignals:
     if signal in userResponse.lower():
-      -> EXIT interview loop
+      -> SKIP remaining questions, move to PROPOSE APPROACHES
 ```
 
-Completion signals: "done", "proceed", "skip", "enough", "that's all", "continue", "next"
+## 3-Phase Algorithm
 
-## Adaptive Depth
+### Phase 1: UNDERSTAND (Adaptive Dialogue)
+
+```text
+UNDERSTAND:
+  1. Read all available context:
+     - .progress.md (prior phase answers, intent, goal)
+     - Prior artifacts (research.md, requirements.md, etc.)
+     - Original goal text
+  2. Read the exploration territory provided by the calling command
+  3. Identify what is UNKNOWN vs what is already decided
+     - If prior phases already covered a topic, SKIP it
+     - Only ask about what still needs clarification
+  4. Set depth from intent:
+     - minRequired = intent.minQuestions
+     - maxAllowed = intent.maxQuestions
+  5. askedCount = 0
+
+  WHILE askedCount < maxAllowed:
+    |
+    +-- Generate next question from context + exploration territory
+    |   (Questions emerge from what you've learned so far, NOT from a fixed pool)
+    |
+    +-- Context-based skip check:
+    |   Read .progress.md holistically. If this topic was already
+    |   answered in a prior phase, SKIP it. Log: "Already covered: [topic]"
+    |
+    +-- Ask single question:
+    |   AskUserQuestion:
+    |     question: "[Context-aware question referencing prior answers]"
+    |     options:
+    |       - "[Option 1]"
+    |       - "[Option 2]"
+    |       - "[Option 3 if needed]"
+    |       - "Other"
+    |
+    +-- askedCount++
+    |
+    +-- If user selected "Other":
+    |   -> Ask context-specific follow-up (see Adaptive Depth below)
+    |   -> DO NOT increment askedCount for follow-ups
+    |
+    +-- Check completion signals (see above)
+    |
+    +-- Decide: ask another question or move to PROPOSE APPROACHES
+    |   (If you have enough context to propose meaningful approaches, move on)
+```
+
+**Key rules for question generation:**
+- Each question builds on prior answers in THIS dialogue AND prior phases
+- Reference specific things the user said ("You mentioned X — does that mean...")
+- Never ask something .progress.md already answers
+- Never ask generic questions — every question must be grounded in the user's context
+
+### Phase 2: PROPOSE APPROACHES
+
+```text
+PROPOSE APPROACHES:
+  1. Synthesize the dialogue into 2-3 distinct approaches
+  2. Each approach MUST include:
+     - Name (short label)
+     - Description (1-2 sentences)
+     - Trade-offs (pros and cons)
+  3. Lead with your recommendation
+  4. Present via AskUserQuestion:
+
+  AskUserQuestion:
+    question: "Based on our discussion, here are the approaches I see:
+
+      **A) [Recommended] [Name]**
+      [Description]. Trade-off: [pro] vs [con].
+
+      **B) [Name]**
+      [Description]. Trade-off: [pro] vs [con].
+
+      **C) [Name]** (if applicable)
+      [Description]. Trade-off: [pro] vs [con].
+
+      Which approach fits best?"
+    options:
+      - "A) [Name]"
+      - "B) [Name]"
+      - "C) [Name]" (if applicable)
+      - "Other"
+
+  5. If user picks "Other":
+     -> Ask what they'd change or combine
+     -> Iterate until approach is confirmed (max 3 rounds)
+  6. Store chosen approach as primary input for the subagent
+```
+
+**Approach rules:**
+- Always present at least 2 approaches (never just 1)
+- Maximum 3 approaches (more causes decision fatigue)
+- The recommended approach goes first
+- Trade-offs must be honest — no straw-man alternatives
+- Apply YAGNI: strip unnecessary complexity from all approaches
+
+### Phase 3: CONFIRM & STORE
+
+```text
+CONFIRM & STORE:
+  1. Brief recap to the user:
+     "Here's what I'll pass to the [agent name]:
+      - [Key decision 1]
+      - [Key decision 2]
+      - [Chosen approach summary]
+      Does this look right?"
+  2. If user corrects something, update before storing
+  3. Store in .progress.md (see Context Accumulator below)
+  4. Proceed to subagent delegation
+```
+
+## Adaptive Depth (Other Responses)
 
 If user selects "Other" for any question:
 
-1. Ask context-specific follow-up (NEVER generic "elaborate")
-2. Continue until clarity reached or 5 rounds complete
-3. Each follow-up round uses single question focused on the "Other" response
+1. Ask a **context-specific** follow-up (NEVER generic "elaborate")
+2. Continue until clarity is reached or 5 rounds complete
+3. Each follow-up uses a single question focused on their response
 
-### Context-Specific Follow-up Instructions
+**Follow-up questions MUST be context-specific, not generic.** When user provides an "Other" response:
 
-Follow-up questions MUST be context-specific, not generic. When user provides an "Other" response:
-
-1. **Acknowledge the specific response**: Reference what the user actually typed, not just "[Other response]"
-2. **Ask a probing question based on response content**: Analyze keywords in their response to form relevant follow-up
+1. **Acknowledge the specific response**: Reference what the user actually typed
+2. **Ask a probing question based on response content**: Analyze keywords in their response
 3. **Include context from prior answers**: Reference earlier responses to create continuity
 
-**Do NOT use generic follow-ups like "Can you elaborate?" - always tailor to their specific response.**
+**Do NOT use generic follow-ups like "Can you elaborate?" — always tailor to their specific response.**
 
-Example - if user types "We need GraphQL support" for constraints:
+Example — if user types "We need GraphQL support" for a technical approach question:
 ```yaml
 AskUserQuestion:
-  question: "You mentioned needing GraphQL support. Is this for:
-    - the entire API layer, or
-    - specific endpoints only?
-    Also, does this relate to your earlier goal of '{goal}'?"
+  question: "You mentioned needing GraphQL support. Is this for the entire API layer, or specific endpoints only?"
   options:
     - "Full API layer - replace REST"
     - "Hybrid - GraphQL for new endpoints only"
@@ -110,10 +176,10 @@ AskUserQuestion:
     - "Other"
 ```
 
-Example - if user types "Security is critical" for success criteria:
+Example — if user types "Security is critical" for success criteria:
 ```yaml
 AskUserQuestion:
-  question: "You emphasized security is critical. Given your constraint of '{constraints}', which security aspects matter most?"
+  question: "You emphasized security is critical. Given your earlier constraints, which security aspects matter most?"
   options:
     - "Authentication and authorization"
     - "Data encryption at rest and in transit"
@@ -126,70 +192,16 @@ AskUserQuestion:
 After each interview, update `.progress.md`:
 
 1. Read existing .progress.md content
-2. Append new interview subsection under "## Interview Responses"
-3. Use semantic keys matching the question type
-4. For "Other" responses, append with descriptive key
-5. Format must be parseable for parameter chain
+2. Append new section under "## Interview Responses"
+3. Use descriptive keys that reflect what was actually discussed
+4. Include the chosen approach
 
 ### Storage Format
 
 ```text
 ### [Phase] Interview (from [phase].md)
-- [Key1]: [response1]
-- [Key2]: [response2]
-- [Key3]: [response3]
+- [Topic 1]: [response]
+- [Topic 2]: [response]
+- Chosen approach: [name] — [brief description]
 [Any follow-up responses from "Other" selections]
 ```
-
-## Canonical Semantic Keys (camelCase standard)
-
-| Phase | Key | Aliases |
-|-------|-----|---------|
-| start | problem | problem, issue |
-| start | constraints | constraints, limitations |
-| start | success | success, successCriteria |
-| research | technicalApproach | approach, tech |
-| research | knownConstraints | constraints |
-| research | integrationPoints | integration |
-| requirements | primaryUsers | users, audience |
-| requirements | priorityTradeoffs | priority |
-| requirements | successCriteria | success, kpis |
-| design | architectureStyle | architecture |
-| design | techConstraints | constraints |
-| design | integrationApproach | integration |
-| tasks | testingDepth | testing, testStrategy |
-| tasks | deploymentApproach | deployment |
-| tasks | executionPriority | priority |
-
-## Parameter Chain Logic
-
-Before asking any question, check if the answer already exists:
-
-```text
-Parameter Chain:
-  BEFORE asking any question:
-    1. Parse .progress.md for existing answers
-    2. Map question to semantic key (see table above)
-    3. If answer exists in prior responses:
-       -> SKIP this question (do not ask again)
-       -> Log: "Skipping [question] - already answered in previous phase"
-    4. If no prior answer:
-       -> Ask via AskUserQuestion
-```
-
-## Question Piping
-
-Before asking each question, replace `{var}` placeholders with values from `.progress.md`:
-
-| Variable | Source | Available From |
-|----------|--------|----------------|
-| `{goal}` | Original goal text | start.md |
-| `{intent}` | Intent classification | start.md |
-| `{problem}` | Problem description | start.md Goal Interview |
-| `{constraints}` | Constraints | start.md Goal Interview |
-| `{users}` | Primary users | requirements.md |
-| `{priority}` | Priority tradeoffs | requirements.md |
-| `{technicalApproach}` | Technical approach | research.md |
-| `{architecture}` | Architecture style | design.md |
-
-**Fallback Behavior**: If variable not found, use original question text (graceful fallback)
