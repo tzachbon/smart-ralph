@@ -233,6 +233,23 @@ If no completion signal:
 3. If taskIteration > maxTaskIterations: proceed to max retries error handling
 4. Otherwise: Retry the same task
 
+## Sequential Review Pattern
+
+> Skip this section if quickMode is true in .ralph-state.json
+
+After the executor reports TASK_COMPLETE and all verification layers pass:
+
+1. Read the dispatch template at `${CLAUDE_PLUGIN_ROOT}/templates/prompts/reviewer-prompt.md`
+2. Fill the placeholders:
+   - `{SPEC_NAME}` — current spec name
+   - `{TASK_TEXT}` — the full task text that was just executed
+   - `{TASK_INDEX}` — the task index
+   - `{IMPLEMENTER_REPORT}` — the executor's output/report
+3. Dispatch the reviewer via Task tool with subagent_type `ralph-specum:spec-reviewer`
+4. Handle the reviewer's output:
+   - **REVIEW_PASS** — proceed to state update and next task
+   - **REVIEW_FAIL** — re-dispatch the executor with the reviewer's feedback appended to the task context. Maximum 2 review retries per task. If still failing after 2 retries, log the issue in .progress.md and proceed.
+
 ## Verification Layers
 
 CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.
