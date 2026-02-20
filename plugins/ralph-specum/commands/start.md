@@ -459,7 +459,8 @@ Examples:
      "maxTaskIterations": 5,
      "globalIteration": 1,
      "maxGlobalIterations": 100,
-     "commitSpec": $commitSpec
+     "commitSpec": $commitSpec,
+     "quickMode": true
    }
    |
 6. Write .progress.md with original goal
@@ -738,7 +739,8 @@ The only exception is `--quick` mode, which skips approval between phases.
      "maxTaskIterations": 5,
      "globalIteration": 1,
      "maxGlobalIterations": 100,
-     "commitSpec": $commitSpec
+     "commitSpec": $commitSpec,
+     "quickMode": false
    }
    ```
 8. Create `.progress.md` with goal
@@ -1548,7 +1550,8 @@ Triggered when `--quick` flag detected. Runs all spec phases sequentially using 
      "maxTaskIterations": 5,
      "globalIteration": 1,
      "maxGlobalIterations": 100,
-     "commitSpec": $commitSpec
+     "commitSpec": $commitSpec,
+     "quickMode": true
    }
    ```
 6. Write `.progress.md` with goal
