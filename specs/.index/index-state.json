@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated": "2026-02-19T20:30:30Z",
+  "updated": "2026-02-19T23:12:00Z",
   "directories": [
     {
       "path": "./specs",
@@ -19,9 +19,16 @@
     {
       "name": "enforce-teams-instead",
       "path": "./specs/enforce-teams-instead",
+      "phase": "completed",
+      "taskIndex": 13,
+      "totalTasks": 13
+    },
+    {
+      "name": "improve-task-generation",
+      "path": "./specs/improve-task-generation",
       "phase": "tasks",
-      "taskIndex": 14,
-      "totalTasks": 14
+      "taskIndex": 66,
+      "totalTasks": 68
     },
     {
       "name": "plan-source-feature",
@@ -29,18 +36,6 @@
       "phase": "completed",
       "taskIndex": 12,
       "totalTasks": 12
-    },
-    {
-      "name": "return-ralph-wrigum",
-      "path": "./specs/return-ralph-wrigum",
-      "phase": "complete",
-      "taskIndex": 19,
-      "totalTasks": 19
-    },
-    {
-      "name": "refactor-plugins",
-      "path": "./specs/refactor-plugins",
-      "phase": "new"
     },
     {
       "name": "implement-ralph-wiggum",
@@ -62,6 +57,13 @@
       "phase": "tasks",
       "taskIndex": 9,
       "totalTasks": 11
+    },
+    {
+      "name": "karpathy-skills-rules",
+      "path": "./specs/karpathy-skills-rules",
+      "phase": "completed",
+      "taskIndex": 12,
+      "totalTasks": 12
     },
     {
       "name": "speckit-stop-hook",
@@ -92,11 +94,6 @@
       "totalTasks": 33
     },
     {
-      "name": "add-walk-through-of",
-      "path": "./specs/add-walk-through-of",
-      "phase": "new"
-    },
-    {
       "name": "codebase-indexing",
       "path": "./specs/codebase-indexing",
       "phase": "completed",
@@ -115,6 +112,13 @@
       "path": "./specs/iterative-failure-recovery",
       "phase": "tasks",
       "taskIndex": 14,
+      "totalTasks": 20
+    },
+    {
+      "name": "reviewer-subagent",
+      "path": "./specs/reviewer-subagent",
+      "phase": "completed",
+      "taskIndex": 20,
       "totalTasks": 20
     },
     {

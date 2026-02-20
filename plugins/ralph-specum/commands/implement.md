@@ -65,7 +65,10 @@ Update `.ralph-state.json` by merging these fields into the existing object:
   "maxFixTaskDepth": 3,
   "globalIteration": 1,
   "maxGlobalIterations": <parsed from --max-global-iterations or default 100>,
-  "fixTaskMap": {}
+  "fixTaskMap": {},
+  "modificationMap": {},
+  "maxModificationsPerTask": 3,
+  "maxModificationDepth": 2
 }
 ```
 
@@ -89,6 +92,9 @@ jq --argjson taskIndex <first_incomplete> \
      globalIteration: 1,
      maxGlobalIterations: $maxGlobalIter,
      fixTaskMap: {},
+     modificationMap: {},
+     maxModificationsPerTask: 3,
+     maxModificationDepth: 2,
      awaitingApproval: false
    }
    ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
@@ -107,6 +113,9 @@ State files from earlier versions may lack new fields. The system handles this g
 - `globalIteration`: Defaults to 1 if missing
 - `maxGlobalIterations`: Defaults to 100 if missing
 - `maxFixTaskDepth`: Defaults to 3 if missing
+- `modificationMap`: Defaults to {} if missing
+- `maxModificationsPerTask`: Defaults to 3 if missing
+- `maxModificationDepth`: Defaults to 2 if missing
 
 ## Start Execution
 
@@ -334,6 +343,12 @@ Proceed to progress merge (Section 9) and state update (Section 8).
 `TeamDelete()`. If fails, cleaned up on next invocation via Step 1.
 
 **After Delegation**:
+
+If spec-executor output contains `TASK_MODIFICATION_REQUEST`:
+1. Process modification per Section 6e (Modification Request Handler)
+2. After processing, check if TASK_COMPLETE was also output (for SPLIT_TASK and ADD_FOLLOWUP)
+3. If TASK_COMPLETE present: proceed to verification layers (section 7)
+4. If no TASK_COMPLETE (ADD_PREREQUISITE): delegate prerequisite, then retry original task
 
 If spec-executor outputs TASK_COMPLETE (or qa-engineer outputs VERIFICATION_PASS):
 1. Run verification layers (section 7) before advancing
@@ -1002,6 +1017,95 @@ If taskIteration exceeds maxTaskIterations:
 4. Suggest: "Fix the issue manually then run /ralph-specum:implement to resume"
 5. Do NOT continue execution
 6. Do NOT output ALL_TASKS_COMPLETE
+
+### 6e. Modification Request Handler
+
+When spec-executor outputs `TASK_MODIFICATION_REQUEST`, parse and process the modification before continuing.
+
+**Detection**:
+
+Check executor output for the literal string `TASK_MODIFICATION_REQUEST` followed by a JSON code block.
+
+**Parse Modification Request**:
+
+Extract the JSON payload:
+```json
+{
+  "type": "SPLIT_TASK" | "ADD_PREREQUISITE" | "ADD_FOLLOWUP",
+  "originalTaskId": "X.Y",
+  "reasoning": "...",
+  "proposedTasks": ["markdown task block", ...]
+}
+```
+
+**Validate Request**:
+
+1. Read `modificationMap` from .ralph-state.json
+2. Count: `modificationMap[originalTaskId].count` (default 0)
+3. If count >= 3: REJECT, log "Max modifications (3) reached for task $taskId" in .progress.md, skip modification
+4. Depth check: count dots in proposed task IDs. If dots > 3 (depth > 2 levels): REJECT
+5. Verify proposed tasks have required fields: Do, Files, Done when, Verify, Commit
+
+**Process by Type**:
+
+**SPLIT_TASK**:
+1. Mark original task [x] in tasks.md (executor completed what it could)
+2. Insert all proposedTasks after original task block using Edit tool
+3. Update totalTasks += proposedTasks.length in state
+4. Update modificationMap
+5. Set taskIndex to first inserted sub-task
+6. Log in .progress.md: "Split task $taskId into N sub-tasks: [ids]. Reason: $reasoning"
+
+**ADD_PREREQUISITE**:
+1. Do NOT mark original task complete
+2. Insert proposedTask BEFORE current task block using Edit tool
+3. Update totalTasks += 1 in state
+4. Update modificationMap
+5. Delegate prerequisite task to spec-executor
+6. After prereq completes: retry original task
+7. Log in .progress.md: "Added prerequisite $prereqId before $taskId. Reason: $reasoning"
+
+**ADD_FOLLOWUP**:
+1. Original task should already be marked [x] (executor outputs TASK_COMPLETE too)
+2. Insert proposedTask after current task block using Edit tool
+3. Update totalTasks += 1 in state
+4. Update modificationMap
+5. Normal advancement — followup will be picked up as next task
+6. Log in .progress.md: "Added followup $followupId after $taskId. Reason: $reasoning"
+
+**Parallel Batch Interaction**:
+- If current task is in a [P] batch and executor requests modification: break out of parallel batch
+- Re-evaluate remaining [P] tasks as sequential after modification
+- This prevents inserting tasks mid-batch which would corrupt parallel execution
+
+**Update State (modificationMap)**:
+
+```bash
+jq --arg taskId "$TASK_ID" \
+   --arg modId "$MOD_TASK_ID" \
+   --arg reason "$REASONING" \
+   --arg type "$MOD_TYPE" \
+   --argjson delta "$PROPOSED_COUNT" \
+   '
+   .modificationMap //= {} |
+   .modificationMap[$taskId] //= {count: 0, modifications: []} |
+   .modificationMap[$taskId].count += 1 |
+   .modificationMap[$taskId].modifications += [{id: $modId, type: $type, reason: $reason}] |
+   .totalTasks += $delta
+   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
+   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+```
+
+> **Note**: Set `PROPOSED_COUNT` to the number of proposed tasks (e.g., `PROPOSED_COUNT=$(echo "$PROPOSED_TASKS" | jq 'length')`). For SPLIT_TASK this is N (the number of sub-tasks), for ADD_PREREQUISITE and ADD_FOLLOWUP this is 1.
+
+**Insertion Algorithm** (same pattern as Section 6c fix task insertion):
+
+1. Read tasks.md
+2. Locate target task by ID pattern: `- [ ] $taskId` or `- [x] $taskId`
+3. Find task block end (next `- [ ]`, `- [x]`, `## Phase`, or EOF)
+4. For ADD_PREREQUISITE: insert before task block start
+5. For SPLIT_TASK/ADD_FOLLOWUP: insert after task block end
+6. Use Edit tool with old_string/new_string
 
 ### 7. Verification Layers
 

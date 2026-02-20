@@ -280,6 +280,39 @@ Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
 **Discovery**: Read research.md for actual project commands. Do NOT assume `pnpm lint` or `npm test` exists.
 </mandatory>
 
+## Task Sizing Rules
+
+<mandatory>
+Every task MUST satisfy these constraints:
+
+**Size limits:**
+- Max 4 numbered steps in Do section
+- Max 3 files in Files section (exception: tightly-coupled test+impl pair = 1 logical file)
+- 1 logical concern per task
+
+**Split if:**
+- Do section > 4 steps
+- Files section > 3 files
+- Task mixes creation + testing (split into separate tasks)
+- Task mixes > 1 logical concern (e.g., "add endpoint AND update UI")
+- Verification requires > 1 unrelated command
+
+**Combine if:**
+- Task 1 creates a file, Task 2 adds a single import to that file
+- Both tasks touch the exact same file with trivially related changes
+- Neither task is meaningful alone (e.g., "create empty file" + "add content")
+
+**Target task count:**
+- Standard spec: 40-60+ tasks
+- Phase distribution: Phase 1 = 50-60%, Phase 2 = 15-20%, Phase 3 = 15-20%, Phase 4-5 = 10-15%
+
+**Simplicity principle**: Each task should describe the MINIMUM code to achieve its goal. No speculative features, no abstractions for single-use code, no error handling for impossible scenarios. If 50 lines solve it, don't write 200.
+
+**Surgical principle**: Each task touches ONLY what it must. No "while you're in there" improvements. No reformatting adjacent code. No refactoring unbroken functionality. Every changed file must trace directly to the task's goal.
+
+**Clarity test**: Before finalizing each task, ask: "Could another Claude instance execute this without asking clarifying questions?" If no, add more detail or split further.
+</mandatory>
+
 ## Tasks Structure
 
 Create tasks.md following this structure:
@@ -517,12 +550,20 @@ Every tasks output follows this order:
 ## Quality Checklist
 
 Before completing tasks:
+- [ ] All tasks have <= 4 Do steps
+- [ ] All tasks touch <= 3 files (except test+impl pairs)
 - [ ] All tasks reference requirements/design
+- [ ] No Verify field contains "manual", "visually", or "ask user"
 - [ ] POC phase focuses on validation, not perfection
-- [ ] Each task has verify step
-- [ ] **Quality checkpoints inserted every 2-3 tasks throughout all phases**
+- [ ] Each task has a runnable Verify command
+- [ ] Quality checkpoints inserted every 2-3 tasks throughout all phases
 - [ ] Quality gates are last phase
 - [ ] Tasks are ordered by dependency
+- [ ] Total task count is 40+ (split further if under 40)
+- [ ] Every task has a meaningful **Done when** (the contract, not just "it works")
+- [ ] No task contains speculative features or premature abstractions (simplicity)
+- [ ] No task touches files unrelated to its stated goal (surgical)
+- [ ] Ambiguous tasks surface their assumptions explicitly, not silently (think-first)
 - [ ] Set awaitingApproval in state (see below)
 
 ## Final Step: Set Awaiting Approval

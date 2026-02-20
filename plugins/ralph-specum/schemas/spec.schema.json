@@ -144,6 +144,42 @@
             },
             "required": ["attempts", "fixTaskIds"]
           }
+        },
+        "modificationMap": {
+          "type": "object",
+          "description": "Tracks modification requests per original task",
+          "default": {},
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "count": { "type": "integer", "minimum": 0 },
+              "modifications": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "type": { "type": "string", "enum": ["SPLIT_TASK", "ADD_PREREQUISITE", "ADD_FOLLOWUP"] },
+                    "reason": { "type": "string" }
+                  },
+                  "required": ["id", "type"]
+                }
+              }
+            },
+            "required": ["count", "modifications"]
+          }
+        },
+        "maxModificationsPerTask": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Max modification requests allowed per original task"
+        },
+        "maxModificationDepth": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 2,
+          "description": "Max nesting depth for modification task IDs"
         }
       }
     },

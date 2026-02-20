@@ -26,6 +26,91 @@ This spec is not complete until ALL criteria are met:
 
 > **Quality Checkpoints**: Intermediate quality gate checks are inserted every 2-3 tasks to catch issues early. For small tasks, insert after 3 tasks. For medium/large tasks, insert after 2 tasks.
 
+## Task Writing Guide
+
+**Sizing rules**: Max 4 Do steps, max 3 files per task. Split if exceeded.
+
+### Task Writing Principles
+
+1. **Think First**: Tasks should surface what's unclear, not assume. If a task depends on an uncertain assumption (e.g., "config file exists at X"), state it explicitly in the Do section or add a verification step. Don't hide confusion in vague steps.
+2. **Simplicity**: Minimum steps to achieve the goal. No speculative features, no abstractions for single-use code. If the task can be done in 2 steps, don't write 4.
+3. **Surgical**: Each task touches only what it must. No drive-by refactors, no "while you're in there" improvements. Every file in the Files section traces directly to the task's goal.
+4. **Goal-Driven**: Emphasize **Done when** and **Verify** over **Do** steps. The Do is guidance; the Done when is the contract. Transform imperative commands into declarative success criteria. Instead of "Add validation" write "Done when: invalid inputs return 400 with error message."
+
+### Bad vs. Good Examples
+
+**Example 1: File Creation (too vague vs. precise)**
+
+BAD:
+- [ ] 1.1 Set up the API module
+  - **Do**: Create the API module with routes and handlers
+  - **Files**: src/api/
+  - **Verify**: Code compiles
+
+GOOD:
+- [ ] 1.1 Create user registration endpoint
+  - **Do**:
+    1. Create `src/api/routes/auth.ts` with POST /register route
+    2. Add request body validation: email (valid format), password (min 8 chars)
+    3. Return 201 with `{ id, email }` on success, 400 with `{ error }` on validation fail
+  - **Files**: src/api/routes/auth.ts
+  - **Done when**: POST /register returns 201 for valid input, 400 for invalid
+  - **Verify**: `curl -X POST localhost:3000/register -d '{"email":"a@b.com","password":"12345678"}' -w '%{http_code}' | grep 201`
+
+**Example 2: Integration (bundled vs. atomic)**
+
+BAD:
+- [ ] 2.1 Add analytics tracking
+  - **Do**: Install PostHog, create wrapper, add to all pages, write tests
+  - **Files**: src/analytics.ts, src/pages/*.tsx, tests/analytics.test.ts
+  - **Verify**: Tests pass
+
+GOOD:
+- [ ] 2.1 Install PostHog SDK and create wrapper
+  - **Do**:
+    1. Add posthog-js: `pnpm add posthog-js`
+    2. Create `src/lib/analytics.ts` exporting `track(event, props)` and `identify(userId)`
+    3. Initialize with env var `POSTHOG_KEY` in wrapper
+  - **Files**: src/lib/analytics.ts, package.json
+  - **Done when**: `import { track } from '@/lib/analytics'` resolves without error
+  - **Verify**: `pnpm check-types`
+
+**Example 3: Refactoring (overloaded vs. focused)**
+
+BAD:
+- [ ] 3.1 Refactor and test the auth module
+  - **Do**: Extract auth logic, add error handling, write unit tests, run linter, fix types
+  - **Files**: src/auth.ts, src/utils/token.ts, tests/auth.test.ts, src/types.ts
+
+GOOD:
+- [ ] 3.1 Extract token validation into utility
+  - **Do**:
+    1. Create `src/utils/token.ts` with `validateToken(token: string): TokenPayload | null`
+    2. Move JWT verify logic from `src/auth.ts` lines 45-62 into new file
+    3. Update `src/auth.ts` to import and call `validateToken`
+  - **Files**: src/utils/token.ts, src/auth.ts
+  - **Done when**: Existing auth flow works identically after extraction
+  - **Verify**: `pnpm check-types && pnpm test -- --grep auth`
+
+**Example 4: Goal-Driven (imperative command vs. success criteria)**
+
+BAD:
+- [ ] 4.1 Add input validation
+  - **Do**: Add validation to the form fields. Check email format, required fields, password strength.
+  - **Files**: src/components/SignupForm.tsx
+  - **Done when**: Validation is added
+  - **Verify**: Validation is added
+
+GOOD:
+- [ ] 4.1 Add signup form validation with error states
+  - **Do**:
+    1. Add validation rules to `src/components/SignupForm.tsx`: email (regex), password (min 8, 1 uppercase, 1 number), name (required)
+    2. Display inline error messages below each field on blur -> verify: error messages render
+    3. Disable submit button until all fields valid -> verify: button disabled state toggles
+  - **Files**: src/components/SignupForm.tsx
+  - **Done when**: Form rejects invalid inputs with visible error messages; submit disabled until valid
+  - **Verify**: `pnpm test -- --grep SignupForm` (write test first if missing: invalid email shows "Invalid email", short password shows "Min 8 characters")
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
@@ -34,7 +119,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Do**: {{Exact steps to implement}}
   - **Files**: {{Exact file paths to create/modify}}
   - **Done when**: {{Explicit success criteria}}
-  - **Verify**: {{Command to verify, e.g., "manually test X does Y"}}
+  - **Verify**: {{Command to verify, e.g., `curl localhost:3000/api | jq .status`}}
   - **Commit**: `feat(scope): {{task description}}`
   - _Requirements: FR-1, AC-1.1_
   - _Design: Component A_
@@ -65,9 +150,9 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Commit**: `feat(scope): {{description}}`
 
 - [ ] 1.5 POC Checkpoint
-  - **Do**: Verify feature works end-to-end
-  - **Done when**: Feature can be demonstrated working
-  - **Verify**: Manual test of core flow
+  - **Do**: Verify feature works end-to-end using automated tools (WebFetch, curl, browser automation, test runner)
+  - **Done when**: Feature can be demonstrated working via automated verification
+  - **Verify**: Run automated end-to-end verification (e.g., `curl API | jq`, browser automation script, or test command)
   - **Commit**: `feat(scope): complete POC`
 
 ## Phase 2: Refactoring
@@ -200,7 +285,7 @@ After POC validated, clean up code.
 
 - [ ] 4.3 Merge after approval (optional - only if explicitly requested)
   - **Do**: Merge PR after approval and CI green
-  - **Verify**: `gh pr merge --auto` or manual merge
+  - **Verify**: `gh pr merge --auto` or merge via GitHub UI
   - **Done when**: Changes in main branch
   - **Note**: Do NOT auto-merge unless user explicitly requests it
 
