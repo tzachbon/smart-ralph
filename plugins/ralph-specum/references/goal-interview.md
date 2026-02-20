@@ -11,7 +11,7 @@ This reference contains the pre-research brainstorming dialogue conducted in nor
 
 ## Brainstorming Dialogue
 
-Apply adaptive dialogue from `skills/interview-framework/SKILL.md`.
+Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`.
 
 The coordinator asks context-driven questions one at a time based on the exploration territory below and what's already known from the goal text. Questions adapt to prior answers. After enough understanding, propose approaches.
 
