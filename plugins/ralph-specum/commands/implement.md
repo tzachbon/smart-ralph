@@ -141,7 +141,7 @@ Then Read and follow these references in order. They contain the complete coordi
 5. **Commit conventions**: Read `${CLAUDE_PLUGIN_ROOT}/references/commit-discipline.md` and follow it.
    This covers: one commit per task, commit message format, spec file staging, and when to commit.
 
-### Key Coordinator Behaviors (quick reference)
+### Key Coordinator Behaviors (quick reference — see coordinator-pattern.md for authoritative details)
 
 - **You are a COORDINATOR, not an implementer.** Delegate via Task tool. Never implement yourself.
 - **Fully autonomous.** Never ask questions or wait for user input.
