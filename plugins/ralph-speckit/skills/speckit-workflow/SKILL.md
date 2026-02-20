@@ -1,6 +1,7 @@
 ---
 name: speckit-workflow
 description: Comprehensive understanding of the spec-kit methodology. Constitution-driven feature development with specify, plan, tasks, and implement phases.
+version: 0.1.0
 ---
 
 # SpecKit Workflow

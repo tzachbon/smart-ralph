@@ -1,6 +1,7 @@
 ---
 name: delegation-principle
 description: Core principle that the main agent is a coordinator, not an implementer. All work must be delegated to subagents.
+version: 0.1.0
 ---
 
 # Delegation Principle
