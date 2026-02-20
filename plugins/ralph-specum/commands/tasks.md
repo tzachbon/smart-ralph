@@ -84,52 +84,43 @@ Context Reading:
 - GREENFIELD: 5-10 questions (full execution context)
 - MID_SIZED: 3-7 questions (balanced approach)
 
-### Tasks Interview (Single-Question Flow)
+### Brainstorming Dialogue
 
-**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
+**Brainstorming Dialogue**: Apply adaptive dialogue from `skills/interview-framework/SKILL.md`
 
-### Phase-Specific Configuration
+The coordinator asks context-driven questions one at a time based on the exploration territory below and what's already in `.progress.md`. Questions adapt to prior answers. After enough understanding, propose approaches.
 
-- **Phase**: Tasks Interview
-- **Parameter Chain Mappings**: testingDepth, deploymentApproach, executionPriority
-- **Available Variables**: `{goal}`, `{intent}`, `{problem}`, `{constraints}`, `{technicalApproach}`, `{users}`, `{priority}`, `{architecture}`
-- **Storage Section**: `### Tasks Interview (from tasks.md)`
+### Tasks Exploration Territory
 
-### Tasks Interview Question Pool
+Areas to probe during the UNDERSTAND phase (hints, not a script):
 
-| # | Question | Required | Key | Options |
-|---|----------|----------|-----|---------|
-| 1 | What testing depth is needed for {goal}? | Required | `testingDepth` | Standard - unit + integration (Recommended) / Minimal - POC only, add tests later / Comprehensive - include E2E / Other |
-| 2 | Deployment considerations for {goal}? | Required | `deploymentApproach` | Standard CI/CD pipeline / Feature flag needed / Gradual rollout required / Other |
-| 3 | What's the execution priority for this work? | Required | `executionPriority` | Ship fast - POC first, polish later / Balanced - reasonable quality with speed / Quality first - thorough from the start / Other |
-| 4 | Any other execution context? (or say 'done' to proceed) | Optional | `additionalTasksContext` | No, let's proceed / Yes, I have more details / Other |
+- **Testing thoroughness** — minimal POC-only tests, standard unit + integration, or comprehensive E2E?
+- **Deployment considerations** — feature flags, database migrations, backward compatibility, rollback plan?
+- **Execution priority** — ship fast with shortcuts, balanced pace, or quality-first from the start?
+- **Dependency ordering** — are there tasks that must complete before others can begin?
+- **Team workflow constraints** — PR review process, CI pipeline requirements, branch strategy?
 
-### Store Tasks Interview Responses
+### Tasks Approach Proposals
 
-After interview, append to `.progress.md` under the "Interview Responses" section:
+After the dialogue, propose 2-3 execution strategies tailored to the user's goal. Examples (illustrative only):
+
+- **(A)** Aggressive POC — fewer tasks, ship in small increments, add polish later
+- **(B)** Thorough — more tasks with full test coverage and quality gates throughout
+- **(C)** Phased delivery — split into multiple PRs with clear milestones
+
+### Store Interview & Approach
+
+After interview and approach selection, append to `.progress.md` under the "Interview Responses" section:
 
 ```markdown
 ### Tasks Interview (from tasks.md)
-- Testing depth: [responses.testingDepth]
-- Deployment approach: [responses.deploymentApproach]
-- Execution priority: [responses.executionPriority]
-- Additional execution context: [responses.additionalTasksContext]
+- [Topic 1]: [response]
+- [Topic 2]: [response]
+- Chosen approach: [name] — [brief description]
 [Any follow-up responses from "Other" selections]
 ```
 
-### Interview Context Format
-
-Pass the combined context (prior + new responses) to the Task delegation prompt:
-
-```text
-Interview Context:
-- Testing depth: [Answer]
-- Deployment considerations: [Answer]
-- Execution priority: [Answer]
-- Follow-up details: [Any additional clarifications]
-```
-
-Store this context to include in the Task delegation prompt.
+Pass the combined context (interview responses + chosen approach) to the Task delegation prompt as "Interview Context".
 
 ## Execute Tasks Generation (Team-Based)
 
