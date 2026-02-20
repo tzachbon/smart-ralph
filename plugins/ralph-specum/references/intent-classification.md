@@ -86,10 +86,11 @@ Input Classification:
       - Example: `./my-plan.md --quick` -> read file, infer name
 
    b. KEBAB-CASE NAME: matches ^[a-z0-9-]+$
-      - Check if ./specs/$name/plan.md exists
-      - If exists: use plan.md content, name=$name
-      - If not exists: error "No plan.md found in ./specs/$name/. Provide goal: /ralph-specum:start $name 'your goal' --quick"
-      - Example: `my-feature --quick` -> check ./specs/my-feature/plan.md
+      - Use `ralph_find_spec($name)` to resolve spec path
+      - If found and `$specPath/plan.md` exists: use plan.md content, name=$name
+      - If found but no plan.md: error "No plan.md found in $specPath/. Provide goal: /ralph-specum:start $name 'your goal' --quick"
+      - If not found: error "Spec '$name' not found. Provide goal: /ralph-specum:start $name 'your goal' --quick"
+      - Example: `my-feature --quick` -> resolve spec path, check plan.md
 
    c. GOAL STRING: anything else (contains spaces, uppercase, special chars)
       - Use as goal content
