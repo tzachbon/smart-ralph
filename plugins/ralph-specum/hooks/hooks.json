@@ -1,6 +1,18 @@
 {
-  "description": "Ralph Specum hooks for spec execution validation and session context loading",
+  "description": "Ralph Specum hooks for spec execution validation, session context loading, and quick mode enforcement",
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/quick-mode-guard.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "*",
