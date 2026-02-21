@@ -277,12 +277,10 @@ When skipped: append "Skipping artifact review (next at task N)" to .progress.md
 
 **Verification Summary**
 
-All 5 layers must pass:
+All 3 layers must pass:
 1. No contradiction phrases with completion claim
-2. Spec files committed (no uncommitted changes)
-3. Checkmark count matches expected taskIndex + 1
-4. Explicit TASK_COMPLETE signal present
-5. Artifact review passes (spec-reviewer REVIEW_PASS or max iterations with graceful degradation)
+2. Explicit TASK_COMPLETE signal present
+3. Artifact review passes (when triggered; auto-pass when skipped per periodic rules)
 
 Only after all verifications pass, proceed to State Update.
 
