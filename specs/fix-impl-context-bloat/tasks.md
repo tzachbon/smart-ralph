@@ -321,7 +321,7 @@ Focus: Ensure edits are clean, no orphaned references, consistent wording.
   - **Commit**: `refactor(spec-executor): update state file protection to match 3-layer model`
   - _Requirements: AC-1.4_
 
-- [ ] 2.6 [VERIFY] Quality checkpoint: post-refactoring validation
+- [x] 2.6 [VERIFY] Quality checkpoint: post-refactoring validation
   - **Do**: Full validation of all changes post-refactoring
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && ! grep -rlE "5 verification|4 verification|Layer 4:|Layer 5:|checkmark mismatch \(Layer" plugins/ralph-specum/references/ plugins/ralph-specum/hooks/scripts/stop-watcher.sh plugins/ralph-specum/commands/implement.md plugins/ralph-specum/agents/spec-executor.md 2>/dev/null && echo PASS`
   - **Done when**: Shell valid, zero stale references across all modified files
