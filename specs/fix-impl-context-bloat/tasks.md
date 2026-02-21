@@ -90,7 +90,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-6, AC-4.3_
   - _Design: Detailed Changes 1. verification-layers.md_
 
-- [ ] 1.7 Update Verification Summary in verification-layers.md
+- [x] 1.7 Update Verification Summary in verification-layers.md
   - **Do**:
     1. Replace the "## Verification Summary" section (lines 188-197) with the 3-layer version from design.md: All 3 layers must pass (contradiction, TASK_COMPLETE signal, artifact review periodic)
   - **Files**: `plugins/ralph-specum/references/verification-layers.md`
