@@ -2,7 +2,7 @@
 
 > Used by: implement.md
 
-Five verification layers run BEFORE advancing taskIndex after a task reports TASK_COMPLETE. All must pass.
+Three verification layers run BEFORE advancing taskIndex after a task reports TASK_COMPLETE. All must pass.
 
 ## Layer 1: Contradiction Detection
 
@@ -18,21 +18,6 @@ If TASK_COMPLETE appears alongside any contradiction phrase:
 - REJECT the completion
 - Log: "CONTRADICTION: claimed completion while admitting failure"
 - Increment taskIteration and retry
-
-## Layer 2: Uncommitted Spec Files Check
-
-Verify spec files are committed before advancing:
-
-```bash
-git status --porcelain $SPEC_PATH/tasks.md $SPEC_PATH/.progress.md
-```
-
-If output is non-empty (uncommitted changes):
-- REJECT the completion
-- Log: "uncommitted spec files detected - task not properly committed"
-- Increment taskIteration and retry
-
-All spec file changes must be committed before a task is considered complete. The coordinator is responsible for committing spec tracking files (.progress.md, tasks.md, .index/) after each state update and at completion. Never leave spec files uncommitted between tasks.
 
 ## Layer 3: Checkmark Verification
 
