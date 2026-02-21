@@ -100,7 +100,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-3, AC-1.3, AC-1.4_
   - _Design: Detailed Changes 1. verification-layers.md_
 
-- [ ] 1.8 Update Spec-Executor Self-Verification section in verification-layers.md
+- [x] 1.8 Update Spec-Executor Self-Verification section in verification-layers.md
   - **Do**:
     1. Replace lines 199-214 ("## Spec-Executor Self-Verification") with the updated version from design.md that: (a) keeps the 4 self-verification steps, (b) replaces the "stop-hook enforces 4 of the 5" paragraph with "The coordinator trusts spec-executor for commit and checkmark verification. Coordinator layers focus on higher-order checks: contradictions, signal presence, and periodic artifact review." and lists the 3 coordinator layers
   - **Files**: `plugins/ralph-specum/references/verification-layers.md`

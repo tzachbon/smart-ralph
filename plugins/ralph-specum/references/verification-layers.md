@@ -166,10 +166,12 @@ Before outputting TASK_COMPLETE, the spec-executor runs its own verification:
 3. Confirm changes committed successfully (including spec files)
 4. Confirm task marked `[x]` in tasks.md
 
-The stop-hook enforces 4 of the 5 coordinator verification layers:
+The coordinator trusts spec-executor for commit and checkmark verification.
+Coordinator layers focus on higher-order checks: contradictions, signal presence, and periodic artifact review.
+
+The coordinator enforces 3 verification layers:
 1. Contradiction detection - rejects "requires manual... TASK_COMPLETE"
-2. Uncommitted files check - rejects if spec files not committed
-3. Checkmark verification - validates task is marked [x]
-4. Signal verification - requires TASK_COMPLETE
+2. Signal verification - requires TASK_COMPLETE
+3. Periodic artifact review - validates implementation against spec
 
 False completion WILL be caught and retried with a specific error message.
