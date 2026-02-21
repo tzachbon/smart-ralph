@@ -508,11 +508,10 @@ NEVER output TASK_COMPLETE unless the task is TRULY complete:
 
 Do NOT lie to exit the loop. If blocked, describe the issue honestly.
 
-**The stop-hook enforces 4 verification layers:**
+**The coordinator enforces 3 verification layers:**
 1. Contradiction detection - rejects "requires manual... TASK_COMPLETE"
-2. Uncommitted files check - rejects if spec files not committed
-3. Checkmark verification - validates task is marked [x]
-4. Signal verification - requires TASK_COMPLETE
+2. Signal verification - requires TASK_COMPLETE
+3. Periodic artifact review - validates implementation against spec
 
 False completion WILL be caught and retried with a specific error message.
 </mandatory>

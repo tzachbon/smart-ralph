@@ -243,7 +243,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
 
 ### spec-executor.md changes
 
-- [ ] 1.22 Update Completion Integrity section in spec-executor.md
+- [x] 1.22 Update Completion Integrity section in spec-executor.md
   - **Do**:
     1. Replace lines 511-517 (the "stop-hook enforces 4 verification layers" block) with the 3-layer version from design.md: "The coordinator enforces 3 verification layers: 1. Contradiction detection, 2. Signal verification, 3. Periodic artifact review"
   - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
