@@ -110,7 +110,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: AC-1.5_
   - _Design: Detailed Changes 1. verification-layers.md_
 
-- [ ] 1.9 [VERIFY] Quality checkpoint: full verification-layers.md validation
+- [x] 1.9 [VERIFY] Quality checkpoint: full verification-layers.md validation
   - **Do**: Verify all changes to verification-layers.md are correct and consistent
   - **Verify**: `grep -c "Layer" plugins/ralph-specum/references/verification-layers.md | head -1 && grep -q "Three verification layers" plugins/ralph-specum/references/verification-layers.md && grep -q "## Layer 1: Contradiction" plugins/ralph-specum/references/verification-layers.md && grep -q "## Layer 2: TASK_COMPLETE" plugins/ralph-specum/references/verification-layers.md && grep -q "## Layer 3: Artifact Review" plugins/ralph-specum/references/verification-layers.md && ! grep -q "## Layer 4" plugins/ralph-specum/references/verification-layers.md && ! grep -q "## Layer 5" plugins/ralph-specum/references/verification-layers.md && grep -q "When to Run" plugins/ralph-specum/references/verification-layers.md && grep -q "All 3 layers" plugins/ralph-specum/references/verification-layers.md && echo PASS`
   - **Done when**: Exactly 3 layers (1, 2, 3), no Layer 4/5, periodic rules present, summary says 3
@@ -118,7 +118,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
 
 ### coordinator-pattern.md changes
 
-- [ ] 1.10 Update Integrity Rules layer count in coordinator-pattern.md
+- [x] 1.10 Update Integrity Rules layer count in coordinator-pattern.md
   - **Do**:
     1. Change line 19 "all 5 in the Verification section" to "all 3 in the Verification section"
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`
