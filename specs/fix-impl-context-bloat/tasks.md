@@ -140,7 +140,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-1, FR-2, AC-1.1, AC-1.2_
   - _Design: Detailed Changes 2. coordinator-pattern.md_
 
-- [ ] 1.12 Renumber remaining layers in coordinator-pattern.md Verification section
+- [x] 1.12 Renumber remaining layers in coordinator-pattern.md Verification section
   - **Do**:
     1. Change "**Layer 4: TASK_COMPLETE Signal Verification**" to "**Layer 2: TASK_COMPLETE Signal Verification**"
     2. Change "**Layer 5: Artifact Review**" to "**Layer 3: Artifact Review (Periodic)**"

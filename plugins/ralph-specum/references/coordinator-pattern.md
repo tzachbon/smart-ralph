@@ -264,9 +264,16 @@ If TASK_COMPLETE missing:
 - Do NOT advance
 - Increment taskIteration and retry
 
-**Layer 5: Artifact Review**
+**Layer 3: Artifact Review (Periodic)**
 
-After Layers 1-4 pass, run the full artifact review loop defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` (section "Layer 5: Artifact Review"). This includes: review delegation prompt, fix task generation on REVIEW_FAIL, review iteration logging, parallel batch handling, and error handling.
+Runs only when:
+- Phase boundary (task phase changed from previous task)
+- Every 5th task (taskIndex % 5 == 0)
+- Final task (taskIndex == totalTasks - 1)
+
+When triggered: run the full artifact review loop defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` (section "Layer 3: Artifact Review").
+
+When skipped: append "Skipping artifact review (next at task N)" to .progress.md and proceed to State Update.
 
 **Verification Summary**
 
