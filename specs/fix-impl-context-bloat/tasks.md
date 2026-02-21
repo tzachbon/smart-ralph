@@ -180,7 +180,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
 
 ### commit-discipline.md changes
 
-- [ ] 1.16 Update Layer reference in commit-discipline.md State File Protection
+- [x] 1.16 Update Layer reference in commit-discipline.md State File Protection
   - **Do**:
     1. Change line 110 "Shortcuts are detected via checkmark mismatch (Layer 3 of verification)." to "State file is verified via contradiction detection and signal verification (Layers 1-2 of verification)."
   - **Files**: `plugins/ralph-specum/references/commit-discipline.md`
