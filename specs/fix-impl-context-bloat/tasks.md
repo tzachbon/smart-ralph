@@ -213,7 +213,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-5, FR-8, AC-3.1, AC-3.2, AC-3.3_
   - _Design: Detailed Changes 4. stop-watcher.sh_
 
-- [ ] 1.19 [VERIFY] Quality checkpoint: stop-watcher.sh changes
+- [x] 1.19 [VERIFY] Quality checkpoint: stop-watcher.sh changes
   - **Do**: Verify stop-watcher.sh is syntactically valid and contains expected changes
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q "TASK_BLOCK" plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q "Current Task" plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q "3 layers" plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo PASS`
   - **Done when**: Shell script has no syntax errors, all expected patterns present
@@ -221,7 +221,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
 
 ### implement.md changes
 
-- [ ] 1.20 Update "5 layers" to "3 layers" in implement.md Step 4 reference
+- [x] 1.20 Update "5 layers" to "3 layers" in implement.md Step 4 reference
   - **Do**:
     1. Change line 137 "5 layers (contradiction detection, uncommitted spec files, checkmark verification, TASK_COMPLETE signal, artifact review via spec-reviewer)" to "3 layers (contradiction detection, TASK_COMPLETE signal, periodic artifact review via spec-reviewer)"
   - **Files**: `plugins/ralph-specum/commands/implement.md`

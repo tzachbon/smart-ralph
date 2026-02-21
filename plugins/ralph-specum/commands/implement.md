@@ -134,7 +134,7 @@ Then Read and follow these references in order. They contain the complete coordi
    This covers: parsing failure output, fix task generation, fix task limits and depth checks, iterative recovery orchestrator, fix task insertion into tasks.md, fixTaskMap state tracking, and progress logging for fix chains.
 
 3. **Verification after each task**: Read `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` and follow it.
-   This covers: 5 layers (contradiction detection, uncommitted spec files, checkmark verification, TASK_COMPLETE signal, artifact review via spec-reviewer). All must pass before advancing.
+   This covers: 3 layers (contradiction detection, TASK_COMPLETE signal, periodic artifact review via spec-reviewer). All must pass before advancing.
 
 4. **Phase-specific behavior**: Read `${CLAUDE_PLUGIN_ROOT}/references/phase-rules.md` and follow it.
    This covers: POC-first workflow (Phase 1-4), phase distribution, quality checkpoints, and phase-specific constraints.
