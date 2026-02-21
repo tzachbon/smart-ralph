@@ -285,7 +285,7 @@ Focus: Ensure edits are clean, no orphaned references, consistent wording.
   - **Commit**: `refactor(verification): fix orphaned layer references`
   - _Requirements: AC-1.3_
 
-- [ ] 2.2 Audit coordinator-pattern.md for orphaned layer references in non-verification sections
+- [x] 2.2 Audit coordinator-pattern.md for orphaned layer references in non-verification sections
   - **Do**:
     1. Search coordinator-pattern.md for any "Layer 2" references meaning "uncommitted" or "Layer 3" meaning "checkmark" (old numbering) outside the verification section
     2. Check "After Delegation" section (line 220) and other sections for stale references
@@ -296,13 +296,13 @@ Focus: Ensure edits are clean, no orphaned references, consistent wording.
   - **Commit**: `refactor(coordinator): fix orphaned layer references`
   - _Requirements: AC-1.4_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: cross-file consistency audit
+- [x] 2.3 [VERIFY] Quality checkpoint: cross-file consistency audit
   - **Do**: Run comprehensive check across all 6 files for any remaining old-model references
   - **Verify**: `for f in plugins/ralph-specum/references/verification-layers.md plugins/ralph-specum/references/coordinator-pattern.md plugins/ralph-specum/references/commit-discipline.md plugins/ralph-specum/hooks/scripts/stop-watcher.sh plugins/ralph-specum/commands/implement.md plugins/ralph-specum/agents/spec-executor.md; do if grep -qE "5 verification|4 verification|Layer 4:|Layer 5:|5 layers|4 layers|uncommitted spec files check|checkmark mismatch \(Layer 3" "$f" 2>/dev/null; then echo "STALE: $f"; exit 1; fi; done && echo PASS`
   - **Done when**: Zero stale references across all files
   - **Commit**: `chore(spec): pass cross-file consistency checkpoint` (only if fixes needed)
 
-- [ ] 2.4 Ensure stop-watcher.sh DESIGN NOTE comment is accurate
+- [x] 2.4 Ensure stop-watcher.sh DESIGN NOTE comment is accurate
   - **Do**:
     1. Update the DESIGN NOTE comment (lines 206-212) if it references outdated layer count or behavior
     2. Verify the comment accurately describes the abbreviated vs full specification relationship
@@ -311,7 +311,7 @@ Focus: Ensure edits are clean, no orphaned references, consistent wording.
   - **Verify**: `grep -A5 "DESIGN NOTE" plugins/ralph-specum/hooks/scripts/stop-watcher.sh | grep -q "abbreviated" && echo PASS`
   - **Commit**: `refactor(stop-watcher): update design note comment`
 
-- [ ] 2.5 Verify spec-executor.md State File Protection section is consistent
+- [x] 2.5 Verify spec-executor.md State File Protection section is consistent
   - **Do**:
     1. Check lines 492-497 in spec-executor.md for "checkmark count mismatch" reference -- this should be updated since coordinator no longer does checkmark verification
     2. Update to reference the new verification model (contradiction detection + signal verification)

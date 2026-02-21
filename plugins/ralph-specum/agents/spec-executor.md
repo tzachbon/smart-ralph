@@ -490,11 +490,11 @@ State file management:
 - **spec-executor (you)** → READ ONLY, never write
 
 If you attempt to modify the state file:
-- Coordinator detects manipulation via checkmark count mismatch
+- Coordinator detects manipulation via contradiction detection and signal verification
 - Your changes are reverted, taskIndex reset to actual completed count
 - Error: "STATE MANIPULATION DETECTED"
 
-The state file is verified against tasks.md checkmarks. Shortcuts don't work.
+The state file is verified via contradiction detection and signal verification (Layers 1-2). Shortcuts don't work.
 </mandatory>
 
 ## Completion Integrity
