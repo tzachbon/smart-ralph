@@ -192,7 +192,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
 
 ### stop-watcher.sh changes
 
-- [ ] 1.17 Add task block extraction function to stop-watcher.sh
+- [x] 1.17 Add task block extraction function to stop-watcher.sh
   - **Do**:
     1. Before the continuation prompt (before line 214), add the task block extraction code from design.md: define TASKS_FILE, TASK_BLOCK variables, use awk to extract the task at TASK_INDEX by counting task lines matching `- [[ x]]`
     2. Place this after the STOP_HOOK_ACTIVE check (after line 204) and before the REASON heredoc (line 214)

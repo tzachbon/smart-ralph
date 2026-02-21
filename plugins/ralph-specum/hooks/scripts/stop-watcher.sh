@@ -203,6 +203,25 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
         exit 0
     fi
 
+    # Extract current task block from tasks.md for inline continuation
+    TASKS_FILE="$CWD/$SPEC_PATH/tasks.md"
+    TASK_BLOCK=""
+    if [ -f "$TASKS_FILE" ]; then
+        # Extract task at TASK_INDEX (0-based) by counting unchecked+checked task lines
+        # If TASK_INDEX exceeds number of tasks, awk outputs nothing (TASK_BLOCK stays empty)
+        # and the coordinator falls back to reading tasks.md directly
+        TASK_BLOCK=$(awk -v idx="$TASK_INDEX" '
+            /^- \[[ x]\]/ {
+                if (count == idx) { found=1; print; next }
+                if (found) { exit }
+                count++
+            }
+            found && /^  / { print; next }
+            found && /^$/ { print; next }
+            found && !/^  / && !/^$/ { exit }
+        ' "$TASKS_FILE")
+    fi
+
     # DESIGN NOTE: Prompt Duplication
     # This continuation prompt is intentionally abbreviated compared to implement.md.
     # - implement.md = full specification (source of truth for coordinator behavior)
