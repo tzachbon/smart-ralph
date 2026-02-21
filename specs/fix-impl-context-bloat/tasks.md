@@ -253,13 +253,13 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: AC-1.4_
   - _Design: Detailed Changes 6. spec-executor.md_
 
-- [ ] 1.23 [VERIFY] Quality checkpoint: all 6 files layer count consistency
+- [x] 1.23 [VERIFY] Quality checkpoint: all 6 files layer count consistency
   - **Do**: Verify no file references "5 layers", "4 layers", "Layer 4:", or "Layer 5:" in verification context
   - **Verify**: `! grep -l "all 5 verification\|all 4 verification\|5 verification layers\|4 verification layers" plugins/ralph-specum/references/verification-layers.md plugins/ralph-specum/references/coordinator-pattern.md plugins/ralph-specum/references/commit-discipline.md plugins/ralph-specum/hooks/scripts/stop-watcher.sh plugins/ralph-specum/commands/implement.md plugins/ralph-specum/agents/spec-executor.md 2>/dev/null && echo PASS`
   - **Done when**: Zero matches for old layer counts across all 6 files
   - **Commit**: `chore(spec): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.24 POC Checkpoint
+- [x] 1.24 POC Checkpoint
   - **Do**: Verify all 6 files are correctly modified end-to-end:
     1. verification-layers.md: 3 layers, periodic rules, --name-only, updated summary and self-verification
     2. coordinator-pattern.md: 3 layers, periodic artifact review, patient waiting
@@ -275,7 +275,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
 
 Focus: Ensure edits are clean, no orphaned references, consistent wording.
 
-- [ ] 2.1 Audit verification-layers.md for orphaned "Layer 4" or "Layer 5" references in prose
+- [x] 2.1 Audit verification-layers.md for orphaned "Layer 4" or "Layer 5" references in prose
   - **Do**:
     1. Search verification-layers.md for any remaining references to "Layer 4", "Layer 5", "Layers 1-4", "Layers 2-3" or "5 layers" in non-heading text
     2. Fix any found references to use correct new numbering

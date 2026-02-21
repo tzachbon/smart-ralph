@@ -61,7 +61,7 @@ WHILE reviewIteration <= 3:
        c. Coordinator decides path:
           - Path A (code-level issues): Generate fix task from feedback,
             insert after current task, delegate to spec-executor,
-            on TASK_COMPLETE re-run Layer 5. Increment reviewIteration.
+            on TASK_COMPLETE re-run Layer 3. Increment reviewIteration.
           - Path B (spec-level/manual issues): Append suggestions under
             "## Review Suggestions" in .progress.md. Do NOT increment
             reviewIteration. Break review loop. Proceed to State Update.
@@ -125,7 +125,7 @@ Same pattern as the fix task generator in implement.md Section 6c:
   - **Commit**: `fix($scope): address review finding from task $taskId`
 ```
 
-After fix task completes (TASK_COMPLETE), re-run Layer 5 from the top with incremented reviewIteration.
+After fix task completes (TASK_COMPLETE), re-run Layer 3 from the top with incremented reviewIteration.
 
 ### Review Iteration Logging
 
@@ -140,7 +140,7 @@ After each review iteration (regardless of outcome), append to `$SPEC_PATH/.prog
 
 ### Parallel Batch Note
 
-When Layer 5 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description.
+When Layer 3 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description.
 
 ### Error Handling
 
