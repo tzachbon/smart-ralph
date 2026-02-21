@@ -50,7 +50,7 @@ When skipped, coordinator appends to .progress.md:
 Set reviewIteration = 1
 
 WHILE reviewIteration <= 3:
-  1. Collect changed files from the task (from the task's Files list and git diff)
+  1. Collect changed files from the task (from the task's Files list and git diff --name-only HEAD~1)
   2. Read $SPEC_PATH/design.md and $SPEC_PATH/requirements.md
   3. Invoke spec-reviewer via Task tool
   4. Parse the last line of spec-reviewer output for signal:
@@ -91,7 +91,7 @@ Task description:
 [Full task block from tasks.md]
 
 Changed files:
-[Content of each file listed in the task's Files section]
+[File names from `git diff --name-only HEAD~1` or task's Files list]
 
 Upstream artifacts (for cross-referencing):
 [Full content of $SPEC_PATH/design.md]

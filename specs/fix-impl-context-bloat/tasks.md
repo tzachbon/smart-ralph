@@ -80,7 +80,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-3, FR-4, AC-1.3, AC-2.1, AC-2.2, AC-2.4_
   - _Design: Detailed Changes 1. verification-layers.md_
 
-- [ ] 1.6 Update git diff to --name-only in verification-layers.md review delegation prompt
+- [x] 1.6 Update git diff to --name-only in verification-layers.md review delegation prompt
   - **Do**:
     1. In the Review Delegation Prompt section, change `git diff` to `git diff --name-only HEAD~1` for the Changed files collection line
   - **Files**: `plugins/ralph-specum/references/verification-layers.md`
