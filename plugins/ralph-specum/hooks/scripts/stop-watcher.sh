@@ -210,6 +210,7 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
         # Extract task at TASK_INDEX (0-based) by counting unchecked+checked task lines
         # If TASK_INDEX exceeds number of tasks, awk outputs nothing (TASK_BLOCK stays empty)
         # and the coordinator falls back to reading tasks.md directly
+        # Note: awk count variable starts at 0 (default) to match 0-based TASK_INDEX
         TASK_BLOCK=$(awk -v idx="$TASK_INDEX" '
             /^- \[[ x]\]/ {
                 if (count == idx) { found=1; print; next }
