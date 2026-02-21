@@ -203,7 +203,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-5, AC-3.1, AC-3.4_
   - _Design: Detailed Changes 4. stop-watcher.sh_
 
-- [ ] 1.18 Update continuation prompt in stop-watcher.sh to inline task block
+- [x] 1.18 Update continuation prompt in stop-watcher.sh to inline task block
   - **Do**:
     1. Replace the REASON heredoc (lines 214-231) with the new version from design.md that: (a) includes `## Current Task` section with `$TASK_BLOCK`, (b) Step 1 reads only .ralph-state.json (not tasks.md), (c) Step 4 reads tasks.md only at completion, (d) references "3 layers" not "4 layers"
   - **Files**: `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`

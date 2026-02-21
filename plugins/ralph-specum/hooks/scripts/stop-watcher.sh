@@ -236,15 +236,18 @@ Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_I
 ## State
 Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE
 
+## Current Task
+$TASK_BLOCK
+
 ## Resume
-1. Read $SPEC_PATH/.ralph-state.json and $SPEC_PATH/tasks.md
-2. Delegate task $TASK_INDEX to spec-executor (or qa-engineer for [VERIFY])
+1. Read $SPEC_PATH/.ralph-state.json for current state
+2. Delegate the task above to spec-executor (or qa-engineer for [VERIFY])
 3. On TASK_COMPLETE: verify, update state, advance
-4. If taskIndex >= totalTasks: delete state file, output ALL_TASKS_COMPLETE
+4. If taskIndex >= totalTasks: read $SPEC_PATH/tasks.md to verify all [x], delete state file, output ALL_TASKS_COMPLETE
 
 ## Critical
 - Delegate via Task tool - do NOT implement yourself
-- Verify all 4 layers before advancing (see implement.md Section 7)
+- Verify all 3 layers before advancing (see implement.md Section 7)
 - On failure: increment taskIteration, retry or generate fix task if recoveryMode
 - On TASK_MODIFICATION_REQUEST: validate, insert tasks, update state (see implement.md Section 6e)
 EOF
