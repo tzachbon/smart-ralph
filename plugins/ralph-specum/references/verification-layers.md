@@ -19,7 +19,7 @@ If TASK_COMPLETE appears alongside any contradiction phrase:
 - Log: "CONTRADICTION: claimed completion while admitting failure"
 - Increment taskIteration and retry
 
-## Layer 4: TASK_COMPLETE Signal Verification
+## Layer 2: TASK_COMPLETE Signal Verification
 
 Verify spec-executor explicitly output TASK_COMPLETE:
 - Must be present in response

@@ -52,7 +52,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-2, AC-1.2_
   - _Design: Detailed Changes 1. verification-layers.md_
 
-- [ ] 1.3 Renumber Layer 4 to Layer 2 in verification-layers.md
+- [x] 1.3 Renumber Layer 4 to Layer 2 in verification-layers.md
   - **Do**:
     1. Change "## Layer 4: TASK_COMPLETE Signal Verification" to "## Layer 2: TASK_COMPLETE Signal Verification"
   - **Files**: `plugins/ralph-specum/references/verification-layers.md`
