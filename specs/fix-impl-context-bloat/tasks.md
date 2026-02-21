@@ -331,7 +331,7 @@ Focus: Ensure edits are clean, no orphaned references, consistent wording.
 
 Focus: Verify behavioral correctness through content-based tests.
 
-- [ ] 3.1 Verify verification-layers.md has exactly 3 layer headings
+- [x] 3.1 Verify verification-layers.md has exactly 3 layer headings
   - **Do**:
     1. Count "## Layer" headings in verification-layers.md
     2. Verify they are exactly: Layer 1 (Contradiction), Layer 2 (TASK_COMPLETE), Layer 3 (Artifact Review)
@@ -340,7 +340,7 @@ Focus: Verify behavioral correctness through content-based tests.
   - **Verify**: `test "$(grep -c '^## Layer' plugins/ralph-specum/references/verification-layers.md)" -eq 3 && grep -m1 '^## Layer' plugins/ralph-specum/references/verification-layers.md | grep -q "Layer 1" && echo PASS`
   - **Commit**: None (read-only verification)
 
-- [ ] 3.2 Verify periodic review conditions are complete in verification-layers.md
+- [x] 3.2 Verify periodic review conditions are complete in verification-layers.md
   - **Do**:
     1. Check that the "When to Run" section contains all 3 conditions: phase boundary, every 5th task, final task
     2. Verify skip message format is documented
@@ -349,7 +349,7 @@ Focus: Verify behavioral correctness through content-based tests.
   - **Verify**: `grep -q "Phase boundary" plugins/ralph-specum/references/verification-layers.md && grep -q "Every 5th task" plugins/ralph-specum/references/verification-layers.md && grep -q "Final task" plugins/ralph-specum/references/verification-layers.md && grep -q "Skipping artifact review" plugins/ralph-specum/references/verification-layers.md && echo PASS`
   - **Commit**: None (read-only verification)
 
-- [ ] 3.3 Verify coordinator-pattern.md Verification Summary matches verification-layers.md
+- [x] 3.3 Verify coordinator-pattern.md Verification Summary matches verification-layers.md
   - **Do**:
     1. Compare the 3-item summary lists in both files
     2. Verify they describe the same 3 layers
@@ -358,13 +358,13 @@ Focus: Verify behavioral correctness through content-based tests.
   - **Verify**: `grep -A4 "All 3 layers" plugins/ralph-specum/references/verification-layers.md | grep -q "contradiction" && grep -A4 "All 3 layers" plugins/ralph-specum/references/coordinator-pattern.md | grep -q "contradiction" && grep -A4 "All 3 layers" plugins/ralph-specum/references/verification-layers.md | grep -q "TASK_COMPLETE" && grep -A4 "All 3 layers" plugins/ralph-specum/references/coordinator-pattern.md | grep -q "TASK_COMPLETE" && echo PASS`
   - **Commit**: None (read-only verification)
 
-- [ ] 3.4 [VERIFY] Quality checkpoint: test phase validation
+- [x] 3.4 [VERIFY] Quality checkpoint: test phase validation
   - **Do**: Run all verification commands from tests 3.1-3.3
   - **Verify**: `test "$(grep -c '^## Layer' plugins/ralph-specum/references/verification-layers.md)" -eq 3 && grep -q "Phase boundary" plugins/ralph-specum/references/verification-layers.md && grep -q "All 3 layers" plugins/ralph-specum/references/coordinator-pattern.md && echo PASS`
   - **Done when**: All structural tests pass
   - **Commit**: `chore(spec): pass test phase quality checkpoint` (only if fixes needed)
 
-- [ ] 3.5 Verify stop-watcher.sh task extraction awk handles task format
+- [x] 3.5 Verify stop-watcher.sh task extraction awk handles task format
   - **Do**:
     1. Verify the awk script in stop-watcher.sh correctly matches `- [ ]` and `- [x]` patterns
     2. Verify it handles multi-line task blocks (indented continuation lines)
@@ -374,7 +374,7 @@ Focus: Verify behavioral correctness through content-based tests.
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q '\- \[[ x]\]' plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q 'found.*\/\^  \/' plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo PASS`
   - **Commit**: None (read-only verification)
 
-- [ ] 3.6 Verify stop-watcher.sh continuation prompt structure
+- [x] 3.6 Verify stop-watcher.sh continuation prompt structure
   - **Do**:
     1. Verify continuation prompt has: State section, Current Task section, Resume section, Critical section
     2. Verify Resume step 1 references only .ralph-state.json (not tasks.md)
@@ -384,7 +384,7 @@ Focus: Verify behavioral correctness through content-based tests.
   - **Verify**: `grep -q "## State" plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q "## Current Task" plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q "## Resume" plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep -q "## Critical" plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo PASS`
   - **Commit**: None (read-only verification)
 
-- [ ] 3.7 Verify patient waiting directive matches parallel-research.md pattern
+- [x] 3.7 Verify patient waiting directive matches parallel-research.md pattern
   - **Do**:
     1. Confirm coordinator-pattern.md Step 5 has "Do NOT poll TaskList in a loop"
     2. Confirm it says "wait for their messages"
@@ -393,7 +393,7 @@ Focus: Verify behavioral correctness through content-based tests.
   - **Verify**: `grep -q "Do NOT poll TaskList" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "wait for their messages" plugins/ralph-specum/references/coordinator-pattern.md && echo PASS`
   - **Commit**: None (read-only verification)
 
-- [ ] 3.8 Verify implement.md has no "5" layer references remaining
+- [x] 3.8 Verify implement.md has no "5" layer references remaining
   - **Do**:
     1. Check implement.md for any remaining "5 layers", "5 verification", "all 5" references
   - **Files**: `plugins/ralph-specum/commands/implement.md`
@@ -401,7 +401,7 @@ Focus: Verify behavioral correctness through content-based tests.
   - **Verify**: `! grep -qE "5 layers|5 verification|all 5 verification" plugins/ralph-specum/commands/implement.md && echo PASS`
   - **Commit**: None (read-only verification)
 
-- [ ] 3.9 [VERIFY] Quality checkpoint: full behavioral test suite
+- [x] 3.9 [VERIFY] Quality checkpoint: full behavioral test suite
   - **Do**: Run all verification commands from Phase 3 as a single comprehensive check
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && test "$(grep -c '^## Layer' plugins/ralph-specum/references/verification-layers.md)" -eq 3 && grep -q "Do NOT poll TaskList" plugins/ralph-specum/references/coordinator-pattern.md && ! grep -qE "5 layers|5 verification|all 5|all 4 verification|4 layers" plugins/ralph-specum/commands/implement.md plugins/ralph-specum/references/coordinator-pattern.md plugins/ralph-specum/references/verification-layers.md plugins/ralph-specum/agents/spec-executor.md 2>/dev/null && echo "ALL TESTS PASS"`
   - **Done when**: Complete behavioral test suite passes
@@ -411,7 +411,7 @@ Focus: Verify behavioral correctness through content-based tests.
 
 > **IMPORTANT**: NEVER push directly to the default branch (main/master). Branch management is handled at startup via `/ralph-specum:start`. You should already be on a feature branch by this phase.
 
-- [ ] 4.1 Local quality check
+- [x] 4.1 Local quality check
   - **Do**: Run comprehensive quality checks locally. Since this is a markdown/shell plugin with no build system, verify:
     1. Shell syntax valid: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. No stale layer references across all 6 files
@@ -420,7 +420,7 @@ Focus: Verify behavioral correctness through content-based tests.
   - **Done when**: All local quality checks pass
   - **Commit**: `fix(context-bloat): address quality issues` (if fixes needed)
 
-- [ ] 4.2 Create PR and verify CI
+- [x] 4.2 Create PR and verify CI
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user (branch should be set at startup)
