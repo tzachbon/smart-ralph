@@ -62,13 +62,13 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-3, AC-1.3_
   - _Design: Detailed Changes 1. verification-layers.md_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: verify verification-layers.md layer removal
+- [x] 1.4 [VERIFY] Quality checkpoint: verify verification-layers.md layer removal
   - **Do**: Verify layers 2 and 3 are fully removed, layer 4 renumbered to 2
   - **Verify**: `! grep -q "Uncommitted Spec Files" plugins/ralph-specum/references/verification-layers.md && ! grep -q "Checkmark Verification" plugins/ralph-specum/references/verification-layers.md && grep -q "## Layer 2: TASK_COMPLETE" plugins/ralph-specum/references/verification-layers.md && echo PASS`
   - **Done when**: No traces of old Layer 2/3, Layer 4 is now Layer 2
   - **Commit**: `chore(verification): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.5 Renumber Layer 5 to Layer 3 and add periodic rules in verification-layers.md
+- [x] 1.5 Renumber Layer 5 to Layer 3 and add periodic rules in verification-layers.md
   - **Do**:
     1. Change "## Layer 5: Artifact Review" to "## Layer 3: Artifact Review"
     2. Change "After Layers 1-4 pass" to "After Layers 1-2 pass"

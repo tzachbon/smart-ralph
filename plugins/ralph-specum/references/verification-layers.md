@@ -30,9 +30,19 @@ If TASK_COMPLETE missing:
 - Do NOT advance
 - Increment taskIteration and retry
 
-## Layer 5: Artifact Review
+## Layer 3: Artifact Review
 
-After Layers 1-4 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
+After Layers 1-2 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
+
+### When to Run
+
+Layer 3 runs only when ANY of these conditions are true:
+- **Phase boundary**: Current task is the first task of a new phase (phase number in task ID changed from previous completed task)
+- **Every 5th task**: taskIndex % 5 == 0
+- **Final task**: taskIndex == totalTasks - 1
+
+When skipped, coordinator appends to .progress.md:
+"Skipping artifact review (next at task N)" where N is the next task index that would trigger review.
 
 ### Review Loop
 
