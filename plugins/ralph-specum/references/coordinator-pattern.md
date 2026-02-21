@@ -204,7 +204,7 @@ ALL Task calls in ONE message for true parallelism:
 `Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec\nprogressFile: .progress-task-$taskIndex.md\n[full task block and context]")`
 
 **Step 5: Wait for Completion**
-Monitor via TaskList. Wait for all teammates to report done. On timeout, proceed with completed tasks and handle failures via Progress Merge.
+Wait for automatic teammate idle notifications. Use TaskList ONCE to verify all tasks complete. Do NOT poll TaskList in a loop. After spawning teammates, wait for their messages -- they will notify you when done.
 
 **Step 6: Shutdown Teammates**
 `SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex", content: "Execution complete, shutting down")` for each teammate.

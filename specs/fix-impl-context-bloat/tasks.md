@@ -162,13 +162,13 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-3, AC-1.4_
   - _Design: Detailed Changes 2. coordinator-pattern.md_
 
-- [ ] 1.14 [VERIFY] Quality checkpoint: coordinator-pattern.md verification section
+- [x] 1.14 [VERIFY] Quality checkpoint: coordinator-pattern.md verification section
   - **Do**: Verify coordinator verification layers are correctly restructured
   - **Verify**: `grep -c "Layer" plugins/ralph-specum/references/coordinator-pattern.md | head -1 && grep -q "all 3 in the Verification" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "these 3 verifications" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "All 3 layers" plugins/ralph-specum/references/coordinator-pattern.md && echo PASS`
   - **Done when**: All "3" references consistent, no "4" or "5" layer references remain in verification context
   - **Commit**: `chore(coordinator): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.15 Add patient waiting directive to coordinator-pattern.md parallel Step 5
+- [x] 1.15 Add patient waiting directive to coordinator-pattern.md parallel Step 5
   - **Do**:
     1. Replace Step 5 content (line 207) "Monitor via TaskList. Wait for all teammates to report done. On timeout, proceed with completed tasks and handle failures via Progress Merge." with: "Wait for automatic teammate idle notifications. Use TaskList ONCE to verify all tasks complete. Do NOT poll TaskList in a loop. After spawning teammates, wait for their messages -- they will notify you when done."
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`
