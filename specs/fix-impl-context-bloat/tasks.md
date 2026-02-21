@@ -128,7 +128,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-3, AC-1.4_
   - _Design: Detailed Changes 2. coordinator-pattern.md_
 
-- [ ] 1.11 Replace Verification Layers section in coordinator-pattern.md -- remove layers 2+3
+- [x] 1.11 Replace Verification Layers section in coordinator-pattern.md -- remove layers 2+3
   - **Do**:
     1. Change line 240 "these 5 verifications" to "these 3 verifications"
     2. Remove Layer 2 (Uncommitted Spec Files Check) section (lines 256-271)

@@ -237,7 +237,7 @@ If no completion signal:
 
 ## Verification Layers
 
-CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.
+CRITICAL: Run these 3 verifications BEFORE advancing taskIndex. All must pass.
 
 **Layer 1: CONTRADICTION Detection**
 
@@ -253,40 +253,7 @@ If TASK_COMPLETE appears alongside any contradiction phrase:
 - Log: "CONTRADICTION: claimed completion while admitting failure"
 - Increment taskIteration and retry
 
-**Layer 2: Uncommitted Spec Files Check**
-
-Before advancing, verify spec files are committed:
-
-```bash
-git status --porcelain $SPEC_PATH/tasks.md $SPEC_PATH/.progress.md
-```
-
-If output is non-empty (uncommitted changes):
-- REJECT the completion
-- Log: "uncommitted spec files detected - task not properly committed"
-- Increment taskIteration and retry
-
-All spec file changes must be committed before task is considered complete.
-
-**IMPORTANT**: The coordinator is responsible for committing spec tracking files (.progress.md, tasks.md, .index/) after each state update and at completion. Never leave spec files uncommitted between tasks.
-
-**Layer 3: Checkmark Verification**
-
-Count completed tasks in tasks.md:
-
-```bash
-grep -c '\- \[x\]' $SPEC_PATH/tasks.md
-```
-
-Expected checkmark count = taskIndex + 1 (0-based index, so task 0 complete = 1 checkmark)
-
-If actual count != expected:
-- REJECT the completion
-- Log: "checkmark mismatch: expected $expected, found $actual"
-- This detects state manipulation or incomplete task marking
-- Increment taskIteration and retry
-
-**Layer 4: TASK_COMPLETE Signal Verification**
+**Layer 2: TASK_COMPLETE Signal Verification**
 
 Verify spec-executor explicitly output TASK_COMPLETE:
 - Must be present in response
