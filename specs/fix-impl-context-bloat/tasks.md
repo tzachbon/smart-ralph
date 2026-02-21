@@ -42,7 +42,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-1, AC-1.1_
   - _Design: Detailed Changes 1. verification-layers.md_
 
-- [ ] 1.2 Remove Layer 3 (Checkmark Verification) from verification-layers.md
+- [x] 1.2 Remove Layer 3 (Checkmark Verification) from verification-layers.md
   - **Do**:
     1. Remove the entire Layer 3 section (lines 37-67, "## Layer 3: Checkmark Verification" through the retry line)
   - **Files**: `plugins/ralph-specum/references/verification-layers.md`

@@ -19,38 +19,6 @@ If TASK_COMPLETE appears alongside any contradiction phrase:
 - Log: "CONTRADICTION: claimed completion while admitting failure"
 - Increment taskIteration and retry
 
-## Layer 3: Checkmark Verification
-
-Count completed tasks in tasks.md:
-
-```bash
-grep -c '\- \[x\]' $SPEC_PATH/tasks.md
-```
-
-Expected checkmark count:
-- **Standard mode**: `taskIndex + 1` (0-based index, so task 0 complete = 1 checkmark)
-- **Recovery mode** (`recoveryMode = true` in state): `taskIndex + 1 + completed fix tasks`. Calculate by summing completed fix task checkmarks for indices <= taskIndex:
-  ```bash
-  # Standard
-  EXPECTED=$((taskIndex + 1))
-
-  # Recovery mode adjustment
-  if [ "$RECOVERY_MODE" = "true" ]; then
-    FIX_COUNT=$(jq --argjson idx "$taskIndex" '
-      [.fixTaskMap // {} | to_entries[]
-       | select(.key | split(".")[0] | tonumber <= $idx)
-       | .value.fixTaskIds | length] | add // 0
-    ' "$SPEC_PATH/.ralph-state.json")
-    EXPECTED=$((EXPECTED + FIX_COUNT))
-  fi
-  ```
-
-If actual count != expected:
-- REJECT the completion
-- Log: "checkmark mismatch: expected $expected, found $actual"
-- This detects state manipulation or incomplete task marking
-- Increment taskIteration and retry
-
 ## Layer 4: TASK_COMPLETE Signal Verification
 
 Verify spec-executor explicitly output TASK_COMPLETE:
