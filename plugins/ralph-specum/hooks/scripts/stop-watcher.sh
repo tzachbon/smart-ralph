@@ -220,7 +220,7 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
             found && /^  / { print; next }
             found && /^$/ { print; next }
             found && !/^  / && !/^$/ { exit }
-        ' "$TASKS_FILE")
+        ' "$TASKS_FILE" | sed -e :a -e '/^[[:space:]]*$/{' -e '$d' -e N -e ba -e '}')
     fi
 
     # DESIGN NOTE: Prompt Duplication
