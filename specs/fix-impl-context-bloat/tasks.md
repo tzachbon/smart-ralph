@@ -231,7 +231,7 @@ Focus: Apply all 6 file changes specified in design.md. Verify each edit via gre
   - _Requirements: FR-3, AC-1.4_
   - _Design: Detailed Changes 5. implement.md_
 
-- [ ] 1.21 Update "all 5 verification layers" to "all 3" in implement.md Key Coordinator Behaviors
+- [x] 1.21 Update "all 5 verification layers" to "all 3" in implement.md Key Coordinator Behaviors
   - **Do**:
     1. Change line 152 "Run all 5 verification layers" to "Run all 3 verification layers"
   - **Files**: `plugins/ralph-specum/commands/implement.md`
