@@ -36,11 +36,11 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/intent-classification.md` and follow the 
 
 ### Quick Mode Check
 
-If `--quick` flag detected in $ARGUMENTS, skip to **Step 5: Quick Mode Flow**.
+If `--quick` flag detected in $ARGUMENTS, skip to **Step 6: Quick Mode Flow**.
 
-## Step 2.5: Skill Discovery Pass 1
+## Step 3: Skill Discovery Pass 1
 
-> **Normal mode only** -- quick mode skips to Step 5 and never reaches this step. Quick mode gets its own Pass 1 in quick-mode.md.
+> **Normal mode only** -- quick mode skips to Step 6 and never reaches this step. Quick mode gets its own Pass 1 in quick-mode.md.
 
 Scan all skill files and match against the goal text:
 
@@ -71,7 +71,7 @@ Scan all skill files and match against the goal text:
    ```
    If no skills match: `- No skills matched`
 
-## Step 3: Scan Existing Specs
+## Step 4: Scan Existing Specs
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/spec-scanner.md` and follow the scanning algorithm and index hint logic.
 
@@ -81,7 +81,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/spec-scanner.md` and follow the scanning 
 
 **Summary**: Scans ./specs/ directory (and all configured specs_dirs) for related specs using keyword matching. Displays related specs with relevance scores. Shows index hint if codebase indexing not yet done. Stores relatedSpecs in .ralph-state.json for use during interview.
 
-## Step 4: Route to Action
+## Step 5: Route to Action
 
 Based on detection logic from Step 2:
 
@@ -200,7 +200,7 @@ Then STOP. Output: `-> Next: Run /ralph-specum:requirements`
 End response immediately.
 </mandatory>
 
-## Step 5: Quick Mode Flow
+## Step 6: Quick Mode Flow
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/quick-mode.md` and follow the full quick mode execution sequence.
 

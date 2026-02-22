@@ -170,7 +170,7 @@ Focus: Clean up inline instructions for clarity. Ensure consistent formatting be
   - **Commit**: `refactor(ralph-specum): normalize tokenization rules across discovery passes`
   - _Design: Tokenization Rules_
 
-- [ ] 2.2 Clean up step numbering in start.md
+- [x] 2.2 Clean up step numbering in start.md
   - **Do**:
     1. Review start.md New Flow numbered list (steps 1-12)
     2. Decide: either use X.5 numbering (2.5, 11.5) or renumber to integers
