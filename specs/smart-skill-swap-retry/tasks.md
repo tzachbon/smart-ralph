@@ -19,7 +19,7 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
   - _Requirements: FR-5, AC-3.1_
   - _Design: State Schema Changes_
 
-- [ ] 1.2 Add discoveredSkills to state initialization in quick-mode.md
+- [x] 1.2 Add discoveredSkills to state initialization in quick-mode.md
   - **Do**:
     1. Open `plugins/ralph-specum/references/quick-mode.md`
     2. In step 5 (Write .ralph-state.json), add `"discoveredSkills": []` to the JSON block (after `quickMode`)

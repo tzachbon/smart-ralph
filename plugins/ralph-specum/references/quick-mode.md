@@ -72,7 +72,7 @@ Validation Sequence:
      taskIndex: 0, totalTasks: 0, taskIteration: 1,
      maxTaskIterations: 5, globalIteration: 1,
      maxGlobalIterations: 100, commitSpec: $commitSpec,
-     quickMode: true }
+     quickMode: true, discoveredSkills: [] }
 6. Write .progress.md with original goal
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
