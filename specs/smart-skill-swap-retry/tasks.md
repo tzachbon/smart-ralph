@@ -76,7 +76,7 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
   - _Requirements: FR-4, FR-7, AC-2.1, AC-2.2, AC-2.3_
   - _Design: Discovery Instructions Block, Insertion Points (Normal Mode)_
 
-- [ ] 1.6 Add Skill Discovery Pass 1 to quick-mode.md (Step 8.5)
+- [x] 1.6 Add Skill Discovery Pass 1 to quick-mode.md (Step 8.5)
   - **Do**:
     1. Open `plugins/ralph-specum/references/quick-mode.md`
     2. In the Quick Mode Execution Sequence, insert step 8.5 between step 8 (Update Spec Index) and step 9 (Goal Type Detection)

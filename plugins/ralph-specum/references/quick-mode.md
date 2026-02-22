@@ -76,6 +76,7 @@ Validation Sequence:
 6. Write .progress.md with original goal
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
+8.5. Skill Discovery Pass 1: scan skills, match against goal text, invoke matches
 9. Goal Type Detection:
    - Classify as "fix" or "add" using regex indicators
    - Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
@@ -91,6 +92,32 @@ Validation Sequence:
     - If commitSpec: stage, commit, push spec files
 15. Invoke spec-executor for task 1
 ```
+
+## Step 8.5: Skill Discovery Pass 1
+
+Scan all skill files and match against the goal text:
+
+1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
+2. Determine **context text**: the goal text only (from step 1)
+3. Tokenize both context text and each skill's `description` using these rules:
+   a. Lowercase the entire string
+   b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
+   c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
+   d. Split on whitespace into word tokens
+   e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
+4. Count word overlap between context tokens and description tokens
+5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
+   - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
+   - On success: add `{ name, matchedAt: "start", invoked: true }` to `discoveredSkills`
+   - On failure: add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
+6. Update `.ralph-state.json` with updated `discoveredSkills` array
+7. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+   ```markdown
+   ## Skill Discovery
+   - **<skill-name>**: matched (keywords: <overlapping words>)
+   - **<skill-name>**: no match
+   ```
+   If no skills match: `- No skills matched`
 
 ## Quick Mode Directive
 
