@@ -51,13 +51,13 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
   - _Requirements: FR-1, FR-2, FR-3, AC-1.1, AC-1.2, AC-1.3, AC-1.5_
   - _Design: Discovery Instructions Block, Insertion Points (Normal Mode)_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: grep for consistent terminology
+- [x] 1.4 [VERIFY] Quality checkpoint: grep for consistent terminology
   - **Do**: Verify start.md uses consistent naming (discoveredSkills, matchedAt, invoked) matching design.md
   - **Verify**: `grep -c 'discoveredSkills' plugins/ralph-specum/commands/start.md` returns >= 2 (init + pass 1) AND `grep -c 'matchedAt' plugins/ralph-specum/commands/start.md` returns >= 1
   - **Done when**: Terminology matches design spec
   - **Commit**: `chore(ralph-specum): fix terminology` (only if fixes needed)
 
-- [ ] 1.5 Add Skill Discovery Pass 2 to start.md (normal mode, post-research)
+- [x] 1.5 Add Skill Discovery Pass 2 to start.md (normal mode, post-research)
   - **Do**:
     1. Open `plugins/ralph-specum/commands/start.md`
     2. In the New Flow section, insert a new step after step 11 (Team Research Phase) and before step 12 (STOP/walkthrough). Renumber if needed, or insert as step 11.5
