@@ -72,29 +72,93 @@ Validation Sequence:
      taskIndex: 0, totalTasks: 0, taskIteration: 1,
      maxTaskIterations: 5, globalIteration: 1,
      maxGlobalIterations: 100, commitSpec: $commitSpec,
-     quickMode: true }
+     quickMode: true, discoveredSkills: [] }
 6. Write .progress.md with original goal
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
-9. Goal Type Detection:
-   - Classify as "fix" or "add" using regex indicators
-   - Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
-   - Add: add|create|build|implement|new|enable|introduce (default)
-   - For fix goals: run reproduction, document BEFORE state
-10. Research Phase: run Team Research flow (skip walkthrough), clear awaitingApproval
-11. Requirements Phase: delegate to product-manager with Quick Mode Directive, review loop
-12. Design Phase: delegate to architect-reviewer with Quick Mode Directive, review loop
-13. Tasks Phase: delegate to task-planner with Quick Mode Directive, review loop
-14. Transition to Execution:
+9. Skill Discovery Pass 1: scan skills, match against goal text, invoke matches
+10. Goal Type Detection:
+    - Classify as "fix" or "add" using regex indicators
+    - Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
+    - Add: add|create|build|implement|new|enable|introduce (default)
+    - For fix goals: run reproduction, document BEFORE state
+11. Research Phase: run Team Research flow (skip walkthrough), clear awaitingApproval
+12. Skill Discovery Pass 2: re-scan skills using goal + research Executive Summary, invoke new matches
+13. Requirements Phase: delegate to product-manager with Quick Mode Directive, review loop
+14. Design Phase: delegate to architect-reviewer with Quick Mode Directive, review loop
+15. Tasks Phase: delegate to task-planner with Quick Mode Directive, review loop
+16. Transition to Execution:
     - Count total tasks (number of `- [ ]` checkboxes)
     - Update state: phase="execution", totalTasks=<count>, taskIndex=0
     - If commitSpec: stage, commit, push spec files
-15. Invoke spec-executor for task 1
+17. Invoke spec-executor for task 1
 ```
+
+## Step 9: Skill Discovery Pass 1
+
+Scan all skill files and match against the goal text:
+
+1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
+   - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
+   - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
+2. Determine **context text**: the goal text only (from step 1)
+3. Tokenize both context text and each skill's `description` using these rules:
+   a. Lowercase the entire string
+   b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
+   c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
+   d. Split on whitespace into word tokens
+   e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
+4. Count word overlap between context tokens and description tokens
+5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
+   - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
+   - On success: add `{ name, matchedAt: "start", invoked: true }` to `discoveredSkills`
+   - On failure: set `invoked: false` -- add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
+6. If no skills match across all scanned skills: log `- No skills matched`
+7. Update `.ralph-state.json` with updated `discoveredSkills` array
+8. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+   ```markdown
+   ## Skill Discovery
+   - **<skill-name>**: matched (keywords: <overlapping words>)
+   - **<skill-name>**: no match
+   - **<skill-name>**: skipped (unreadable)
+   - **<skill-name>**: skipped (no description)
+   ```
+   If no skills match: `- No skills matched`
+
+## Step 12: Skill Discovery Pass 2 (Post-Research Retry)
+
+Re-scan skills with enriched context after research completes:
+
+1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
+   - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
+   - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
+2. Determine **context text**: goal text + the **Executive Summary** section from `research.md`
+3. Tokenize both context text and each skill's `description` using these rules:
+   a. Lowercase the entire string
+   b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
+   c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
+   d. Split on whitespace into word tokens
+   e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
+4. Count word overlap between context tokens and description tokens
+5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
+   - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
+   - On success: add `{ name, matchedAt: "post-research", invoked: true }` to `discoveredSkills`
+   - On failure: set `invoked: false` -- add `{ name, matchedAt: "post-research", invoked: false }`, log warning, continue
+6. If no skills match across all scanned skills: log `- No skills matched`
+7. Update `.ralph-state.json` with updated `discoveredSkills` array
+8. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
+   ```markdown
+   ### Post-Research Retry
+   - **<skill-name>**: matched (keywords: <overlapping words>)
+   - **<skill-name>**: no match (already invoked)
+   - **<skill-name>**: skipped (unreadable)
+   - **<skill-name>**: skipped (no description)
+   ```
+   If no new skills match: `- No new skills matched`
 
 ## Quick Mode Directive
 
-Each agent delegation in steps 10-13 includes this directive in the Task prompt:
+Each agent delegation in steps 11-15 includes this directive in the Task prompt:
 
 ```text
 Quick Mode Context:
@@ -109,7 +173,7 @@ Running in quick mode with no user feedback. You MUST:
 
 ## Quick Mode Review Loop (Per Artifact)
 
-After each phase agent returns in steps 11-13, run spec-reviewer to validate:
+After each phase agent returns in steps 13-15, run spec-reviewer to validate:
 
 ```text
 Set iteration = 1
