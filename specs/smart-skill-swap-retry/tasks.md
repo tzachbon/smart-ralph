@@ -133,7 +133,7 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
   - _Requirements: FR-8, AC-5.3_
   - _Design: Error Handling_
 
-- [ ] 1.10 [VERIFY] Quality checkpoint: full content verification
+- [x] 1.10 [VERIFY] Quality checkpoint: full content verification
   - **Do**: Verify all 4 discovery insertion points exist and have required elements
   - **Verify**: Run all of these:
     - `grep -c 'Skill Discovery' plugins/ralph-specum/commands/start.md` >= 2 (pass 1 + pass 2)
@@ -145,7 +145,7 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
   - **Done when**: All grep counts meet thresholds
   - **Commit**: `chore(ralph-specum): pass POC quality checkpoint` (only if fixes needed)
 
-- [ ] 1.11 POC Checkpoint: verify feature works end-to-end
+- [x] 1.11 POC Checkpoint: verify feature works end-to-end
   - **Do**:
     1. Read start.md fully and trace the normal mode flow: Step 1 -> Step 2 -> Step 2.5 (Pass 1) -> Step 3 -> Step 4 (New Flow) -> steps 1-11 -> Post-Research (Pass 2) -> STOP
     2. Read quick-mode.md fully and trace: steps 1-8 -> 8.5 (Pass 1) -> 9-10 -> 10.5 (Pass 2) -> 11-15
@@ -159,7 +159,7 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
 
 Focus: Clean up inline instructions for clarity. Ensure consistent formatting between normal and quick mode.
 
-- [ ] 2.1 Ensure tokenization rules are identically worded in all 4 passes
+- [x] 2.1 Ensure tokenization rules are identically worded in all 4 passes
   - **Do**:
     1. Compare the tokenization rules text in start.md Pass 1 vs Pass 2 vs quick-mode.md Pass 1 vs Pass 2
     2. Pick the clearest wording and normalize all 4 to use identical phrasing
