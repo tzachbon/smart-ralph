@@ -121,6 +121,8 @@ If no [P] marker on current task, set:
 
 ## Task Delegation
 
+**Task Start SHA**: Before delegating any task, record `TASK_START_SHA=$(git rev-parse HEAD)`. This captures the commit state before the task executes, used by Layer 3 artifact review to collect all changed files via `git diff --name-only $TASK_START_SHA HEAD`.
+
 ### VERIFY Task Detection
 
 Before standard delegation, check if current task has [VERIFY] marker.
@@ -268,7 +270,7 @@ If TASK_COMPLETE missing:
 
 Runs only when:
 - Phase boundary (task phase changed from previous task)
-- Every 5th task (taskIndex % 5 == 0)
+- Every 5th task (taskIndex > 0 && taskIndex % 5 == 0)
 - Final task (taskIndex == totalTasks - 1)
 
 When triggered: run the full artifact review loop defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` (section "Layer 3: Artifact Review").

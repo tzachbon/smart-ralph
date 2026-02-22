@@ -21,8 +21,9 @@ If TASK_COMPLETE appears alongside any contradiction phrase:
 
 ## Layer 2: TASK_COMPLETE Signal Verification
 
-Verify spec-executor explicitly output TASK_COMPLETE:
+Verify spec-executor explicitly output TASK_COMPLETE (or ALL_TASKS_COMPLETE):
 - Must be present in response
+- ALL_TASKS_COMPLETE is accepted as equivalent to TASK_COMPLETE
 - Not just implied or partial completion
 - Silent completion is not valid
 
@@ -38,19 +39,21 @@ After Layers 1-2 pass, invoke the `spec-reviewer` agent to validate the implemen
 
 Layer 3 runs only when ANY of these conditions are true:
 - **Phase boundary**: Current task is the first task of a new phase (phase number in task ID changed from previous completed task)
-- **Every 5th task**: taskIndex % 5 == 0
-- **Final task**: taskIndex == totalTasks - 1
+- **Every 5th task**: taskIndex > 0 && taskIndex % 5 == 0
+- **Final task**: taskIndex == totalTasks - 1 (accepts either TASK_COMPLETE or ALL_TASKS_COMPLETE from spec-executor)
 
 When skipped, coordinator appends to .progress.md:
-"Skipping artifact review (next at task N)" where N is the next task index that would trigger review.
+"Skipping artifact review (next at task N)" where N is the next taskIndex satisfying the periodic condition (taskIndex > 0 && taskIndex % 5 == 0). For example, at taskIndex 1, N = 5; at taskIndex 6, N = 10. Phase boundary and final task triggers are computed separately.
+
+**Pre-requisite**: Before delegating each task, the coordinator records `TASK_START_SHA=$(git rev-parse HEAD)` to capture the commit state before task execution.
 
 ### Review Loop
 
-```
+```text
 Set reviewIteration = 1
 
 WHILE reviewIteration <= 3:
-  1. Collect changed files from the task (from the task's Files list and git diff --name-only HEAD~1)
+  1. Collect changed files from the task (from the task's Files list and git diff --name-only $TASK_START_SHA HEAD)
   2. Read $SPEC_PATH/design.md and $SPEC_PATH/requirements.md
   3. Invoke spec-reviewer via Task tool
   4. Parse the last line of spec-reviewer output for signal:
@@ -91,7 +94,7 @@ Task description:
 [Full task block from tasks.md]
 
 Changed files:
-[File names from `git diff --name-only HEAD~1` or task's Files list]
+[File names from `git diff --name-only $TASK_START_SHA HEAD` or task's Files list]
 
 Upstream artifacts (for cross-referencing):
 [Full content of $SPEC_PATH/design.md]
@@ -168,6 +171,8 @@ Before outputting TASK_COMPLETE, the spec-executor runs its own verification:
 
 The coordinator trusts spec-executor for commit and checkmark verification.
 Coordinator layers focus on higher-order checks: contradictions, signal presence, and periodic artifact review.
+
+**ALL_TASKS_COMPLETE handling**: When spec-executor outputs ALL_TASKS_COMPLETE instead of TASK_COMPLETE, Layer 2 treats it as satisfying the TASK_COMPLETE signal requirement. Layer 3's final-task trigger (taskIndex == totalTasks - 1) accepts either signal when deciding to run final-task verification.
 
 The coordinator enforces 3 verification layers:
 1. Contradiction detection - rejects "requires manual... TASK_COMPLETE"

@@ -231,7 +231,7 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
     # specification lives in implement.md; this prompt provides just enough context
     # for the coordinator to resume execution efficiently.
 
-    REASON=$(cat <<EOF
+    REASON=$(cat <<STOP_WATCHER_REASON_EOF
 Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
 
 ## State
@@ -248,10 +248,10 @@ $TASK_BLOCK
 
 ## Critical
 - Delegate via Task tool - do NOT implement yourself
-- Verify all 3 layers before advancing (see implement.md Section 7)
+- Verify all 3 layers before advancing (see verification-layers.md)
 - On failure: increment taskIteration, retry or generate fix task if recoveryMode
-- On TASK_MODIFICATION_REQUEST: validate, insert tasks, update state (see implement.md Section 6e)
-EOF
+- On TASK_MODIFICATION_REQUEST: validate, insert tasks, update state (see coordinator-pattern.md § 'Modification Request Handler')
+STOP_WATCHER_REASON_EOF
 )
 
     SYSTEM_MSG="Ralph-specum iteration $GLOBAL_ITERATION | Task $((TASK_INDEX + 1))/$TOTAL_TASKS"

@@ -464,6 +464,6 @@ Focus: Verify behavioral correctness through content-based tests.
 
 ## Dependencies
 
-```
+```text
 Phase 1 (POC: all 6 file edits) → Phase 2 (Refactor: orphan cleanup) → Phase 3 (Testing: content verification) → Phase 4 (Quality Gates + PR)
 ```
