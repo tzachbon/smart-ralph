@@ -94,13 +94,13 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
   - _Requirements: FR-1, FR-2, FR-3, AC-1.1, AC-5.1_
   - _Design: Insertion Points (Quick Mode)_
 
-- [ ] 1.7 [VERIFY] Quality checkpoint: both files have Pass 1
+- [x] 1.7 [VERIFY] Quality checkpoint: both files have Pass 1
   - **Do**: Verify both start.md and quick-mode.md contain Skill Discovery Pass 1 with matching algorithm
   - **Verify**: `grep -c 'Skill Discovery Pass 1' plugins/ralph-specum/commands/start.md` >= 1 AND `grep -c 'Skill Discovery Pass 1' plugins/ralph-specum/references/quick-mode.md` >= 1 AND `grep -c 'overlap >= 2' plugins/ralph-specum/commands/start.md` >= 1 AND `grep -c 'overlap >= 2' plugins/ralph-specum/references/quick-mode.md` >= 1
   - **Done when**: Both files have consistent Pass 1 instructions with threshold
   - **Commit**: `chore(ralph-specum): align pass 1 instructions` (only if fixes needed)
 
-- [ ] 1.8 Add Skill Discovery Pass 2 to quick-mode.md (Step 10.5)
+- [x] 1.8 Add Skill Discovery Pass 2 to quick-mode.md (Step 10.5)
   - **Do**:
     1. Open `plugins/ralph-specum/references/quick-mode.md`
     2. Insert step 10.5 between step 10 (Research Phase) and step 11 (Requirements Phase)
