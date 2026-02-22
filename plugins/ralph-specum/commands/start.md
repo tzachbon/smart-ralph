@@ -45,6 +45,8 @@ If `--quick` flag detected in $ARGUMENTS, skip to **Step 5: Quick Mode Flow**.
 Scan all skill files and match against the goal text:
 
 1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
+   - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
+   - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
 2. Determine **context text**: the goal text only (from Step 2)
 3. Tokenize both context text and each skill's `description` using these rules:
    a. Lowercase the entire string
@@ -56,13 +58,16 @@ Scan all skill files and match against the goal text:
 5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
    - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
    - On success: add `{ name, matchedAt: "start", invoked: true }` to `discoveredSkills`
-   - On failure: add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
-6. Update `.ralph-state.json` with updated `discoveredSkills` array
-7. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+   - On failure: set `invoked: false` -- add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
+6. If no skills match across all scanned skills: log `- No skills matched`
+7. Update `.ralph-state.json` with updated `discoveredSkills` array
+8. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
    ```markdown
    ## Skill Discovery
    - **<skill-name>**: matched (keywords: <overlapping words>)
    - **<skill-name>**: no match
+   - **<skill-name>**: skipped (unreadable)
+   - **<skill-name>**: skipped (no description)
    ```
    If no skills match: `- No skills matched`
 
@@ -140,6 +145,8 @@ Continuing...
     Scan all skill files and match against goal + research context:
 
     1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
+       - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
+       - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
     2. Determine **context text**: goal text + the **Executive Summary** section from `research.md`
     3. Tokenize both context text and each skill's `description` using these rules:
        a. Lowercase the entire string
@@ -151,13 +158,16 @@ Continuing...
     5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
        - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
        - On success: add `{ name, matchedAt: "post-research", invoked: true }` to `discoveredSkills`
-       - On failure: add `{ name, matchedAt: "post-research", invoked: false }`, log warning, continue
-    6. Update `.ralph-state.json` with updated `discoveredSkills` array
-    7. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
+       - On failure: set `invoked: false` -- add `{ name, matchedAt: "post-research", invoked: false }`, log warning, continue
+    6. If no skills match across all scanned skills: log `- No skills matched`
+    7. Update `.ralph-state.json` with updated `discoveredSkills` array
+    8. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
        ```markdown
        ### Post-Research Retry
        - **<skill-name>**: matched (keywords: <overlapping words>)
        - **<skill-name>**: no match (already invoked)
+       - **<skill-name>**: skipped (unreadable)
+       - **<skill-name>**: skipped (no description)
        ```
        If no new skills match: `- No new skills matched`
 

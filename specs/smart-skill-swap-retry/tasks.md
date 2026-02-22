@@ -118,7 +118,7 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
   - _Requirements: FR-4, FR-7, AC-2.1, AC-2.2, AC-2.4_
   - _Design: Insertion Points (Quick Mode)_
 
-- [ ] 1.9 Add error handling instructions to both discovery passes
+- [x] 1.9 Add error handling instructions to both discovery passes
   - **Do**:
     1. In start.md Step 2.5 and post-research pass, add explicit error handling notes:
        - If SKILL.md is unreadable: skip skill, log warning
