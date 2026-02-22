@@ -191,7 +191,7 @@ Focus: Clean up inline instructions for clarity. Ensure consistent formatting be
   - **Verify**: `grep -n '^[0-9]' plugins/ralph-specum/references/quick-mode.md` shows logical sequence
   - **Commit**: `refactor(ralph-specum): clean up step numbering in quick-mode.md`
 
-- [ ] 2.4 [VERIFY] Quality checkpoint: refactoring consistency
+- [x] 2.4 [VERIFY] Quality checkpoint: refactoring consistency
   - **Do**: Verify both files are internally consistent and cross-references work
   - **Verify**: `grep -c 'Skill Discovery' plugins/ralph-specum/commands/start.md` >= 2 AND `grep -c 'Skill Discovery' plugins/ralph-specum/references/quick-mode.md` >= 2 AND no broken "Step N" references exist
   - **Done when**: Both files read cleanly with no orphaned references
@@ -201,7 +201,7 @@ Focus: Clean up inline instructions for clarity. Ensure consistent formatting be
 
 Focus: Verify the markdown instructions are correct and complete by automated content checks. No runtime test framework exists -- validation is structural.
 
-- [ ] 3.1 Verify all 6 skills are discoverable via frontmatter
+- [x] 3.1 Verify all 6 skills are discoverable via frontmatter
   - **Do**:
     1. Read each SKILL.md under `plugins/ralph-specum/skills/*/SKILL.md`
     2. Verify each has `name` and `description` in YAML frontmatter
@@ -212,7 +212,7 @@ Focus: Verify the markdown instructions are correct and complete by automated co
   - **Commit**: none (read-only check)
   - _Requirements: AC-1.1, AC-1.4_
 
-- [ ] 3.2 Verify tokenization handles existing skill descriptions correctly
+- [x] 3.2 Verify tokenization handles existing skill descriptions correctly
   - **Do**:
     1. Read interview-framework SKILL.md description: "Adaptive brainstorming-style dialogue for all spec phases (Understand, Propose Approaches, Confirm & Store)"
     2. Apply tokenization rules manually:
@@ -229,7 +229,7 @@ Focus: Verify the markdown instructions are correct and complete by automated co
   - **Commit**: `test(ralph-specum): verify tokenization against real skill descriptions`
   - _Design: Tokenization Rules, Matching Algorithm_
 
-- [ ] 3.3 Verify discovery instructions reference correct CLAUDE_PLUGIN_ROOT path
+- [x] 3.3 Verify discovery instructions reference correct CLAUDE_PLUGIN_ROOT path
   - **Do**:
     1. Check that all discovery instructions in start.md and quick-mode.md use `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` (not hardcoded paths)
     2. Verify the Skill invocation uses `ralph-specum:<name>` format
@@ -239,7 +239,7 @@ Focus: Verify the markdown instructions are correct and complete by automated co
   - **Commit**: none (read-only check) or `fix(ralph-specum): correct plugin root paths` if fixes needed
   - _Requirements: AC-1.1_
 
-- [ ] 3.4 [VERIFY] Quality checkpoint: content completeness
+- [x] 3.4 [VERIFY] Quality checkpoint: content completeness
   - **Do**: Run all structural checks to ensure nothing was missed
   - **Verify**: All of these pass:
     - `grep -c 'discoveredSkills' plugins/ralph-specum/commands/start.md` >= 3
@@ -255,7 +255,7 @@ Focus: Verify the markdown instructions are correct and complete by automated co
   - **Done when**: All counts meet thresholds
   - **Commit**: `chore(ralph-specum): pass content completeness checkpoint` (only if fixes needed)
 
-- [ ] 3.5 Verify AC coverage by tracing each acceptance criterion
+- [x] 3.5 Verify AC coverage by tracing each acceptance criterion
   - **Do**:
     1. For each AC in requirements.md, verify the corresponding instruction exists in start.md or quick-mode.md:
        - AC-1.1: Read SKILL.md files -> check for CLAUDE_PLUGIN_ROOT/skills reference
@@ -279,7 +279,7 @@ Focus: Verify the markdown instructions are correct and complete by automated co
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Bump plugin version
+- [x] 4.1 Bump plugin version
   - **Do**:
     1. Bump patch version in `plugins/ralph-specum/.claude-plugin/plugin.json` (4.1.2 -> 4.2.0, minor bump for new feature)
     2. Bump matching version in `.claude-plugin/marketplace.json` (4.1.2 -> 4.2.0)
