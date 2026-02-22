@@ -30,7 +30,7 @@ Focus: Get skill discovery working end-to-end in both normal and quick mode. Acc
   - _Requirements: FR-5, AC-3.1_
   - _Design: State Schema Changes_
 
-- [ ] 1.3 Add Skill Discovery Pass 1 to start.md (normal mode, Step 2.5)
+- [x] 1.3 Add Skill Discovery Pass 1 to start.md (normal mode, Step 2.5)
   - **Do**:
     1. Open `plugins/ralph-specum/commands/start.md`
     2. Insert a new section `## Step 2.5: Skill Discovery Pass 1` between the "Quick Mode Check" subsection (after Step 2) and Step 3 (Scan Existing Specs)

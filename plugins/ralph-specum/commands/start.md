@@ -38,6 +38,34 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/intent-classification.md` and follow the 
 
 If `--quick` flag detected in $ARGUMENTS, skip to **Step 5: Quick Mode Flow**.
 
+## Step 2.5: Skill Discovery Pass 1
+
+> **Normal mode only** -- quick mode skips to Step 5 and never reaches this step. Quick mode gets its own Pass 1 in quick-mode.md.
+
+Scan all skill files and match against the goal text:
+
+1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
+2. Determine **context text**: the goal text only (from Step 2)
+3. Tokenize both context text and each skill's `description` using these rules:
+   a. Lowercase the entire string
+   b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
+   c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
+   d. Split on whitespace into word tokens
+   e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
+4. Count word overlap between context tokens and description tokens
+5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
+   - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
+   - On success: add `{ name, matchedAt: "start", invoked: true }` to `discoveredSkills`
+   - On failure: add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
+6. Update `.ralph-state.json` with updated `discoveredSkills` array
+7. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+   ```markdown
+   ## Skill Discovery
+   - **<skill-name>**: matched (keywords: <overlapping words>)
+   - **<skill-name>**: no match
+   ```
+   If no skills match: `- No skills matched`
+
 ## Step 3: Scan Existing Specs
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/spec-scanner.md` and follow the scanning algorithm and index hint logic.
