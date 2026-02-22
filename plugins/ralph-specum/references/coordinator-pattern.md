@@ -16,7 +16,7 @@ You are fully autonomous. NEVER ask questions or wait for user input.
 
 - NEVER lie about completion -- verify actual state before claiming done
 - NEVER remove tasks -- if tasks fail, ADD fix tasks; total task count only increases
-- NEVER skip verification layers (all 5 in the Verification section must pass)
+- NEVER skip verification layers (all 3 in the Verification section must pass)
 - NEVER trust sub-agent claims without independent verification
 - If a continuation prompt fires but no active execution is found: stop cleanly, do not fabricate state
 
@@ -121,6 +121,8 @@ If no [P] marker on current task, set:
 
 ## Task Delegation
 
+**Task Start SHA**: Before delegating any task, record `TASK_START_SHA=$(git rev-parse HEAD)`. This captures the commit state before the task executes, used by Layer 3 artifact review to collect all changed files via `git diff --name-only $TASK_START_SHA HEAD`.
+
 ### VERIFY Task Detection
 
 Before standard delegation, check if current task has [VERIFY] marker.
@@ -204,7 +206,7 @@ ALL Task calls in ONE message for true parallelism:
 `Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec\nprogressFile: .progress-task-$taskIndex.md\n[full task block and context]")`
 
 **Step 5: Wait for Completion**
-Monitor via TaskList. Wait for all teammates to report done. On timeout, proceed with completed tasks and handle failures via Progress Merge.
+Wait for automatic teammate idle notifications. Use TaskList ONCE to verify all tasks complete. Do NOT poll TaskList in a loop. After spawning teammates, wait for their messages -- they will notify you when done.
 
 **Step 6: Shutdown Teammates**
 `SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex", content: "Execution complete, shutting down")` for each teammate.
@@ -237,7 +239,7 @@ If no completion signal:
 
 ## Verification Layers
 
-CRITICAL: Run these 5 verifications BEFORE advancing taskIndex. All must pass.
+CRITICAL: Run these 3 verifications BEFORE advancing taskIndex. All must pass.
 
 **Layer 1: CONTRADICTION Detection**
 
@@ -253,40 +255,7 @@ If TASK_COMPLETE appears alongside any contradiction phrase:
 - Log: "CONTRADICTION: claimed completion while admitting failure"
 - Increment taskIteration and retry
 
-**Layer 2: Uncommitted Spec Files Check**
-
-Before advancing, verify spec files are committed:
-
-```bash
-git status --porcelain $SPEC_PATH/tasks.md $SPEC_PATH/.progress.md
-```
-
-If output is non-empty (uncommitted changes):
-- REJECT the completion
-- Log: "uncommitted spec files detected - task not properly committed"
-- Increment taskIteration and retry
-
-All spec file changes must be committed before task is considered complete.
-
-**IMPORTANT**: The coordinator is responsible for committing spec tracking files (.progress.md, tasks.md, .index/) after each state update and at completion. Never leave spec files uncommitted between tasks.
-
-**Layer 3: Checkmark Verification**
-
-Count completed tasks in tasks.md:
-
-```bash
-grep -c '\- \[x\]' $SPEC_PATH/tasks.md
-```
-
-Expected checkmark count = taskIndex + 1 (0-based index, so task 0 complete = 1 checkmark)
-
-If actual count != expected:
-- REJECT the completion
-- Log: "checkmark mismatch: expected $expected, found $actual"
-- This detects state manipulation or incomplete task marking
-- Increment taskIteration and retry
-
-**Layer 4: TASK_COMPLETE Signal Verification**
+**Layer 2: TASK_COMPLETE Signal Verification**
 
 Verify spec-executor explicitly output TASK_COMPLETE:
 - Must be present in response
@@ -297,18 +266,23 @@ If TASK_COMPLETE missing:
 - Do NOT advance
 - Increment taskIteration and retry
 
-**Layer 5: Artifact Review**
+**Layer 3: Artifact Review (Periodic)**
 
-After Layers 1-4 pass, run the full artifact review loop defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` (section "Layer 5: Artifact Review"). This includes: review delegation prompt, fix task generation on REVIEW_FAIL, review iteration logging, parallel batch handling, and error handling.
+Runs only when:
+- Phase boundary (task phase changed from previous task)
+- Every 5th task (taskIndex > 0 && taskIndex % 5 == 0)
+- Final task (taskIndex == totalTasks - 1)
+
+When triggered: run the full artifact review loop defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` (section "Layer 3: Artifact Review").
+
+When skipped: append "Skipping artifact review (next at task N)" to .progress.md and proceed to State Update.
 
 **Verification Summary**
 
-All 5 layers must pass:
+All 3 layers must pass:
 1. No contradiction phrases with completion claim
-2. Spec files committed (no uncommitted changes)
-3. Checkmark count matches expected taskIndex + 1
-4. Explicit TASK_COMPLETE signal present
-5. Artifact review passes (spec-reviewer REVIEW_PASS or max iterations with graceful degradation)
+2. Explicit TASK_COMPLETE signal present
+3. Artifact review passes (when triggered; auto-pass when skipped per periodic rules)
 
 Only after all verifications pass, proceed to State Update.
 

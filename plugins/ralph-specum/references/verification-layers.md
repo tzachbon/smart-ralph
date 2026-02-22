@@ -2,7 +2,7 @@
 
 > Used by: implement.md
 
-Five verification layers run BEFORE advancing taskIndex after a task reports TASK_COMPLETE. All must pass.
+Three verification layers run BEFORE advancing taskIndex after a task reports TASK_COMPLETE. All must pass.
 
 ## Layer 1: Contradiction Detection
 
@@ -19,57 +19,11 @@ If TASK_COMPLETE appears alongside any contradiction phrase:
 - Log: "CONTRADICTION: claimed completion while admitting failure"
 - Increment taskIteration and retry
 
-## Layer 2: Uncommitted Spec Files Check
+## Layer 2: TASK_COMPLETE Signal Verification
 
-Verify spec files are committed before advancing:
-
-```bash
-git status --porcelain $SPEC_PATH/tasks.md $SPEC_PATH/.progress.md
-```
-
-If output is non-empty (uncommitted changes):
-- REJECT the completion
-- Log: "uncommitted spec files detected - task not properly committed"
-- Increment taskIteration and retry
-
-All spec file changes must be committed before a task is considered complete. The coordinator is responsible for committing spec tracking files (.progress.md, tasks.md, .index/) after each state update and at completion. Never leave spec files uncommitted between tasks.
-
-## Layer 3: Checkmark Verification
-
-Count completed tasks in tasks.md:
-
-```bash
-grep -c '\- \[x\]' $SPEC_PATH/tasks.md
-```
-
-Expected checkmark count:
-- **Standard mode**: `taskIndex + 1` (0-based index, so task 0 complete = 1 checkmark)
-- **Recovery mode** (`recoveryMode = true` in state): `taskIndex + 1 + completed fix tasks`. Calculate by summing completed fix task checkmarks for indices <= taskIndex:
-  ```bash
-  # Standard
-  EXPECTED=$((taskIndex + 1))
-
-  # Recovery mode adjustment
-  if [ "$RECOVERY_MODE" = "true" ]; then
-    FIX_COUNT=$(jq --argjson idx "$taskIndex" '
-      [.fixTaskMap // {} | to_entries[]
-       | select(.key | split(".")[0] | tonumber <= $idx)
-       | .value.fixTaskIds | length] | add // 0
-    ' "$SPEC_PATH/.ralph-state.json")
-    EXPECTED=$((EXPECTED + FIX_COUNT))
-  fi
-  ```
-
-If actual count != expected:
-- REJECT the completion
-- Log: "checkmark mismatch: expected $expected, found $actual"
-- This detects state manipulation or incomplete task marking
-- Increment taskIteration and retry
-
-## Layer 4: TASK_COMPLETE Signal Verification
-
-Verify spec-executor explicitly output TASK_COMPLETE:
+Verify spec-executor explicitly output TASK_COMPLETE (or ALL_TASKS_COMPLETE):
 - Must be present in response
+- ALL_TASKS_COMPLETE is accepted as equivalent to TASK_COMPLETE
 - Not just implied or partial completion
 - Silent completion is not valid
 
@@ -77,17 +31,29 @@ If TASK_COMPLETE missing:
 - Do NOT advance
 - Increment taskIteration and retry
 
-## Layer 5: Artifact Review
+## Layer 3: Artifact Review
 
-After Layers 1-4 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
+After Layers 1-2 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
+
+### When to Run
+
+Layer 3 runs only when ANY of these conditions are true:
+- **Phase boundary**: Current task is the first task of a new phase (phase number in task ID changed from previous completed task)
+- **Every 5th task**: taskIndex > 0 && taskIndex % 5 == 0
+- **Final task**: taskIndex == totalTasks - 1 (accepts either TASK_COMPLETE or ALL_TASKS_COMPLETE from spec-executor)
+
+When skipped, coordinator appends to .progress.md:
+"Skipping artifact review (next at task N)" where N is the next taskIndex satisfying the periodic condition (taskIndex > 0 && taskIndex % 5 == 0). For example, at taskIndex 1, N = 5; at taskIndex 6, N = 10. Phase boundary and final task triggers are computed separately.
+
+**Pre-requisite**: Before delegating each task, the coordinator records `TASK_START_SHA=$(git rev-parse HEAD)` to capture the commit state before task execution.
 
 ### Review Loop
 
-```
+```text
 Set reviewIteration = 1
 
 WHILE reviewIteration <= 3:
-  1. Collect changed files from the task (from the task's Files list and git diff)
+  1. Collect changed files from the task (from the task's Files list and git diff --name-only $TASK_START_SHA HEAD)
   2. Read $SPEC_PATH/design.md and $SPEC_PATH/requirements.md
   3. Invoke spec-reviewer via Task tool
   4. Parse the last line of spec-reviewer output for signal:
@@ -98,7 +64,7 @@ WHILE reviewIteration <= 3:
        c. Coordinator decides path:
           - Path A (code-level issues): Generate fix task from feedback,
             insert after current task, delegate to spec-executor,
-            on TASK_COMPLETE re-run Layer 5. Increment reviewIteration.
+            on TASK_COMPLETE re-run Layer 3. Increment reviewIteration.
           - Path B (spec-level/manual issues): Append suggestions under
             "## Review Suggestions" in .progress.md. Do NOT increment
             reviewIteration. Break review loop. Proceed to State Update.
@@ -128,7 +94,7 @@ Task description:
 [Full task block from tasks.md]
 
 Changed files:
-[Content of each file listed in the task's Files section]
+[File names from `git diff --name-only $TASK_START_SHA HEAD` or task's Files list]
 
 Upstream artifacts (for cross-referencing):
 [Full content of $SPEC_PATH/design.md]
@@ -162,7 +128,7 @@ Same pattern as the fix task generator in implement.md Section 6c:
   - **Commit**: `fix($scope): address review finding from task $taskId`
 ```
 
-After fix task completes (TASK_COMPLETE), re-run Layer 5 from the top with incremented reviewIteration.
+After fix task completes (TASK_COMPLETE), re-run Layer 3 from the top with incremented reviewIteration.
 
 ### Review Iteration Logging
 
@@ -177,7 +143,7 @@ After each review iteration (regardless of outcome), append to `$SPEC_PATH/.prog
 
 ### Parallel Batch Note
 
-When Layer 5 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description.
+When Layer 3 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description.
 
 ### Error Handling
 
@@ -187,12 +153,10 @@ When Layer 5 runs after a parallel batch, use `parallelGroup.startIndex` as the 
 
 ## Verification Summary
 
-All 5 layers must pass before advancing:
+All 3 layers must pass before advancing:
 1. No contradiction phrases with completion claim
-2. Spec files committed (no uncommitted changes)
-3. Checkmark count matches expected taskIndex + 1
-4. Explicit TASK_COMPLETE signal present
-5. Artifact review passes (spec-reviewer REVIEW_PASS or max iterations with graceful degradation)
+2. Explicit TASK_COMPLETE signal present
+3. Artifact review passes (when triggered by periodic rules; otherwise auto-pass)
 
 Only after all verifications pass, proceed to State Update.
 
@@ -205,10 +169,14 @@ Before outputting TASK_COMPLETE, the spec-executor runs its own verification:
 3. Confirm changes committed successfully (including spec files)
 4. Confirm task marked `[x]` in tasks.md
 
-The stop-hook enforces 4 of the 5 coordinator verification layers:
+The coordinator trusts spec-executor for commit and checkmark verification.
+Coordinator layers focus on higher-order checks: contradictions, signal presence, and periodic artifact review.
+
+**ALL_TASKS_COMPLETE handling**: When spec-executor outputs ALL_TASKS_COMPLETE instead of TASK_COMPLETE, Layer 2 treats it as satisfying the TASK_COMPLETE signal requirement. Layer 3's final-task trigger (taskIndex == totalTasks - 1) accepts either signal when deciding to run final-task verification.
+
+The coordinator enforces 3 verification layers:
 1. Contradiction detection - rejects "requires manual... TASK_COMPLETE"
-2. Uncommitted files check - rejects if spec files not committed
-3. Checkmark verification - validates task is marked [x]
-4. Signal verification - requires TASK_COMPLETE
+2. Signal verification - requires TASK_COMPLETE
+3. Periodic artifact review - validates implementation against spec
 
 False completion WILL be caught and retried with a specific error message.

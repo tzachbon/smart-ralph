@@ -203,6 +203,26 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
         exit 0
     fi
 
+    # Extract current task block from tasks.md for inline continuation
+    TASKS_FILE="$CWD/$SPEC_PATH/tasks.md"
+    TASK_BLOCK=""
+    if [ -f "$TASKS_FILE" ]; then
+        # Extract task at TASK_INDEX (0-based) by counting unchecked+checked task lines
+        # If TASK_INDEX exceeds number of tasks, awk outputs nothing (TASK_BLOCK stays empty)
+        # and the coordinator falls back to reading tasks.md directly
+        # Note: awk count variable starts at 0 (default) to match 0-based TASK_INDEX
+        TASK_BLOCK=$(awk -v idx="$TASK_INDEX" '
+            /^- \[[ x]\]/ {
+                if (count == idx) { found=1; print; next }
+                if (found) { exit }
+                count++
+            }
+            found && /^  / { print; next }
+            found && /^$/ { print; next }
+            found && !/^  / && !/^$/ { exit }
+        ' "$TASKS_FILE" | sed -e :a -e '/^[[:space:]]*$/{' -e '$d' -e N -e ba -e '}')
+    fi
+
     # DESIGN NOTE: Prompt Duplication
     # This continuation prompt is intentionally abbreviated compared to implement.md.
     # - implement.md = full specification (source of truth for coordinator behavior)
@@ -211,24 +231,27 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
     # specification lives in implement.md; this prompt provides just enough context
     # for the coordinator to resume execution efficiently.
 
-    REASON=$(cat <<EOF
+    REASON=$(cat <<STOP_WATCHER_REASON_EOF
 Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
 
 ## State
 Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE
 
+## Current Task
+$TASK_BLOCK
+
 ## Resume
-1. Read $SPEC_PATH/.ralph-state.json and $SPEC_PATH/tasks.md
-2. Delegate task $TASK_INDEX to spec-executor (or qa-engineer for [VERIFY])
+1. Read $SPEC_PATH/.ralph-state.json for current state
+2. Delegate the task above to spec-executor (or qa-engineer for [VERIFY])
 3. On TASK_COMPLETE: verify, update state, advance
-4. If taskIndex >= totalTasks: delete state file, output ALL_TASKS_COMPLETE
+4. If taskIndex >= totalTasks: read $SPEC_PATH/tasks.md to verify all [x], delete state file, output ALL_TASKS_COMPLETE
 
 ## Critical
 - Delegate via Task tool - do NOT implement yourself
-- Verify all 4 layers before advancing (see implement.md Section 7)
+- Verify all 3 layers before advancing (see verification-layers.md)
 - On failure: increment taskIteration, retry or generate fix task if recoveryMode
-- On TASK_MODIFICATION_REQUEST: validate, insert tasks, update state (see implement.md Section 6e)
-EOF
+- On TASK_MODIFICATION_REQUEST: validate, insert tasks, update state (see coordinator-pattern.md § 'Modification Request Handler')
+STOP_WATCHER_REASON_EOF
 )
 
     SYSTEM_MSG="Ralph-specum iteration $GLOBAL_ITERATION | Task $((TASK_INDEX + 1))/$TOTAL_TASKS"

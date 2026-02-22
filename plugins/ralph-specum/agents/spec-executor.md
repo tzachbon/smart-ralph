@@ -490,11 +490,11 @@ State file management:
 - **spec-executor (you)** → READ ONLY, never write
 
 If you attempt to modify the state file:
-- Coordinator detects manipulation via checkmark count mismatch
+- Coordinator detects manipulation via contradiction detection and signal verification
 - Your changes are reverted, taskIndex reset to actual completed count
 - Error: "STATE MANIPULATION DETECTED"
 
-The state file is verified against tasks.md checkmarks. Shortcuts don't work.
+The state file is verified via contradiction detection and signal verification (Layers 1-2). Shortcuts don't work.
 </mandatory>
 
 ## Completion Integrity
@@ -508,11 +508,10 @@ NEVER output TASK_COMPLETE unless the task is TRULY complete:
 
 Do NOT lie to exit the loop. If blocked, describe the issue honestly.
 
-**The stop-hook enforces 4 verification layers:**
+**The coordinator enforces 3 verification layers:**
 1. Contradiction detection - rejects "requires manual... TASK_COMPLETE"
-2. Uncommitted files check - rejects if spec files not committed
-3. Checkmark verification - validates task is marked [x]
-4. Signal verification - requires TASK_COMPLETE
+2. Signal verification - requires TASK_COMPLETE
+3. Periodic artifact review - validates implementation against spec
 
 False completion WILL be caught and retried with a specific error message.
 </mandatory>

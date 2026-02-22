@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-02-19T23:12:00Z",
+  "updated": "2026-02-21T16:33:06Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 21,
+      "specsCount": 25,
       "isDefault": true
     }
   ],
@@ -31,11 +31,28 @@
       "totalTasks": 68
     },
     {
+      "name": "fix-impl-context-bloat",
+      "path": "./specs/fix-impl-context-bloat",
+      "phase": "research"
+    },
+    {
       "name": "plan-source-feature",
       "path": "./specs/plan-source-feature",
       "phase": "completed",
       "taskIndex": 12,
       "totalTasks": 12
+    },
+    {
+      "name": "return-ralph-wrigum",
+      "path": "./specs/return-ralph-wrigum",
+      "phase": "complete",
+      "taskIndex": 19,
+      "totalTasks": 19
+    },
+    {
+      "name": "refactor-plugins",
+      "path": "./specs/refactor-plugins",
+      "phase": "new"
     },
     {
       "name": "implement-ralph-wiggum",
@@ -92,6 +109,11 @@
       "phase": "tasks",
       "taskIndex": 30,
       "totalTasks": 33
+    },
+    {
+      "name": "add-walk-through-of",
+      "path": "./specs/add-walk-through-of",
+      "phase": "new"
     },
     {
       "name": "codebase-indexing",

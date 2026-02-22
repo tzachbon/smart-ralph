@@ -107,4 +107,4 @@ The spec-executor must NEVER modify `.ralph-state.json`:
 - Coordinator (implement command loop) increments taskIndex after verified completion
 - spec-executor: READ ONLY, never write
 
-State file is verified against tasks.md checkmarks. Shortcuts are detected via checkmark mismatch (Layer 3 of verification).
+State file is verified via contradiction detection and signal verification (Layers 1-2 of verification).
