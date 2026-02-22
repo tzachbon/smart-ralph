@@ -76,25 +76,25 @@ Validation Sequence:
 6. Write .progress.md with original goal
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
-8.5. Skill Discovery Pass 1: scan skills, match against goal text, invoke matches
-9. Goal Type Detection:
-   - Classify as "fix" or "add" using regex indicators
-   - Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
-   - Add: add|create|build|implement|new|enable|introduce (default)
-   - For fix goals: run reproduction, document BEFORE state
-10. Research Phase: run Team Research flow (skip walkthrough), clear awaitingApproval
-10.5. Skill Discovery Pass 2: re-scan skills using goal + research Executive Summary, invoke new matches
-11. Requirements Phase: delegate to product-manager with Quick Mode Directive, review loop
-12. Design Phase: delegate to architect-reviewer with Quick Mode Directive, review loop
-13. Tasks Phase: delegate to task-planner with Quick Mode Directive, review loop
-14. Transition to Execution:
+9. Skill Discovery Pass 1: scan skills, match against goal text, invoke matches
+10. Goal Type Detection:
+    - Classify as "fix" or "add" using regex indicators
+    - Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
+    - Add: add|create|build|implement|new|enable|introduce (default)
+    - For fix goals: run reproduction, document BEFORE state
+11. Research Phase: run Team Research flow (skip walkthrough), clear awaitingApproval
+12. Skill Discovery Pass 2: re-scan skills using goal + research Executive Summary, invoke new matches
+13. Requirements Phase: delegate to product-manager with Quick Mode Directive, review loop
+14. Design Phase: delegate to architect-reviewer with Quick Mode Directive, review loop
+15. Tasks Phase: delegate to task-planner with Quick Mode Directive, review loop
+16. Transition to Execution:
     - Count total tasks (number of `- [ ]` checkboxes)
     - Update state: phase="execution", totalTasks=<count>, taskIndex=0
     - If commitSpec: stage, commit, push spec files
-15. Invoke spec-executor for task 1
+17. Invoke spec-executor for task 1
 ```
 
-## Step 8.5: Skill Discovery Pass 1
+## Step 9: Skill Discovery Pass 1
 
 Scan all skill files and match against the goal text:
 
@@ -125,7 +125,7 @@ Scan all skill files and match against the goal text:
    ```
    If no skills match: `- No skills matched`
 
-## Step 10.5: Skill Discovery Pass 2 (Post-Research Retry)
+## Step 12: Skill Discovery Pass 2 (Post-Research Retry)
 
 Re-scan skills with enriched context after research completes:
 
@@ -158,7 +158,7 @@ Re-scan skills with enriched context after research completes:
 
 ## Quick Mode Directive
 
-Each agent delegation in steps 10-13 includes this directive in the Task prompt:
+Each agent delegation in steps 11-15 includes this directive in the Task prompt:
 
 ```text
 Quick Mode Context:
@@ -173,7 +173,7 @@ Running in quick mode with no user feedback. You MUST:
 
 ## Quick Mode Review Loop (Per Artifact)
 
-After each phase agent returns in steps 11-13, run spec-reviewer to validate:
+After each phase agent returns in steps 13-15, run spec-reviewer to validate:
 
 ```text
 Set iteration = 1

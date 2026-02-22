@@ -181,7 +181,7 @@ Focus: Clean up inline instructions for clarity. Ensure consistent formatting be
   - **Verify**: `grep -n 'Step [0-9]' plugins/ralph-specum/commands/start.md` shows sequential numbering
   - **Commit**: `refactor(ralph-specum): clean up step numbering in start.md`
 
-- [ ] 2.3 Clean up step numbering in quick-mode.md
+- [x] 2.3 Clean up step numbering in quick-mode.md
   - **Do**:
     1. Review Quick Mode Execution Sequence numbered list
     2. Decide: either use X.5 numbering (8.5, 10.5) or renumber to integers
