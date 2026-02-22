@@ -97,7 +97,8 @@ Continuing...
      "phase": "research", "taskIndex": 0, "totalTasks": 0,
      "taskIteration": 1, "maxTaskIterations": 5,
      "globalIteration": 1, "maxGlobalIterations": 100,
-     "commitSpec": true, "quickMode": false
+     "commitSpec": true, "quickMode": false,
+     "discoveredSkills": []
    }
    ```
 8. Create `.progress.md` with goal
