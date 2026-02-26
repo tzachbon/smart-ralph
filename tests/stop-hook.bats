@@ -230,6 +230,60 @@ load 'helpers/setup.bash'
     assert_json_reason_contains "Continue spec"
 }
 
+# =============================================================================
+# Test: awaitingApproval gate
+# =============================================================================
+
+@test "exits silently when awaitingApproval is true during execution" {
+    create_state_file "execution" 2 5 1
+    # Set awaitingApproval in state file
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.awaitingApproval = true' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    # Should NOT output continuation prompt - waiting for user
+    assert_output_not_contains "Continue spec"
+}
+
+@test "logs awaitingApproval to stderr" {
+    create_state_file "execution" 2 5 1
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.awaitingApproval = true' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    local stderr_output
+    stderr_output=$(run_stop_watcher 2>&1 >/dev/null || true)
+
+    [[ "$stderr_output" == *"awaitingApproval=true"* ]]
+}
+
+@test "outputs continuation prompt when awaitingApproval is false" {
+    create_state_file "execution" 2 5 1
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.awaitingApproval = false' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+}
+
+@test "outputs continuation prompt when awaitingApproval is absent" {
+    create_state_file "execution" 2 5 1
+    # Default state file has no awaitingApproval field
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+}
+
 @test "JSON output has all three required fields" {
     create_state_file "execution" 0 5 1
 
