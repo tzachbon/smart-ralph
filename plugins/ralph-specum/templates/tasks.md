@@ -416,7 +416,7 @@ Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality)
 <!-- TDD WORKFLOW (use when Intent = TRIVIAL/REFACTOR/MID_SIZED)  -->
 <!-- ============================================================ -->
 
-<!-- Replace all POC phases above with TDD phases below -->
+<!-- When generating tasks for a non-greenfield spec, use these TDD phases instead of the POC phases above -->
 
 ## Phase 1: Red-Green-Yellow Cycles
 
