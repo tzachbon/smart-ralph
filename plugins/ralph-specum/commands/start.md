@@ -14,9 +14,10 @@ Create a task for each item and complete in order:
 
 1. **Handle branch** -- check git branch, create/switch if needed
 2. **Parse input** -- extract name, goal, flags from $ARGUMENTS
-3. **Classify intent** -- determine what user wants (new spec, resume, quick mode)
-4. **Scan existing specs** -- find matching or related specs
-5. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
+3. **Skill Discovery (Pass 1)** -- detect required skills and capabilities
+4. **Classify intent** -- determine what user wants (new spec, resume, quick mode)
+5. **Scan existing specs** -- find matching or related specs
+6. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
 
 ## Step 1: Branch Management (FIRST STEP)
 
@@ -97,14 +98,75 @@ Continuing...
      "phase": "research", "taskIndex": 0, "totalTasks": 0,
      "taskIteration": 1, "maxTaskIterations": 5,
      "globalIteration": 1, "maxGlobalIterations": 100,
-     "commitSpec": true, "quickMode": false
+     "commitSpec": true, "quickMode": false,
+     "discoveredSkills": []
    }
    ```
 8. Create `.progress.md` with goal
-9. Update Spec Index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
-10. **Goal Interview** -- Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and follow brainstorming dialogue
-11. **Team Research Phase** -- Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` and follow the dispatch pattern
-12. **STOP** -- After merge and state update (awaitingApproval=true), display walkthrough and wait for user
+9. **Skill Discovery Pass 1** -- Scan all skill files and match against the goal text:
+   1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
+      - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
+      - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
+   2. Determine **context text**: the goal text only (from Step 2)
+   3. Tokenize both context text and each skill's `description` using these rules:
+      a. Lowercase the entire string
+      b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
+      c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
+      d. Split on whitespace into word tokens
+      e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
+   4. Count word overlap between context tokens and description tokens
+   5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
+      - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
+      - On success: add `{ name, matchedAt: "start", invoked: true }` to `discoveredSkills`
+      - On failure: set `invoked: false` -- add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
+   6. If no skills match across all scanned skills: log `- No skills matched`
+   7. Update `.ralph-state.json` with updated `discoveredSkills` array
+   8. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+      ```markdown
+      ## Skill Discovery
+      - **<skill-name>**: matched (keywords: <overlapping words>)
+      - **<skill-name>**: no match
+      - **<skill-name>**: skipped (unreadable)
+      - **<skill-name>**: skipped (no description)
+      ```
+      If no skills match: `- No skills matched`
+10. Update Spec Index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
+11. **Goal Interview** -- Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and follow brainstorming dialogue
+12. **Team Research Phase** -- Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` and follow the dispatch pattern
+13. **Skill Discovery Pass 2 (Post-Research Retry)** -- Re-scan skills with enriched context after research completes:
+
+    ### Skill Discovery Pass 2
+
+    Scan all skill files and match against goal + research context:
+
+    1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
+       - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
+       - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
+    2. Determine **context text**: goal text + the **Executive Summary** section from `research.md`
+    3. Tokenize both context text and each skill's `description` using these rules:
+       a. Lowercase the entire string
+       b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
+       c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
+       d. Split on whitespace into word tokens
+       e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
+    4. Count word overlap between context tokens and description tokens
+    5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
+       - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
+       - On success: add `{ name, matchedAt: "post-research", invoked: true }` to `discoveredSkills`
+       - On failure: set `invoked: false` -- add `{ name, matchedAt: "post-research", invoked: false }`, log warning, continue
+    6. If no skills match across all scanned skills: log `- No new skills matched`
+    7. Update `.ralph-state.json` with updated `discoveredSkills` array
+    8. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
+       ```markdown
+       ### Post-Research Retry
+       - **<skill-name>**: matched (keywords: <overlapping words>)
+       - **<skill-name>**: no match (already invoked)
+       - **<skill-name>**: skipped (unreadable)
+       - **<skill-name>**: skipped (no description)
+       ```
+       If no new skills match: `- No new skills matched`
+
+14. **STOP** -- After merge and state update (awaitingApproval=true), display walkthrough and wait for user
 
 ### Research Walkthrough (Normal Mode Only)
 
