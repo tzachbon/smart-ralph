@@ -165,14 +165,75 @@ What to append:
 - Complex areas that may need extra attention
 </mandatory>
 
-## POC-First Workflow
+## Workflow Selection
 
 <mandatory>
-ALL specs MUST follow POC-first workflow:
+Read `.progress.md` Intent Classification to choose workflow:
+
+- **GREENFIELD** → POC-first workflow (prototype first, test later)
+- **TRIVIAL / REFACTOR / MID_SIZED** → TDD Red-Green-Yellow workflow (test first, implement to pass)
+
+If Intent Classification is missing, infer from goal keywords:
+- "new", "create", "build", "from scratch" → POC-first
+- "fix", "extend", "refactor", "update", "change", "bug" → TDD
+
+Read `${CLAUDE_PLUGIN_ROOT}/references/phase-rules.md` for full phase structure of both workflows.
+</mandatory>
+
+## POC-First Workflow (GREENFIELD only)
+
+<mandatory>
+When intent is GREENFIELD, follow POC-first workflow:
 1. **Phase 1: Make It Work** - Validate idea fast, skip tests, accept shortcuts
 2. **Phase 2: Refactoring** - Clean up code structure
 3. **Phase 3: Testing** - Add unit/integration/e2e tests
 4. **Phase 4: Quality Gates** - Lint, types, CI verification
+</mandatory>
+
+## TDD Workflow (Non-Greenfield)
+
+<mandatory>
+When intent is NOT GREENFIELD (TRIVIAL, REFACTOR, MID_SIZED), use TDD Red-Green-Yellow:
+
+**Phases:**
+1. **Phase 1: Red-Green-Yellow Cycles** - TDD triplets drive implementation
+2. **Phase 2: Additional Testing** - Integration/E2E beyond unit tests
+3. **Phase 3: Quality Gates** - Lint, types, CI verification
+4. **Phase 4: PR Lifecycle** - CI monitoring, review resolution
+
+**Every implementation change starts with a failing test.** Group related behavior into triplets:
+
+```markdown
+- [ ] 1.1 [RED] Failing test: <expected behavior>
+  - **Do**: Write test asserting expected behavior (must fail initially)
+  - **Files**: <test file>
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `<test cmd> -- --grep "<test name>" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for <behavior>`
+  - _Requirements: FR-1, AC-1.1_
+
+- [ ] 1.2 [GREEN] Pass test: <minimal implementation>
+  - **Do**: Write minimum code to make failing test pass
+  - **Files**: <impl file>
+  - **Done when**: Previously failing test now passes
+  - **Verify**: `<test cmd> -- --grep "<test name>"`
+  - **Commit**: `feat(scope): green - implement <behavior>`
+  - _Requirements: FR-1, AC-1.1_
+
+- [ ] 1.3 [YELLOW] Refactor: <cleanup description>
+  - **Do**: Refactor while keeping tests green
+  - **Files**: <impl file, test file if needed>
+  - **Done when**: Code is clean AND all tests pass
+  - **Verify**: `<test cmd> && <lint cmd>`
+  - **Commit**: `refactor(scope): yellow - clean up <component>`
+```
+
+**TDD Rules:**
+- [RED]: ONLY write test code. No implementation. Test MUST fail.
+- [GREEN]: ONLY enough code to pass the test. No extras, no refactoring.
+- [YELLOW]: Optional per triplet. Skip if code is already clean after [GREEN].
+- Quality checkpoints after every 1-2 triplets.
+- Phase 1 = 60-70% of tasks, Phase 2 = 10-15%, Phase 3-4 = 15-25%.
 </mandatory>
 
 ## VF Task Generation for Fix Goals
@@ -316,7 +377,9 @@ Every task MUST satisfy these constraints:
 
 ## Tasks Structure
 
-Create tasks.md following this structure:
+Create tasks.md following the structure matching the selected workflow.
+
+### POC Structure (GREENFIELD)
 
 ```markdown
 # Tasks: <Feature Name>
@@ -488,6 +551,80 @@ Use the template from `templates/tasks.md` Phase 5 section. Adapt commands to th
 - **Production TODOs**: [what needs proper implementation in Phase 2]
 ```
 
+### TDD Structure (Non-Greenfield)
+
+```markdown
+# Tasks: <Feature Name>
+
+## Phase 1: Red-Green-Yellow Cycles
+
+Focus: Test-driven implementation. Every change starts with a failing test.
+
+- [ ] 1.1 [RED] Failing test: <expected behavior A>
+  - **Do**: Write test asserting expected behavior
+  - **Files**: <test file>
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `<test cmd> -- --grep "<test name>" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for <behavior>`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Component A_
+
+- [ ] 1.2 [GREEN] Pass test: <minimal implementation A>
+  - **Do**: Write minimum code to make failing test pass
+  - **Files**: <impl file>
+  - **Done when**: Previously failing test now passes
+  - **Verify**: `<test cmd> -- --grep "<test name>"`
+  - **Commit**: `feat(scope): green - implement <behavior>`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Component A_
+
+- [ ] 1.3 [YELLOW] Refactor: <cleanup A>
+  - **Do**: Refactor while keeping tests green
+  - **Files**: <impl file, test file if needed>
+  - **Done when**: Code is clean AND all tests pass
+  - **Verify**: `<test cmd> && <lint cmd>`
+  - **Commit**: `refactor(scope): yellow - clean up <component>`
+
+- [ ] 1.4 [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd> && <test cmd>
+  - **Do**: Run quality commands and verify all pass
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors, all tests pass
+  - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
+
+- [ ] 1.5 [RED] Failing test: <expected behavior B>
+  ...continue with next triplet...
+
+## Phase 2: Additional Testing
+
+Focus: Integration and E2E tests beyond unit tests written in Phase 1.
+
+- [ ] 2.1 Integration tests for <component interaction>
+  - **Do**: Create integration test at <path>
+  - **Files**: <test file>
+  - **Done when**: Integration points tested
+  - **Verify**: Test command passes
+  - **Commit**: `test(scope): add integration tests`
+  - _Design: Test Strategy_
+
+- [ ] 2.2 [VERIFY] Quality checkpoint: <lint cmd> && <typecheck cmd> && <test cmd>
+  - **Do**: Run quality commands
+  - **Verify**: All commands exit 0
+  - **Done when**: All checks pass
+  - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
+
+## Phase 3: Quality Gates
+
+(Same as POC Phase 4)
+
+## Phase 4: PR Lifecycle
+
+(Same as POC Phase 5)
+
+## Notes
+
+- **TDD approach**: All implementation driven by failing tests first
+```
+
 ## Task Requirements
 
 Each task MUST be:
@@ -555,17 +692,26 @@ Before completing tasks:
 - [ ] All tasks touch <= 3 files (except test+impl pairs)
 - [ ] All tasks reference requirements/design
 - [ ] No Verify field contains "manual", "visually", or "ask user"
-- [ ] POC phase focuses on validation, not perfection
 - [ ] Each task has a runnable Verify command
 - [ ] Quality checkpoints inserted every 2-3 tasks throughout all phases
 - [ ] Quality gates are last phase
 - [ ] Tasks are ordered by dependency
-- [ ] Total task count is 40+ (split further if under 40)
 - [ ] Every task has a meaningful **Done when** (the contract, not just "it works")
 - [ ] No task contains speculative features or premature abstractions (simplicity)
 - [ ] No task touches files unrelated to its stated goal (surgical)
 - [ ] Ambiguous tasks surface their assumptions explicitly, not silently (think-first)
 - [ ] Set awaitingApproval in state (see below)
+
+**POC-specific (GREENFIELD):**
+- [ ] POC phase focuses on validation, not perfection
+- [ ] Total task count is 40+ (split further if under 40)
+
+**TDD-specific (Non-Greenfield):**
+- [ ] Every implementation task has a preceding [RED] test task
+- [ ] [RED] tasks verify test FAILS, [GREEN] tasks verify test PASSES
+- [ ] [YELLOW] tasks are optional — only when refactoring is needed
+- [ ] TDD triplets are grouped by logical behavior
+- [ ] Total task count is 30+ (split further if under 30)
 
 ## Final Step: Set Awaiting Approval
 

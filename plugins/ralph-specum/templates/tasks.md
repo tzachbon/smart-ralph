@@ -3,12 +3,22 @@
 ## Overview
 
 Total tasks: {{N}}
-POC-first workflow with 5 phases:
+
+<!-- Select workflow based on Intent Classification in .progress.md -->
+<!-- GREENFIELD → POC-first workflow | TRIVIAL/REFACTOR/MID_SIZED → TDD workflow -->
+
+**POC-first workflow** (GREENFIELD):
 1. Phase 1: Make It Work (POC) - Validate idea end-to-end
 2. Phase 2: Refactoring - Clean up code structure
 3. Phase 3: Testing - Add unit/integration/e2e tests
 4. Phase 4: Quality Gates - Local quality checks and PR creation
 5. Phase 5: PR Lifecycle - Autonomous CI monitoring, review resolution, final validation
+
+**TDD Red-Green-Yellow workflow** (TRIVIAL/REFACTOR/MID_SIZED):
+1. Phase 1: Red-Green-Yellow Cycles - Test-first implementation
+2. Phase 2: Additional Testing - Integration/E2E beyond unit tests
+3. Phase 3: Quality Gates - Local quality checks and PR creation
+4. Phase 4: PR Lifecycle - Autonomous CI monitoring, review resolution, final validation
 
 ## Completion Criteria (Autonomous Execution Standard)
 
@@ -110,6 +120,44 @@ GOOD:
   - **Files**: src/components/SignupForm.tsx
   - **Done when**: Form rejects invalid inputs with visible error messages; submit disabled until valid
   - **Verify**: `pnpm test -- --grep SignupForm` (write test first if missing: invalid email shows "Invalid email", short password shows "Min 8 characters")
+
+**Example 5: TDD Triplet (non-greenfield bug fix)**
+
+BAD:
+- [ ] 1.1 Fix the login timeout bug
+  - **Do**: Find the timeout code and fix it, then write a test
+  - **Files**: src/auth.ts, tests/auth.test.ts
+  - **Verify**: Tests pass
+
+GOOD:
+- [ ] 1.1 [RED] Failing test: login does not timeout after 30s
+  - **Do**:
+    1. Add test in `tests/auth.test.ts`: "should complete login within 30s timeout"
+    2. Assert that `login()` resolves before 30000ms (currently fails due to bug)
+  - **Files**: tests/auth.test.ts
+  - **Done when**: Test exists AND fails with timeout error
+  - **Verify**: `pnpm test -- --grep "login.*timeout" 2>&1 | grep -q "FAIL" && echo RED_PASS`
+  - **Commit**: `test(auth): red - failing test for login timeout`
+
+- [ ] 1.2 [GREEN] Fix login timeout
+  - **Do**:
+    1. Fix timeout handling in `src/auth.ts` — set proper timeout on HTTP request
+  - **Files**: src/auth.ts
+  - **Done when**: Login timeout test now passes
+  - **Verify**: `pnpm test -- --grep "login.*timeout"`
+  - **Commit**: `fix(auth): green - fix login timeout handling`
+
+- [ ] 1.3 [YELLOW] Refactor: extract timeout config
+  - **Do**:
+    1. Extract hardcoded timeout to config constant in `src/auth.ts`
+  - **Files**: src/auth.ts
+  - **Done when**: Code is clean AND all auth tests pass
+  - **Verify**: `pnpm test -- --grep "auth" && pnpm lint`
+  - **Commit**: `refactor(auth): yellow - extract timeout to config`
+
+<!-- ============================================================ -->
+<!-- POC-FIRST WORKFLOW (use when Intent = GREENFIELD)            -->
+<!-- ============================================================ -->
 
 ## Phase 1: Make It Work (POC)
 
@@ -362,4 +410,98 @@ EOF
 
 ```
 Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality) → Phase 5 (PR Lifecycle)
+```
+
+<!-- ============================================================ -->
+<!-- TDD WORKFLOW (use when Intent = TRIVIAL/REFACTOR/MID_SIZED)  -->
+<!-- ============================================================ -->
+
+<!-- When generating tasks for a non-greenfield spec, use these TDD phases instead of the POC phases above -->
+
+## Phase 1: Red-Green-Yellow Cycles
+
+Focus: Test-driven implementation. Every change starts with a failing test.
+
+- [ ] 1.1 [RED] Failing test: {{expected behavior A}}
+  - **Do**:
+    1. Write test asserting {{expected behavior}}
+    2. Run test to confirm it fails with expected assertion error
+  - **Files**: {{test file path}}
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `{{test cmd}} -- --grep "{{test name}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for {{behavior}}`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Component A_
+
+- [ ] 1.2 [GREEN] Pass test: {{minimal implementation A}}
+  - **Do**:
+    1. Write minimum code to make the failing test pass
+    2. Do NOT refactor, do NOT add extras
+  - **Files**: {{impl file path}}
+  - **Done when**: Previously failing test now passes
+  - **Verify**: `{{test cmd}} -- --grep "{{test name}}"`
+  - **Commit**: `feat(scope): green - implement {{behavior}}`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Component A_
+
+- [ ] 1.3 [YELLOW] Refactor: {{cleanup A}}
+  - **Do**:
+    1. Refactor implementation while keeping all tests green
+    2. Improve naming, extract helpers, remove duplication
+  - **Files**: {{impl file, test file if needed}}
+  - **Done when**: Code is clean AND all tests still pass
+  - **Verify**: `{{test cmd}} && {{lint cmd}}`
+  - **Commit**: `refactor(scope): yellow - clean up {{component}}`
+
+- [ ] 1.4 [VERIFY] Quality checkpoint: {{lint cmd}} && {{typecheck cmd}} && {{test cmd}}
+  - **Do**: Run quality commands and verify all pass
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors, all tests pass
+  - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
+
+- [ ] 1.5 [RED] Failing test: {{expected behavior B}}
+  - ...continue with next TDD triplet...
+
+## Phase 2: Additional Testing
+
+Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
+
+- [ ] 2.1 Integration tests for {{component interaction}}
+  - **Do**: Create integration test at {{path}}
+  - **Files**: {{test file path}}
+  - **Done when**: Integration points tested across components
+  - **Verify**: {{test cmd}} passes
+  - **Commit**: `test(scope): add integration tests for {{component}}`
+  - _Design: Test Strategy_
+
+- [ ] 2.2 E2E tests (if UI)
+  - **Do**: Create E2E test at {{path}}
+  - **Files**: {{test file path}}
+  - **Done when**: User flow tested end-to-end
+  - **Verify**: {{e2e cmd}} passes
+  - **Commit**: `test(scope): add e2e tests`
+  - _Requirements: US-1_
+
+- [ ] 2.3 [VERIFY] Quality checkpoint: {{lint cmd}} && {{typecheck cmd}} && {{test cmd}}
+  - **Do**: Run all quality commands
+  - **Verify**: All commands exit 0
+  - **Done when**: All checks pass
+  - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
+
+## Phase 3: Quality Gates
+
+> (Same structure as POC Phase 4 above)
+
+## Phase 4: PR Lifecycle (Continuous Validation)
+
+> (Same structure as POC Phase 5 above)
+
+## Notes
+
+- **TDD approach**: All implementation driven by failing tests first
+
+## Dependencies
+
+```
+Phase 1 (TDD Cycles) → Phase 2 (Additional Tests) → Phase 3 (Quality) → Phase 4 (PR Lifecycle)
 ```

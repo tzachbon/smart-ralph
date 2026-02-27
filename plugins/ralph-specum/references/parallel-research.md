@@ -44,9 +44,9 @@ Before invoking any subagents, analyze the goal and break it into independent re
 
 ## Dispatch Pattern (Team-Based)
 
-### Step 1: Check for Orphaned Team
+### Step 1: Clean Up Any Active Team
 
-Read `~/.claude/teams/research-$spec/config.json`. If it exists, call `TeamDelete()` to clean up from a previous interrupted session.
+Call `TeamDelete()` unconditionally to release any team the session may still be leading (e.g., from a prior phase or interrupted run). Ignore errors if no active team exists. Then check `~/.claude/teams/research-$spec/config.json` — if the file still exists, delete it manually (`rm -rf ~/.claude/teams/research-$spec`).
 
 ### Step 2: Create Team
 

@@ -187,6 +187,13 @@ fi
 
 # Loop control: output continuation prompt if more tasks remain
 if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
+    # Respect user approval gates (e.g. PR creation, manual review steps)
+    AWAITING=$(jq -r '.awaitingApproval // false' "$STATE_FILE" 2>/dev/null || echo "false")
+    if [ "$AWAITING" = "true" ]; then
+        echo "[ralph-specum] awaitingApproval=true, allowing stop for user gate" >&2
+        exit 0
+    fi
+
     # Read recovery mode for prompt customization
     RECOVERY_MODE=$(jq -r '.recoveryMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
     MAX_TASK_ITER=$(jq -r '.maxTaskIterations // 5' "$STATE_FILE" 2>/dev/null || echo "5")
