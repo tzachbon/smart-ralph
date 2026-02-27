@@ -113,23 +113,22 @@ Continuing...
       - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
       - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
    2. Determine **context text**: the goal text only (from Step 2)
-   3. Tokenize both context text and each skill's `description` using these rules:
-      a. Lowercase the entire string
-      b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
-      c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
-      d. Split on whitespace into word tokens
-      e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
-   4. Count word overlap between context tokens and description tokens
-   5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
+   3. For each skill, determine relevance using **semantic judgment**:
+      - Read the skill's `name` and `description`
+      - Ask: is this skill conceptually relevant to the goal?
+      - Use domain knowledge — e.g., "building a UI" relates to React/CSS/component skills even without those words appearing; "authentication" relates to JWT/OAuth skills; "data persistence" relates to database skills
+      - **Err on the side of invoking**: if there is a reasonable conceptual connection, treat as a match
+      - Skip only when there is clearly no plausible relationship to the goal's domain
+   4. If skill is relevant AND not already in `discoveredSkills` with `invoked: true`:
       - Invoke using the format for the source path (plugin vs project/claude)
       - On success: add `{ name, source: "<path>", matchedAt: "start", invoked: true }` to `discoveredSkills`
       - On failure: set `invoked: false` -- add `{ name, source: "<path>", matchedAt: "start", invoked: false }`, log warning, continue
-   6. If no skills match across all scanned skills: log `- No skills matched`
-   7. Update `.ralph-state.json` with updated `discoveredSkills` array
-   8. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+   5. If no skills match across all scanned skills: log `- No skills matched`
+   6. Update `.ralph-state.json` with updated `discoveredSkills` array
+   7. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
       ```markdown
       ## Skill Discovery
-      - **<skill-name>** (<source>): matched (keywords: <overlapping words>)
+      - **<skill-name>** (<source>): matched (reason: <brief rationale>)
       - **<skill-name>** (<source>): no match
       - **<skill-name>** (<source>): skipped (unreadable)
       - **<skill-name>** (<source>): skipped (no description)
@@ -153,23 +152,22 @@ Continuing...
        - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
        - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
     2. Determine **context text**: goal text + the **Executive Summary** section from `research.md`
-    3. Tokenize both context text and each skill's `description` using these rules:
-       a. Lowercase the entire string
-       b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
-       c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
-       d. Split on whitespace into word tokens
-       e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
-    4. Count word overlap between context tokens and description tokens
-    5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
+    3. For each skill not already invoked, determine relevance using **semantic judgment**:
+       - Read the skill's `name` and `description`
+       - Ask: is this skill conceptually relevant to the goal or the research findings?
+       - Use domain knowledge — e.g., research mentioning "real-time updates" relates to WebSocket/SSE skills; "performance bottlenecks" relates to caching/optimization skills
+       - **Err on the side of invoking**: if there is a reasonable conceptual connection, treat as a match
+       - Skip only when there is clearly no plausible relationship to the goal's domain
+    4. If skill is relevant AND not already in `discoveredSkills` with `invoked: true`:
        - Invoke using the format for the source path (plugin vs project/claude)
        - On success: add `{ name, source: "<path>", matchedAt: "post-research", invoked: true }` to `discoveredSkills`
        - On failure: set `invoked: false` -- add `{ name, source: "<path>", matchedAt: "post-research", invoked: false }`, log warning, continue
-    6. If no skills match across all scanned skills: log `- No new skills matched`
-    7. Update `.ralph-state.json` with updated `discoveredSkills` array
-    8. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
+    5. If no skills match across all scanned skills: log `- No new skills matched`
+    6. Update `.ralph-state.json` with updated `discoveredSkills` array
+    7. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
        ```markdown
        ### Post-Research Retry
-       - **<skill-name>** (<source>): matched (keywords: <overlapping words>)
+       - **<skill-name>** (<source>): matched (reason: <brief rationale>)
        - **<skill-name>** (<source>): no match (already invoked)
        - **<skill-name>** (<source>): skipped (unreadable)
        - **<skill-name>** (<source>): skipped (no description)
