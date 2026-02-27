@@ -91,7 +91,7 @@ Research topics identified for parallel execution:
 ...
 ```
 
-Follow the full team lifecycle: Check orphaned team -> Create team -> Create tasks -> Spawn teammates (ALL in ONE message) -> Wait -> Shutdown -> Collect results -> Clean up team.
+Follow the full team lifecycle: Clean up any active team (unconditional TeamDelete) -> Create team -> Create tasks -> Spawn teammates (ALL in ONE message) -> Wait -> Shutdown -> Collect results -> Clean up team.
 
 **Fallback**: If TeamCreate fails, fall back to direct Task calls without a team.
 </mandatory>

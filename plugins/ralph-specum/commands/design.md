@@ -75,7 +75,7 @@ Pass combined context to delegation prompt as "Interview Context".
 
 Follow the full team lifecycle:
 
-1. **Check orphaned team**: Read `~/.claude/teams/design-$spec/config.json`. If exists, `TeamDelete()`.
+1. **Clean up any active team**: Call `TeamDelete()` unconditionally to release any team from a prior phase (ignore errors if no active team). Then check `~/.claude/teams/design-$spec/config.json` — if exists, delete it (`rm -rf ~/.claude/teams/design-$spec`).
 2. **Create team**: `TeamCreate(team_name: "design-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate technical design for $spec", activeForm: "Generating design")`
 4. **Spawn teammate**: `Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1")` — delegate with requirements, research, and interview context. Instruct to design architecture with mermaid diagrams, component responsibilities, technical decisions with rationale, file structure, error handling, test strategy. Output to `./specs/$spec/design.md`.

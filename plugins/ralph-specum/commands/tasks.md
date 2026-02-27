@@ -80,7 +80,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` for checkpoint in
 
 Follow the full team lifecycle:
 
-1. **Check orphaned team**: Read `~/.claude/teams/tasks-$spec/config.json`. If exists, `TeamDelete()`.
+1. **Clean up any active team**: Call `TeamDelete()` unconditionally to release any team from a prior phase (ignore errors if no active team). Then check `~/.claude/teams/tasks-$spec/config.json` — if exists, delete it (`rm -rf ~/.claude/teams/tasks-$spec`).
 2. **Create team**: `TeamCreate(team_name: "tasks-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate implementation tasks for $spec", activeForm: "Generating tasks")`
 4. **Spawn teammate**: `Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1")` — delegate with requirements, design, and interview context. Instruct to:
