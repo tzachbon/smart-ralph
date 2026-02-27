@@ -144,7 +144,7 @@ Re-scan skills with enriched context after research completes:
    - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
    - On success: add `{ name, matchedAt: "post-research", invoked: true }` to `discoveredSkills`
    - On failure: set `invoked: false` -- add `{ name, matchedAt: "post-research", invoked: false }`, log warning, continue
-6. If no skills match across all scanned skills: log `- No skills matched`
+6. If no skills match across all scanned skills: log `- No new skills matched`
 7. Update `.ralph-state.json` with updated `discoveredSkills` array
 8. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
    ```markdown

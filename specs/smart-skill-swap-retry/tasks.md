@@ -343,4 +343,4 @@ Focus: Verify the markdown instructions are correct and complete by automated co
 - **Production TODOs**: If skill count grows beyond ~10, consider a centralized discovery reference file. For now, inline is simpler.
 - **Key insight**: The "code" is markdown instructions for an AI agent. There is no runtime, no build, no test framework. "Testing" means structural validation of the markdown content.
 - **Stopword list**: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about (25 words)
-- **Threshold**: 2 word overlap -- prevents false positives while catching real matches
+- **Threshold**: 2-word overlap -- prevents false positives while catching real matches
