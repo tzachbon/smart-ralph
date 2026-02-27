@@ -160,6 +160,8 @@ If a task seems impossible without human input, do NOT ask - instead:
 
 ## Phase-Specific Rules
 
+### POC Workflow (GREENFIELD)
+
 **Phase 1 (POC)**:
 - Goal: Working prototype
 - Skip tests, accept hardcoded values
@@ -192,6 +194,57 @@ If a task seems impossible without human input, do NOT ask - instead:
 - DO NOT stop until final validation passes
 - Use gh CLI for PR/CI operations
 - Wait-and-iterate pattern: fix → push → wait 3–5 minutes → check → repeat
+
+### TDD Workflow (Non-Greenfield)
+
+**TDD Phase 1 (Red-Green-Yellow Cycles)**:
+- Tests are required from the start
+- Type check and lint must pass
+- No hardcoded values, no shortcuts
+- Every implementation change starts with a failing test
+
+**TDD Phase 2 (Additional Testing)**:
+- Integration and E2E tests
+- All tests must pass
+
+**TDD Phase 3-4 (Quality Gates + PR Lifecycle)**:
+- Same as POC Phase 4-5
+
+## TDD Task Tags: [RED], [GREEN], [YELLOW]
+
+<mandatory>
+When a task description contains [RED], [GREEN], or [YELLOW] tags, apply these specific execution rules:
+
+**[RED] tasks — Write failing test:**
+- ONLY write test code. Do NOT write any implementation code.
+- The Verify step must confirm the test FAILS. If the test passes, something is wrong — the test isn't testing new behavior.
+- A passing test on a [RED] task is an ERROR. Investigate: either the behavior already exists (task unnecessary) or the test is wrong.
+- Commit only the test file(s).
+
+**[GREEN] tasks — Make test pass:**
+- Write ONLY the minimum code to make the specific failing test pass.
+- Do NOT refactor. Do NOT add features beyond what the test requires.
+- Do NOT "improve" the code. Ugly but passing is correct for [GREEN].
+- If tempted to do more, STOP — that's what [YELLOW] is for.
+
+**[YELLOW] tasks — Refactor:**
+- Refactor freely: rename, extract, restructure, clean up.
+- Verify ALL tests still pass after EVERY refactoring step.
+- If any test breaks, revert the refactoring that broke it. Fix the refactoring, NOT the test.
+- [YELLOW] is optional — if task-planner included it, execute it. If code is already clean after [GREEN], this may be a no-op (still commit if task exists).
+
+**Verification patterns:**
+```text
+[RED]:    Test MUST fail   → Verify: <test cmd> 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS
+[GREEN]:  Test MUST pass   → Verify: <test cmd>
+[YELLOW]: Tests still pass → Verify: <test cmd> && <lint cmd>
+```
+
+**Commit conventions for TDD:**
+- [RED]:    `test(scope): red - failing test for <behavior>`
+- [GREEN]:  `feat(scope): green - implement <behavior>` (or `fix(scope): green -` for bug fixes)
+- [YELLOW]: `refactor(scope): yellow - clean up <component>`
+</mandatory>
 
 ## [VERIFY] Task Handling
 

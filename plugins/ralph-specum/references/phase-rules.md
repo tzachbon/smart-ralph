@@ -2,7 +2,29 @@
 
 > Used by: implement.md, task-planner agent
 
-All specs MUST follow the POC-first workflow with 5 phases. This is non-negotiable.
+All specs follow one of two workflows based on intent classification:
+- **GREENFIELD** intent → POC-first workflow (5 phases)
+- **Non-greenfield** intent (TRIVIAL, REFACTOR, MID_SIZED) → TDD Red-Green-Yellow workflow (4 phases)
+
+## Workflow Selection
+
+Read Intent Classification from `.progress.md`:
+
+```text
+## Intent Classification
+- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+```
+
+| Intent | Workflow | Rationale |
+|--------|----------|-----------|
+| GREENFIELD | POC-first | New feature needs fast validation before investing in tests |
+| TRIVIAL | TDD | Fix/small change — existing code has (or should have) tests to build on |
+| REFACTOR | TDD | Restructuring existing code — tests guard against regressions |
+| MID_SIZED | TDD | Extending existing feature — tests define expected behavior first |
+
+---
+
+# POC-First Workflow (GREENFIELD)
 
 ## Phase 1: Make It Work (POC)
 
@@ -92,6 +114,100 @@ PR Creation -> CI Monitoring -> Review Check -> Fix Issues -> Push -> Repeat
 - Max 20 CI monitoring cycles
 - If exceeded: output error and STOP
 
+---
+
+# TDD Workflow (Non-Greenfield)
+
+When Intent Classification is NOT `GREENFIELD`, use TDD Red-Green-Yellow workflow. Tests come FIRST — they define the expected behavior before implementation.
+
+## TDD Phase 1: Red-Green-Yellow Cycles
+
+**Goal**: Implement features/fixes through disciplined TDD triplets.
+
+Each unit of work is a 3-task cycle:
+
+1. **[RED]** — Write a failing test that captures expected behavior. Verify the test FAILS.
+2. **[GREEN]** — Write minimum code to make the test pass. Verify the test PASSES.
+3. **[YELLOW]** — Refactor implementation while keeping tests green. Verify tests still pass + lint.
+
+**Rules**:
+- Every implementation change starts with a [RED] test
+- [GREEN] must be minimal — only enough to pass the test, no more
+- [YELLOW] is optional per triplet (skip if code is already clean)
+- Quality checkpoints after every 1-2 triplets (every 3-6 tasks)
+- Group related behavior into triplets (one triplet per logical behavior)
+
+**Phase distribution**: 60-70% of total tasks
+
+**TDD triplet format**:
+```markdown
+- [ ] 1.1 [RED] Failing test: <expected behavior>
+  - **Do**: Write test asserting expected behavior (must fail initially)
+  - **Files**: <test file>
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `<test cmd> -- --grep "<test name>" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for <behavior>`
+  - _Requirements: FR-1, AC-1.1_
+
+- [ ] 1.2 [GREEN] Pass test: <minimal implementation>
+  - **Do**: Write minimum code to make failing test pass
+  - **Files**: <impl file>
+  - **Done when**: Previously failing test now passes
+  - **Verify**: `<test cmd> -- --grep "<test name>"`
+  - **Commit**: `feat(scope): green - implement <behavior>`
+  - _Requirements: FR-1, AC-1.1_
+
+- [ ] 1.3 [YELLOW] Refactor: <cleanup description>
+  - **Do**: Refactor while keeping tests green
+  - **Files**: <impl file, test file if needed>
+  - **Done when**: Code is clean AND all tests pass
+  - **Verify**: `<test cmd> && <lint cmd>`
+  - **Commit**: `refactor(scope): yellow - clean up <component>`
+```
+
+## TDD Phase 2: Additional Testing
+
+**Goal**: Integration and E2E tests beyond what [RED] steps covered.
+
+- Unit tests are already written in Phase 1 [RED] steps
+- This phase adds integration tests spanning multiple components
+- E2E tests for user-facing flows
+- Lighter than POC Phase 3 since core coverage exists
+
+**Phase distribution**: 10-15% of total tasks
+
+## TDD Phase 3: Quality Gates
+
+Same as POC Phase 4. All local checks pass, create PR, verify CI.
+
+**Phase distribution**: 10-15% of total tasks
+
+## TDD Phase 4: PR Lifecycle
+
+Same as POC Phase 5. Autonomous PR management loop.
+
+**Phase distribution**: 5-10% of total tasks
+
+## TDD Target Task Count
+
+- Standard spec: 30-50+ tasks (smaller than POC since no throw-away prototyping)
+- Phase distribution: Phase 1 (TDD cycles) = 60-70%, Phase 2 (Additional tests) = 10-15%, Phase 3-4 (Quality/PR) = 15-25%
+
+## TDD Behaviors Per Phase
+
+| Behavior | TDD Phase 1 | TDD Phase 2 | TDD Phase 3 | TDD Phase 4 |
+|----------|-------------|-------------|-------------|-------------|
+| Tests required | Yes (from start) | Yes | Yes | Yes |
+| Type check must pass | Yes | Yes | Yes | Yes |
+| Lint must pass | Yes (in [YELLOW]) | Yes | Yes | Yes |
+| Hardcoded values OK | No | No | No | No |
+| Error handling required | Yes (test it first) | Yes | Yes | Yes |
+| CI must be green | No | No | Yes | Yes |
+| PR required | No | No | Yes | Yes |
+| Review comments resolved | No | No | No | Yes |
+
+---
+
 ## VF Task for Fix Goals
 
 When `.progress.md` contains `## Reality Check (BEFORE)`, the goal is a fix-type and requires a VF (Verification Final) task as the final task in Phase 4:
@@ -171,12 +287,12 @@ Final verification sequence (last 3 tasks of spec):
 
 Read research.md for actual project commands. Do NOT assume `pnpm lint` or `npm test` exists. Use the commands discovered from the codebase.
 
-## Target Task Count
+## POC Target Task Count
 
 - Standard spec: 40-60+ tasks
 - Phase distribution: Phase 1 = 50-60%, Phase 2 = 15-20%, Phase 3 = 15-20%, Phase 4-5 = 10-15%
 
-## Behaviors That Change Per Phase
+## POC Behaviors Per Phase
 
 | Behavior | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Phase 5 |
 |----------|---------|---------|---------|---------|---------|

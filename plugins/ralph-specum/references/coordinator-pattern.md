@@ -189,8 +189,8 @@ Wait for spec-executor to complete. It will output TASK_COMPLETE on success.
 
 Use team lifecycle for parallel batches.
 
-**Step 1: Check for Orphaned Team**
-Read `~/.claude/teams/exec-$spec/config.json`. If exists, call `TeamDelete()` to clean up.
+**Step 1: Clean Up Any Active Team**
+Call `TeamDelete()` unconditionally to release any team the session may still be leading (ignore errors if no active team). Then check `~/.claude/teams/exec-$spec/config.json` — if exists, delete it (`rm -rf ~/.claude/teams/exec-$spec`).
 
 **Step 2: Create Team**
 `TeamCreate(team_name: "exec-$spec", description: "Parallel execution batch")`
