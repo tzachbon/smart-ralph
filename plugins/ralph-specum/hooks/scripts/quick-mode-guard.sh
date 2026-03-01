@@ -22,7 +22,7 @@ export RALPH_CWD
 source "$SCRIPT_DIR/path-resolver.sh"
 
 # Resolve current spec
-SPEC_PATH=$(ralph_resolve_current 2>/dev/null)
+SPEC_PATH=$(ralph_resolve_current 2>/dev/null) || true
 if [ -z "$SPEC_PATH" ]; then
     exit 0
 fi
