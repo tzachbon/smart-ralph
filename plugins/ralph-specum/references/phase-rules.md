@@ -235,8 +235,8 @@ VE tasks provide autonomous end-to-end verification by spinning up real infrastr
 
 VE tasks extend the final verification sequence, after V6 and before Phase 5:
 
-```
-V4 (Full local CI) -> V5 (CI pipeline) -> V6 (AC checklist) -> VE1 -> VE2 -> VE3 -> Phase 5 (PR Lifecycle)
+```text
+V4 (Full local CI) -> V5 (CI pipeline) -> V6 (AC checklist) -> VE1 -> VE2 -> VE3 -> PR Lifecycle
 ```
 
 ### Structure

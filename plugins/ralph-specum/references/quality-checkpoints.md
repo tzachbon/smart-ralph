@@ -150,8 +150,8 @@ VE tasks provide autonomous end-to-end verification by spinning up real infrastr
 
 - [ ] VE3 [VERIFY] E2E cleanup: tear down infrastructure
   - **Do**:
-    1. Kill processes by PID from /tmp/ve-pids.txt
-    2. Fallback: kill by port (`lsof -ti :{{port}} | xargs kill -9`)
+    1. Gracefully stop processes by PID from /tmp/ve-pids.txt (SIGTERM first, SIGKILL only if still alive)
+    2. Fallback: kill by port (`lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`)
     3. Remove /tmp/ve-pids.txt
     4. Verify port is free
   - **Verify**: `! lsof -ti :{{port}} && echo PASS`
@@ -184,8 +184,8 @@ VE-cleanup (VE3) MUST run even if prior VE tasks fail. Orphaned processes (dev s
 - VE-cleanup is never skipped — it runs as the final VE task unconditionally
 
 **Cleanup strategy** (PID-based primary, port-based fallback):
-1. Read PIDs from `/tmp/ve-pids.txt` and `kill -9` each
-2. Fallback: `lsof -ti :{{port}} | xargs kill -9` to catch processes missed by PID
+1. Read PIDs from `/tmp/ve-pids.txt` and send `kill` (SIGTERM); wait 2s, then escalate to `kill -9` only for survivors
+2. Fallback: `lsof -ti :{{port}} | xargs -r kill` (then `-9` escalation) to catch processes missed by PID
 3. Remove `/tmp/ve-pids.txt`
 4. Verify port is free: `! lsof -ti :{{port}}`
 

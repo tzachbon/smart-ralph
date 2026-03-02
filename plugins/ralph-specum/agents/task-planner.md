@@ -313,8 +313,8 @@ Generate VE tasks using this 3-task structure (startup, check, cleanup):
 
 - [ ] VE3 [VERIFY] E2E cleanup: stop server and free port
   - **Do**:
-    1. Kill by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null`
-    2. Kill by port fallback: `lsof -ti :{{port}} | xargs kill -9 2>/dev/null`
+    1. Kill by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
+    2. Kill by port fallback: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`
     3. Remove PID file: `rm -f /tmp/ve-pids.txt`
     4. Verify port free: `! lsof -ti :{{port}}`
   - **Verify**: `! lsof -ti :{{port}} && echo VE3_PASS`
@@ -331,7 +331,7 @@ Generate VE tasks using this 3-task structure (startup, check, cleanup):
 - Commands come from research.md "Verification Tooling" section — never hardcode dev server commands or ports
 - If no tooling detected: generate 1 VE task (build + import check) + 1 cleanup (see Library/No-Tooling Fallback)
 
-**Placement**: VE tasks appear after V6 (AC checklist) and before Phase 5 (PR Lifecycle).
+**Placement**: VE tasks appear after V6 (AC checklist) and before the PR Lifecycle phase (Phase 5 in POC-first workflow, Phase 4 in TDD workflow).
 
 ### Quick Mode vs Normal Mode
 

@@ -241,7 +241,7 @@ If no completion signal:
 
 ### VE Task Exception (Cleanup Guarantee)
 
-When a VE task — VE1 (startup), VE2 (check), or VE3 (cleanup) — hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
+When a VE1 (startup) or VE2 (check) task hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
 
 1. Log VE failure in .progress.md: "VE-check failed after N retries — skipping to VE-cleanup"
 2. Scan forward in tasks.md to find VE-cleanup task index (see pseudocode below)
@@ -249,9 +249,11 @@ When a VE task — VE1 (startup), VE2 (check), or VE3 (cleanup) — hits max ret
 4. Execute VE-cleanup via qa-engineer (standard `[VERIFY]` delegation)
 5. After VE-cleanup completes (pass or fail), THEN output the max retries error and stop
 
+**VE3 (cleanup) edge case**: If VE3 itself fails after max retries, stop immediately with error — there is nothing to skip forward to. Log: "VE-cleanup failed after N retries — aborting. Manual cleanup may be needed (check port {{port}})."
+
 **Skip-forward pseudocode**:
-```
-# Starting from the failed VE task index, scan forward to find VE-cleanup
+```text
+# Only applies to VE1/VE2 failures. VE3 failures stop immediately.
 cleanupIndex = null
 for i in range(currentTaskIndex + 1, totalTasks):
     task = tasks[i]

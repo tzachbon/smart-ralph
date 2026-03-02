@@ -351,8 +351,8 @@ After POC validated, clean up code.
 
 - [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
   - **Do**:
-    1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null`
-    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs kill -9 2>/dev/null`
+    1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
+    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`
     3. Remove PID file: `rm -f /tmp/ve-pids.txt`
     4. Verify port free: `! lsof -ti :{{port}}`
   - **Verify**: `! lsof -ti :{{port}} && echo PASS`
@@ -540,8 +540,8 @@ Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
 
 - [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
   - **Do**:
-    1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null`
-    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs kill -9 2>/dev/null`
+    1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
+    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`
     3. Remove PID file: `rm -f /tmp/ve-pids.txt`
     4. Verify port free: `! lsof -ti :{{port}}`
   - **Verify**: `! lsof -ti :{{port}} && echo PASS`
