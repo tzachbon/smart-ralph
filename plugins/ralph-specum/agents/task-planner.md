@@ -865,11 +865,13 @@ Before completing tasks:
 - [ ] No task contains speculative features or premature abstractions (simplicity)
 - [ ] No task touches files unrelated to its stated goal (surgical)
 - [ ] Ambiguous tasks surface their assumptions explicitly, not silently (think-first)
+- [ ] Independent tasks marked [P] where file overlap is zero
 - [ ] Set awaitingApproval in state (see below)
 
 **POC-specific (GREENFIELD):**
 - [ ] POC phase focuses on validation, not perfection
 - [ ] Total task count is 40+ (split further if under 40)
+- [ ] [P] groups have max 5 tasks, broken by [VERIFY] checkpoints
 
 **TDD-specific (Non-Greenfield):**
 - [ ] Every implementation task has a preceding [RED] test task

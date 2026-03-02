@@ -292,7 +292,7 @@ Focus: Clean up and ensure consistency across all additions.
   - **Commit**: `refactor(task-planner): wrap [P] rules in mandatory tags`
   - _Design: Component 1_
 
-- [ ] 2.2 Add [P] to task-planner quality checklist
+- [x] 2.2 Add [P] to task-planner quality checklist
   - **Do**:
     1. Open `plugins/ralph-specum/agents/task-planner.md`
     2. In the `## Quality Checklist` section (around line 690), add a new checklist item for [P]: `- [ ] Independent tasks marked [P] where file overlap is zero`
