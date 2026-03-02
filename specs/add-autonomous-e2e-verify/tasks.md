@@ -126,7 +126,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-1, FR-4, FR-5, AC-4.2, AC-4.4, AC-4.5, AC-4.6_
   - _Design: Component 3_
 
-- [ ] 1.9 Add VE task rules to task-planner.md
+- [x] 1.9 Add VE task rules to task-planner.md
   - **Do**:
     1. In the VE Task Generation section, after the template, add "VE Task Rules" subsection
     2. Rules: always sequential (never [P]), always [VERIFY] tag, VE-cleanup MUST always run, max 5 VE tasks (1 startup + 1-3 checks + 1 cleanup), commands from research.md not hardcoded, if no tooling: 1 VE task (build + import check) + cleanup

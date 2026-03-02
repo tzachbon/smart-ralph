@@ -317,6 +317,17 @@ Generate VE tasks using this 3-task structure (startup, check, cleanup):
   - **Done when**: No process listening on {{port}}, PID file removed
   - **Commit**: None
 ```
+
+### VE Task Rules
+
+- VE tasks are always sequential (never `[P]`) — infrastructure state depends on prior steps
+- VE tasks always use the `[VERIFY]` tag — delegated to qa-engineer
+- VE-cleanup MUST always run, even if prior VE tasks fail (coordinator skips to cleanup on max retries)
+- Max 5 VE tasks per spec: 1 startup + 1-3 checks + 1 cleanup
+- Commands come from research.md "Verification Tooling" section — never hardcode dev server commands or ports
+- If no tooling detected: generate 1 VE task (build + import check) + 1 cleanup (see Library/No-Tooling Fallback)
+
+**Placement**: VE tasks appear after V6 (AC checklist) and before Phase 5 (PR Lifecycle).
 </mandatory>
 
 ## Intermediate Quality Gate Checkpoints
