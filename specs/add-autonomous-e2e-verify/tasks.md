@@ -60,7 +60,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-2, AC-3.2, AC-3.3, AC-3.4_
   - _Design: Component 1_
 
-- [ ] 1.3 [VERIFY] Quality checkpoint: file integrity
+- [x] 1.3 [VERIFY] Quality checkpoint: file integrity
   - **Do**: Verify both modified files exist and contain expected new content
   - **Verify**: `test -f plugins/ralph-specum/references/parallel-research.md && test -f plugins/ralph-specum/agents/research-analyst.md && grep -q "Verification Tooling" plugins/ralph-specum/references/parallel-research.md && grep -q "Verification Tooling Discovery" plugins/ralph-specum/agents/research-analyst.md && echo PASS`
   - **Done when**: Both files contain new VE-related content
@@ -68,7 +68,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 ### Tasks Command: VE Prompt
 
-- [ ] 1.4 Add VE interview question to tasks.md Step 2
+- [x] 1.4 Add VE interview question to tasks.md Step 2
   - **Do**:
     1. Open `plugins/ralph-specum/commands/tasks.md`
     2. In Step 2's "Tasks Exploration Territory" list, add bullet: `- **E2E verification** -- add autonomous end-to-end verification tasks? (default YES). What should be tested end-to-end?`
@@ -80,7 +80,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-7, AC-2.1, AC-2.2, AC-2.4_
   - _Design: Component 2_
 
-- [ ] 1.5 Add VE quick-mode context to tasks.md Step 3 delegation
+- [x] 1.5 Add VE quick-mode context to tasks.md Step 3 delegation
   - **Do**:
     1. Open `plugins/ralph-specum/commands/tasks.md`
     2. In Step 3's delegation prompt instructions (the bulleted list under "Instruct to:"), add a bullet: `- If quick mode: auto-enable VE tasks. Pass verification tooling from research.md and strategy "auto" to task-planner`
