@@ -269,7 +269,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 ### Templates: VE Tasks
 
-- [ ] 1.22 Add VE task template to POC workflow in templates/tasks.md
+- [x] 1.22 Add VE task template to POC workflow in templates/tasks.md
   - **Do**:
     1. Open `plugins/ralph-specum/templates/tasks.md`
     2. In the POC workflow section, after the V6 / VF task template (Phase 4 section, before Phase 5), add VE task templates: VE1 (startup), VE2 (check), VE3 (cleanup)
