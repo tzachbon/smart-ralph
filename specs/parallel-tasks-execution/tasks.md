@@ -140,7 +140,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-2, US-2_
   - _Design: Component 3 - Stop-Watcher_
 
-- [ ] 1.10 Add parallel group scanning to stop-watcher
+- [x] 1.10 Add parallel group scanning to stop-watcher
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. After the IS_PARALLEL check (added in 1.9), add an awk script that scans for consecutive [P] tasks when IS_PARALLEL=true

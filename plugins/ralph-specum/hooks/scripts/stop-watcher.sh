@@ -236,6 +236,26 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
         IS_PARALLEL="true"
     fi
 
+    # When parallel marker detected, scan for all consecutive [P] tasks from TASK_INDEX
+    if [ "$IS_PARALLEL" = "true" ] && [ -f "$TASKS_FILE" ]; then
+        PARALLEL_TASKS=$(awk -v idx="$TASK_INDEX" '
+            /^- \[[ x]\]/ {
+                if (count >= idx) {
+                    if (/\[P\]/) { found=1; block=block $0 "\n"; next }
+                    else if (found) { exit }
+                }
+                count++
+            }
+            found && /^  / { block=block $0 "\n"; next }
+            found && /^$/ { block=block $0 "\n"; next }
+            found && !/^  / && !/^$/ { exit }
+            END { printf "%s", block }
+        ' "$TASKS_FILE")
+        if [ -n "$PARALLEL_TASKS" ]; then
+            TASK_BLOCK="$PARALLEL_TASKS"
+        fi
+    fi
+
     # DESIGN NOTE: Prompt Duplication
     # This continuation prompt is intentionally abbreviated compared to implement.md.
     # - implement.md = full specification (source of truth for coordinator behavior)
