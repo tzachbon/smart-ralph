@@ -40,6 +40,8 @@ This spec is not complete until ALL criteria are met:
 
 **Sizing rules**: Max 4 Do steps, max 3 files per task. Split if exceeded.
 
+**Parallel markers**: Mark independent tasks with [P] for concurrent execution. Adjacent [P] tasks form a parallel group. [VERIFY] tasks always break groups.
+
 ### Task Writing Principles
 
 1. **Think First**: Tasks should surface what's unclear, not assume. If a task depends on an uncertain assumption (e.g., "config file exists at X"), state it explicitly in the Do section or add a verification step. Don't hide confusion in vague steps.

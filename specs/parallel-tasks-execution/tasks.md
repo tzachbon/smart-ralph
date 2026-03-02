@@ -108,7 +108,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-1, FR-9_
   - _Design: Component 2 - Tasks Template_
 
-- [ ] 1.7 [P] Add [P] marker documentation to task writing guide in template
+- [x] 1.7 [P] Add [P] marker documentation to task writing guide in template
   - **Do**:
     1. Open `plugins/ralph-specum/templates/tasks.md`
     2. In the `## Task Writing Guide` section, add a brief note about [P] markers after the existing sizing rules line
