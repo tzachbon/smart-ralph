@@ -284,6 +284,39 @@ Read the "Verification Tooling" section from research.md to determine project ty
 | CLI | Binary/script entry point | Run commands, check output |
 | Mobile | iOS/Android deps (react-native, flutter, xcode) | Simulator if available |
 | Library | No dev server, no UI | Build + import check only |
+
+### VE Task Templates
+
+Generate VE tasks using this 3-task structure (startup, check, cleanup):
+
+```markdown
+- [ ] VE1 [VERIFY] E2E startup: start dev server and wait for ready
+  - **Do**:
+    1. Start dev server in background: `{{dev_cmd}} &`
+    2. Record PID: `echo $! > /tmp/ve-pids.txt`
+    3. Wait for server ready with 60s timeout: `for i in $(seq 1 60); do curl -s {{health_endpoint}} && break || sleep 1; done`
+  - **Verify**: `curl -sf {{health_endpoint}} && echo VE1_PASS`
+  - **Done when**: Dev server running and responding on {{port}}
+  - **Commit**: None
+
+- [ ] VE2 [VERIFY] E2E check: test critical user flow
+  - **Do**:
+    1. Test critical user flow via curl/browser/CLI
+    2. Verify expected output or response code
+  - **Verify**: `{{critical_flow_cmd}} && echo VE2_PASS`
+  - **Done when**: Critical user flow produces expected output
+  - **Commit**: None
+
+- [ ] VE3 [VERIFY] E2E cleanup: stop server and free port
+  - **Do**:
+    1. Kill by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null`
+    2. Kill by port fallback: `lsof -ti :{{port}} | xargs kill -9 2>/dev/null`
+    3. Remove PID file: `rm -f /tmp/ve-pids.txt`
+    4. Verify port free: `! lsof -ti :{{port}}`
+  - **Verify**: `! lsof -ti :{{port}} && echo VE3_PASS`
+  - **Done when**: No process listening on {{port}}, PID file removed
+  - **Commit**: None
+```
 </mandatory>
 
 ## Intermediate Quality Gate Checkpoints

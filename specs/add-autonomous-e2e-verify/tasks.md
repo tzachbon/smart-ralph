@@ -113,7 +113,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-9, AC-4.1, AC-4.3_
   - _Design: Component 3_
 
-- [ ] 1.8 Add VE task template to task-planner.md
+- [x] 1.8 Add VE task template to task-planner.md
   - **Do**:
     1. In the new "VE Task Generation" section (added in 1.7), add the VE task template block with 3 tasks: VE1 (startup), VE2 (check), VE3 (cleanup)
     2. VE1 template: start dev server in background, record PID, wait for ready with 60s timeout
