@@ -411,7 +411,14 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - _Requirements: AC-3.4_
   - _Design: Component 1_
 
-- [x] 2.7 Improve coordinator VE-cleanup skip-forward logic prose
+- [x] 2.7 [VERIFY] Quality checkpoint: detection and template quality
+  - **Do**: Verify VE templates match sizing rules and detection logic has fallback
+  - **Files**: `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/agents/research-analyst.md`
+  - **Verify**: `grep -A10 "VE1" plugins/ralph-specum/agents/task-planner.md | grep -q "Do\|Verify" && grep -q "No.*tooling detected" plugins/ralph-specum/agents/research-analyst.md && echo PASS`
+  - **Done when**: Templates comply with sizing rules, detection has fallback
+  - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
+
+- [x] 2.8 Improve coordinator VE-cleanup skip-forward logic prose
   - **Do**:
     1. Review VE Task Exception section in coordinator-pattern.md
     2. Ensure skip-to-cleanup algorithm is unambiguous: search forward from failed task for "E2E cleanup" description, jump taskIndex to that task
@@ -423,7 +430,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - _Requirements: AC-1.4, NFR-4_
   - _Design: Component 6_
 
-- [x] 2.8 Add cross-references between files
+- [x] 2.9 Add cross-references between files
   - **Do**:
     1. In phase-rules.md VE section, add: "See quality-checkpoints.md for VE format details and verify-fix-reverify loop"
     2. In quality-checkpoints.md VE section, add: "See phase-rules.md for VE placement rules"
@@ -434,7 +441,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Commit**: `refactor(ralph-specum): add cross-references between VE documentation files`
   - _Design: Components 3, 4, 5_
 
-- [x] 2.9 [VERIFY] Quality checkpoint: refactoring complete
+- [x] 2.10 [VERIFY] Quality checkpoint: refactoring complete
   - **Do**: Verify all refactoring tasks improved consistency and cross-references
   - **Files**: `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/references/coordinator-pattern.md`, `plugins/ralph-specum/templates/tasks.md`
   - **Verify**: `grep -r "VE" plugins/ralph-specum/ --include="*.md" -l | wc -l | xargs test 6 -le && echo PASS`
