@@ -95,7 +95,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-1, FR-9_
   - _Design: Component 2 - Tasks Template_
 
-- [ ] 1.6 [P] Add [P] examples to TDD section in tasks template
+- [x] 1.6 [P] Add [P] examples to TDD section in tasks template
   - **Do**:
     1. Open `plugins/ralph-specum/templates/tasks.md`
     2. In the TDD Phase 1 section, the [RED]/[GREEN]/[YELLOW] tasks cannot be parallel (they depend on each other within a triplet)

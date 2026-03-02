@@ -459,8 +459,30 @@ Focus: Test-driven implementation. Every change starts with a failing test.
   - **Done when**: No lint errors, no type errors, all tests pass
   - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
 
-- [ ] 1.5 [RED] Failing test: {{expected behavior B}}
-  - ...continue with next TDD triplet...
+<!-- Adjacent [RED] tests for independent behaviors can be [P] since they don't depend on each other -->
+- [ ] 1.5 [P] [RED] Failing test: {{expected behavior B}}
+  - **Do**:
+    1. Write test asserting {{expected behavior B}}
+    2. Run test to confirm it fails with expected assertion error
+  - **Files**: {{test file path}}
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `{{test cmd}} -- --grep "{{test name B}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for {{behavior B}}`
+  - _Requirements: FR-2, AC-2.1_
+  - _Design: Component B_
+
+- [ ] 1.6 [P] [RED] Failing test: {{expected behavior C}}
+  - **Do**:
+    1. Write test asserting {{expected behavior C}}
+    2. Run test to confirm it fails with expected assertion error
+  - **Files**: {{test file path}}
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `{{test cmd}} -- --grep "{{test name C}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for {{behavior C}}`
+  - _Requirements: FR-3, AC-3.1_
+  - _Design: Component C_
+
+- [ ] 1.7 ...continue with [GREEN] for each, then next TDD triplet...
 
 ## Phase 2: Additional Testing
 
