@@ -299,6 +299,9 @@ STOP_WATCHER_REASON_EOF
 )
 
     SYSTEM_MSG="Ralph-specum iteration $GLOBAL_ITERATION | Task $((TASK_INDEX + 1))/$TOTAL_TASKS"
+    if [ "$IS_PARALLEL" = "true" ]; then
+        SYSTEM_MSG="$SYSTEM_MSG (PARALLEL GROUP)"
+    fi
 
     jq -n \
       --arg reason "$REASON" \

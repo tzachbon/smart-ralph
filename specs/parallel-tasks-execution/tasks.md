@@ -172,7 +172,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-3, US-2, US-3_
   - _Design: Component 3 - Stop-Watcher_
 
-- [ ] 1.13 Add parallel-specific system message to stop-watcher
+- [x] 1.13 Add parallel-specific system message to stop-watcher
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. Modify the SYSTEM_MSG variable (around line 264) to include parallel indicator when IS_PARALLEL=true
