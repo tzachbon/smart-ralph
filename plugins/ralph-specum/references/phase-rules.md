@@ -69,11 +69,12 @@ Read Intent Classification from `.progress.md`:
 
 ## Phase 4: Quality Gates
 
-**Goal**: All local checks pass. Create PR and verify CI.
+**Goal**: All local checks pass. Create PR and verify CI. VE tasks (E2E verification) run after V6 in this phase.
 
 - All local checks must pass (lint, types, tests)
 - Create PR, verify CI
 - Never push directly to default branch (main/master)
+- VE tasks appear after V6, before Phase 5 transition (see "VE Tasks" section)
 
 **Phase distribution**: 10-15% (combined with Phase 5)
 
@@ -83,7 +84,7 @@ Read Intent Classification from `.progress.md`:
 - CI checks green
 - Review comments addressed
 
-Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
+Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation. VE tasks appear in the final verification sequence: V4 -> V5 -> V6 -> VE1/VE2/VE3 -> Phase 5.
 
 ## Phase 5: PR Lifecycle
 
