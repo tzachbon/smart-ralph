@@ -144,7 +144,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - **Done when**: All 3 VE subsections present in task-planner.md
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.11 Add quick mode VE auto-enable logic to task-planner.md
+- [x] 1.11 Add quick mode VE auto-enable logic to task-planner.md
   - **Do**:
     1. In the VE Task Generation section, add subsection "Quick Mode vs Normal Mode"
     2. Quick mode: always generate VE tasks, no user prompt needed. Use "auto" strategy (detect from research.md)

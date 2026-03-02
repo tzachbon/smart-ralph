@@ -328,6 +328,15 @@ Generate VE tasks using this 3-task structure (startup, check, cleanup):
 - If no tooling detected: generate 1 VE task (build + import check) + 1 cleanup (see Library/No-Tooling Fallback)
 
 **Placement**: VE tasks appear after V6 (AC checklist) and before Phase 5 (PR Lifecycle).
+
+### Quick Mode vs Normal Mode
+
+VE task generation depends on the execution mode:
+
+- **Quick mode**: Always auto-enable VE tasks. No user prompt needed. Use "auto" strategy — detect project type and tooling from research.md automatically.
+- **Normal mode**: Check interview context for `E2E verification: YES/NO`. If YES or not present (default YES), generate VE tasks. If NO, skip VE generation entirely.
+
+In both modes, the project type detection table and research.md "Verification Tooling" section drive which VE templates are generated.
 </mandatory>
 
 ## Intermediate Quality Gate Checkpoints
