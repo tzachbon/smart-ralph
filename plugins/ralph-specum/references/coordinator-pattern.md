@@ -241,16 +241,35 @@ If no completion signal:
 
 ### VE Task Exception (Cleanup Guarantee)
 
-When a VE task (description contains "E2E" and `[VERIFY]`) hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
+When a VE task — VE1 (startup), VE2 (check), or VE3 (cleanup) — hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
 
 1. Log VE failure in .progress.md: "VE-check failed after N retries — skipping to VE-cleanup"
-2. Search forward in tasks.md for the VE-cleanup task (description contains "E2E cleanup")
-3. Track the VE-cleanup task index separately from other VE tasks
-4. Skip to VE-cleanup task and execute it via qa-engineer (standard `[VERIFY]` delegation)
-5. VE-cleanup uses PID-based kill (`kill -9` PIDs from `/tmp/ve-pids.txt`) with port-based kill as fallback (`lsof -ti :$PORT | xargs kill -9`)
-6. After VE-cleanup completes (pass or fail), THEN output the max retries error and stop
+2. Scan forward in tasks.md to find VE-cleanup task index (see pseudocode below)
+3. Skip taskIndex forward to the VE-cleanup task
+4. Execute VE-cleanup via qa-engineer (standard `[VERIFY]` delegation)
+5. After VE-cleanup completes (pass or fail), THEN output the max retries error and stop
 
-This guarantees orphaned processes (dev servers, browsers) are cleaned up even when verification fails. See `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "VE-Cleanup Guarantee" section for cleanup strategy details.
+**Skip-forward pseudocode**:
+```
+# Starting from the failed VE task index, scan forward to find VE-cleanup
+cleanupIndex = null
+for i in range(currentTaskIndex + 1, totalTasks):
+    task = tasks[i]
+    if task.description contains "E2E cleanup":
+        cleanupIndex = i
+        break
+
+if cleanupIndex is null:
+    # No VE-cleanup found — log error and stop immediately
+    log("ERROR: No VE-cleanup task found after VE failure")
+    stop()
+
+# Skip all intervening VE-check tasks
+taskIndex = cleanupIndex
+# Execute VE-cleanup, then stop with error
+```
+
+This guarantees orphaned processes (dev servers, browsers) are cleaned up even when verification fails. VE-cleanup uses PID-based kill (`kill -9` PIDs from `/tmp/ve-pids.txt`) with port-based kill as fallback (`lsof -ti :$PORT | xargs kill -9`). See `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "VE-Cleanup Guarantee" section for cleanup strategy details.
 
 ## Verification Layers
 

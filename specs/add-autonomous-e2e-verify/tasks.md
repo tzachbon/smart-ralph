@@ -359,7 +359,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Commit**: `refactor(ralph-specum): standardize VE naming in agent files`
   - _Design: Components 1, 3_
 
-- [ ] 2.2 Standardize VE naming in reference files
+- [x] 2.2 Standardize VE naming in reference files
   - **Do**:
     1. Audit phase-rules.md, quality-checkpoints.md, and coordinator-pattern.md for consistent VE naming
     2. Ensure "VE" prefix and "VE-cleanup" hyphenation match agent files

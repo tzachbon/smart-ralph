@@ -123,7 +123,9 @@ When `.progress.md` contains `## Reality Check (BEFORE)`, the goal is a fix-type
 
 ## VE Tasks (E2E Verification)
 
-VE tasks provide autonomous end-to-end verification by spinning up real infrastructure (dev servers, browsers, simulators) and testing actual user flows. They follow a 3-task structure:
+> See also: `${CLAUDE_PLUGIN_ROOT}/references/phase-rules.md` for VE placement rules. See `${CLAUDE_PLUGIN_ROOT}/references/coordinator-pattern.md` "VE Task Exception" for cleanup guarantee implementation.
+
+VE tasks provide autonomous end-to-end verification by spinning up real infrastructure (dev servers, browsers, simulators) and testing actual user flows. They follow a 3-task structure: VE1 (startup), VE2 (check), VE3 (cleanup).
 
 ### VE Task Format
 
