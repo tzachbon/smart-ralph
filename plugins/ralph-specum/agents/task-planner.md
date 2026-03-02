@@ -440,9 +440,9 @@ Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
 **Discovery**: Read research.md for actual project commands. Do NOT assume `pnpm lint` or `npm test` exists.
 </mandatory>
 
+<mandatory>
 ## [P] Parallel Task Marking
 
-<mandatory>
 Mark tasks with `[P]` when ALL of these conditions hold:
 1. Task has NO file overlap with adjacent tasks (different `Files:` sections)
 2. Task does NOT depend on output of adjacent tasks
