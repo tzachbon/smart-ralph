@@ -3,22 +3,22 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-02-21T16:33:06Z
+**Last updated:** 2026-03-02T20:58:38Z
 
 ## Directories (1)
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 25 | Yes |
+| ./specs | 27 | Yes |
 
-## All Specs (25)
+## All Specs (27)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
 | add-skills-doc | ./specs | completed | done |
 | enforce-teams-instead | ./specs | completed | done |
 | improve-task-generation | ./specs | tasks | 66/68 tasks |
-| fix-impl-context-bloat | ./specs | research |  |
+| fix-impl-context-bloat | ./specs | tasks | 47/48 tasks |
 | plan-source-feature | ./specs | completed | done |
 | return-ralph-wrigum | ./specs | complete |  |
 | refactor-plugins | ./specs | new |  |
@@ -37,7 +37,9 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | reviewer-subagent | ./specs | completed | done |
 | goal-interview | ./specs | completed | done |
 | adaptive-interview | ./specs | completed | done |
+| add-autonomous-e2e-verify | ./specs | research |  |
 | remove-ralph-wiggum | ./specs | completed | done |
+| smart-skill-swap-retry | ./specs | tasks | 21/26 tasks |
 | improve-walkthrough-feature | ./specs | tasks | 13/14 tasks |
 | when-creating-worktree | ./specs | completed | done |
 
