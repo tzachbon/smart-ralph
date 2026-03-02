@@ -74,7 +74,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-1, FR-9_
   - _Design: Component 1 - Task Planner Agent_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: verify task-planner.md changes
+- [x] 1.4 [VERIFY] Quality checkpoint: verify task-planner.md changes
   - **Do**: Verify all 3 task-planner additions are present and well-formed
   - **Verify**: `grep -c '\[P\]' plugins/ralph-specum/agents/task-planner.md | awk '{print ($1 >= 5) ? "PASS" : "FAIL: only " $1 " [P] occurrences"}'`
   - **Done when**: task-planner.md has [P] rules section, heuristics, and updated examples (at least 5 [P] references)
