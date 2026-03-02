@@ -185,7 +185,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: NFR-5, US-6_
   - _Design: Component 3 - Stop-Watcher_
 
-- [ ] 1.14 [VERIFY] Quality checkpoint: verify stop-watcher continuation prompt
+- [x] 1.14 [VERIFY] Quality checkpoint: verify stop-watcher continuation prompt
   - **Do**: Verify stop-watcher has complete parallel support: detection, scanning, prompt, system message
   - **Verify**: `grep -c 'IS_PARALLEL\|PARALLEL_TASKS\|PARALLEL GROUP\|dispatch ALL' plugins/ralph-specum/hooks/scripts/stop-watcher.sh | awk '{print ($1 >= 4) ? "PASS" : "FAIL: only " $1 " parallel references"}'`
   - **Done when**: All 4 parallel components present in stop-watcher.sh
@@ -193,7 +193,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
 
 ### Version Bumps
 
-- [ ] 1.15 [P] Bump version in plugin.json
+- [x] 1.15 [P] Bump version in plugin.json
   - **Do**:
     1. Open `plugins/ralph-specum/.claude-plugin/plugin.json`
     2. Change `"version": "4.2.4"` to `"version": "4.3.0"` (minor bump for new feature)
@@ -203,7 +203,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - **Commit**: `chore(ralph-specum): bump version to 4.3.0`
   - _Requirements: NFR-2_
 
-- [ ] 1.16 [P] Bump version in marketplace.json
+- [x] 1.16 [P] Bump version in marketplace.json
   - **Do**:
     1. Open `.claude-plugin/marketplace.json`
     2. In the ralph-specum plugin entry, change `"version": "4.2.4"` to `"version": "4.3.0"`
