@@ -314,7 +314,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-5, FR-6, AC-1.4, NFR-4_
   - _Design: Component 6_
 
-- [ ] 1.26 Add VE recovery mode note to coordinator-pattern.md
+- [x] 1.26 Add VE recovery mode note to coordinator-pattern.md
   - **Do**:
     1. In coordinator-pattern.md, in the "VERIFY Task Detection" section, add note: "VE tasks (description contains 'E2E') always have recovery mode enabled regardless of state file recoveryMode flag. VE failures are expected and recoverable."
     2. This ensures fix task generation works for VE tasks even without explicit --recovery-mode flag
