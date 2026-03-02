@@ -519,6 +519,33 @@ Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
 
 > (Same structure as POC Phase 4 above)
 
+<!-- VE tasks generated from research.md Verification Tooling section -->
+
+- [ ] VE1 [VERIFY] E2E startup: launch dev server and verify health
+  - **Do**:
+    1. Start dev server: `{{dev_cmd}}` (background, save PID to /tmp/ve-pids.txt)
+    2. Wait for server ready: poll `{{health_endpoint}}` on port `{{port}}` until 200 (timeout 30s)
+  - **Verify**: `curl -sf {{health_endpoint}} -o /dev/null && echo PASS`
+  - **Done when**: Dev server running and health endpoint returns 200
+  - **Commit**: None
+
+- [ ] VE2 [VERIFY] E2E check: run critical flow verification
+  - **Do**:
+    1. Run critical flow check: `{{critical_flow_cmd}}`
+    2. Verify output matches expected behavior
+  - **Verify**: `{{critical_flow_cmd}} && echo PASS`
+  - **Done when**: Critical user flow completes successfully against running server
+  - **Commit**: None
+
+- [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
+  - **Do**:
+    1. Kill processes from /tmp/ve-pids.txt: `xargs kill < /tmp/ve-pids.txt 2>/dev/null`
+    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs kill 2>/dev/null`
+    3. Remove PID file: `rm -f /tmp/ve-pids.txt`
+  - **Verify**: `! lsof -ti :{{port}} && echo PASS`
+  - **Done when**: No processes on port {{port}}, PID file removed
+  - **Commit**: None
+
 ## Phase 4: PR Lifecycle (Continuous Validation)
 
 > (Same structure as POC Phase 5 above)
