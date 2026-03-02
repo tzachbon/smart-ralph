@@ -282,7 +282,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-1, AC-1.2_
   - _Design: Component 6_
 
-- [ ] 1.23 Add VE task template to TDD workflow in templates/tasks.md
+- [x] 1.23 Add VE task template to TDD workflow in templates/tasks.md
   - **Do**:
     1. In templates/tasks.md TDD workflow section, after Phase 3 Quality Gates (before Phase 4 PR Lifecycle), add same VE task templates: VE1 (startup), VE2 (check), VE3 (cleanup)
     2. Include same template variables and comment as POC section
