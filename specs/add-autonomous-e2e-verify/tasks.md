@@ -302,7 +302,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 ### Coordinator: VE-Cleanup Guarantee
 
-- [ ] 1.25 Add VE-cleanup guarantee to coordinator-pattern.md
+- [x] 1.25 Add VE-cleanup guarantee to coordinator-pattern.md
   - **Do**:
     1. Open `plugins/ralph-specum/references/coordinator-pattern.md`
     2. In the "After Delegation" section, after the "no completion signal" handling, add a new subsection: "### VE Task Exception (Cleanup Guarantee)"

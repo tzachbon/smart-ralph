@@ -237,6 +237,19 @@ If no completion signal:
 3. If taskIteration > maxTaskIterations: proceed to max retries error handling
 4. Otherwise: Retry the same task
 
+### VE Task Exception (Cleanup Guarantee)
+
+When a VE task (description contains "E2E" and `[VERIFY]`) hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
+
+1. Log VE failure in .progress.md: "VE-check failed after N retries — skipping to VE-cleanup"
+2. Search forward in tasks.md for the VE-cleanup task (description contains "E2E cleanup")
+3. Track the VE-cleanup task index separately from other VE tasks
+4. Skip to VE-cleanup task and execute it via qa-engineer (standard `[VERIFY]` delegation)
+5. VE-cleanup uses PID-based kill (`kill -9` PIDs from `/tmp/ve-pids.txt`) with port-based kill as fallback (`lsof -ti :$PORT | xargs kill -9`)
+6. After VE-cleanup completes (pass or fail), THEN output the max retries error and stop
+
+This guarantees orphaned processes (dev servers, browsers) are cleaned up even when verification fails. See `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "VE-Cleanup Guarantee" section for cleanup strategy details.
+
 ## Verification Layers
 
 CRITICAL: Run these 3 verifications BEFORE advancing taskIndex. All must pass.
