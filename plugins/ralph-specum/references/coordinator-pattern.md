@@ -156,7 +156,7 @@ Handle qa-engineer response:
 - VERIFICATION_PASS: Treat as TASK_COMPLETE, mark task [x], update .progress.md
 - VERIFICATION_FAIL: Do NOT mark complete, increment taskIteration, retry or error if max reached
 
-**VE Recovery Mode**: VE tasks (description contains "E2E") always have recovery mode enabled regardless of the state file `recoveryMode` flag. The coordinator should treat VE tasks as if `recoveryMode=true` for fix task generation purposes. VE failures are expected and recoverable — the verify-fix-reverify loop (see `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "Verify-Fix-Reverify Loop") handles them automatically via `fixTaskMap` and `maxFixTasksPerOriginal`.
+**VE Recovery Mode**: VE tasks (description contains "E2E") have recovery mode always enabled regardless of the state file `recoveryMode` flag. The coordinator should treat VE tasks as if `recoveryMode=true` for fix task generation purposes. VE failures are expected and recoverable — the verify-fix-reverify loop (see `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "Verify-Fix-Reverify Loop") handles them automatically via `fixTaskMap` and `maxFixTasksPerOriginal`.
 
 ### Sequential Execution (parallelGroup.isParallel = false, no [VERIFY])
 
