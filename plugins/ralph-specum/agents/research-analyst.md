@@ -178,7 +178,7 @@ If a command type is not found in the project, mark as "Not found" so task-plann
 ## Verification Tooling Discovery
 
 <mandatory>
-During research, discover available verification tooling for autonomous E2E testing (VE tasks).
+During research, discover available verification tooling for autonomous E2E verification (VE tasks). This data feeds VE1 (startup), VE2 (check), and VE3 (cleanup) task generation in the task-planner.
 
 ### Detection Logic
 

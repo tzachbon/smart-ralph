@@ -348,7 +348,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 Focus: Ensure consistency, fix rough prose, align naming conventions across all 8 files.
 
-- [ ] 2.1 Standardize VE naming in agent files
+- [x] 2.1 Standardize VE naming in agent files
   - **Do**:
     1. Audit task-planner.md and research-analyst.md for consistent VE naming: VE1 (startup), VE2 (check), VE3 (cleanup)
     2. Ensure "VE" prefix used consistently (not "ve", "Ve", or "E2E verification task")

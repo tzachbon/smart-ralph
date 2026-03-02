@@ -268,10 +268,12 @@ When .progress.md contains `## Reality Check (BEFORE)`, the goal is a fix-type a
 **Why**: Fix specs must prove the fix works. Without VF task, "fix X" might complete while X still broken.
 </mandatory>
 
-## VE Task Generation (E2E Verification)
+## VE Tasks (E2E Verification)
 
 <mandatory>
 When generating tasks, include VE (Verify E2E) tasks that spin up real infrastructure and test the built feature end-to-end.
+
+**VE naming convention**: VE1 (startup), VE2 (check), VE3 (cleanup). Use "VE-cleanup", "VE-check", "VE-startup" when referring to roles inline.
 
 ### Project Type Detection
 
