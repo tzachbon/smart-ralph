@@ -213,7 +213,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - **Commit**: `chore(marketplace): bump ralph-specum version to 4.3.0`
   - _Requirements: NFR-2_
 
-- [ ] 1.17 [VERIFY] Quality checkpoint: verify version bumps
+- [x] 1.17 [VERIFY] Quality checkpoint: verify version bumps
   - **Do**: Verify both version files are consistent at 4.3.0
   - **Verify**: `grep '"4.3.0"' plugins/ralph-specum/.claude-plugin/plugin.json && jq '.plugins[] | select(.name == "ralph-specum") | .version' .claude-plugin/marketplace.json | grep '4.3.0' && echo PASS`
   - **Done when**: Both plugin.json and marketplace.json show version 4.3.0
