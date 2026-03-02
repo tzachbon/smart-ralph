@@ -293,7 +293,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-1, AC-1.2_
   - _Design: Component 6_
 
-- [ ] 1.24 [VERIFY] Quality checkpoint: templates
+- [x] 1.24 [VERIFY] Quality checkpoint: templates
   - **Do**: Verify templates/tasks.md has VE templates in both workflows
   - **Files**: `plugins/ralph-specum/templates/tasks.md`
   - **Verify**: `grep -c "VE1" plugins/ralph-specum/templates/tasks.md | xargs test 2 -le && grep -c "VE-cleanup\|E2E cleanup" plugins/ralph-specum/templates/tasks.md | xargs test 2 -le && echo PASS`
@@ -325,7 +325,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-6, AC-5.1_
   - _Design: Component 6_
 
-- [ ] 1.27 [VERIFY] Quality checkpoint: coordinator pattern
+- [x] 1.27 [VERIFY] Quality checkpoint: coordinator pattern
   - **Do**: Verify coordinator-pattern.md has both VE additions
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Verify**: `grep -q "VE Task Exception" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "recovery mode" plugins/ralph-specum/references/coordinator-pattern.md && echo PASS`
@@ -334,7 +334,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 ### POC Checkpoint
 
-- [ ] 1.28 POC Checkpoint: verify all 8 files modified with VE content
+- [x] 1.28 POC Checkpoint: verify all 8 files modified with VE content
   - **Do**:
     1. Verify all 8 target files contain VE-related content
     2. Verify VE task placement is after V6 and before Phase 5 in all relevant files
