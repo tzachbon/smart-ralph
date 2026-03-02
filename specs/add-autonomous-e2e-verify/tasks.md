@@ -6,14 +6,14 @@ generated: auto
 
 ## Overview
 
-Total tasks: 47
+Total tasks: 50
 
 **POC-first workflow** (GREENFIELD):
-1. Phase 1: Make It Work (POC) - 28 tasks (60%)
-2. Phase 2: Refactoring - 7 tasks (15%)
-3. Phase 3: Testing - 6 tasks (13%)
+1. Phase 1: Make It Work (POC) - 28 tasks (56%)
+2. Phase 2: Refactoring - 9 tasks (18%)
+3. Phase 3: Testing - 6 tasks (12%)
 4. Phase 4: Quality Gates - 3 tasks (6%)
-5. Phase 5: PR Lifecycle - 3 tasks (6%)
+5. Phase 5: PR Lifecycle - 4 tasks (8%)
 
 ## Completion Criteria (Autonomous Execution Standard)
 
@@ -62,6 +62,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 - [x] 1.3 [VERIFY] Quality checkpoint: file integrity
   - **Do**: Verify both modified files exist and contain expected new content
+  - **Files**: `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/agents/research-analyst.md`
   - **Verify**: `test -f plugins/ralph-specum/references/parallel-research.md && test -f plugins/ralph-specum/agents/research-analyst.md && grep -q "Verification Tooling" plugins/ralph-specum/references/parallel-research.md && grep -q "Verification Tooling Discovery" plugins/ralph-specum/agents/research-analyst.md && echo PASS`
   - **Done when**: Both files contain new VE-related content
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -94,6 +95,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 - [x] 1.6 [VERIFY] Quality checkpoint: tasks command
   - **Do**: Verify tasks.md command contains all VE additions
+  - **Files**: `plugins/ralph-specum/commands/tasks.md`
   - **Verify**: `grep -c "E2E" plugins/ralph-specum/commands/tasks.md | xargs test 2 -le && echo PASS`
   - **Done when**: At least 2 E2E references in tasks command
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -138,8 +140,9 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-1, AC-1.2, AC-4.7, NFR-1_
   - _Design: Component 3_
 
-- [ ] 1.10 [VERIFY] Quality checkpoint: task planner VE section
+- [x] 1.10 [VERIFY] Quality checkpoint: task planner VE section
   - **Do**: Verify task-planner.md has complete VE section with detection, templates, and rules
+  - **Files**: `plugins/ralph-specum/agents/task-planner.md`
   - **Verify**: `grep -q "VE Task Generation" plugins/ralph-specum/agents/task-planner.md && grep -q "VE1" plugins/ralph-specum/agents/task-planner.md && grep -q "VE Task Rules" plugins/ralph-specum/agents/task-planner.md && grep -q "VE-cleanup" plugins/ralph-specum/agents/task-planner.md && echo PASS`
   - **Done when**: All 3 VE subsections present in task-planner.md
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -168,15 +171,16 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-9, AC-4.3_
   - _Design: Component 3_
 
-- [ ] 1.13 [VERIFY] Quality checkpoint: task planner complete
+- [x] 1.13 [VERIFY] Quality checkpoint: task planner complete
   - **Do**: Verify task-planner.md has all VE additions: generation section, templates, rules, quick/normal mode, fallback
+  - **Files**: `plugins/ralph-specum/agents/task-planner.md`
   - **Verify**: `grep -c "VE" plugins/ralph-specum/agents/task-planner.md | xargs test 10 -le && echo PASS`
   - **Done when**: At least 10 VE references across all new subsections
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
 ### Phase Rules Extension
 
-- [ ] 1.14 Add VE Tasks section to phase-rules.md (POC workflow)
+- [x] 1.14 Add VE Tasks section to phase-rules.md (POC workflow)
   - **Do**:
     1. Open `plugins/ralph-specum/references/phase-rules.md`
     2. After the "VF Task for Fix Goals" section (before "Quality Checkpoint Rules"), add new section: `## VE Tasks (E2E Verification)`
@@ -189,7 +193,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-10, FR-1_
   - _Design: Component 4_
 
-- [ ] 1.15 Add VE references to POC phase distribution in phase-rules.md
+- [x] 1.15 Add VE references to POC phase distribution in phase-rules.md
   - **Do**:
     1. In phase-rules.md POC workflow, update Phase 4 description to mention VE tasks placement between V6 and Phase 5
     2. In "POC Behaviors Per Phase" table, add a row for VE Tasks column or note that VE tasks appear in Phase 4's final verification sequence
@@ -200,7 +204,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-10_
   - _Design: Component 4_
 
-- [ ] 1.16 Add VE references to TDD workflow in phase-rules.md
+- [x] 1.16 Add VE references to TDD workflow in phase-rules.md
   - **Do**:
     1. In phase-rules.md TDD workflow section, add note that VE tasks apply identically: after V6 in Phase 3 (Quality Gates), before Phase 4 (PR Lifecycle)
     2. Reference the VE Tasks section for details
@@ -213,6 +217,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 - [ ] 1.17 [VERIFY] Quality checkpoint: phase rules
   - **Do**: Verify phase-rules.md has VE section and both workflows reference it
+  - **Files**: `plugins/ralph-specum/references/phase-rules.md`
   - **Verify**: `grep -q "VE Tasks" plugins/ralph-specum/references/phase-rules.md && grep -q "VE1" plugins/ralph-specum/references/phase-rules.md && echo PASS`
   - **Done when**: VE Tasks section and VE task references present
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -257,6 +262,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 - [ ] 1.21 [VERIFY] Quality checkpoint: quality checkpoints file
   - **Do**: Verify quality-checkpoints.md has all 3 VE subsections
+  - **Files**: `plugins/ralph-specum/references/quality-checkpoints.md`
   - **Verify**: `grep -q "VE Tasks" plugins/ralph-specum/references/quality-checkpoints.md && grep -q "Verify-Fix-Reverify" plugins/ralph-specum/references/quality-checkpoints.md && grep -q "VE-Cleanup Guarantee" plugins/ralph-specum/references/quality-checkpoints.md && echo PASS`
   - **Done when**: All 3 subsections present
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -289,6 +295,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 - [ ] 1.24 [VERIFY] Quality checkpoint: templates
   - **Do**: Verify templates/tasks.md has VE templates in both workflows
+  - **Files**: `plugins/ralph-specum/templates/tasks.md`
   - **Verify**: `grep -c "VE1" plugins/ralph-specum/templates/tasks.md | xargs test 2 -le && grep -c "VE-cleanup\|E2E cleanup" plugins/ralph-specum/templates/tasks.md | xargs test 2 -le && echo PASS`
   - **Done when**: At least 2 VE1 references (one per workflow) and 2 cleanup references
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -320,6 +327,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 - [ ] 1.27 [VERIFY] Quality checkpoint: coordinator pattern
   - **Do**: Verify coordinator-pattern.md has both VE additions
+  - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Verify**: `grep -q "VE Task Exception" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "recovery mode" plugins/ralph-specum/references/coordinator-pattern.md && echo PASS`
   - **Done when**: Both VE-cleanup guarantee and recovery mode note present
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -331,7 +339,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
     1. Verify all 8 target files contain VE-related content
     2. Verify VE task placement is after V6 and before Phase 5 in all relevant files
     3. Verify no contradictions between files (consistent naming VE1/VE2/VE3, consistent rules)
-  - **Files**: All 8 target files
+  - **Files**: `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Done when**: All 8 files modified, VE content consistent across all files
   - **Verify**: `test -f plugins/ralph-specum/references/parallel-research.md && grep -q "Verification Tooling" plugins/ralph-specum/references/parallel-research.md && grep -q "VE Task Generation" plugins/ralph-specum/agents/task-planner.md && grep -q "E2E verification" plugins/ralph-specum/commands/tasks.md && grep -q "VE Tasks" plugins/ralph-specum/references/phase-rules.md && grep -q "VE Tasks" plugins/ralph-specum/references/quality-checkpoints.md && grep -q "VE1" plugins/ralph-specum/templates/tasks.md && grep -q "VE Task Exception" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "Verification Tooling Discovery" plugins/ralph-specum/agents/research-analyst.md && echo POC_PASS`
   - **Commit**: `feat(ralph-specum): complete POC for autonomous E2E verification`
@@ -340,18 +348,47 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 Focus: Ensure consistency, fix rough prose, align naming conventions across all 8 files.
 
-- [ ] 2.1 Standardize VE naming conventions across all files
+- [ ] 2.1 Standardize VE naming in agent files
   - **Do**:
-    1. Audit all 8 modified files for consistent VE naming: VE1 (startup), VE2 (check), VE3 (cleanup)
+    1. Audit task-planner.md and research-analyst.md for consistent VE naming: VE1 (startup), VE2 (check), VE3 (cleanup)
     2. Ensure "VE" prefix used consistently (not "ve", "Ve", or "E2E verification task")
-    3. Ensure "VE-cleanup" hyphenation is consistent everywhere
-  - **Files**: All files with VE content (audit, fix inconsistencies)
-  - **Done when**: VE naming is consistent across all 8 files
-  - **Verify**: `for f in plugins/ralph-specum/agents/task-planner.md plugins/ralph-specum/references/phase-rules.md plugins/ralph-specum/references/quality-checkpoints.md plugins/ralph-specum/templates/tasks.md plugins/ralph-specum/references/coordinator-pattern.md; do grep -q "VE1" "$f" || echo "MISSING VE1 in $f"; done && echo PASS`
-  - **Commit**: `refactor(ralph-specum): standardize VE naming conventions`
-  - _Design: All components_
+    3. Ensure "VE-cleanup" hyphenation is consistent
+  - **Files**: `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/agents/research-analyst.md`
+  - **Done when**: VE naming is consistent across both agent files
+  - **Verify**: `grep -q "VE1" plugins/ralph-specum/agents/task-planner.md && grep -q "VE-cleanup" plugins/ralph-specum/agents/task-planner.md && echo PASS`
+  - **Commit**: `refactor(ralph-specum): standardize VE naming in agent files`
+  - _Design: Components 1, 3_
 
-- [ ] 2.2 Ensure VE templates match task sizing rules
+- [ ] 2.2 Standardize VE naming in reference files
+  - **Do**:
+    1. Audit phase-rules.md, quality-checkpoints.md, and coordinator-pattern.md for consistent VE naming
+    2. Ensure "VE" prefix and "VE-cleanup" hyphenation match agent files
+    3. Fix any inconsistencies found
+  - **Files**: `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
+  - **Done when**: VE naming is consistent across all 3 reference files
+  - **Verify**: `for f in plugins/ralph-specum/references/phase-rules.md plugins/ralph-specum/references/quality-checkpoints.md plugins/ralph-specum/references/coordinator-pattern.md; do grep -q "VE1" "$f" || echo "MISSING VE1 in $f"; done && echo PASS`
+  - **Commit**: `refactor(ralph-specum): standardize VE naming in reference files`
+  - _Design: Components 4, 5, 6_
+
+- [ ] 2.3 Standardize VE naming in template and command files
+  - **Do**:
+    1. Audit templates/tasks.md and commands/tasks.md for consistent VE naming
+    2. Ensure "VE" prefix and "VE-cleanup" hyphenation match other files
+    3. Fix any inconsistencies found
+  - **Files**: `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/commands/tasks.md`
+  - **Done when**: VE naming is consistent across template and command files
+  - **Verify**: `grep -q "VE1" plugins/ralph-specum/templates/tasks.md && grep -q "VE-cleanup\|E2E cleanup" plugins/ralph-specum/templates/tasks.md && echo PASS`
+  - **Commit**: `refactor(ralph-specum): standardize VE naming in template and command files`
+  - _Design: Components 2, 6_
+
+- [ ] 2.4 [VERIFY] Quality checkpoint: naming consistency
+  - **Do**: Verify VE naming is consistent across all files after standardization
+  - **Files**: `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
+  - **Verify**: `grep -r "VE1" plugins/ralph-specum/ --include="*.md" -l | wc -l | xargs test 3 -le && echo PASS`
+  - **Done when**: At least 3 files reference VE1 consistently
+  - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
+
+- [ ] 2.5 Ensure VE templates match task sizing rules
   - **Do**:
     1. Review VE task templates in task-planner.md and templates/tasks.md
     2. Ensure each VE task has max 4 Do steps, clear Verify command, Done when criteria
@@ -362,13 +399,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Commit**: `refactor(ralph-specum): align VE templates with task sizing rules`
   - _Design: Components 3, 6_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: refactoring consistency
-  - **Do**: Verify naming consistency and template format compliance
-  - **Verify**: `grep -r "VE1" plugins/ralph-specum/ --include="*.md" -l | wc -l | xargs test 3 -le && echo PASS`
-  - **Done when**: At least 3 files reference VE1 consistently
-  - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
-
-- [ ] 2.4 Improve research-analyst detection logic prose
+- [ ] 2.6 Improve research-analyst detection logic prose
   - **Do**:
     1. Review verification tooling discovery section in research-analyst.md
     2. Ensure detection commands are clearly documented with expected output
@@ -380,7 +411,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - _Requirements: AC-3.4_
   - _Design: Component 1_
 
-- [ ] 2.5 Improve coordinator VE-cleanup skip-forward logic prose
+- [ ] 2.7 Improve coordinator VE-cleanup skip-forward logic prose
   - **Do**:
     1. Review VE Task Exception section in coordinator-pattern.md
     2. Ensure skip-to-cleanup algorithm is unambiguous: search forward from failed task for "E2E cleanup" description, jump taskIndex to that task
@@ -392,7 +423,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - _Requirements: AC-1.4, NFR-4_
   - _Design: Component 6_
 
-- [ ] 2.6 Add cross-references between files
+- [ ] 2.8 Add cross-references between files
   - **Do**:
     1. In phase-rules.md VE section, add: "See quality-checkpoints.md for VE format details and verify-fix-reverify loop"
     2. In quality-checkpoints.md VE section, add: "See phase-rules.md for VE placement rules"
@@ -403,8 +434,9 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Commit**: `refactor(ralph-specum): add cross-references between VE documentation files`
   - _Design: Components 3, 4, 5_
 
-- [ ] 2.7 [VERIFY] Quality checkpoint: refactoring complete
+- [ ] 2.9 [VERIFY] Quality checkpoint: refactoring complete
   - **Do**: Verify all refactoring tasks improved consistency and cross-references
+  - **Files**: `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/references/coordinator-pattern.md`, `plugins/ralph-specum/templates/tasks.md`
   - **Verify**: `grep -r "VE" plugins/ralph-specum/ --include="*.md" -l | wc -l | xargs test 6 -le && echo PASS`
   - **Done when**: At least 6 files reference VE content, cross-references in place
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -436,6 +468,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
 
 - [ ] 3.3 [VERIFY] Quality checkpoint: testing progress
   - **Do**: Run all verification commands from tasks 3.1-3.2
+  - **Files**: `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/agents/task-planner.md`
   - **Verify**: `grep -q "Verification Tooling Discovery" plugins/ralph-specum/agents/research-analyst.md && grep -q "VE Task Generation" plugins/ralph-specum/agents/task-planner.md && echo PASS`
   - **Done when**: Both verification checks pass
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
@@ -446,7 +479,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
     2. Check quality-checkpoints.md states VE after V6
     3. Check templates/tasks.md has VE after V6/VF in both POC and TDD sections
     4. Check task-planner.md states VE after V6, before Phase 5
-  - **Files**: All 4 files with VE placement references
+  - **Files**: `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`
   - **Done when**: VE placement is consistent (after V6, before Phase 5) in all files
   - **Verify**: `grep -q "after V6\|V4.*V5.*V6.*VE\|After V6" plugins/ralph-specum/references/phase-rules.md && grep -q "after V6\|After V6\|V6.*VE" plugins/ralph-specum/references/quality-checkpoints.md && echo PASS`
   - **Commit**: `test(ralph-specum): verify VE placement consistency`
@@ -458,7 +491,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
     2. Check quality-checkpoints.md still has all original sections: Frequency Rules, [VERIFY] format, Final Verification Sequence, VF Task
     3. Check coordinator-pattern.md still has all original sections: Read State, Check Completion, Parse Current Task, Task Delegation, Verification Layers
     4. Check templates/tasks.md still has both POC and TDD workflow sections
-  - **Files**: All 4 core reference files
+  - **Files**: `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Done when**: All original content preserved, VE additions are additive only
   - **Verify**: `grep -q "Phase 1: Make It Work" plugins/ralph-specum/references/phase-rules.md && grep -q "Frequency Rules" plugins/ralph-specum/references/quality-checkpoints.md && grep -q "Verification Layers" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "POC-FIRST WORKFLOW\|Phase 1: Make It Work" plugins/ralph-specum/templates/tasks.md && echo PASS`
   - **Commit**: `test(ralph-specum): verify backward compatibility preserved`
@@ -466,26 +499,30 @@ Focus: Validate correctness of all VE additions via automated content checks.
 
 - [ ] 3.6 [VERIFY] Quality checkpoint: all testing complete
   - **Do**: Run comprehensive content verification across all 8 files
+  - **Files**: `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Verify**: `for f in plugins/ralph-specum/references/parallel-research.md plugins/ralph-specum/agents/research-analyst.md plugins/ralph-specum/commands/tasks.md plugins/ralph-specum/agents/task-planner.md plugins/ralph-specum/references/phase-rules.md plugins/ralph-specum/references/quality-checkpoints.md plugins/ralph-specum/templates/tasks.md plugins/ralph-specum/references/coordinator-pattern.md; do test -f "$f" || echo "MISSING: $f"; done && echo ALL_FILES_EXIST`
   - **Done when**: All 8 files exist and pass content checks
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
 ## Phase 4: Quality Gates
 
-- [ ] V4 [VERIFY] Full content verification of all 8 modified files
+- [ ] 4.1 [VERIFY] Full content verification of all 8 modified files
   - **Do**: Run comprehensive automated check across all files for VE content integrity
+  - **Files**: `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Verify**: `grep -q "Verification Tooling" plugins/ralph-specum/references/parallel-research.md && grep -q "Verification Tooling Discovery" plugins/ralph-specum/agents/research-analyst.md && grep -q "E2E verification" plugins/ralph-specum/commands/tasks.md && grep -q "VE Task Generation" plugins/ralph-specum/agents/task-planner.md && grep -q "VE Tasks" plugins/ralph-specum/references/phase-rules.md && grep -q "VE Tasks" plugins/ralph-specum/references/quality-checkpoints.md && grep -q "VE1" plugins/ralph-specum/templates/tasks.md && grep -q "VE Task Exception" plugins/ralph-specum/references/coordinator-pattern.md && echo V4_PASS`
   - **Done when**: All 8 files contain expected VE content
   - **Commit**: `chore(ralph-specum): pass full content verification` (only if fixes needed)
 
-- [ ] V5 [VERIFY] Version bump check
+- [ ] 4.2 [VERIFY] Version bump check
   - **Do**: Check if plugin version needs bumping per project CLAUDE.md rules (any plugin file changed = version bump required)
+  - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Verify**: `test -f plugins/ralph-specum/.claude-plugin/plugin.json && test -f .claude-plugin/marketplace.json && echo FILES_EXIST`
   - **Done when**: Version files exist and are ready for bumping (actual bump happens in commit)
   - **Commit**: None
 
-- [ ] V6 [VERIFY] AC checklist
+- [ ] 4.3 [VERIFY] AC checklist
   - **Do**: Programmatically verify each acceptance criterion is satisfied
+  - **Files**: `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/references/coordinator-pattern.md`, `plugins/ralph-specum/references/quality-checkpoints.md`
   - **Verify**: `grep -q "auto-enable VE\|quickMode.*VE\|quick mode.*VE\|Quick Mode" plugins/ralph-specum/agents/task-planner.md && grep -q "E2E verification" plugins/ralph-specum/commands/tasks.md && grep -q "Verification Tooling" plugins/ralph-specum/references/parallel-research.md && grep -q "VE1.*VE2.*VE3\|VE1.*startup\|E2E startup" plugins/ralph-specum/agents/task-planner.md && grep -q "VE-cleanup\|VE-Cleanup\|E2E cleanup" plugins/ralph-specum/agents/task-planner.md && grep -q "VE-Cleanup Guarantee\|VE Task Exception" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "Verify-Fix-Reverify\|verify-fix-reverify" plugins/ralph-specum/references/quality-checkpoints.md && echo V6_PASS`
   - **Done when**: All critical ACs confirmed met: AC-1.1 (quick mode auto-enable), AC-2.1 (interview question), AC-3.1 (research topic), AC-4.2 (VE format), AC-1.4 (cleanup guarantee), AC-5.1 (verify-fix-reverify)
   - **Commit**: None
