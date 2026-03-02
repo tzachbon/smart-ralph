@@ -91,12 +91,18 @@ Follow the full team lifecycle:
    - Insert quality checkpoints per quality-checkpoints.md
    - Each task = one commit, tasks must be executable without human interaction
    - Count total tasks, output to `./specs/$spec/tasks.md`
+   - If quick mode: auto-enable VE tasks. Pass verification tooling from research.md and strategy "auto" to task-planner
 5. **Wait for completion**: Monitor via TaskList.
 6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "planner-1")`
 7. **Collect results**: Read `./specs/$spec/tasks.md`.
 8. **Clean up**: `TeamDelete()`.
 
 **Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call.
+
+> **VE Delegation Context**: When delegating to task-planner, include these additional inputs for VE (E2E Verification) task generation:
+> - **E2E Verification**: enabled or disabled (from interview response, or auto-enabled in quick mode)
+> - **Verification Tooling**: the Verification Tooling section from research.md (dev server commands, browser deps, ports, health endpoints)
+> - **Strategy**: the user's chosen verification strategy, or "auto" in quick mode
 </mandatory>
 
 ## Step 4: Artifact Review (skip if --quick)
