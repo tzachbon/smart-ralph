@@ -303,7 +303,7 @@ Focus: Clean up and ensure consistency across all additions.
   - **Commit**: `refactor(task-planner): add [P] items to quality checklist`
   - _Requirements: FR-1_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: verify refactoring consistency
+- [x] 2.3 [VERIFY] Quality checkpoint: verify refactoring consistency
   - **Do**: Verify task-planner.md has mandatory tags and quality checklist items for [P]
   - **Verify**: `grep '<mandatory>' plugins/ralph-specum/agents/task-planner.md | wc -l | awk '{print ($1 >= 1) ? "PASS" : "FAIL"}' && grep 'marked \[P\]' plugins/ralph-specum/agents/task-planner.md && echo REFACTOR_PASS`
   - **Done when**: Mandatory tags present and quality checklist updated
@@ -330,7 +330,7 @@ Focus: Clean up and ensure consistency across all additions.
   - **Commit**: `refactor(templates): add clarifying comment for [P] in TDD context`
   - _Design: Component 2_
 
-- [ ] 2.6 [VERIFY] Quality checkpoint: verify refactoring complete
+- [x] 2.6 [VERIFY] Quality checkpoint: verify refactoring complete
   - **Do**: Verify all refactoring tasks are reflected in the files
   - **Verify**: `grep 'Parallel group detection' plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep 'NOT within a single R-G-Y' plugins/ralph-specum/templates/tasks.md && grep 'marked \[P\]' plugins/ralph-specum/agents/task-planner.md && echo REFACTOR_COMPLETE`
   - **Done when**: All 3 files have proper comments and structure
@@ -340,7 +340,7 @@ Focus: Clean up and ensure consistency across all additions.
 
 Focus: Verify all changes via automated checks since there's no test runner for this plugin.
 
-- [ ] 3.1 Verify task-planner [P] rules content completeness
+- [x] 3.1 Verify task-planner [P] rules content completeness
   - **Do**:
     1. Run comprehensive grep checks against task-planner.md to verify all required [P] content
     2. Check for: 4 conditions, max group size, phase boundaries, [VERIFY] breaks groups, "When in doubt" guidance
@@ -350,7 +350,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Commit**: None (read-only verification)
   - _Requirements: FR-1, FR-6_
 
-- [ ] 3.2 Verify task-planner [P] examples are valid markdown
+- [x] 3.2 Verify task-planner [P] examples are valid markdown
   - **Do**:
     1. Verify task-planner.md [P] examples follow the exact task format: `- [ ] X.Y [P] Task name`
     2. Verify the examples include Do, Files, Done when, Verify, Commit fields
@@ -360,13 +360,13 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Commit**: None (read-only verification)
   - _Requirements: FR-1_
 
-- [ ] 3.3 [VERIFY] Quality checkpoint: task-planner content tests
+- [x] 3.3 [VERIFY] Quality checkpoint: task-planner content tests
   - **Do**: Run all task-planner content verifications
   - **Verify**: `grep '\[P\] Parallel Task Marking' plugins/ralph-specum/agents/task-planner.md && grep '<mandatory>' plugins/ralph-specum/agents/task-planner.md && echo PASS`
   - **Done when**: All task-planner content checks pass
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.4 Verify template [P] markers in POC section
+- [x] 3.4 Verify template [P] markers in POC section
   - **Do**:
     1. Verify templates/tasks.md has [P] markers on POC tasks 1.1 and 1.2
     2. Verify task 1.3 (Quality Checkpoint) does NOT have [P]
@@ -376,7 +376,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Commit**: None (read-only verification)
   - _Requirements: FR-1, FR-9_
 
-- [ ] 3.5 Verify template [P] markers in TDD section
+- [x] 3.5 Verify template [P] markers in TDD section
   - **Do**:
     1. Verify templates/tasks.md has [P] [RED] markers for independent test tasks
     2. Verify the TDD triplet tasks (1.1-1.3) do NOT have [P]
@@ -386,13 +386,13 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Commit**: None (read-only verification)
   - _Requirements: FR-1, FR-9_
 
-- [ ] 3.6 [VERIFY] Quality checkpoint: template content tests
+- [x] 3.6 [VERIFY] Quality checkpoint: template content tests
   - **Do**: Run all template content verifications
   - **Verify**: `grep -c '\[P\]' plugins/ralph-specum/templates/tasks.md | awk '{print ($1 >= 4) ? "PASS" : "FAIL"}'`
   - **Done when**: Template has at least 4 [P] references
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.7 Verify stop-watcher [P] detection with mock task block
+- [x] 3.7 Verify stop-watcher [P] detection with mock task block
   - **Do**:
     1. Create a small test: pipe a mock [P] task line through the detection logic
     2. `echo "- [ ] 1.2 [P] Create user service" | head -1 | grep -q '\[P\]' && echo "DETECTED"`
@@ -402,7 +402,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Commit**: None (inline test)
   - _Requirements: FR-2_
 
-- [ ] 3.8 Verify stop-watcher bash syntax after all changes
+- [x] 3.8 Verify stop-watcher bash syntax after all changes
   - **Do**:
     1. Run `bash -n` on the modified stop-watcher.sh
     2. Verify no syntax errors introduced by parallel detection additions
@@ -412,7 +412,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Commit**: None (read-only verification)
   - _Requirements: NFR-2_
 
-- [ ] 3.9 Verify backward compatibility: non-[P] tasks unchanged
+- [x] 3.9 Verify backward compatibility: non-[P] tasks unchanged
   - **Do**:
     1. Verify stop-watcher still has IS_PARALLEL="false" as default
     2. Verify the existing sequential REASON heredoc is unchanged for non-parallel tasks
@@ -423,13 +423,13 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Commit**: None (read-only verification)
   - _Requirements: FR-9, NFR-2, NFR-3_
 
-- [ ] 3.10 [VERIFY] Quality checkpoint: all stop-watcher tests
+- [x] 3.10 [VERIFY] Quality checkpoint: all stop-watcher tests
   - **Do**: Run comprehensive stop-watcher verifications
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep 'IS_PARALLEL="false"' plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep 'dispatch ALL' plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo ALL_STOP_WATCHER_PASS`
   - **Done when**: All stop-watcher tests pass
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.11 Verify version consistency across files
+- [x] 3.11 Verify version consistency across files
   - **Do**:
     1. Check that plugin.json and marketplace.json both have version 4.3.0
     2. Verify they match each other
@@ -439,7 +439,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 [VERIFY] Full local validation: all files, all checks
+- [x] 4.1 [VERIFY] Full local validation: all files, all checks
   - **Do**: Run complete validation suite
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep '\[P\] Parallel Task Marking' plugins/ralph-specum/agents/task-planner.md && grep '\[P\]' plugins/ralph-specum/templates/tasks.md && jq -r .version plugins/ralph-specum/.claude-plugin/plugin.json | grep '4.3.0' && echo FULL_LOCAL_PASS`
   - **Done when**: All local checks pass
