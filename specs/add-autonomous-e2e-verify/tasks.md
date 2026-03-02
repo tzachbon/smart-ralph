@@ -466,7 +466,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
   - **Commit**: `test(ralph-specum): verify task-planner covers all project types`
   - _Requirements: FR-9, AC-4.3_
 
-- [ ] 3.3 [VERIFY] Quality checkpoint: testing progress
+- [x] 3.3 [VERIFY] Quality checkpoint: testing progress
   - **Do**: Run all verification commands from tasks 3.1-3.2
   - **Files**: `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/agents/task-planner.md`
   - **Verify**: `grep -q "Verification Tooling Discovery" plugins/ralph-specum/agents/research-analyst.md && grep -q "VE Task Generation" plugins/ralph-specum/agents/task-planner.md && echo PASS`
@@ -497,7 +497,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
   - **Commit**: `test(ralph-specum): verify backward compatibility preserved`
   - _Requirements: NFR-3_
 
-- [ ] 3.6 [VERIFY] Quality checkpoint: all testing complete
+- [x] 3.6 [VERIFY] Quality checkpoint: all testing complete
   - **Do**: Run comprehensive content verification across all 8 files
   - **Files**: `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Verify**: `for f in plugins/ralph-specum/references/parallel-research.md plugins/ralph-specum/agents/research-analyst.md plugins/ralph-specum/commands/tasks.md plugins/ralph-specum/agents/task-planner.md plugins/ralph-specum/references/phase-rules.md plugins/ralph-specum/references/quality-checkpoints.md plugins/ralph-specum/templates/tasks.md plugins/ralph-specum/references/coordinator-pattern.md; do test -f "$f" || echo "MISSING: $f"; done && echo ALL_FILES_EXIST`
@@ -541,7 +541,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
   - **Verify**: `grep -q '"version"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -q '"version"' .claude-plugin/marketplace.json && echo PASS`
   - **Commit**: `chore(ralph-specum): bump version for VE tasks feature`
 
-- [ ] 5.2 Create pull request
+- [x] 5.2 Create pull request
   - **Do**:
     1. Verify current branch: `git branch --show-current`
     2. Push: `git push -u origin $(git branch --show-current)`
@@ -567,7 +567,7 @@ EOF
   - **Done when**: PR created and URL returned
   - **Commit**: None
 
-- [ ] 5.3 Monitor CI and fix failures
+- [x] 5.3 Monitor CI and fix failures
   - **Do**:
     1. Check status: `gh pr checks`
     2. If failures: read logs, fix issues, push
@@ -577,7 +577,7 @@ EOF
   - **Done when**: All CI checks passing
   - **Commit**: `fix(ralph-specum): address CI failures` (as needed)
 
-- [ ] 5.4 Final validation
+- [x] 5.4 Final validation
   - **Do**: Verify ALL completion criteria:
     1. All Phase 1-4 tasks complete
     2. CI checks all green
