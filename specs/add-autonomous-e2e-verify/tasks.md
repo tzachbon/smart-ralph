@@ -381,7 +381,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Commit**: `refactor(ralph-specum): standardize VE naming in template and command files`
   - _Design: Components 2, 6_
 
-- [ ] 2.4 [VERIFY] Quality checkpoint: naming consistency
+- [x] 2.4 [VERIFY] Quality checkpoint: naming consistency
   - **Do**: Verify VE naming is consistent across all files after standardization
   - **Files**: `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Verify**: `grep -r "VE1" plugins/ralph-specum/ --include="*.md" -l | wc -l | xargs test 3 -le && echo PASS`
@@ -434,7 +434,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Commit**: `refactor(ralph-specum): add cross-references between VE documentation files`
   - _Design: Components 3, 4, 5_
 
-- [ ] 2.9 [VERIFY] Quality checkpoint: refactoring complete
+- [x] 2.9 [VERIFY] Quality checkpoint: refactoring complete
   - **Do**: Verify all refactoring tasks improved consistency and cross-references
   - **Files**: `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/references/coordinator-pattern.md`, `plugins/ralph-specum/templates/tasks.md`
   - **Verify**: `grep -r "VE" plugins/ralph-specum/ --include="*.md" -l | wc -l | xargs test 6 -le && echo PASS`
