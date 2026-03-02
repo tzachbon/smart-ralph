@@ -3,25 +3,24 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-03-02T20:58:38Z
+**Last updated:** 2026-03-02T21:37:32Z
 
 ## Directories (1)
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 27 | Yes |
+| ./specs | 25 | Yes |
 
-## All Specs (27)
+## All Specs (25)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
+| parallel-tasks-execution | ./specs | research |  |
 | add-skills-doc | ./specs | completed | done |
 | enforce-teams-instead | ./specs | completed | done |
 | improve-task-generation | ./specs | tasks | 66/68 tasks |
 | fix-impl-context-bloat | ./specs | tasks | 47/48 tasks |
 | plan-source-feature | ./specs | completed | done |
-| return-ralph-wrigum | ./specs | complete |  |
-| refactor-plugins | ./specs | new |  |
 | implement-ralph-wiggum | ./specs | tasks | 27/35 tasks |
 | fork-ralph-wiggum | ./specs | completed | done |
 | reality-verification-principle | ./specs | tasks | 9/11 tasks |
@@ -30,7 +29,6 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | qa-verification | ./specs | completed | done |
 | ralph-speckit | ./specs | completed | done |
 | multi-spec-dirs | ./specs | tasks | 30/33 tasks |
-| add-walk-through-of | ./specs | new |  |
 | codebase-indexing | ./specs | completed | done |
 | parallel-task-execution | ./specs | tasks | 24/25 tasks |
 | iterative-failure-recovery | ./specs | tasks | 14/20 tasks |

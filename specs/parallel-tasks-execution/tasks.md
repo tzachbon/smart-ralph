@@ -120,7 +120,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-1_
   - _Design: Component 2 - Tasks Template_
 
-- [ ] 1.8 [VERIFY] Quality checkpoint: verify template changes
+- [x] 1.8 [VERIFY] Quality checkpoint: verify template changes
   - **Do**: Verify all template [P] additions are present
   - **Verify**: `grep -c '\[P\]' plugins/ralph-specum/templates/tasks.md | awk '{print ($1 >= 4) ? "PASS" : "FAIL: only " $1 " [P] occurrences"}'`
   - **Done when**: templates/tasks.md has [P] in POC section, TDD section, and task writing guide (at least 4 references)
@@ -128,7 +128,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
 
 ### Stop-Watcher Updates
 
-- [ ] 1.9 Add [P] marker detection to stop-watcher task block extraction
+- [x] 1.9 Add [P] marker detection to stop-watcher task block extraction
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. After the existing TASK_BLOCK extraction (around line 231), add a check for [P] marker in the first line of TASK_BLOCK

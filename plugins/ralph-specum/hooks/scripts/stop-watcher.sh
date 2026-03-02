@@ -230,6 +230,12 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
         ' "$TASKS_FILE" | sed -e :a -e '/^[[:space:]]*$/{' -e '$d' -e N -e ba -e '}')
     fi
 
+    # Detect [P] parallel marker on current task
+    IS_PARALLEL="false"
+    if echo "$TASK_BLOCK" | head -1 | grep -q '\[P\]'; then
+        IS_PARALLEL="true"
+    fi
+
     # DESIGN NOTE: Prompt Duplication
     # This continuation prompt is intentionally abbreviated compared to implement.md.
     # - implement.md = full specification (source of truth for coordinator behavior)
