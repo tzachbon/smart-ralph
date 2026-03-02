@@ -337,6 +337,29 @@ VE task generation depends on the execution mode:
 - **Normal mode**: Check interview context for `E2E verification: YES/NO`. If YES or not present (default YES), generate VE tasks. If NO, skip VE generation entirely.
 
 In both modes, the project type detection table and research.md "Verification Tooling" section drive which VE templates are generated.
+
+### Library/No-Tooling Fallback
+
+When project type is Library or no verification tooling is detected, use this minimal VE template instead of the full startup/check/cleanup sequence:
+
+```markdown
+- [ ] VE1 [VERIFY] E2E build and import check
+  - **Do**:
+    1. Run build command: `{{build_cmd}}`
+    2. Verify build artifact exists and is importable: `node -e "require('{{package_name}}')"` or equivalent
+  - **Verify**: `{{build_cmd}} && echo VE1_PASS`
+  - **Done when**: Build succeeds and artifact is importable
+  - **Commit**: None
+
+- [ ] VE2 [VERIFY] E2E cleanup: remove build artifacts
+  - **Do**:
+    1. Clean build artifacts if needed: `{{clean_cmd}}` (or no-op if not applicable)
+  - **Verify**: `echo VE2_PASS`
+  - **Done when**: Cleanup complete
+  - **Commit**: None
+```
+
+No dev server startup needed. Just verify the build artifact exists and is importable.
 </mandatory>
 
 ## Intermediate Quality Gate Checkpoints

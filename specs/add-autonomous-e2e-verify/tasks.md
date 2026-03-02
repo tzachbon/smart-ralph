@@ -156,7 +156,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-7, AC-1.1, AC-2.3_
   - _Design: Component 3_
 
-- [ ] 1.12 Add library fallback VE template to task-planner.md
+- [x] 1.12 Add library fallback VE template to task-planner.md
   - **Do**:
     1. In the VE Task Generation section, add "Library/No-Tooling Fallback" subsection
     2. Template: single VE1 task that runs build command and verifies import works, plus VE2 cleanup (minimal)
