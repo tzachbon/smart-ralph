@@ -92,7 +92,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-7, FR-8, AC-1.1_
   - _Design: Component 2_
 
-- [ ] 1.6 [VERIFY] Quality checkpoint: tasks command
+- [x] 1.6 [VERIFY] Quality checkpoint: tasks command
   - **Do**: Verify tasks.md command contains all VE additions
   - **Verify**: `grep -c "E2E" plugins/ralph-specum/commands/tasks.md | xargs test 2 -le && echo PASS`
   - **Done when**: At least 2 E2E references in tasks command
@@ -100,7 +100,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 ### Task Planner: VE Task Generation
 
-- [ ] 1.7 Add project type detection section to task-planner.md
+- [x] 1.7 Add project type detection section to task-planner.md
   - **Do**:
     1. Open `plugins/ralph-specum/agents/task-planner.md`
     2. After the "VF Task Generation for Fix Goals" mandatory section, add a new mandatory section: `## VE Task Generation (E2E Verification)`

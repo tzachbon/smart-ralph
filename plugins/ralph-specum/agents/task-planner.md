@@ -268,6 +268,24 @@ When .progress.md contains `## Reality Check (BEFORE)`, the goal is a fix-type a
 **Why**: Fix specs must prove the fix works. Without VF task, "fix X" might complete while X still broken.
 </mandatory>
 
+## VE Task Generation (E2E Verification)
+
+<mandatory>
+When generating tasks, include VE (Verify E2E) tasks that spin up real infrastructure and test the built feature end-to-end.
+
+### Project Type Detection
+
+Read the "Verification Tooling" section from research.md to determine project type and available tools.
+
+| Project Type | Detection Signal | VE Approach |
+|---|---|---|
+| Web App | Dev server script + browser deps (playwright/puppeteer/cypress) | Start server, curl/browser check |
+| API | Dev server script + health endpoint | Start server, curl endpoints |
+| CLI | Binary/script entry point | Run commands, check output |
+| Mobile | iOS/Android deps (react-native, flutter, xcode) | Simulator if available |
+| Library | No dev server, no UI | Build + import check only |
+</mandatory>
+
 ## Intermediate Quality Gate Checkpoints
 
 <mandatory>
