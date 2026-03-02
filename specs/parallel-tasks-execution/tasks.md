@@ -61,7 +61,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-1, FR-2, US-1_
   - _Design: Component 1 - Parallelizability Rules_
 
-- [ ] 1.3 [P] Add [P] to POC task examples in task-planner agent
+- [x] 1.3 [P] Add [P] to POC task examples in task-planner agent
   - **Do**:
     1. Open `plugins/ralph-specum/agents/task-planner.md`
     2. In the `### POC Structure (GREENFIELD)` section, modify the example tasks 1.1 and 1.2 to show [P] usage
