@@ -370,7 +370,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Commit**: `refactor(ralph-specum): standardize VE naming in reference files`
   - _Design: Components 4, 5, 6_
 
-- [ ] 2.3 Standardize VE naming in template and command files
+- [x] 2.3 Standardize VE naming in template and command files
   - **Do**:
     1. Audit templates/tasks.md and commands/tasks.md for consistent VE naming
     2. Ensure "VE" prefix and "VE-cleanup" hyphenation match other files
@@ -388,7 +388,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Done when**: At least 3 files reference VE1 consistently
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.5 Ensure VE templates match task sizing rules
+- [x] 2.5 Ensure VE templates match task sizing rules
   - **Do**:
     1. Review VE task templates in task-planner.md and templates/tasks.md
     2. Ensure each VE task has max 4 Do steps, clear Verify command, Done when criteria
@@ -399,7 +399,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - **Commit**: `refactor(ralph-specum): align VE templates with task sizing rules`
   - _Design: Components 3, 6_
 
-- [ ] 2.6 Improve research-analyst detection logic prose
+- [x] 2.6 Improve research-analyst detection logic prose
   - **Do**:
     1. Review verification tooling discovery section in research-analyst.md
     2. Ensure detection commands are clearly documented with expected output
@@ -411,7 +411,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - _Requirements: AC-3.4_
   - _Design: Component 1_
 
-- [ ] 2.7 Improve coordinator VE-cleanup skip-forward logic prose
+- [x] 2.7 Improve coordinator VE-cleanup skip-forward logic prose
   - **Do**:
     1. Review VE Task Exception section in coordinator-pattern.md
     2. Ensure skip-to-cleanup algorithm is unambiguous: search forward from failed task for "E2E cleanup" description, jump taskIndex to that task
@@ -423,7 +423,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
   - _Requirements: AC-1.4, NFR-4_
   - _Design: Component 6_
 
-- [ ] 2.8 Add cross-references between files
+- [x] 2.8 Add cross-references between files
   - **Do**:
     1. In phase-rules.md VE section, add: "See quality-checkpoints.md for VE format details and verify-fix-reverify loop"
     2. In quality-checkpoints.md VE section, add: "See phase-rules.md for VE placement rules"
