@@ -264,14 +264,25 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
     # specification lives in implement.md; this prompt provides just enough context
     # for the coordinator to resume execution efficiently.
 
+    # Build task section header and instructions based on parallel mode
+    if [ "$IS_PARALLEL" = "true" ]; then
+        TASK_HEADER="## Current Task Group (PARALLEL)"
+        PARALLEL_INSTRUCTIONS="
+PARALLEL: These are [P] tasks -- dispatch ALL in ONE message via Task tool. Each gets progressFile: .progress-task-\$INDEX.md. After all complete: merge progress, advance taskIndex past group."
+    else
+        TASK_HEADER="## Current Task"
+        PARALLEL_INSTRUCTIONS=""
+    fi
+
     REASON=$(cat <<STOP_WATCHER_REASON_EOF
 Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
 
 ## State
 Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE
 
-## Current Task
+$TASK_HEADER
 $TASK_BLOCK
+$PARALLEL_INSTRUCTIONS
 
 ## Resume
 1. Read $SPEC_PATH/.ralph-state.json for current state

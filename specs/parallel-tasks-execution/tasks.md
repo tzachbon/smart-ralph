@@ -153,13 +153,13 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-2, FR-3, US-2_
   - _Design: Component 3 - Stop-Watcher_
 
-- [ ] 1.11 [VERIFY] Quality checkpoint: verify stop-watcher [P] detection logic
+- [x] 1.11 [VERIFY] Quality checkpoint: verify stop-watcher [P] detection logic
   - **Do**: Verify stop-watcher has IS_PARALLEL detection and awk-based group scanning
   - **Verify**: `grep -c 'IS_PARALLEL\|PARALLEL_TASKS' plugins/ralph-specum/hooks/scripts/stop-watcher.sh | awk '{print ($1 >= 3) ? "PASS" : "FAIL: only " $1 " references"}'`
   - **Done when**: stop-watcher.sh has both [P] detection and group scanning
   - **Commit**: `chore(stop-watcher): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.12 Add parallel continuation prompt to stop-watcher
+- [x] 1.12 Add parallel continuation prompt to stop-watcher
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. In the REASON heredoc (around line 241), add conditional parallel dispatch instructions when IS_PARALLEL=true
