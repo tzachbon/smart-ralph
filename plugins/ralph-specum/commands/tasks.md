@@ -50,6 +50,7 @@ Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/S
 - **Execution priority** -- ship fast with shortcuts, balanced pace, or quality-first from the start?
 - **Dependency ordering** -- are there tasks that must complete before others can begin?
 - **Team workflow constraints** -- PR review process, CI pipeline requirements, branch strategy?
+- **E2E verification** -- add autonomous end-to-end verification tasks? (default YES). What should be tested end-to-end?
 
 ### Tasks Approach Proposals
 
@@ -64,6 +65,7 @@ Append to `.progress.md` under "Interview Responses":
 ```markdown
 ### Tasks Interview (from tasks.md)
 - [Topic 1]: [response]
+- E2E verification: YES/NO -- [strategy or "auto"]
 - Chosen approach: [name] -- [brief description]
 ```
 
