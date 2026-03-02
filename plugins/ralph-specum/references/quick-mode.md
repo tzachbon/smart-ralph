@@ -82,11 +82,11 @@ Validation Sequence:
     - Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
     - Add: add|create|build|implement|new|enable|introduce (default)
     - For fix goals: run reproduction, document BEFORE state
-11. Research Phase: run Team Research flow (skip walkthrough), clear awaitingApproval
+11. Research Phase: TaskCreate("Research for $spec", activeForm: "Researching"), run Team Research flow (skip walkthrough), clear awaitingApproval, TaskUpdate(completed)
 12. Skill Discovery Pass 2: re-scan skills using goal + research Executive Summary, invoke new matches
-13. Requirements Phase: delegate to product-manager with Quick Mode Directive, review loop
-14. Design Phase: delegate to architect-reviewer with Quick Mode Directive, review loop
-15. Tasks Phase: delegate to task-planner with Quick Mode Directive, review loop
+13. Requirements Phase: TaskCreate("Requirements for $spec", activeForm: "Generating requirements"), delegate to product-manager with Quick Mode Directive, review loop, TaskUpdate(completed)
+14. Design Phase: TaskCreate("Design for $spec", activeForm: "Generating design"), delegate to architect-reviewer with Quick Mode Directive, review loop, TaskUpdate(completed)
+15. Tasks Phase: TaskCreate("Tasks for $spec", activeForm: "Generating tasks"), delegate to task-planner with Quick Mode Directive, review loop, TaskUpdate(completed)
 16. Transition to Execution:
     - Count total tasks (number of `- [ ]` checkboxes)
     - Update state: phase="execution", totalTasks=<count>, taskIndex=0

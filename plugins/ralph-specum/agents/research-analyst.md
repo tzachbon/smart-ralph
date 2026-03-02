@@ -175,6 +175,78 @@ Add to research.md:
 If a command type is not found in the project, mark as "Not found" so task-planner knows to skip that check in [VERIFY] tasks.
 </mandatory>
 
+## Verification Tooling Discovery
+
+<mandatory>
+During research, discover available verification tooling for autonomous E2E verification (VE tasks). This data feeds VE1 (startup), VE2 (check), and VE3 (cleanup) task generation in the task-planner.
+
+### Detection Logic
+
+Run these commands to detect available verification tooling:
+
+1. **Dev server scripts** — parse package.json for dev/start/serve scripts:
+   ```bash
+   jq -r '.scripts | to_entries[] | select(.key | test("dev|start|serve")) | "\(.key): \(.value)"' package.json 2>/dev/null || echo "No dev server scripts"
+   ```
+
+2. **Browser automation deps** — check dependencies and devDependencies:
+   ```bash
+   jq -r '[(.dependencies // {}), (.devDependencies // {})] | add | to_entries[] | select(.key | test("playwright|puppeteer|cypress|selenium")) | "\(.key): \(.value)"' package.json 2>/dev/null || echo "No browser automation deps"
+   ```
+
+3. **E2E config files** — look for framework config files in project root:
+   ```bash
+   ls playwright.config.* cypress.config.* cypress.json .cypressrc* wdio.conf.* 2>/dev/null || echo "No E2E config files"
+   ```
+
+4. **Port detection** — extract port numbers from env files and package.json scripts:
+   ```bash
+   grep -ohE '(PORT|port)[=:]\s*[0-9]+' .env .env.local .env.development 2>/dev/null | head -5 || echo "No port in env files"
+   jq -r '.scripts | to_entries[] | .value' package.json 2>/dev/null | grep -oE '\-\-port[= ][0-9]+|:[0-9]{4}' | head -5 || echo "No port in scripts"
+   ```
+
+5. **Health endpoints** — search source for health/ready route definitions:
+   ```bash
+   grep -rn "health\|healthz\|ready\|readiness" src/ app/ routes/ 2>/dev/null | grep -i "get\|route\|endpoint\|path" | head -5 || echo "No health endpoints found"
+   ```
+
+6. **Docker detection** — check for containerization configs:
+   ```bash
+   ls Dockerfile docker-compose.yml docker-compose.yaml .dockerignore 2>/dev/null || echo "No Docker files"
+   ```
+
+### Output Format
+
+Add to research.md:
+
+```markdown
+## Verification Tooling
+
+| Tool | Command | Detected From |
+|------|---------|---------------|
+| Dev Server | `npm run dev` | package.json scripts.dev |
+| Browser Automation | `playwright` | devDependencies |
+| E2E Config | `playwright.config.ts` | project root |
+| Port | `3000` | .env / package.json |
+| Health Endpoint | `/api/health` | src/routes/ |
+| Docker | `docker-compose.yml` | project root |
+
+**Project Type**: Web App / API / CLI / Mobile / Library
+**Verification Strategy**: Start dev server on port 3000, use curl to check health endpoint, use playwright for critical user flows / Build and verify import / Run CLI commands and check output
+```
+
+If no automated E2E tooling detected, output:
+
+```markdown
+## Verification Tooling
+
+No automated E2E tooling detected. Fallback: build + import check only.
+
+**Project Type**: Library
+**Verification Strategy**: Build and verify artifact is importable
+```
+</mandatory>
+
 ### Step 3: Cross-Reference
 
 - Compare external best practices with internal implementation

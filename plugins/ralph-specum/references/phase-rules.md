@@ -69,11 +69,12 @@ Read Intent Classification from `.progress.md`:
 
 ## Phase 4: Quality Gates
 
-**Goal**: All local checks pass. Create PR and verify CI.
+**Goal**: All local checks pass. Create PR and verify CI. VE Tasks (E2E Verification) run after V6 in this phase.
 
 - All local checks must pass (lint, types, tests)
 - Create PR, verify CI
 - Never push directly to default branch (main/master)
+- VE tasks appear after V6, before Phase 5 transition (see "VE Tasks" section)
 
 **Phase distribution**: 10-15% (combined with Phase 5)
 
@@ -83,7 +84,7 @@ Read Intent Classification from `.progress.md`:
 - CI checks green
 - Review comments addressed
 
-Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
+Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation. VE tasks appear in the final verification sequence: V4 -> V5 -> V6 -> VE1/VE2/VE3 -> Phase 5.
 
 ## Phase 5: PR Lifecycle
 
@@ -178,7 +179,7 @@ Each unit of work is a 3-task cycle:
 
 ## TDD Phase 3: Quality Gates
 
-Same as POC Phase 4. All local checks pass, create PR, verify CI.
+Same as POC Phase 4. All local checks pass, create PR, verify CI. VE tasks apply identically: after V6 (AC checklist), before Phase 4 (PR Lifecycle). See "VE Tasks (E2E Verification)" section for placement, structure, and rules.
 
 **Phase distribution**: 10-15% of total tasks
 
@@ -223,6 +224,43 @@ When `.progress.md` contains `## Reality Check (BEFORE)`, the goal is a fix-type
   - **Done when**: Command that failed before now passes
   - **Commit**: `chore(<spec>): verify fix resolves original issue`
 ```
+
+## VE Tasks (E2E Verification)
+
+> See also: `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` for VE format details and verify-fix-reverify loop. See `${CLAUDE_PLUGIN_ROOT}/agents/task-planner.md` "VE Task Generation" for VE templates and generation rules.
+
+VE tasks provide autonomous end-to-end verification by spinning up real infrastructure and testing built features against it.
+
+### Placement
+
+VE tasks extend the final verification sequence, after V6 and before Phase 5:
+
+```text
+V4 (Full local CI) -> V5 (CI pipeline) -> V6 (AC checklist) -> VE1 -> VE2 -> VE3 -> PR Lifecycle
+```
+
+### Structure
+
+VE tasks follow a 3-part structure:
+
+1. **VE1 (Startup)** — Start dev server/infrastructure in background, record PID, wait for ready
+2. **VE2 (Check)** — Test critical user flows via curl/browser/CLI, verify expected output
+3. **VE3 (Cleanup)** — Kill by PID, kill by port fallback, remove PID file, verify port free
+
+### Rules
+
+- **Sequential**: VE tasks are always sequential (never `[P]`). Infrastructure state is shared.
+- **[VERIFY] tagged**: All VE tasks use `[VERIFY]` and are delegated to qa-engineer.
+- **Cleanup guaranteed**: VE3 (cleanup) MUST run even if VE1 or VE2 fail. Coordinator skips to VE3 on max retries.
+- **Commands from research.md**: All commands (dev server, port, health endpoint) come from research.md Verification Tooling section. Never hardcoded.
+- **Recovery mode always enabled**: VE failures trigger fix task generation via existing recovery mode, regardless of state file recoveryMode flag.
+- **Max 3 retries per VE task**: After 3 failed attempts, skip to VE-cleanup and report error.
+
+### When Omitted
+
+- **Quick mode**: VE tasks are auto-enabled (no user prompt needed)
+- **Normal mode**: User can skip VE tasks during interview (default: YES)
+- **Library projects**: Get minimal VE (build + import check only, no dev server startup)
 
 ## Quality Checkpoint Rules
 

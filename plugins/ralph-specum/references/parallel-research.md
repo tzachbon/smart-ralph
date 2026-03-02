@@ -22,6 +22,7 @@ Before invoking any subagents, analyze the goal and break it into independent re
 | Domain-Specific (web) | `research-analyst` | Specialized topics needing focused web research |
 | Domain-Specific (code) | `Explore` | Specialized topics needing codebase exploration |
 | Quality Commands | `Explore` | Project lint/test/build commands discovery |
+| Verification Tooling | `Explore` | Dev server, test runner, browser deps, E2E configs, ports |
 
 **Minimum requirement**: 2 topics (1 research-analyst + 1 Explore). There are zero exceptions to the parallel requirement.
 
@@ -34,6 +35,8 @@ Before invoking any subagents, analyze the goal and break it into independent re
 | Goal involves external APIs + codebase | 2+ research-analyst for API docs/best practices + 1+ Explore |
 | Goal touches multiple components | Multiple Explore (one per component) + multiple research-analyst (one per external topic) |
 | Complex architecture question | 5+: 3-4 research-analyst (different external topics) + 2-3 Explore (different code areas) |
+
+**Note**: Verification Tooling discovery is always assigned to an Explore agent (codebase-only: package.json scripts, dependency detection, config file discovery).
 
 ### Topic Deduplication
 

@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-02-21T16:33:06Z",
+  "updated": "2026-03-02T20:58:38Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 25,
+      "specsCount": 27,
       "isDefault": true
     }
   ],
@@ -33,7 +33,9 @@
     {
       "name": "fix-impl-context-bloat",
       "path": "./specs/fix-impl-context-bloat",
-      "phase": "research"
+      "phase": "tasks",
+      "taskIndex": 47,
+      "totalTasks": 48
     },
     {
       "name": "plan-source-feature",
@@ -158,11 +160,23 @@
       "totalTasks": 22
     },
     {
+      "name": "add-autonomous-e2e-verify",
+      "path": "./specs/add-autonomous-e2e-verify",
+      "phase": "research"
+    },
+    {
       "name": "remove-ralph-wiggum",
       "path": "./specs/remove-ralph-wiggum",
       "phase": "completed",
       "taskIndex": 16,
       "totalTasks": 16
+    },
+    {
+      "name": "smart-skill-swap-retry",
+      "path": "./specs/smart-skill-swap-retry",
+      "phase": "tasks",
+      "taskIndex": 21,
+      "totalTasks": 26
     },
     {
       "name": "improve-walkthrough-feature",

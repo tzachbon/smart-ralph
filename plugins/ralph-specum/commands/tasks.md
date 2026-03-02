@@ -50,6 +50,7 @@ Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/S
 - **Execution priority** -- ship fast with shortcuts, balanced pace, or quality-first from the start?
 - **Dependency ordering** -- are there tasks that must complete before others can begin?
 - **Team workflow constraints** -- PR review process, CI pipeline requirements, branch strategy?
+- **E2E verification** -- add autonomous end-to-end verification tasks? (default YES). What should be tested end-to-end?
 
 ### Tasks Approach Proposals
 
@@ -64,6 +65,7 @@ Append to `.progress.md` under "Interview Responses":
 ```markdown
 ### Tasks Interview (from tasks.md)
 - [Topic 1]: [response]
+- E2E verification: YES/NO -- [strategy or "auto"]
 - Chosen approach: [name] -- [brief description]
 ```
 
@@ -89,12 +91,18 @@ Follow the full team lifecycle:
    - Insert quality checkpoints per quality-checkpoints.md
    - Each task = one commit, tasks must be executable without human interaction
    - Count total tasks, output to `./specs/$spec/tasks.md`
+   - If quick mode: auto-enable VE tasks. Pass verification tooling from research.md and strategy "auto" to task-planner
 5. **Wait for completion**: Monitor via TaskList.
 6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "planner-1")`
 7. **Collect results**: Read `./specs/$spec/tasks.md`.
 8. **Clean up**: `TeamDelete()`.
 
 **Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call.
+
+> **VE Delegation Context**: When delegating to task-planner, include these additional inputs for VE Tasks — VE1 (startup), VE2 (check), VE3 (cleanup) — generation:
+> - **E2E Verification**: enabled or disabled (from interview response, or auto-enabled in quick mode)
+> - **Verification Tooling**: the Verification Tooling section from research.md (dev server commands, browser deps, ports, health endpoints)
+> - **Strategy**: the user's chosen verification strategy, or "auto" in quick mode
 </mandatory>
 
 ## Step 4: Artifact Review (skip if --quick)

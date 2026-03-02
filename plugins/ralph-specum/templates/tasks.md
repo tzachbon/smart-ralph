@@ -331,6 +331,34 @@ After POC validated, clean up code.
   - **Done when**: Original failure no longer reproduces, BEFORE/AFTER comparison documented
   - **Note**: This task only applies when goal was classified as "fix" type. Skip if goal was "add" or "enhance".
 
+<!-- VE Tasks: VE1 (startup), VE2 (check), VE3 (cleanup) — generated from research.md Verification Tooling section -->
+
+- [ ] VE1 [VERIFY] E2E startup: launch dev server and verify health
+  - **Do**:
+    1. Start dev server: `{{dev_cmd}}` (background, save PID to /tmp/ve-pids.txt)
+    2. Wait for server ready: poll `{{health_endpoint}}` on port `{{port}}` until 200 (timeout 30s)
+  - **Verify**: `curl -sf {{health_endpoint}} -o /dev/null && echo PASS`
+  - **Done when**: Dev server running and health endpoint returns 200
+  - **Commit**: None
+
+- [ ] VE2 [VERIFY] E2E check: run critical flow verification
+  - **Do**:
+    1. Run critical flow check: `{{critical_flow_cmd}}`
+    2. Verify output matches expected behavior
+  - **Verify**: `{{critical_flow_cmd}} && echo PASS`
+  - **Done when**: Critical user flow completes successfully against running server
+  - **Commit**: None
+
+- [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
+  - **Do**:
+    1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
+    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`
+    3. Remove PID file: `rm -f /tmp/ve-pids.txt`
+    4. Verify port free: `! lsof -ti :{{port}}`
+  - **Verify**: `! lsof -ti :{{port}} && echo PASS`
+  - **Done when**: No processes on port {{port}}, PID file removed
+  - **Commit**: None
+
 - [ ] 4.3 Merge after approval (optional - only if explicitly requested)
   - **Do**: Merge PR after approval and CI green
   - **Verify**: `gh pr merge --auto` or merge via GitHub UI
@@ -491,6 +519,34 @@ Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
 ## Phase 3: Quality Gates
 
 > (Same structure as POC Phase 4 above)
+
+<!-- VE Tasks: VE1 (startup), VE2 (check), VE3 (cleanup) — generated from research.md Verification Tooling section -->
+
+- [ ] VE1 [VERIFY] E2E startup: launch dev server and verify health
+  - **Do**:
+    1. Start dev server: `{{dev_cmd}}` (background, save PID to /tmp/ve-pids.txt)
+    2. Wait for server ready: poll `{{health_endpoint}}` on port `{{port}}` until 200 (timeout 30s)
+  - **Verify**: `curl -sf {{health_endpoint}} -o /dev/null && echo PASS`
+  - **Done when**: Dev server running and health endpoint returns 200
+  - **Commit**: None
+
+- [ ] VE2 [VERIFY] E2E check: run critical flow verification
+  - **Do**:
+    1. Run critical flow check: `{{critical_flow_cmd}}`
+    2. Verify output matches expected behavior
+  - **Verify**: `{{critical_flow_cmd}} && echo PASS`
+  - **Done when**: Critical user flow completes successfully against running server
+  - **Commit**: None
+
+- [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
+  - **Do**:
+    1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
+    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`
+    3. Remove PID file: `rm -f /tmp/ve-pids.txt`
+    4. Verify port free: `! lsof -ti :{{port}}`
+  - **Verify**: `! lsof -ti :{{port}} && echo PASS`
+  - **Done when**: No processes on port {{port}}, PID file removed
+  - **Commit**: None
 
 ## Phase 4: PR Lifecycle (Continuous Validation)
 
