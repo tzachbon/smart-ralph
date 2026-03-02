@@ -372,6 +372,41 @@ Adjacent `[P]` tasks form a parallel group dispatched in one message.
 - Max group size: 5 tasks (practical limit for concurrent Task() calls)
 - Phase boundaries break groups (task 1.N and 2.1 cannot be in same group)
 - When in doubt, keep sequential. Wrong parallelism causes harder bugs than slowness.
+
+### Auto-Detection Heuristics
+
+Use these checks to decide if adjacent tasks can be marked `[P]`:
+
+1. **File overlap check**: Compare `Files:` sections of adjacent tasks. If ANY file appears in both tasks, they CANNOT be `[P]`. Zero file overlap is required.
+2. **Output dependency check**: Read each task's `Do:` section. If task B references a file created or modified by task A, they CANNOT be `[P]`.
+3. **Shared config detection**: Flag tasks that modify shared config files (package.json, tsconfig.json, .eslintrc, Cargo.toml, go.mod, etc.). These are sequential — concurrent writes to shared configs cause merge conflicts.
+4. **Import/dependency chain**: If task B imports from a module task A creates, they CANNOT be `[P]`.
+
+**Example: 2 parallel tasks + checkpoint**
+```markdown
+- [ ] 1.5 [P] Create user validation module
+  - **Do**:
+    1. Create `src/validators/user.ts` with email and name validation
+  - **Files**: src/validators/user.ts
+  - **Done when**: Validation functions exported
+  - **Verify**: `grep 'export' src/validators/user.ts && echo PASS`
+  - **Commit**: `feat(validators): add user validation`
+
+- [ ] 1.6 [P] Create product validation module
+  - **Do**:
+    1. Create `src/validators/product.ts` with price and SKU validation
+  - **Files**: src/validators/product.ts
+  - **Done when**: Validation functions exported
+  - **Verify**: `grep 'export' src/validators/product.ts && echo PASS`
+  - **Commit**: `feat(validators): add product validation`
+
+- [ ] 1.7 [VERIFY] Quality checkpoint: verify validators
+  - **Do**: Run quality checks
+  - **Verify**: All commands exit 0
+  - **Done when**: No errors
+  - **Commit**: `chore(validators): pass quality checkpoint` (if fixes needed)
+```
+Tasks 1.5 and 1.6 have zero file overlap and no output dependencies — safe to mark `[P]`. Task 1.7 `[VERIFY]` breaks the group.
 </mandatory>
 
 ## Task Sizing Rules

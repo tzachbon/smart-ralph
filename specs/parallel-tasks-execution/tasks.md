@@ -48,7 +48,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - _Requirements: FR-1, US-1_
   - _Design: Component 1 - Task Planner Agent_
 
-- [ ] 1.2 [P] Add [P] heuristics to task-planner agent
+- [x] 1.2 [P] Add [P] heuristics to task-planner agent
   - **Do**:
     1. Open `plugins/ralph-specum/agents/task-planner.md`
     2. Within the `## [P] Parallel Task Marking` section (added in 1.1), add a subsection for auto-detection heuristics
