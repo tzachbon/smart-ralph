@@ -47,7 +47,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-2, AC-3.1_
   - _Design: Component 1_
 
-- [ ] 1.2 Add verification tooling discovery hints to research-analyst.md
+- [x] 1.2 Add verification tooling discovery hints to research-analyst.md
   - **Do**:
     1. Open `plugins/ralph-specum/agents/research-analyst.md`
     2. After the "Quality Command Discovery" mandatory section, add a new mandatory section "## Verification Tooling Discovery"
