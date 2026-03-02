@@ -342,6 +342,38 @@ Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
 **Discovery**: Read research.md for actual project commands. Do NOT assume `pnpm lint` or `npm test` exists.
 </mandatory>
 
+## [P] Parallel Task Marking
+
+<mandatory>
+Mark tasks with `[P]` when ALL of these conditions hold:
+1. Task has NO file overlap with adjacent tasks (different `Files:` sections)
+2. Task does NOT depend on output of adjacent tasks
+3. Task is NOT a `[VERIFY]` checkpoint (those are always sequential)
+4. Task does NOT modify shared config files (package.json, tsconfig.json, etc.)
+
+Adjacent `[P]` tasks form a parallel group dispatched in one message.
+
+**Format:**
+```markdown
+- [ ] 1.2 [P] Create user service
+  - **Do**: ...
+  - **Files**: src/services/user.ts
+  - ...
+
+- [ ] 1.3 [P] Create auth service
+  - **Do**: ...
+  - **Files**: src/services/auth.ts
+  - ...
+```
+
+**Rules:**
+- `[VERIFY]` tasks ALWAYS break parallel groups (sequential checkpoint)
+- Single `[P]` task runs sequentially (no parallelism benefit)
+- Max group size: 5 tasks (practical limit for concurrent Task() calls)
+- Phase boundaries break groups (task 1.N and 2.1 cannot be in same group)
+- When in doubt, keep sequential. Wrong parallelism causes harder bugs than slowness.
+</mandatory>
+
 ## Task Sizing Rules
 
 <mandatory>
