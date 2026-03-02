@@ -224,6 +224,41 @@ When `.progress.md` contains `## Reality Check (BEFORE)`, the goal is a fix-type
   - **Commit**: `chore(<spec>): verify fix resolves original issue`
 ```
 
+## VE Tasks (E2E Verification)
+
+VE tasks provide autonomous end-to-end verification by spinning up real infrastructure and testing built features against it.
+
+### Placement
+
+VE tasks extend the final verification sequence, after V6 and before Phase 5:
+
+```
+V4 (Full local CI) -> V5 (CI pipeline) -> V6 (AC checklist) -> VE1 -> VE2 -> VE3 -> Phase 5 (PR Lifecycle)
+```
+
+### Structure
+
+VE tasks follow a 3-part structure:
+
+1. **VE1 (Startup)** — Start dev server/infrastructure in background, record PID, wait for ready
+2. **VE2 (Check)** — Test critical user flows via curl/browser/CLI, verify expected output
+3. **VE3 (Cleanup)** — Kill by PID, kill by port fallback, remove PID file, verify port free
+
+### Rules
+
+- **Sequential**: VE tasks are always sequential (never `[P]`). Infrastructure state is shared.
+- **[VERIFY] tagged**: All VE tasks use `[VERIFY]` and are delegated to qa-engineer.
+- **Cleanup guaranteed**: VE3 (cleanup) MUST run even if VE1 or VE2 fail. Coordinator skips to VE3 on max retries.
+- **Commands from research.md**: All commands (dev server, port, health endpoint) come from research.md Verification Tooling section. Never hardcoded.
+- **Recovery mode always enabled**: VE failures trigger fix task generation via existing recovery mode, regardless of state file recoveryMode flag.
+- **Max 3 retries per VE task**: After 3 failed attempts, skip to VE-cleanup and report error.
+
+### When Omitted
+
+- **Quick mode**: VE tasks are auto-enabled (no user prompt needed)
+- **Normal mode**: User can skip VE tasks during interview (default: YES)
+- **Library projects**: Get minimal VE (build + import check only, no dev server startup)
+
 ## Quality Checkpoint Rules
 
 Insert quality gate checkpoints throughout the task list to catch issues early.
