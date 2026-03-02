@@ -445,7 +445,7 @@ Focus: Ensure consistency, fix rough prose, align naming conventions across all 
 
 Focus: Validate correctness of all VE additions via automated content checks.
 
-- [ ] 3.1 Verify research-analyst detection logic completeness
+- [x] 3.1 Verify research-analyst detection logic completeness
   - **Do**:
     1. Check research-analyst.md contains all 6 detection types: dev server, browser automation deps, E2E config files, port detection, health endpoints, Docker detection
     2. Check output format contains: Tool/Command/Detected From table, Project Type, Verification Strategy
@@ -455,7 +455,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
   - **Commit**: `test(ralph-specum): verify research-analyst detection completeness`
   - _Requirements: AC-3.2, AC-3.3_
 
-- [ ] 3.2 Verify task-planner VE generation covers all project types
+- [x] 3.2 Verify task-planner VE generation covers all project types
   - **Do**:
     1. Check task-planner.md project type table has 5 types: Web App, API, CLI, Mobile, Library
     2. Check each type has detection signal and VE approach columns filled
@@ -473,7 +473,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
   - **Done when**: Both verification checks pass
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.4 Verify VE placement consistency across all files
+- [x] 3.4 Verify VE placement consistency across all files
   - **Do**:
     1. Check phase-rules.md states VE after V6, before Phase 5
     2. Check quality-checkpoints.md states VE after V6
@@ -485,7 +485,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
   - **Commit**: `test(ralph-specum): verify VE placement consistency`
   - _Requirements: FR-1, AC-1.2_
 
-- [ ] 3.5 Verify backward compatibility (no broken existing content)
+- [x] 3.5 Verify backward compatibility (no broken existing content)
   - **Do**:
     1. Check phase-rules.md still has all original sections: Phase 1-5, VF Task, Quality Checkpoint Rules
     2. Check quality-checkpoints.md still has all original sections: Frequency Rules, [VERIFY] format, Final Verification Sequence, VF Task
@@ -506,21 +506,21 @@ Focus: Validate correctness of all VE additions via automated content checks.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 [VERIFY] Full content verification of all 8 modified files
+- [x] 4.1 [VERIFY] Full content verification of all 8 modified files
   - **Do**: Run comprehensive automated check across all files for VE content integrity
   - **Files**: `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Verify**: `grep -q "Verification Tooling" plugins/ralph-specum/references/parallel-research.md && grep -q "Verification Tooling Discovery" plugins/ralph-specum/agents/research-analyst.md && grep -q "E2E verification" plugins/ralph-specum/commands/tasks.md && grep -q "VE Task Generation" plugins/ralph-specum/agents/task-planner.md && grep -q "VE Tasks" plugins/ralph-specum/references/phase-rules.md && grep -q "VE Tasks" plugins/ralph-specum/references/quality-checkpoints.md && grep -q "VE1" plugins/ralph-specum/templates/tasks.md && grep -q "VE Task Exception" plugins/ralph-specum/references/coordinator-pattern.md && echo V4_PASS`
   - **Done when**: All 8 files contain expected VE content
   - **Commit**: `chore(ralph-specum): pass full content verification` (only if fixes needed)
 
-- [ ] 4.2 [VERIFY] Version bump check
+- [x] 4.2 [VERIFY] Version bump check
   - **Do**: Check if plugin version needs bumping per project CLAUDE.md rules (any plugin file changed = version bump required)
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Verify**: `test -f plugins/ralph-specum/.claude-plugin/plugin.json && test -f .claude-plugin/marketplace.json && echo FILES_EXIST`
   - **Done when**: Version files exist and are ready for bumping (actual bump happens in commit)
   - **Commit**: None
 
-- [ ] 4.3 [VERIFY] AC checklist
+- [x] 4.3 [VERIFY] AC checklist
   - **Do**: Programmatically verify each acceptance criterion is satisfied
   - **Files**: `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/references/coordinator-pattern.md`, `plugins/ralph-specum/references/quality-checkpoints.md`
   - **Verify**: `grep -q "auto-enable VE\|quickMode.*VE\|quick mode.*VE\|Quick Mode" plugins/ralph-specum/agents/task-planner.md && grep -q "E2E verification" plugins/ralph-specum/commands/tasks.md && grep -q "Verification Tooling" plugins/ralph-specum/references/parallel-research.md && grep -q "VE1.*VE2.*VE3\|VE1.*startup\|E2E startup" plugins/ralph-specum/agents/task-planner.md && grep -q "VE-cleanup\|VE-Cleanup\|E2E cleanup" plugins/ralph-specum/agents/task-planner.md && grep -q "VE-Cleanup Guarantee\|VE Task Exception" plugins/ralph-specum/references/coordinator-pattern.md && grep -q "Verify-Fix-Reverify\|verify-fix-reverify" plugins/ralph-specum/references/quality-checkpoints.md && echo V6_PASS`
@@ -531,7 +531,7 @@ Focus: Validate correctness of all VE additions via automated content checks.
 
 > Autonomous Loop: This phase continues until ALL completion criteria met.
 
-- [ ] 5.1 Bump plugin version
+- [x] 5.1 Bump plugin version
   - **Do**:
     1. Read current version from `plugins/ralph-specum/.claude-plugin/plugin.json`
     2. Bump minor version (new feature)
