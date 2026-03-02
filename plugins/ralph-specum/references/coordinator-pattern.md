@@ -156,6 +156,8 @@ Handle qa-engineer response:
 - VERIFICATION_PASS: Treat as TASK_COMPLETE, mark task [x], update .progress.md
 - VERIFICATION_FAIL: Do NOT mark complete, increment taskIteration, retry or error if max reached
 
+**VE Recovery Mode**: VE tasks (description contains "E2E") have recovery mode always enabled regardless of the state file `recoveryMode` flag. The coordinator should treat VE tasks as if `recoveryMode=true` for fix task generation purposes. VE failures are expected and recoverable — the verify-fix-reverify loop (see `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "Verify-Fix-Reverify Loop") handles them automatically via `fixTaskMap` and `maxFixTasksPerOriginal`.
+
 ### Sequential Execution (parallelGroup.isParallel = false, no [VERIFY])
 
 Delegate ONE task to spec-executor via Task tool:
@@ -236,6 +238,40 @@ If no completion signal:
 2. Increment taskIteration in state file
 3. If taskIteration > maxTaskIterations: proceed to max retries error handling
 4. Otherwise: Retry the same task
+
+### VE Task Exception (Cleanup Guarantee)
+
+When a VE1 (startup) or VE2 (check) task hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
+
+1. Log VE failure in .progress.md: "VE-check failed after N retries — skipping to VE-cleanup"
+2. Scan forward in tasks.md to find VE-cleanup task index (see pseudocode below)
+3. Skip taskIndex forward to the VE-cleanup task
+4. Execute VE-cleanup via qa-engineer (standard `[VERIFY]` delegation)
+5. After VE-cleanup completes (pass or fail), THEN output the max retries error and stop
+
+**VE3 (cleanup) edge case**: If VE3 itself fails after max retries, stop immediately with error — there is nothing to skip forward to. Log: "VE-cleanup failed after N retries — aborting. Manual cleanup may be needed (check port {{port}})."
+
+**Skip-forward pseudocode**:
+```text
+# Only applies to VE1/VE2 failures. VE3 failures stop immediately.
+cleanupIndex = null
+for i in range(currentTaskIndex + 1, totalTasks):
+    task = tasks[i]
+    if task.description contains "E2E cleanup":
+        cleanupIndex = i
+        break
+
+if cleanupIndex is null:
+    # No VE-cleanup found — log error and stop immediately
+    log("ERROR: No VE-cleanup task found after VE failure")
+    stop()
+
+# Skip all intervening VE-check tasks
+taskIndex = cleanupIndex
+# Execute VE-cleanup, then stop with error
+```
+
+This guarantees orphaned processes (dev servers, browsers) are cleaned up even when verification fails. VE-cleanup uses PID-based kill (`kill -9` PIDs from `/tmp/ve-pids.txt`) with port-based kill as fallback (`lsof -ti :$PORT | xargs kill -9`). See `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "VE-Cleanup Guarantee" section for cleanup strategy details.
 
 ## Verification Layers
 
