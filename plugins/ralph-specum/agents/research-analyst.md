@@ -182,32 +182,35 @@ During research, discover available verification tooling for autonomous E2E veri
 
 ### Detection Logic
 
-1. **Dev server scripts** (package.json):
+Run these commands to detect available verification tooling:
+
+1. **Dev server scripts** — parse package.json for dev/start/serve scripts:
    ```bash
-   cat package.json | jq -r '.scripts | to_entries[] | select(.key | test("dev|start|serve")) | "\(.key): \(.value)"' 2>/dev/null || echo "No dev server scripts"
+   jq -r '.scripts | to_entries[] | select(.key | test("dev|start|serve")) | "\(.key): \(.value)"' package.json 2>/dev/null || echo "No dev server scripts"
    ```
 
-2. **Browser automation deps** (package.json):
+2. **Browser automation deps** — check dependencies and devDependencies:
    ```bash
-   cat package.json | jq -r '(.dependencies + .devDependencies) | to_entries[] | select(.key | test("playwright|puppeteer|cypress|selenium")) | .key' 2>/dev/null || echo "No browser automation deps"
+   jq -r '[(.dependencies // {}), (.devDependencies // {})] | add | to_entries[] | select(.key | test("playwright|puppeteer|cypress|selenium")) | "\(.key): \(.value)"' package.json 2>/dev/null || echo "No browser automation deps"
    ```
 
-3. **E2E config files**:
+3. **E2E config files** — look for framework config files in project root:
    ```bash
    ls playwright.config.* cypress.config.* cypress.json .cypressrc* wdio.conf.* 2>/dev/null || echo "No E2E config files"
    ```
 
-4. **Port detection** (common dev server ports):
+4. **Port detection** — extract port numbers from env files and package.json scripts:
    ```bash
-   grep -rh "PORT\|port" .env .env.local .env.development package.json 2>/dev/null | head -10 || echo "No port config found"
+   grep -ohE '(PORT|port)[=:]\s*[0-9]+' .env .env.local .env.development 2>/dev/null | head -5 || echo "No port in env files"
+   jq -r '.scripts | to_entries[] | .value' package.json 2>/dev/null | grep -oE '\-\-port[= ][0-9]+|:[0-9]{4}' | head -5 || echo "No port in scripts"
    ```
 
-5. **Health endpoints**:
+5. **Health endpoints** — search source for health/ready route definitions:
    ```bash
-   grep -rh "health\|healthz\|ready\|readiness" src/ app/ 2>/dev/null | head -5 || echo "No health endpoints found"
+   grep -rn "health\|healthz\|ready\|readiness" src/ app/ routes/ 2>/dev/null | grep -i "get\|route\|endpoint\|path" | head -5 || echo "No health endpoints found"
    ```
 
-6. **Docker detection**:
+6. **Docker detection** — check for containerization configs:
    ```bash
    ls Dockerfile docker-compose.yml docker-compose.yaml .dockerignore 2>/dev/null || echo "No Docker files"
    ```
