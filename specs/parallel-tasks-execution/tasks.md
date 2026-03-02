@@ -281,7 +281,7 @@ EOF
 
 Focus: Clean up and ensure consistency across all additions.
 
-- [ ] 2.1 Ensure [P] rules use mandatory tags in task-planner
+- [x] 2.1 Ensure [P] rules use mandatory tags in task-planner
   - **Do**:
     1. Open `plugins/ralph-specum/agents/task-planner.md`
     2. Wrap the [P] rules section content in `<mandatory>` tags (matching the pattern used by [VERIFY] and other sections)
