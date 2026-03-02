@@ -215,7 +215,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-10_
   - _Design: Component 4_
 
-- [ ] 1.17 [VERIFY] Quality checkpoint: phase rules
+- [x] 1.17 [VERIFY] Quality checkpoint: phase rules
   - **Do**: Verify phase-rules.md has VE section and both workflows reference it
   - **Files**: `plugins/ralph-specum/references/phase-rules.md`
   - **Verify**: `grep -q "VE Tasks" plugins/ralph-specum/references/phase-rules.md && grep -q "VE1" plugins/ralph-specum/references/phase-rules.md && echo PASS`
@@ -224,7 +224,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
 
 ### Quality Checkpoints Extension
 
-- [ ] 1.18 Add VE Task Format section to quality-checkpoints.md
+- [x] 1.18 Add VE Task Format section to quality-checkpoints.md
   - **Do**:
     1. Open `plugins/ralph-specum/references/quality-checkpoints.md`
     2. After the "VF Task for Fix Goals" section, add new section: `## VE Tasks (E2E Verification)`
@@ -237,7 +237,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-3, AC-4.2_
   - _Design: Component 5_
 
-- [ ] 1.19 Add verify-fix-reverify loop section to quality-checkpoints.md
+- [x] 1.19 Add verify-fix-reverify loop section to quality-checkpoints.md
   - **Do**:
     1. In the new VE section, add subsection "### Verify-Fix-Reverify Loop"
     2. Document the loop: qa-engineer outputs VERIFICATION_FAIL -> coordinator generates fix task via fixTaskMap -> fix task executes -> VE-check retries -> max 3 iterations -> VE-cleanup ALWAYS runs last
@@ -249,7 +249,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-6, AC-5.1, AC-5.2, AC-5.3, AC-5.4, AC-5.5_
   - _Design: Component 5_
 
-- [ ] 1.20 Add VE-cleanup guarantee section to quality-checkpoints.md
+- [x] 1.20 Add VE-cleanup guarantee section to quality-checkpoints.md
   - **Do**:
     1. In the VE section, add subsection "### VE-Cleanup Guarantee"
     2. Document: VE-cleanup must run even if prior VE tasks fail; coordinator tracks VE-cleanup task index separately; if VE-check hits max retries, skip to VE-cleanup instead of stopping; VE-cleanup uses both PID-based and port-based kill
@@ -260,7 +260,7 @@ Focus: Get all 8 files modified with VE content. Validate the system hangs toget
   - _Requirements: FR-5, AC-1.4, NFR-4_
   - _Design: Component 5_
 
-- [ ] 1.21 [VERIFY] Quality checkpoint: quality checkpoints file
+- [x] 1.21 [VERIFY] Quality checkpoint: quality checkpoints file
   - **Do**: Verify quality-checkpoints.md has all 3 VE subsections
   - **Files**: `plugins/ralph-specum/references/quality-checkpoints.md`
   - **Verify**: `grep -q "VE Tasks" plugins/ralph-specum/references/quality-checkpoints.md && grep -q "Verify-Fix-Reverify" plugins/ralph-specum/references/quality-checkpoints.md && grep -q "VE-Cleanup Guarantee" plugins/ralph-specum/references/quality-checkpoints.md && echo PASS`
@@ -531,7 +531,17 @@ Focus: Validate correctness of all VE additions via automated content checks.
 
 > Autonomous Loop: This phase continues until ALL completion criteria met.
 
-- [ ] 5.1 Create pull request
+- [ ] 5.1 Bump plugin version
+  - **Do**:
+    1. Read current version from `plugins/ralph-specum/.claude-plugin/plugin.json`
+    2. Bump minor version (new feature)
+    3. Update same version in `.claude-plugin/marketplace.json` for the ralph-specum entry
+  - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
+  - **Done when**: Both files have matching bumped version
+  - **Verify**: `grep -q '"version"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -q '"version"' .claude-plugin/marketplace.json && echo PASS`
+  - **Commit**: `chore(ralph-specum): bump version for VE tasks feature`
+
+- [ ] 5.2 Create pull request
   - **Do**:
     1. Verify current branch: `git branch --show-current`
     2. Push: `git push -u origin $(git branch --show-current)`
@@ -552,25 +562,28 @@ Focus: Validate correctness of all VE additions via automated content checks.
 - [ ] CI checks pass
 EOF
 )"`
+  - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Verify**: `gh pr view --json url -q .url 2>/dev/null`
   - **Done when**: PR created and URL returned
   - **Commit**: None
 
-- [ ] 5.2 Monitor CI and fix failures
+- [ ] 5.3 Monitor CI and fix failures
   - **Do**:
     1. Check status: `gh pr checks`
     2. If failures: read logs, fix issues, push
     3. Repeat until all green
+  - **Files**: `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`
   - **Verify**: `gh pr checks` shows all passing
   - **Done when**: All CI checks passing
   - **Commit**: `fix(ralph-specum): address CI failures` (as needed)
 
-- [ ] 5.3 Final validation
+- [ ] 5.4 Final validation
   - **Do**: Verify ALL completion criteria:
     1. All Phase 1-4 tasks complete
     2. CI checks all green
     3. All 8 files contain VE content
     4. No regressions in existing functionality
+  - **Files**: `plugins/ralph-specum/references/parallel-research.md`, `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/agents/task-planner.md`, `plugins/ralph-specum/references/phase-rules.md`, `plugins/ralph-specum/references/quality-checkpoints.md`, `plugins/ralph-specum/templates/tasks.md`, `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Verify**: `gh pr checks` all green
   - **Done when**: All completion criteria met
   - **Commit**: None
