@@ -230,7 +230,7 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
         ' "$TASKS_FILE" | sed -e :a -e '/^[[:space:]]*$/{' -e '$d' -e N -e ba -e '}')
     fi
 
-    # Detect [P] parallel marker on current task
+    # Parallel group detection: if current task has [P] marker, scan for consecutive [P] tasks and include all in continuation prompt
     IS_PARALLEL="false"
     if echo "$TASK_BLOCK" | head -1 | grep -q '\[P\]'; then
         IS_PARALLEL="true"

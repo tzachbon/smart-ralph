@@ -221,7 +221,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
 
 ### POC End-to-End Validation
 
-- [ ] 1.18 [P] Validate task-planner [P] section is well-structured
+- [x] 1.18 [P] Validate task-planner [P] section is well-structured
   - **Do**:
     1. Read `plugins/ralph-specum/agents/task-planner.md` and verify:
     2. The [P] section has mandatory tags wrapping rules
@@ -232,7 +232,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - **Verify**: `grep -c 'Max group size\|max.*5\|Max.*5' plugins/ralph-specum/agents/task-planner.md | awk '{print ($1 >= 1) ? "PASS" : "FAIL: missing max group size"}'`
   - **Commit**: None
 
-- [ ] 1.19 [P] Validate stop-watcher bash syntax
+- [x] 1.19 [P] Validate stop-watcher bash syntax
   - **Do**:
     1. Run bash syntax check on stop-watcher.sh
     2. Verify the script has no syntax errors after all modifications
@@ -241,13 +241,13 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo PASS`
   - **Commit**: None
 
-- [ ] 1.20 [VERIFY] POC Checkpoint: end-to-end validation
+- [x] 1.20 [VERIFY] POC Checkpoint: end-to-end validation
   - **Do**: Verify all 3 modified files have [P] support and versions are bumped
   - **Verify**: `grep '\[P\] Parallel Task Marking' plugins/ralph-specum/agents/task-planner.md && grep '\[P\]' plugins/ralph-specum/templates/tasks.md && grep 'IS_PARALLEL' plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep '"4.3.0"' plugins/ralph-specum/.claude-plugin/plugin.json && bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo POC_COMPLETE`
   - **Done when**: All files modified, versions bumped, bash syntax valid
   - **Commit**: `feat(ralph-specum): complete POC for [P] parallel task execution`
 
-- [ ] 1.21 Create draft PR and push
+- [x] 1.21 Create draft PR and push
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. Push branch: `git push -u origin $(git branch --show-current)`
@@ -309,7 +309,7 @@ Focus: Clean up and ensure consistency across all additions.
   - **Done when**: Mandatory tags present and quality checklist updated
   - **Commit**: `chore(ralph-specum): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.4 Ensure stop-watcher parallel block is well-commented
+- [x] 2.4 Ensure stop-watcher parallel block is well-commented
   - **Do**:
     1. Open `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. Add a comment block before the IS_PARALLEL detection explaining the parallel group logic
@@ -320,7 +320,7 @@ Focus: Clean up and ensure consistency across all additions.
   - **Commit**: `refactor(stop-watcher): add comments for parallel group detection`
   - _Design: Component 3_
 
-- [ ] 2.5 Ensure template [P] examples have clear boundary comments
+- [x] 2.5 Ensure template [P] examples have clear boundary comments
   - **Do**:
     1. Open `plugins/ralph-specum/templates/tasks.md`
     2. Add a markdown comment before the [P] TDD example explaining when [P] is valid with TDD: `<!-- [P] is valid for independent [RED] tests, but NOT within a single R-G-Y triplet -->`

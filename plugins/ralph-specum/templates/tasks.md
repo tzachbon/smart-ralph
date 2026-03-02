@@ -489,6 +489,7 @@ Focus: Test-driven implementation. Every change starts with a failing test.
   - **Done when**: No lint errors, no type errors, all tests pass
   - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
 
+<!-- [P] is valid for independent [RED] tests, but NOT within a single R-G-Y triplet -->
 <!-- Adjacent [RED] tests for independent behaviors can be [P] since they don't depend on each other -->
 - [ ] 1.5 [P] [RED] Failing test: {{expected behavior B}}
   - **Do**:
