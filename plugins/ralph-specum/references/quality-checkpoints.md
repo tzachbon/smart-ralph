@@ -171,6 +171,24 @@ When a VE-check task (VE2) fails, the existing recovery mode handles retry autom
 
 This reuses the existing recovery mode mechanism — no new loop infrastructure is needed. The `fixTaskMap` tracks which fix tasks belong to which VE-check, and `maxFixTasksPerOriginal` enforces the retry cap. VE-cleanup (VE3) ALWAYS runs last regardless of whether VE-check passed or exhausted retries.
 
+### VE-Cleanup Guarantee
+
+VE-cleanup (VE3) MUST run even if prior VE tasks fail. Orphaned processes (dev servers, browsers) block ports and waste resources.
+
+**Rules**:
+- Coordinator tracks the VE-cleanup task index separately from other VE tasks
+- If VE-startup (VE1) fails: skip VE-check, jump directly to VE-cleanup
+- If VE-check (VE2) hits max retries (3 fix attempts): skip to VE-cleanup instead of stopping the entire spec
+- VE-cleanup is never skipped — it runs as the final VE task unconditionally
+
+**Cleanup strategy** (PID-based primary, port-based fallback):
+1. Read PIDs from `/tmp/ve-pids.txt` and `kill -9` each
+2. Fallback: `lsof -ti :{{port}} | xargs kill -9` to catch processes missed by PID
+3. Remove `/tmp/ve-pids.txt`
+4. Verify port is free: `! lsof -ti :{{port}}`
+
+Using both PID and port-based kill ensures no orphaned processes remain, even if the PID file is incomplete or a child process spawned on the same port.
+
 ## Execution: How [VERIFY] Tasks Are Handled
 
 The spec-executor does NOT execute [VERIFY] tasks directly. It delegates them to the `qa-engineer` subagent via Task tool:
