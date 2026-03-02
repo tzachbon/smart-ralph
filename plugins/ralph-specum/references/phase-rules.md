@@ -179,7 +179,7 @@ Each unit of work is a 3-task cycle:
 
 ## TDD Phase 3: Quality Gates
 
-Same as POC Phase 4. All local checks pass, create PR, verify CI.
+Same as POC Phase 4. All local checks pass, create PR, verify CI. VE tasks apply identically: after V6 (AC checklist), before Phase 4 (PR Lifecycle). See "VE Tasks (E2E Verification)" section for placement, structure, and rules.
 
 **Phase distribution**: 10-15% of total tasks
 
