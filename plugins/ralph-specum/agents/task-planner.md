@@ -268,7 +268,9 @@ When .progress.md contains `## Reality Check (BEFORE)`, the goal is a fix-type a
 **Why**: Fix specs must prove the fix works. Without VF task, "fix X" might complete while X still broken.
 </mandatory>
 
-## VE Tasks (E2E Verification)
+## VE Task Generation (E2E Verification)
+
+> See also: `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` for VE format details and verify-fix-reverify loop. See `${CLAUDE_PLUGIN_ROOT}/references/phase-rules.md` for VE placement rules within POC and TDD workflows.
 
 <mandatory>
 When generating tasks, include VE (Verify E2E) tasks that spin up real infrastructure and test the built feature end-to-end.
