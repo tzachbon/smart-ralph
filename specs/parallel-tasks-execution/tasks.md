@@ -82,7 +82,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
 
 ### Templates Updates
 
-- [ ] 1.5 [P] Add [P] examples to POC section in tasks template
+- [x] 1.5 [P] Add [P] examples to POC section in tasks template
   - **Do**:
     1. Open `plugins/ralph-specum/templates/tasks.md`
     2. In the POC Phase 1 section, modify template tasks 1.1 and 1.2 to include [P] markers
@@ -246,6 +246,36 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - **Verify**: `grep '\[P\] Parallel Task Marking' plugins/ralph-specum/agents/task-planner.md && grep '\[P\]' plugins/ralph-specum/templates/tasks.md && grep 'IS_PARALLEL' plugins/ralph-specum/hooks/scripts/stop-watcher.sh && grep '"4.3.0"' plugins/ralph-specum/.claude-plugin/plugin.json && bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo POC_COMPLETE`
   - **Done when**: All files modified, versions bumped, bash syntax valid
   - **Commit**: `feat(ralph-specum): complete POC for [P] parallel task execution`
+
+- [ ] 1.21 Create draft PR and push
+  - **Do**:
+    1. Verify current branch is a feature branch: `git branch --show-current`
+    2. Push branch: `git push -u origin $(git branch --show-current)`
+    3. Create draft PR: `gh pr create --draft --title "feat(ralph-specum): add [P] parallel task execution markers" --body "$(cat <<'EOF'
+## Summary
+- Add [P] inline marker support to task-planner agent for marking parallelizable tasks
+- Add [P] examples to tasks.md template (both POC and TDD sections)
+- Update stop-watcher to detect [P] groups and emit parallel continuation prompts
+- Bump version to 4.3.0
+
+## Changes
+- `agents/task-planner.md`: New [P] marking rules, heuristics, and examples
+- `templates/tasks.md`: [P] examples in POC and TDD sections
+- `hooks/scripts/stop-watcher.sh`: Parallel group detection and dispatch instructions
+- Version bump in plugin.json and marketplace.json
+
+## Test Plan
+- [ ] task-planner.md has [P] rules section with mandatory tags
+- [ ] templates/tasks.md has [P] in POC and TDD sections
+- [ ] stop-watcher.sh detects [P] and emits parallel prompt
+- [ ] bash -n passes on stop-watcher.sh
+- [ ] Versions consistent at 4.3.0
+- [ ] CI checks pass
+EOF
+)"`
+  - **Verify**: `gh pr view --json state --jq .state | grep -q 'OPEN' && echo PASS`
+  - **Done when**: Draft PR created and pushed
+  - **Commit**: None
 
 ## Phase 2: Refactoring
 
@@ -415,41 +445,27 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Done when**: All local checks pass
   - **Commit**: `fix(ralph-specum): address any remaining issues` (only if fixes needed)
 
-- [ ] 4.2 Create PR and verify CI
+- [ ] 4.2 Push latest changes and verify CI is green
   - **Do**:
-    1. Verify current branch is a feature branch: `git branch --show-current`
-    2. If on default branch, STOP and alert user
-    3. Push branch: `git push -u origin $(git branch --show-current)`
-    4. Create PR: `gh pr create --title "feat(ralph-specum): add [P] parallel task execution markers" --body "$(cat <<'EOF'
-## Summary
-- Add [P] inline marker support to task-planner agent for marking parallelizable tasks
-- Add [P] examples to tasks.md template (both POC and TDD sections)
-- Update stop-watcher to detect [P] groups and emit parallel continuation prompts
-- Bump version to 4.3.0
-
-## Changes
-- `agents/task-planner.md`: New [P] marking rules, heuristics, and examples
-- `templates/tasks.md`: [P] examples in POC and TDD sections
-- `hooks/scripts/stop-watcher.sh`: Parallel group detection and dispatch instructions
-- Version bump in plugin.json and marketplace.json
-
-## Test Plan
-- [x] task-planner.md has [P] rules section with mandatory tags
-- [x] templates/tasks.md has [P] in POC and TDD sections
-- [x] stop-watcher.sh detects [P] and emits parallel prompt
-- [x] bash -n passes on stop-watcher.sh
-- [x] Versions consistent at 4.3.0
-- [ ] CI checks pass
-EOF
-)"`
-  - **Verify**: `gh pr checks --watch` or `gh pr checks`
-  - **Done when**: All CI checks green, PR ready for review
-  - **Commit**: None
+    1. Push all changes: `git push`
+    2. Wait for CI: `gh pr checks --watch`
+    3. If CI fails: read logs with `gh run view --log-failed`, fix issues, push again
+  - **Verify**: `gh pr checks` shows all green
+  - **Done when**: CI pipeline passes on the draft PR
+  - **Commit**: `fix: address CI failures` (only if fixes needed)
 
 - [ ] 4.3 [VERIFY] CI pipeline passes
   - **Do**: Verify GitHub Actions/CI passes after push
   - **Verify**: `gh pr checks` shows all green
   - **Done when**: CI pipeline passes
+  - **Commit**: None
+
+- [ ] 4.3.1 Mark PR as ready for review
+  - **Do**:
+    1. Verify CI is green: `gh pr checks`
+    2. Mark PR ready: `gh pr ready`
+  - **Verify**: `gh pr view --json isDraft --jq .isDraft | grep -q 'false' && echo PASS`
+  - **Done when**: PR is no longer in draft mode, marked ready for review
   - **Commit**: None
 
 - [ ] 4.4 [VERIFY] AC checklist

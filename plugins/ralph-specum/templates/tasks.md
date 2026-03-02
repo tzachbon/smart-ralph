@@ -163,7 +163,7 @@ GOOD:
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
-- [ ] 1.1 {{Specific task name}}
+- [ ] 1.1 [P] {{Specific task name}}
   - **Do**: {{Exact steps to implement}}
   - **Files**: {{Exact file paths to create/modify}}
   - **Done when**: {{Explicit success criteria}}
@@ -172,7 +172,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-1, AC-1.1_
   - _Design: Component A_
 
-- [ ] 1.2 {{Another task}}
+- [ ] 1.2 [P] {{Another task}}
   - **Do**: {{Steps}}
   - **Files**: {{Paths}}
   - **Done when**: {{Criteria}}
