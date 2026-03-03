@@ -66,7 +66,7 @@
   - **Done when**: All files exist, schema valid JSON, stop-watcher valid bash, start.md has epic detection
   - **Verify**: `ls plugins/ralph-specum/templates/epic.md plugins/ralph-specum/agents/triage-analyst.md plugins/ralph-specum/references/triage-flow.md plugins/ralph-specum/commands/triage.md && jq empty plugins/ralph-specum/schemas/spec.schema.json && bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
 
-- [ ] 2.2 Update CLAUDE.md documentation
+- [x] 2.2 Update CLAUDE.md documentation
   - **Do**: 1. Add Epics section to Architecture in CLAUDE.md after "State Files" section: file structure, entry points, flow summary. 2. Add `triage-analyst` row to Agents table. 3. Add `.current-epic` and `.epic-state.json` to State Files section. 4. Keep changes surgical - only add epic-related content.
   - **Files**: `CLAUDE.md`
   - **Done when**: CLAUDE.md contains Epics section, triage-analyst in agents table, and epic state files documented
@@ -74,7 +74,7 @@
   - **Commit**: `docs: add epic triage documentation to CLAUDE.md`
   - _Design: docs/plans/2026-03-03-epic-triage-design.md, Task 10_
 
-- [ ] 2.3 Update plugin description and keywords
+- [x] 2.3 Update plugin description and keywords
   - **Do**: 1. Update description in `plugins/ralph-specum/.claude-plugin/plugin.json` to mention epic triage. 2. Add "epic" and "triage" to keywords array. 3. Update description and tags in `.claude-plugin/marketplace.json` similarly.
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Done when**: Both files mention epic/triage in description and keywords/tags
