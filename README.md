@@ -99,6 +99,7 @@ claude --plugin-dir ./smart-ralph/plugins/ralph-specum
 | `/ralph-specum:index` | Scan codebase and generate component specs |
 | `/ralph-specum:status` | Show all specs and progress |
 | `/ralph-specum:switch <name>` | Change active spec |
+| `/ralph-specum:triage [name] [goal]` | Decompose large features into multiple specs (epics) |
 | `/ralph-specum:cancel` | Cancel loop, cleanup state |
 | `/ralph-specum:help` | Show help |
 
@@ -108,12 +109,21 @@ claude --plugin-dir ./smart-ralph/plugins/ralph-specum
 
 ```mermaid
 flowchart TD
-    A["I want a feature!"] --> B[Research]
-    B -->|Analyzes codebase, searches web| C[Requirements]
-    C -->|User stories, acceptance criteria| D[Design]
-    D -->|Architecture, patterns, decisions| E[Tasks]
-    E -->|POC-first task breakdown| F[Execution]
-    F -->|Task-by-task with fresh context| G["I did it!"]
+    A["I want a feature!"] --> B{"/start detects scope"}
+    B -->|Single spec| C[Research]
+    B -->|"Too big for one spec"| T["/triage"]
+
+    C -->|Analyzes codebase, searches web| D[Requirements]
+    D -->|User stories, acceptance criteria| E[Design]
+    E -->|Architecture, patterns, decisions| F[Tasks]
+    F -->|POC-first task breakdown| G[Execution]
+    G -->|Task-by-task with fresh context| H["I did it!"]
+
+    T -->|Explore| T1[Exploration Research]
+    T1 -->|Brainstorm| T2[Triage Analyst]
+    T2 -->|Validate| T3[Validation Research]
+    T3 -->|Finalize| T4["Epic Plan"]
+    T4 -->|"Spec 1, Spec 2, ..."| C
 ```
 
 ### The Agents
@@ -122,6 +132,7 @@ Each phase uses a specialized sub-agent:
 
 | Phase | Agent | Superpower |
 |-------|-------|------------|
+| Triage | `triage-analyst` | Feature decomposition, dependency graphs, interface contracts |
 | Research | `research-analyst` | Web search, codebase analysis, feasibility checks |
 | Requirements | `product-manager` | User stories, acceptance criteria, business value |
 | Design | `architect-reviewer` | Architecture patterns, technical trade-offs |
