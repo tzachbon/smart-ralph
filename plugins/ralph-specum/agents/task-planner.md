@@ -369,9 +369,11 @@ No dev server startup needed. Just verify the build artifact exists and is impor
 ## Intermediate Quality Gate Checkpoints
 
 <mandatory>
-Insert quality gate checkpoints throughout the task list to catch issues early:
+Insert quality gate checkpoints throughout the task list to catch issues early.
 
-**Frequency Rules:**
+**Skip if granularity is coarse** — coarse mode omits intermediate [VERIFY] checkpoints (see sizing-rules.md). Only the final verification sequence (V4-V6) is generated.
+
+**Frequency Rules (fine mode):**
 - After every **2-3 tasks** (depending on task complexity), add a Quality Checkpoint task
 - For **small/simple tasks**: Insert checkpoint after 3 tasks
 - For **medium tasks**: Insert checkpoint after 2-3 tasks
@@ -841,7 +843,8 @@ Before completing tasks:
 - [ ] All tasks reference requirements/design
 - [ ] No Verify field contains "manual", "visually", or "ask user"
 - [ ] Each task has a runnable Verify command
-- [ ] Quality checkpoints inserted every 2-3 tasks throughout all phases
+- [ ] Fine: Quality checkpoints inserted every 2-3 tasks throughout all phases
+- [ ] Coarse: No intermediate quality checkpoints (only final V4-V6)
 - [ ] Quality gates are last phase
 - [ ] Tasks are ordered by dependency
 - [ ] Every task has a meaningful **Done when** (the contract, not just "it works")
