@@ -4,7 +4,7 @@
 
 Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stored in state, read by task-planner, sizing rules applied.
 
-- [ ] 1.1 Create sizing-rules.md reference file
+- [x] 1.1 Create sizing-rules.md reference file
   - **Do**:
     1. Create `plugins/ralph-specum/references/sizing-rules.md` with the full content from design.md Component 1
     2. Include fine table, coarse table, split/combine rules for each, coarse guidance, and shared rules section
