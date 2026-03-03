@@ -199,7 +199,7 @@ Focus: No compiled tests exist for this plugin (markdown-only). Validate via str
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 [P] Bump plugin.json version 4.4.0 to 4.5.0
+- [x] 4.1 [P] Bump plugin.json version 4.4.0 to 4.5.0
   - **Do**:
     1. Update `version` field in `plugins/ralph-specum/.claude-plugin/plugin.json` from `4.4.0` to `4.5.0`
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`
@@ -208,7 +208,7 @@ Focus: No compiled tests exist for this plugin (markdown-only). Validate via str
   - **Commit**: `chore(ralph-specum): bump version to 4.5.0`
   - _Design: Component 7_
 
-- [ ] 4.2 [P] Bump marketplace.json version 4.4.0 to 4.5.0
+- [x] 4.2 [P] Bump marketplace.json version 4.4.0 to 4.5.0
   - **Do**:
     1. Update the ralph-specum entry's `version` field in `.claude-plugin/marketplace.json` from `4.4.0` to `4.5.0`
   - **Files**: `.claude-plugin/marketplace.json`
