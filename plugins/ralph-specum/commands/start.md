@@ -1,6 +1,6 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
-argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>]
+argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>] [--tasks-size fine|coarse]
 allowed-tools: "*"
 ---
 
@@ -33,7 +33,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/branch-management.md` and follow the full
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/intent-classification.md` and follow the detection logic.
 
-**Summary**: Extracts name, goal, and flags (--fresh, --quick, --commit-spec, --no-commit-spec, --specs-dir) from $ARGUMENTS. Classifies whether this is a new spec, resume, or quick mode. Determines commit spec behavior. Routes to the appropriate flow below.
+**Summary**: Extracts name, goal, and flags (--fresh, --quick, --commit-spec, --no-commit-spec, --specs-dir, --tasks-size) from $ARGUMENTS. Classifies whether this is a new spec, resume, or quick mode. Determines commit spec behavior. Routes to the appropriate flow below.
 
 ### Quick Mode Check
 
@@ -102,6 +102,10 @@ Continuing...
      "discoveredSkills": []
    }
    ```
+   **`--tasks-size` handling**: If `--tasks-size` flag is present in `$ARGUMENTS`:
+   - If value is `fine` or `coarse`: add `"granularity": "<value>"` to the JSON above
+   - If value is invalid (not `fine` or `coarse`): warn the user (`⚠️ Invalid --tasks-size value "<value>", defaulting to fine`) and add `"granularity": "fine"`
+   - If `--tasks-size` flag is absent: omit the `granularity` field entirely (do not add it)
 8. Create `.progress.md` with goal
 9. **Skill Discovery Pass 1** -- Scan all skill files and match against the goal text:
    1. Scan SKILL.md files from all skill paths (collect all skills before matching):

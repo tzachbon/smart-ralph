@@ -14,6 +14,7 @@ From `$ARGUMENTS`, extract:
 - **--commit-spec**: Commit and push spec files after generation (default: true in normal mode, false in quick mode)
 - **--no-commit-spec**: Explicitly disable committing spec files
 - **--specs-dir <path>**: Create spec in specified directory (must be in configured specs_dirs array)
+- **--tasks-size <fine|coarse>**: Task granularity level for task generation
 
 ### Commit Spec Flag Logic
 
@@ -35,6 +36,8 @@ From `$ARGUMENTS`, extract:
 - `/ralph-specum:start ./my-plan.md --quick` -> Quick mode with file input
 - `/ralph-specum:start my-feature ./plan.md --quick` -> Quick mode with name+file
 - `/ralph-specum:start my-feature --quick` -> Quick mode using existing plan.md
+- `/ralph-specum:start my-feature "Add logging" --tasks-size coarse` -> Coarse granularity (10-20 tasks)
+- `/ralph-specum:start my-feature --quick --tasks-size fine` -> Quick mode with fine granularity
 
 ## Detection Logic (Normal Mode)
 
