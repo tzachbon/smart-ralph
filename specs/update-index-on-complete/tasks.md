@@ -19,7 +19,7 @@ Focus: Add index update calls to both ALL_TASKS_COMPLETE detection paths in stop
   - _Requirements: FR-1, FR-3, FR-4, AC-1.1_
   - _Design: stop-watcher.sh Primary path_
 
-- [ ] 1.2 Add index update to fallback ALL_TASKS_COMPLETE detection path
+- [x] 1.2 Add index update to fallback ALL_TASKS_COMPLETE detection path
   - **Do**:
     1. In the fallback detection block (line ~77-80), insert `"$SCRIPT_DIR/update-spec-index.sh" --quiet 2>/dev/null || true` before `exit 0`
   - **Files**: plugins/ralph-specum/hooks/scripts/stop-watcher.sh
