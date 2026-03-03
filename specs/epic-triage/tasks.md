@@ -34,7 +34,7 @@
   - **Commit**: `feat(ralph-specum): add triage-flow reference for explore-brainstorm-validate-finalize`
   - _Design: docs/plans/2026-03-03-epic-triage-design.md, Task 4_
 
-- [ ] 1.5 Create triage.md command
+- [x] 1.5 Create triage.md command
   - **Do**: 1. Create `plugins/ralph-specum/commands/triage.md` with frontmatter (description, argument-hint: [epic-name] [goal], allowed-tools: "*"). 2. Checklist: check active epic, handle branch, parse input, run triage flow, display result. 3. Step 1: detect `.current-epic`, show status if exists, offer continue/new/view. 4. Step 2: branch management via reference. 5. Step 3: parse epic-name and goal from args, create `specs/_epics/$EPIC_NAME/` dir, init `.progress.md`. 6. Step 4: delegate to triage-flow reference. 7. Step 5: mandatory walkthrough with epic summary. 8. Include coordinator delegation requirement and stop-after-subagent mandatory blocks.
   - **Files**: `plugins/ralph-specum/commands/triage.md`
   - **Done when**: Command file exists with valid frontmatter, 5-step checklist, delegation requirements, and mandatory walkthrough
