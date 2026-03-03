@@ -439,3 +439,71 @@ More text")
 
     [[ "$stderr_output" == *"ALL_TASKS_COMPLETE detected"* ]]
 }
+
+# =============================================================================
+# Test: Index update on ALL_TASKS_COMPLETE
+# =============================================================================
+
+@test "calls update-spec-index.sh when ALL_TASKS_COMPLETE detected in transcript" {
+    create_state_file "execution" 2 5 1
+    local marker="$TEST_WORKSPACE/index-update-called"
+    mock_index_script "$marker"
+
+    local transcript_file
+    transcript_file=$(create_transcript "Some output
+TASK_COMPLETE
+More output
+ALL_TASKS_COMPLETE")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    [ -f "$marker" ]
+}
+
+@test "does not call update-spec-index.sh when ALL_TASKS_COMPLETE not in transcript" {
+    create_state_file "execution" 2 5 1
+    local marker="$TEST_WORKSPACE/index-update-called"
+    mock_index_script "$marker"
+
+    local transcript_file
+    transcript_file=$(create_transcript "Some output
+TASK_COMPLETE
+More output")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    [ ! -f "$marker" ]
+}
+
+@test "hook exits cleanly when update-spec-index.sh fails" {
+    create_state_file "execution" 2 5 1
+    mock_failing_index_script
+
+    local transcript_file
+    transcript_file=$(create_transcript "ALL_TASKS_COMPLETE")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    # Should still exit cleanly despite index update failure
+    assert_output_not_contains "Continue spec"
+}
+
+@test "both ALL_TASKS_COMPLETE detection paths call update-spec-index.sh" {
+    # Structural test: verify both grep paths have the index update call
+    local primary_count
+    primary_count=$(sed -n '/tail -500.*ALL_TASKS_COMPLETE/,/exit 0/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || echo 0)
+    [ "$primary_count" -ge 1 ]
+
+    local fallback_count
+    fallback_count=$(sed -n '/tail -20.*ALL_TASKS_COMPLETE/,/exit 0/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || echo 0)
+    [ "$fallback_count" -ge 1 ]
+}

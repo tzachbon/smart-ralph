@@ -71,11 +71,13 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
         echo "[ralph-specum] ALL_TASKS_COMPLETE detected in transcript" >&2
         # Note: State file cleanup is handled by the coordinator (implement.md Section 10)
         # Do not delete here to avoid race condition
+        "$SCRIPT_DIR/update-spec-index.sh" --quiet 2>/dev/null || true
         exit 0
     fi
     # Fallback: check last 20 lines for edge cases (very recent signal)
     if tail -20 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '^ALL_TASKS_COMPLETE$'; then
         echo "[ralph-specum] ALL_TASKS_COMPLETE detected in transcript (tail-end)" >&2
+        "$SCRIPT_DIR/update-spec-index.sh" --quiet 2>/dev/null || true
         exit 0
     fi
 fi

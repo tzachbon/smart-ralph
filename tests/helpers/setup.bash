@@ -7,6 +7,10 @@
 STOP_WATCHER_SCRIPT="${BATS_TEST_DIRNAME}/../plugins/ralph-specum/hooks/scripts/stop-watcher.sh"
 export PATH_RESOLVER_SCRIPT="${BATS_TEST_DIRNAME}/../plugins/ralph-specum/hooks/scripts/path-resolver.sh"
 
+# Path to update-spec-index.sh (for mocking in tests)
+INDEX_SCRIPT="${BATS_TEST_DIRNAME}/../plugins/ralph-specum/hooks/scripts/update-spec-index.sh"
+INDEX_SCRIPT_BACKUP=""
+
 # Test workspace directory (created fresh for each test)
 TEST_WORKSPACE=""
 
@@ -25,8 +29,9 @@ setup() {
     echo "test-spec" > "$TEST_WORKSPACE/specs/.current-spec"
 }
 
-# Teardown: Clean up test workspace
+# Teardown: Clean up test workspace and restore mocked scripts
 teardown() {
+    restore_index_script
     if [ -n "$TEST_WORKSPACE" ] && [ -d "$TEST_WORKSPACE" ]; then
         rm -rf "$TEST_WORKSPACE"
     fi
@@ -205,6 +210,42 @@ assert_json_system_message_contains() {
         echo "Expected JSON systemMessage to contain: $expected"
         echo "Actual systemMessage: $msg"
         return 1
+    fi
+}
+
+# Mock update-spec-index.sh to track invocations via a marker file
+# Usage: mock_index_script [marker_file]
+mock_index_script() {
+    local marker_file="${1:-$TEST_WORKSPACE/index-update-called}"
+    INDEX_SCRIPT_BACKUP="$TEST_WORKSPACE/update-spec-index.sh.bak"
+
+    cp "$INDEX_SCRIPT" "$INDEX_SCRIPT_BACKUP"
+    cat > "$INDEX_SCRIPT" <<MOCK_EOF
+#!/bin/bash
+touch "$marker_file"
+MOCK_EOF
+    chmod +x "$INDEX_SCRIPT"
+}
+
+# Mock update-spec-index.sh to simulate failure (exit 1)
+# Usage: mock_failing_index_script
+mock_failing_index_script() {
+    INDEX_SCRIPT_BACKUP="$TEST_WORKSPACE/update-spec-index.sh.bak"
+
+    cp "$INDEX_SCRIPT" "$INDEX_SCRIPT_BACKUP"
+    cat > "$INDEX_SCRIPT" <<'MOCK_EOF'
+#!/bin/bash
+exit 1
+MOCK_EOF
+    chmod +x "$INDEX_SCRIPT"
+}
+
+# Restore update-spec-index.sh from backup (called automatically in teardown)
+restore_index_script() {
+    if [ -n "$INDEX_SCRIPT_BACKUP" ] && [ -f "$INDEX_SCRIPT_BACKUP" ]; then
+        cp "$INDEX_SCRIPT_BACKUP" "$INDEX_SCRIPT"
+        rm -f "$INDEX_SCRIPT_BACKUP"
+        INDEX_SCRIPT_BACKUP=""
     fi
 }
 
