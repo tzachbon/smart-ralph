@@ -60,7 +60,7 @@
 
 ## Phase 2: Quality & Documentation
 
-- [ ] 2.1 [VERIFY] Verify all new files and modifications
+- [x] 2.1 [VERIFY] Verify all new files and modifications
   - **Do**: 1. Check all 4 new files exist (template, agent, reference, command). 2. Validate schema JSON. 3. Validate stop-watcher bash syntax. 4. Verify start.md contains epic detection.
   - **Files**: `plugins/ralph-specum/templates/epic.md`, `plugins/ralph-specum/agents/triage-analyst.md`, `plugins/ralph-specum/references/triage-flow.md`, `plugins/ralph-specum/commands/triage.md`
   - **Done when**: All files exist, schema valid JSON, stop-watcher valid bash, start.md has epic detection
