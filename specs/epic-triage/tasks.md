@@ -26,7 +26,7 @@
   - **Commit**: `feat(ralph-specum): add triage-analyst agent for epic decomposition`
   - _Design: docs/plans/2026-03-03-epic-triage-design.md, Task 3_
 
-- [ ] 1.4 Create triage-flow reference
+- [x] 1.4 Create triage-flow reference
   - **Do**: 1. Create `plugins/ralph-specum/references/triage-flow.md` with "Used by: triage.md" header. 2. Define 4-step flow: Exploration Research (triage-focused parallel-research), Brainstorming & Decomposition (triage-analyst delegation), Validation Research (single research-analyst validation), Finalize (adjustment rounds, output selection, state init). 3. Include research prompt customizations, output handlers (spec files, GitHub issues, both), and epic status display format.
   - **Files**: `plugins/ralph-specum/references/triage-flow.md`
   - **Done when**: Reference file exists with all 4 steps, research prompts, output handlers, and status display format
