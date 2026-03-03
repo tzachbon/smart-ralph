@@ -162,7 +162,7 @@ Focus: Clean up any rough edges from POC. Ensure consistency across all modified
 
 Focus: No compiled tests exist for this plugin (markdown-only). Validate via structural checks and schema consistency.
 
-- [ ] 3.1 Validate schema JSON is well-formed
+- [x] 3.1 Validate schema JSON is well-formed
   - **Do**:
     1. Parse `spec.schema.json` with Python json module to verify valid JSON
     2. Verify `granularity` field has correct structure: type=string, enum=[fine,coarse]
@@ -173,7 +173,7 @@ Focus: No compiled tests exist for this plugin (markdown-only). Validate via str
   - **Commit**: None (verification only)
   - _Requirements: FR-3, AC-6.1, AC-6.2_
 
-- [ ] 3.2 Validate sizing-rules.md content completeness
+- [x] 3.2 Validate sizing-rules.md content completeness
   - **Do**:
     1. Verify all required sections exist: Fine, Coarse, Shared Rules
     2. Verify fine constraints match requirements: 40-60+, max 4 steps, max 3 files
@@ -185,7 +185,7 @@ Focus: No compiled tests exist for this plugin (markdown-only). Validate via str
   - **Commit**: None (verification only)
   - _Requirements: FR-5, FR-6, AC-3.1-3.5, AC-4.1-4.6_
 
-- [ ] 3.3 Validate all AC references are addressable
+- [x] 3.3 Validate all AC references are addressable
   - **Do**:
     1. Check start.md covers flag parsing (AC-1.1-1.4)
     2. Check tasks.md covers flag override (AC-2.1-2.4) and interview question (AC-5.1-5.5)
