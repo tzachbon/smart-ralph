@@ -16,7 +16,7 @@ Add configurable task granularity levels (fine/coarse) to ralph-specum's task pl
 - [ ] AC-1.1: `/ralph-specum:start my-spec My goal --tasks-size coarse` stores `"granularity": "coarse"` in `.ralph-state.json`
 - [ ] AC-1.2: `/ralph-specum:start my-spec My goal --tasks-size fine` stores `"granularity": "fine"` in `.ralph-state.json`
 - [ ] AC-1.3: Omitting `--tasks-size` on `/start` does NOT set the field (deferred to interview or default)
-- [ ] AC-1.4: Invalid value (e.g., `--tasks-size mega`) produces a clear error message and does not create the spec
+- [ ] AC-1.4: Invalid value (e.g., `--tasks-size mega`) logs a warning and defaults to fine
 
 ### US-2: Specify granularity via --tasks-size flag on /ralph-specum:tasks
 
@@ -28,7 +28,7 @@ Add configurable task granularity levels (fine/coarse) to ralph-specum's task pl
 - [ ] AC-2.1: `/ralph-specum:tasks --tasks-size coarse` stores `"granularity": "coarse"` in `.ralph-state.json` and passes it to task-planner
 - [ ] AC-2.2: `/ralph-specum:tasks --tasks-size fine` stores `"granularity": "fine"` and passes it to task-planner
 - [ ] AC-2.3: Flag on `/tasks` overrides any value previously stored by `/start`
-- [ ] AC-2.4: Invalid value produces a clear error and aborts task generation
+- [ ] AC-2.4: Invalid value logs a warning and defaults to fine
 
 ### US-3: Task planner generates fine-grained tasks (40-60+) with [VERIFY] checkpoints
 
@@ -93,6 +93,15 @@ Add configurable task granularity levels (fine/coarse) to ralph-specum's task pl
 - [ ] AC-7.2: Coarse mode generates [P] markers on eligible tasks (same rules: zero file overlap, no output dependencies)
 - [ ] AC-7.3: [VERIFY] tasks still break parallel groups in both modes
 
+### US-8: README documents --tasks-size flag
+
+**As a** plugin user reading the documentation
+**I want** the CLAUDE.md or README to explain the `--tasks-size` flag and granularity levels
+**So that** I know how to control task granularity
+
+**Acceptance Criteria:**
+- [ ] AC-8.1: CLAUDE.md documents the `--tasks-size fine|coarse` flag with usage examples and explains what each level produces
+
 ## Functional Requirements
 
 | ID | Requirement | Priority | Acceptance Criteria |
@@ -107,8 +116,9 @@ Add configurable task granularity levels (fine/coarse) to ralph-specum's task pl
 | FR-8 | Flag on /tasks overrides value from /start | Medium | AC-2.3 |
 | FR-9 | [P] markers applied in both modes using same eligibility rules | Medium | AC-7.1 through AC-7.3 |
 | FR-10 | Final verification sequence (V4-V6) always generated regardless of mode | High | AC-3.5, AC-4.5 |
-| FR-11 | Invalid granularity value produces clear error | Low | AC-1.4, AC-2.4 |
+| FR-11 | Invalid granularity value warns and defaults to fine | Low | AC-1.4, AC-2.4 |
 | FR-12 | Quick mode defaults to fine when no flag provided | Medium | AC-5.5 |
+| FR-13 | Update CLAUDE.md/README with `--tasks-size` flag documentation | Medium | AC-8.1 |
 
 ## Non-Functional Requirements
 
