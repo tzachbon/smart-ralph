@@ -137,7 +137,7 @@ Focus: Clean up any rough edges from POC. Ensure consistency across all modified
   - **Commit**: `refactor(sizing-rules): align formatting with existing references`
   - _Design: Existing Patterns to Follow_
 
-- [ ] 2.2 Verify task-planner.md conditional reference is clear
+- [x] 2.2 Verify task-planner.md conditional reference is clear
   - **Do**:
     1. Re-read the replaced sizing section in task-planner.md
     2. Verify the `${CLAUDE_PLUGIN_ROOT}/references/sizing-rules.md` path uses the correct variable
