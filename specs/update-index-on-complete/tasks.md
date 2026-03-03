@@ -41,7 +41,7 @@ Focus: Add index update calls to both ALL_TASKS_COMPLETE detection paths in stop
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Bump plugin version in plugin.json and marketplace.json
+- [x] 4.1 Bump plugin version in plugin.json and marketplace.json
   - **Do**:
     1. Bump version in `plugins/ralph-specum/.claude-plugin/plugin.json` from `4.4.0` to `4.5.0` (minor: new feature)
     2. Bump version in `.claude-plugin/marketplace.json` for the ralph-specum entry from `4.4.0` to `4.5.0`
