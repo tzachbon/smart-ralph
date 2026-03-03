@@ -106,36 +106,14 @@ claude --plugin-dir ./smart-ralph/plugins/ralph-specum
 
 ## How It Works
 
-```text
-        "I want a feature!"
-               |
-               v
-    +---------------------+
-    |      Research       |  <- Analyzes codebase, searches web
-    +---------------------+
-               |
-               v
-    +---------------------+
-    |    Requirements     |  <- User stories, acceptance criteria
-    +---------------------+
-               |
-               v
-    +---------------------+
-    |       Design        |  <- Architecture, patterns, decisions
-    +---------------------+
-               |
-               v
-    +---------------------+
-    |       Tasks         |  <- POC-first task breakdown
-    +---------------------+
-               |
-               v
-    +---------------------+
-    |     Execution       |  <- Task-by-task with fresh context
-    +---------------------+
-               |
-               v
-          "I did it!"
+```mermaid
+flowchart TD
+    A["I want a feature!"] --> B[Research]
+    B -->|Analyzes codebase, searches web| C[Requirements]
+    C -->|User stories, acceptance criteria| D[Design]
+    D -->|Architecture, patterns, decisions| E[Tasks]
+    E -->|POC-first task breakdown| F[Execution]
+    F -->|Task-by-task with fresh context| G["I did it!"]
 ```
 
 ### The Agents
@@ -197,34 +175,16 @@ The `/ralph-specum:index` command:
 
 ### How It Works
 
-```text
-     /ralph-specum:index
-             |
-             v
-  +---------------------+
-  |  Pre-Scan Interview |  <- External URLs? Focus areas? Sparse areas?
-  +---------------------+
-             |
-             v
-  +---------------------+
-  |  Component Scanner  |  <- Detects controllers, services, models...
-  +---------------------+
-             |
-             v
-  +---------------------+
-  | External Resources  |  <- Fetches URLs, queries MCP, introspects skills
-  +---------------------+
-             |
-             v
-  +---------------------+
-  |  Post-Scan Review   |  <- Validates findings with user
-  +---------------------+
-             |
-             v
-      specs/.index/
-       ├── index.md          # Summary dashboard
-       ├── components/       # Code component specs
-       └── external/         # External resource specs
+```mermaid
+flowchart TD
+    A["/ralph-specum:index"] --> B[Pre-Scan Interview]
+    B -->|External URLs? Focus areas?| C[Component Scanner]
+    C -->|Controllers, services, models...| D[External Resources]
+    D -->|URLs, MCP, skills| E[Post-Scan Review]
+    E -->|Validates findings with user| F["specs/.index/"]
+    F --- G["index.md - Summary dashboard"]
+    F --- H["components/ - Code component specs"]
+    F --- I["external/ - External resource specs"]
 ```
 
 ### Options
