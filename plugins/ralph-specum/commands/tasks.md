@@ -114,7 +114,10 @@ Follow the full team lifecycle:
 
 **Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call.
 
-> **VE Delegation Context**: When delegating to task-planner, include these additional inputs for VE Tasks — VE1 (startup), VE2 (check), VE3 (cleanup) — generation:
+> **Delegation Context**: When delegating to task-planner, include these inputs:
+> - **Granularity**: [fine|coarse] (from `granularity` field in `.ralph-state.json`)
+>
+> For VE Tasks — VE1 (startup), VE2 (check), VE3 (cleanup) — generation:
 > - **E2E Verification**: enabled or disabled (from interview response, or auto-enabled in quick mode)
 > - **Verification Tooling**: the Verification Tooling section from research.md (dev server commands, browser deps, ports, health endpoints)
 > - **Strategy**: the user's chosen verification strategy, or "auto" in quick mode

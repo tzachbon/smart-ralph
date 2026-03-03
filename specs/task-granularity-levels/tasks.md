@@ -106,7 +106,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-7, FR-12, AC-5.1, AC-5.2, AC-5.3, AC-5.4, AC-5.5_
   - _Design: Component 4 (Step 2)_
 
-- [ ] 1.10 Add granularity to tasks.md delegation context
+- [x] 1.10 Add granularity to tasks.md delegation context
   - **Do**:
     1. In Step 3 (Execute Task Generation), add instruction to include `granularity` value from `.ralph-state.json` in the delegation context passed to task-planner
     2. Add `- **Granularity**: [fine|coarse] (from .ralph-state.json)` to the delegation inputs alongside VE delegation context
