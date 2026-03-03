@@ -39,7 +39,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-5, FR-6, AC-3.1, AC-4.1_
   - _Design: Component 2 (Quality Checklist)_
 
-- [ ] 1.4 [P] Add --tasks-size to intent-classification.md
+- [x] 1.4 [P] Add --tasks-size to intent-classification.md
   - **Do**:
     1. Add `- **--tasks-size <fine|coarse>**: Task granularity level for task generation` to the argument parsing bullet list (after `--specs-dir`)
     2. Add 2 examples to the Examples section showing `--tasks-size` usage
@@ -50,7 +50,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-1, FR-2_
   - _Design: Component 5_
 
-- [ ] 1.5 [P] Add granularity field to spec.schema.json
+- [x] 1.5 [P] Add granularity field to spec.schema.json
   - **Do**:
     1. Add `"granularity"` property to `definitions.state.properties` with `type: "string"`, `enum: ["fine", "coarse"]`, `description: "Task sizing level: fine (40-60+ tasks) or coarse (10-20 tasks)"`
     2. Do NOT add to `required` array (backwards compatible)
