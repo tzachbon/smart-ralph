@@ -115,7 +115,7 @@ Follow the full team lifecycle:
 **Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: task-planner)` call.
 
 > **Delegation Context**: When delegating to task-planner, include these inputs:
-> - **Granularity**: [fine|coarse] (from `granularity` field in `.ralph-state.json`)
+> - **Granularity**: [fine|coarse] (from `granularity` field in `.ralph-state.json`; default to `fine` if field is absent)
 >
 > For VE Tasks — VE1 (startup), VE2 (check), VE3 (cleanup) — generation:
 > - **E2E Verification**: enabled or disabled (from interview response, or auto-enabled in quick mode)

@@ -217,7 +217,7 @@ Focus: No compiled tests exist for this plugin (markdown-only). Validate via str
   - **Commit**: `chore(marketplace): bump ralph-specum to 4.5.0`
   - _Design: Component 7_
 
-- [ ] V4 [VERIFY] Full local quality check
+- [x] V4 [VERIFY] Full local quality check
   - **Do**: Run all structural verifications:
     1. Verify all 9 target files exist and contain expected patterns
     2. Verify schema JSON is valid
@@ -227,13 +227,13 @@ Focus: No compiled tests exist for this plugin (markdown-only). Validate via str
   - **Done when**: All verifications pass, versions match, schema valid
   - **Commit**: `chore(task-granularity): pass local quality check` (if fixes needed)
 
-- [ ] V5 [VERIFY] CI pipeline passes
+- [x] V5 [VERIFY] CI pipeline passes
   - **Do**: Verify GitHub Actions/CI passes after push
   - **Verify**: `gh pr checks --watch` or `gh pr checks`
   - **Done when**: CI pipeline passes
   - **Commit**: None
 
-- [ ] V6 [VERIFY] AC checklist
+- [x] V6 [VERIFY] AC checklist
   - **Do**: Programmatically verify each acceptance criterion:
     1. AC-1.1/1.2: start.md stores granularity -> `grep granularity plugins/ralph-specum/commands/start.md`
     2. AC-1.3: Omitting flag doesn't set field -> start.md state init omits when absent
@@ -251,7 +251,7 @@ Focus: No compiled tests exist for this plugin (markdown-only). Validate via str
 
 ## Phase 5: PR Lifecycle
 
-- [ ] 5.1 Create PR and verify CI
+- [x] 5.1 Create PR and verify CI
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. Push branch: `git push -u origin $(git branch --show-current)`
