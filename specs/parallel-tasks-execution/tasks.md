@@ -112,7 +112,7 @@ Focus: Add [P] marker support to all 3 files + version bumps. Get it working end
   - **Do**:
     1. Open `plugins/ralph-specum/templates/tasks.md`
     2. In the `## Task Writing Guide` section, add a brief note about [P] markers after the existing sizing rules line
-    3. Add: `**Parallel markers**: Mark independent tasks with `[P]` for concurrent execution. Adjacent [P] tasks form a parallel group. [VERIFY] tasks always break groups.`
+    3. Add: **Parallel markers**: Mark independent tasks with `[P]` for concurrent execution. Adjacent [P] tasks form a parallel group. [VERIFY] tasks always break groups.
   - **Files**: `plugins/ralph-specum/templates/tasks.md`
   - **Done when**: Task Writing Guide section mentions [P] markers
   - **Verify**: `grep 'Parallel markers' plugins/ralph-specum/templates/tasks.md | grep -q '\[P\]' && echo PASS`
@@ -445,7 +445,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Done when**: All local checks pass
   - **Commit**: `fix(ralph-specum): address any remaining issues` (only if fixes needed)
 
-- [ ] 4.2 Push latest changes and verify CI is green
+- [x] 4.2 Push latest changes and verify CI is green
   - **Do**:
     1. Push all changes: `git push`
     2. Wait for CI: `gh pr checks --watch`
@@ -454,13 +454,13 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Done when**: CI pipeline passes on the draft PR
   - **Commit**: `fix: address CI failures` (only if fixes needed)
 
-- [ ] 4.3 [VERIFY] CI pipeline passes
+- [x] 4.3 [VERIFY] CI pipeline passes
   - **Do**: Verify GitHub Actions/CI passes after push
   - **Verify**: `gh pr checks` shows all green
   - **Done when**: CI pipeline passes
   - **Commit**: None
 
-- [ ] 4.3.1 Mark PR as ready for review
+- [x] 4.3.1 Mark PR as ready for review
   - **Do**:
     1. Verify CI is green: `gh pr checks`
     2. Mark PR ready: `gh pr ready`
@@ -468,7 +468,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Done when**: PR is no longer in draft mode, marked ready for review
   - **Commit**: None
 
-- [ ] 4.4 [VERIFY] AC checklist
+- [x] 4.4 [VERIFY] AC checklist
   - **Do**: Verify each acceptance criterion from requirements.md
   - **Verify**:
     1. US-1 (task author marks [P]): `grep '\[P\] Parallel Task Marking' plugins/ralph-specum/agents/task-planner.md && echo AC_US1_PASS`
@@ -484,7 +484,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
 
 > **Autonomous Loop**: This phase continues until ALL completion criteria met.
 
-- [ ] 5.1 Monitor CI and fix failures
+- [x] 5.1 Monitor CI and fix failures
   - **Do**:
     1. Check status: `gh pr checks`
     2. If failures: read logs with `gh run view --log-failed`
@@ -496,7 +496,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Done when**: All CI checks passing
   - **Commit**: `fix: address CI failures` (as needed)
 
-- [ ] 5.2 Address code review comments
+- [x] 5.2 Address code review comments
   - **Do**:
     1. Fetch reviews: `gh pr view --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED")'`
     2. For inline comments: `gh api repos/{owner}/{repo}/pulls/{number}/comments`
@@ -506,7 +506,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
   - **Done when**: All review comments resolved
   - **Commit**: `fix: address review - {{summary}}` (per comment)
 
-- [ ] 5.3 Final validation
+- [x] 5.3 Final validation
   - **Do**: Verify ALL completion criteria:
     1. All tasks checked: `grep -c '^\s*- \[x\]' specs/parallel-tasks-execution/tasks.md`
     2. No unchecked remain: `grep -c '^\s*- \[ \]' specs/parallel-tasks-execution/tasks.md | grep -q '^0$'`
@@ -526,7 +526,7 @@ Focus: Verify all changes via automated checks since there's no test runner for 
 
 ## Dependencies
 
-```
+```text
 Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality) → Phase 5 (PR Lifecycle)
 
 Within Phase 1:
