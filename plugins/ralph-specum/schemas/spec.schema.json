@@ -180,6 +180,11 @@
           "minimum": 1,
           "default": 2,
           "description": "Max nesting depth for modification task IDs"
+        },
+        "granularity": {
+          "type": "string",
+          "enum": ["fine", "coarse"],
+          "description": "Task sizing level: fine (40-60+ tasks) or coarse (10-20 tasks)"
         }
       }
     },
