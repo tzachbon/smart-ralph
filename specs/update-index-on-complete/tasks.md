@@ -29,7 +29,7 @@ Focus: Add index update calls to both ALL_TASKS_COMPLETE detection paths in stop
   - _Requirements: FR-2, FR-3, FR-4, AC-1.3_
   - _Design: stop-watcher.sh Fallback path_
 
-- [ ] 1.3 [VERIFY] Verify both paths have index update and script structure is valid
+- [x] 1.3 [VERIFY] Verify both paths have index update and script structure is valid
   - **Do**:
     1. Verify both ALL_TASKS_COMPLETE paths call update-spec-index.sh
     2. Verify error suppression pattern (`2>/dev/null || true`) is present on both calls
@@ -51,7 +51,7 @@ Focus: Add index update calls to both ALL_TASKS_COMPLETE detection paths in stop
   - **Commit**: `chore(ralph-specum): bump version to 4.5.0`
   - _Requirements: Version bump required per CLAUDE.md_
 
-- [ ] 4.2 [VERIFY] Final verification: script syntax + AC checklist
+- [x] 4.2 [VERIFY] Final verification: script syntax + AC checklist
   - **Do**:
     1. Verify bash syntax: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
     2. AC-1.1: Primary path calls update-spec-index.sh before exit 0
@@ -66,7 +66,7 @@ Focus: Add index update calls to both ALL_TASKS_COMPLETE detection paths in stop
 
 ## Phase 5: PR Lifecycle
 
-- [ ] 5.1 Create PR
+- [x] 5.1 Create PR
   - **Do**:
     1. Verify on feature branch: `git branch --show-current`
     2. Stage and push changes
@@ -75,7 +75,7 @@ Focus: Add index update calls to both ALL_TASKS_COMPLETE detection paths in stop
   - **Done when**: PR is open and targeting main
   - **Commit**: None
 
-- [ ] 5.2 [VERIFY] CI pipeline passes
+- [x] 5.2 [VERIFY] CI pipeline passes
   - **Do**: Monitor CI checks on the PR
   - **Verify**: `gh pr checks | grep -v 'pass\|✓' | wc -l | grep -q '^0$' && echo PASS`
   - **Done when**: All CI checks green
