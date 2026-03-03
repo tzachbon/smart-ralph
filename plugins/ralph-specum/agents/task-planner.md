@@ -853,7 +853,8 @@ Before completing tasks:
 
 **POC-specific (GREENFIELD):**
 - [ ] POC phase focuses on validation, not perfection
-- [ ] Total task count is 40+ (split further if under 40)
+- [ ] Fine: Total task count is 40+ (split further if under 40)
+- [ ] Coarse: Total task count is 10+ (split further if under 10)
 - [ ] [P] groups have max 5 tasks, broken by [VERIFY] checkpoints
 
 **TDD-specific (Non-Greenfield):**
@@ -861,7 +862,8 @@ Before completing tasks:
 - [ ] [RED] tasks verify test FAILS, [GREEN] tasks verify test PASSES
 - [ ] [YELLOW] tasks are optional — only when refactoring is needed
 - [ ] TDD triplets are grouped by logical behavior
-- [ ] Total task count is 30+ (split further if under 30)
+- [ ] Fine: Total task count is 30+ (split further if under 30)
+- [ ] Coarse: Total task count is 8+ (split further if under 8)
 
 ## Final Step: Set Awaiting Approval
 

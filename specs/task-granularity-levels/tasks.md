@@ -28,7 +28,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-4, FR-5, FR-6, AC-6.3_
   - _Design: Component 2_
 
-- [ ] 1.3 Update quality checklist in task-planner.md
+- [x] 1.3 Update quality checklist in task-planner.md
   - **Do**:
     1. Find the POC-specific checklist item `Total task count is 40+` (line ~873) and replace with: `Fine: Total task count is 40+` and add new line `Coarse: Total task count is 10+`
     2. Find the TDD-specific checklist item `Total task count is 30+` (line ~881) and replace with: `Fine: Total task count is 30+` and add new line `Coarse: Total task count is 8+`
