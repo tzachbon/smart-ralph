@@ -495,7 +495,7 @@ Focus: Test-driven implementation. Every change starts with a failing test.
   - **Do**:
     1. Write test asserting {{expected behavior B}}
     2. Run test to confirm it fails with expected assertion error
-  - **Files**: {{test file path}}
+  - **Files**: {{test file path B}}
   - **Done when**: Test exists AND fails with expected assertion error
   - **Verify**: `{{test cmd}} -- --grep "{{test name B}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
   - **Commit**: `test(scope): red - failing test for {{behavior B}}`
@@ -506,7 +506,7 @@ Focus: Test-driven implementation. Every change starts with a failing test.
   - **Do**:
     1. Write test asserting {{expected behavior C}}
     2. Run test to confirm it fails with expected assertion error
-  - **Files**: {{test file path}}
+  - **Files**: {{test file path C}}
   - **Done when**: Test exists AND fails with expected assertion error
   - **Verify**: `{{test cmd}} -- --grep "{{test name C}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
   - **Commit**: `test(scope): red - failing test for {{behavior C}}`
