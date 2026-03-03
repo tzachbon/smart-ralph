@@ -10,7 +10,7 @@
   - **Commit**: `feat(ralph-specum): add epicState schema and epicName field`
   - _Design: docs/plans/2026-03-03-epic-triage-design.md, Task 1_
 
-- [ ] 1.2 Create epic.md template
+- [x] 1.2 Create epic.md template
   - **Do**: 1. Create `plugins/ralph-specum/templates/epic.md` with frontmatter (epic, created placeholders) and sections: Vision, Success Criteria, Specs (with per-spec Goal/AC/MVP Scope/Dependencies/Interface Contracts/Architecture/Size), Dependency Graph, Notes. 2. Use `{{PLACEHOLDER}}` syntax matching existing templates.
   - **Files**: `plugins/ralph-specum/templates/epic.md`
   - **Done when**: Template file exists with all required sections and placeholder syntax
