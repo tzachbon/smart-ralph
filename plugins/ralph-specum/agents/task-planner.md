@@ -440,6 +440,73 @@ Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
 **Discovery**: Read research.md for actual project commands. Do NOT assume `pnpm lint` or `npm test` exists.
 </mandatory>
 
+<mandatory>
+## [P] Parallel Task Marking
+
+Mark tasks with `[P]` when ALL of these conditions hold:
+1. Task has NO file overlap with adjacent tasks (different `Files:` sections)
+2. Task does NOT depend on output of adjacent tasks
+3. Task is NOT a `[VERIFY]` checkpoint (those are always sequential)
+4. Task does NOT modify shared config files (package.json, tsconfig.json, etc.)
+
+Adjacent `[P]` tasks form a parallel group dispatched in one message.
+
+**Format:**
+```markdown
+- [ ] 1.2 [P] Create user service
+  - **Do**: ...
+  - **Files**: src/services/user.ts
+  - ...
+
+- [ ] 1.3 [P] Create auth service
+  - **Do**: ...
+  - **Files**: src/services/auth.ts
+  - ...
+```
+
+**Rules:**
+- `[VERIFY]` tasks ALWAYS break parallel groups (sequential checkpoint)
+- Single `[P]` task runs sequentially (no parallelism benefit)
+- Max group size: 5 tasks (practical limit for concurrent Task() calls)
+- Phase boundaries break groups (task 1.N and 2.1 cannot be in same group)
+- When in doubt, keep sequential. Wrong parallelism causes harder bugs than slowness.
+
+### Auto-Detection Heuristics
+
+Use these checks to decide if adjacent tasks can be marked `[P]`:
+
+1. **File overlap check**: Compare `Files:` sections of adjacent tasks. If ANY file appears in both tasks, they CANNOT be `[P]`. Zero file overlap is required.
+2. **Output dependency check**: Read each task's `Do:` section. If task B references a file created or modified by task A, they CANNOT be `[P]`.
+3. **Shared config detection**: Flag tasks that modify shared config files (package.json, tsconfig.json, .eslintrc, Cargo.toml, go.mod, etc.). These are sequential — concurrent writes to shared configs cause merge conflicts.
+4. **Import/dependency chain**: If task B imports from a module task A creates, they CANNOT be `[P]`.
+
+**Example: 2 parallel tasks + checkpoint**
+```markdown
+- [ ] 1.5 [P] Create user validation module
+  - **Do**:
+    1. Create `src/validators/user.ts` with email and name validation
+  - **Files**: src/validators/user.ts
+  - **Done when**: Validation functions exported
+  - **Verify**: `grep 'export' src/validators/user.ts && echo PASS`
+  - **Commit**: `feat(validators): add user validation`
+
+- [ ] 1.6 [P] Create product validation module
+  - **Do**:
+    1. Create `src/validators/product.ts` with price and SKU validation
+  - **Files**: src/validators/product.ts
+  - **Done when**: Validation functions exported
+  - **Verify**: `grep 'export' src/validators/product.ts && echo PASS`
+  - **Commit**: `feat(validators): add product validation`
+
+- [ ] 1.7 [VERIFY] Quality checkpoint: verify validators
+  - **Do**: Run quality checks
+  - **Verify**: All commands exit 0
+  - **Done when**: No errors
+  - **Commit**: `chore(validators): pass quality checkpoint` (if fixes needed)
+```
+Tasks 1.5 and 1.6 have zero file overlap and no output dependencies — safe to mark `[P]`. Task 1.7 `[VERIFY]` breaks the group.
+</mandatory>
+
 ## Task Sizing Rules
 
 <mandatory>
@@ -486,7 +553,7 @@ Create tasks.md following the structure matching the selected workflow.
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
-- [ ] 1.1 [Specific task name]
+- [ ] 1.1 [P] [Specific task name]
   - **Do**: [Exact steps to implement]
   - **Files**: [Exact file paths to create/modify]
   - **Done when**: [Explicit success criteria]
@@ -495,7 +562,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-1, AC-1.1_
   - _Design: Component A_
 
-- [ ] 1.2 [Another task]
+- [ ] 1.2 [P] [Another task]
   - **Do**: [Steps]
   - **Files**: [Paths]
   - **Done when**: [Criteria]
@@ -798,11 +865,13 @@ Before completing tasks:
 - [ ] No task contains speculative features or premature abstractions (simplicity)
 - [ ] No task touches files unrelated to its stated goal (surgical)
 - [ ] Ambiguous tasks surface their assumptions explicitly, not silently (think-first)
+- [ ] Independent tasks marked [P] where file overlap is zero
 - [ ] Set awaitingApproval in state (see below)
 
 **POC-specific (GREENFIELD):**
 - [ ] POC phase focuses on validation, not perfection
 - [ ] Total task count is 40+ (split further if under 40)
+- [ ] [P] groups have max 5 tasks, broken by [VERIFY] checkpoints
 
 **TDD-specific (Non-Greenfield):**
 - [ ] Every implementation task has a preceding [RED] test task

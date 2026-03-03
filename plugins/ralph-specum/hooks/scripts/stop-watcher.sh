@@ -230,6 +230,32 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
         ' "$TASKS_FILE" | sed -e :a -e '/^[[:space:]]*$/{' -e '$d' -e N -e ba -e '}')
     fi
 
+    # Parallel group detection: if current task has [P] marker, scan for consecutive [P] tasks and include all in continuation prompt
+    IS_PARALLEL="false"
+    if echo "$TASK_BLOCK" | head -1 | grep -q '\[P\]'; then
+        IS_PARALLEL="true"
+    fi
+
+    # When parallel marker detected, scan for all consecutive [P] tasks from TASK_INDEX
+    if [ "$IS_PARALLEL" = "true" ] && [ -f "$TASKS_FILE" ]; then
+        PARALLEL_TASKS=$(awk -v idx="$TASK_INDEX" -v max_group=5 '
+            /^- \[[ x]\]/ {
+                if (count >= idx) {
+                    if (/\[P\]/ && pcount < max_group) { found=1; pcount++; block=block $0 "\n"; next }
+                    else if (found) { exit }
+                }
+                count++
+            }
+            found && /^  / { block=block $0 "\n"; next }
+            found && /^$/ { block=block $0 "\n"; next }
+            found && !/^  / && !/^$/ { exit }
+            END { printf "%s", block }
+        ' "$TASKS_FILE")
+        if [ -n "$PARALLEL_TASKS" ]; then
+            TASK_BLOCK="$PARALLEL_TASKS"
+        fi
+    fi
+
     # DESIGN NOTE: Prompt Duplication
     # This continuation prompt is intentionally abbreviated compared to implement.md.
     # - implement.md = full specification (source of truth for coordinator behavior)
@@ -238,14 +264,25 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
     # specification lives in implement.md; this prompt provides just enough context
     # for the coordinator to resume execution efficiently.
 
+    # Build task section header and instructions based on parallel mode
+    if [ "$IS_PARALLEL" = "true" ]; then
+        TASK_HEADER="## Current Task Group (PARALLEL)"
+        PARALLEL_INSTRUCTIONS="
+PARALLEL: These are [P] tasks -- dispatch ALL in ONE message via Task tool. Each gets progressFile: .progress-task-\$INDEX.md. After all complete: merge progress, advance taskIndex past group."
+    else
+        TASK_HEADER="## Current Task"
+        PARALLEL_INSTRUCTIONS=""
+    fi
+
     REASON=$(cat <<STOP_WATCHER_REASON_EOF
 Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
 
 ## State
 Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE
 
-## Current Task
+$TASK_HEADER
 $TASK_BLOCK
+$PARALLEL_INSTRUCTIONS
 
 ## Resume
 1. Read $SPEC_PATH/.ralph-state.json for current state
@@ -262,6 +299,9 @@ STOP_WATCHER_REASON_EOF
 )
 
     SYSTEM_MSG="Ralph-specum iteration $GLOBAL_ITERATION | Task $((TASK_INDEX + 1))/$TOTAL_TASKS"
+    if [ "$IS_PARALLEL" = "true" ]; then
+        SYSTEM_MSG="$SYSTEM_MSG (PARALLEL GROUP)"
+    fi
 
     jq -n \
       --arg reason "$REASON" \

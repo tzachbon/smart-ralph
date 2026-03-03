@@ -40,6 +40,8 @@ This spec is not complete until ALL criteria are met:
 
 **Sizing rules**: Max 4 Do steps, max 3 files per task. Split if exceeded.
 
+**Parallel markers**: Mark independent tasks with [P] for concurrent execution. Adjacent [P] tasks form a parallel group. [VERIFY] tasks always break groups.
+
 ### Task Writing Principles
 
 1. **Think First**: Tasks should surface what's unclear, not assume. If a task depends on an uncertain assumption (e.g., "config file exists at X"), state it explicitly in the Do section or add a verification step. Don't hide confusion in vague steps.
@@ -163,7 +165,7 @@ GOOD:
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
-- [ ] 1.1 {{Specific task name}}
+- [ ] 1.1 [P] {{Specific task name}}
   - **Do**: {{Exact steps to implement}}
   - **Files**: {{Exact file paths to create/modify}}
   - **Done when**: {{Explicit success criteria}}
@@ -172,7 +174,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-1, AC-1.1_
   - _Design: Component A_
 
-- [ ] 1.2 {{Another task}}
+- [ ] 1.2 [P] {{Another task}}
   - **Do**: {{Steps}}
   - **Files**: {{Paths}}
   - **Done when**: {{Criteria}}
@@ -487,8 +489,31 @@ Focus: Test-driven implementation. Every change starts with a failing test.
   - **Done when**: No lint errors, no type errors, all tests pass
   - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
 
-- [ ] 1.5 [RED] Failing test: {{expected behavior B}}
-  - ...continue with next TDD triplet...
+<!-- [P] is valid for independent [RED] tests, but NOT within a single R-G-Y triplet -->
+<!-- Adjacent [RED] tests for independent behaviors can be [P] since they don't depend on each other -->
+- [ ] 1.5 [P] [RED] Failing test: {{expected behavior B}}
+  - **Do**:
+    1. Write test asserting {{expected behavior B}}
+    2. Run test to confirm it fails with expected assertion error
+  - **Files**: {{test file path B}}
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `{{test cmd}} -- --grep "{{test name B}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for {{behavior B}}`
+  - _Requirements: FR-2, AC-2.1_
+  - _Design: Component B_
+
+- [ ] 1.6 [P] [RED] Failing test: {{expected behavior C}}
+  - **Do**:
+    1. Write test asserting {{expected behavior C}}
+    2. Run test to confirm it fails with expected assertion error
+  - **Files**: {{test file path C}}
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `{{test cmd}} -- --grep "{{test name C}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for {{behavior C}}`
+  - _Requirements: FR-3, AC-3.1_
+  - _Design: Component C_
+
+- [ ] 1.7 ...continue with [GREEN] for each, then next TDD triplet...
 
 ## Phase 2: Additional Testing
 

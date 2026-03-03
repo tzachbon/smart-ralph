@@ -1,14 +1,19 @@
 {
   "version": "1.0",
-  "updated": "2026-03-02T20:58:38Z",
+  "updated": "2026-03-02T21:37:32Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 27,
+      "specsCount": 25,
       "isDefault": true
     }
   ],
   "specs": [
+    {
+      "name": "parallel-tasks-execution",
+      "path": "./specs/parallel-tasks-execution",
+      "phase": "research"
+    },
     {
       "name": "add-skills-doc",
       "path": "./specs/add-skills-doc",
@@ -43,18 +48,6 @@
       "phase": "completed",
       "taskIndex": 12,
       "totalTasks": 12
-    },
-    {
-      "name": "return-ralph-wrigum",
-      "path": "./specs/return-ralph-wrigum",
-      "phase": "complete",
-      "taskIndex": 19,
-      "totalTasks": 19
-    },
-    {
-      "name": "refactor-plugins",
-      "path": "./specs/refactor-plugins",
-      "phase": "new"
     },
     {
       "name": "implement-ralph-wiggum",
@@ -111,11 +104,6 @@
       "phase": "tasks",
       "taskIndex": 30,
       "totalTasks": 33
-    },
-    {
-      "name": "add-walk-through-of",
-      "path": "./specs/add-walk-through-of",
-      "phase": "new"
     },
     {
       "name": "codebase-indexing",
