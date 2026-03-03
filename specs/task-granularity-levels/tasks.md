@@ -117,7 +117,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-4, AC-6.3_
   - _Design: Component 4 (Step 3)_
 
-- [ ] 1.11 POC Checkpoint
+- [x] 1.11 POC Checkpoint
   - **Do**: Verify all 9 files are modified/created with correct content by running automated checks
   - **Done when**: All files exist, contain expected patterns, schema is valid JSON
   - **Verify**: `test -f plugins/ralph-specum/references/sizing-rules.md && grep -q 'sizing-rules.md' plugins/ralph-specum/agents/task-planner.md && grep -q '\-\-tasks-size' plugins/ralph-specum/commands/start.md && grep -q '\-\-tasks-size' plugins/ralph-specum/commands/tasks.md && grep -q '\-\-tasks-size' plugins/ralph-specum/references/intent-classification.md && python3 -c "import json; json.load(open('plugins/ralph-specum/schemas/spec.schema.json'))" && grep -q '\-\-tasks-size' CLAUDE.md && echo POC_PASS`
