@@ -42,7 +42,7 @@
   - **Commit**: `feat(ralph-specum): add /triage command for epic decomposition`
   - _Design: docs/plans/2026-03-03-epic-triage-design.md, Task 5_
 
-- [ ] 1.6 Add epic detection to start.md
+- [x] 1.6 Add epic detection to start.md
   - **Do**: 1. Insert "Step 3.5: Epic Detection" section in `plugins/ralph-specum/commands/start.md` between Step 3 (Scan Existing Specs) and Step 4 (Route to Action). 2. Check for `.current-epic` file, read `.epic-state.json`, find unblocked specs, display brief status, ask user. 3. Add complexity detection: if no active epic and goal appears complex, suggest `/triage`. 4. Add `epicName` to state initialization note in New Flow section. 5. Update gitignore step to include `specs/.current-epic`.
   - **Files**: `plugins/ralph-specum/commands/start.md`
   - **Done when**: start.md contains Step 3.5 with epic detection, epicName state note, and updated gitignore step
@@ -50,7 +50,7 @@
   - **Commit**: `feat(ralph-specum): add epic detection to /start routing`
   - _Design: docs/plans/2026-03-03-epic-triage-design.md, Task 6_
 
-- [ ] 1.7 Add epic state update to stop-watcher.sh
+- [x] 1.7 Add epic state update to stop-watcher.sh
   - **Do**: 1. In `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`, add epic state update logic inside both ALL_TASKS_COMPLETE detection blocks (before each `exit 0`). 2. Read `epicName` from state file, check for `.current-epic`, update `.epic-state.json` with jq to mark spec as completed. 3. Verify bash syntax.
   - **Files**: `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
   - **Done when**: Stop-watcher updates epic state on spec completion and passes `bash -n` validation
