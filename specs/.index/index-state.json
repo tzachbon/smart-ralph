@@ -1,184 +1,18 @@
 {
   "version": "1.0",
-  "updated": "2026-03-02T21:37:32Z",
+  "updated": "2026-03-03T18:14:05Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 25,
+      "specsCount": 26,
       "isDefault": true
     }
   ],
   "specs": [
     {
-      "name": "parallel-tasks-execution",
-      "path": "./specs/parallel-tasks-execution",
-      "phase": "research"
-    },
-    {
-      "name": "add-skills-doc",
-      "path": "./specs/add-skills-doc",
-      "phase": "completed",
-      "taskIndex": 5,
-      "totalTasks": 5
-    },
-    {
-      "name": "enforce-teams-instead",
-      "path": "./specs/enforce-teams-instead",
-      "phase": "completed",
-      "taskIndex": 13,
-      "totalTasks": 13
-    },
-    {
-      "name": "improve-task-generation",
-      "path": "./specs/improve-task-generation",
-      "phase": "tasks",
-      "taskIndex": 66,
-      "totalTasks": 68
-    },
-    {
-      "name": "fix-impl-context-bloat",
-      "path": "./specs/fix-impl-context-bloat",
-      "phase": "tasks",
-      "taskIndex": 47,
-      "totalTasks": 48
-    },
-    {
-      "name": "plan-source-feature",
-      "path": "./specs/plan-source-feature",
-      "phase": "completed",
-      "taskIndex": 12,
-      "totalTasks": 12
-    },
-    {
-      "name": "implement-ralph-wiggum",
-      "path": "./specs/implement-ralph-wiggum",
-      "phase": "tasks",
-      "taskIndex": 27,
-      "totalTasks": 35
-    },
-    {
-      "name": "fork-ralph-wiggum",
-      "path": "./specs/fork-ralph-wiggum",
-      "phase": "completed",
-      "taskIndex": 21,
-      "totalTasks": 21
-    },
-    {
-      "name": "reality-verification-principle",
-      "path": "./specs/reality-verification-principle",
-      "phase": "tasks",
-      "taskIndex": 9,
-      "totalTasks": 11
-    },
-    {
-      "name": "karpathy-skills-rules",
-      "path": "./specs/karpathy-skills-rules",
-      "phase": "completed",
-      "taskIndex": 12,
-      "totalTasks": 12
-    },
-    {
-      "name": "speckit-stop-hook",
-      "path": "./specs/speckit-stop-hook",
-      "phase": "tasks",
-      "taskIndex": 9,
-      "totalTasks": 12
-    },
-    {
-      "name": "qa-verification",
-      "path": "./specs/qa-verification",
-      "phase": "completed",
-      "taskIndex": 19,
-      "totalTasks": 19
-    },
-    {
-      "name": "ralph-speckit",
-      "path": "./specs/ralph-speckit",
-      "phase": "completed",
-      "taskIndex": 27,
-      "totalTasks": 27
-    },
-    {
-      "name": "multi-spec-dirs",
-      "path": "./specs/multi-spec-dirs",
-      "phase": "tasks",
-      "taskIndex": 30,
-      "totalTasks": 33
-    },
-    {
-      "name": "codebase-indexing",
-      "path": "./specs/codebase-indexing",
-      "phase": "completed",
-      "taskIndex": 39,
-      "totalTasks": 39
-    },
-    {
-      "name": "parallel-task-execution",
-      "path": "./specs/parallel-task-execution",
-      "phase": "tasks",
-      "taskIndex": 24,
-      "totalTasks": 25
-    },
-    {
-      "name": "iterative-failure-recovery",
-      "path": "./specs/iterative-failure-recovery",
-      "phase": "tasks",
-      "taskIndex": 14,
-      "totalTasks": 20
-    },
-    {
-      "name": "reviewer-subagent",
-      "path": "./specs/reviewer-subagent",
-      "phase": "completed",
-      "taskIndex": 20,
-      "totalTasks": 20
-    },
-    {
-      "name": "goal-interview",
-      "path": "./specs/goal-interview",
-      "phase": "completed",
-      "taskIndex": 14,
-      "totalTasks": 14
-    },
-    {
-      "name": "adaptive-interview",
-      "path": "./specs/adaptive-interview",
-      "phase": "completed",
-      "taskIndex": 22,
-      "totalTasks": 22
-    },
-    {
-      "name": "add-autonomous-e2e-verify",
-      "path": "./specs/add-autonomous-e2e-verify",
-      "phase": "research"
-    },
-    {
-      "name": "remove-ralph-wiggum",
-      "path": "./specs/remove-ralph-wiggum",
-      "phase": "completed",
-      "taskIndex": 16,
-      "totalTasks": 16
-    },
-    {
-      "name": "smart-skill-swap-retry",
-      "path": "./specs/smart-skill-swap-retry",
-      "phase": "tasks",
-      "taskIndex": 21,
-      "totalTasks": 26
-    },
-    {
-      "name": "improve-walkthrough-feature",
-      "path": "./specs/improve-walkthrough-feature",
-      "phase": "tasks",
-      "taskIndex": 13,
-      "totalTasks": 14
-    },
-    {
-      "name": "when-creating-worktree",
-      "path": "./specs/when-creating-worktree",
-      "phase": "completed",
-      "taskIndex": 7,
-      "totalTasks": 7
+      "name": "test-spec",
+      "path": "./specs/test-spec",
+      "phase": "new"
     }
   ]
 }

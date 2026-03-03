@@ -3,15 +3,15 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-03-03T00:00:00Z
+**Last updated:** 2026-03-03T18:14:05Z
 
 ## Directories (1)
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 25 | Yes |
+| ./specs | 26 | Yes |
 
-## All Specs (25)
+## All Specs (26)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
@@ -41,6 +41,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | improve-walkthrough-feature | ./specs | tasks | 13/14 tasks |
 | when-creating-worktree | ./specs | completed | done |
 | epic-triage | ./specs | execution | 11/11 tasks |
+| test-spec | ./specs | new |  |
 
 ## Indexed Components (12)
 

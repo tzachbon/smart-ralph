@@ -88,6 +88,7 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
                 echo "[ralph-specum] Updated epic '$EPIC_NAME_VAL': spec '$SPEC_NAME' marked completed" >&2
             fi
         fi
+        "$SCRIPT_DIR/update-spec-index.sh" --quiet 2>/dev/null || true
         exit 0
     fi
     # Fallback: check last 20 lines for edge cases (very recent signal)
@@ -110,6 +111,7 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
                 echo "[ralph-specum] Updated epic '$EPIC_NAME_VAL': spec '$SPEC_NAME' marked completed" >&2
             fi
         fi
+        "$SCRIPT_DIR/update-spec-index.sh" --quiet 2>/dev/null || true
         exit 0
     fi
 fi
