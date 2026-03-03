@@ -41,6 +41,25 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | smart-skill-swap-retry | ./specs | tasks | 21/26 tasks |
 | improve-walkthrough-feature | ./specs | tasks | 13/14 tasks |
 | when-creating-worktree | ./specs | completed | done |
+| epic-triage | ./specs | execution | 11/11 tasks |
+| test-spec | ./specs | new |  |
+
+## Indexed Components (12)
+
+| Component | Category | Source |
+|-----------|----------|--------|
+| agent-architect-reviewer | agents | plugins/ralph-specum/agents/architect-reviewer.md |
+| agent-product-manager | agents | plugins/ralph-specum/agents/product-manager.md |
+| agent-qa-engineer | agents | plugins/ralph-specum/agents/qa-engineer.md |
+| agent-research-analyst | agents | plugins/ralph-specum/agents/research-analyst.md |
+| agent-spec-executor | agents | plugins/ralph-specum/agents/spec-executor.md |
+| agent-task-planner | agents | plugins/ralph-specum/agents/task-planner.md |
+| agent-triage-analyst | agents | plugins/ralph-specum/agents/triage-analyst.md |
+| command-implement | commands | plugins/ralph-specum/commands/implement.md |
+| command-start | commands | plugins/ralph-specum/commands/start.md |
+| command-triage | commands | plugins/ralph-specum/commands/triage.md |
+| hook-stop-watcher | hooks | plugins/ralph-specum/hooks/scripts/stop-watcher.sh |
+| reference-triage-flow | references | plugins/ralph-specum/references/triage-flow.md |
 
 ---
 
@@ -48,3 +67,4 @@ See [index-state.json](./index-state.json) for machine-readable data.
 - `/ralph-specum:status` - Show detailed status
 - `/ralph-specum:switch <name>` - Switch active spec
 - `/ralph-specum:start <name>` - Create or resume spec
+- `/ralph-specum:triage <goal>` - Decompose large features into multiple specs

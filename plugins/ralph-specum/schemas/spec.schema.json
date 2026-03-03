@@ -181,10 +181,70 @@
           "default": 2,
           "description": "Max nesting depth for modification task IDs"
         },
+        "epicName": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Parent epic name if this spec belongs to an epic"
+        },
         "granularity": {
           "type": "string",
           "enum": ["fine", "coarse"],
           "description": "Task sizing level: fine (40-60+ tasks) or coarse (10-20 tasks)"
+        }
+      }
+    },
+
+    "epicState": {
+      "type": "object",
+      "description": "State for epic (multi-spec) tracking",
+      "required": ["name", "goal", "specs"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Epic name in kebab-case"
+        },
+        "goal": {
+          "type": "string",
+          "description": "High-level epic goal"
+        },
+        "specs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "status", "dependencies"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z0-9-]+$",
+                "description": "Spec name in kebab-case"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "in_progress", "completed", "cancelled"],
+                "description": "Spec completion status within the epic"
+              },
+              "dependencies": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9-]+$"
+                },
+                "description": "Names of specs that must complete before this one"
+              }
+            }
+          },
+          "description": "Ordered list of specs in this epic with dependency graph"
+        },
+        "output": {
+          "type": "string",
+          "enum": ["spec-files", "github-issues", "both"],
+          "description": "Where the epic plan was stored"
+        },
+        "issueNumber": {
+          "type": ["integer", "null"],
+          "description": "GitHub parent issue number (if output includes github-issues)"
         }
       }
     },

@@ -117,6 +117,30 @@ plugins/ralph-specum/
 - `./specs/.current-spec` - Active spec name
 - `./specs/<name>/.ralph-state.json` - Loop state (phase, taskIndex, iterations). Deleted on completion
 - `./specs/<name>/.progress.md` - Progress tracking, learnings, context for agents
+- `./specs/.current-epic` - Active epic name
+- `./specs/_epics/<name>/.epic-state.json` - Epic progress (which specs are done/pending/blocked)
+
+### Epics (Multi-Spec Orchestration)
+
+Epics decompose large features into multiple dependency-aware specs.
+
+**File structure:**
+```
+specs/
+  .current-epic          # Points to active epic name
+  _epics/
+    <epic-name>/
+      epic.md            # Triage output (vision, specs, dependency graph)
+      research.md        # Exploration + validation research
+      .epic-state.json   # Progress tracking across specs
+      .progress.md       # Learnings and decisions
+```
+
+**Entry points:**
+- `/ralph-specum:triage <goal>` -- create or resume an epic
+- `/ralph-specum:start` -- detects active epics, suggests next unblocked spec
+
+**Flow:** Explore (research) -> Brainstorm (triage-analyst) -> Validate (research) -> Finalize (output selection)
 
 ### Agents
 
@@ -127,6 +151,7 @@ plugins/ralph-specum/
 | architect-reviewer | `agents/architect-reviewer.md` | Technical design, architecture |
 | task-planner | `agents/task-planner.md` | POC-first task breakdown |
 | spec-executor | `agents/spec-executor.md` | Autonomous task implementation |
+| triage-analyst | `agents/triage-analyst.md` | Feature decomposition, epic creation |
 
 ### POC-First Workflow (Mandatory)
 

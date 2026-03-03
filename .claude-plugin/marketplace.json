@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "ralph-specum",
-      "description": "Spec-driven development with research, requirements, design, tasks, and autonomous execution. Fresh context per task.",
-      "version": "4.5.1",
+      "description": "Spec-driven development with research, requirements, design, tasks, autonomous execution, and epic triage. Fresh context per task.",
+      "version": "4.6.0",
       "author": {
         "name": "tzachbon"
       },
@@ -21,7 +21,9 @@
         "spec-driven",
         "autonomous",
         "research",
-        "tasks"
+        "tasks",
+        "epic",
+        "triage"
       ]
     },
     {
