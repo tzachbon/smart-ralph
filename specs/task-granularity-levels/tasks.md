@@ -94,7 +94,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-2, FR-8, AC-2.1, AC-2.2, AC-2.3, AC-2.4_
   - _Design: Component 4 (frontmatter + Step 1)_
 
-- [ ] 1.9 Add granularity interview question to tasks.md
+- [x] 1.9 Add granularity interview question to tasks.md
   - **Do**:
     1. In Step 2 (Brainstorming Dialogue), add `- **Task granularity** -- fine (40-60+ small tasks, [VERIFY] every 2-3, ideal for parallel) or coarse (10-20 larger tasks, no intermediate [VERIFY], fewer tokens)? Fine is recommended.` to the exploration territory list
     2. Add instruction after the list: ask granularity question only when NOT `--quick` AND `granularity` not already set in `.ralph-state.json`; store response in `.progress.md` and update `.ralph-state.json`
