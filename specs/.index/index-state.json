@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-03-02T21:37:32Z",
+  "updated": "2026-03-03T11:58:13Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 25,
+      "specsCount": 26,
       "isDefault": true
     }
   ],
@@ -12,7 +12,9 @@
     {
       "name": "parallel-tasks-execution",
       "path": "./specs/parallel-tasks-execution",
-      "phase": "research"
+      "phase": "tasks",
+      "taskIndex": 46,
+      "totalTasks": 62
     },
     {
       "name": "add-skills-doc",
@@ -85,6 +87,13 @@
       "totalTasks": 12
     },
     {
+      "name": "task-granularity-levels",
+      "path": "./specs/task-granularity-levels",
+      "phase": "completed",
+      "taskIndex": 24,
+      "totalTasks": 24
+    },
+    {
       "name": "qa-verification",
       "path": "./specs/qa-verification",
       "phase": "completed",
@@ -150,7 +159,9 @@
     {
       "name": "add-autonomous-e2e-verify",
       "path": "./specs/add-autonomous-e2e-verify",
-      "phase": "research"
+      "phase": "tasks",
+      "taskIndex": 54,
+      "totalTasks": 55
     },
     {
       "name": "remove-ralph-wiggum",
