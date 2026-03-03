@@ -147,7 +147,7 @@ Focus: Clean up any rough edges from POC. Ensure consistency across all modified
   - **Verify**: `grep -q 'CLAUDE_PLUGIN_ROOT.*sizing-rules.md' plugins/ralph-specum/agents/task-planner.md && echo PASS`
   - **Commit**: `refactor(task-planner): verify conditional reference clarity`
 
-- [ ] 2.3 Verify flag parsing consistency across start.md and tasks.md
+- [x] 2.3 Verify flag parsing consistency across start.md and tasks.md
   - **Do**:
     1. Confirm `--tasks-size` parsing follows the same `$ARGUMENTS` string matching pattern as `--quick`, `--fresh`, `--commit-spec`
     2. Ensure both commands handle invalid values identically (warn + default to fine)
