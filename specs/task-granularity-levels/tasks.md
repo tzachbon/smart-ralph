@@ -127,7 +127,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
 
 Focus: Clean up any rough edges from POC. Ensure consistency across all modified files.
 
-- [ ] 2.1 Ensure sizing-rules.md formatting matches existing references
+- [x] 2.1 Ensure sizing-rules.md formatting matches existing references
   - **Do**:
     1. Compare formatting of `sizing-rules.md` against `references/quality-checkpoints.md` and `references/phase-rules.md` for consistent header style, table formatting, and `> Used by:` convention
     2. Fix any formatting inconsistencies (header levels, table alignment, whitespace)
