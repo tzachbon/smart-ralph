@@ -61,7 +61,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-3, AC-6.1, AC-6.2_
   - _Design: Component 6_
 
-- [ ] 1.6 [P] Update start.md frontmatter and flag parsing
+- [x] 1.6 [P] Update start.md frontmatter and flag parsing
   - **Do**:
     1. Update `argument-hint` in frontmatter to include `[--tasks-size fine|coarse]`
     2. In Step 2 summary text, add `--tasks-size` to the flags list
@@ -73,7 +73,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-1, FR-3, AC-1.1, AC-1.2, AC-1.3, AC-1.4_
   - _Design: Component 3_
 
-- [ ] 1.7 [P] Document --tasks-size flag in CLAUDE.md
+- [x] 1.7 [P] Document --tasks-size flag in CLAUDE.md
   - **Do**:
     1. In the Development section, after the test workflow example and before the version bump warning, add a brief subsection documenting `--tasks-size fine|coarse`
     2. Include: what each level produces (fine=40-60+ tasks, coarse=10-20 tasks), example commands, and note that fine is default
