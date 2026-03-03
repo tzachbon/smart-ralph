@@ -185,6 +185,11 @@
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
           "description": "Parent epic name if this spec belongs to an epic"
+        },
+        "granularity": {
+          "type": "string",
+          "enum": ["fine", "coarse"],
+          "description": "Task sizing level: fine (40-60+ tasks) or coarse (10-20 tasks)"
         }
       }
     },

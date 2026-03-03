@@ -53,6 +53,18 @@ claude --plugin-dir ./plugins/ralph-specum
 /ralph-specum:start test-feature Some test goal
 ```
 
+### Task Granularity
+
+Control task count with `--tasks-size`:
+
+```bash
+/ralph-specum:tasks --tasks-size coarse    # 10-20 larger tasks, no intermediate [VERIFY]
+/ralph-specum:tasks --tasks-size fine       # 40-60+ small tasks with [VERIFY] checkpoints (default)
+/ralph-specum:start my-spec Goal --tasks-size coarse  # Set early, carries through
+```
+
+Fine is the default. Coarse reduces token consumption ~3-5x for sequential execution.
+
 > **⚠️ CRITICAL: Version bumps are REQUIRED for ANY plugin change**
 >
 > When making ANY changes to plugin files (commands, agents, hooks, templates, schemas):
