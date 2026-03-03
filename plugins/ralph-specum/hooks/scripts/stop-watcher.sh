@@ -238,10 +238,10 @@ if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
 
     # When parallel marker detected, scan for all consecutive [P] tasks from TASK_INDEX
     if [ "$IS_PARALLEL" = "true" ] && [ -f "$TASKS_FILE" ]; then
-        PARALLEL_TASKS=$(awk -v idx="$TASK_INDEX" '
+        PARALLEL_TASKS=$(awk -v idx="$TASK_INDEX" -v max_group=5 '
             /^- \[[ x]\]/ {
                 if (count >= idx) {
-                    if (/\[P\]/) { found=1; block=block $0 "\n"; next }
+                    if (/\[P\]/ && pcount < max_group) { found=1; pcount++; block=block $0 "\n"; next }
                     else if (found) { exit }
                 }
                 count++
