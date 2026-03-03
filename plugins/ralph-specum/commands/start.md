@@ -57,25 +57,33 @@ Check if there is an active epic:
 EPIC_FILE="./specs/.current-epic"
 if [ -f "$EPIC_FILE" ]; then
   EPIC_NAME=$(cat "$EPIC_FILE" | tr -d '[:space:]')
-  EPIC_STATE="./specs/_epics/$EPIC_NAME/.epic-state.json"
+  # Validate kebab-case to prevent path injection
+  if [[ "$EPIC_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+    EPIC_STATE="./specs/_epics/$EPIC_NAME/.epic-state.json"
+  else
+    echo "Warning: Invalid epic name '$EPIC_NAME' in .current-epic, ignoring"
+    EPIC_NAME=""
+    EPIC_STATE=""
+  fi
 fi
 ```
 
 **If active epic exists AND no specific spec name was provided in $ARGUMENTS**:
 1. Read `.epic-state.json`
-2. Find specs with status "pending" whose dependencies are all "completed"
-3. Display brief epic status:
+2. First check for any spec with status "in_progress" -- if found, suggest resuming it
+3. Otherwise find specs with status "pending" whose dependencies are all "completed"
+4. Display brief epic status:
    ```text
    Active epic: $EPIC_NAME (N/M specs complete)
    Next unblocked: <spec-name> -- <goal>
    ```
-4. Ask user: "Start this spec, or work on something else?"
+5. Ask user: "Start this spec, or work on something else?"
    - If user accepts: set `name` and `goal` from the epic's spec definition, set `epicName` in context, continue to Step 4 (New Flow) with pre-populated values
    - If user declines: continue normal Step 4 routing
 
 **If no active epic AND goal appears complex** (multiple distinct components, cross-cutting concerns, user mentions "big" or "large"):
 - Suggest: "This looks like it might need multiple specs. Want to run `/triage` instead?"
-- If user accepts: invoke `/ralph-specum:triage` with the goal. STOP.
+- If user accepts: invoke `/ralph-specum:triage` with no positional args and let triage collect epic-name + goal interactively. STOP.
 - If user declines: continue normal Step 4 routing.
 
 ## Step 4: Route to Action

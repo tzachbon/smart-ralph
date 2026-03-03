@@ -77,9 +77,14 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
         if [ -n "$EPIC_NAME_VAL" ] && [ -f "$CURRENT_EPIC_FILE" ]; then
             EPIC_STATE_FILE="$CWD/specs/_epics/$EPIC_NAME_VAL/.epic-state.json"
             if [ -f "$EPIC_STATE_FILE" ]; then
-                jq --arg spec "$SPEC_NAME" '
+                TMP_FILE=$(mktemp "${EPIC_STATE_FILE}.tmp.XXXXXX")
+                if jq --arg spec "$SPEC_NAME" '
                   .specs |= map(if .name == $spec then .status = "completed" else . end)
-                ' "$EPIC_STATE_FILE" > "$EPIC_STATE_FILE.tmp" && mv "$EPIC_STATE_FILE.tmp" "$EPIC_STATE_FILE"
+                ' "$EPIC_STATE_FILE" > "$TMP_FILE"; then
+                    mv "$TMP_FILE" "$EPIC_STATE_FILE"
+                else
+                    rm -f "$TMP_FILE"
+                fi
                 echo "[ralph-specum] Updated epic '$EPIC_NAME_VAL': spec '$SPEC_NAME' marked completed" >&2
             fi
         fi
@@ -94,9 +99,14 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
         if [ -n "$EPIC_NAME_VAL" ] && [ -f "$CURRENT_EPIC_FILE" ]; then
             EPIC_STATE_FILE="$CWD/specs/_epics/$EPIC_NAME_VAL/.epic-state.json"
             if [ -f "$EPIC_STATE_FILE" ]; then
-                jq --arg spec "$SPEC_NAME" '
+                TMP_FILE=$(mktemp "${EPIC_STATE_FILE}.tmp.XXXXXX")
+                if jq --arg spec "$SPEC_NAME" '
                   .specs |= map(if .name == $spec then .status = "completed" else . end)
-                ' "$EPIC_STATE_FILE" > "$EPIC_STATE_FILE.tmp" && mv "$EPIC_STATE_FILE.tmp" "$EPIC_STATE_FILE"
+                ' "$EPIC_STATE_FILE" > "$TMP_FILE"; then
+                    mv "$TMP_FILE" "$EPIC_STATE_FILE"
+                else
+                    rm -f "$TMP_FILE"
+                fi
                 echo "[ralph-specum] Updated epic '$EPIC_NAME_VAL': spec '$SPEC_NAME' marked completed" >&2
             fi
         fi

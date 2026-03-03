@@ -221,7 +221,11 @@
               },
               "dependencies": {
                 "type": "array",
-                "items": { "type": "string" },
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9-]+$"
+                },
                 "description": "Names of specs that must complete before this one"
               }
             }
