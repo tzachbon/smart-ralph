@@ -82,7 +82,7 @@
   - **Commit**: `docs(ralph-specum): update plugin description and keywords for epic triage`
   - _Design: docs/plans/2026-03-03-epic-triage-design.md, Task 11_
 
-- [ ] 2.4 Version bump
+- [x] 2.4 Version bump
   - **Do**: 1. Bump version from 4.4.0 to 4.5.0 in `plugins/ralph-specum/.claude-plugin/plugin.json`. 2. Bump version from 4.4.0 to 4.5.0 in `.claude-plugin/marketplace.json` for the ralph-specum entry. 3. Verify both match.
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Done when**: Both files show version 4.5.0 for ralph-specum
