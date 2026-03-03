@@ -510,28 +510,11 @@ Tasks 1.5 and 1.6 have zero file overlap and no output dependencies — safe to 
 ## Task Sizing Rules
 
 <mandatory>
-Every task MUST satisfy these constraints:
+Read `${CLAUDE_PLUGIN_ROOT}/references/sizing-rules.md` for sizing constraints.
 
-**Size limits:**
-- Max 4 numbered steps in Do section
-- Max 3 files in Files section (exception: tightly-coupled test+impl pair = 1 logical file)
-- 1 logical concern per task
+**Determine granularity level**: Read `granularity` from the delegation context (passed by tasks.md coordinator). If not provided, default to `fine`.
 
-**Split if:**
-- Do section > 4 steps
-- Files section > 3 files
-- Task mixes creation + testing (split into separate tasks)
-- Task mixes > 1 logical concern (e.g., "add endpoint AND update UI")
-- Verification requires > 1 unrelated command
-
-**Combine if:**
-- Task 1 creates a file, Task 2 adds a single import to that file
-- Both tasks touch the exact same file with trivially related changes
-- Neither task is meaningful alone (e.g., "create empty file" + "add content")
-
-**Target task count:**
-- Standard spec: 40-60+ tasks
-- Phase distribution: Phase 1 = 50-60%, Phase 2 = 15-20%, Phase 3 = 15-20%, Phase 4-5 = 10-15%
+Apply the sizing rules (task count, max steps, max files, [VERIFY] frequency) for the detected level. All shared rules apply regardless of level.
 
 **Simplicity principle**: Each task should describe the MINIMUM code to achieve its goal. No speculative features, no abstractions for single-use code, no error handling for impossible scenarios. If 50 lines solve it, don't write 200.
 

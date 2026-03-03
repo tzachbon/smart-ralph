@@ -16,7 +16,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - _Requirements: FR-5, FR-6, AC-3.1-3.5, AC-4.1-4.6_
   - _Design: Component 1_
 
-- [ ] 1.2 Replace hardcoded sizing section in task-planner.md
+- [x] 1.2 Replace hardcoded sizing section in task-planner.md
   - **Do**:
     1. Replace lines 510-541 (the `## Task Sizing Rules` `<mandatory>` block) with the conditional reference from design.md Component 2
     2. Keep the `## Task Sizing Rules` header, replace body with `Read ${CLAUDE_PLUGIN_ROOT}/references/sizing-rules.md` directive + granularity detection + simplicity/surgical/clarity principles
