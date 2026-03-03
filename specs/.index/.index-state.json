@@ -1,11 +1,12 @@
 {
-  "lastIndexed": "2026-02-05T15:28:01+02:00",
-  "componentCount": 9,
+  "lastIndexed": "2026-03-03T00:00:00Z",
+  "componentCount": 12,
   "externalCount": 6,
   "categories": {
-    "agents": 6,
-    "commands": 2,
+    "agents": 7,
+    "commands": 3,
     "hooks": 1,
+    "references": 1,
     "controllers": 0,
     "services": 0,
     "models": 0,
@@ -38,8 +39,11 @@
     "plugins/ralph-specum/agents/task-planner.md": "4e8f2a1b",
     "plugins/ralph-specum/agents/qa-engineer.md": "3c9d7e5a",
     "plugins/ralph-specum/commands/implement.md": "19181307",
-    "plugins/ralph-specum/commands/start.md": "7fefcdda",
-    "plugins/ralph-specum/hooks/scripts/stop-watcher.sh": "a1b2c3d4"
+    "plugins/ralph-specum/commands/start.md": "62dae51a",
+    "plugins/ralph-specum/commands/triage.md": "bf372016",
+    "plugins/ralph-specum/hooks/scripts/stop-watcher.sh": "03374bb5",
+    "plugins/ralph-specum/agents/triage-analyst.md": "12b69c70",
+    "plugins/ralph-specum/references/triage-flow.md": "f13f21ac"
   },
   "interviewResponses": {
     "externalUrls": "Claude Code docs, Plugin development, https://awesomeclaude.ai/ralph-wiggum, https://ghuntley.com/loop/, https://github.com/anthropics/claude-code/blob/main/plugins/ralph-wiggum/.claude-plugin/plugin.json, https://www.aihero.dev/getting-started-with-ralph",
