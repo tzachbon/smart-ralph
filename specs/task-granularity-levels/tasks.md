@@ -83,7 +83,7 @@ Focus: Get `--tasks-size fine|coarse` flag working end-to-end: flag parsed, stor
   - **Commit**: `docs(claude-md): document --tasks-size flag`
   - _Requirements: FR-13, AC-8.1_
 
-- [ ] 1.8 Update tasks.md frontmatter and flag parsing
+- [x] 1.8 Update tasks.md frontmatter and flag parsing
   - **Do**:
     1. Update `argument-hint` in frontmatter to `[spec-name] [--tasks-size fine|coarse]`
     2. In Step 1, add instruction to check `$ARGUMENTS` for `--tasks-size` flag; if present and valid (`fine` or `coarse`), update `granularity` in `.ralph-state.json`; if invalid value, warn and default to fine

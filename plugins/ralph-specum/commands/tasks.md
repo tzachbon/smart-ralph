@@ -1,6 +1,6 @@
 ---
 description: Generate implementation tasks from design
-argument-hint: [spec-name]
+argument-hint: [spec-name] [--tasks-size fine|coarse]
 allowed-tools: "*"
 ---
 
@@ -27,7 +27,11 @@ Create a task for each item and complete in order:
 4. Check `design.md` exists. If not, error: "Design not found. Run /ralph-specum:design first."
 5. Check `requirements.md` exists
 6. Read `.ralph-state.json`; clear approval flag: `awaitingApproval: false`
-7. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
+7. **`--tasks-size` flag handling**: Check `$ARGUMENTS` for `--tasks-size` flag:
+   - If value is `fine` or `coarse`: update `granularity` in `.ralph-state.json` to the given value (overrides any value set by `/ralph-specum:start`)
+   - If value is invalid (not `fine` or `coarse`): warn the user (`⚠️ Invalid --tasks-size value "<value>", defaulting to fine`) and set `"granularity": "fine"` in `.ralph-state.json`
+   - If `--tasks-size` flag is absent: leave `granularity` unchanged in `.ralph-state.json` (preserve any value set by `/ralph-specum:start`)
+8. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
 
 ## Step 2: Interview (skip if --quick)
 
