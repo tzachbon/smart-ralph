@@ -31,7 +31,8 @@ Create a task for each item and complete in order:
    - If value is `fine` or `coarse`: update `granularity` in `.ralph-state.json` to the given value (overrides any value set by `/ralph-specum:start`)
    - If value is invalid (not `fine` or `coarse`): warn the user (`⚠️ Invalid --tasks-size value "<value>", defaulting to fine`) and set `"granularity": "fine"` in `.ralph-state.json`
    - If `--tasks-size` flag is absent: leave `granularity` unchanged in `.ralph-state.json` (preserve any value set by `/ralph-specum:start`)
-8. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
+8. **Quick mode granularity default**: If `--quick` is present in `$ARGUMENTS` AND `granularity` is not set in `.ralph-state.json`, set `"granularity": "fine"` in `.ralph-state.json`
+9. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
 
 ## Step 2: Interview (skip if --quick)
 
@@ -55,14 +56,14 @@ Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/S
 - **Dependency ordering** -- are there tasks that must complete before others can begin?
 - **Team workflow constraints** -- PR review process, CI pipeline requirements, branch strategy?
 - **E2E verification** -- add autonomous end-to-end verification tasks? (default YES). What should be tested end-to-end?
-- **Task granularity** -- fine (40-60+ small tasks, [VERIFY] every 2-3, ideal for parallel) or coarse (10-20 larger tasks, no intermediate [VERIFY], fewer tokens)? Fine is recommended.
+- **Task granularity** -- fine (40-60+ small tasks, ideal for parallel) or coarse (10-20 larger tasks, fewer tokens)? Both include [VERIFY] checkpoints every 2-3 tasks. Fine is recommended.
 
 **Granularity question skip conditions**: Only ask the "Task granularity" question when ALL of these are true:
 - `--quick` is NOT present in `$ARGUMENTS`
 - `granularity` is NOT already set in `.ralph-state.json` (i.e., not pre-set via `--tasks-size` flag on `/ralph-specum:start` or `/ralph-specum:tasks`)
 
 If either condition is false, skip the granularity question:
-- In `--quick` mode: default to `fine` silently (no question asked, set `"granularity": "fine"` in `.ralph-state.json` if not already set)
+- In `--quick` mode: handled in Step 1 (quick mode granularity default)
 - If `granularity` already set in `.ralph-state.json`: use the existing value without asking
 
 When the user answers the granularity question, store the response in `.progress.md` under Interview Responses and update `"granularity"` in `.ralph-state.json`.

@@ -28,7 +28,7 @@ Determine the active granularity level from delegation context. Default: fine.
 
 **Combine if:**
 - Task 1 creates a file, Task 2 adds a single import to that file
-- Both tasks touch the exact same file with trivially related changes
+- Both tasks touch the same file with trivially related changes
 - Neither task is meaningful alone
 
 ## Coarse
@@ -39,7 +39,7 @@ Determine the active granularity level from delegation context. Default: fine.
 | Target task count (TDD) | 8-15 |
 | Max Do steps | 8-10 |
 | Max files per task | 5-6 |
-| Intermediate [VERIFY] | None |
+| Intermediate [VERIFY] | Every 2-3 tasks |
 | [P] markers | Yes |
 | Final V4-V6 | Always |
 | VE tasks | Per project type |

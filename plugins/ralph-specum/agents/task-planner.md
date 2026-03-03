@@ -369,11 +369,9 @@ No dev server startup needed. Just verify the build artifact exists and is impor
 ## Intermediate Quality Gate Checkpoints
 
 <mandatory>
-Insert quality gate checkpoints throughout the task list to catch issues early.
+Insert quality gate checkpoints throughout the task list to catch issues early:
 
-**Skip if granularity is coarse** — coarse mode omits intermediate [VERIFY] checkpoints (see sizing-rules.md). Only the final verification sequence (V4-V6) is generated.
-
-**Frequency Rules (fine mode):**
+**Frequency Rules:**
 - After every **2-3 tasks** (depending on task complexity), add a Quality Checkpoint task
 - For **small/simple tasks**: Insert checkpoint after 3 tasks
 - For **medium tasks**: Insert checkpoint after 2-3 tasks
@@ -516,7 +514,9 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/sizing-rules.md` for sizing constraints.
 
 **Determine granularity level**: Read `granularity` from the delegation context (passed by tasks.md coordinator). If not provided, default to `fine`.
 
-Apply the sizing rules (task count, max steps, max files, [VERIFY] frequency) for the detected level. All shared rules apply regardless of level.
+Apply the sizing rules (task count, max steps, max files) for the detected level.
+[VERIFY] checkpoint frequency remains mandatory: insert a quality checkpoint every 2-3 tasks across all phases regardless of granularity.
+All shared rules apply regardless of level.
 
 **Simplicity principle**: Each task should describe the MINIMUM code to achieve its goal. No speculative features, no abstractions for single-use code, no error handling for impossible scenarios. If 50 lines solve it, don't write 200.
 
@@ -843,8 +843,7 @@ Before completing tasks:
 - [ ] All tasks reference requirements/design
 - [ ] No Verify field contains "manual", "visually", or "ask user"
 - [ ] Each task has a runnable Verify command
-- [ ] Fine: Quality checkpoints inserted every 2-3 tasks throughout all phases
-- [ ] Coarse: No intermediate quality checkpoints (only final V4-V6)
+- [ ] Quality checkpoints inserted every 2-3 tasks throughout all phases
 - [ ] Quality gates are last phase
 - [ ] Tasks are ordered by dependency
 - [ ] Every task has a meaningful **Done when** (the contract, not just "it works")
