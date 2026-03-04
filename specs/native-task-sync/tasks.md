@@ -16,7 +16,7 @@
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo "PASS"` and read coordinator-pattern.md for the new section
   - **Commit**: `feat(native-sync): add batch push strategy to coordinator`
 
-- [ ] 1.3 Add Initial Setup sync section to coordinator-pattern.md
+- [x] 1.3 Add Initial Setup sync section to coordinator-pattern.md
   - **Do**: Add a new "## Native Task Sync - Initial Setup" section after "Read State" and before "Check Completion" in coordinator-pattern.md. This section: checks nativeSyncEnabled, parses all tasks from tasks.md, creates TaskCreate for each task with subject (FR-11 format), description (first 1-2 sub-items), and activeForm (FR-12 format). Marks already-completed tasks as completed. Stores nativeTaskMap in state. On failure, sets nativeSyncEnabled to false.
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Done when**: The Initial Setup section exists with complete logic for parsing tasks.md and creating native tasks

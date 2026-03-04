@@ -42,6 +42,31 @@ If state file missing or corrupt (invalid JSON, missing required fields):
 3. Do NOT continue execution
 4. Do NOT output ALL_TASKS_COMPLETE
 
+## Native Task Sync - Initial Setup
+
+If `nativeSyncEnabled` is not `false` in state AND `nativeTaskMap` is missing or empty:
+
+1. Parse all tasks from tasks.md (same parsing as existing task count logic)
+2. For each task at index `i`:
+   - Extract title (first line after `- [ ]` or `- [x]`)
+   - Extract first 1-2 sub-items as description
+   - Detect markers: [P], [VERIFY], or none
+   - Format subject per FR-11:
+     - Regular: "1.1 Task title"
+     - Parallel: "[P] 2.1 Task title"
+     - Verify: "[VERIFY] 1.4 Quality checkpoint"
+   - Format activeForm per FR-12:
+     - Regular: "Executing 1.1 Task title"
+     - Parallel: "Executing [P] 2.1 Task title"
+     - Verify: "Verifying 1.4 Quality checkpoint"
+   - Call TaskCreate(subject, description, activeForm)
+   - If task already completed ([x]): immediately TaskUpdate(status: "completed")
+   - Store mapping: nativeTaskMap[i] = returned task ID
+3. Write updated nativeTaskMap to .ralph-state.json
+4. If any TaskCreate fails: log warning to .progress.md, set nativeSyncEnabled: false, continue without sync
+
+If `nativeSyncEnabled` is `false`: skip all sync operations silently.
+
 ## Check Completion
 
 If taskIndex >= totalTasks:
