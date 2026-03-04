@@ -72,7 +72,7 @@
   - **Verify**: Read coordinator-pattern.md and confirm failure counter logic in Initial Setup section
   - **Commit**: `refactor(native-sync): add explicit failure counter logic`
 
-- [ ] 2.3 [VERIFY] Quality check: all files coherent
+- [x] 2.3 [VERIFY] Quality check: all files coherent
   - **Do**: Run `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh`. Read coordinator-pattern.md and verify section ordering is correct (sync sections don't break existing flow). Verify implement.md jq merge pattern.
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo "PASS"`
   - **Done when**: All files pass validation, section ordering is correct
@@ -80,7 +80,7 @@
 
 ## Phase 3: Quality Gates
 
-- [ ] 3.1 Bump plugin version
+- [x] 3.1 Bump plugin version
   - **Do**: Bump the patch version in both `plugins/ralph-specum/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` for the ralph-specum entry. This is required per CLAUDE.md for any plugin change.
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Done when**: Version bumped in both files
