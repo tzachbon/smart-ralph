@@ -42,6 +42,36 @@ If state file missing or corrupt (invalid JSON, missing required fields):
 3. Do NOT continue execution
 4. Do NOT output ALL_TASKS_COMPLETE
 
+## Native Task Sync - Initial Setup
+
+If `nativeSyncEnabled` is not `false` in state AND (`nativeTaskMap` is missing or empty, OR existing IDs are stale):
+
+**Stale ID detection**: If `nativeTaskMap` is non-empty, validate by calling `TaskGet(taskId: nativeTaskMap["0"])`. If it fails (task not found), the IDs are stale from a prior session. Clear `nativeTaskMap` and rebuild.
+
+1. Parse all tasks from tasks.md (same parsing as existing task count logic)
+2. For each task at index `i`:
+   - Extract title (first line after `- [ ]` or `- [x]`)
+   - Extract first 1-2 sub-items as description
+   - Detect markers: [P], [VERIFY], or none
+   - Format subject per FR-11:
+     - Regular: "1.1 Task title"
+     - Parallel: "[P] 2.1 Task title"
+     - Verify: "[VERIFY] 1.4 Quality checkpoint"
+   - Format activeForm per FR-12:
+     - Regular: "Executing 1.1 Task title"
+     - Parallel: "Executing [P] 2.1 Task title"
+     - Verify: "Verifying 1.4 Quality checkpoint"
+   - Call TaskCreate(subject, description, activeForm)
+   - On success: reset `nativeSyncFailureCount` to 0 in state
+   - On failure: increment `nativeSyncFailureCount` in state. If count >= 3: set `nativeSyncEnabled` to `false`, log "Native sync disabled after 3 consecutive failures" to .progress.md, stop creating remaining tasks and continue without sync
+   - Store mapping: nativeTaskMap[i] = returned task ID
+   - If task already completed ([x]): immediately TaskUpdate(taskId: nativeTaskMap[i], status: "completed")
+3. Write updated nativeTaskMap to .ralph-state.json
+
+If `nativeSyncEnabled` is `false`: skip all sync operations silently.
+
+> **Graceful degradation pattern**: All other sync sections (Bidirectional, Pre-Delegation, Post-Verification, Failure, Modification, Completion, Parallel) follow the same counter logic on their TaskCreate/TaskUpdate calls: reset `nativeSyncFailureCount` to 0 on success, increment on failure, disable sync at >= 3 consecutive failures. The Initial Setup section is most likely to trigger this (many TaskCreate calls), but the pattern applies uniformly.
+
 ## Check Completion
 
 If taskIndex >= totalTasks:
@@ -118,6 +148,27 @@ If no [P] marker on current task, set:
   "isParallel": false
 }
 ```
+
+## Native Task Sync - Bidirectional Check
+
+Before each task delegation, reconcile tasks.md with native task state:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Scan tasks.md for any tasks marked `[x]` whose native counterpart is NOT completed
+3. For each such mismatch: `TaskUpdate(taskId, status: "completed")`
+4. This handles: manual task completion, external edits to tasks.md, recovery from sync gaps
+5. If any TaskUpdate fails: log warning, continue
+
+## Native Task Sync - Pre-Delegation
+
+Before delegating the current task:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - Format activeForm per FR-12: "Executing 1.1 Task title", "Executing [P] 2.1 Task title", or "Verifying 1.4 Quality checkpoint"
+   - `TaskUpdate(taskId, status: "in_progress", activeForm: "<FR-12 format>")`
+4. If TaskUpdate fails: log warning, continue
 
 ## Task Delegation
 
@@ -203,6 +254,19 @@ Call `TeamDelete()` unconditionally to release any team the session may still be
 For each taskIndex in parallelGroup.taskIndices:
 `TaskCreate(subject: "Execute task $taskIndex", description: "Task $taskIndex for $spec. progressFile: .progress-task-$taskIndex.md", activeForm: "Executing task $taskIndex")`
 
+## Native Task Sync - Parallel
+
+When parallel [P] group starts:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. For each taskIndex in `parallelGroup.taskIndices`:
+   - Look up native task ID from `nativeTaskMap`
+   - Format activeForm per FR-12: "Executing [P] 2.1 Task title"
+   - `TaskUpdate(taskId: nativeTaskMap[taskIndex], status: "in_progress", activeForm: "<FR-12 format>")`
+3. ALL TaskUpdate calls in ONE message (parallel tool calls)
+4. If any TaskUpdate fails: log warning, continue
+5. As each executor completes: `TaskUpdate(taskId: nativeTaskMap[taskIndex], status: "completed")`
+
 **Step 4: Spawn Teammates**
 ALL Task calls in ONE message for true parallelism:
 `Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec\nprogressFile: .progress-task-$taskIndex.md\n[full task block and context]")`
@@ -238,6 +302,18 @@ If no completion signal:
 2. Increment taskIteration in state file
 3. If taskIteration > maxTaskIterations: proceed to max retries error handling
 4. Otherwise: Retry the same task
+
+## Native Task Sync - Failure
+
+When task fails and taskIteration increments:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - Format subject per FR-11 retry: "1.3 Task title [retry 2/5]"
+   - Format activeForm per FR-12 retry: "Retrying 1.3 Task title (attempt 2)"
+   - `TaskUpdate(taskId, subject: "<FR-11 retry format>", activeForm: "<FR-12 retry format>")`
+4. If TaskUpdate fails: log warning, continue
 
 ### VE Task Exception (Cleanup Guarantee)
 
@@ -322,6 +398,17 @@ All 3 layers must pass:
 
 Only after all verifications pass, proceed to State Update.
 
+## Native Task Sync - Post-Verification
+
+After all 3 verification layers pass:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - `TaskUpdate(taskId, status: "completed")`
+4. If ID missing: log warning to .progress.md, continue (map may be stale)
+5. If TaskUpdate fails: log warning, continue
+
 ## State Update
 
 After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
@@ -364,6 +451,29 @@ Updated fields (all other fields preserved as-is):
 Check if all tasks complete:
 - If taskIndex >= totalTasks: proceed to Completion Signal
 - If taskIndex < totalTasks: continue to next iteration (loop re-invokes coordinator)
+
+## Git Push Strategy
+
+Commit after every task, but batch pushes to avoid excessive remote operations.
+
+**When to push:**
+- After completing each phase (Phase 1, Phase 2, etc.)
+- After every 5 commits if within a long phase
+- Before creating a PR (Phase 4/5)
+- When awaitingApproval is set (user gate requires remote state)
+
+**When NOT to push:**
+- After every individual task commit
+- During mid-phase execution with fewer than 5 pending commits
+
+**Implementation:**
+1. Track commits since last push (count via `git rev-list @{push}..HEAD 2>/dev/null | wc -l` or maintain a counter)
+2. After State Update, check push conditions:
+   - Phase boundary: current task's phase header differs from previous task's
+   - Commit count: 5+ commits since last push
+   - Approval gate: awaitingApproval about to be set
+3. If any condition met: `git push`
+4. Log push in .progress.md: "Pushed N commits (reason: phase boundary / batch limit / approval gate)"
 
 ## Progress Merge (Parallel Only)
 
@@ -416,6 +526,16 @@ Output exactly `ALL_TASKS_COMPLETE` when:
 - All tasks marked [x] in tasks.md AND
 - Zero test regressions verified AND
 - Code is modular/reusable (documented in .progress.md)
+
+## Native Task Sync - Completion
+
+Before outputting ALL_TASKS_COMPLETE:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Iterate all entries in `nativeTaskMap`
+3. For any task not already `"completed"`: `TaskUpdate(taskId: nativeTaskMap[index], status: "completed")`
+4. If any TaskUpdate fails: log warning, continue
+5. Log "Native task sync finalized: N tasks synced" to .progress.md
 
 Before outputting:
 1. Verify all tasks marked [x] in tasks.md
@@ -536,6 +656,27 @@ jq --arg taskId "$TASK_ID" \
 4. For ADD_PREREQUISITE: insert before task block start
 5. For SPLIT_TASK/ADD_FOLLOWUP: insert after task block end
 6. Use Edit tool with old_string/new_string
+
+## Native Task Sync - Modification
+
+When TASK_MODIFICATION_REQUEST is processed and new tasks are inserted into tasks.md:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. For SPLIT_TASK:
+   - `TaskUpdate` original task status: `"completed"`
+   - For each new split task: `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")`, add returned ID to `nativeTaskMap`
+3. For ADD_PREREQUISITE:
+   - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for prerequisite, add returned ID to `nativeTaskMap`
+   - `TaskUpdate` original task with `addBlockedBy: [prerequisite task ID]`
+4. For ADD_FOLLOWUP:
+   - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for followup, add returned ID to `nativeTaskMap`
+5. Update `nativeTaskMap` in .ralph-state.json with new entries
+6. Re-indexing: rebuild `nativeTaskMap` to match the updated tasks.md order.
+   - Parse tasks.md in order after insertion.
+   - Keep existing native task IDs for unchanged task identities (match by task ID pattern `X.Y` in subject, not title alone).
+   - Assign newly created IDs to inserted tasks at their actual indices.
+   - Persist the fully re-keyed map to .ralph-state.json.
+7. If any TaskCreate/TaskUpdate fails: log warning, continue
 
 ## PR Lifecycle Loop (Phase 5)
 
