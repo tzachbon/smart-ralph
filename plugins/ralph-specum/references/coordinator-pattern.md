@@ -152,7 +152,7 @@ Before each task delegation, reconcile tasks.md with native task state:
 2. Scan tasks.md for any tasks marked `[x]` whose native counterpart is NOT completed
 3. For each such mismatch: `TaskUpdate(taskId, status: "completed")`
 4. This handles: manual task completion, external edits to tasks.md, recovery from sync gaps
-5. If any TaskUpdate fails: log warning, continue (best-effort sync)
+5. If any TaskUpdate fails: log warning, continue
 
 ## Native Task Sync - Pre-Delegation
 
@@ -161,8 +161,9 @@ Before delegating the current task:
 1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
 2. Look up native task ID: `nativeTaskMap[taskIndex]`
 3. If ID exists:
-   - `TaskUpdate(taskId, status: "in_progress", activeForm: "Executing [task title]")`
-4. If TaskUpdate fails: log warning, continue (do not block execution)
+   - Format activeForm per FR-12: "Executing 1.1 Task title", "Executing [P] 2.1 Task title", or "Verifying 1.4 Quality checkpoint"
+   - `TaskUpdate(taskId, status: "in_progress", activeForm: "<FR-12 format>")`
+4. If TaskUpdate fails: log warning, continue
 
 ## Task Delegation
 
@@ -252,12 +253,14 @@ For each taskIndex in parallelGroup.taskIndices:
 
 When parallel [P] group starts:
 
-1. If `nativeSyncEnabled` is `false`: skip
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
 2. For each taskIndex in `parallelGroup.taskIndices`:
    - Look up native task ID from `nativeTaskMap`
-   - `TaskUpdate(status: "in_progress", activeForm: "Executing [P] [title]")`
+   - Format activeForm per FR-12: "Executing [P] 2.1 Task title"
+   - `TaskUpdate(status: "in_progress", activeForm: "<FR-12 format>")`
 3. ALL TaskUpdate calls in ONE message (parallel tool calls)
-4. As each executor completes: `TaskUpdate` individual task to `"completed"`
+4. If any TaskUpdate fails: log warning, continue
+5. As each executor completes: `TaskUpdate` individual task to `"completed"`
 
 **Step 4: Spawn Teammates**
 ALL Task calls in ONE message for true parallelism:
@@ -301,7 +304,10 @@ When task fails and taskIteration increments:
 
 1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
 2. Look up native task ID: `nativeTaskMap[taskIndex]`
-3. `TaskUpdate(taskId, subject: "[original title] [retry N/M]", activeForm: "Retrying [title] (attempt N)")`
+3. If ID exists:
+   - Format subject per FR-11 retry: "1.3 Task title [retry 2/5]"
+   - Format activeForm per FR-12 retry: "Retrying 1.3 Task title (attempt 2)"
+   - `TaskUpdate(taskId, subject: "<FR-11 retry format>", activeForm: "<FR-12 retry format>")`
 4. If TaskUpdate fails: log warning, continue
 
 ### VE Task Exception (Cleanup Guarantee)
@@ -395,7 +401,8 @@ After all 3 verification layers pass:
 2. Look up native task ID: `nativeTaskMap[taskIndex]`
 3. If ID exists:
    - `TaskUpdate(taskId, status: "completed")`
-4. If TaskUpdate fails: log warning, continue
+4. If ID missing: log warning to .progress.md, continue (map may be stale)
+5. If TaskUpdate fails: log warning, continue
 
 ## State Update
 
@@ -522,7 +529,8 @@ Before outputting ALL_TASKS_COMPLETE:
 1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
 2. Iterate all entries in `nativeTaskMap`
 3. For any task not already `"completed"`: `TaskUpdate(status: "completed")`
-4. Log "Native task sync finalized: N tasks synced" to .progress.md
+4. If any TaskUpdate fails: log warning, continue
+5. Log "Native task sync finalized: N tasks synced" to .progress.md
 
 Before outputting:
 1. Verify all tasks marked [x] in tasks.md
@@ -648,17 +656,18 @@ jq --arg taskId "$TASK_ID" \
 
 When TASK_MODIFICATION_REQUEST is processed and new tasks are inserted into tasks.md:
 
-1. If `nativeSyncEnabled` is `false`: skip
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
 2. For SPLIT_TASK:
    - `TaskUpdate` original task status: `"completed"`
-   - For each new split task: `TaskCreate(subject, description, activeForm)`, add returned ID to `nativeTaskMap`
+   - For each new split task: `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")`, add returned ID to `nativeTaskMap`
 3. For ADD_PREREQUISITE:
-   - `TaskCreate` for prerequisite, add returned ID to `nativeTaskMap`
+   - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for prerequisite, add returned ID to `nativeTaskMap`
    - `TaskUpdate` original task with `addBlockedBy: [prerequisite task ID]`
 4. For ADD_FOLLOWUP:
-   - `TaskCreate` for followup, add returned ID to `nativeTaskMap`
+   - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for followup, add returned ID to `nativeTaskMap`
 5. Update `nativeTaskMap` in .ralph-state.json with new entries
 6. Re-indexing: new tasks get keys beyond current max index (append, no shifting)
+7. If any TaskCreate/TaskUpdate fails: log warning, continue
 
 ## PR Lifecycle Loop (Phase 5)
 
