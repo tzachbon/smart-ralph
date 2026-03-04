@@ -87,7 +87,7 @@
   - **Verify**: Read both files and confirm version numbers match and are higher than current
   - **Commit**: `chore(ralph-specum): bump version for native-task-sync feature`
 
-- [ ] 3.2 [VERIFY] Final validation: V4 Full local CI
+- [x] 3.2 [VERIFY] Final validation: V4 Full local CI
   - **Do**: Run `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh` to validate bash syntax. Validate all JSON files: `jq empty .claude-plugin/marketplace.json && jq empty plugins/ralph-specum/.claude-plugin/plugin.json`. Read all 3 modified files one final time to verify correctness.
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && jq empty .claude-plugin/marketplace.json && jq empty plugins/ralph-specum/.claude-plugin/plugin.json && echo "ALL PASS"`
   - **Done when**: All validation commands pass
@@ -95,14 +95,14 @@
 
 ## Phase 4: PR Lifecycle
 
-- [ ] 4.1 Create pull request
+- [x] 4.1 Create pull request
   - **Do**: Create a PR with title "feat(ralph-specum): add native Claude Code task sync to implement loop". Include summary of changes: 3 files modified, 8 sync integration points, graceful degradation, bidirectional sync. Push branch and create PR via `gh pr create`.
   - **Files**: None (git operations only)
   - **Done when**: PR created and URL returned
   - **Verify**: `gh pr view --json url -q .url`
   - **Commit**: None (PR creation only)
 
-- [ ] 4.2 [VERIFY] CI pipeline and review
+- [x] 4.2 [VERIFY] CI pipeline and review
   - **Do**: Check if CI passes. If CI fails, fix issues and push. Check for review comments, address if any.
   - **Verify**: `gh pr checks` shows all green or no CI configured
   - **Done when**: PR is ready to merge (CI green, no unresolved comments)

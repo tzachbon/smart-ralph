@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-03-03T18:14:05Z",
+  "updated": "2026-03-04T19:40:39Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 26,
+      "specsCount": 29,
       "isDefault": true
     }
   ],
@@ -15,6 +15,13 @@
       "phase": "tasks",
       "taskIndex": 46,
       "totalTasks": 62
+    },
+    {
+      "name": "epic-triage",
+      "path": "./specs/epic-triage",
+      "phase": "completed",
+      "taskIndex": 11,
+      "totalTasks": 11
     },
     {
       "name": "add-skills-doc",
@@ -45,6 +52,13 @@
       "totalTasks": 48
     },
     {
+      "name": "native-task-sync",
+      "path": "./specs/native-task-sync",
+      "phase": "completed",
+      "taskIndex": 15,
+      "totalTasks": 15
+    },
+    {
       "name": "plan-source-feature",
       "path": "./specs/plan-source-feature",
       "phase": "completed",
@@ -71,6 +85,13 @@
       "phase": "tasks",
       "taskIndex": 9,
       "totalTasks": 11
+    },
+    {
+      "name": "update-index-on-complete",
+      "path": "./specs/update-index-on-complete",
+      "phase": "completed",
+      "taskIndex": 7,
+      "totalTasks": 7
     },
     {
       "name": "karpathy-skills-rules",
