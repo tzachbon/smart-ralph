@@ -48,9 +48,15 @@ From `$ARGUMENTS`:
 
 ## Step 3: Initialize Execution State
 
-1. Count total tasks in tasks.md (lines matching `- [ ]` or `- [x]`)
-2. Count already completed tasks (lines matching `- [x]`)
-3. Set taskIndex to first incomplete task
+Count tasks using these exact commands:
+
+```bash
+TOTAL=$(grep -c -e '- \[.\]' "$SPEC_PATH/tasks.md" 2>/dev/null || echo 0)
+COMPLETED=$(grep -c -e '- \[x\]' "$SPEC_PATH/tasks.md" 2>/dev/null || echo 0)
+FIRST_INCOMPLETE=$((COMPLETED))
+```
+
+Key: Use `-e` flag so grep doesn't interpret the pattern's leading hyphen as an option.
 
 **CRITICAL: Merge into existing state -- do NOT overwrite the file.**
 
