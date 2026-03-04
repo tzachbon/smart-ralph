@@ -50,7 +50,7 @@
   - **Verify**: Read coordinator-pattern.md and confirm all 8 sync sections total exist (Initial Setup + Bidirectional + Pre-Delegation + Post-Verification + Failure + Modification + Completion + Parallel)
   - **Commit**: `feat(native-sync): add failure, modification, completion, and parallel sync sections`
 
-- [ ] 1.8 [VERIFY] POC checkpoint: end-to-end validation
+- [x] 1.8 [VERIFY] POC checkpoint: end-to-end validation
   - **Do**: Verify all changes are coherent: (1) implement.md initializes 3 new state fields; (2) coordinator-pattern.md has 8 sync sections at correct integration points; (3) stop-watcher.sh extracts NATIVE_SYNC and includes sync instructions in resume prompt. Read all 3 files and verify sync logic flow is complete from init through completion.
   - **Verify**: Read all 3 modified files and confirm the full sync flow: init -> bidirectional check -> pre-delegation -> post-verification -> failure -> modification -> completion -> parallel
   - **Done when**: All 3 files modified, all 8 sync sections present, stop-hook has sync in resume
