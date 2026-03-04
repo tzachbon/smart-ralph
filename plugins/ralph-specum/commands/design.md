@@ -75,7 +75,7 @@ Pass combined context to delegation prompt as "Interview Context".
 
 Follow the full team lifecycle:
 
-1. **Clean up any active team**: Call `TeamDelete()` unconditionally to release any team from a prior phase (ignore errors if no active team). Then check `~/.claude/teams/design-$spec/config.json` — if exists, delete it (`rm -rf ~/.claude/teams/design-$spec`).
+1. **Clean up stale team (MANDATORY FIRST ACTION)**: Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
 2. **Create team**: `TeamCreate(team_name: "design-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate technical design for $spec", activeForm: "Generating design")`
 4. **Spawn teammate**: `Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1")` — delegate with requirements, research, and interview context. Instruct to design architecture with mermaid diagrams, component responsibilities, technical decisions with rationale, file structure, error handling, test strategy. Output to `./specs/$spec/design.md`.
@@ -84,7 +84,7 @@ Follow the full team lifecycle:
 7. **Collect results**: Read `./specs/$spec/design.md`.
 8. **Clean up**: `TeamDelete()`.
 
-**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: architect-reviewer)` call.
+**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: architect-reviewer)` call.
 </mandatory>
 
 ## Step 4: Artifact Review (only in --quick mode)

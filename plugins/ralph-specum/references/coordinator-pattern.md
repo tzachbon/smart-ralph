@@ -242,13 +242,13 @@ Wait for spec-executor to complete. It will output TASK_COMPLETE on success.
 
 Use team lifecycle for parallel batches.
 
-**Step 1: Clean Up Any Active Team**
-Call `TeamDelete()` unconditionally to release any team the session may still be leading (ignore errors if no active team). Then check `~/.claude/teams/exec-$spec/config.json` — if exists, delete it (`rm -rf ~/.claude/teams/exec-$spec`).
+**Step 1: Clean Up Stale Team (MANDATORY FIRST ACTION)**
+Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
 
 **Step 2: Create Team**
 `TeamCreate(team_name: "exec-$spec", description: "Parallel execution batch")`
 
-**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: spec-executor)` calls in one message (skip Steps 3, 6, 7).
+**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: spec-executor)` calls in one message (skip Steps 3, 6, 7).
 
 **Step 3: Create Tasks**
 For each taskIndex in parallelGroup.taskIndices:

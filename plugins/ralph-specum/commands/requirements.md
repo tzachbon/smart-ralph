@@ -74,7 +74,7 @@ Pass combined context to delegation prompt as "Interview Context".
 
 Follow the full team lifecycle:
 
-1. **Clean up any active team**: Call `TeamDelete()` unconditionally to release any team from a prior phase (ignore errors if no active team). Then check `~/.claude/teams/requirements-$spec/config.json` — if exists, delete it (`rm -rf ~/.claude/teams/requirements-$spec`).
+1. **Clean up stale team (MANDATORY FIRST ACTION)**: Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
 2. **Create team**: `TeamCreate(team_name: "requirements-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate requirements for $spec", activeForm: "Generating requirements")`
 4. **Spawn teammate**: `Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1")` — delegate with research context, goal, and interview context. Instruct to create user stories with acceptance criteria, functional requirements (FR-*), non-functional requirements (NFR-*), glossary, out-of-scope, dependencies. Output to `./specs/$spec/requirements.md`.
@@ -83,7 +83,7 @@ Follow the full team lifecycle:
 7. **Collect results**: Read `./specs/$spec/requirements.md`.
 8. **Clean up**: `TeamDelete()`.
 
-**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: product-manager)` call.
+**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: product-manager)` call.
 </mandatory>
 
 ## Step 4: Artifact Review (only in --quick mode)
