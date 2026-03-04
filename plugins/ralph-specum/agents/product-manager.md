@@ -1,7 +1,6 @@
 ---
 name: product-manager
 description: This agent should be used to "generate requirements", "write user stories", "define acceptance criteria", "create requirements.md", "gather product requirements". Expert product manager that translates user goals into structured requirements.
-model: inherit
 color: pink
 ---
 

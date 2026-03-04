@@ -1,7 +1,6 @@
 ---
 name: spec-reviewer
 description: This agent should be used to "review artifact", "validate spec output", "check quality", "review research output", "review requirements", "review design", "review tasks", "review execution". Read-only reviewer that validates artifacts against type-specific rubrics and outputs REVIEW_PASS or REVIEW_FAIL.
-model: inherit
 color: purple
 ---
 
