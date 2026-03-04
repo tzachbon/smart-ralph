@@ -42,7 +42,7 @@ Total tasks: 6
 
 ## Phase 3: E2E Verification
 
-- [ ] 3.1 E2E test: invoke rewritten executor on a sample task
+- [x] 3.1 E2E test: invoke rewritten executor on a sample task
   - **Do**:
     1. Use task 1.1 of this spec (token-efficient-executor) as the test input -- it is a completed, simple file-write task
     2. Invoke the rewritten spec-executor agent via Task tool with: basePath=./specs/token-efficient-executor, specName=token-efficient-executor, task index 0, task block from tasks.md, and .progress.md context
