@@ -43,7 +43,7 @@
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo "PASS"`
   - **Commit**: `feat(native-sync): add sync instructions to stop-hook continuation prompt`
 
-- [ ] 1.7 Add Failure, Modification, Completion, and Parallel sync sections
+- [x] 1.7 Add Failure, Modification, Completion, and Parallel sync sections
   - **Do**: Add 4 remaining sync sections to coordinator-pattern.md: (1) "## Native Task Sync - Failure" in failure handling path - updates task subject with retry count; (2) "## Native Task Sync - Modification" in modification request handler - handles SPLIT_TASK, ADD_PREREQUISITE, ADD_FOLLOWUP by creating/updating native tasks and extending nativeTaskMap; (3) "## Native Task Sync - Completion" before ALL_TASKS_COMPLETE - ensures all native tasks show completed; (4) "## Native Task Sync - Parallel" in parallel execution section - marks all group tasks in_progress simultaneously.
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Done when**: All 4 sections exist at correct positions with complete logic
