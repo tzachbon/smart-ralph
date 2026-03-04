@@ -669,7 +669,11 @@ When TASK_MODIFICATION_REQUEST is processed and new tasks are inserted into task
 4. For ADD_FOLLOWUP:
    - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for followup, add returned ID to `nativeTaskMap`
 5. Update `nativeTaskMap` in .ralph-state.json with new entries
-6. Re-indexing: new tasks get keys beyond current max index (append, no shifting)
+6. Re-indexing: rebuild `nativeTaskMap` to match the updated tasks.md order.
+   - Parse tasks.md in order after insertion.
+   - Keep existing native task IDs for unchanged task identities (match by task title).
+   - Assign newly created IDs to inserted tasks at their actual indices.
+   - Persist the fully re-keyed map to .ralph-state.json.
 7. If any TaskCreate/TaskUpdate fails: log warning, continue
 
 ## PR Lifecycle Loop (Phase 5)

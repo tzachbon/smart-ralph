@@ -161,11 +161,13 @@ Extend .ralph-state.json with:
 ```json
 {
   "nativeTaskMap": { "0": "task-1", "1": "task-2", ... },
-  "nativeSyncEnabled": true
+  "nativeSyncEnabled": true,
+  "nativeSyncFailureCount": 0
 }
 ```
 - `nativeTaskMap`: maps 0-based task index to native task ID string
 - `nativeSyncEnabled`: boolean, set to false on persistent sync failure
+- `nativeSyncFailureCount`: consecutive sync failure counter; reset to 0 on success, triggers disabling sync at >= 3
 
 ### FR-10: Bidirectional Sync Check
 Before each task delegation:

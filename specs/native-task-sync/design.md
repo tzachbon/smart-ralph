@@ -295,7 +295,7 @@ New fields added by this feature:
 
 | File | Change Type | Description |
 |------|------------|-------------|
-| `plugins/ralph-specum/references/coordinator-pattern.md` | Major | Add 7 sync sections at integration points |
+| `plugins/ralph-specum/references/coordinator-pattern.md` | Major | Add 8 sync sections at integration points |
 | `plugins/ralph-specum/hooks/scripts/stop-watcher.sh` | Minor | Add sync state to continuation prompt + NATIVE_SYNC variable |
 | `plugins/ralph-specum/commands/implement.md` | Minor | Add nativeTaskMap/nativeSyncEnabled to initial state merge |
 

@@ -40,7 +40,7 @@ Claude Code provides 4 task management tools for in-session progress tracking:
 - `addBlockedBy`/`addBlocks` enforce task ordering with auto-unblock when blocker completes
 
 **Best practices for our use case**:
-- Batch creation of 9-10 tasks at a time (avoid flooding context with TaskList responses)
+- Create all tasks at initialization (single pass), then update statuses incrementally during execution
 - Use metadata field for sync mapping: `{"tasksmdIndex": N}`
 - Set activeForm always for visible progress
 - Mark in_progress before delegation, completed after verification
