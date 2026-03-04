@@ -47,9 +47,9 @@ Before invoking any subagents, analyze the goal and break it into independent re
 
 ## Dispatch Pattern (Team-Based)
 
-### Step 1: Clean Up Any Active Team
+### Step 1: Clean Up Stale Team (MANDATORY FIRST ACTION)
 
-Call `TeamDelete()` unconditionally to release any team the session may still be leading (e.g., from a prior phase or interrupted run). Ignore errors if no active team exists. Then check `~/.claude/teams/research-$spec/config.json` — if the file still exists, delete it manually (`rm -rf ~/.claude/teams/research-$spec`).
+Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase or interrupted run). Errors mean no team was active -- harmless, proceed.
 
 ### Step 2: Create Team
 
@@ -57,7 +57,7 @@ Call `TeamDelete()` unconditionally to release any team the session may still be
 TeamCreate(team_name: "research-$spec", description: "Parallel research for $spec")
 ```
 
-**Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: ...)` calls without a team. The research output is the same either way.
+**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: ...)` calls without a team. The research output is the same either way.
 
 ### Step 3: Create Tasks
 

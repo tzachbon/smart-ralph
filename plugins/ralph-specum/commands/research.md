@@ -91,9 +91,9 @@ Research topics identified for parallel execution:
 ...
 ```
 
-Follow the full team lifecycle: Clean up any active team (unconditional TeamDelete) -> Create team -> Create tasks -> Spawn teammates (ALL in ONE message) -> Wait -> Shutdown -> Collect results -> Clean up team.
+Follow the full team lifecycle: Clean up stale team (MANDATORY TeamDelete first) -> Create team -> Create tasks -> Spawn teammates (ALL in ONE message) -> Wait -> Shutdown -> Collect results -> Clean up team.
 
-**Fallback**: If TeamCreate fails, fall back to direct Task calls without a team.
+**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct Task calls without a team.
 </mandatory>
 
 ## Step 4: Merge Results

@@ -21,6 +21,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | enforce-teams-instead | ./specs | completed | done |
 | improve-task-generation | ./specs | tasks | 66/68 tasks |
 | fix-impl-context-bloat | ./specs | tasks | 47/48 tasks |
+| native-task-sync | ./specs | completed | done |
 | plan-source-feature | ./specs | completed | done |
 | implement-ralph-wiggum | ./specs | tasks | 27/35 tasks |
 | token-efficient-executor | ./specs | completed | done |

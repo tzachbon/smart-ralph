@@ -52,6 +52,13 @@
       "totalTasks": 48
     },
     {
+      "name": "native-task-sync",
+      "path": "./specs/native-task-sync",
+      "phase": "completed",
+      "taskIndex": 15,
+      "totalTasks": 15
+    },
+    {
       "name": "plan-source-feature",
       "path": "./specs/plan-source-feature",
       "phase": "completed",

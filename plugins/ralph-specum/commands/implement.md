@@ -48,9 +48,15 @@ From `$ARGUMENTS`:
 
 ## Step 3: Initialize Execution State
 
-1. Count total tasks in tasks.md (lines matching `- [ ]` or `- [x]`)
-2. Count already completed tasks (lines matching `- [x]`)
-3. Set taskIndex to first incomplete task
+Count tasks using these exact commands:
+
+```bash
+TOTAL=$(grep -c -e '- \[.\]' "$SPEC_PATH/tasks.md" 2>/dev/null || echo 0)
+COMPLETED=$(grep -c -e '- \[x\]' "$SPEC_PATH/tasks.md" 2>/dev/null || echo 0)
+FIRST_INCOMPLETE=$((COMPLETED))
+```
+
+Key: Use `-e` flag so grep doesn't interpret the pattern's leading hyphen as an option.
 
 **CRITICAL: Merge into existing state -- do NOT overwrite the file.**
 
@@ -74,7 +80,10 @@ Update `.ralph-state.json` by merging these fields into the existing object:
   "modificationMap": {},
   "maxModificationsPerTask": 3,
   "maxModificationDepth": 2,
-  "awaitingApproval": false
+  "awaitingApproval": false,
+  "nativeTaskMap": {},
+  "nativeSyncEnabled": true,
+  "nativeSyncFailureCount": 0
 }
 ```
 
@@ -101,7 +110,10 @@ jq --argjson taskIndex <first_incomplete> \
      modificationMap: {},
      maxModificationsPerTask: 3,
      maxModificationDepth: 2,
-     awaitingApproval: false
+     awaitingApproval: false,
+     nativeTaskMap: {},
+     nativeSyncEnabled: true,
+     nativeSyncFailureCount: 0
    }
    ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
    mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
@@ -110,7 +122,7 @@ jq --argjson taskIndex <first_incomplete> \
 **Preserved fields** (set by earlier phases, must NOT be removed):
 - `source`, `name`, `basePath`, `commitSpec`, `relatedSpecs`
 
-**Backwards Compatibility**: State files from earlier versions may lack new fields. The system handles missing fields gracefully with defaults (globalIteration: 1, maxGlobalIterations: 100, maxFixTaskDepth: 3, modificationMap: {}, maxModificationsPerTask: 3, maxModificationDepth: 2).
+**Backwards Compatibility**: State files from earlier versions may lack new fields. The system handles missing fields gracefully with defaults (globalIteration: 1, maxGlobalIterations: 100, maxFixTaskDepth: 3, modificationMap: {}, maxModificationsPerTask: 3, maxModificationDepth: 2, nativeTaskMap: {}, nativeSyncEnabled: true, nativeSyncFailureCount: 0).
 
 ## Step 4: Execute Task Loop
 
