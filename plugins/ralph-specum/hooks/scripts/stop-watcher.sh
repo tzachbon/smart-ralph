@@ -144,6 +144,7 @@ TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+NATIVE_SYNC=$(jq -r '.nativeSyncEnabled // true' "$STATE_FILE" 2>/dev/null || echo "true")
 
 # Check global iteration limit
 GLOBAL_ITERATION=$(jq -r '.globalIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
@@ -314,7 +315,7 @@ PARALLEL: These are [P] tasks -- dispatch ALL in ONE message via Task tool. Each
 Continue spec: $SPEC_NAME (Task $((TASK_INDEX + 1))/$TOTAL_TASKS, Iter $GLOBAL_ITERATION)
 
 ## State
-Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE
+Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITER | Recovery: $RECOVERY_MODE | NativeSync: $NATIVE_SYNC
 
 $TASK_HEADER
 $TASK_BLOCK
@@ -322,9 +323,10 @@ $PARALLEL_INSTRUCTIONS
 
 ## Resume
 1. Read $SPEC_PATH/.ralph-state.json for current state
-2. Delegate the task above to spec-executor (or qa-engineer for [VERIFY])
-3. On TASK_COMPLETE: verify, update state, advance
-4. If taskIndex >= totalTasks: read $SPEC_PATH/tasks.md to verify all [x], delete state file, output ALL_TASKS_COMPLETE
+2. Native sync (if NativeSync != false): (a) if nativeTaskMap is empty, rebuild from tasks.md (TaskCreate all, store IDs in state), (b) TaskUpdate current task to in_progress with activeForm
+3. Delegate the task above to spec-executor (or qa-engineer for [VERIFY])
+4. On TASK_COMPLETE: verify, update state, advance. Then TaskUpdate task to completed (if NativeSync != false)
+5. If taskIndex >= totalTasks: finalize all native tasks to completed (if NativeSync != false), read $SPEC_PATH/tasks.md to verify all [x], delete state file, output ALL_TASKS_COMPLETE
 
 ## Critical
 - Delegate via Task tool - do NOT implement yourself

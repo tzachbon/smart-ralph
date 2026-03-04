@@ -30,13 +30,13 @@
   - **Verify**: Read coordinator-pattern.md and confirm 3 new sections exist at correct integration points
   - **Commit**: `feat(native-sync): add pre-delegation, bidirectional, and post-verification sync`
 
-- [ ] 1.5 [VERIFY] Quality check: validate modified files
+- [x] 1.5 [VERIFY] Quality check: validate modified files
   - **Do**: Verify coordinator-pattern.md is valid markdown with no broken sections. Verify implement.md jq pattern is syntactically correct. Run `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh` to confirm no syntax regressions.
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/stop-watcher.sh && echo "PASS"`
   - **Done when**: All files pass validation
   - **Commit**: `chore(native-sync): pass quality checkpoint` (if fixes needed)
 
-- [ ] 1.6 Add sync instructions to stop-hook continuation prompt
+- [x] 1.6 Add sync instructions to stop-hook continuation prompt
   - **Do**: In stop-watcher.sh, add `NATIVE_SYNC` variable extraction from state file (around line 144): `NATIVE_SYNC=$(jq -r '.nativeSyncEnabled // true' "$STATE_FILE" 2>/dev/null || echo "true")`. Add NativeSync to the State line in the continuation prompt. Update the Resume section in REASON to include sync steps: (a) rebuild nativeTaskMap if empty, (b) TaskUpdate current task to in_progress, (c) after TASK_COMPLETE: TaskUpdate to completed, (d) on completion: finalize all native tasks.
   - **Files**: `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
   - **Done when**: stop-watcher.sh extracts NATIVE_SYNC, includes it in State line, and Resume section has sync instructions
