@@ -144,6 +144,26 @@ If no [P] marker on current task, set:
 }
 ```
 
+## Native Task Sync - Bidirectional Check
+
+Before each task delegation, reconcile tasks.md with native task state:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Scan tasks.md for any tasks marked `[x]` whose native counterpart is NOT completed
+3. For each such mismatch: `TaskUpdate(taskId, status: "completed")`
+4. This handles: manual task completion, external edits to tasks.md, recovery from sync gaps
+5. If any TaskUpdate fails: log warning, continue (best-effort sync)
+
+## Native Task Sync - Pre-Delegation
+
+Before delegating the current task:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - `TaskUpdate(taskId, status: "in_progress", activeForm: "Executing [task title]")`
+4. If TaskUpdate fails: log warning, continue (do not block execution)
+
 ## Task Delegation
 
 **Task Start SHA**: Before delegating any task, record `TASK_START_SHA=$(git rev-parse HEAD)`. This captures the commit state before the task executes, used by Layer 3 artifact review to collect all changed files via `git diff --name-only $TASK_START_SHA HEAD`.
@@ -346,6 +366,16 @@ All 3 layers must pass:
 3. Artifact review passes (when triggered; auto-pass when skipped per periodic rules)
 
 Only after all verifications pass, proceed to State Update.
+
+## Native Task Sync - Post-Verification
+
+After all 3 verification layers pass:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - `TaskUpdate(taskId, status: "completed")`
+4. If TaskUpdate fails: log warning, continue
 
 ## State Update
 

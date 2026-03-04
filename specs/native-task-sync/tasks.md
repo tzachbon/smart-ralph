@@ -23,7 +23,7 @@
   - **Verify**: Read coordinator-pattern.md and confirm the section exists between "Read State" and "Check Completion"
   - **Commit**: `feat(native-sync): add initial task creation to coordinator`
 
-- [ ] 1.4 Add Pre-Delegation and Post-Verification sync sections
+- [x] 1.4 Add Pre-Delegation and Post-Verification sync sections
   - **Do**: Add two new sections to coordinator-pattern.md: (1) "## Native Task Sync - Bidirectional Check" before Task Delegation that reconciles tasks.md [x] marks with native task status; (2) "## Native Task Sync - Pre-Delegation" before Task Delegation that marks current task in_progress with activeForm; (3) "## Native Task Sync - Post-Verification" after verification layers that marks task completed. Each section checks nativeSyncEnabled first and skips if false.
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Done when**: All 3 sections exist at the correct positions in coordinator-pattern.md
