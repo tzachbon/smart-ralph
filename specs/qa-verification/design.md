@@ -67,7 +67,6 @@ graph TB
 ---
 name: qa-engineer
 description: QA engineer that runs verification commands and checks acceptance criteria for [VERIFY] tasks.
-model: inherit
 tools: [Read, Write, Edit, Bash, Glob, Grep]
 ---
 ```
@@ -292,7 +291,6 @@ The last 3 tasks of every spec MUST be the final verification sequence in this o
 ---
 name: qa-engineer
 description: QA engineer that runs verification commands and checks acceptance criteria for [VERIFY] tasks.
-model: inherit
 tools: [Read, Write, Edit, Bash, Glob, Grep]
 ---
 
@@ -590,7 +588,7 @@ Not applicable for markdown agent files. Testing via integration.
 
 Based on codebase analysis:
 
-1. **Agent frontmatter pattern**: name, description, model: inherit, tools array
+1. **Agent frontmatter pattern**: name, description, tools array (model omitted to inherit from parent)
 2. **Mandatory blocks**: Use `<mandatory>` tags for critical rules
 3. **Signal pattern**: TASK_COMPLETE for execution, VERIFICATION_PASS/FAIL for verification
 4. **Progress append pattern**: Always append learnings to .progress.md

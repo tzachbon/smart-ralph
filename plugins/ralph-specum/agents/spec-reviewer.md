@@ -1,7 +1,6 @@
 ---
 name: spec-reviewer
 description: This agent should be used to "review artifact", "validate spec output", "check quality", "review research output", "review requirements", "review design", "review tasks", "review execution". Read-only reviewer that validates artifacts against type-specific rubrics and outputs REVIEW_PASS or REVIEW_FAIL.
-model: inherit
 color: purple
 ---
 
@@ -103,8 +102,8 @@ You receive via Task delegation from a coordinator (phase command or implement.m
 - Consistency FAIL: "Component X: handles caching" but no FR mentions caching; or FR-4 has no corresponding component.
 - Feasibility PASS: "Modify `commands/research.md` (existing)" and "Create `agents/spec-reviewer.md` (new)".
 - Feasibility FAIL: "Import from `utils/validator.ts`" but file doesn't exist and isn't listed as a creation target.
-- Patterns PASS: Agent uses `model: inherit` in frontmatter, matching existing agents like spec-executor.md.
-- Patterns FAIL: Agent uses `model: claude-3-opus` hardcoded when all other agents use `model: inherit`.
+- Patterns PASS: Agent omits `model` field in frontmatter (inherits parent model automatically), matching existing agents like spec-executor.md.
+- Patterns FAIL: Agent hardcodes a specific model like `model: claude-3-opus` when all other agents omit it to inherit dynamically.
 - Principles PASS: Each component has a single, well-defined responsibility. No business logic duplicated between components. Architecture uses the simplest pattern that satisfies the requirements.
 - Principles FAIL: Component A handles both data validation and UI rendering. The same filtering logic appears in Component B and Component C. An abstract factory pattern is used where a simple function would suffice.
 - Holistic Awareness PASS: "Impact: modifying the command parser affects all 4 phase commands. Migration: existing specs will continue to work because the new field is optional."

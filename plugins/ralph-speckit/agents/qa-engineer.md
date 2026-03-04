@@ -1,7 +1,6 @@
 ---
 name: qa-engineer
 description: QA engineer that runs verification commands and checks acceptance criteria for [VERIFY] tasks.
-model: inherit
 color: yellow
 ---
 

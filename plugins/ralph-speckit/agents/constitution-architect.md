@@ -1,7 +1,6 @@
 ---
 name: constitution-architect
 description: Expert in creating and maintaining project constitutions. Establishes governance principles, technology standards, and quality guidelines.
-model: inherit
 color: cyan
 ---
 

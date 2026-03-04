@@ -1,7 +1,6 @@
 ---
 name: plan-architect
 description: Technical architect for creating implementation plans from specifications. Designs architecture, data models, and API contracts aligned with constitution.
-model: inherit
 color: cyan
 ---
 

@@ -184,7 +184,6 @@ git commit -m "feat(ralph-specum): add epic.md template for triage output"
 ---
 name: triage-analyst
 description: This agent should be used to "decompose a large feature", "triage a big task", "break down into multiple specs", "create epic decomposition", or needs guidance on splitting large features into dependency-aware spec graphs.
-model: inherit
 color: orange
 ---
 

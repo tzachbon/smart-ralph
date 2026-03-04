@@ -14,7 +14,7 @@ Focus: Create the reviewer agent and wire it into one phase command to validate 
 
 - [x] 1.1 Create spec-reviewer.md agent definition
   - **Do**: Create `plugins/ralph-specum/agents/spec-reviewer.md` with:
-    1. Frontmatter: name=spec-reviewer, description including trigger phrases ("review artifact", "validate spec output", "check quality"), model=inherit
+    1. Frontmatter: name=spec-reviewer, description including trigger phrases ("review artifact", "validate spec output", "check quality")
     2. Core role: read-only reviewer that validates artifacts against rubrics
     3. When Invoked section: receives artifactType, artifact content, upstream artifacts, iteration number via Task delegation
     4. Type-specific rubrics for: research, requirements, design, tasks, execution (inline in agent)
@@ -48,7 +48,7 @@ Focus: Create the reviewer agent and wire it into one phase command to validate 
 - [x] 1.3 [VERIFY] POC checkpoint - reviewer agent and research integration
   - **Do**: Verify the spec-reviewer agent and research.md review loop are correctly wired
   - **Done when**: spec-reviewer.md exists with all required sections, research.md has review loop, patterns match existing agent/command conventions
-  - **Verify**: `grep -q "name: spec-reviewer" plugins/ralph-specum/agents/spec-reviewer.md && grep -q "model: inherit" plugins/ralph-specum/agents/spec-reviewer.md && grep -q "Artifact Review" plugins/ralph-specum/commands/research.md && grep -q "iteration" plugins/ralph-specum/commands/research.md`
+  - **Verify**: `grep -q "name: spec-reviewer" plugins/ralph-specum/agents/spec-reviewer.md && grep -q "Artifact Review" plugins/ralph-specum/commands/research.md && grep -q "iteration" plugins/ralph-specum/commands/research.md`
   - **Commit**: `chore(qa): pass POC quality checkpoint`
 
 ## Phase 2: Refactoring
@@ -233,13 +233,13 @@ After POC validated, wire reviewer into all remaining phase commands and executi
 
 - [x] 4.1 [VERIFY] Full pattern consistency check
   - **Do**: Verify all files follow plugin conventions:
-    1. spec-reviewer.md has correct frontmatter (name, description, model: inherit)
+    1. spec-reviewer.md has correct frontmatter (name, description)
     2. All modified commands maintain existing structure (no broken sections)
     3. Review loop pattern is identical across all four phase commands
     4. Signal names (REVIEW_PASS/REVIEW_FAIL) are consistent everywhere
     5. Mandatory blocks are properly formatted with `<mandatory>` tags
   - **Done when**: Pattern consistency verified across all files
-  - **Verify**: `grep -q "model: inherit" plugins/ralph-specum/agents/spec-reviewer.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/research.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/requirements.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/design.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/tasks.md`
+  - **Verify**: `grep -q "name: spec-reviewer" plugins/ralph-specum/agents/spec-reviewer.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/research.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/requirements.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/design.md && grep -c "REVIEW_PASS" plugins/ralph-specum/commands/tasks.md`
   - **Commit**: `chore(qa): pass full pattern consistency check`
 
 - [x] 4.2 [VERIFY] AC checklist verification

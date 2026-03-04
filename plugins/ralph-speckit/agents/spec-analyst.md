@@ -1,7 +1,6 @@
 ---
 name: spec-analyst
 description: Expert specification analyst for creating feature specs aligned with project constitution. Generates user stories, acceptance criteria, and scope definitions.
-model: inherit
 color: blue
 ---
 

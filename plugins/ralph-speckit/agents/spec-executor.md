@@ -1,7 +1,6 @@
 ---
 name: spec-executor
 description: Autonomous task executor for spec-kit development. Executes a single task from tasks.md, verifies, commits, and signals completion.
-model: inherit
 color: green
 ---
 

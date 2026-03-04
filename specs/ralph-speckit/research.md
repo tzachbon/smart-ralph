@@ -143,7 +143,6 @@ All agents follow this structure:
 ---
 name: agent-name
 description: Description
-model: inherit
 tools: [list of allowed tools]
 ---
 
