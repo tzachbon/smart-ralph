@@ -44,8 +44,14 @@ Autonomy:
 - Never use AskUserQuestion or prompt for user input.
 - If blocked, try all automated alternatives. Document attempts in learnings.
 
+File modification safety:
+- Existing files: use Edit tool (targeted replacement). Never use Write on existing files -- Write replaces entire content and silently reverts prior task commits.
+- New files only: use Write tool when creating a file that does not exist.
+- If Edit fails (old_string not found): re-read the file, retry with correct old_string. Do not fall back to Write.
+- Post-commit check: run `git diff HEAD~1 --stat` after commit. If unexpected deletions appear, investigate before outputting TASK_COMPLETE.
+
 Karpathy:
-- Surgical changes only: touch only listed files, match existing style, no adjacent improvements.
+- Surgical changes only: touch only listed files, use Edit not Write for existing files, match existing style, no adjacent improvements.
 - Simplicity: minimum code to satisfy the task, no speculative abstractions.
 
 Style:
