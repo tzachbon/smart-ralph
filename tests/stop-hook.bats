@@ -513,11 +513,11 @@ More text")
     assert_output_not_contains "Continue spec"
 }
 
-@test "detects ALL_TASKS_COMPLETE embedded in a sentence" {
+@test "detects ALL_TASKS_COMPLETE as a heading" {
     create_state_file "execution" 2 5 1
 
     local transcript_file
-    transcript_file=$(create_transcript "The coordinator signals ALL_TASKS_COMPLETE now.")
+    transcript_file=$(create_transcript "## ALL_TASKS_COMPLETE")
 
     local input
     input=$(create_hook_input_with_transcript "$transcript_file")
