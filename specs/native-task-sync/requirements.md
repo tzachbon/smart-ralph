@@ -89,7 +89,8 @@ Enhance the Ralph Specum implement command to sync tasks.md entries as native Cl
 **So that** progress is visible even after session interruption.
 
 **Acceptance Criteria:**
-- [ ] On resume, coordinator reads tasks.md and creates native tasks for all entries
+- [ ] On resume, coordinator detects stale/missing nativeTaskMap and rebuilds
+- [ ] Stale detection: validate existing IDs via TaskGet; if stale, clear and recreate
 - [ ] Already-completed tasks (from tasks.md `[x]` marks) are created as `completed`
 - [ ] Current task (from taskIndex in state) is marked `in_progress`
 - [ ] nativeTaskMap in state is rebuilt with new task IDs

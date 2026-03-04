@@ -81,7 +81,7 @@
 ## Phase 3: Quality Gates
 
 - [x] 3.1 Bump plugin version
-  - **Do**: Bump the patch version in both `plugins/ralph-specum/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` for the ralph-specum entry. This is required per CLAUDE.md for any plugin change.
+  - **Do**: Bump the minor version in both `plugins/ralph-specum/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` for the ralph-specum entry. This is required per CLAUDE.md for any plugin change.
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Done when**: Version bumped in both files
   - **Verify**: Read both files and confirm version numbers match and are higher than current

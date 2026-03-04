@@ -44,7 +44,9 @@ If state file missing or corrupt (invalid JSON, missing required fields):
 
 ## Native Task Sync - Initial Setup
 
-If `nativeSyncEnabled` is not `false` in state AND `nativeTaskMap` is missing or empty:
+If `nativeSyncEnabled` is not `false` in state AND (`nativeTaskMap` is missing or empty, OR existing IDs are stale):
+
+**Stale ID detection**: If `nativeTaskMap` is non-empty, validate by calling `TaskGet(taskId: nativeTaskMap["0"])`. If it fails (task not found), the IDs are stale from a prior session. Clear `nativeTaskMap` and rebuild.
 
 1. Parse all tasks from tasks.md (same parsing as existing task count logic)
 2. For each task at index `i`:
@@ -671,7 +673,7 @@ When TASK_MODIFICATION_REQUEST is processed and new tasks are inserted into task
 5. Update `nativeTaskMap` in .ralph-state.json with new entries
 6. Re-indexing: rebuild `nativeTaskMap` to match the updated tasks.md order.
    - Parse tasks.md in order after insertion.
-   - Keep existing native task IDs for unchanged task identities (match by task title).
+   - Keep existing native task IDs for unchanged task identities (match by task ID pattern `X.Y` in subject, not title alone).
    - Assign newly created IDs to inserted tasks at their actual indices.
    - Persist the fully re-keyed map to .ralph-state.json.
 7. If any TaskCreate/TaskUpdate fails: log warning, continue

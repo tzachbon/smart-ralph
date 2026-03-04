@@ -286,8 +286,8 @@ New fields added by this feature:
 **Rationale**: Sync is a UI convenience, not execution-critical. Must never block the loop.
 
 ### Decision 6: Rebuild on resume
-**Choice**: If nativeTaskMap is empty/missing, rebuild from tasks.md.
-**Rationale**: Session restarts create new task ID space. Old IDs are stale. Rebuilding is simple (parse tasks.md, create all, map).
+**Choice**: If nativeTaskMap is empty/missing OR stale (validated via TaskGet probe), rebuild from tasks.md.
+**Rationale**: Session restarts create new task ID space. Old IDs are stale. Stale detection via TaskGet on first entry; if fails, clear and rebuild. Rebuilding is simple (parse tasks.md, create all, map).
 
 ## File Changes
 

@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This spec adds native Claude Code task UI integration to the Ralph Specum execution loop. The implement command and stop-hook will sync tasks.md entries to native TaskCreate/TaskUpdate calls, displayed in a rolling window of ~10 tasks. The codebase analysis identified 8 integration points in the coordinator/stop-hook flow, with 3 high-priority ones (state init, post-verification, stop-hook resume). A shared sync utility script will handle all CRUD operations, called from both the coordinator and stop-hook. Research shows completed tasks should remain visible (matching ansible-playbook/GitHub Actions patterns) rather than hidden, with sync metadata for debugging. The Task API has no hard limits on task count but practical UX limits suggest 10-20 visible tasks max. Bidirectional sync is achievable via metadata mapping (tasksmdIndex stored in task metadata).
+This spec adds native Claude Code task UI integration to the Ralph Specum execution loop. The coordinator creates all native tasks upfront from tasks.md when execution starts, then updates their status as tasks complete. The codebase analysis identified 8 integration points in the coordinator/stop-hook flow, with 3 high-priority ones (state init, post-verification, stop-hook resume). Sync logic is inline in coordinator-pattern.md (the stop-hook cannot call TaskCreate/TaskUpdate directly since it's bash, so it includes sync instructions in its continuation prompt for the coordinator to execute). Research shows completed tasks should remain visible (matching ansible-playbook/GitHub Actions patterns). The Task API has no hard limits on task count - user confirmed Claude Code handles 67+ tasks fine. Bidirectional sync is achievable via nativeTaskMap (index-to-ID mapping stored in .ralph-state.json).
 
 ## External Research
 
@@ -75,7 +75,7 @@ Key design decisions:
 **Rationale**: GitHub Actions, Docker BuildKit, and ansible all use this pattern. Jira users consistently complain when completed work is hidden entirely. The aggregate counter leverages the Zeigarnik effect (incomplete tasks drive motivation).
 
 ### Pitfalls to Avoid
-- Don't create all tasks upfront (floods UI, wastes API calls for tasks that may get modified)
+- [SUPERSEDED] Originally recommended against upfront creation, but user confirmed Claude Code handles 67+ tasks fine. Final decision: create all upfront.
 - Don't rely on native tasks as sole source of truth (session-scoped, lost on restart)
 - Don't block execution if sync fails (graceful degradation)
 - Don't over-decorate task subjects (keep them scannable)
