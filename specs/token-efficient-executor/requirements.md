@@ -73,7 +73,7 @@ Rewrite the spec-executor agent prompt from 570 lines to ~200 lines and add outp
 
 - **Executor**: The spec-executor agent that runs one task at a time
 - **Coordinator**: The implement command loop that delegates tasks to the executor and manages state
-- **Stop-watcher**: The hook script that detects TASK_COMPLETE/ALL_TASKS_COMPLETE and controls the execution loop
+- **Stop-watcher**: The hook script that detects ALL_TASKS_COMPLETE and controls loop termination; TASK_COMPLETE is consumed by the coordinator
 - **Bookend strategy**: Placing critical rules at both the beginning and end of a prompt to maximize adherence
 - **Suppression instructions**: Explicit instructions telling the agent what NOT to output
 - **Few-shot examples**: Concrete output samples that demonstrate expected format

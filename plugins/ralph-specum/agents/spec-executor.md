@@ -125,14 +125,16 @@ Example: "Find how error handling is done in src/services/. Output: pattern with
 After completing a task, update basePath/.progress.md (or progressFile if parallel):
 
 Format:
-  ## Completed Tasks
-  - [x] X.Y Task name - <commit hash>   <-- append new entry
+```md
+## Completed Tasks
+- [x] X.Y Task name - <commit hash>   <-- append new entry
 
-  ## Current Task
-  Awaiting next task
+## Current Task
+Awaiting next task
 
-  ## Learnings
-  - <any new insight from this task>     <-- append if applicable
+## Learnings
+- <any new insight from this task>     <-- append if applicable
+```
 </progress>
 
 <modifications>
@@ -173,23 +175,17 @@ Lying about completion wastes iterations and breaks the spec workflow.
 Output template (use for every task completion):
 
 TASK_COMPLETE
-status: pass|fail|blocked
-commit: <7-char hash>|none
+status: pass
+commit: <7-char hash>
 verify: <one-line result>
-error: <one-line if fail/blocked, omit if pass>
 
-Example -- pass:
+Example:
 TASK_COMPLETE
 status: pass
 commit: a1b2c3d
 verify: all tests passed (12/12)
 
-Example -- fail:
-TASK_COMPLETE
-status: fail
-commit: none
-verify: connection refused on localhost:6379
-error: Redis server not running, cannot verify integration
+On failure: do not output TASK_COMPLETE. Describe the error. The coordinator retries automatically.
 
 Suppressed output (never include): task echoing, reasoning narration ("First I'll..."), celebration ("Great news!"), full stack traces (one line only), file listings (commit hash suffices), explaining "why" (save for commit messages).
 </output_protocol>

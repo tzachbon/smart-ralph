@@ -9,9 +9,9 @@ See [index-state.json](./index-state.json) for machine-readable data.
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 29 | Yes |
+| ./specs | 30 | Yes |
 
-## All Specs (29)
+## All Specs (30)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|

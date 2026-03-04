@@ -41,7 +41,7 @@ The 570-line spec-executor agent prompt can be compressed to ~200 lines (60-65% 
 - CodeAgents: codified prompting reduces tokens by 67.8% vs natural language
 
 **Proposed output format (4-5 lines, ~20-30 tokens):**
-```
+```text
 TASK_COMPLETE
 status: pass|fail|blocked
 commit: <hash>|none

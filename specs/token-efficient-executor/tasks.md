@@ -2,7 +2,7 @@
 
 ## Overview
 
-Total tasks: 6
+Total tasks: 5
 
 **Workflow**: Simplified (write -> verify -> E2E -> finalize)
 **Scope**: Single file rewrite: `plugins/ralph-specum/agents/spec-executor.md`
@@ -79,6 +79,6 @@ Total tasks: 6
 
 ## Dependencies
 
-```
+```text
 1.1 (write) -> 2.1 (verify content) -> 3.1 (E2E test) -> 4.1 (version bump) -> 4.2 (PR)
 ```
