@@ -217,7 +217,7 @@ Focus on the specific issues flagged. Do not rewrite sections that passed review
 
 ## Existing Patterns to Follow
 
-- **Agent frontmatter**: Same format as `spec-executor.md` and `qa-engineer.md` (name, description, model: inherit)
+- **Agent frontmatter**: Same format as `spec-executor.md` and `qa-engineer.md` (name, description)
 - **Signal protocol**: REVIEW_PASS/REVIEW_FAIL mirrors VERIFICATION_PASS/VERIFICATION_FAIL from `qa-engineer.md`
 - **Task delegation**: Same `Task tool with subagent_type: spec-reviewer` pattern used for all other agents
 - **Coordinator pattern**: Phase commands are coordinators that delegate. Review loop follows same pattern as existing feedback loops.

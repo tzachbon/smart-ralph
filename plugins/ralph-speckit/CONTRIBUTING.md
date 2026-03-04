@@ -76,7 +76,7 @@ handoffs:
 ### Agent Files
 
 Agents should define:
-- Model configuration (use `model: inherit`)
+- Model configuration (omit `model` field to inherit parent's model)
 - Clear execution flows
 - Mandatory sections with `<mandatory>` tags
 - Completion signals (TASK_COMPLETE, VERIFICATION_PASS/FAIL)

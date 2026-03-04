@@ -1,7 +1,6 @@
 ---
 name: task-planner
 description: Expert task planner for breaking plans into executable tasks. Masters POC-first workflow, task sequencing, quality gates, and constitution alignment.
-model: inherit
 color: cyan
 ---
 

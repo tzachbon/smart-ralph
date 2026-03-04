@@ -123,7 +123,6 @@ interface DetectionResult {
 ---
 name: plan-synthesizer
 description: Synthesizes all spec artifacts from a plan or goal in one pass for quick mode.
-model: inherit
 tools: [Read, Write, Edit, Glob, Grep, Task]
 ---
 

@@ -28,7 +28,7 @@
 
 **Step 1: Add color to each agent's YAML frontmatter**
 
-Add `color` field after `model: inherit` in each file. Color assignment by role:
+Add `color` field to each file. Color assignment by role:
 
 | Agent | Color | Role |
 |-------|-------|------|
@@ -46,7 +46,6 @@ Example frontmatter change for `research-analyst.md`:
 ---
 name: research-analyst
 description: This agent should be used to...
-model: inherit
 color: blue
 ---
 ```
