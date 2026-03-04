@@ -3,27 +3,30 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-03-03T18:14:05Z
+**Last updated:** 2026-03-04T21:32:04Z
 
 ## Directories (1)
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 26 | Yes |
+| ./specs | 29 | Yes |
 
-## All Specs (26)
+## All Specs (29)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
 | parallel-tasks-execution | ./specs | tasks | 46/62 tasks |
+| epic-triage | ./specs | completed | done |
 | add-skills-doc | ./specs | completed | done |
 | enforce-teams-instead | ./specs | completed | done |
 | improve-task-generation | ./specs | tasks | 66/68 tasks |
 | fix-impl-context-bloat | ./specs | tasks | 47/48 tasks |
 | plan-source-feature | ./specs | completed | done |
 | implement-ralph-wiggum | ./specs | tasks | 27/35 tasks |
+| token-efficient-executor | ./specs | completed | done |
 | fork-ralph-wiggum | ./specs | completed | done |
 | reality-verification-principle | ./specs | tasks | 9/11 tasks |
+| update-index-on-complete | ./specs | completed | done |
 | karpathy-skills-rules | ./specs | completed | done |
 | speckit-stop-hook | ./specs | tasks | 9/12 tasks |
 | task-granularity-levels | ./specs | completed | done |
@@ -41,25 +44,6 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | smart-skill-swap-retry | ./specs | tasks | 21/26 tasks |
 | improve-walkthrough-feature | ./specs | tasks | 13/14 tasks |
 | when-creating-worktree | ./specs | completed | done |
-| epic-triage | ./specs | execution | 11/11 tasks |
-| test-spec | ./specs | new |  |
-
-## Indexed Components (12)
-
-| Component | Category | Source |
-|-----------|----------|--------|
-| agent-architect-reviewer | agents | plugins/ralph-specum/agents/architect-reviewer.md |
-| agent-product-manager | agents | plugins/ralph-specum/agents/product-manager.md |
-| agent-qa-engineer | agents | plugins/ralph-specum/agents/qa-engineer.md |
-| agent-research-analyst | agents | plugins/ralph-specum/agents/research-analyst.md |
-| agent-spec-executor | agents | plugins/ralph-specum/agents/spec-executor.md |
-| agent-task-planner | agents | plugins/ralph-specum/agents/task-planner.md |
-| agent-triage-analyst | agents | plugins/ralph-specum/agents/triage-analyst.md |
-| command-implement | commands | plugins/ralph-specum/commands/implement.md |
-| command-start | commands | plugins/ralph-specum/commands/start.md |
-| command-triage | commands | plugins/ralph-specum/commands/triage.md |
-| hook-stop-watcher | hooks | plugins/ralph-specum/hooks/scripts/stop-watcher.sh |
-| reference-triage-flow | references | plugins/ralph-specum/references/triage-flow.md |
 
 ---
 
@@ -67,4 +51,3 @@ See [index-state.json](./index-state.json) for machine-readable data.
 - `/ralph-specum:status` - Show detailed status
 - `/ralph-specum:switch <name>` - Switch active spec
 - `/ralph-specum:start <name>` - Create or resume spec
-- `/ralph-specum:triage <goal>` - Decompose large features into multiple specs
