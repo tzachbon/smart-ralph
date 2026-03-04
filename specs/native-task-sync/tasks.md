@@ -65,7 +65,7 @@
   - **Verify**: Read coordinator-pattern.md and confirm consistent formatting across all sync sections
   - **Commit**: `refactor(native-sync): normalize sync section formatting`
 
-- [ ] 2.2 Add graceful degradation counter logic
+- [x] 2.2 Add graceful degradation counter logic
   - **Do**: In the coordinator-pattern.md sync sections, ensure the nativeSyncFailureCount logic is explicit: (1) On successful TaskCreate/TaskUpdate: reset counter to 0 in state; (2) On failure: increment counter, if >= 3 set nativeSyncEnabled to false and log to .progress.md; (3) Add this pattern to the Initial Setup section (most likely to fail with many calls) and document that other sections inherit the same pattern.
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`
   - **Done when**: Failure counter logic is explicit with reset-on-success and disable-at-3 behavior

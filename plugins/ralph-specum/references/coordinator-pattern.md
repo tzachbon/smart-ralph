@@ -60,12 +60,15 @@ If `nativeSyncEnabled` is not `false` in state AND `nativeTaskMap` is missing or
      - Parallel: "Executing [P] 2.1 Task title"
      - Verify: "Verifying 1.4 Quality checkpoint"
    - Call TaskCreate(subject, description, activeForm)
+   - On success: reset `nativeSyncFailureCount` to 0 in state
+   - On failure: increment `nativeSyncFailureCount` in state. If count >= 3: set `nativeSyncEnabled` to `false`, log "Native sync disabled after 3 consecutive failures" to .progress.md, stop creating remaining tasks and continue without sync
    - If task already completed ([x]): immediately TaskUpdate(status: "completed")
    - Store mapping: nativeTaskMap[i] = returned task ID
 3. Write updated nativeTaskMap to .ralph-state.json
-4. If any TaskCreate fails: log warning to .progress.md, set nativeSyncEnabled: false, continue without sync
 
 If `nativeSyncEnabled` is `false`: skip all sync operations silently.
+
+> **Graceful degradation pattern**: All other sync sections (Bidirectional, Pre-Delegation, Post-Verification, Failure, Modification, Completion, Parallel) follow the same counter logic on their TaskCreate/TaskUpdate calls: reset `nativeSyncFailureCount` to 0 on success, increment on failure, disable sync at >= 3 consecutive failures. The Initial Setup section is most likely to trigger this (many TaskCreate calls), but the pattern applies uniformly.
 
 ## Check Completion
 
