@@ -16,7 +16,7 @@ Enhance the Ralph Specum implement command to sync tasks.md entries as native Cl
 - [ ] Each native task has a subject matching the task title (e.g., "1.1 Create auth module")
 - [ ] Each native task includes the first 1-2 sub-items from the task block as description
 - [ ] Already-completed tasks (marked `[x]` in tasks.md) are created with status `completed`
-- [ ] Incomplete tasks are created with status `pending`
+- [ ] Incomplete tasks are created with status `pending`, except the first incomplete task which is set to `in_progress`
 - [ ] No user interaction required during creation
 
 ### US-2: Real-Time Status Updates During Execution

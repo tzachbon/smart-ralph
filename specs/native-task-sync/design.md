@@ -44,7 +44,7 @@ coordinator (resumed, abbreviated prompt)
 ```markdown
 ## Native Task Sync - Initial Setup
 
-If `nativeSyncEnabled` is not `false` in state AND `nativeTaskMap` is missing or empty:
+If `nativeSyncEnabled` is not `false` in state AND (`nativeTaskMap` is missing or empty, OR existing IDs are stale per TaskGet probe):
 
 1. Parse all tasks from tasks.md (same parsing as existing task count logic)
 2. For each task at index `i`:
@@ -137,7 +137,7 @@ When TASK_MODIFICATION_REQUEST processed and new tasks inserted into tasks.md:
 4. For ADD_FOLLOWUP:
    - TaskCreate for followup, add to nativeTaskMap
 5. Update nativeTaskMap in .ralph-state.json with new entries
-6. Re-indexing strategy: new tasks get keys beyond current max index (e.g., if max is "39", new tasks get "40", "41", etc.). The coordinator updates totalTasks to match. No shifting of existing keys needed since task indices in nativeTaskMap are logical positions, not physical line numbers.
+6. Re-indexing: rebuild nativeTaskMap to match updated tasks.md order. Parse tasks.md after insertion, match existing tasks by ID pattern (X.Y), assign new IDs to inserted tasks at their actual indices, persist fully re-keyed map.
 ```
 
 #### New section: "Native Task Sync - Completion" (before ALL_TASKS_COMPLETE output)
@@ -345,9 +345,9 @@ Coordinator resumes (stop-hook or session restart)
   |     |-- Build new nativeTaskMap
   |     |-- Write to state
   |
-  +-- nativeTaskMap exists?
-        |-- Validate by trying TaskUpdate on first entry
-        |-- If fails (stale IDs): rebuild (same as empty)
+  +-- nativeTaskMap exists and non-empty?
+        |-- Validate by trying TaskGet on first entry
+        |-- If fails (stale IDs): clear map, rebuild (same as empty)
         |-- If works: use existing map
 ```
 

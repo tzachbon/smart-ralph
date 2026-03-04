@@ -64,8 +64,8 @@ If `nativeSyncEnabled` is not `false` in state AND (`nativeTaskMap` is missing o
    - Call TaskCreate(subject, description, activeForm)
    - On success: reset `nativeSyncFailureCount` to 0 in state
    - On failure: increment `nativeSyncFailureCount` in state. If count >= 3: set `nativeSyncEnabled` to `false`, log "Native sync disabled after 3 consecutive failures" to .progress.md, stop creating remaining tasks and continue without sync
-   - If task already completed ([x]): immediately TaskUpdate(status: "completed")
    - Store mapping: nativeTaskMap[i] = returned task ID
+   - If task already completed ([x]): immediately TaskUpdate(taskId: nativeTaskMap[i], status: "completed")
 3. Write updated nativeTaskMap to .ralph-state.json
 
 If `nativeSyncEnabled` is `false`: skip all sync operations silently.
@@ -262,10 +262,10 @@ When parallel [P] group starts:
 2. For each taskIndex in `parallelGroup.taskIndices`:
    - Look up native task ID from `nativeTaskMap`
    - Format activeForm per FR-12: "Executing [P] 2.1 Task title"
-   - `TaskUpdate(status: "in_progress", activeForm: "<FR-12 format>")`
+   - `TaskUpdate(taskId: nativeTaskMap[taskIndex], status: "in_progress", activeForm: "<FR-12 format>")`
 3. ALL TaskUpdate calls in ONE message (parallel tool calls)
 4. If any TaskUpdate fails: log warning, continue
-5. As each executor completes: `TaskUpdate` individual task to `"completed"`
+5. As each executor completes: `TaskUpdate(taskId: nativeTaskMap[taskIndex], status: "completed")`
 
 **Step 4: Spawn Teammates**
 ALL Task calls in ONE message for true parallelism:
@@ -533,7 +533,7 @@ Before outputting ALL_TASKS_COMPLETE:
 
 1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
 2. Iterate all entries in `nativeTaskMap`
-3. For any task not already `"completed"`: `TaskUpdate(status: "completed")`
+3. For any task not already `"completed"`: `TaskUpdate(taskId: nativeTaskMap[index], status: "completed")`
 4. If any TaskUpdate fails: log warning, continue
 5. Log "Native task sync finalized: N tasks synced" to .progress.md
 
