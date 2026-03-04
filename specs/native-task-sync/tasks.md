@@ -9,7 +9,7 @@
   - **Verify**: Read implement.md and confirm the 3 fields appear in the merge pattern and example JSON
   - **Commit**: `feat(native-sync): add sync state fields to implement.md`
 
-- [ ] 1.2 Add batch push strategy to coordinator-pattern.md
+- [x] 1.2 Add batch push strategy to coordinator-pattern.md
   - **Do**: Add a "## Git Push Strategy" section to coordinator-pattern.md (after commit discipline reference or in the coordinator prompt area). The section instructs the coordinator to NOT push after every commit. Instead: push after completing each phase, push after every 5 commits if within a long phase, push before creating a PR, push when awaitingApproval is set. Also update the stop-hook continuation prompt's Resume section to include "Do NOT push after every commit - batch pushes per phase or every 5 commits."
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`, `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
   - **Done when**: Git Push Strategy section exists in coordinator-pattern.md and stop-hook resume mentions batch pushing

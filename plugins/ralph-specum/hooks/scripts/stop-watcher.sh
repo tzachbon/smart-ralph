@@ -329,6 +329,7 @@ $PARALLEL_INSTRUCTIONS
 ## Critical
 - Delegate via Task tool - do NOT implement yourself
 - Verify all 3 layers before advancing (see verification-layers.md)
+- Do NOT push after every commit - batch pushes per phase or every 5 commits (see coordinator-pattern.md § 'Git Push Strategy')
 - On failure: increment taskIteration, retry or generate fix task if recoveryMode
 - On TASK_MODIFICATION_REQUEST: validate, insert tasks, update state (see coordinator-pattern.md § 'Modification Request Handler')
 STOP_WATCHER_REASON_EOF
