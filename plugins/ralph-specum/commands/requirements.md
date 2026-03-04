@@ -15,7 +15,7 @@ Create a task for each item and complete in order:
 1. **Gather context** -- resolve spec, read research and goal
 2. **Interview** -- brainstorming dialogue (skip if `--quick`)
 3. **Execute requirements** -- dispatch product-manager via team
-4. **Artifact review** -- spec-reviewer validation loop (skip if `--quick`)
+4. **Artifact review** -- spec-reviewer validation loop (only if `--quick`)
 5. **Walkthrough & approval** -- display summary, get user approval
 6. **Finalize** -- update state, commit, stop
 
@@ -86,12 +86,12 @@ Follow the full team lifecycle:
 **Fallback**: If TeamCreate fails, fall back to direct `Task(subagent_type: product-manager)` call.
 </mandatory>
 
-## Step 4: Artifact Review (skip if --quick)
+## Step 4: Artifact Review (only in --quick mode)
 
 <mandatory>
 **Review loop must complete before walkthrough. Max 3 iterations.**
 
-If `--quick`, skip to Step 5.
+If NOT `--quick`, skip to Step 5.
 
 Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
 - REVIEW_PASS: log to .progress.md, proceed
@@ -135,13 +135,17 @@ Output: $PWD/specs/$spec/requirements.md
 
 If `--quick`, skip to Step 6.
 
-Ask ONE question: "Does this look right?" with options: Approve (Recommended) / Need changes / Other
+Ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
+1. **Approve** (Recommended) -- Accept artifact as-is, advance to next phase
+2. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
+3. **Request changes** -- Provide specific feedback to revise the artifact
 
 **If "Approve"**: proceed to Step 6.
-**If "Need changes" or "Other"**:
+**If "Run review"**: Invoke spec-reviewer via Task tool with full requirements.md content (upstream: research.md). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
+**If "Request changes" or "Other"**:
 1. Ask what to change
 2. Re-invoke product-manager using **cleanup-and-recreate** team pattern (TeamDelete old -> TeamCreate new -> spawn with feedback -> wait -> shutdown -> TeamDelete)
-3. Re-display walkthrough, ask again. Loop until approved.
+3. Re-display walkthrough, ask again with same 3 choices. Loop until approved.
 
 ## Step 6: Finalize
 
