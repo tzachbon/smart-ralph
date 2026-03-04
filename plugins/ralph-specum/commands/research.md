@@ -16,7 +16,7 @@ Create a task for each item and complete in order:
 2. **Interview** -- brainstorming dialogue (skip if `--quick`)
 3. **Execute parallel research** -- dispatch team of research-analyst + Explore agents
 4. **Merge results** -- synthesize partial files into research.md
-5. **Artifact review** -- spec-reviewer validation loop (skip if `--quick`)
+5. **Artifact review** -- spec-reviewer validation loop (only if `--quick`)
 6. **Walkthrough & approval** -- display summary, get user approval
 7. **Finalize** -- update state, commit, stop
 
@@ -104,12 +104,12 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` "Merging Results" s
 
 After merge, delete partial files: `rm ./specs/$spec/.research-*.md`
 
-## Step 5: Artifact Review (skip if --quick)
+## Step 5: Artifact Review (only in --quick mode)
 
 <mandatory>
 **Review loop must complete before walkthrough. Max 3 iterations.**
 
-If `--quick`, skip to Step 6.
+If NOT `--quick`, skip to Step 6.
 
 Invoke `spec-reviewer` via Task tool to validate research.md. Follow the standard review loop:
 - REVIEW_PASS: log to .progress.md, proceed to walkthrough
@@ -152,10 +152,14 @@ Output: $PWD/specs/$spec/research.md
 
 If `--quick`, skip to Step 7.
 
-Ask ONE question: "Does this look right?" with options: Approve (Recommended) / Need changes / Other
+Ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
+1. **Approve** (Recommended) -- Accept artifact as-is, advance to next phase
+2. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
+3. **Request changes** -- Provide specific feedback to revise the artifact
 
 **If "Approve"**: proceed to Step 7.
-**If "Need changes" or "Other"**: Ask what to change, invoke subagents with feedback, re-merge, re-display walkthrough, ask again. Loop until approved.
+**If "Run review"**: Invoke spec-reviewer via Task tool with full research.md content (upstream: none). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
+**If "Request changes" or "Other"**: Ask what to change, invoke subagents with feedback, re-merge, re-display walkthrough, ask again with same 3 choices. Loop until approved.
 
 ## Step 7: Finalize
 
