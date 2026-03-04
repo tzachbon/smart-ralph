@@ -2,7 +2,7 @@
 
 ## Phase 1: Make It Work (POC)
 
-- [ ] 1.1 Add native sync state fields to implement.md
+- [x] 1.1 Add native sync state fields to implement.md
   - **Do**: In implement.md Step 3, add `nativeTaskMap: {}`, `nativeSyncEnabled: true`, `nativeSyncFailureCount: 0` to the jq merge pattern that initializes .ralph-state.json. Add these fields to the "Preserved fields" documentation comment. Update the example JSON block to include these fields.
   - **Files**: `plugins/ralph-specum/commands/implement.md`
   - **Done when**: The jq merge in Step 3 includes all 3 new fields. Backward compatibility note added.
