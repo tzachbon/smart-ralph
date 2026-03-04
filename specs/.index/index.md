@@ -3,15 +3,15 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-03-04T19:40:39Z
+**Last updated:** 2026-03-04T21:32:04Z
 
 ## Directories (1)
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 29 | Yes |
+| ./specs | 30 | Yes |
 
-## All Specs (29)
+## All Specs (30)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
@@ -24,6 +24,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | native-task-sync | ./specs | completed | done |
 | plan-source-feature | ./specs | completed | done |
 | implement-ralph-wiggum | ./specs | tasks | 27/35 tasks |
+| token-efficient-executor | ./specs | completed | done |
 | fork-ralph-wiggum | ./specs | completed | done |
 | reality-verification-principle | ./specs | tasks | 9/11 tasks |
 | update-index-on-complete | ./specs | completed | done |

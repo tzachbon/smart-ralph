@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-03-04T19:40:39Z",
+  "updated": "2026-03-04T21:32:04Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 29,
+      "specsCount": 30,
       "isDefault": true
     }
   ],
@@ -71,6 +71,13 @@
       "phase": "tasks",
       "taskIndex": 27,
       "totalTasks": 35
+    },
+    {
+      "name": "token-efficient-executor",
+      "path": "./specs/token-efficient-executor",
+      "phase": "completed",
+      "taskIndex": 5,
+      "totalTasks": 5
     },
     {
       "name": "fork-ralph-wiggum",
