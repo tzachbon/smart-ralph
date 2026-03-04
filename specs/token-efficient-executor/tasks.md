@@ -58,7 +58,7 @@ Total tasks: 6
 
 ## Phase 4: Finalize
 
-- [ ] 4.1 Bump plugin version
+- [x] 4.1 Bump plugin version
   - **Do**:
     1. Bump version from `4.7.2` to `4.8.0` in `plugins/ralph-specum/.claude-plugin/plugin.json`
     2. Bump version from `4.7.2` to `4.8.0` in `.claude-plugin/marketplace.json` (ralph-specum entry)
