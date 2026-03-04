@@ -497,6 +497,36 @@ More output")
     assert_output_not_contains "Continue spec"
 }
 
+@test "detects ALL_TASKS_COMPLETE with markdown bold formatting" {
+    create_state_file "execution" 2 5 1
+
+    local transcript_file
+    transcript_file=$(create_transcript "Some output
+**ALL_TASKS_COMPLETE**
+More text")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_output_not_contains "Continue spec"
+}
+
+@test "detects ALL_TASKS_COMPLETE as a heading" {
+    create_state_file "execution" 2 5 1
+
+    local transcript_file
+    transcript_file=$(create_transcript "## ALL_TASKS_COMPLETE")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_output_not_contains "Continue spec"
+}
+
 @test "both ALL_TASKS_COMPLETE detection paths call update-spec-index.sh" {
     # Structural test: verify both grep paths have the index update call
     local primary_count
