@@ -9,7 +9,7 @@ Total tasks: 6
 
 ## Phase 1: Write the Rewrite
 
-- [ ] 1.1 Rewrite spec-executor.md from design.md sections
+- [x] 1.1 Rewrite spec-executor.md from design.md sections
   - **Do**:
     1. Read `specs/token-efficient-executor/design.md` section-by-section content spec (Section 2)
     2. Assemble the complete new `spec-executor.md` by concatenating: frontmatter (unchanged) + all 13 XML sections (`<role>`, `<input>`, `<flow>`, `<rules>`, `<tdd>`, `<verify_tasks>`, `<parallel>`, `<explore>`, `<progress>`, `<modifications>`, `<errors>`, `<output_protocol>`, `<bookend>`) using the exact "Rewritten content" code blocks from design.md
