@@ -208,9 +208,11 @@ Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITE
 
 ### Component 3: implement.md (Modified)
 
-**Purpose**: Initialize sync state fields during Step 3.
+**Purpose**: Initialize sync state fields during Step 3 and add batch push instruction to coordinator prompt.
 
-**Changes**: Add to the jq merge in Step 3:
+**Changes**:
+
+#### Change 1: Add to the jq merge in Step 3:
 
 ```json
 {
@@ -221,6 +223,22 @@ Path: $SPEC_PATH | Index: $TASK_INDEX | Iteration: $TASK_ITERATION/$MAX_TASK_ITE
 ```
 
 These are merged into existing state, preserving all other fields. Empty nativeTaskMap signals the coordinator to perform initial sync on first iteration.
+
+#### Change 2: Add batch push instruction to coordinator prompt
+
+Add a "Git Push Strategy" section to the coordinator prompt (Step 4) or to coordinator-pattern.md:
+
+```markdown
+## Git Push Strategy
+
+Do NOT push after every commit. Instead, batch pushes:
+- Push after completing each phase (Phase 1, Phase 2, etc.)
+- Push after every 5 commits if within a long phase
+- Push before creating a PR (Phase 4)
+- Push when awaitingApproval is set to true
+
+This reduces remote operations and avoids spamming CI with per-task pushes.
+```
 
 ### Component 4: .ralph-state.json (Extended Schema)
 
