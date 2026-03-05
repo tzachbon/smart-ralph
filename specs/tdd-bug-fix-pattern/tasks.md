@@ -58,13 +58,13 @@ Focus: Add BUG_FIX intent type and reproduce-first workflow across 5 reference f
   - **Commit**: `feat(phase-rules): add Bug TDD workflow with Phase 0 reproduce and canonical BEFORE format`
   - _Requirements: FR-2, FR-4, AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-4.1, AC-5.5_
 
-- [ ] 1.5 [VERIFY] Quality checkpoint: phase-rules.md integrity
+- [x] 1.5 [VERIFY] Quality checkpoint: phase-rules.md integrity
   - **Do**: Confirm phase-rules.md has BUG_FIX in workflow table and Bug TDD section
   - **Verify**: `sg --pattern 'BUG_FIX' /Users/zachbonfil/projects/smart-ralph/.claude/worktrees/groovy-snacking-gosling/plugins/ralph-specum/references/phase-rules.md | wc -l | xargs -I{} sh -c '[ {} -ge 2 ] && echo PASS || echo FAIL'`
   - **Done when**: BUG_FIX appears at least twice (table row + workflow section)
   - **Commit**: None
 
-- [ ] 1.6 Flesh out step 10 in `quick-mode.md`
+- [x] 1.6 Flesh out step 10 in `quick-mode.md`
   - **Do**:
     1. Read `plugins/ralph-specum/references/quick-mode.md`
     2. In the **Quick Mode Execution Sequence**, replace step 10's stub line `"For fix goals: run reproduction, document BEFORE state"` with full logic:
@@ -79,7 +79,7 @@ Focus: Add BUG_FIX intent type and reproduce-first workflow across 5 reference f
   - **Commit**: `feat(quick-mode): implement step 10 BEFORE state capture for fix goals`
   - _Requirements: FR-5, AC-6.1, AC-6.2, AC-6.3_
 
-- [ ] 1.7 Add Bug TDD Task Planning section to `task-planner.md`
+- [x] 1.7 Add Bug TDD Task Planning section to `task-planner.md`
   - **Do**:
     1. Read `plugins/ralph-specum/agents/task-planner.md`
     2. Locate the Workflow Selection section (where intent type determines workflow)
