@@ -40,7 +40,7 @@ Focus: Add BUG_FIX intent type and reproduce-first workflow across 5 reference f
   - **Done when**: Both grep commands find their patterns
   - **Commit**: None
 
-- [ ] 1.4 Add Bug TDD Workflow and canonical BEFORE format to `phase-rules.md`
+- [x] 1.4 Add Bug TDD Workflow and canonical BEFORE format to `phase-rules.md`
   - **Do**:
     1. Read `plugins/ralph-specum/references/phase-rules.md`
     2. In the **Workflow Selection** table, add BUG_FIX row: `| BUG_FIX | Bug TDD | Reproduce first, then TDD to lock in fix and prevent regression |`

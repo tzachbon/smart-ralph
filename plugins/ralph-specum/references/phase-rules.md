@@ -2,9 +2,10 @@
 
 > Used by: implement.md, task-planner agent
 
-All specs follow one of two workflows based on intent classification:
+All specs follow one of three workflows based on intent classification:
 - **GREENFIELD** intent → POC-first workflow (5 phases)
 - **Non-greenfield** intent (TRIVIAL, REFACTOR, MID_SIZED) → TDD Red-Green-Yellow workflow (4 phases)
+- **BUG_FIX** intent → Bug TDD workflow (Phase 0 + 4 phases)
 
 ## Workflow Selection
 
@@ -12,7 +13,7 @@ Read Intent Classification from `.progress.md`:
 
 ```text
 ## Intent Classification
-- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED|BUG_FIX]
 ```
 
 | Intent | Workflow | Rationale |
@@ -21,6 +22,7 @@ Read Intent Classification from `.progress.md`:
 | TRIVIAL | TDD | Fix/small change — existing code has (or should have) tests to build on |
 | REFACTOR | TDD | Restructuring existing code — tests guard against regressions |
 | MID_SIZED | TDD | Extending existing feature — tests define expected behavior first |
+| BUG_FIX | Bug TDD | Reproduce first, then TDD to lock in fix and prevent regression |
 
 ---
 
@@ -209,9 +211,55 @@ Same as POC Phase 5. Autonomous PR management loop.
 
 ---
 
+---
+
+# Bug TDD Workflow (BUG_FIX)
+
+When Intent Classification is `BUG_FIX`, prepend a Phase 0 (Reproduce) before the standard TDD phases. The goal is to lock in a failing reproduction before any code changes, then use TDD to fix and prevent regression.
+
+## Phase 0: Reproduce
+
+**Goal**: Confirm the bug is reproducible before touching any code.
+
+**Rules**:
+- No code changes in Phase 0
+- STOP if reproduction fails -- surface error to user
+- **Diagnostic-first principle**: Only make code changes when you are certain you can solve the problem. Otherwise: (1) address the root cause, not the symptoms; (2) add descriptive logging statements and error messages to track variable and code state; (3) add test functions and statements to isolate the problem
+
+**Phase 0 task format**:
+```markdown
+- [ ] 0.1 [VERIFY] Reproduce bug: <brief description of failure>
+  - **Do**: Run reproduction command and confirm it fails as described
+  - **Done when**: Command fails with expected error/output
+  - **Verify**: `<reproduction command> 2>&1 | grep -q "<expected error>" && echo REPRO_PASS`
+  - **Commit**: None (no code changes in Phase 0)
+
+- [ ] 0.2 [VERIFY] Confirm repro consistency: bug fails reliably
+  - **Do**: Run reproduction command 3 times to confirm consistent failure
+  - **Done when**: Failure is consistent across runs; document BEFORE state in .progress.md
+  - **Verify**: `<reproduction command> 2>&1 | grep -q "<expected error>" && echo CONSISTENT_PASS`
+  - **Commit**: `chore(<spec>): document reality check before`
+```
+
+**Canonical `## Reality Check (BEFORE)` format** (write to `.progress.md` at end of Phase 0):
+```markdown
+## Reality Check (BEFORE)
+- Reproduction command: `<exact command>`
+- Exit code: <N>
+- Output: <relevant snippet>
+- Confirmed failing: yes
+- Timestamp: <ISO 8601>
+```
+
+**Note**: The first [RED] task in Phase 1 must reference the BEFORE state (reproduction command) so the test locks in the exact failure mode.
+
+**Note**: Phase 2, Phase 3, and Phase 4 are identical to TDD Phase 2, 3, and 4. VF task is mandatory for BUG_FIX goals.
+
+---
+
 ## VF Task for Fix Goals
 
-When `.progress.md` contains `## Reality Check (BEFORE)`, the goal is a fix-type and requires a VF (Verification Final) task as the final task in Phase 4:
+When `.progress.md` contains `## Reality Check (BEFORE)` OR Intent Classification is `BUG_FIX`, the goal is a fix-type and requires a VF (Verification Final) task as the final task in Phase 4:
 
 ```markdown
 - [ ] VF [VERIFY] Goal verification: original failure now passes
