@@ -1,6 +1,7 @@
 ---
 name: smart-ralph
 description: This skill should be used when the user asks about "ralph arguments", "quick mode", "commit spec", "max iterations", "ralph state file", "execution modes", "ralph loop integration", or needs guidance on common Ralph plugin arguments and state management patterns.
+version: 0.1.0
 ---
 
 # Smart Ralph
@@ -54,9 +55,11 @@ else if "--quick" in args:
 
 ### Quick Mode (`--quick`)
 
-- Skips all interactive prompts and interviews
-- Auto-generates all artifacts in sequence
-- Immediately starts execution after generation
+- Skips all interactive prompts, interviews, and approval pauses
+- Runs the same phase agents (research, requirements, design, tasks) sequentially
+- Agents receive a "be more opinionated" directive since there's no user feedback
+- spec-reviewer validates each artifact (max 3 iterations)
+- Immediately starts execution after all phases complete
 - Does NOT commit by default (use `--commit` to override)
 - Still delegates to subagents (delegation is mandatory)
 

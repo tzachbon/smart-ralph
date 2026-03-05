@@ -3,12 +3,22 @@
 ## Overview
 
 Total tasks: {{N}}
-POC-first workflow with 5 phases:
+
+<!-- Select workflow based on Intent Classification in .progress.md -->
+<!-- GREENFIELD → POC-first workflow | TRIVIAL/REFACTOR/MID_SIZED → TDD workflow -->
+
+**POC-first workflow** (GREENFIELD):
 1. Phase 1: Make It Work (POC) - Validate idea end-to-end
 2. Phase 2: Refactoring - Clean up code structure
 3. Phase 3: Testing - Add unit/integration/e2e tests
 4. Phase 4: Quality Gates - Local quality checks and PR creation
 5. Phase 5: PR Lifecycle - Autonomous CI monitoring, review resolution, final validation
+
+**TDD Red-Green-Yellow workflow** (TRIVIAL/REFACTOR/MID_SIZED):
+1. Phase 1: Red-Green-Yellow Cycles - Test-first implementation
+2. Phase 2: Additional Testing - Integration/E2E beyond unit tests
+3. Phase 3: Quality Gates - Local quality checks and PR creation
+4. Phase 4: PR Lifecycle - Autonomous CI monitoring, review resolution, final validation
 
 ## Completion Criteria (Autonomous Execution Standard)
 
@@ -26,20 +36,145 @@ This spec is not complete until ALL criteria are met:
 
 > **Quality Checkpoints**: Intermediate quality gate checks are inserted every 2-3 tasks to catch issues early. For small tasks, insert after 3 tasks. For medium/large tasks, insert after 2 tasks.
 
+## Task Writing Guide
+
+**Sizing rules**: Max 4 Do steps, max 3 files per task. Split if exceeded.
+
+**Parallel markers**: Mark independent tasks with [P] for concurrent execution. Adjacent [P] tasks form a parallel group. [VERIFY] tasks always break groups.
+
+### Task Writing Principles
+
+1. **Think First**: Tasks should surface what's unclear, not assume. If a task depends on an uncertain assumption (e.g., "config file exists at X"), state it explicitly in the Do section or add a verification step. Don't hide confusion in vague steps.
+2. **Simplicity**: Minimum steps to achieve the goal. No speculative features, no abstractions for single-use code. If the task can be done in 2 steps, don't write 4.
+3. **Surgical**: Each task touches only what it must. No drive-by refactors, no "while you're in there" improvements. Every file in the Files section traces directly to the task's goal.
+4. **Goal-Driven**: Emphasize **Done when** and **Verify** over **Do** steps. The Do is guidance; the Done when is the contract. Transform imperative commands into declarative success criteria. Instead of "Add validation" write "Done when: invalid inputs return 400 with error message."
+
+### Bad vs. Good Examples
+
+**Example 1: File Creation (too vague vs. precise)**
+
+BAD:
+- [ ] 1.1 Set up the API module
+  - **Do**: Create the API module with routes and handlers
+  - **Files**: src/api/
+  - **Verify**: Code compiles
+
+GOOD:
+- [ ] 1.1 Create user registration endpoint
+  - **Do**:
+    1. Create `src/api/routes/auth.ts` with POST /register route
+    2. Add request body validation: email (valid format), password (min 8 chars)
+    3. Return 201 with `{ id, email }` on success, 400 with `{ error }` on validation fail
+  - **Files**: src/api/routes/auth.ts
+  - **Done when**: POST /register returns 201 for valid input, 400 for invalid
+  - **Verify**: `curl -X POST localhost:3000/register -d '{"email":"a@b.com","password":"12345678"}' -w '%{http_code}' | grep 201`
+
+**Example 2: Integration (bundled vs. atomic)**
+
+BAD:
+- [ ] 2.1 Add analytics tracking
+  - **Do**: Install PostHog, create wrapper, add to all pages, write tests
+  - **Files**: src/analytics.ts, src/pages/*.tsx, tests/analytics.test.ts
+  - **Verify**: Tests pass
+
+GOOD:
+- [ ] 2.1 Install PostHog SDK and create wrapper
+  - **Do**:
+    1. Add posthog-js: `pnpm add posthog-js`
+    2. Create `src/lib/analytics.ts` exporting `track(event, props)` and `identify(userId)`
+    3. Initialize with env var `POSTHOG_KEY` in wrapper
+  - **Files**: src/lib/analytics.ts, package.json
+  - **Done when**: `import { track } from '@/lib/analytics'` resolves without error
+  - **Verify**: `pnpm check-types`
+
+**Example 3: Refactoring (overloaded vs. focused)**
+
+BAD:
+- [ ] 3.1 Refactor and test the auth module
+  - **Do**: Extract auth logic, add error handling, write unit tests, run linter, fix types
+  - **Files**: src/auth.ts, src/utils/token.ts, tests/auth.test.ts, src/types.ts
+
+GOOD:
+- [ ] 3.1 Extract token validation into utility
+  - **Do**:
+    1. Create `src/utils/token.ts` with `validateToken(token: string): TokenPayload | null`
+    2. Move JWT verify logic from `src/auth.ts` lines 45-62 into new file
+    3. Update `src/auth.ts` to import and call `validateToken`
+  - **Files**: src/utils/token.ts, src/auth.ts
+  - **Done when**: Existing auth flow works identically after extraction
+  - **Verify**: `pnpm check-types && pnpm test -- --grep auth`
+
+**Example 4: Goal-Driven (imperative command vs. success criteria)**
+
+BAD:
+- [ ] 4.1 Add input validation
+  - **Do**: Add validation to the form fields. Check email format, required fields, password strength.
+  - **Files**: src/components/SignupForm.tsx
+  - **Done when**: Validation is added
+  - **Verify**: Validation is added
+
+GOOD:
+- [ ] 4.1 Add signup form validation with error states
+  - **Do**:
+    1. Add validation rules to `src/components/SignupForm.tsx`: email (regex), password (min 8, 1 uppercase, 1 number), name (required)
+    2. Display inline error messages below each field on blur -> verify: error messages render
+    3. Disable submit button until all fields valid -> verify: button disabled state toggles
+  - **Files**: src/components/SignupForm.tsx
+  - **Done when**: Form rejects invalid inputs with visible error messages; submit disabled until valid
+  - **Verify**: `pnpm test -- --grep SignupForm` (write test first if missing: invalid email shows "Invalid email", short password shows "Min 8 characters")
+
+**Example 5: TDD Triplet (non-greenfield bug fix)**
+
+BAD:
+- [ ] 1.1 Fix the login timeout bug
+  - **Do**: Find the timeout code and fix it, then write a test
+  - **Files**: src/auth.ts, tests/auth.test.ts
+  - **Verify**: Tests pass
+
+GOOD:
+- [ ] 1.1 [RED] Failing test: login does not timeout after 30s
+  - **Do**:
+    1. Add test in `tests/auth.test.ts`: "should complete login within 30s timeout"
+    2. Assert that `login()` resolves before 30000ms (currently fails due to bug)
+  - **Files**: tests/auth.test.ts
+  - **Done when**: Test exists AND fails with timeout error
+  - **Verify**: `pnpm test -- --grep "login.*timeout" 2>&1 | grep -q "FAIL" && echo RED_PASS`
+  - **Commit**: `test(auth): red - failing test for login timeout`
+
+- [ ] 1.2 [GREEN] Fix login timeout
+  - **Do**:
+    1. Fix timeout handling in `src/auth.ts` — set proper timeout on HTTP request
+  - **Files**: src/auth.ts
+  - **Done when**: Login timeout test now passes
+  - **Verify**: `pnpm test -- --grep "login.*timeout"`
+  - **Commit**: `fix(auth): green - fix login timeout handling`
+
+- [ ] 1.3 [YELLOW] Refactor: extract timeout config
+  - **Do**:
+    1. Extract hardcoded timeout to config constant in `src/auth.ts`
+  - **Files**: src/auth.ts
+  - **Done when**: Code is clean AND all auth tests pass
+  - **Verify**: `pnpm test -- --grep "auth" && pnpm lint`
+  - **Commit**: `refactor(auth): yellow - extract timeout to config`
+
+<!-- ============================================================ -->
+<!-- POC-FIRST WORKFLOW (use when Intent = GREENFIELD)            -->
+<!-- ============================================================ -->
+
 ## Phase 1: Make It Work (POC)
 
 Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
-- [ ] 1.1 {{Specific task name}}
+- [ ] 1.1 [P] {{Specific task name}}
   - **Do**: {{Exact steps to implement}}
   - **Files**: {{Exact file paths to create/modify}}
   - **Done when**: {{Explicit success criteria}}
-  - **Verify**: {{Command to verify, e.g., "manually test X does Y"}}
+  - **Verify**: {{Command to verify, e.g., `curl localhost:3000/api | jq .status`}}
   - **Commit**: `feat(scope): {{task description}}`
   - _Requirements: FR-1, AC-1.1_
   - _Design: Component A_
 
-- [ ] 1.2 {{Another task}}
+- [ ] 1.2 [P] {{Another task}}
   - **Do**: {{Steps}}
   - **Files**: {{Paths}}
   - **Done when**: {{Criteria}}
@@ -65,9 +200,9 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Commit**: `feat(scope): {{description}}`
 
 - [ ] 1.5 POC Checkpoint
-  - **Do**: Verify feature works end-to-end
-  - **Done when**: Feature can be demonstrated working
-  - **Verify**: Manual test of core flow
+  - **Do**: Verify feature works end-to-end using automated tools (WebFetch, curl, browser automation, test runner)
+  - **Done when**: Feature can be demonstrated working via automated verification
+  - **Verify**: Run automated end-to-end verification (e.g., `curl API | jq`, browser automation script, or test command)
   - **Commit**: `feat(scope): complete POC`
 
 ## Phase 2: Refactoring
@@ -198,9 +333,37 @@ After POC validated, clean up code.
   - **Done when**: Original failure no longer reproduces, BEFORE/AFTER comparison documented
   - **Note**: This task only applies when goal was classified as "fix" type. Skip if goal was "add" or "enhance".
 
+<!-- VE Tasks: VE1 (startup), VE2 (check), VE3 (cleanup) — generated from research.md Verification Tooling section -->
+
+- [ ] VE1 [VERIFY] E2E startup: launch dev server and verify health
+  - **Do**:
+    1. Start dev server: `{{dev_cmd}}` (background, save PID to /tmp/ve-pids.txt)
+    2. Wait for server ready: poll `{{health_endpoint}}` on port `{{port}}` until 200 (timeout 30s)
+  - **Verify**: `curl -sf {{health_endpoint}} -o /dev/null && echo PASS`
+  - **Done when**: Dev server running and health endpoint returns 200
+  - **Commit**: None
+
+- [ ] VE2 [VERIFY] E2E check: run critical flow verification
+  - **Do**:
+    1. Run critical flow check: `{{critical_flow_cmd}}`
+    2. Verify output matches expected behavior
+  - **Verify**: `{{critical_flow_cmd}} && echo PASS`
+  - **Done when**: Critical user flow completes successfully against running server
+  - **Commit**: None
+
+- [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
+  - **Do**:
+    1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
+    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`
+    3. Remove PID file: `rm -f /tmp/ve-pids.txt`
+    4. Verify port free: `! lsof -ti :{{port}}`
+  - **Verify**: `! lsof -ti :{{port}} && echo PASS`
+  - **Done when**: No processes on port {{port}}, PID file removed
+  - **Commit**: None
+
 - [ ] 4.3 Merge after approval (optional - only if explicitly requested)
   - **Do**: Merge PR after approval and CI green
-  - **Verify**: `gh pr merge --auto` or manual merge
+  - **Verify**: `gh pr merge --auto` or merge via GitHub UI
   - **Done when**: Changes in main branch
   - **Note**: Do NOT auto-merge unless user explicitly requests it
 
@@ -277,4 +440,149 @@ EOF
 
 ```
 Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality) → Phase 5 (PR Lifecycle)
+```
+
+<!-- ============================================================ -->
+<!-- TDD WORKFLOW (use when Intent = TRIVIAL/REFACTOR/MID_SIZED)  -->
+<!-- ============================================================ -->
+
+<!-- When generating tasks for a non-greenfield spec, use these TDD phases instead of the POC phases above -->
+
+## Phase 1: Red-Green-Yellow Cycles
+
+Focus: Test-driven implementation. Every change starts with a failing test.
+
+- [ ] 1.1 [RED] Failing test: {{expected behavior A}}
+  - **Do**:
+    1. Write test asserting {{expected behavior}}
+    2. Run test to confirm it fails with expected assertion error
+  - **Files**: {{test file path}}
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `{{test cmd}} -- --grep "{{test name}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for {{behavior}}`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Component A_
+
+- [ ] 1.2 [GREEN] Pass test: {{minimal implementation A}}
+  - **Do**:
+    1. Write minimum code to make the failing test pass
+    2. Do NOT refactor, do NOT add extras
+  - **Files**: {{impl file path}}
+  - **Done when**: Previously failing test now passes
+  - **Verify**: `{{test cmd}} -- --grep "{{test name}}"`
+  - **Commit**: `feat(scope): green - implement {{behavior}}`
+  - _Requirements: FR-1, AC-1.1_
+  - _Design: Component A_
+
+- [ ] 1.3 [YELLOW] Refactor: {{cleanup A}}
+  - **Do**:
+    1. Refactor implementation while keeping all tests green
+    2. Improve naming, extract helpers, remove duplication
+  - **Files**: {{impl file, test file if needed}}
+  - **Done when**: Code is clean AND all tests still pass
+  - **Verify**: `{{test cmd}} && {{lint cmd}}`
+  - **Commit**: `refactor(scope): yellow - clean up {{component}}`
+
+- [ ] 1.4 [VERIFY] Quality checkpoint: {{lint cmd}} && {{typecheck cmd}} && {{test cmd}}
+  - **Do**: Run quality commands and verify all pass
+  - **Verify**: All commands exit 0
+  - **Done when**: No lint errors, no type errors, all tests pass
+  - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
+
+<!-- [P] is valid for independent [RED] tests, but NOT within a single R-G-Y triplet -->
+<!-- Adjacent [RED] tests for independent behaviors can be [P] since they don't depend on each other -->
+- [ ] 1.5 [P] [RED] Failing test: {{expected behavior B}}
+  - **Do**:
+    1. Write test asserting {{expected behavior B}}
+    2. Run test to confirm it fails with expected assertion error
+  - **Files**: {{test file path B}}
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `{{test cmd}} -- --grep "{{test name B}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for {{behavior B}}`
+  - _Requirements: FR-2, AC-2.1_
+  - _Design: Component B_
+
+- [ ] 1.6 [P] [RED] Failing test: {{expected behavior C}}
+  - **Do**:
+    1. Write test asserting {{expected behavior C}}
+    2. Run test to confirm it fails with expected assertion error
+  - **Files**: {{test file path C}}
+  - **Done when**: Test exists AND fails with expected assertion error
+  - **Verify**: `{{test cmd}} -- --grep "{{test name C}}" 2>&1 | grep -q "FAIL\|fail\|Error" && echo RED_PASS`
+  - **Commit**: `test(scope): red - failing test for {{behavior C}}`
+  - _Requirements: FR-3, AC-3.1_
+  - _Design: Component C_
+
+- [ ] 1.7 ...continue with [GREEN] for each, then next TDD triplet...
+
+## Phase 2: Additional Testing
+
+Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
+
+- [ ] 2.1 Integration tests for {{component interaction}}
+  - **Do**: Create integration test at {{path}}
+  - **Files**: {{test file path}}
+  - **Done when**: Integration points tested across components
+  - **Verify**: {{test cmd}} passes
+  - **Commit**: `test(scope): add integration tests for {{component}}`
+  - _Design: Test Strategy_
+
+- [ ] 2.2 E2E tests (if UI)
+  - **Do**: Create E2E test at {{path}}
+  - **Files**: {{test file path}}
+  - **Done when**: User flow tested end-to-end
+  - **Verify**: {{e2e cmd}} passes
+  - **Commit**: `test(scope): add e2e tests`
+  - _Requirements: US-1_
+
+- [ ] 2.3 [VERIFY] Quality checkpoint: {{lint cmd}} && {{typecheck cmd}} && {{test cmd}}
+  - **Do**: Run all quality commands
+  - **Verify**: All commands exit 0
+  - **Done when**: All checks pass
+  - **Commit**: `chore(scope): pass quality checkpoint` (if fixes needed)
+
+## Phase 3: Quality Gates
+
+> (Same structure as POC Phase 4 above)
+
+<!-- VE Tasks: VE1 (startup), VE2 (check), VE3 (cleanup) — generated from research.md Verification Tooling section -->
+
+- [ ] VE1 [VERIFY] E2E startup: launch dev server and verify health
+  - **Do**:
+    1. Start dev server: `{{dev_cmd}}` (background, save PID to /tmp/ve-pids.txt)
+    2. Wait for server ready: poll `{{health_endpoint}}` on port `{{port}}` until 200 (timeout 30s)
+  - **Verify**: `curl -sf {{health_endpoint}} -o /dev/null && echo PASS`
+  - **Done when**: Dev server running and health endpoint returns 200
+  - **Commit**: None
+
+- [ ] VE2 [VERIFY] E2E check: run critical flow verification
+  - **Do**:
+    1. Run critical flow check: `{{critical_flow_cmd}}`
+    2. Verify output matches expected behavior
+  - **Verify**: `{{critical_flow_cmd}} && echo PASS`
+  - **Done when**: Critical user flow completes successfully against running server
+  - **Commit**: None
+
+- [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
+  - **Do**:
+    1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
+    2. Fallback port cleanup: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`
+    3. Remove PID file: `rm -f /tmp/ve-pids.txt`
+    4. Verify port free: `! lsof -ti :{{port}}`
+  - **Verify**: `! lsof -ti :{{port}} && echo PASS`
+  - **Done when**: No processes on port {{port}}, PID file removed
+  - **Commit**: None
+
+## Phase 4: PR Lifecycle (Continuous Validation)
+
+> (Same structure as POC Phase 5 above)
+
+## Notes
+
+- **TDD approach**: All implementation driven by failing tests first
+
+## Dependencies
+
+```
+Phase 1 (TDD Cycles) → Phase 2 (Additional Tests) → Phase 3 (Quality) → Phase 4 (PR Lifecycle)
 ```

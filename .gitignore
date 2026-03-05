@@ -31,3 +31,6 @@ Thumbs.db
 
 # Test fixtures
 test-ac-*/
+
+# Claude
+.claude/worktrees/**

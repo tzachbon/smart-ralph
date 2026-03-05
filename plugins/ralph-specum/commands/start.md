@@ -1,221 +1,269 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
-argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>]
-allowed-tools: [Read, Write, Bash, Task, AskUserQuestion]
+argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>] [--tasks-size fine|coarse]
+allowed-tools: "*"
 ---
 
-# Start
+# Smart Start
 
 Smart entry point for ralph-specum. Detects whether to create a new spec or resume an existing one.
 
-## Branch Management (FIRST STEP)
+## Checklist
+
+Create a task for each item and complete in order:
+
+1. **Handle branch** -- check git branch, create/switch if needed
+2. **Parse input** -- extract name, goal, flags from $ARGUMENTS
+3. **Skill Discovery (Pass 1)** -- detect required skills and capabilities
+4. **Classify intent** -- determine what user wants (new spec, resume, quick mode)
+5. **Scan existing specs** -- find matching or related specs
+6. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
+
+## Step 1: Branch Management (FIRST STEP)
 
 <mandatory>
 Before creating any files or directories, check the current git branch and handle appropriately.
 </mandatory>
 
-### Step 1: Check Current Branch
+Read `${CLAUDE_PLUGIN_ROOT}/references/branch-management.md` and follow the full branch decision logic.
+
+**Summary**: Checks current branch, determines if on default branch (main/master), and prompts user for branch strategy (new branch, worktree, or continue). In quick mode, auto-creates branch on default or stays on current. If worktree chosen, STOP here -- user must cd to worktree first.
+
+## Step 2: Parse Input and Classify Intent
+
+Read `${CLAUDE_PLUGIN_ROOT}/references/intent-classification.md` and follow the detection logic.
+
+**Summary**: Extracts name, goal, and flags (--fresh, --quick, --commit-spec, --no-commit-spec, --specs-dir, --tasks-size) from $ARGUMENTS. Classifies whether this is a new spec, resume, or quick mode. Determines commit spec behavior. Routes to the appropriate flow below.
+
+### Quick Mode Check
+
+If `--quick` flag detected in $ARGUMENTS, skip to **Step 5: Quick Mode Flow**.
+
+## Step 3: Scan Existing Specs
+
+Read `${CLAUDE_PLUGIN_ROOT}/references/spec-scanner.md` and follow the scanning algorithm and index hint logic.
+
+<mandatory>
+**Skip spec scanner and index hint if --quick flag detected in $ARGUMENTS.**
+</mandatory>
+
+**Summary**: Scans ./specs/ directory (and all configured specs_dirs) for related specs using keyword matching. Displays related specs with relevance scores. Shows index hint if codebase indexing not yet done. Stores relatedSpecs in .ralph-state.json for use during interview.
+
+## Step 3.5: Epic Detection
+
+Check if there is an active epic:
 
 ```bash
-git branch --show-current
+EPIC_FILE="./specs/.current-epic"
+if [ -f "$EPIC_FILE" ]; then
+  EPIC_NAME=$(cat "$EPIC_FILE" | tr -d '[:space:]')
+  # Validate kebab-case to prevent path injection
+  if [[ "$EPIC_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+    EPIC_STATE="./specs/_epics/$EPIC_NAME/.epic-state.json"
+  else
+    echo "Warning: Invalid epic name '$EPIC_NAME' in .current-epic, ignoring"
+    EPIC_NAME=""
+    EPIC_STATE=""
+  fi
+fi
 ```
 
-### Step 2: Determine Default Branch
+**If active epic exists AND no specific spec name was provided in $ARGUMENTS**:
+1. Read `.epic-state.json`
+2. First check for any spec with status "in_progress" -- if found, suggest resuming it
+3. Otherwise find specs with status "pending" whose dependencies are all "completed"
+4. Display brief epic status:
+   ```text
+   Active epic: $EPIC_NAME (N/M specs complete)
+   Next unblocked: <spec-name> -- <goal>
+   ```
+5. Ask user: "Start this spec, or work on something else?"
+   - If user accepts: set `name` and `goal` from the epic's spec definition, set `epicName` in context, continue to Step 4 (New Flow) with pre-populated values
+   - If user declines: continue normal Step 4 routing
 
-Check which is the default branch:
-```bash
-git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@'
+**If no active epic AND goal appears complex** (multiple distinct components, cross-cutting concerns, user mentions "big" or "large"):
+- Suggest: "This looks like it might need multiple specs. Want to run `/triage` instead?"
+- If user accepts: invoke `/ralph-specum:triage` with no positional args and let triage collect epic-name + goal interactively. STOP.
+- If user declines: continue normal Step 4 routing.
+
+## Step 4: Route to Action
+
+Based on detection logic from Step 2:
+
+### Resume Flow
+
+1. Read `$specPath/.ralph-state.json`
+2. If no state file -- check which files exist, determine last phase, ask "Continue or restart?"
+3. If state file exists -- read phase/taskIndex, show brief status, continue from current phase
+
+**Status Display:**
+```text
+Resuming: $name
+Phase: $phase
+Progress: $completed/$total tasks complete
+Current: $currentTask
+
+Continuing...
 ```
 
-If that fails, assume `main` or `master` (check which exists):
-```bash
-git rev-parse --verify origin/main 2>/dev/null && echo "main" || echo "master"
-```
+**Resume by Phase:**
 
-### Step 3: Branch Decision Logic
+| Phase | Action |
+|-------|--------|
+| research | Create research team, spawn parallel teammates, merge results |
+| requirements | Invoke product-manager agent |
+| design | Invoke architect-reviewer agent |
+| tasks | Invoke task-planner agent |
+| execution | Invoke spec-executor for current task |
+
+### New Flow
+
+1. If no name provided, ask: "What should we call this spec?" (validates kebab-case)
+2. If no goal provided, ask: "What is the goal? Describe what you want to build."
+3. Determine spec directory:
+   ```text
+   specsDir = (--specs-dir if valid) OR (interview response) OR ralph_get_default_dir()
+   basePath = "$specsDir/$name"
+   ```
+4. Create spec directory: `mkdir -p "$basePath"`
+5. Update .current-spec (bare name for default dir, full path for non-default)
+6. Ensure gitignore entries for specs/.current-spec, specs/.current-epic, and **/.progress.md
+7. Initialize `.ralph-state.json`:
+   ```json
+   {
+     "source": "spec", "name": "$name", "basePath": "$basePath",
+     "phase": "research", "taskIndex": 0, "totalTasks": 0,
+     "taskIteration": 1, "maxTaskIterations": 5,
+     "globalIteration": 1, "maxGlobalIterations": 100,
+     "commitSpec": true, "quickMode": false,
+     "discoveredSkills": []
+   }
+   ```
+   If this spec was suggested by an active epic, also include:
+   ```json
+   "epicName": "$EPIC_NAME"
+   ```
+   in the initial state, and pre-populate the goal and acceptance criteria from `epic.md`.
+
+   **`--tasks-size` handling**: If `--tasks-size` flag is present in `$ARGUMENTS`:
+   - If value is `fine` or `coarse`: add `"granularity": "<value>"` to the JSON above
+   - If value is invalid (not `fine` or `coarse`): warn the user (`⚠️ Invalid --tasks-size value "<value>", defaulting to fine`) and add `"granularity": "fine"`
+   - If `--tasks-size` flag is absent: omit the `granularity` field entirely (do not add it)
+8. Create `.progress.md` with goal
+9. **Skill Discovery Pass 1** -- Scan all skill files and match against the goal text:
+   1. Scan SKILL.md files from all skill paths (collect all skills before matching):
+      - **Plugin skills**: `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` → invoked as `Skill({ skill: "ralph-specum:<name>" })`
+      - **Project skills**: `.agents/skills/*/SKILL.md` → invoked as `Skill({ skill: "<name>" })`
+      - **Claude skills**: `.claude/skills/*/SKILL.md` → invoked as `Skill({ skill: "<name>" })`
+
+      For each file found, read its YAML frontmatter (`name`, `description` fields):
+      - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
+      - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
+   2. Determine **context text**: the goal text only (from Step 2)
+   3. For each skill, determine relevance using **semantic judgment**:
+      - Read the skill's `name` and `description`
+      - Ask: is this skill conceptually relevant to the goal?
+      - Use domain knowledge — e.g., "building a UI" relates to React/CSS/component skills even without those words appearing; "authentication" relates to JWT/OAuth skills; "data persistence" relates to database skills
+      - **Err on the side of invoking**: if there is a reasonable conceptual connection, treat as a match
+      - Skip only when there is clearly no plausible relationship to the goal's domain
+   4. If skill is relevant AND not already in `discoveredSkills` with `invoked: true`:
+      - Invoke using the format for the source path (plugin vs project/claude)
+      - On success: add `{ name, source: "<path>", matchedAt: "start", invoked: true }` to `discoveredSkills`
+      - On failure: set `invoked: false` -- add `{ name, source: "<path>", matchedAt: "start", invoked: false }`, log warning, continue
+   5. If no skills match across all scanned skills: log `- No skills matched`
+   6. Update `.ralph-state.json` with updated `discoveredSkills` array
+   7. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+      ```markdown
+      ## Skill Discovery
+      - **<skill-name>** (<source>): matched (reason: <brief rationale>)
+      - **<skill-name>** (<source>): no match
+      - **<skill-name>** (<source>): skipped (unreadable)
+      - **<skill-name>** (<source>): skipped (no description)
+      ```
+      If no skills match: `- No skills matched`
+10. Update Spec Index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
+11. **Goal Interview** -- Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and follow brainstorming dialogue
+12. **Team Research Phase** -- Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` and follow the dispatch pattern
+13. **Skill Discovery Pass 2 (Post-Research Retry)** -- Re-scan skills with enriched context after research completes:
+
+    ### Skill Discovery Pass 2
+
+    Scan all skill files and match against goal + research context:
+
+    1. Scan SKILL.md files from all skill paths (collect all skills before matching):
+       - **Plugin skills**: `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` → invoked as `Skill({ skill: "ralph-specum:<name>" })`
+       - **Project skills**: `.agents/skills/*/SKILL.md` → invoked as `Skill({ skill: "<name>" })`
+       - **Claude skills**: `.claude/skills/*/SKILL.md` → invoked as `Skill({ skill: "<name>" })`
+
+       For each file found, read its YAML frontmatter (`name`, `description` fields):
+       - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
+       - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
+    2. Determine **context text**: goal text + the **Executive Summary** section from `research.md`
+    3. For each skill not already invoked, determine relevance using **semantic judgment**:
+       - Read the skill's `name` and `description`
+       - Ask: is this skill conceptually relevant to the goal or the research findings?
+       - Use domain knowledge — e.g., research mentioning "real-time updates" relates to WebSocket/SSE skills; "performance bottlenecks" relates to caching/optimization skills
+       - **Err on the side of invoking**: if there is a reasonable conceptual connection, treat as a match
+       - Skip only when there is clearly no plausible relationship to the goal's domain
+    4. If skill is relevant AND not already in `discoveredSkills` with `invoked: true`:
+       - Invoke using the format for the source path (plugin vs project/claude)
+       - On success: add `{ name, source: "<path>", matchedAt: "post-research", invoked: true }` to `discoveredSkills`
+       - On failure: set `invoked: false` -- add `{ name, source: "<path>", matchedAt: "post-research", invoked: false }`, log warning, continue
+    5. If no skills match across all scanned skills: log `- No new skills matched`
+    6. Update `.ralph-state.json` with updated `discoveredSkills` array
+    7. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
+       ```markdown
+       ### Post-Research Retry
+       - **<skill-name>** (<source>): matched (reason: <brief rationale>)
+       - **<skill-name>** (<source>): no match (already invoked)
+       - **<skill-name>** (<source>): skipped (unreadable)
+       - **<skill-name>** (<source>): skipped (no description)
+       ```
+       If no new skills match: `- No new skills matched`
+
+14. **STOP** -- After merge and state update (awaitingApproval=true), display walkthrough and wait for user
+
+### Research Walkthrough (Normal Mode Only)
+
+<mandatory>
+**WALKTHROUGH IS REQUIRED IN NORMAL MODE - DO NOT SKIP.**
+
+After research.md is created, display:
 
 ```text
-1. Get current branch name
-   |
-   +-- ON DEFAULT BRANCH (main/master):
-   |   |
-   |   +-- Ask user for branch strategy:
-   |   |   "Starting new spec work. How would you like to handle branching?"
-   |   |   1. Create branch in current directory (git checkout -b)
-   |   |   2. Create git worktree (separate directory)
-   |   |
-   |   +-- If user chooses 1 (current directory):
-   |   |   - Generate branch name from spec name: feat/$specName
-   |   |   - If spec name not yet known, use temp name: feat/spec-work-<timestamp>
-   |   |   - Create and switch: git checkout -b <branch-name>
-   |   |   - Inform user: "Created branch '<branch-name>' for this work"
-   |   |   - Suggest: "Run /ralph-specum:research to start the research phase."
-   |   |
-   |   +-- If user chooses 2 (worktree):
-   |   |   - Generate branch name from spec name: feat/$specName
-   |   |   - Determine worktree path: ../<repo-name>-<spec-name> or prompt user
-   |   |   - Create worktree: git worktree add <path> -b <branch-name>
-   |   |   - Inform user: "Created worktree at '<path>' on branch '<branch-name>'"
-   |   |   - IMPORTANT: Suggest user to cd to worktree and resume conversation there:
-   |   |     "For best results, cd to '<path>' and start a new Claude Code session from there."
-   |   |     "Then run /ralph-specum:research to begin."
-   |   |   - STOP HERE - do not continue to Parse Arguments (user needs to switch directories)
-   |   |
-   |   +-- Continue to Parse Arguments
-   |
-   +-- ON NON-DEFAULT BRANCH (feature branch):
-       |
-       +-- Ask user for preference:
-       |   "You are currently on branch '<current-branch>'.
-       |    Would you like to:
-       |    1. Continue working on this branch
-       |    2. Create a new branch in current directory
-       |    3. Create git worktree (separate directory)"
-       |
-       +-- If user chooses 1 (continue):
-       |   - Stay on current branch
-       |   - Suggest: "Run /ralph-specum:research to start the research phase."
-       |   - Continue to Parse Arguments
-       |
-       +-- If user chooses 2 (new branch):
-       |   - Generate branch name from spec name: feat/$specName
-       |   - If spec name not yet known, use temp name: feat/spec-work-<timestamp>
-       |   - Create and switch: git checkout -b <branch-name>
-       |   - Inform user: "Created branch '<branch-name>' for this work"
-       |   - Suggest: "Run /ralph-specum:research to start the research phase."
-       |   - Continue to Parse Arguments
-       |
-       +-- If user chooses 3 (worktree):
-           - Generate branch name from spec name: feat/$specName
-           - Determine worktree path: ../<repo-name>-<spec-name> or prompt user
-           - Create worktree: git worktree add <path> -b <branch-name>
-           - Inform user: "Created worktree at '<path>' on branch '<branch-name>'"
-           - IMPORTANT: Suggest user to cd to worktree and resume conversation there:
-             "For best results, cd to '<path>' and start a new Claude Code session from there."
-             "Then run /ralph-specum:research to begin."
-           - STOP HERE - do not continue to Parse Arguments (user needs to switch directories)
+Research complete for '$name'.
+Output: $basePath/research.md
+
+## What I Found
+
+**Summary**: [1-2 sentences from Executive Summary]
+
+**Key Recommendations**:
+1. [First recommendation]
+2. [Second recommendation]
+3. [Third recommendation]
+
+**Feasibility**: [High/Medium/Low] | **Risk**: [High/Medium/Low] | **Effort**: [S/M/L/XL]
 ```
 
-### Branch Naming Convention
+Then STOP. Output: `-> Next: Run /ralph-specum:requirements`
+End response immediately.
+</mandatory>
 
-When creating a new branch:
-- Use format: `feat/<spec-name>` (e.g., `feat/user-auth`)
-- If spec name contains special chars, sanitize to kebab-case
-- If branch already exists, append `-2`, `-3`, etc.
+## Step 5: Quick Mode Flow
 
-Example:
-```text
-Spec name: user-auth
-Branch: feat/user-auth
+Read `${CLAUDE_PLUGIN_ROOT}/references/quick-mode.md` and follow the full quick mode execution sequence.
 
-If feat/user-auth exists:
-Branch: feat/user-auth-2
-```
+**Summary**: Validates input, infers name, creates spec directory, initializes state with quickMode=true, then runs all phases sequentially (research, requirements, design, tasks) delegating to subagents with Quick Mode Directive. Each artifact gets a review loop (max 3 iterations). After all artifacts generated, transitions to execution and invokes spec-executor for task 1.
 
-### Worktree Details
-
-When user chooses worktree option:
-
-**State files copied to worktree:**
-- `$DEFAULT_SPECS_DIR/.current-spec` - Active spec name/path pointer
-- `$SPEC_PATH/.ralph-state.json` - Loop state (phase, taskIndex, iterations)
-- `$SPEC_PATH/.progress.md` - Progress tracking and learnings
-
-**Note**: The spec may be in any configured specs_dir, not just `./specs/`. Use `ralph_resolve_current()` to get the full spec path.
-
-These files are copied when:
-1. The worktree is created via `git worktree add`
-2. A spec is currently active (resolved via `ralph_resolve_current()`)
-3. The source files exist in the main worktree
-
-Copy uses non-overwrite semantics (skips if file already exists in target).
-
-```bash
-# Get repo name for path suggestion
-REPO_NAME=$(basename $(git rev-parse --show-toplevel))
-
-# Get default specs dir and resolve current spec path using path resolver
-DEFAULT_SPECS_DIR=$(ralph_get_default_dir)  # e.g., "./specs"
-SPEC_PATH=""
-SPEC_NAME=""
-
-# Resolve current spec (handles both bare names and full paths)
-if SPEC_PATH=$(ralph_resolve_current 2>/dev/null); then
-    SPEC_NAME=$(basename "$SPEC_PATH")
-fi
-
-# Default worktree path
-WORKTREE_PATH="../${REPO_NAME}-${SPEC_NAME}"
-
-# Create worktree with new branch
-git worktree add "$WORKTREE_PATH" -b "feat/${SPEC_NAME}"
-
-# Copy spec state files to worktree (failures are warnings, not errors)
-# Note: Always copy .current-spec from default specs dir
-if [ -d "$DEFAULT_SPECS_DIR" ]; then
-    mkdir -p "$WORKTREE_PATH/$DEFAULT_SPECS_DIR" || echo "Warning: Failed to create specs directory in worktree"
-
-    # Copy .current-spec if exists (don't overwrite existing)
-    if [ -f "$DEFAULT_SPECS_DIR/.current-spec" ] && [ ! -f "$WORKTREE_PATH/$DEFAULT_SPECS_DIR/.current-spec" ]; then
-        cp "$DEFAULT_SPECS_DIR/.current-spec" "$WORKTREE_PATH/$DEFAULT_SPECS_DIR/.current-spec" || echo "Warning: Failed to copy .current-spec to worktree"
-    fi
-fi
-
-# If spec path resolved, copy spec state files from that path
-# (may be in non-default specs dir like ./packages/api/specs/my-feature)
-if [ -n "$SPEC_PATH" ] && [ -d "$SPEC_PATH" ]; then
-    # Create parent directory structure in worktree
-    SPEC_PARENT_DIR=$(dirname "$SPEC_PATH")
-    mkdir -p "$WORKTREE_PATH/$SPEC_PARENT_DIR" || echo "Warning: Failed to create spec parent directory in worktree"
-    mkdir -p "$WORKTREE_PATH/$SPEC_PATH" || echo "Warning: Failed to create spec directory in worktree"
-
-    # Copy state files (don't overwrite existing)
-    if [ -f "$SPEC_PATH/.ralph-state.json" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.ralph-state.json" ]; then
-        cp "$SPEC_PATH/.ralph-state.json" "$WORKTREE_PATH/$SPEC_PATH/" || echo "Warning: Failed to copy .ralph-state.json to worktree"
-    fi
-
-    if [ -f "$SPEC_PATH/.progress.md" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.progress.md" ]; then
-        cp "$SPEC_PATH/.progress.md" "$WORKTREE_PATH/$SPEC_PATH/" || echo "Warning: Failed to copy .progress.md to worktree"
-    fi
-fi
-```
-
-After worktree creation:
-- Inform user of the worktree path
-- IMPORTANT: Output clear guidance for the user:
-  ```text
-  Created worktree at '<path>' on branch '<branch-name>'
-  Spec state files copied to worktree.
-
-  For best results, cd to the worktree directory and start a new Claude Code session from there:
-
-    cd <path>
-    claude
-
-  Then run /ralph-specum:research to begin the research phase.
-  ```
-- STOP the command here - do not continue to Parse Arguments or create spec files
-- The user needs to switch directories first to work in the worktree
-- To clean up later: `git worktree remove <path>`
-
-### Quick Mode Branch Handling
-
-In `--quick` mode, still perform branch check but skip the user prompt for non-default branches:
-- If on default branch: auto-create feature branch in current directory (no worktree prompt in quick mode)
-- If on non-default branch: stay on current branch (no prompt, quick mode is non-interactive)
-
-## Quick Mode Execution
-
-In quick mode (`--quick`), execution uses the self-contained stop-hook loop for autonomous task completion.
-
-After generating spec artifacts in quick mode, the stop-hook automatically continues execution by delegating tasks to spec-executor until `ALL_TASKS_COMPLETE` is output.
+**IMPORTANT**: Each phase MUST be tracked as a native Claude task via `TaskCreate` / `TaskUpdate`. Create a task at phase start (with `activeForm` for spinner text), mark it completed when the phase finishes. This provides visible progress in the UI. See quick-mode.md steps 11-15 for the exact pattern.
 
 <mandatory>
 ## CRITICAL: Delegation Requirement
 
 **YOU ARE A COORDINATOR, NOT AN IMPLEMENTER.**
 
-You MUST delegate ALL substantive work to subagents. This is NON-NEGOTIABLE regardless of mode (normal or quick).
+You MUST delegate ALL substantive work to subagents. This is NON-NEGOTIABLE regardless of mode.
 
 **NEVER do any of these yourself:**
 - Write code or modify source files
@@ -225,27 +273,29 @@ You MUST delegate ALL substantive work to subagents. This is NON-NEGOTIABLE rega
 - Run verification commands as part of task execution
 
 **ALWAYS delegate to the appropriate subagent:**
+
 | Work Type | Subagent |
 |-----------|----------|
-| Research | `research-analyst` |
+| Research | Research Team (multiple parallel teammates) |
 | Requirements | `product-manager` |
 | Design | `architect-reviewer` |
 | Task Planning | `task-planner` |
-| Artifact Generation (quick mode) | `plan-synthesizer` |
+| Artifact Review | `spec-reviewer` |
 | Task Execution | `spec-executor` |
 
-Quick mode does NOT exempt you from delegation - it only skips interactive phases.
+Quick mode does NOT exempt you from delegation -- it only skips interactive phases.
 </mandatory>
 
 <mandatory>
 ## CRITICAL: Stop After Each Subagent (Normal Mode)
 
-In normal mode (no `--quick` flag), you MUST STOP your response after each subagent completes.
+After ANY subagent returns in normal mode (no `--quick` flag):
 
-**After invoking a subagent via Task tool:**
 1. Wait for subagent to return
-2. Output a brief status message (e.g., "Research phase complete. Run /ralph-specum:requirements to continue.")
-3. **END YOUR RESPONSE IMMEDIATELY**
+2. Read `$basePath/.ralph-state.json`
+3. If `awaitingApproval: true`: STOP IMMEDIATELY
+4. Output a brief status message
+5. **END YOUR RESPONSE**
 
 **DO NOT:**
 - Invoke another subagent in the same response
@@ -257,944 +307,11 @@ In normal mode (no `--quick` flag), you MUST STOP your response after each subag
 Exception: `--quick` mode runs all phases without stopping.
 </mandatory>
 
+## Quick Mode Execution (Stop-Hook)
 
-## Parse Arguments
+In quick mode, after generating spec artifacts, execution uses the self-contained stop-hook loop for autonomous task completion. The stop-hook automatically continues by delegating tasks to spec-executor until `ALL_TASKS_COMPLETE` is output.
 
-From `$ARGUMENTS`, extract:
-- **name**: Optional spec name (kebab-case)
-- **goal**: Everything after the name except flags (optional)
-- **--fresh**: Force new spec without prompting if one exists
-- **--quick**: Skip all spec phases, auto-generate artifacts, start execution immediately
-- **--commit-spec**: Commit and push spec files after generation (default: true in normal mode, false in quick mode)
-- **--no-commit-spec**: Explicitly disable committing spec files
-- **--specs-dir <path>**: Create spec in specified directory (must be in configured specs_dirs array)
-
-### Multi-Directory Resolution
-
-This command uses the path resolver for multi-directory support:
-
-```bash
-# Source path resolver (conceptually - commands don't execute bash directly)
-# These functions are available via the path-resolver.sh helper:
-
-ralph_get_specs_dirs()    # Returns all configured spec directories
-ralph_get_default_dir()   # Returns first specs_dir (default for new specs)
-ralph_find_spec(name)     # Find spec by name, returns full path
-ralph_list_specs()        # List all specs as "name|path" pairs
-ralph_resolve_current()   # Resolve .current-spec to full path
-```
-
-### --specs-dir Validation
-
-When `--specs-dir` is provided:
-1. Call `ralph_get_specs_dirs()` to get configured directories
-2. Check if provided path matches one of the configured directories
-3. If NOT in configured list: Error "Invalid --specs-dir: '$path' is not in configured specs_dirs"
-4. If valid: Use this path as the spec root instead of default
-
-```text
---specs-dir Validation Logic:
-
-1. Extract --specs-dir value from $ARGUMENTS
-2. Get configured dirs: dirs = ralph_get_specs_dirs()
-3. Normalize paths (remove trailing slashes)
-4. Check: specsDir in dirs?
-   - YES: Use specsDir for spec creation
-   - NO: Error "Invalid --specs-dir: '$specsDir' is not in configured specs_dirs. Configured: $dirs"
-```
-
-### Commit Spec Flag Logic
-
-```text
-1. Check if --no-commit-spec in $ARGUMENTS → commitSpec = false
-2. Else if --commit-spec in $ARGUMENTS → commitSpec = true
-3. Else if --quick in $ARGUMENTS → commitSpec = false (quick mode default)
-4. Else → commitSpec = true (normal mode default)
-```
-
-### Spec Directory Resolution
-
-```text
-Spec Directory Logic:
-
-1. Check if --specs-dir in $ARGUMENTS
-   - YES: Validate against configured specs_dirs, use if valid
-   - NO: Use ralph_get_default_dir() (first configured dir, defaults to ./specs)
-
-2. Determine spec base path:
-   specsDir = validated --specs-dir OR ralph_get_default_dir()
-   basePath = "$specsDir/$name"
-
-3. For .current-spec:
-   - If specsDir == "./specs" (default): Write bare name
-   - If specsDir != "./specs" (non-default): Write full path "$specsDir/$name"
-```
-
-Examples:
-- `/ralph-specum:start` -> Auto-detect: resume active or ask for new
-- `/ralph-specum:start user-auth` -> Resume or create user-auth
-- `/ralph-specum:start user-auth Add OAuth2` -> Create user-auth with goal
-- `/ralph-specum:start user-auth --fresh` -> Force new, overwrite if exists
-- `/ralph-specum:start "Build auth with JWT" --quick` -> Quick mode with goal string
-- `/ralph-specum:start my-feature "Add logging" --quick` -> Quick mode with name+goal
-- `/ralph-specum:start ./my-plan.md --quick` -> Quick mode with file input
-- `/ralph-specum:start my-feature ./plan.md --quick` -> Quick mode with name+file
-- `/ralph-specum:start my-feature --quick` -> Quick mode using existing plan.md
-
-## Quick Mode Flow
-
-When `--quick` flag detected, bypass interactive spec phases and auto-generate all artifacts.
-
-### Quick Mode Input Detection
-
-Parse arguments before `--quick` flag and classify input type:
-
-```text
-Input Classification:
-
-1. TWO ARGS before --quick:
-   - First arg = spec name (must be kebab-case: ^[a-z0-9-]+$)
-   - Second arg = goal string OR file path
-   - Detect file path if: starts with "./" OR "/" OR ends with ".md"
-   - Examples:
-     - `my-feature "Add login" --quick` -> name=my-feature, goal="Add login"
-     - `my-feature ./plan.md --quick` -> name=my-feature, file=./plan.md
-
-2. ONE ARG before --quick:
-   a. FILE PATH: starts with "./" OR "/" OR ends with ".md"
-      - Read file content as plan
-      - Infer name from plan content
-      - Example: `./my-plan.md --quick` -> read file, infer name
-
-   b. KEBAB-CASE NAME: matches ^[a-z0-9-]+$
-      - Check if ./specs/$name/plan.md exists
-      - If exists: use plan.md content, name=$name
-      - If not exists: error "No plan.md found in ./specs/$name/. Provide goal: /ralph-specum:start $name 'your goal' --quick"
-      - Example: `my-feature --quick` -> check ./specs/my-feature/plan.md
-
-   c. GOAL STRING: anything else (contains spaces, uppercase, special chars)
-      - Use as goal content
-      - Infer name from goal
-      - Example: `"Build auth with JWT" --quick` -> goal, infer name
-
-3. ZERO ARGS with --quick:
-   - Error: "Quick mode requires a goal or plan file"
-```
-
-### File Reading
-
-When file path detected:
-1. Validate file exists using Read tool
-2. If not exists: error "File not found: $filePath"
-3. Read file content
-4. Strip frontmatter if present (content between --- markers at start)
-5. If content empty after stripping: error "Plan content is empty. Provide a goal or non-empty file."
-6. Use content as planContent
-
-### Existing Plan Check
-
-When kebab-case name provided without goal:
-1. Use `ralph_find_spec(name)` to locate existing spec
-2. If found: Check if `$specPath/plan.md` exists
-   - If plan.md exists: read content, use as planContent
-   - If plan.md not exists: error "No plan.md found in $specPath. Provide goal: /ralph-specum:start $name 'your goal' --quick"
-3. If not found: error "Spec '$name' not found. Provide goal: /ralph-specum:start $name 'your goal' --quick"
-
-### Name Inference
-
-If no explicit name provided, infer from goal:
-1. Take first 3 words of goal
-2. Convert to kebab-case (lowercase, spaces to hyphens)
-3. Truncate to max 30 characters
-4. Strip non-alphanumeric except hyphens
-
-Example: "Build authentication with JWT tokens" -> "build-authentication-with"
-
-### Quick Mode Execution
-
-<mandatory>
-**REMINDER: Even in quick mode, you MUST delegate ALL work to subagents.**
-- Artifact generation → delegate to `plan-synthesizer` via Task tool
-- Task execution → delegate to `spec-executor` via Task tool
-- You only handle: directory creation, state file writes, and coordination
-</mandatory>
-
-```text
-1. Validate input (non-empty goal/plan)
-   |
-2. Infer name from goal (if not provided)
-   |
-3. Determine spec directory using path resolver:
-   specsDir = (--specs-dir value if provided and valid) OR ralph_get_default_dir()
-   basePath = "$specsDir/$name"
-   |
-4. Create spec directory: mkdir -p "$basePath"
-   |
-4a. Ensure gitignore entries exist for spec state files:
-   - Add specs/.current-spec to .gitignore if not present
-   - Add **/.progress.md to .gitignore if not present
-   |
-5. Write .ralph-state.json (note: basePath uses resolved path):
-   {
-     "source": "plan",
-     "name": "$name",
-     "basePath": "$basePath",
-     "phase": "tasks",
-     "taskIndex": 0,
-     "totalTasks": 0,
-     "taskIteration": 1,
-     "maxTaskIterations": 5,
-     "globalIteration": 1,
-     "maxGlobalIterations": 100,
-     "commitSpec": $commitSpec
-   }
-   |
-6. Write .progress.md with original goal
-   |
-7. Update .current-spec based on root directory:
-   defaultDir = ralph_get_default_dir()
-   if specsDir == defaultDir:
-       echo "$name" > "$defaultDir/.current-spec"     # Bare name for default root
-   else:
-       echo "$basePath" > "$defaultDir/.current-spec" # Full path for non-default root
-   |
-8. Invoke plan-synthesizer agent via Task tool:
-   Task: plan-synthesizer
-   Input: goal="$goal", basePath="$basePath"
-   |
-9. After generation completes:
-   - Update .ralph-state.json: phase="execution", taskIndex=0
-   - Read tasks.md to get totalTasks count
-   |
-9a. If commitSpec is true:
-   - Stage spec files: git add $basePath/research.md $basePath/requirements.md $basePath/design.md $basePath/tasks.md
-   - Commit: git commit -m "spec($name): add spec artifacts"
-   - Push: git push -u origin $(git branch --show-current)
-   |
-10. Display brief summary:
-   Quick mode: Created spec '$name' at $basePath
-   [If commitSpec: "Spec committed and pushed."]
-   Starting execution...
-   |
-11. Invoke spec-executor for task 1
-```
-
-### Quick Mode Validation
-
-Before creating the spec, validate all inputs:
-
-```text
-Validation Sequence:
-
-1. ZERO ARGS CHECK (if no args before --quick)
-   - Error: "Quick mode requires a goal or plan file"
-
-2. --specs-dir VALIDATION (if provided)
-   - Get configured dirs via ralph_get_specs_dirs()
-   - If --specs-dir value NOT in configured list:
-     - Error: "Invalid --specs-dir: '$path' is not in configured specs_dirs"
-   - If valid: Use as specsDir
-
-3. FILE NOT FOUND (if file path detected)
-   - If file not exists: "File not found: $filePath"
-
-4. EMPTY CONTENT CHECK
-   - If empty or whitespace only: "Plan content is empty. Provide a goal or non-empty file."
-
-5. PLAN TOO SHORT WARNING (< 10 words)
-   - If word count < 10: "Warning: Short plan may produce vague tasks"
-   - Continue with warning displayed
-
-6. NAME CONFLICT RESOLUTION
-   - specsDir = validated --specs-dir OR ralph_get_default_dir()
-   - If $specsDir/$name/ already exists:
-     - Append -2, -3, etc. until unique name found
-     - Display: "Created '$name-2' at $specsDir ($name already exists)"
-```
-
-### Atomic Rollback
-
-On generation failure after spec directory created:
-
-```text
-Rollback Procedure:
-
-1. CAPTURE FAILURE
-   - plan-synthesizer agent returns error or times out
-
-2. DELETE SPEC DIRECTORY
-   - rm -rf "./specs/$name"
-
-3. RESTORE .current-spec
-   - If previous spec was set, restore it
-
-4. DISPLAY ERROR
-   - "Generation failed: $errorReason. No spec created."
-```
-
-## Detection Logic
-
-```text
-1. Determine target specs directory:
-   - If --specs-dir provided: Use validated path
-   - Else: Use ralph_get_default_dir()
-   |
-2. Check if name provided in arguments
-   |
-   +-- Yes: Use ralph_find_spec(name) to check if spec exists
-   |   |
-   |   +-- Found + no --fresh: Ask "Resume '$name' or start fresh?"
-   |   |   +-- Resume: Go to resume flow (use found path)
-   |   |   +-- Fresh: Delete existing, go to new flow
-   |   |
-   |   +-- Found + --fresh: Delete existing, go to new flow
-   |   |
-   |   +-- Not found: Go to new flow (create in target specs dir)
-   |   |
-   |   +-- Ambiguous (exit 2): Show paths, ask user to specify
-   |
-   +-- No: Use ralph_resolve_current() to check active spec
-       |
-       +-- Has active spec: Go to resume flow (use resolved path)
-       |
-       +-- No active spec: Ask for name and goal, go to new flow
-```
-
-## Resume Flow
-
-1. Read `./specs/$name/.ralph-state.json`
-2. If no state file (completed or never started):
-   - Check what files exist (research.md, requirements.md, etc.)
-   - Determine last completed phase
-   - Ask: "Continue to next phase or restart?"
-3. If state file exists:
-   - Read current phase and task index
-   - Show brief status:
-     ```
-     Resuming '$name'
-     Phase: execution, Task 3/8
-     Last: "Add error handling"
-     ```
-   - Continue from current phase
-
-### Resume by Phase
-
-| Phase | Action |
-|-------|--------|
-| research | Invoke research-analyst agent |
-| requirements | Invoke product-manager agent |
-| design | Invoke architect-reviewer agent |
-| tasks | Invoke task-planner agent |
-| execution | Invoke spec-executor for current task |
-
-<mandatory>
-## CRITICAL: Stop After Subagent Completes
-
-After ANY subagent (research-analyst, product-manager, architect-reviewer, task-planner) returns, you MUST:
-
-1. **Read the state file**: `cat ./specs/$name/.ralph-state.json`
-2. **Check awaitingApproval**: If `awaitingApproval: true`, you MUST STOP IMMEDIATELY
-3. **Do NOT invoke the next phase** - the user must explicitly run the next command
-
-```text
-Subagent returns
-↓
-Read .ralph-state.json
-↓
-awaitingApproval == true?
-↓
-YES → STOP. Output: "Phase complete. Run /ralph-specum:<next> to continue."
-NO → Continue (only in quick mode where awaitingApproval is not set)
-```
-
-**This is NON-NEGOTIABLE in normal mode.** Each phase requires user approval before proceeding.
-
-The only exception is `--quick` mode, which skips approval between phases.
-</mandatory>
-
-## New Flow
-
-1. If no name provided, ask:
-   - "What should we call this spec?" (validates kebab-case)
-2. If no goal provided, ask:
-   - "What is the goal? Describe what you want to build."
-3. Determine spec directory using path resolver and interview response:
-   ```text
-   # Resolve target directory (priority order)
-   specsDir = (--specs-dir value if provided and valid)
-              OR (interview response specsDir if multi-dir was asked)
-              OR ralph_get_default_dir()
-   basePath = "$specsDir/$name"
-   ```
-4. Create spec directory: `mkdir -p "$basePath"`
-5. Update active spec based on root directory:
-   ```text
-   # Write to .current-spec
-   defaultDir = ralph_get_default_dir()
-   if specsDir == defaultDir:
-       echo "$name" > "$defaultDir/.current-spec"     # Bare name for default root
-   else:
-       echo "$basePath" > "$defaultDir/.current-spec" # Full path for non-default root
-   ```
-6. Ensure gitignore entries exist for spec state files:
-   ```bash
-   # Add .current-spec and .progress.md to .gitignore if not already present
-   if [ -f .gitignore ]; then
-     grep -q "specs/.current-spec" .gitignore || echo "specs/.current-spec" >> .gitignore
-     grep -q "\*\*/\.progress\.md" .gitignore || echo "**/.progress.md" >> .gitignore
-   else
-     echo "specs/.current-spec" > .gitignore
-     echo "**/.progress.md" >> .gitignore
-   fi
-   ```
-7. Initialize `.ralph-state.json` (note: basePath uses resolved path):
-   ```json
-   {
-     "source": "spec",
-     "name": "$name",
-     "basePath": "$basePath",
-     "phase": "research",
-     "taskIndex": 0,
-     "totalTasks": 0,
-     "taskIteration": 1,
-     "maxTaskIterations": 5,
-     "globalIteration": 1,
-     "maxGlobalIterations": 100,
-     "commitSpec": $commitSpec
-   }
-   ```
-8. Create `.progress.md` with goal
-9. **Update Spec Index**:
-   ```bash
-   # Update the spec index after creating the spec
-   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
-   ```
-10. **Goal Interview** (skip if --quick in $ARGUMENTS)
-11. Invoke research-analyst agent with goal interview context
-12. **STOP** - research-analyst sets awaitingApproval=true. Output status and wait for user to run `/ralph-specum:requirements`
-
-## Index Hint
-
-Before starting a new spec, check if codebase indexing exists. If not, show a helpful hint.
-
-<mandatory>
-**Skip index hint if --quick flag detected in $ARGUMENTS.**
-</mandatory>
-
-### Check Index Status
-
-```bash
-# Session guard (skip if already shown in this session)
-if [ -z "${RALPH_SPECUM_INDEX_HINT_SHOWN:-}" ]; then
-  # Check if specs/.index/ exists and has content
-  if [ ! -d "./specs/.index" ] || [ -z "$(ls -A ./specs/.index 2>/dev/null)" ]; then
-    # Index is empty or missing - show hint
-    SHOW_INDEX_HINT=true
-  else
-    # Index has content - don't show hint
-    SHOW_INDEX_HINT=false
-  fi
-else
-  # Already shown in this session - don't show again
-  SHOW_INDEX_HINT=false
-fi
-```
-
-### Display Hint
-
-If `SHOW_INDEX_HINT` is true, display the following hint before continuing and set `RALPH_SPECUM_INDEX_HINT_SHOWN=true` for this session:
-
-```text
-Tip: Run /ralph-specum:index to scan your codebase and create indexed specs.
-This helps the research phase find relevant existing code patterns and components.
-```
-
-After displaying the hint, export the session guard: `export RALPH_SPECUM_INDEX_HINT_SHOWN=1`
-
-**Note**: Only show this hint once per session. After displaying, continue with Spec Scanner.
-
-## Spec Scanner
-
-Before conducting the Goal Interview, scan existing specs to find related work. This helps surface prior context and avoid duplicate effort.
-
-<mandatory>
-**Skip spec scanner if --quick flag detected in $ARGUMENTS.**
-</mandatory>
-
-### Scan Steps
-
-```text
-1. List all specs across all configured directories using ralph_list_specs():
-   - Returns "name|path" pairs for each spec
-   - Searches all directories in ralph_get_specs_dirs()
-   - Exclude the current spec being created (if known)
-   - Exclude .index directory (handled separately in step 1b)
-   |
-1b. Scan indexed specs (if ./specs/.index/ exists):
-   - List component specs: ls ./specs/.index/components/*.md 2>/dev/null
-   - List external specs: ls ./specs/.index/external/*.md 2>/dev/null
-   - For each indexed spec:
-     - Read the file and extract "## Purpose" section (component) or "## Summary" section (external)
-     - Use the purpose/summary as the match text
-     - Mark as "indexed" type for display differentiation
-   |
-2. For each spec found (name|path pair):
-   - Read $path/.progress.md (using the full path from ralph_list_specs)
-   - Extract "Original Goal" section (line after "## Original Goal")
-   - If .progress.md doesn't exist, skip this spec
-   |
-3. Keyword matching:
-   - Extract keywords from current goal (split by spaces, lowercase)
-   - Remove common words: "the", "a", "an", "to", "for", "with", "and", "or"
-   - For each existing spec, count matching keywords with its Original Goal
-   - For each indexed spec, count matching keywords with its Purpose/Summary
-   - Score = number of matching keywords
-   |
-4. Rank and filter:
-   - Sort ALL specs (regular + indexed) by score (descending)
-   - Take top 5 specs with score > 0 (increased from 3 to accommodate indexed specs)
-   - If no matches found, skip display step
-   - Classify relevance: High (score >= 5), Medium (score 3-4), Low (score 1-2)
-   |
-5. Display related specs (if any found):
-   |
-   Related specs found:
-
-   Feature specs:
-   - spec-name-1 [High]: [first 50 chars of Original Goal]... [dir-path if non-default]
-   - spec-name-2 [Medium]: [first 50 chars of Original Goal]... [dir-path if non-default]
-
-   Indexed components (from specs/.index/components):
-   - auth-controller [High]: Handles authentication and session management...
-   - user-service [Medium]: User CRUD operations and validation...
-
-   Indexed external (from specs/.index/external):
-   - api-docs [Low]: External API documentation for...
-   |
-   This context may inform the interview questions.
-   |
-6. Store in state file:
-   - Update .ralph-state.json with relatedSpecs array:
-     {
-       ...existing state,
-       "relatedSpecs": [
-         {"name": "spec-name-1", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "High"},
-         {"name": "spec-name-2", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "Medium"},
-         {"name": "auth-controller", "path": "specs/.index/components", "goal": "Purpose text", "score": N, "type": "indexed-component", "relevance": "High"},
-         {"name": "api-docs", "path": "specs/.index/external", "goal": "Summary text", "score": N, "type": "indexed-external", "relevance": "Low"}
-       ]
-     }
-```
-
-### Keyword Extraction
-
-Extract meaningful keywords from the goal:
-
-```javascript
-// Pseudocode for keyword extraction
-function extractKeywords(text) {
-  const stopWords = ["the", "a", "an", "to", "for", "with", "and", "or", "is", "it", "this", "that", "be", "on", "in", "of"];
-  return text
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(word => word.length > 2)
-    .filter(word => !stopWords.includes(word));
-}
-```
-
-### Match Scoring
-
-Simple keyword overlap scoring:
-
-```javascript
-// Pseudocode for scoring
-function scoreMatch(currentGoalKeywords, existingGoalKeywords) {
-  let score = 0;
-  for (const keyword of currentGoalKeywords) {
-    if (existingGoalKeywords.includes(keyword)) {
-      score += 1;
-    }
-  }
-  return score;
-}
-```
-
-### Example Output
-
-```text
-Related specs found:
-- user-auth: Add OAuth2 authentication with JWT tokens...
-- api-refactor: Restructure API endpoints for better...
-- error-handling: Implement consistent error handling...
-
-This context may inform the interview questions.
-```
-
-### Usage in Interview
-
-After scanning, if related specs were found, you may reference them when asking clarifying questions. For example:
-- "I noticed you have a spec 'user-auth' for authentication. Does this new feature relate to or depend on that work?"
-- "There's an existing 'api-refactor' spec. Should this work integrate with those changes?"
-
-**For indexed specs**, reference them to understand existing codebase patterns:
-- "The indexed auth-controller component handles authentication. Should this feature extend that controller or create a new one?"
-- "I found an indexed external spec for your API documentation. Does this feature need to follow the patterns described there?"
-
-## Goal Interview (Pre-Research)
-
-<mandatory>
-**Skip interview if --quick flag detected in $ARGUMENTS.**
-
-If NOT quick mode, conduct goal interview using AskUserQuestion before research phase.
-</mandatory>
-
-### Quick Mode Check
-
-Check if `--quick` appears in `$ARGUMENTS`. If present, skip directly to "Invoke research-analyst".
-
-### Intent Classification
-
-Before asking interview questions, classify the user's goal to determine question depth.
-
-**Classification Logic:**
-
-Analyze the goal text for keywords to determine intent type:
-
-```text
-Intent Classification:
-
-1. TRIVIAL: Goal contains keywords like:
-   - "fix typo", "typo", "spelling"
-   - "small change", "minor"
-   - "quick", "simple", "tiny"
-   - "rename", "update text"
-   → Min questions: 1, Max questions: 2
-
-2. REFACTOR: Goal contains keywords like:
-   - "refactor", "restructure", "reorganize"
-   - "clean up", "cleanup", "simplify"
-   - "extract", "consolidate", "modularize"
-   - "improve code", "tech debt"
-   → Min questions: 3, Max questions: 5
-
-3. GREENFIELD: Goal contains keywords like:
-   - "new feature", "new system", "new module"
-   - "add", "build", "implement", "create"
-   - "integrate", "introduce"
-   - "from scratch"
-   → Min questions: 5, Max questions: 10
-
-4. MID_SIZED: Default if no clear match
-   → Min questions: 3, Max questions: 7
-```
-
-**Confidence Threshold:**
-
-| Match Count | Confidence | Action |
-|-------------|------------|--------|
-| 3+ keywords | High | Use matched category |
-| 1-2 keywords | Medium | Use matched category |
-| 0 keywords | Low | Default to MID_SIZED |
-
-**Question Count Rules:**
-- TRIVIAL: 1-2 questions (get essentials, move fast)
-- REFACTOR: 3-5 questions (understand scope and risks)
-- GREENFIELD: 5-10 questions (full context needed)
-- MID_SIZED: 3-7 questions (balanced approach)
-
-**Store Intent:**
-After classification, store the result in `.progress.md`:
-```markdown
-## Interview Format
-- Version: 1.0
-
-## Intent Classification
-- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
-- Confidence: [high|medium|low] ([N] keywords matched)
-- Min questions: [N]
-- Max questions: [N]
-- Keywords matched: [list of matched keywords]
-```
-
-### Question Count by Intent
-
-Intent classification determines the question count range, not which questions to ask. All goals use the same Goal Interview Question Pool (defined below), but the number of questions varies by intent:
-
-| Intent | Min Questions | Max Questions |
-|--------|---------------|---------------|
-| TRIVIAL | 1 | 2 |
-| REFACTOR | 3 | 5 |
-| GREENFIELD | 5 | 10 |
-| MID_SIZED | 3 | 7 |
-
-**Question Selection Logic:**
-
-```text
-1. Get intent from Intent Classification step
-2. Intent determines question COUNT, not which pool to use
-3. All goals use the Goal Interview Question Pool
-4. Ask Required questions first, then Optional questions
-5. Stop when:
-   - User signals completion (after minRequired reached)
-   - All questions asked (maxAllowed reached)
-   - User selects "No, let's proceed" on optional question
-```
-
-### Question Classification
-
-Before asking any question, classify it to determine the appropriate source for the answer.
-
-**Classification Matrix:**
-
-| Question Type | Source | Examples |
-|---------------|--------|----------|
-| Codebase fact | Explore agent | "What patterns exist?", "Where is X located?", "What dependencies are used?" |
-| User preference | AskUserQuestion | "What priority level?", "Which approach do you prefer?" |
-| Requirement | AskUserQuestion | "What must this feature do?", "What are the constraints?" |
-| Scope decision | AskUserQuestion | "Should this include X?", "What's in/out of scope?" |
-| Risk tolerance | AskUserQuestion | "How critical is backwards compatibility?" |
-| Constraint | AskUserQuestion | "Any performance requirements?", "Timeline constraints?" |
-
-<mandatory>
-**DO NOT ask user about codebase facts - use Explore agent instead.**
-
-Questions that should go to the user (AskUserQuestion):
-- Preference: "Which approach do you prefer?"
-- Requirement: "What must this feature accomplish?"
-- Scope: "Should this include feature X?"
-- Constraint: "Any performance/timeline constraints?"
-- Risk: "How important is backwards compatibility?"
-
-Questions that should use Explore agent (NOT AskUserQuestion):
-- Existing patterns: "How does the codebase handle X?"
-- File locations: "Where are the authentication modules?"
-- Dependencies: "What libraries are currently used for Y?"
-- Code conventions: "What naming patterns are used?"
-- Architecture: "How is the service layer structured?"
-
-**Before each interview question, check: Is this a codebase fact or user decision?**
-- Codebase fact → Use Explore agent to find the answer automatically
-- User decision → Ask via AskUserQuestion
-</mandatory>
-
-### Question Piping
-
-Before asking each question, replace `{var}` placeholders with values from `.progress.md` context.
-
-**Available Variables:**
-- `{goal}` - Original goal text from user
-- `{intent}` - Intent classification (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED)
-- `{problem}` - Problem description from Goal Interview
-- `{constraints}` - Constraints from Goal Interview
-- `{users}` - Primary users (not yet available in start.md, populated in later phases)
-- `{priority}` - Priority tradeoffs (not yet available in start.md, populated in later phases)
-
-**Piping Instructions:**
-1. Before each AskUserQuestion, replace `{var}` with values from `.progress.md`
-2. If variable not found, use original question text (graceful fallback)
-3. Example: "What priority tradeoffs for {goal}?" becomes "What priority tradeoffs for Add user authentication?"
-
-**Fallback Behavior:**
-- If `{goal}` not found → use "{goal}" literally (this should rarely happen since goal is always provided)
-- If `{intent}` not found → skip piping for that variable
-- Always prefer graceful degradation over errors
-
-### Goal Interview Questions (Single-Question Flow)
-
-**Interview Framework**: Apply standard single-question loop from `skills/interview-framework/SKILL.md`
-
-### Parameter Chain Note
-
-**Note**: start.md is the first phase - no prior responses exist to check.
-
-This phase initializes the interview context. Later phases (research, requirements, design, tasks) use parameter chain to skip questions already answered here.
-
-### Phase-Specific Configuration
-
-- **Phase**: Goal Interview (first phase)
-- **Available Variables**: `{goal}`, `{intent}` (others populated in later phases)
-- **Storage Section**: `### Goal Interview (from start.md)`
-- **Semantic Keys**: problem, constraints, success, additionalContext
-
-### Goal Interview Question Pool
-
-| # | Question | Required | Key | Options |
-|---|----------|----------|-----|---------|
-| 1 | What problem are you solving with this feature? | Required | `problem` | Fixing a bug or issue / Adding new functionality / Improving existing behavior / Other |
-| 2 | Any constraints or must-haves for this feature? | Required | `constraints` | No special constraints / Must integrate with existing code / Performance is critical / Other |
-| 3 | How will you know this feature is successful? | Required | `success` | Tests pass and code works / Users can complete specific workflow / Performance meets target metrics / Other |
-| 4 | Any other context you'd like to share? (or say 'done' to proceed) | Optional | `additionalContext` | No, let's proceed / Yes, I have more details / Other |
-| 5 | Where should this spec be stored? | Conditional | `specsDir` | [dynamically from specs_dirs] |
-
-### Spec Location Interview
-
-After the standard Goal Interview questions, determine where the spec should be stored:
-
-```text
-Spec Location Logic:
-
-1. Check if --specs-dir already provided in $ARGUMENTS
-   → SKIP spec location question entirely, use provided value
-
-2. Get configured directories: dirs = ralph_get_specs_dirs()
-
-3. If dirs.length > 1 (multiple directories configured):
-   → ASK using AskUserQuestion:
-     Question: "Where should this spec be stored?"
-     Options: [each configured directory as an option]
-   → Store response as specsDir
-
-4. If dirs.length == 1 (only default directory):
-   → OUTPUT awareness message (non-blocking, just inform):
-     "Spec will be created in ./specs/
-      Tip: You can organize specs in multiple directories.
-      See /ralph-specum:help for multi-directory setup."
-   → Use default directory as specsDir
-   → Continue immediately without waiting for response
-
-5. Store specsDir for use in spec creation
-```
-
-**Multi-Directory Question Format:**
-
-When multiple directories are configured, use AskUserQuestion with dynamic options:
-
-```text
-Question: "Where should this spec be stored?"
-Header: "Location"
-Options: [
-  { label: "./specs (Recommended)", description: "Default specs directory" },
-  { label: "./packages/api/specs", description: "API-related specs" },
-  ... additional configured directories
-]
-```
-
-**Awareness Message Format:**
-
-When only the default directory is configured, output this informational message:
-
-```text
-Spec will be created in ./specs/
-
-Tip: You can organize specs in multiple directories by configuring
-specs_dirs in .claude/ralph-specum.local.md. See /ralph-specum:help
-for multi-directory setup instructions.
-```
-
-This is NOT a blocking question - continue immediately after displaying.
-
-### Store Goal Context
-
-After interview, update `.progress.md` with Interview Format, Intent Classification, and Interview Responses sections:
-
-```markdown
-## Interview Format
-- Version: 1.0
-
-## Intent Classification
-- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
-- Confidence: [high|medium|low] ([N] keywords matched)
-- Min questions: [N]
-- Max questions: [N]
-- Keywords matched: [list of matched keywords]
-
-## Interview Responses
-
-### Goal Interview (from start.md)
-- Problem: [responses.problem]
-- Constraints: [responses.constraints]
-- Success criteria: [responses.success]
-- Additional context: [responses.additionalContext]
-- Spec location: [responses.specsDir] (if multi-dir was asked)
-[Any follow-up responses from "Other" selections]
-```
-
-### Pass Context to Research
-
-Include goal interview context when invoking research-analyst:
-
-```text
-Task delegation prompt should include:
-
-Goal Interview Context:
-- Problem: [response]
-- Constraints: [response]
-- Success criteria: [response]
-
-Use this context to focus research on relevant areas.
-```
-
-## Quick Mode Flow
-
-Triggered when `--quick` flag detected. Skips all spec phases and auto-generates artifacts.
-
-```text
-1. Check if --quick flag present in $ARGUMENTS
-   |
-   +-- Yes: Extract args before --quick
-   |   |
-   |   +-- Two args: name = first, goal = second
-   |   |
-   |   +-- One arg: goal = first (infer name later)
-   |   |
-   |   +-- Zero args: Error "Quick mode requires a goal or plan"
-   |
-   +-- No: Continue to normal Detection Logic
-```
-
-### Quick Mode Steps (POC)
-
-1. Parse args before `--quick`:
-   - If two args: `name` = first arg (kebab-case), `goal` = second arg
-   - If one arg: `goal` = arg, `name` = infer from goal (first 3 words, kebab-case, max 30 chars)
-2. Validate non-empty goal
-3. Determine spec directory using path resolver:
-   - `specsDir` = (--specs-dir value if provided and valid) OR `ralph_get_default_dir()`
-   - `basePath` = "$specsDir/$name"
-4. Create spec directory: `mkdir -p "$basePath"`
-5. Initialize `.ralph-state.json` with `source: "plan"` (note: basePath uses resolved path):
-   ```json
-   {
-     "source": "plan",
-     "name": "$name",
-     "basePath": "$basePath",
-     "phase": "tasks",
-     "taskIndex": 0,
-     "totalTasks": 0,
-     "taskIteration": 1,
-     "maxTaskIterations": 5,
-     "globalIteration": 1,
-     "maxGlobalIterations": 100
-   }
-   ```
-6. Write `.progress.md` with goal
-7. Update `.current-spec` based on root:
-   - If specsDir == default: write bare name
-   - If specsDir != default: write full path "$basePath"
-8. **Update Spec Index**:
-   ```bash
-   ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
-   ```
-9. Invoke plan-synthesizer agent to generate all artifacts
-10. After generation: update state `phase: "execution"`, read task count
-11. Invoke spec-executor for task 1
-
-## Status Display (on resume)
-
-Before resuming, show brief status:
-
-```text
-Resuming: user-auth
-Phase: execution
-Progress: 3/8 tasks complete
-Current: 2.1 Add error handling
-
-Continuing...
-```
-
-## Output
-
-After detection and action:
+## Output Examples
 
 **New spec:**
 ```text

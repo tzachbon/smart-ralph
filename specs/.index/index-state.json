@@ -1,20 +1,62 @@
 {
   "version": "1.0",
-  "updated": "2026-02-05T13:36:55Z",
+  "updated": "2026-03-04T21:32:04Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 13,
+      "specsCount": 30,
       "isDefault": true
     }
   ],
   "specs": [
+    {
+      "name": "parallel-tasks-execution",
+      "path": "./specs/parallel-tasks-execution",
+      "phase": "tasks",
+      "taskIndex": 46,
+      "totalTasks": 62
+    },
+    {
+      "name": "epic-triage",
+      "path": "./specs/epic-triage",
+      "phase": "completed",
+      "taskIndex": 11,
+      "totalTasks": 11
+    },
     {
       "name": "add-skills-doc",
       "path": "./specs/add-skills-doc",
       "phase": "completed",
       "taskIndex": 5,
       "totalTasks": 5
+    },
+    {
+      "name": "enforce-teams-instead",
+      "path": "./specs/enforce-teams-instead",
+      "phase": "completed",
+      "taskIndex": 13,
+      "totalTasks": 13
+    },
+    {
+      "name": "improve-task-generation",
+      "path": "./specs/improve-task-generation",
+      "phase": "tasks",
+      "taskIndex": 66,
+      "totalTasks": 68
+    },
+    {
+      "name": "fix-impl-context-bloat",
+      "path": "./specs/fix-impl-context-bloat",
+      "phase": "tasks",
+      "taskIndex": 47,
+      "totalTasks": 48
+    },
+    {
+      "name": "native-task-sync",
+      "path": "./specs/native-task-sync",
+      "phase": "completed",
+      "taskIndex": 15,
+      "totalTasks": 15
     },
     {
       "name": "plan-source-feature",
@@ -31,11 +73,53 @@
       "totalTasks": 35
     },
     {
+      "name": "token-efficient-executor",
+      "path": "./specs/token-efficient-executor",
+      "phase": "completed",
+      "taskIndex": 5,
+      "totalTasks": 5
+    },
+    {
+      "name": "fork-ralph-wiggum",
+      "path": "./specs/fork-ralph-wiggum",
+      "phase": "completed",
+      "taskIndex": 21,
+      "totalTasks": 21
+    },
+    {
       "name": "reality-verification-principle",
       "path": "./specs/reality-verification-principle",
       "phase": "tasks",
       "taskIndex": 9,
       "totalTasks": 11
+    },
+    {
+      "name": "update-index-on-complete",
+      "path": "./specs/update-index-on-complete",
+      "phase": "completed",
+      "taskIndex": 7,
+      "totalTasks": 7
+    },
+    {
+      "name": "karpathy-skills-rules",
+      "path": "./specs/karpathy-skills-rules",
+      "phase": "completed",
+      "taskIndex": 12,
+      "totalTasks": 12
+    },
+    {
+      "name": "speckit-stop-hook",
+      "path": "./specs/speckit-stop-hook",
+      "phase": "tasks",
+      "taskIndex": 9,
+      "totalTasks": 12
+    },
+    {
+      "name": "task-granularity-levels",
+      "path": "./specs/task-granularity-levels",
+      "phase": "completed",
+      "taskIndex": 24,
+      "totalTasks": 24
     },
     {
       "name": "qa-verification",
@@ -54,9 +138,16 @@
     {
       "name": "multi-spec-dirs",
       "path": "./specs/multi-spec-dirs",
-      "phase": "completed",
-      "taskIndex": 33,
+      "phase": "tasks",
+      "taskIndex": 30,
       "totalTasks": 33
+    },
+    {
+      "name": "codebase-indexing",
+      "path": "./specs/codebase-indexing",
+      "phase": "completed",
+      "taskIndex": 39,
+      "totalTasks": 39
     },
     {
       "name": "parallel-task-execution",
@@ -73,6 +164,13 @@
       "totalTasks": 20
     },
     {
+      "name": "reviewer-subagent",
+      "path": "./specs/reviewer-subagent",
+      "phase": "completed",
+      "taskIndex": 20,
+      "totalTasks": 20
+    },
+    {
       "name": "goal-interview",
       "path": "./specs/goal-interview",
       "phase": "completed",
@@ -85,6 +183,27 @@
       "phase": "completed",
       "taskIndex": 22,
       "totalTasks": 22
+    },
+    {
+      "name": "add-autonomous-e2e-verify",
+      "path": "./specs/add-autonomous-e2e-verify",
+      "phase": "tasks",
+      "taskIndex": 54,
+      "totalTasks": 55
+    },
+    {
+      "name": "remove-ralph-wiggum",
+      "path": "./specs/remove-ralph-wiggum",
+      "phase": "completed",
+      "taskIndex": 16,
+      "totalTasks": 16
+    },
+    {
+      "name": "smart-skill-swap-retry",
+      "path": "./specs/smart-skill-swap-retry",
+      "phase": "tasks",
+      "taskIndex": 21,
+      "totalTasks": 26
     },
     {
       "name": "improve-walkthrough-feature",

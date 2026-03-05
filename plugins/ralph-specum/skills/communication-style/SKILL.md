@@ -1,6 +1,8 @@
 ---
 name: communication-style
 description: This skill should be used when the user asks about "output formatting", "concise responses", "Matt Pocock planning style", "scannable output", "action steps format", or needs guidance on communication and output formatting rules for Ralph agents.
+version: 0.1.0
+user-invocable: false
 ---
 
 # Communication Style
@@ -102,3 +104,10 @@ Components:
 - Token generation: JWT with 24h expiry
 - Middleware: verify token on protected routes
 ```
+
+## Karpathy Alignment
+
+**Simplicity First** complements these conciseness rules:
+- Conciseness = fewer words. Simplicity = fewer concepts.
+- Both reject unnecessary complexity — in prose and in code.
+- If an explanation could be a table, use a table. If a feature could be skipped, skip it.

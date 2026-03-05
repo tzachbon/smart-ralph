@@ -1,10 +1,10 @@
 {
   "name": "ralph-specum",
-  "version": "3.1.2",
-  "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, and autonomous implementation with fresh context per task.",
+  "version": "4.8.3",
+  "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, autonomous implementation, and epic triage for multi-spec feature decomposition.",
   "author": {
     "name": "tzachbon"
   },
   "license": "MIT",
-  "keywords": ["ralph", "spec-driven", "research", "requirements", "design", "tasks", "autonomous", "loop"]
+  "keywords": ["ralph", "spec-driven", "research", "requirements", "design", "tasks", "autonomous", "loop", "epic", "triage"]
 }

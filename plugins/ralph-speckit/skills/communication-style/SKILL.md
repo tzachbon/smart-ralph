@@ -1,6 +1,7 @@
 ---
 name: communication-style
 description: Output rules for all agents - concise, scannable, actionable. Based on Matt Pocock's planning principles.
+version: 0.1.0
 ---
 
 # Communication Style

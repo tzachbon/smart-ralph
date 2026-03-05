@@ -9,25 +9,41 @@
   "plugins": [
     {
       "name": "ralph-specum",
-      "description": "Spec-driven development with research, requirements, design, tasks, and autonomous execution. Fresh context per task.",
-      "version": "3.1.2",
+      "description": "Spec-driven development with research, requirements, design, tasks, autonomous execution, and epic triage. Fresh context per task.",
+      "version": "4.8.3",
       "author": {
         "name": "tzachbon"
       },
       "source": "./plugins/ralph-specum",
       "category": "development",
-      "tags": ["ralph", "spec-driven", "autonomous", "research", "tasks"]
+      "tags": [
+        "ralph",
+        "spec-driven",
+        "autonomous",
+        "research",
+        "tasks",
+        "epic",
+        "triage"
+      ]
     },
     {
       "name": "ralph-speckit",
       "description": "Spec-driven development using GitHub spec-kit methodology. Constitution-first approach with specify, plan, tasks, and implement phases.",
-      "version": "0.4.0",
+      "version": "0.5.2",
       "author": {
         "name": "tzachbon"
       },
       "source": "./plugins/ralph-speckit",
       "category": "development",
-      "tags": ["ralph", "speckit", "spec-driven", "constitution", "specify", "plan", "tasks"]
+      "tags": [
+        "ralph",
+        "speckit",
+        "spec-driven",
+        "constitution",
+        "specify",
+        "plan",
+        "tasks"
+      ]
     }
   ]
 }

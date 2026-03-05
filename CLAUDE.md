@@ -9,6 +9,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. **NEVER delete branches on remote without explicit user permission**
 4. **Ask before any destructive action** — When in doubt, ask the user
 
+## Karpathy Coding Rules
+
+Four rules for all agents and code generation. Non-negotiable.
+
+### 1. Think Before Coding
+- State assumptions explicitly. If uncertain, ask.
+- Multiple interpretations? Present them, don't pick silently.
+- Simpler approach exists? Say so. Push back when warranted.
+- Something unclear? Stop. Name what's confusing. Ask.
+
+### 2. Simplicity First
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No speculative "flexibility" or "configurability".
+- 200 lines that could be 50? Rewrite.
+- Test: "Would a senior engineer say this is overcomplicated?"
+
+### 3. Surgical Changes
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor what isn't broken.
+- Match existing style, even if you'd do it differently.
+- Remove only dead code YOUR changes created.
+- Every changed line must trace to the user's request.
+
+### 4. Goal-Driven Execution
+- "Add validation" -> Write tests for invalid inputs, make them pass.
+- "Fix the bug" -> Write reproducing test, make it pass.
+- "Refactor X" -> Ensure tests pass before and after.
+- Define success criteria. Loop until verified.
+
 ## Overview
 
 Smart Ralph is a Claude Code plugin for spec-driven development. It transforms feature requests into structured specs (research, requirements, design, tasks) then executes them task-by-task with fresh context per task.
@@ -22,6 +52,18 @@ claude --plugin-dir ./plugins/ralph-specum
 # Test the workflow
 /ralph-specum:start test-feature Some test goal
 ```
+
+### Task Granularity
+
+Control task count with `--tasks-size`:
+
+```bash
+/ralph-specum:tasks --tasks-size coarse    # 10-20 larger tasks, no intermediate [VERIFY]
+/ralph-specum:tasks --tasks-size fine       # 40-60+ small tasks with [VERIFY] checkpoints (default)
+/ralph-specum:start my-spec Goal --tasks-size coarse  # Set early, carries through
+```
+
+Fine is the default. Coarse reduces token consumption ~3-5x for sequential execution.
 
 > **⚠️ CRITICAL: Version bumps are REQUIRED for ANY plugin change**
 >
@@ -75,6 +117,30 @@ plugins/ralph-specum/
 - `./specs/.current-spec` - Active spec name
 - `./specs/<name>/.ralph-state.json` - Loop state (phase, taskIndex, iterations). Deleted on completion
 - `./specs/<name>/.progress.md` - Progress tracking, learnings, context for agents
+- `./specs/.current-epic` - Active epic name
+- `./specs/_epics/<name>/.epic-state.json` - Epic progress (which specs are done/pending/blocked)
+
+### Epics (Multi-Spec Orchestration)
+
+Epics decompose large features into multiple dependency-aware specs.
+
+**File structure:**
+```
+specs/
+  .current-epic          # Points to active epic name
+  _epics/
+    <epic-name>/
+      epic.md            # Triage output (vision, specs, dependency graph)
+      research.md        # Exploration + validation research
+      .epic-state.json   # Progress tracking across specs
+      .progress.md       # Learnings and decisions
+```
+
+**Entry points:**
+- `/ralph-specum:triage <goal>` -- create or resume an epic
+- `/ralph-specum:start` -- detects active epics, suggests next unblocked spec
+
+**Flow:** Explore (research) -> Brainstorm (triage-analyst) -> Validate (research) -> Finalize (output selection)
 
 ### Agents
 
@@ -85,6 +151,7 @@ plugins/ralph-specum/
 | architect-reviewer | `agents/architect-reviewer.md` | Technical design, architecture |
 | task-planner | `agents/task-planner.md` | POC-first task breakdown |
 | spec-executor | `agents/spec-executor.md` | Autonomous task implementation |
+| triage-analyst | `agents/triage-analyst.md` | Feature decomposition, epic creation |
 
 ### POC-First Workflow (Mandatory)
 

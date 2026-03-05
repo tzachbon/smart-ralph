@@ -563,7 +563,6 @@ Based on ralph-specum codebase analysis:
 ---
 name: agent-name
 description: Description
-model: inherit
 ---
 ```
 

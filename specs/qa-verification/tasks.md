@@ -13,7 +13,7 @@ Focus: Validate [VERIFY] tasks work end-to-end. Create qa-engineer, basic spec-e
 
 - [x] 1.1 Create qa-engineer agent
   - **Do**: Create new agent file with:
-    1. Frontmatter: name, description, model: inherit, tools: [Read, Write, Edit, Bash, Glob, Grep]
+    1. Frontmatter: name, description, tools: [Read, Write, Edit, Bash, Glob, Grep]
     2. "When Invoked" section explaining task receipt from spec-executor
     3. Execution flow: parse commands, run via Bash, output VERIFICATION_PASS/FAIL
     4. AC checklist handling for V6 tasks

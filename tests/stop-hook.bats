@@ -76,10 +76,11 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
-    assert_output_contains ".ralph-state.json"
-    assert_output_contains "spec-executor"
-    assert_output_contains "ALL_TASKS_COMPLETE"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
+    assert_json_reason_contains ".ralph-state.json"
+    assert_json_reason_contains "spec-executor"
+    assert_json_reason_contains "ALL_TASKS_COMPLETE"
 }
 
 @test "outputs continuation prompt when tasks remain (midway)" {
@@ -87,7 +88,8 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
 }
 
 @test "outputs continuation prompt when one task remains" {
@@ -95,7 +97,8 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
 }
 
 # =============================================================================
@@ -107,8 +110,9 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    # Should not output continuation prompt for corrupt state
-    assert_output_not_contains "Continue spec"
+    # Should output JSON error, not continuation prompt
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt"
 }
 
 @test "outputs error message for corrupt JSON" {
@@ -116,9 +120,10 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    # New behavior: outputs structured error to stdout with recovery options
-    assert_output_contains "ERROR: Corrupt state file"
-    assert_output_contains "Recovery options"
+    # New behavior: outputs structured JSON error to stdout with recovery options
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt state file"
+    assert_json_reason_contains "Recovery options"
 }
 
 # =============================================================================
@@ -194,7 +199,126 @@ load 'helpers/setup.bash'
 
     run run_stop_watcher
     [ "$status" -eq 0 ]
-    assert_output_contains "Continue spec: test-spec"
+    assert_json_block
+    assert_json_reason_contains "Continue spec: test-spec"
+}
+
+# =============================================================================
+# Test: stop_hook_active guard
+# =============================================================================
+
+@test "exits silently when stop_hook_active is true" {
+    create_state_file "execution" 0 5 1
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" true)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT' 2>/dev/null"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "outputs JSON when stop_hook_active is false" {
+    create_state_file "execution" 0 5 1
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" false)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+}
+
+# =============================================================================
+# Test: awaitingApproval gate
+# =============================================================================
+
+@test "exits silently when awaitingApproval is true during execution" {
+    create_state_file "execution" 2 5 1
+    # Set awaitingApproval in state file
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.awaitingApproval = true' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    # Should NOT output continuation prompt - waiting for user
+    assert_output_not_contains "Continue spec"
+}
+
+@test "logs awaitingApproval to stderr" {
+    create_state_file "execution" 2 5 1
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.awaitingApproval = true' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    local stderr_output
+    stderr_output=$(run_stop_watcher 2>&1 >/dev/null || true)
+
+    [[ "$stderr_output" == *"awaitingApproval=true"* ]]
+}
+
+@test "outputs continuation prompt when awaitingApproval is false" {
+    create_state_file "execution" 2 5 1
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.awaitingApproval = false' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+}
+
+@test "outputs continuation prompt when awaitingApproval is absent" {
+    create_state_file "execution" 2 5 1
+    # Default state file has no awaitingApproval field
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+}
+
+@test "JSON output has all three required fields" {
+    create_state_file "execution" 0 5 1
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "Continue spec"
+    assert_json_system_message_contains "Ralph-specum"
+}
+
+@test "max iterations error exits cleanly with stderr message" {
+    create_state_file "execution" 2 5 1
+    # Set globalIteration to match maxGlobalIterations to trigger the error
+    local spec_dir="$TEST_WORKSPACE/specs/test-spec"
+    local tmp
+    tmp=$(jq '.globalIteration = 100 | .maxGlobalIterations = 100' "$spec_dir/.ralph-state.json")
+    echo "$tmp" > "$spec_dir/.ralph-state.json"
+
+    # Max iterations now exits cleanly (no JSON block) to allow Claude to stop
+    # Capture stderr separately to verify error message
+    local stderr_output
+    stderr_output=$(run_stop_watcher 2>&1 >/dev/null || true)
+    [[ "$stderr_output" == *"Maximum global iterations"* ]]
+}
+
+@test "corrupt state error still fires when stop_hook_active is true" {
+    create_corrupt_state_file
+
+    local input
+    input=$(create_hook_input "$TEST_WORKSPACE" true)
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt"
 }
 
 # =============================================================================
@@ -252,7 +376,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should output continuation prompt - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "handles missing transcript_path gracefully" {
@@ -265,7 +389,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should continue normally - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "handles non-existent transcript file gracefully" {
@@ -278,7 +402,7 @@ More output")
     run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
     # Should continue normally - tasks remain
-    assert_output_contains "Continue spec"
+    assert_json_reason_contains "Continue spec"
 }
 
 @test "detects ALL_TASKS_COMPLETE with trailing whitespace" {
@@ -314,4 +438,102 @@ More text")
     stderr_output=$(bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'" 2>&1 >/dev/null || true)
 
     [[ "$stderr_output" == *"ALL_TASKS_COMPLETE detected"* ]]
+}
+
+# =============================================================================
+# Test: Index update on ALL_TASKS_COMPLETE
+# =============================================================================
+
+@test "calls update-spec-index.sh when ALL_TASKS_COMPLETE detected in transcript" {
+    create_state_file "execution" 2 5 1
+    local marker="$TEST_WORKSPACE/index-update-called"
+    mock_index_script "$marker"
+
+    local transcript_file
+    transcript_file=$(create_transcript "Some output
+TASK_COMPLETE
+More output
+ALL_TASKS_COMPLETE")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    [ -f "$marker" ]
+}
+
+@test "does not call update-spec-index.sh when ALL_TASKS_COMPLETE not in transcript" {
+    create_state_file "execution" 2 5 1
+    local marker="$TEST_WORKSPACE/index-update-called"
+    mock_index_script "$marker"
+
+    local transcript_file
+    transcript_file=$(create_transcript "Some output
+TASK_COMPLETE
+More output")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    [ ! -f "$marker" ]
+}
+
+@test "hook exits cleanly when update-spec-index.sh fails" {
+    create_state_file "execution" 2 5 1
+    mock_failing_index_script
+
+    local transcript_file
+    transcript_file=$(create_transcript "ALL_TASKS_COMPLETE")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    # Should still exit cleanly despite index update failure
+    assert_output_not_contains "Continue spec"
+}
+
+@test "detects ALL_TASKS_COMPLETE with markdown bold formatting" {
+    create_state_file "execution" 2 5 1
+
+    local transcript_file
+    transcript_file=$(create_transcript "Some output
+**ALL_TASKS_COMPLETE**
+More text")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_output_not_contains "Continue spec"
+}
+
+@test "detects ALL_TASKS_COMPLETE as a heading" {
+    create_state_file "execution" 2 5 1
+
+    local transcript_file
+    transcript_file=$(create_transcript "## ALL_TASKS_COMPLETE")
+
+    local input
+    input=$(create_hook_input_with_transcript "$transcript_file")
+
+    run bash -c "echo '$input' | bash '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+    assert_output_not_contains "Continue spec"
+}
+
+@test "both ALL_TASKS_COMPLETE detection paths call update-spec-index.sh" {
+    # Structural test: verify both grep paths have the index update call
+    local primary_count
+    primary_count=$(sed -n '/tail -500.*ALL_TASKS_COMPLETE/,/exit 0/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || echo 0)
+    [ "$primary_count" -ge 1 ]
+
+    local fallback_count
+    fallback_count=$(sed -n '/tail -20.*ALL_TASKS_COMPLETE/,/exit 0/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || echo 0)
+    [ "$fallback_count" -ge 1 ]
 }

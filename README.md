@@ -156,6 +156,7 @@ For Codex, the equivalent public surface is the primary `$ralph-specum` skill pl
 | `/ralph-specum:index` | Scan codebase and generate component specs |
 | `/ralph-specum:status` | Show all specs and progress |
 | `/ralph-specum:switch <name>` | Change active spec |
+| `/ralph-specum:triage [name] [goal]` | Decompose large features into multiple specs (epics) |
 | `/ralph-specum:cancel` | Cancel loop, cleanup state |
 | `/ralph-specum:help` | Show help |
 
@@ -163,36 +164,23 @@ For Codex, the equivalent public surface is the primary `$ralph-specum` skill pl
 
 ## How It Works
 
-```text
-        "I want a feature!"
-               |
-               v
-    +---------------------+
-    |      Research       |  <- Analyzes codebase, searches web
-    +---------------------+
-               |
-               v
-    +---------------------+
-    |    Requirements     |  <- User stories, acceptance criteria
-    +---------------------+
-               |
-               v
-    +---------------------+
-    |       Design        |  <- Architecture, patterns, decisions
-    +---------------------+
-               |
-               v
-    +---------------------+
-    |       Tasks         |  <- POC-first task breakdown
-    +---------------------+
-               |
-               v
-    +---------------------+
-    |     Execution       |  <- Task-by-task with fresh context
-    +---------------------+
-               |
-               v
-          "I did it!"
+```mermaid
+flowchart TD
+    A["I want a feature!"] --> B{"/start detects scope"}
+    B -->|Single spec| C[Research]
+    B -->|"Too big for one spec"| T["/triage"]
+
+    C -->|Analyzes codebase, searches web| D[Requirements]
+    D -->|User stories, acceptance criteria| E[Design]
+    E -->|Architecture, patterns, decisions| F[Tasks]
+    F -->|POC-first task breakdown| G[Execution]
+    G -->|Task-by-task with fresh context| H["I did it!"]
+
+    T -->|Explore| T1[Exploration Research]
+    T1 -->|Brainstorm| T2[Triage Analyst]
+    T2 -->|Validate| T3[Validation Research]
+    T3 -->|Finalize| T4["Epic Plan"]
+    T4 -->|"Spec 1, Spec 2, ..."| C
 ```
 
 ### The Agents
@@ -201,6 +189,7 @@ Each phase uses a specialized sub-agent:
 
 | Phase | Agent | Superpower |
 |-------|-------|------------|
+| Triage | `triage-analyst` | Feature decomposition, dependency graphs, interface contracts |
 | Research | `research-analyst` | Web search, codebase analysis, feasibility checks |
 | Requirements | `product-manager` | User stories, acceptance criteria, business value |
 | Design | `architect-reviewer` | Architecture patterns, technical trade-offs |
@@ -254,34 +243,16 @@ The `/ralph-specum:index` command:
 
 ### How It Works
 
-```text
-     /ralph-specum:index
-             |
-             v
-  +---------------------+
-  |  Pre-Scan Interview |  <- External URLs? Focus areas? Sparse areas?
-  +---------------------+
-             |
-             v
-  +---------------------+
-  |  Component Scanner  |  <- Detects controllers, services, models...
-  +---------------------+
-             |
-             v
-  +---------------------+
-  | External Resources  |  <- Fetches URLs, queries MCP, introspects skills
-  +---------------------+
-             |
-             v
-  +---------------------+
-  |  Post-Scan Review   |  <- Validates findings with user
-  +---------------------+
-             |
-             v
-      specs/.index/
-       ├── index.md          # Summary dashboard
-       ├── components/       # Code component specs
-       └── external/         # External resource specs
+```mermaid
+flowchart TD
+    A["/ralph-specum:index"] --> B[Pre-Scan Interview]
+    B -->|External URLs? Focus areas?| C[Component Scanner]
+    C -->|Controllers, services, models...| D[External Resources]
+    D -->|URLs, MCP, skills| E[Post-Scan Review]
+    E -->|Validates findings with user| F["specs/.index/"]
+    F --- G["index.md - Summary dashboard"]
+    F --- H["components/ - Code component specs"]
+    F --- I["external/ - External resource specs"]
 ```
 
 ### Options
