@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Refactor"
+  short_description: "Update specs after implementation learnings"
+  default_prompt: "Use $ralph-specum-refactor to revise Ralph spec files after implementation."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Status"
+  short_description: "Show active spec and backlog status"
+  default_prompt: "Use $ralph-specum-status to show Ralph progress across configured specs."

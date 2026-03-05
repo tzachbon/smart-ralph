@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Design"
+  short_description: "Generate technical design for an active spec"
+  default_prompt: "Use $ralph-specum-design to write design.md for the active Ralph spec."

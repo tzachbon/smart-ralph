@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Switch"
+  short_description: "Switch the active Ralph spec"
+  default_prompt: "Use $ralph-specum-switch to change the active Ralph spec."

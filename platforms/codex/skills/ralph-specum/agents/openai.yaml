@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ralph Specum"
+  short_description: "Run Ralph Specum workflows in Codex"
+  default_prompt: "Use $ralph-specum to run Ralph Specum in this repo."
+policy:
+  allow_implicit_invocation: true

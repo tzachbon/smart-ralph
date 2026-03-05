@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Requirements"
+  short_description: "Generate requirements for an active spec"
+  default_prompt: "Use $ralph-specum-requirements to write requirements.md for the active Ralph spec."
