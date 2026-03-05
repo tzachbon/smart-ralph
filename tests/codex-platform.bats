@@ -176,7 +176,7 @@ plugin_commands = sorted(
     p.stem for p in (ROOT / "plugins/ralph-specum/commands").glob("*.md")
 )
 codex_helpers = sorted(
-    p.name.removeprefix("ralph-specum-")
+    p.name[len("ralph-specum-"):]
     for p in (ROOT / "platforms/codex/skills").glob("ralph-specum-*")
     if p.is_dir()
 )
@@ -189,7 +189,7 @@ assert codex_helpers == expected, {
 ' "$root"
 }
 
-@test "codex platform: install docs list every shipped skill exactly once" {
+@test "codex platform: install docs list every shipped skill" {
     local root
     root="$(repo_root)"
 

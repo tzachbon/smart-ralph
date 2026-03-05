@@ -22,12 +22,12 @@ Use this for the implementation phase.
 
 1. Resolve the active spec. If none exists, stop.
 2. Require `tasks.md`. Read `.progress.md`, current state, and current task markers.
-3. Recompute `totalTasks`, completed count, and the first incomplete task.
+3. Recompute task counters from disk: `total`, `completed`, and `next_index`.
 4. Merge state for execution:
    - `phase: "execution"`
    - `awaitingApproval: false`
-   - `totalTasks`
-   - `taskIndex: first incomplete`
+   - `totalTasks: total`
+   - `taskIndex: next_index`
    - preserve `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`
 5. Execute tasks in order until complete or blocked.
 6. `[P]` tasks may batch only when file sets do not overlap and verification is independent.

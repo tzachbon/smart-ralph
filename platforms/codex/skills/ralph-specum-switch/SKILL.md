@@ -13,6 +13,8 @@ Use this to switch the active spec.
 ## Contract
 
 - Read `.claude/ralph-specum.local.md` when present
+- Parse `specs_dirs` from frontmatter to discover all spec roots
+- Treat the first `specs_dirs` entry as the default root
 - Default specs root is `./specs`
 - `.current-spec` lives in the default specs root
 - Do not guess on ambiguous names
