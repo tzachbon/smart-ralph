@@ -11,7 +11,7 @@ workflow: mid-sized (additive reference file changes)
 
 Focus: Add BUG_FIX intent type and reproduce-first workflow across 5 reference files. All changes are additive -- no existing sections removed.
 
-- [ ] 1.1 [P] Add BUG_FIX intent to `intent-classification.md`
+- [x] 1.1 [P] Add BUG_FIX intent to `intent-classification.md`
   - **Do**:
     1. Read `plugins/ralph-specum/references/intent-classification.md`
     2. In the **Classification Logic** block, insert BUG_FIX as item 0 (before TRIVIAL), with keywords: fix, resolve, debug, broken, failing, not working, error, bug, patch, crash, regression, reproduce, repro, issue. Min/Max questions: 5/5.
