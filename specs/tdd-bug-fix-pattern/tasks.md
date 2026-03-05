@@ -24,7 +24,7 @@ Focus: Add BUG_FIX intent type and reproduce-first workflow across 5 reference f
   - **Commit**: `feat(intent-classification): add BUG_FIX intent type with priority rule`
   - _Requirements: FR-1, AC-1.1, AC-1.2, AC-1.3_
 
-- [ ] 1.2 [P] Add Bug Interview section to `goal-interview.md`
+- [x] 1.2 [P] Add Bug Interview section to `goal-interview.md`
   - **Do**:
     1. Read `plugins/ralph-specum/references/goal-interview.md`
     2. After the `## Prerequisites` section, insert a new `## Bug Interview (BUG_FIX Intent)` section with: intro sentence, the 5 exact bug questions (Q1 repro steps, Q2 expected vs actual, Q3 when started, Q4 regression check, Q5 fastest repro command), an `### After Bug Interview` note (skip approach proposals, skip Spec Location Interview, store in `## Interview Responses`).

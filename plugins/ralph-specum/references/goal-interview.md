@@ -9,6 +9,20 @@ This reference contains the pre-research brainstorming dialogue conducted in nor
 - Intent classification must be completed first (see `intent-classification.md` for Goal Intent Classification)
 - Dialogue depth determined by intent type (TRIVIAL: 1-2, REFACTOR: 3-5, GREENFIELD: 5-10, MID_SIZED: 3-7)
 
+## Bug Interview (BUG_FIX Intent)
+
+When intent is `BUG_FIX`, replace the standard brainstorming dialogue with these focused questions:
+
+1. Walk me through the exact steps to reproduce this bug. What do you do, in what order?
+2. What did you expect to happen? What actually happened instead?
+3. When did this start? Was it working before? (if yes: what changed?)
+4. Is there an existing failing test that captures this bug, or do we need to write one?
+5. What is the fastest command to reproduce the failure? (e.g., `pnpm test -- --grep 'login'`, `curl localhost:3000/api/users`). If none, describe the manual steps.
+
+### After Bug Interview
+
+Skip approach proposals and Spec Location Interview. Store all responses in `## Interview Responses` as usual.
+
 ## Brainstorming Dialogue
 
 Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`.
