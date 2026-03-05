@@ -20,10 +20,13 @@ Use this for the `start` and `new` entrypoints.
 
 ## Action
 
-1. Resolve the target by explicit path, exact name, or `.current-spec`.
-2. If the same name exists in multiple configured roots, stop and require a full path.
-3. `new` is an alias here. Create the spec directory if needed.
-4. Initialize or merge state with:
+1. Parse explicit name, goal, `--quick`, commit flags, optional specs root, and optional `--tasks-size fine|coarse`.
+2. Resolve the target by explicit path, exact name, or `.current-spec`.
+3. If the same name exists in multiple configured roots, stop and require a full path.
+4. Check active epic context from `specs/.current-epic` when no explicit spec was chosen.
+5. For large or cross-cutting goals, route to triage instead of forcing a single spec.
+6. `new` is an alias here. Create the spec directory if needed.
+7. Initialize or merge state with:
    - `source: "spec"`
    - `name`
    - `basePath`
@@ -37,9 +40,13 @@ Use this for the `start` and `new` entrypoints.
    - `commitSpec: settings auto_commit_spec or true`
    - `relatedSpecs: []`
    - `awaitingApproval: false`
-5. Update `.current-spec`.
-6. Write `.progress.md` with goal, current phase, next step, blockers, and learnings.
-7. In quick mode, generate missing artifacts in order and continue into implementation in the same run.
+   - preserve or set `quickMode`
+   - preserve or set `granularity` when `--tasks-size` was supplied
+   - preserve or set `epicName` when starting from an epic suggestion
+8. Update `.current-spec`.
+9. Write `.progress.md` with goal, current phase, next step, blockers, learnings, and skill discovery results when used.
+10. On resume, prefer `tasks.md` and present files over stale state when they disagree.
+11. In quick mode, generate missing artifacts in order, skip normal approval pauses, and continue into implementation in the same run.
 
 ## Branch Isolation
 

@@ -25,4 +25,4 @@ Use this to switch the active spec.
 4. Update `.current-spec`:
    - bare name for the default root
    - full path for non-default roots
-5. Read the target spec state and summarize phase, progress, and present files.
+5. Read the target spec state and summarize phase, progress, approval state, and present files.

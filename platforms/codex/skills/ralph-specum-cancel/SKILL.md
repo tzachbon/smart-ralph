@@ -21,6 +21,7 @@ Use this to stop execution and optionally remove a spec.
 
 1. Resolve the target spec. If none exists, report that there is nothing to cancel.
 2. Read `.ralph-state.json` when present and summarize the current phase and progress.
-3. If the user wants a safe cancel, delete `.ralph-state.json` only and keep the spec files.
+3. Safe cancel is the default. Delete `.ralph-state.json` only and keep the spec files unless the user asked for full removal.
 4. If the user wants full removal, confirm first, then delete the spec directory and clear `.current-spec` when it points to that spec.
-5. Report exactly what was removed.
+5. If the removed spec belongs to the active epic, keep epic files intact unless the user explicitly asked to remove epic planning too.
+6. Report exactly what was removed.

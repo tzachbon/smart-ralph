@@ -19,6 +19,8 @@ python "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-gi
 
 Optional helper skills also install from `platforms/codex/skills/ralph-specum-*`.
 
+If you want the full Codex helper set, include `platforms/codex/skills/ralph-specum-triage` too.
+
 More detail: [`platforms/codex/README.md`](platforms/codex/README.md)
 
 ---
@@ -192,6 +194,8 @@ Just run `/ralph-specum:start` - it auto-detects existing specs and continues wh
 
 In Codex, use `$ralph-specum` or `$ralph-specum-start`, then continue with the matching helper skill or the primary skill.
 
+If the work was triaged into an epic, check `./specs/.current-epic` and resume the next unblocked spec rather than creating a new one.
+
 If you want to force a specific spec:
 ```bash
 /ralph-specum:switch spec-name
@@ -250,6 +254,14 @@ If tasks are out of order, re-run:
 ```bash
 /ralph-specum:tasks
 ```
+
+Current task plans may also include:
+- `[P]` markers for tasks safe to run in parallel
+- `[VERIFY]` checkpoints
+- VE tasks for end-to-end verification
+- fine or coarse granularity depending on `--tasks-size`
+
+In Codex, the same concepts are exposed through `$ralph-specum-tasks` and `$ralph-specum-implement`.
 
 ---
 

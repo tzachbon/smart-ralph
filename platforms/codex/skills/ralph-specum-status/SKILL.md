@@ -21,18 +21,20 @@ Use this to report Ralph state across configured spec roots.
 
 1. Resolve configured roots.
 2. Read `.current-spec` to identify the active spec.
-3. For each spec directory, inspect:
+3. Read `specs/.current-epic` when present and summarize epic status.
+4. For each spec directory, inspect:
    - `.ralph-state.json`
    - `research.md`
    - `requirements.md`
    - `design.md`
    - `tasks.md`
-4. If `tasks.md` exists, count completed and incomplete tasks.
-5. Group results by spec root.
-6. Show the active spec, current phase, backlog state, and which artifacts exist.
+5. If `tasks.md` exists, count completed and incomplete tasks.
+6. Group results by spec root.
+7. Show the active spec, current phase, backlog state, approval state, granularity when present, and which artifacts exist.
 
 ## Output
 
 - Specs in the default root can be shown by name.
 - Specs in other roots should include the root suffix for disambiguation.
 - Include the next likely command when it is obvious.
+- If an epic is active, include the next unblocked spec.

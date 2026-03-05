@@ -24,5 +24,6 @@ Use this to generate searchable index specs for an existing codebase.
    - `specs/.index/index.md`
    - `specs/.index/components/*.md`
    - `specs/.index/external/*.md`
-4. Include external URLs, MCP endpoints, or installed skills only when the user asked for them or they are clearly relevant.
-5. In dry run mode, report what would be created without writing files.
+4. Keep outputs deterministic so start, research, and triage can reuse them.
+5. Include external URLs, MCP endpoints, or installed skills only when the user asked for them or they are clearly relevant.
+6. In dry run mode, report what would be created without writing files.

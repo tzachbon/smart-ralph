@@ -21,10 +21,11 @@ Use this to revise spec artifacts after implementation learnings.
 1. Resolve the target spec.
 2. Read `.progress.md` and existing spec files.
 3. Identify what implementation changed, what stayed accurate, and what is now obsolete.
-4. Update files in order:
+4. Preserve newer Ralph concepts already expressed in the spec, including approval checkpoints, granularity choices, `[P]` tasks, `[VERIFY]` tasks, VE tasks, and epic constraints when relevant.
+5. Update files in order:
    - `requirements.md`
    - `design.md`
    - `tasks.md`
-5. If requirements changed, revisit design and tasks.
-6. If design changed, revisit tasks.
-7. Record the rationale in `.progress.md`.
+6. If requirements changed, revisit design and tasks.
+7. If design changed, revisit tasks.
+8. Record the rationale and cascade decisions in `.progress.md`.

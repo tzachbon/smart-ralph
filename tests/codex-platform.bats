@@ -8,6 +8,7 @@ all_codex_skills() {
     cat <<'EOF'
 ralph-specum
 ralph-specum-start
+ralph-specum-triage
 ralph-specum-research
 ralph-specum-requirements
 ralph-specum-design
@@ -26,6 +27,7 @@ EOF
 helper_codex_skills() {
     cat <<'EOF'
 ralph-specum-start
+ralph-specum-triage
 ralph-specum-research
 ralph-specum-requirements
 ralph-specum-design

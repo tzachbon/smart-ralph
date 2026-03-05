@@ -31,6 +31,7 @@ Handle these intents directly:
 | Intent | Action |
 |--------|--------|
 | Start, new, resume, quick mode | Follow the start flow in `references/workflow.md` |
+| Triage | Decompose a large goal into an epic and dependency-aware specs |
 | Research | Write `research.md` using the research template shape |
 | Requirements | Write `requirements.md` using the requirements template shape |
 | Design | Write `design.md` using the design template shape |
@@ -54,10 +55,22 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 4. Keep `.current-spec` in the default specs root.
 5. Merge state fields. Do not replace the whole state object.
 6. Preserve `source`, `name`, `basePath`, `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`.
-7. Write `.progress.md` after every phase and after every implementation attempt.
-8. Honor the `Commit` line in tasks during implementation unless the user explicitly disables task commits.
-9. Use branch creation or worktree creation when the user asks for branch isolation or the repo policy requires it.
-10. In quick mode, generate missing artifacts and continue into implementation in the same session.
+7. Also preserve newer state fields when present, especially `awaitingApproval`, `quickMode`, `granularity`, `epicName`, `discoveredSkills`, and native task sync metadata.
+8. Write `.progress.md` after every phase and after every implementation attempt.
+9. Honor approval checkpoints between phases unless quick mode is active.
+10. Honor the `Commit` line in tasks during implementation unless the user explicitly disables task commits.
+11. Use branch creation or worktree creation when the user asks for branch isolation or the repo policy requires it.
+12. In quick mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
+
+## Current Workflow Expectations
+
+- Use brainstorming-style interviews for research, requirements, design, and tasks when quick mode is not active.
+- Route obviously large or cross-cutting efforts to triage before normal spec generation.
+- Support active epic state via `specs/.current-epic` and per-epic state in `specs/_epics/<epic-name>/`.
+- Treat task planning as POC-first with `[P]` markers for safe parallel work and `[VERIFY]` checkpoints for explicit quality validation.
+- Support VE tasks when the plan needs autonomous end-to-end verification.
+- During implementation, recompute task counts from disk, resume from the first incomplete task, and prefer task file truth over stale state.
+- Native task sync is part of the current Ralph execution model. Keep Codex wording aligned with that behavior without promising Claude-only hook mechanics.
 
 ## Bootstrap
 
