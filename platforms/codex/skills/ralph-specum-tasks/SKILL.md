@@ -28,7 +28,7 @@ Use this for the tasks phase.
 7. Count tasks and merge state with:
    - `phase: "tasks"`
    - `awaitingApproval: true`
-   - `taskIndex: first incomplete or 0`
+   - `taskIndex: first incomplete or totalTasks`
    - `totalTasks: counted tasks`
 8. Update `.progress.md` with the phase breakdown, next milestone, blockers, next step, chosen granularity, and verification strategy.
 9. If spec commits are enabled, commit only the spec artifacts.

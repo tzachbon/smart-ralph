@@ -67,9 +67,11 @@ PY
     [ ! -e "$root/AGENTS.md" ]
     [ ! -e "$root/tests/codex-wrapper.bats" ]
 
-    run find "$root/.agents/skills" -maxdepth 1 -mindepth 1 -type d \( -name 'ralph-specum' -o -name 'ralph-specum-*' \)
-    [ "$status" -eq 0 ]
-    [ -z "$output" ]
+    if [ -d "$root/.agents/skills" ]; then
+        run find "$root/.agents/skills" -maxdepth 1 -mindepth 1 -type d \( -name 'ralph-specum' -o -name 'ralph-specum-*' \)
+        [ "$status" -eq 0 ]
+        [ -z "$output" ]
+    fi
 }
 
 @test "codex platform: each installable skill has required files" {
@@ -126,16 +128,19 @@ PY
     [[ "$readme_text" == *"platforms/codex/README.md"* ]]
     [[ "$readme_text" == *"platforms/codex/skills/ralph-specum"* ]]
     [[ "$readme_text" == *"ralph-specum-triage"* ]]
+    [[ "$readme_text" == *"python3 \"\$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py\""* ]]
     [[ "$trouble_text" == *"platforms/codex/skills/ralph-specum"* ]]
     [[ "$trouble_text" == *"ralph-specum-triage"* ]]
     [[ "$package_text" != *"repo-root AGENTS.md"* ]]
     [[ "$package_text" == *"Prompt to send to Codex:"* ]]
+    [[ "$package_text" == *"python3 \"\$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py\""* ]]
 }
 
 @test "codex platform: copied install layout remains usable" {
     local root temp_codex_home skill
     root="$(repo_root)"
     temp_codex_home="$(mktemp -d)"
+    trap 'rm -rf "$temp_codex_home"' EXIT
 
     mkdir -p "$temp_codex_home/skills"
 
@@ -147,8 +152,6 @@ PY
 
     [ -f "$temp_codex_home/skills/ralph-specum/assets/bootstrap/AGENTS.md" ]
     [ -f "$temp_codex_home/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md" ]
-
-    rm -rf "$temp_codex_home"
 }
 
 @test "codex platform: skill frontmatter passes quick validation when available" {
@@ -246,9 +249,9 @@ pairs = {
     "research": ["brainstorming", "research.md", "verification tooling"],
     "requirements": ["brainstorming", "requirements.md", "awaitingApproval"],
     "design": ["brainstorming", "design.md", "awaitingApproval"],
-    "tasks": ["granularity", "[P]", "[VERIFY]", "VE tasks"],
-    "implement": ["[P]", "[VERIFY]", "VE tasks", "tasks.md", "approval"],
-    "status": [".current-epic", "approval state", "granularity"],
+    "tasks": ["granularity", "[P]", "[VERIFY]", "VE tasks", "taskIndex: first incomplete or totalTasks"],
+    "implement": ["[P]", "[VERIFY]", "VE tasks", "tasks.md", "approval", "file sets do not overlap", "Marker syntax must be explicitly present"],
+    "status": [".current-epic", "approval state", "granularity", "there is no active spec"],
     "switch": [".current-spec", "approval state"],
     "cancel": [".ralph-state.json", "Safe cancel", "full removal"],
     "index": ["specs/.index", "dry run", "deterministic"],

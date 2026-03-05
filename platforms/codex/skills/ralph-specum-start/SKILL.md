@@ -51,4 +51,4 @@ Use this for the `start` and `new` entrypoints.
 ## Branch Isolation
 
 - If the user wants isolation, offer a feature branch in place or a worktree with a feature branch.
-- If a worktree is created, stop after creation and tell the user to continue from that worktree.
+- If a worktree is created, stop after creation and ask the user to continue from that worktree.

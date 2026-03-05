@@ -9,6 +9,8 @@ import re
 from pathlib import Path
 
 DEFAULT_SPECS_DIR = "./specs"
+TRUE_VALUES = {"true", "yes", "1"}
+FALSE_VALUES = {"false", "no", "0"}
 
 
 def parse_scalar(value: str):
@@ -37,8 +39,8 @@ def parse_scalar(value: str):
 def parse_frontmatter(path: Path) -> dict[str, object]:
     if not path.exists():
         return {}
-    text = path.read_text()
-    match = re.match(r"^---\n(.*?)\n---", text, re.DOTALL)
+    text = path.read_text(encoding="utf-8")
+    match = re.match(r"^---\r?\n(.*?)\r?\n---(?:\r?\n|$)", text, re.DOTALL)
     if not match:
         return {}
     lines = match.group(1).splitlines()
@@ -75,6 +77,42 @@ def parse_frontmatter(path: Path) -> dict[str, object]:
     return data
 
 
+def coerce_int(value: object, default: int) -> int:
+    if isinstance(value, bool):
+        return default
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and re.fullmatch(r"-?\d+", value.strip()):
+        return int(value.strip())
+    return default
+
+
+def coerce_bool(value: object, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        if value == 1:
+            return True
+        if value == 0:
+            return False
+        return default
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in TRUE_VALUES:
+            return True
+        if lowered in FALSE_VALUES:
+            return False
+    return default
+
+
+def default_specs_dir(cwd: Path, specs_dirs: list[str]) -> str:
+    for root in specs_dirs:
+        root_path = cwd / root
+        if root_path.exists() and root_path.is_dir():
+            return root
+    return DEFAULT_SPECS_DIR
+
+
 def resolve_config(cwd: Path) -> dict[str, object]:
     settings = parse_frontmatter(cwd / ".claude" / "ralph-specum.local.md")
     raw_dirs = settings.get("specs_dirs")
@@ -86,10 +124,10 @@ def resolve_config(cwd: Path) -> dict[str, object]:
         specs_dirs = [DEFAULT_SPECS_DIR]
     return {
         "specs_dirs": specs_dirs,
-        "default_dir": specs_dirs[0],
-        "default_max_iterations": int(settings.get("default_max_iterations", 5)),
-        "auto_commit_spec": bool(settings.get("auto_commit_spec", True)),
-        "quick_mode_default": bool(settings.get("quick_mode_default", False)),
+        "default_dir": default_specs_dir(cwd, specs_dirs),
+        "default_max_iterations": coerce_int(settings.get("default_max_iterations", 5), 5),
+        "auto_commit_spec": coerce_bool(settings.get("auto_commit_spec", True), True),
+        "quick_mode_default": coerce_bool(settings.get("quick_mode_default", False), False),
     }
 
 
@@ -116,7 +154,7 @@ def list_specs(cwd: Path, specs_dirs: list[str]) -> list[dict[str, str]]:
     specs = []
     for root in specs_dirs:
         root_path = cwd / root
-        if not root_path.exists():
+        if not root_path.exists() or not root_path.is_dir():
             continue
         for child in sorted(root_path.iterdir()):
             if not child.is_dir() or child.name.startswith("."):

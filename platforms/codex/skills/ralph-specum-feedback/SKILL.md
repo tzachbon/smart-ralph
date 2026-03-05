@@ -14,7 +14,7 @@ Use this to capture product feedback or bug reports for Ralph Specum.
 
 1. Summarize the issue, request, or missing behavior.
 2. Gather the minimum reproducible context, affected files, commands, environment details, and whether the issue is on the Codex package or Claude plugin surface.
-3. If `gh` is available and the user wants submission, create a GitHub issue draft or issue.
+3. If `gh` is available and the user wants submission, create a GitHub issue.
 4. If `gh` is unavailable or the user only wants a draft, produce a ready-to-paste issue body and the repository issue URL.
 
 ## Output

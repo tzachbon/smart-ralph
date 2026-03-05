@@ -187,6 +187,6 @@ After POC is validated, clean up code.
 
 ## Dependencies
 
-```
+```text
 Phase 1 (POC) -> Phase 2 (Refactor) -> Phase 3 (Testing) -> Phase 4 (Quality) -> Phase 5 (PR Lifecycle)
 ```

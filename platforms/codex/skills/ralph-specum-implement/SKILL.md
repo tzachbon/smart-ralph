@@ -30,17 +30,18 @@ Use this for the implementation phase.
    - `taskIndex: first incomplete`
    - preserve `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`
 5. Execute tasks in order until complete or blocked.
-6. `[P]` tasks may batch only when file overlap is low and verification is independent.
+6. `[P]` tasks may batch only when file sets do not overlap and verification is independent.
 7. `[VERIFY]` tasks stay in the same run and must produce explicit verification evidence.
-8. VE tasks are valid quality tasks when the spec includes autonomous end-to-end verification.
-9. Native task sync metadata should be preserved when present.
-10. After each task or safe batch:
+8. Marker syntax must be explicitly present in `tasks.md`. If markers are absent, treat tasks as non-batchable by default.
+9. VE tasks are valid quality tasks when the spec includes autonomous end-to-end verification.
+10. Native task sync metadata should be preserved when present.
+11. After each task or safe batch:
    - mark the checkbox
    - update `.progress.md`
    - merge the state update
    - use the task `Commit` line unless commits were explicitly disabled
-11. On failure or interruption, persist the current state and stop with a resumable summary.
-12. On full completion, remove `.ralph-state.json` and report completion.
+12. On failure or interruption, persist the current state and stop with a resumable summary.
+13. On full completion, remove `.ralph-state.json` and report completion.
 
 ## Resume Rules
 

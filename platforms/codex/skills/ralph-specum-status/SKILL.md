@@ -21,6 +21,7 @@ Use this to report Ralph state across configured spec roots.
 
 1. Resolve configured roots.
 2. Read `.current-spec` to identify the active spec.
+   - If `.current-spec` is missing or empty, report that there is no active spec and continue listing specs across roots.
 3. Read `specs/.current-epic` when present and summarize epic status.
 4. For each spec directory, inspect:
    - `.ralph-state.json`

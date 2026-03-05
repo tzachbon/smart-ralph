@@ -23,10 +23,10 @@
 
 1. Resolve current repo state, branch, and spec roots.
 2. Start or resume a spec.
-3. Generate `research.md`.
-4. Generate `requirements.md`.
-5. Generate `design.md`.
-6. Generate `tasks.md`.
+3. Create `research.md`.
+4. Draft `requirements.md`.
+5. Prepare `design.md`.
+6. Compile `tasks.md`.
 7. Implement tasks until complete or blocked.
 8. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
 
@@ -37,7 +37,7 @@
 - If the current branch is the default branch and the user wants isolation, offer:
   - feature branch in place
   - worktree with a feature branch
-- If the user wants a worktree, stop after creating it and tell them to continue from the worktree.
+- If the user wants a worktree, stop after creating it and ask them to continue from the worktree.
 
 ## Quick Mode
 

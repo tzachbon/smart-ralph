@@ -33,13 +33,13 @@ When a spec name exists in multiple roots:
 
 Use `scripts/resolve_spec_paths.py`.
 
-Examples:
+Examples for this source repo, run them from the repo root:
 
 ```bash
-python scripts/resolve_spec_paths.py --cwd "$PWD"
-python scripts/resolve_spec_paths.py --cwd "$PWD" --current
-python scripts/resolve_spec_paths.py --cwd "$PWD" --name api-auth
-python scripts/resolve_spec_paths.py --cwd "$PWD" --list
+python3 ./platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py --cwd "$PWD"
+python3 ./platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py --cwd "$PWD" --current
+python3 ./platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py --cwd "$PWD" --name api-auth
+python3 ./platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py --cwd "$PWD" --list
 ```
 
 Exit behavior:

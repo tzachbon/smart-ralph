@@ -41,7 +41,7 @@ In Codex, ask `$skill-installer` to install:
 Direct script form:
 
 ```bash
-python "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
+python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
   --repo tzachbon/smart-ralph \
   --path platforms/codex/skills/ralph-specum
 ```
@@ -72,7 +72,7 @@ Use $skill-installer to install the Smart Ralph Codex skills from repo `tzachbon
 ```
 
 ```bash
-python "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
+python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
   --repo tzachbon/smart-ralph \
   --path \
     platforms/codex/skills/ralph-specum \

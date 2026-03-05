@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 
@@ -32,7 +33,13 @@ def parse_pairs(items: list[str], as_json: bool) -> dict[str, object]:
         value = value.strip()
         if not key:
             raise SystemExit(f"Invalid assignment: {item}")
-        merged[key] = json.loads(value) if as_json else parse_scalar(value)
+        if as_json:
+            try:
+                merged[key] = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise SystemExit(f"Invalid JSON for '{key}': {exc.msg}") from exc
+        else:
+            merged[key] = parse_scalar(value)
     return merged
 
 
@@ -47,7 +54,10 @@ def main() -> int:
     state_path = Path(args.state_file)
     state = {}
     if state_path.exists():
-        state = json.loads(state_path.read_text())
+        try:
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"State file is not valid JSON: {state_path} ({exc.msg})") from exc
         if not isinstance(state, dict):
             raise SystemExit("State file must contain a JSON object.")
 
@@ -60,7 +70,17 @@ def main() -> int:
         return 0
 
     state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(encoded)
+    tmp_path = state_path.with_suffix(state_path.suffix + ".tmp")
+    try:
+        with tmp_path.open("w", encoding="utf-8") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, state_path)
+    except Exception:
+        if tmp_path.exists():
+            tmp_path.unlink()
+        raise
     return 0
 
 
