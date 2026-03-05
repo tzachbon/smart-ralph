@@ -235,6 +235,34 @@ When intent is NOT GREENFIELD (TRIVIAL, REFACTOR, MID_SIZED), use TDD Red-Green-
 - Phase 1 = 60-70% of tasks, Phase 2 = 10-15%, Phase 3-4 = 15-25%.
 </mandatory>
 
+## Bug TDD Task Planning (BUG_FIX intent)
+
+<mandatory>
+When Intent Classification is `BUG_FIX`, apply all 5 rules below:
+
+**Rule 1: Always prepend Phase 0 with exactly two tasks.**
+Before any Phase 1 tasks, insert:
+- `0.1 [VERIFY] Reproduce bug` -- run reproduction command, confirm it fails as described
+- `0.2 [VERIFY] Confirm repro is consistent` -- run reproduction command 3 times to confirm consistent failure
+
+Use reproduction command from (in priority order): bug interview Q5 response > `## Reality Check (BEFORE)` in .progress.md > project test runner from research.md.
+
+**Rule 2: First [RED] task must reference BEFORE state.**
+The first [RED] task in Phase 1 must include a note referencing the reproduction command from `## Reality Check (BEFORE)` so the test locks in the exact failure mode documented before any code changes.
+
+**Rule 3: VF task is mandatory.**
+Always include a VF (Verification Final) task as the final task in Phase 4 regardless of other conditions. Do not omit it for BUG_FIX goals.
+
+**Rule 4: No GREENFIELD Phase 1 POC.**
+BUG_FIX intent always uses Bug TDD workflow (Phase 0 + TDD phases). Never use the POC-first GREENFIELD workflow for a BUG_FIX goal.
+
+**Rule 5: Reproduction command source priority.**
+When determining the reproduction command to use in Phase 0 tasks:
+1. Q5 interview response (from bug interview in .progress.md)
+2. `## Reality Check (BEFORE)` block in .progress.md (`Reproduction command:` field)
+3. Project test runner from research.md (pnpm/npm/yarn test or equivalent)
+</mandatory>
+
 ## VF Task Generation for Fix Goals
 
 <mandatory>
