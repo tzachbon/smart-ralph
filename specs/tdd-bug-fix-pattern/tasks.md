@@ -95,7 +95,7 @@ Focus: Add BUG_FIX intent type and reproduce-first workflow across 5 reference f
   - **Commit**: `feat(task-planner): add Bug TDD task planning section with Phase 0 prepend and mandatory VF`
   - _Requirements: FR-6, AC-3.1, AC-4.5_
 
-- [ ] 1.8 [VERIFY] Quality checkpoint: all 5 files modified
+- [x] 1.8 [VERIFY] Quality checkpoint: all 5 files modified
   - **Do**: Verify all 5 target files contain their BUG_FIX additions
   - **Verify**: `sg --pattern 'BUG_FIX' /Users/zachbonfil/projects/smart-ralph/.claude/worktrees/groovy-snacking-gosling/plugins/ralph-specum/references/intent-classification.md > /dev/null && sg --pattern 'Bug Interview' /Users/zachbonfil/projects/smart-ralph/.claude/worktrees/groovy-snacking-gosling/plugins/ralph-specum/references/goal-interview.md > /dev/null && sg --pattern 'Bug TDD Workflow' /Users/zachbonfil/projects/smart-ralph/.claude/worktrees/groovy-snacking-gosling/plugins/ralph-specum/references/phase-rules.md > /dev/null && sg --pattern 'INFER' /Users/zachbonfil/projects/smart-ralph/.claude/worktrees/groovy-snacking-gosling/plugins/ralph-specum/references/quick-mode.md > /dev/null && sg --pattern 'Bug TDD Task Planning' /Users/zachbonfil/projects/smart-ralph/.claude/worktrees/groovy-snacking-gosling/plugins/ralph-specum/agents/task-planner.md > /dev/null && echo ALL_FILES_PASS`
   - **Done when**: All 5 patterns found, prints `ALL_FILES_PASS`
@@ -103,7 +103,7 @@ Focus: Add BUG_FIX intent type and reproduce-first workflow across 5 reference f
 
 ## Phase 2: Bump Plugin Version
 
-- [ ] 2.1 Bump plugin version in manifest files
+- [x] 2.1 Bump plugin version in manifest files
   - **Do**:
     1. Read `plugins/ralph-specum/.claude-plugin/plugin.json` -- note current version
     2. Increment patch version (e.g. 3.1.0 -> 3.1.1)
