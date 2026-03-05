@@ -43,6 +43,23 @@ ralph-specum-help
 EOF
 }
 
+assert_python() {
+    local script
+    script="$1"
+    shift
+    run env ASSERT_PYTHON_SCRIPT="$script" python3 - "$@" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(sys.argv[1])
+SCRIPT = os.environ["ASSERT_PYTHON_SCRIPT"]
+namespace = {"Path": Path, "ROOT": ROOT, "sys": sys}
+exec(SCRIPT, namespace)
+PY
+    [ "$status" -eq 0 ]
+}
+
 @test "codex platform: repo root wrapper files are gone" {
     local root
     root="$(repo_root)"
@@ -108,8 +125,11 @@ EOF
 
     [[ "$readme_text" == *"platforms/codex/README.md"* ]]
     [[ "$readme_text" == *"platforms/codex/skills/ralph-specum"* ]]
+    [[ "$readme_text" == *"ralph-specum-triage"* ]]
     [[ "$trouble_text" == *"platforms/codex/skills/ralph-specum"* ]]
+    [[ "$trouble_text" == *"ralph-specum-triage"* ]]
     [[ "$package_text" != *"repo-root AGENTS.md"* ]]
+    [[ "$package_text" == *"Prompt to send to Codex:"* ]]
 }
 
 @test "codex platform: copied install layout remains usable" {
@@ -142,4 +162,174 @@ EOF
         run python3 "$validator" "$root/platforms/codex/skills/$skill"
         [ "$status" -eq 0 ]
     done < <(all_codex_skills)
+}
+
+@test "codex platform: helper skill set matches plugin command surface" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+plugin_commands = sorted(
+    p.stem for p in (ROOT / "plugins/ralph-specum/commands").glob("*.md")
+)
+codex_helpers = sorted(
+    p.name.removeprefix("ralph-specum-")
+    for p in (ROOT / "platforms/codex/skills").glob("ralph-specum-*")
+    if p.is_dir()
+)
+
+expected = sorted(cmd for cmd in plugin_commands if cmd != "new")
+assert codex_helpers == expected, {
+    "expected": expected,
+    "actual": codex_helpers,
+}
+' "$root"
+}
+
+@test "codex platform: install docs list every shipped skill exactly once" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+skills = sorted(
+    p.name for p in (ROOT / "platforms/codex/skills").glob("ralph-specum*")
+    if p.is_dir()
+)
+readme = (ROOT / "README.md").read_text()
+package = (ROOT / "platforms/codex/README.md").read_text()
+
+for skill in skills:
+    assert readme.count(skill) >= 1, skill
+    assert package.count(skill) >= 1, skill
+
+assert "Prompt to send to Codex:" in readme
+assert "Prompt to send to Codex:" in package
+' "$root"
+}
+
+@test "codex platform: primary skill routing stays aligned with plugin commands" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+primary = (ROOT / "platforms/codex/skills/ralph-specum/SKILL.md").read_text()
+required_tokens = {
+    "start": "Start, new, resume, quick mode",
+    "triage": "| Triage |",
+    "research": "| Research |",
+    "requirements": "| Requirements |",
+    "design": "| Design |",
+    "tasks": "| Tasks |",
+    "implement": "| Implement |",
+    "status": "| Status |",
+    "switch": "| Switch |",
+    "cancel": "| Cancel |",
+    "index": "| Index |",
+    "refactor": "| Refactor |",
+    "feedback": "| Feedback |",
+    "help": "| Help |",
+}
+
+for command, token in required_tokens.items():
+    assert token in primary, {"command": command, "token": token}
+' "$root"
+}
+
+@test "codex platform: helper skills retain plugin command semantics" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+pairs = {
+    "start": ["quick mode", "granularity", ".current-epic", "awaitingApproval"],
+    "triage": ["specs/_epics", ".current-epic", ".epic-state.json", "dependencies"],
+    "research": ["brainstorming", "research.md", "verification tooling"],
+    "requirements": ["brainstorming", "requirements.md", "awaitingApproval"],
+    "design": ["brainstorming", "design.md", "awaitingApproval"],
+    "tasks": ["granularity", "[P]", "[VERIFY]", "VE tasks"],
+    "implement": ["[P]", "[VERIFY]", "VE tasks", "tasks.md", "approval"],
+    "status": [".current-epic", "approval state", "granularity"],
+    "switch": [".current-spec", "approval state"],
+    "cancel": [".ralph-state.json", "Safe cancel", "full removal"],
+    "index": ["specs/.index", "dry run", "deterministic"],
+    "refactor": ["requirements.md", "design.md", "tasks.md", "[VERIFY]"],
+    "feedback": ["GitHub issue", "Codex package", "Claude plugin"],
+    "help": ["$ralph-specum-triage", "Large effort flow", ".current-epic"],
+}
+
+for name, tokens in pairs.items():
+    text = (ROOT / f"platforms/codex/skills/ralph-specum-{name}/SKILL.md").read_text()
+    for token in tokens:
+        assert token in text, {"skill": name, "token": token}
+' "$root"
+}
+
+@test "codex platform: shared template headings still cover plugin templates" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+def headings(path):
+    return [line.strip() for line in path.read_text().splitlines() if line.startswith("#")]
+
+template_names = [
+    "component-spec.md",
+    "design.md",
+    "external-spec.md",
+    "index-summary.md",
+    "progress.md",
+    "requirements.md",
+    "research.md",
+    "settings-template.md",
+    "tasks.md",
+]
+
+for name in template_names:
+    codex = headings(ROOT / "platforms/codex/skills/ralph-specum/assets/templates" / name)
+    plugin = headings(ROOT / "plugins/ralph-specum/templates" / name)
+    missing = [
+        heading for heading in codex
+        if not any(other.startswith(heading) for other in plugin)
+    ]
+    assert not missing, {"template": name, "missing_in_plugin": missing}
+
+must_match_exactly = [
+    "component-spec.md",
+    "design.md",
+    "external-spec.md",
+    "index-summary.md",
+    "progress.md",
+    "requirements.md",
+    "research.md",
+]
+
+for name in must_match_exactly:
+    codex = headings(ROOT / "platforms/codex/skills/ralph-specum/assets/templates" / name)
+    plugin = headings(ROOT / "plugins/ralph-specum/templates" / name)
+    assert codex == plugin, {"template": name, "codex": codex, "plugin": plugin}
+' "$root"
+}
+
+@test "codex platform: shared bootstrap and scripts expose current drift-sensitive fields" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+bootstrap = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md").read_text()
+settings = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md").read_text()
+count_tasks = (ROOT / "platforms/codex/skills/ralph-specum/scripts/count_tasks.py").read_text()
+merge_state = (ROOT / "platforms/codex/skills/ralph-specum/scripts/merge_state.py").read_text()
+resolve_paths = (ROOT / "platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py").read_text()
+
+assert "$ralph-specum-start" in bootstrap
+assert ".current-spec" in bootstrap
+assert "specs_dirs" in settings
+assert "\"total\"" in count_tasks
+assert "\"completed\"" in count_tasks
+assert "\"next_index\"" in count_tasks
+assert "--set" in merge_state
+assert "--json" in merge_state
+assert ".current-spec" in resolve_paths
+assert "specs_dirs" in resolve_paths
+' "$root"
 }
