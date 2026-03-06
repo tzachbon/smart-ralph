@@ -1,0 +1,102 @@
+name: Codex Version Check
+
+on:
+  pull_request:
+    paths:
+      - 'platforms/codex/**'
+
+jobs:
+  check-version-bump:
+    name: Verify Codex package version bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check Codex manifest version
+        run: |
+          BASE_BRANCH="${{ github.base_ref }}"
+          MANIFEST="platforms/codex/manifest.json"
+
+          version_greater() {
+            local v1=$1 v2=$2
+            if [ "$v1" = "$v2" ]; then
+              return 1
+            fi
+            local IFS=.
+            local i v1_parts=($v1) v2_parts=($v2)
+            for ((i=0; i<${#v1_parts[@]} || i<${#v2_parts[@]}; i++)); do
+              local n1=${v1_parts[i]:-0}
+              local n2=${v2_parts[i]:-0}
+              if ((n1 > n2)); then
+                return 0
+              fi
+              if ((n1 < n2)); then
+                return 1
+              fi
+            done
+            return 1
+          }
+
+          validate_semver() {
+            local version=$1
+            [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          }
+
+          if [ ! -f "$MANIFEST" ]; then
+            echo "ERROR: Missing Codex manifest at $MANIFEST"
+            exit 1
+          fi
+
+          if ! git diff --quiet "origin/${BASE_BRANCH}...HEAD" -- platforms/codex/; then
+            echo "Detected changes under platforms/codex/"
+          else
+            echo "No Codex package changes detected"
+            exit 0
+          fi
+
+          PR_VERSION=$(jq -r '.version // "null"' "$MANIFEST" 2>/dev/null || echo "null")
+          PR_NAME=$(jq -r '.name // "null"' "$MANIFEST" 2>/dev/null || echo "null")
+          BASE_VERSION=$(git show "origin/${BASE_BRANCH}:${MANIFEST}" 2>/dev/null | jq -r '.version // "null"' 2>/dev/null || echo "null")
+
+          echo "manifest name:    $PR_NAME"
+          echo "manifest version: ${BASE_VERSION} -> ${PR_VERSION}"
+
+          if [ "$PR_NAME" != "ralph-specum-codex" ]; then
+            echo "ERROR: Expected manifest name ralph-specum-codex"
+            exit 1
+          fi
+
+          if [ "$PR_VERSION" = "null" ] || [ -z "$PR_VERSION" ]; then
+            echo "ERROR: Missing version in $MANIFEST"
+            exit 1
+          fi
+
+          if ! validate_semver "$PR_VERSION"; then
+            echo "ERROR: Invalid semantic version in $MANIFEST: $PR_VERSION"
+            exit 1
+          fi
+
+          if [ "$BASE_VERSION" = "null" ] || [ -z "$BASE_VERSION" ]; then
+            echo "New Codex manifest detected. Version: $PR_VERSION"
+            exit 0
+          fi
+
+          if ! validate_semver "$BASE_VERSION"; then
+            echo "ERROR: Base branch has invalid semantic version in $MANIFEST: $BASE_VERSION"
+            exit 1
+          fi
+
+          if [ "$PR_VERSION" = "$BASE_VERSION" ]; then
+            echo "ERROR: Codex package changed but version was not bumped"
+            exit 1
+          fi
+
+          if ! version_greater "$PR_VERSION" "$BASE_VERSION"; then
+            echo "ERROR: Codex package version must increase"
+            exit 1
+          fi
+
+          echo "Codex package version check passed"

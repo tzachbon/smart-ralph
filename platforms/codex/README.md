@@ -2,6 +2,10 @@
 
 Installable Codex skills for Ralph Specum live in this package. This is the Codex distribution surface for this repo. It is not meant to be copied into a project root as-is.
 
+Package manifest: `platforms/codex/manifest.json`
+
+Current package version: `4.8.4`
+
 ## What Ships
 
 - Primary skill: `$ralph-specum`
@@ -31,6 +35,11 @@ Prompt to send to Codex:
 
 ```text
 Use $skill-installer to install the Smart Ralph Codex skill from repo `tzachbon/smart-ralph` at path `platforms/codex/skills/ralph-specum`.
+First ask whether to install globally under `$CODEX_HOME/skills` or project-local inside this repo.
+Before installing, check whether an existing install already has a `manifest.json` version for Smart Ralph Codex.
+Compare that installed version to `platforms/codex/manifest.json` in this repo.
+If no install exists or the versions differ, run the installer for the selected target.
+If the versions match, say it is already up to date and skip reinstalling.
 ```
 
 In Codex, ask `$skill-installer` to install:
@@ -69,6 +78,11 @@ Use $skill-installer to install the Smart Ralph Codex skills from repo `tzachbon
 - `platforms/codex/skills/ralph-specum-refactor`
 - `platforms/codex/skills/ralph-specum-feedback`
 - `platforms/codex/skills/ralph-specum-help`
+First ask whether to install globally under `$CODEX_HOME/skills` or project-local inside this repo.
+Before installing, check whether an existing Smart Ralph Codex install already has a `manifest.json` version.
+Compare that installed version to `platforms/codex/manifest.json` in this repo.
+If no install exists or the versions differ, run the installer for the selected target.
+If the versions match, say it is already up to date and skip reinstalling.
 ```
 
 ```bash
@@ -93,6 +107,34 @@ python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-g
 ```
 
 Restart Codex after installation.
+
+### Update Existing Install
+
+Prompt to send to Codex:
+
+```text
+Use $skill-installer to update the Smart Ralph Codex install from repo `tzachbon/smart-ralph`.
+First ask whether the current install lives globally under `$CODEX_HOME/skills` or project-local inside this repo.
+Check the installed Smart Ralph Codex `manifest.json` version and compare it to `platforms/codex/manifest.json` in this repo.
+Only if the versions differ, reinstall these paths into the selected target:
+- `platforms/codex/skills/ralph-specum`
+- `platforms/codex/skills/ralph-specum-start`
+- `platforms/codex/skills/ralph-specum-triage`
+- `platforms/codex/skills/ralph-specum-research`
+- `platforms/codex/skills/ralph-specum-requirements`
+- `platforms/codex/skills/ralph-specum-design`
+- `platforms/codex/skills/ralph-specum-tasks`
+- `platforms/codex/skills/ralph-specum-implement`
+- `platforms/codex/skills/ralph-specum-status`
+- `platforms/codex/skills/ralph-specum-switch`
+- `platforms/codex/skills/ralph-specum-cancel`
+- `platforms/codex/skills/ralph-specum-index`
+- `platforms/codex/skills/ralph-specum-refactor`
+- `platforms/codex/skills/ralph-specum-feedback`
+- `platforms/codex/skills/ralph-specum-help`
+If the versions match, say it is already up to date and do not reinstall.
+Then restart Codex.
+```
 
 ## Optional Project Bootstrap
 
@@ -120,6 +162,7 @@ Recommended destinations in the consumer repo:
 
 ## Maintainer Notes
 
+- Any change under `platforms/codex/` must bump `platforms/codex/manifest.json`.
 - Skill sources live under `platforms/codex/skills/`.
 - The primary skill contains the shared references, scripts, bootstrap assets, and canonical templates.
 - Helper skills are standalone install units. They must not depend on files outside their own installed directory.
