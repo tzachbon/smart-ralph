@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-design
-description: This skill should be used when the user asks to generate Ralph design docs in Codex, write `design.md`, approve requirements and move to design, or mentions "$ralph-specum-design".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-design`, or explicitly asks Ralph Specum in Codex to run the design phase.
 metadata:
   surface: helper
   action: design
@@ -32,3 +32,12 @@ Use this for the design phase.
 ## Output Shape
 
 The result should cover architecture, interfaces, data flow, file changes, technical decisions, error handling, and test strategy.
+
+## Response Handoff
+
+- After writing `design.md`, name `design.md` and summarize the design briefly.
+- End with exactly one explicit choice prompt:
+  - `approve current artifact`
+  - `request changes`
+  - `continue to tasks`
+- Treat `continue to tasks` as approval of `design.md`.

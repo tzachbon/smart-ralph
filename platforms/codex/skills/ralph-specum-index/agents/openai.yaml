@@ -1,4 +1,6 @@
 interface:
   display_name: "Ralph Specum Index"
   short_description: "Index a codebase into Ralph specs"
-  default_prompt: "Use $ralph-specum-index to build or refresh Ralph codebase index files."
+  default_prompt: "Use $ralph-specum-index to build or refresh Ralph codebase index files, then ask me to approve the index, request changes, or continue to research."
+policy:
+  allow_implicit_invocation: false

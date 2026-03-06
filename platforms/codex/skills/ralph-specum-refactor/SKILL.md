@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-refactor
-description: This skill should be used when the user asks to refactor Ralph spec files in Codex, update requirements design or tasks after implementation learnings, or mentions "$ralph-specum-refactor".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-refactor`, or explicitly asks Ralph Specum in Codex to revise spec artifacts after implementation learnings.
 metadata:
   surface: helper
   action: refactor
@@ -29,3 +29,12 @@ Use this to revise spec artifacts after implementation learnings.
 6. If requirements changed, revisit design and tasks.
 7. If design changed, revisit tasks.
 8. Record the rationale and cascade decisions in `.progress.md`.
+
+## Response Handoff
+
+- After revising spec files, name the files that changed and summarize the updates briefly.
+- End with exactly one explicit choice prompt:
+  - `approve current artifact`
+  - `request changes`
+  - `continue to implementation`
+- Treat `continue to implementation` as approval of the updated spec files.

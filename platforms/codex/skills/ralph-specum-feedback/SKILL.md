@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-feedback
-description: This skill should be used when the user asks to send Ralph feedback in Codex, report a Ralph issue, draft an issue for this project, or mentions "$ralph-specum-feedback".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-feedback`, or explicitly asks Ralph Specum in Codex to draft or submit feedback.
 metadata:
   surface: helper
   action: feedback

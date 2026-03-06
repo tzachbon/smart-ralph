@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-research
-description: This skill should be used when the user asks to run or rerun the Ralph research phase in Codex, generate `research.md`, research an active spec, or mentions "$ralph-specum-research".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-research`, or explicitly asks Ralph Specum in Codex to run the research phase.
 metadata:
   surface: helper
   action: research
@@ -32,3 +32,12 @@ Use this for the research phase.
 ## Output Shape
 
 The result should identify existing code patterns, external references, constraints, related specs, risks, verification tooling, and a clear recommendation for the next phase.
+
+## Response Handoff
+
+- After writing `research.md`, name `research.md` and summarize the research briefly.
+- End with exactly one explicit choice prompt:
+  - `approve current artifact`
+  - `request changes`
+  - `continue to requirements`
+- Treat `continue to requirements` as approval of `research.md`.

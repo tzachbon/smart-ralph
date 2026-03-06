@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-start
-description: This skill should be used when the user asks to start or resume Ralph Specum work in Codex, create a new Ralph spec, run quick mode, use the `new` alias, or mentions "$ralph-specum-start".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-start`, or explicitly asks Ralph Specum in Codex to start or resume a spec.
 metadata:
   surface: helper
   action: start
@@ -47,8 +47,17 @@ Use this for the `start` and `new` entrypoints.
 9. Write `.progress.md` with goal, current phase, next step, blockers, learnings, and skill discovery results when used.
 10. On resume, prefer `tasks.md` and present files over stale state when they disagree.
 11. In quick mode, generate missing artifacts in order, skip normal approval pauses, and continue into implementation in the same run.
+12. Without quick mode or explicit autonomy, stop after setup and ask whether to continue to research.
 
 ## Branch Isolation
 
 - If the user wants isolation, offer a feature branch in place or a worktree with a feature branch.
 - If a worktree is created, stop after creation and ask the user to continue from that worktree.
+
+## Response Handoff
+
+- After creating or resuming the spec, name the resolved spec path and summarize the current state briefly.
+- End with exactly one explicit choice prompt:
+  - `request changes`
+  - `continue to research`
+- Do not run research until the user explicitly asks to continue or explicitly asked for quick or autonomous flow.

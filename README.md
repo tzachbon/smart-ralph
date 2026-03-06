@@ -151,6 +151,8 @@ The helper skill package also includes `$ralph-specum-switch`, `$ralph-specum-ca
 
 Use `$ralph-specum-triage` first when the goal is large, cross-cutting, or likely to become multiple specs. Use `$ralph-specum-start` for a single spec or to resume an existing one.
 
+Codex Ralph is approval-gated by default. After each spec artifact, Ralph stops and asks you to approve the current artifact, request changes, or continue to the next step. Quick or autonomous flow happens only when you explicitly ask for it.
+
 ### Claude Code
 
 ```bash

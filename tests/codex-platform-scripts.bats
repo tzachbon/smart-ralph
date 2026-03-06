@@ -91,7 +91,7 @@ teardown() {
 }
 
 @test "codex scripts: resolve_spec_paths handles crlf frontmatter and bool variants" {
-    local script default_dir max_iterations auto_commit quick_mode
+    local script default_dir max_iterations auto_commit
     script="$(resolve_spec_paths_script)"
 
     mkdir -p "$TEST_REPO/packages/specs"
@@ -112,16 +112,15 @@ EOF
     default_dir="$(json_query default_dir <<< "$output")"
     max_iterations="$(json_query default_max_iterations <<< "$output")"
     auto_commit="$(json_query auto_commit_spec <<< "$output")"
-    quick_mode="$(json_query quick_mode_default <<< "$output")"
 
     [ "$default_dir" = "./packages/specs" ]
     [ "$max_iterations" = "7" ]
     [ "$auto_commit" = "false" ]
-    [ "$quick_mode" = "true" ]
+    [[ "$output" != *"quick_mode_default"* ]]
 }
 
 @test "codex scripts: resolve_spec_paths falls back on malformed scalar settings" {
-    local script max_iterations auto_commit quick_mode
+    local script max_iterations auto_commit
     script="$(resolve_spec_paths_script)"
 
     mkdir -p "$TEST_REPO/specs"
@@ -140,11 +139,33 @@ EOF
 
     max_iterations="$(json_query default_max_iterations <<< "$output")"
     auto_commit="$(json_query auto_commit_spec <<< "$output")"
-    quick_mode="$(json_query quick_mode_default <<< "$output")"
 
     [ "$max_iterations" = "5" ]
     [ "$auto_commit" = "true" ]
-    [ "$quick_mode" = "false" ]
+    [[ "$output" != *"quick_mode_default"* ]]
+}
+
+@test "codex scripts: resolve_spec_paths ignores deprecated quick mode setting" {
+    local script auto_commit
+    script="$(resolve_spec_paths_script)"
+
+    mkdir -p "$TEST_REPO/specs"
+    cat > "$TEST_REPO/.claude/ralph-specum.local.md" <<'EOF'
+---
+specs_dirs:
+  - "./specs"
+auto_commit_spec: false
+quick_mode_default: true
+---
+EOF
+
+    run python3 "$script" --cwd "$TEST_REPO"
+    [ "$status" -eq 0 ]
+
+    auto_commit="$(json_query auto_commit_spec <<< "$output")"
+
+    [ "$auto_commit" = "false" ]
+    [[ "$output" != *"quick_mode_default"* ]]
 }
 
 @test "codex scripts: resolve_spec_paths skips missing and file roots" {

@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-tasks
-description: This skill should be used when the user asks to generate Ralph tasks in Codex, write `tasks.md`, approve design and move to task planning, or mentions "$ralph-specum-tasks".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-tasks`, or explicitly asks Ralph Specum in Codex to run the tasks phase.
 metadata:
   surface: helper
   action: tasks
@@ -37,3 +37,12 @@ Use this for the tasks phase.
 ## Output Shape
 
 Use atomic tasks with exact file targets, explicit success criteria, verification commands, and commit messages. Preserve POC-first ordering. Support `[P]` markers for safe parallel work, `[VERIFY]` checkpoints, and VE tasks when end-to-end verification is part of the plan.
+
+## Response Handoff
+
+- After writing `tasks.md`, name `tasks.md` and summarize the task plan briefly.
+- End with exactly one explicit choice prompt:
+  - `approve current artifact`
+  - `request changes`
+  - `continue to implementation`
+- Treat `continue to implementation` as approval of `tasks.md`.

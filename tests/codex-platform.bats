@@ -84,6 +84,19 @@ PY
     done < <(all_codex_skills)
 }
 
+@test "codex platform: all Codex skill metadata disables implicit invocation" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+for skill in (ROOT / "platforms/codex/skills").glob("ralph-specum*"):
+    if not skill.is_dir():
+        continue
+    text = (skill / "agents/openai.yaml").read_text()
+    assert "allow_implicit_invocation: false" in text, skill.name
+' "$root"
+}
+
 @test "codex platform: primary skill ships shared resources" {
     local root
     root="$(repo_root)"
@@ -238,6 +251,27 @@ for command, token in required_tokens.items():
 ' "$root"
 }
 
+@test "codex platform: default prompts advertise approval handoffs" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+expected = {
+    "ralph-specum": ["approve each artifact", "request changes", "continue"],
+    "ralph-specum-start": ["wait for explicit direction", "research"],
+    "ralph-specum-research": ["approve it", "continue to requirements"],
+    "ralph-specum-requirements": ["approve it", "continue to design"],
+    "ralph-specum-design": ["approve it", "continue to tasks"],
+    "ralph-specum-tasks": ["approve it", "continue to implementation"],
+}
+
+for skill, tokens in expected.items():
+    text = (ROOT / "platforms/codex/skills" / skill / "agents/openai.yaml").read_text()
+    for token in tokens:
+        assert token in text, {"skill": skill, "token": token}
+' "$root"
+}
+
 @test "codex platform: helper skills retain plugin command semantics" {
     local root
     root="$(repo_root)"
@@ -261,6 +295,27 @@ pairs = {
 }
 
 for name, tokens in pairs.items():
+    text = (ROOT / f"platforms/codex/skills/ralph-specum-{name}/SKILL.md").read_text()
+    for token in tokens:
+        assert token in text, {"skill": name, "token": token}
+' "$root"
+}
+
+@test "codex platform: phase skills require approval handoff text" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+expected = {
+    "research": ["approve current artifact", "request changes", "continue to requirements"],
+    "requirements": ["approve current artifact", "request changes", "continue to design"],
+    "design": ["approve current artifact", "request changes", "continue to tasks"],
+    "tasks": ["approve current artifact", "request changes", "continue to implementation"],
+    "triage": ["approve current artifact", "request changes", "continue to the next spec"],
+    "refactor": ["approve current artifact", "request changes", "continue to implementation"],
+}
+
+for name, tokens in expected.items():
     text = (ROOT / f"platforms/codex/skills/ralph-specum-{name}/SKILL.md").read_text()
     for token in tokens:
         assert token in text, {"skill": name, "token": token}
@@ -327,6 +382,7 @@ resolve_paths = (ROOT / "platforms/codex/skills/ralph-specum/scripts/resolve_spe
 assert "$ralph-specum-start" in bootstrap
 assert ".current-spec" in bootstrap
 assert "specs_dirs" in settings
+assert "quick_mode_default" not in settings
 assert "\"total\"" in count_tasks
 assert "\"completed\"" in count_tasks
 assert "\"next_index\"" in count_tasks
@@ -334,5 +390,6 @@ assert "--set" in merge_state
 assert "--json" in merge_state
 assert ".current-spec" in resolve_paths
 assert "specs_dirs" in resolve_paths
+assert "quick_mode_default" not in resolve_paths
 ' "$root"
 }

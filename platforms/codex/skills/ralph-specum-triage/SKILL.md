@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-triage
-description: This skill should be used when the user asks to triage a large Ralph effort in Codex, split work into multiple specs, create or resume an epic, or mentions "$ralph-specum-triage".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-triage`, or explicitly asks Ralph Specum in Codex to triage a large effort into multiple specs.
 metadata:
   surface: helper
   action: triage
@@ -42,3 +42,12 @@ The result should make it clear:
 - which specs can start now
 - which specs are blocked by dependencies
 - what contracts must stay stable across specs
+
+## Response Handoff
+
+- After writing `epic.md`, name `epic.md` and summarize the epic plan briefly.
+- End with exactly one explicit choice prompt:
+  - `approve current artifact`
+  - `request changes`
+  - `continue to the next spec`
+- Treat `continue to the next spec` as approval of `epic.md`.

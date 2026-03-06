@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-switch
-description: This skill should be used when the user asks to switch the active Ralph spec in Codex, change `.current-spec`, pick a different spec root, or mentions "$ralph-specum-switch".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-switch`, or explicitly asks Ralph Specum in Codex to switch the active spec.
 metadata:
   surface: helper
   action: switch

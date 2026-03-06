@@ -127,7 +127,6 @@ def resolve_config(cwd: Path) -> dict[str, object]:
         "default_dir": default_specs_dir(cwd, specs_dirs),
         "default_max_iterations": coerce_int(settings.get("default_max_iterations", 5), 5),
         "auto_commit_spec": coerce_bool(settings.get("auto_commit_spec", True), True),
-        "quick_mode_default": coerce_bool(settings.get("quick_mode_default", False), False),
     }
 
 

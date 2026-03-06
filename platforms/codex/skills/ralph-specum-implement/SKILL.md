@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-implement
-description: This skill should be used when the user asks to execute Ralph tasks in Codex, resume Ralph implementation, finish a Ralph backlog, recover from an interrupted run, or mentions "$ralph-specum-implement".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-implement`, or explicitly asks Ralph Specum in Codex to run implementation for an approved task plan.
 metadata:
   surface: helper
   action: implement

@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-cancel
-description: This skill should be used when the user asks to cancel Ralph execution in Codex, stop a Ralph run, clear Ralph state, delete a Ralph spec, or mentions "$ralph-specum-cancel".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-cancel`, or explicitly asks Ralph Specum in Codex to stop execution or remove a spec.
 metadata:
   surface: helper
   action: cancel

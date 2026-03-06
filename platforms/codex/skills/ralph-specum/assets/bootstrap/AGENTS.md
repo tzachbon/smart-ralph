@@ -5,7 +5,7 @@ Use Ralph Specum as the spec workflow for this repo.
 ## Preferred Entry Surface
 
 - `$ralph-specum` for the general flow
-- `$ralph-specum-start` to create, resume, switch, or run quick mode
+- `$ralph-specum-start` to create or resume a spec, then stop
 - `$ralph-specum-research`
 - `$ralph-specum-requirements`
 - `$ralph-specum-design`
@@ -23,10 +23,15 @@ Use Ralph Specum as the spec workflow for this repo.
 ## Flow
 
 1. Start or resume a spec
-2. Research
-3. Requirements
-4. Design
-5. Tasks
-6. Implement
+2. Stop and ask whether to continue to research
+3. Research
+4. Approve the artifact, request changes, or continue to requirements
+5. Requirements
+6. Approve the artifact, request changes, or continue to design
+7. Design
+8. Approve the artifact, request changes, or continue to tasks
+9. Tasks
+10. Approve the artifact, request changes, or continue to implementation
+11. Implement
 
-Quick mode may generate missing artifacts and continue straight into implementation in one run.
+Quick mode may generate missing artifacts and continue straight into implementation in one run only when the user explicitly asks for quick or autonomous flow.

@@ -9,12 +9,12 @@ Relevant frontmatter keys:
 - `specs_dirs`
 - `default_max_iterations`
 - `auto_commit_spec`
-- `quick_mode_default`
 
 ## Default Behavior
 
 - default specs root: `./specs`
 - current spec marker: `<default-specs-root>/.current-spec`
+- ignore unknown or deprecated settings keys
 
 ## `.current-spec` Rules
 

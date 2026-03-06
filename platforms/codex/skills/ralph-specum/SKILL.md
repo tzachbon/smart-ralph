@@ -1,6 +1,6 @@
 ---
 name: ralph-specum
-description: This skill should be used when the user asks to "use Ralph Specum in Codex", "start a Ralph spec", "run Ralph quick mode", "resume spec-driven work", "generate research requirements design or tasks", "implement a Ralph spec", "check Ralph status", "switch specs", "cancel Ralph execution", "index a codebase", "refactor Ralph specs", "submit Ralph feedback", or mentions "$ralph-specum".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum`, explicitly asks to use Ralph Specum in Codex, explicitly asks Ralph Specum to handle a named Ralph phase, or explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
 metadata:
   surface: primary
 ---
@@ -60,7 +60,20 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 9. Honor approval checkpoints between phases unless quick mode is active.
 10. Honor the `Commit` line in tasks during implementation unless the user explicitly disables task commits.
 11. Use branch creation or worktree creation when the user asks for branch isolation or the repo policy requires it.
-12. In quick mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
+12. Enter quick mode only when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
+13. In quick mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
+
+## Approval Handoff
+
+- After writing `research.md`, `requirements.md`, `design.md`, `tasks.md`, `epic.md`, or refactored spec files outside quick mode:
+  - name the file or files that changed
+  - give a short summary
+  - end with exactly one explicit choice prompt:
+    - `approve current artifact`
+    - `request changes`
+    - `continue to <named next step>`
+- Treat `continue to <named next step>` as approval of the current artifact and permission to proceed.
+- After `start` or `new`, summarize the resolved spec and stop unless the user explicitly asked for quick or autonomous flow. The next choice should point to `continue to research`.
 
 ## Current Workflow Expectations
 

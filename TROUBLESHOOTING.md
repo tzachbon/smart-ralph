@@ -192,7 +192,7 @@ rm -rf ./specs/your-spec-name
 
 Just run `/ralph-specum:start` - it auto-detects existing specs and continues where you left off.
 
-In Codex, use `$ralph-specum` or `$ralph-specum-start`, then continue with the matching helper skill or the primary skill.
+In Codex, use `$ralph-specum` or `$ralph-specum-start`, then approve the current artifact, request changes, or explicitly continue to the matching next step.
 
 If the work was triaged into an epic, check `./specs/.current-epic` and resume the next unblocked spec rather than creating a new one.
 

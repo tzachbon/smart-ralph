@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-requirements
-description: This skill should be used when the user asks to generate Ralph requirements in Codex, write `requirements.md`, approve research and move to requirements, or mentions "$ralph-specum-requirements".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-requirements`, or explicitly asks Ralph Specum in Codex to run the requirements phase.
 metadata:
   surface: helper
   action: requirements
@@ -32,3 +32,12 @@ Use this for the requirements phase.
 ## Output Shape
 
 The result should include user stories, acceptance criteria, functional requirements, non-functional requirements, dependencies, exclusions, and success criteria.
+
+## Response Handoff
+
+- After writing `requirements.md`, name `requirements.md` and summarize the requirements briefly.
+- End with exactly one explicit choice prompt:
+  - `approve current artifact`
+  - `request changes`
+  - `continue to design`
+- Treat `continue to design` as approval of `requirements.md`.

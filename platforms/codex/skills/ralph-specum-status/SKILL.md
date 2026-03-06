@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-status
-description: This skill should be used when the user asks for Ralph status in Codex, wants to see active spec progress, list specs across roots, or mentions "$ralph-specum-status".
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-status`, or explicitly asks Ralph Specum in Codex for status or active spec progress.
 metadata:
   surface: helper
   action: status
@@ -39,3 +39,4 @@ Use this to report Ralph state across configured spec roots.
 - Specs in other roots should include the root suffix for disambiguation.
 - Include the next likely command when it is obvious.
 - If an epic is active, include the next unblocked spec.
+- If approval is pending, explicitly tell the user to approve the current artifact, request changes, or continue to the named next step.
