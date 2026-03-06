@@ -60,11 +60,10 @@ PY
     [ "$status" -eq 0 ]
 }
 
-@test "codex platform: repo root wrapper files are gone" {
+@test "codex platform: legacy Codex wrapper files are gone" {
     local root
     root="$(repo_root)"
 
-    [ ! -e "$root/AGENTS.md" ]
     [ ! -e "$root/tests/codex-wrapper.bats" ]
 
     if [ -d "$root/.agents/skills" ]; then
