@@ -154,28 +154,35 @@ Analyze the goal text for keywords to determine intent type:
 ```text
 Intent Classification:
 
-1. TRIVIAL: Goal contains keywords like:
+1. BUG_FIX: Goal contains keywords like:
+   - "fix", "resolve", "debug", "broken", "failing"
+   - "not working", "error", "bug", "patch", "crash"
+   - "regression", "reproduce", "repro", "issue"
+   -> Min questions: 5, Max questions: 5
+   Note: TRIVIAL-specific keywords (typo, spelling, minor, tiny, rename, update text) override BUG_FIX when both match.
+
+2. TRIVIAL: Goal contains keywords like:
    - "fix typo", "typo", "spelling"
    - "small change", "minor"
    - "quick", "simple", "tiny"
    - "rename", "update text"
    -> Min questions: 1, Max questions: 2
 
-2. REFACTOR: Goal contains keywords like:
+3. REFACTOR: Goal contains keywords like:
    - "refactor", "restructure", "reorganize"
    - "clean up", "cleanup", "simplify"
    - "extract", "consolidate", "modularize"
    - "improve code", "tech debt"
    -> Min questions: 3, Max questions: 5
 
-3. GREENFIELD: Goal contains keywords like:
+4. GREENFIELD: Goal contains keywords like:
    - "new feature", "new system", "new module"
    - "add", "build", "implement", "create"
    - "integrate", "introduce"
    - "from scratch"
    -> Min questions: 5, Max questions: 10
 
-4. MID_SIZED: Default if no clear match
+5. MID_SIZED: Default if no clear match
    -> Min questions: 3, Max questions: 7
 ```
 
@@ -189,6 +196,7 @@ Intent Classification:
 
 ### Question Count Rules
 
+- BUG_FIX: 5 questions (understand reproduction, scope, and root cause)
 - TRIVIAL: 1-2 questions (get essentials, move fast)
 - REFACTOR: 3-5 questions (understand scope and risks)
 - GREENFIELD: 5-10 questions (full context needed)
@@ -200,6 +208,7 @@ Intent classification determines how deep the brainstorming dialogue goes:
 
 | Intent | Min Questions | Max Questions |
 |--------|---------------|---------------|
+| BUG_FIX | 5 | 5 |
 | TRIVIAL | 1 | 2 |
 | REFACTOR | 3 | 5 |
 | GREENFIELD | 5 | 10 |
@@ -213,7 +222,7 @@ After classification, store the result in `.progress.md`:
 - Version: 1.0
 
 ## Intent Classification
-- Type: [TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+- Type: [BUG_FIX|TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
 - Confidence: [high|medium|low] ([N] keywords matched)
 - Min questions: [N]
 - Max questions: [N]
