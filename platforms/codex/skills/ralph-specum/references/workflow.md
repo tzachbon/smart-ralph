@@ -23,17 +23,13 @@
 
 1. Resolve current repo state, branch, and spec roots.
 2. Start or resume a spec.
-3. Stop after start unless the user explicitly asked for quick or autonomous flow.
-4. Create `research.md`.
-5. Ask the user to approve the artifact, request changes, or continue to requirements.
-6. Draft `requirements.md`.
-7. Ask the user to approve the artifact, request changes, or continue to design.
-8. Prepare `design.md`.
-9. Ask the user to approve the artifact, request changes, or continue to tasks.
-10. Compile `tasks.md`.
-11. Ask the user to approve the artifact, request changes, or continue to implementation.
-12. Implement tasks until complete or blocked.
-13. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
+3. Wait for explicit direction to continue to research unless the user explicitly asked for quick or autonomous flow.
+4. Create `research.md` and request approval, changes, or continuation to requirements.
+5. Draft `requirements.md` and request approval, changes, or continuation to design.
+6. Prepare `design.md` and request approval, changes, or continuation to tasks.
+7. Compile `tasks.md` and request approval, changes, or continuation to implementation.
+8. Implement tasks until complete or blocked.
+9. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
 
 ## Start And New
 

@@ -68,6 +68,8 @@ Use `scripts/merge_state.py` for deterministic top-level merges.
 
 `awaitingApproval: true` is not enough on its own.
 
+This mirrors `Approval Prompt Shape` in `references/workflow.md` and should stay in sync with that section. Current enforcement is via Codex platform review plus the repo-local metadata and content checks.
+
 When a phase sets `awaitingApproval: true`, the visible assistant response must also:
 
 - name the file or files that changed

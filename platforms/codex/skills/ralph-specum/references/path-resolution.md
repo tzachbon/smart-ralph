@@ -14,7 +14,7 @@ Relevant frontmatter keys:
 
 - default specs root: `./specs`
 - current spec marker: `<default-specs-root>/.current-spec`
-- ignore unknown or deprecated settings keys
+- ignore unknown or deprecated settings keys, including `quick_mode_default`
 
 ## `.current-spec` Rules
 

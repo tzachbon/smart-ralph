@@ -39,7 +39,8 @@ Use this for the `start` and `new` entrypoints.
    - `maxGlobalIterations: 100`
    - `commitSpec: settings auto_commit_spec or true`
    - `relatedSpecs: []`
-   - `awaitingApproval: false`
+   - `awaitingApproval: true` when the run will stop after setup and wait for explicit direction
+   - `awaitingApproval: false` when quick mode or explicit autonomy will continue without pausing
    - preserve or set `quickMode`
    - preserve or set `granularity` when `--tasks-size` was supplied
    - preserve or set `epicName` when starting from an epic suggestion

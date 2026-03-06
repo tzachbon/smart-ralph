@@ -256,13 +256,15 @@ for command, token in required_tokens.items():
 
     assert_python '
 expected = {
-    "ralph-specum": ["approve each artifact", "request changes", "continue"],
+    "ralph-specum": ["approve current artifact", "request changes", "continue to <named next step>"],
     "ralph-specum-start": ["wait for explicit direction", "research"],
-    "ralph-specum-research": ["approve it", "continue to requirements"],
-    "ralph-specum-requirements": ["approve it", "continue to design"],
-    "ralph-specum-design": ["approve it", "continue to tasks"],
-    "ralph-specum-tasks": ["approve it", "continue to implementation"],
+    "ralph-specum-research": ["approve current artifact", "continue to requirements"],
+    "ralph-specum-requirements": ["approve current artifact", "continue to design"],
+    "ralph-specum-design": ["approve current artifact", "continue to tasks"],
+    "ralph-specum-tasks": ["approve current artifact", "continue to implementation"],
     "ralph-specum-cancel": ["whether anything was removed", "exactly what if so"],
+    "ralph-specum-triage": ["approve current artifact", "continue to the next spec"],
+    "ralph-specum-refactor": ["approve current artifact", "continue to implementation"],
 }
 
 for skill, tokens in expected.items():
@@ -328,12 +330,21 @@ for name, tokens in expected.items():
 
     assert_python '
 bootstrap = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md").read_text()
+bootstrap_local = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md").read_text()
 primary = (ROOT / "platforms/codex/skills/ralph-specum/SKILL.md").read_text()
 workflow = (ROOT / "platforms/codex/skills/ralph-specum/references/workflow.md").read_text()
+path_resolution = (ROOT / "platforms/codex/skills/ralph-specum/references/path-resolution.md").read_text()
+state_contract = (ROOT / "platforms/codex/skills/ralph-specum/references/state-contract.md").read_text()
 
 assert "create, resume, or run in quick mode" in bootstrap
+assert "`quick_mode_default` is removed and ignored" in bootstrap_local
+assert "Use only when the user explicitly invokes `$ralph-specum`" in primary
+assert "## Response Handoff" in primary
 assert "epic.md" not in primary.split("## Current Workflow Expectations")[0]
 assert "epic.md" not in workflow.split("Treat `continue to <named next step>` as approval of the current artifact.")[0]
+assert "Wait for explicit direction to continue to research" in workflow
+assert "quick_mode_default" in path_resolution
+assert "Approval Prompt Shape" in state_contract
 ' "$root"
 }
 

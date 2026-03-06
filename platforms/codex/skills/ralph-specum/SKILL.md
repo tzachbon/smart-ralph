@@ -1,6 +1,6 @@
 ---
 name: ralph-specum
-description: This skill should be used only when the user explicitly asks to use `$ralph-specum`, explicitly asks to use Ralph Specum in Codex, explicitly asks Ralph Specum to handle a named Ralph phase, or explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
+description: Use only when the user explicitly invokes `$ralph-specum`, requests Ralph Specum in Codex, asks Ralph Specum to handle a named phase, or explicitly requests autonomous or quick mode or continuation without pauses.
 metadata:
   surface: primary
 ---
@@ -63,7 +63,7 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 12. Enter quick mode only when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
 13. In quick mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
 
-## Approval Handoff
+## Response Handoff
 
 - After writing `research.md`, `requirements.md`, `design.md`, `tasks.md`, or refactored spec files outside quick mode:
   - name the file or files that changed
