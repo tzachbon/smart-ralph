@@ -77,11 +77,37 @@ Validation Sequence:
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
 9. Skill Discovery Pass 1: scan skills, match against goal text, invoke matches
-10. Goal Type Detection:
+10. Goal Type Detection (BUG_FIX BEFORE state capture):
     - Classify as "fix" or "add" using regex indicators
     - Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
     - Add: add|create|build|implement|new|enable|introduce (default)
-    - For fix goals: run reproduction, document BEFORE state
+    - For fix goals, execute sub-steps a-e:
+      a. INFER reproduction command from goal text:
+         - Scan goal text for backtick-quoted content (e.g., `pnpm test foo`) -- use first match
+         - Scan goal text for "run X" or "by running X" patterns -- use captured X
+         - Fallback priority: (1) command from goal text, (2) pnpm test / npm test / yarn test (whichever lock file exists), (3) skip with warning logged to .progress.md
+      b. RUN the inferred command: capture full stdout, stderr, and exit code
+      c. WRITE canonical `## Reality Check (BEFORE)` block to .progress.md:
+         ```markdown
+         ## Reality Check (BEFORE)
+         - Reproduction command: `<exact command>`
+         - Exit code: <N>
+         - Output: <relevant snippet>
+         - Confirmed failing: yes
+         - Timestamp: <ISO 8601>
+         ```
+      d. If exit code != 0 (confirmed failing): continue to step 11
+      e. If exit code == 0 (NOT confirmed failing): append WARNING to .progress.md and continue
+         (non-interactive -- do not block or prompt user)
+         ```markdown
+         ## Reality Check (BEFORE)
+         - Reproduction command: `<exact command>`
+         - Exit code: 0
+         - Output: <relevant snippet>
+         - Confirmed failing: no
+         - WARNING: Reproduction command exited 0; bug may not be reproducible with this command
+         - Timestamp: <ISO 8601>
+         ```
 11. Research Phase: TaskCreate("Research for $spec", activeForm: "Researching"), run Team Research flow (skip walkthrough), clear awaitingApproval, TaskUpdate(completed)
 12. Skill Discovery Pass 2: re-scan skills using goal + research Executive Summary, invoke new matches
 13. Requirements Phase: TaskCreate("Requirements for $spec", activeForm: "Generating requirements"), delegate to product-manager with Quick Mode Directive, review loop, TaskUpdate(completed)
