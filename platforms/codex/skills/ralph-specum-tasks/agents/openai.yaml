@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Tasks"
+  short_description: "Generate implementation tasks for an active spec"
+  default_prompt: "Use $ralph-specum-tasks to write tasks.md for the active Ralph spec."

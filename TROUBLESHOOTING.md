@@ -6,6 +6,39 @@ Common issues and solutions for Smart Ralph.
 
 ## Installation Issues
 
+### Codex skill not found
+
+Codex installation targets the packaged skill folders in this repo, not the repo root.
+
+**Use:**
+```bash
+python "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
+  --repo tzachbon/smart-ralph \
+  --path platforms/codex/skills/ralph-specum
+```
+
+Optional helper skills also install from `platforms/codex/skills/ralph-specum-*`.
+
+If you want the full Codex helper set, include `platforms/codex/skills/ralph-specum-triage` too.
+
+More detail: [`platforms/codex/README.md`](platforms/codex/README.md)
+
+---
+
+### Codex bootstrap files missing
+
+Project-local bootstrap files are optional in Codex. They are shipped inside the installed primary skill, not at this repo root.
+
+**Installed locations:**
+```text
+$CODEX_HOME/skills/ralph-specum/assets/bootstrap/AGENTS.md
+$CODEX_HOME/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md
+```
+
+Copy them into a consumer repo only if you want repo-local guidance.
+
+---
+
 ### "Ralph Loop plugin not found"
 
 Smart Ralph v2.0.0+ requires the Ralph Loop plugin as a dependency.
@@ -159,6 +192,10 @@ rm -rf ./specs/your-spec-name
 
 Just run `/ralph-specum:start` - it auto-detects existing specs and continues where you left off.
 
+In Codex, use `$ralph-specum` or `$ralph-specum-start`, then continue with the matching helper skill or the primary skill.
+
+If the work was triaged into an epic, check `./specs/.current-epic` and resume the next unblocked spec rather than creating a new one.
+
 If you want to force a specific spec:
 ```bash
 /ralph-specum:switch spec-name
@@ -217,6 +254,14 @@ If tasks are out of order, re-run:
 ```bash
 /ralph-specum:tasks
 ```
+
+Current task plans may also include:
+- `[P]` markers for tasks safe to run in parallel
+- `[VERIFY]` checkpoints
+- VE tasks for end-to-end verification
+- fine or coarse granularity depending on `--tasks-size`
+
+In Codex, the same concepts are exposed through `$ralph-specum-tasks` and `$ralph-specum-implement`.
 
 ---
 

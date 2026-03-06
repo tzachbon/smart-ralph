@@ -10,7 +10,7 @@
 [![Claude Code](https://img.shields.io/badge/Built%20for-Claude%20Code-blueviolet)](https://claude.ai/code)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-**Spec-driven development for Claude Code. Task-by-task execution with fresh context per task.**
+**Spec-driven development for Claude Code and Codex. Task-by-task execution with fresh context per task.**
 
 Self-contained execution loop. No external dependencies.
 
@@ -39,6 +39,8 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ## Installation
 
+### Claude Code
+
 ```bash
 # Install Smart Ralph
 /plugin marketplace add tzachbon/smart-ralph
@@ -46,6 +48,68 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 # Restart Claude Code
 ```
+
+### Codex
+
+Codex support ships as installable skills under `platforms/codex/skills/`. Install the primary skill from this repo:
+
+Prompt to send to Codex:
+
+```text
+Use $skill-installer to install the Smart Ralph Codex skill from repo `tzachbon/smart-ralph` at path `platforms/codex/skills/ralph-specum`.
+```
+
+```bash
+python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
+  --repo tzachbon/smart-ralph \
+  --path platforms/codex/skills/ralph-specum
+```
+
+Install the helper bundle when you want explicit skill entrypoints:
+
+Prompt to send to Codex:
+
+```text
+Use $skill-installer to install the Smart Ralph Codex skills from repo `tzachbon/smart-ralph` at these paths:
+- `platforms/codex/skills/ralph-specum`
+- `platforms/codex/skills/ralph-specum-start`
+- `platforms/codex/skills/ralph-specum-triage`
+- `platforms/codex/skills/ralph-specum-research`
+- `platforms/codex/skills/ralph-specum-requirements`
+- `platforms/codex/skills/ralph-specum-design`
+- `platforms/codex/skills/ralph-specum-tasks`
+- `platforms/codex/skills/ralph-specum-implement`
+- `platforms/codex/skills/ralph-specum-status`
+- `platforms/codex/skills/ralph-specum-switch`
+- `platforms/codex/skills/ralph-specum-cancel`
+- `platforms/codex/skills/ralph-specum-index`
+- `platforms/codex/skills/ralph-specum-refactor`
+- `platforms/codex/skills/ralph-specum-feedback`
+- `platforms/codex/skills/ralph-specum-help`
+```
+
+```bash
+python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
+  --repo tzachbon/smart-ralph \
+  --path \
+    platforms/codex/skills/ralph-specum \
+    platforms/codex/skills/ralph-specum-start \
+    platforms/codex/skills/ralph-specum-triage \
+    platforms/codex/skills/ralph-specum-research \
+    platforms/codex/skills/ralph-specum-requirements \
+    platforms/codex/skills/ralph-specum-design \
+    platforms/codex/skills/ralph-specum-tasks \
+    platforms/codex/skills/ralph-specum-implement \
+    platforms/codex/skills/ralph-specum-status \
+    platforms/codex/skills/ralph-specum-switch \
+    platforms/codex/skills/ralph-specum-cancel \
+    platforms/codex/skills/ralph-specum-index \
+    platforms/codex/skills/ralph-specum-refactor \
+    platforms/codex/skills/ralph-specum-feedback \
+    platforms/codex/skills/ralph-specum-help
+```
+
+More Codex packaging details and the same install prompts live in [`platforms/codex/README.md`](platforms/codex/README.md).
 
 <details>
 <summary>Troubleshooting & alternative methods</summary>
@@ -67,6 +131,28 @@ claude --plugin-dir ./smart-ralph/plugins/ralph-specum
 
 ## Quick Start
 
+### Codex
+
+Use `$ralph-specum` as the default Codex surface. Helper skills mirror the explicit phase entrypoints:
+
+```text
+$ralph-specum
+$ralph-specum-start
+$ralph-specum-triage
+$ralph-specum-research
+$ralph-specum-requirements
+$ralph-specum-design
+$ralph-specum-tasks
+$ralph-specum-implement
+$ralph-specum-status
+```
+
+The helper skill package also includes `$ralph-specum-switch`, `$ralph-specum-cancel`, `$ralph-specum-index`, `$ralph-specum-refactor`, `$ralph-specum-feedback`, and `$ralph-specum-help`.
+
+Use `$ralph-specum-triage` first when the goal is large, cross-cutting, or likely to become multiple specs. Use `$ralph-specum-start` for a single spec or to resume an existing one.
+
+### Claude Code
+
 ```bash
 # The smart way (auto-detects resume or new)
 /ralph-specum:start user-auth Add JWT authentication
@@ -85,6 +171,8 @@ claude --plugin-dir ./smart-ralph/plugins/ralph-specum
 ---
 
 ## Commands
+
+For Codex, the equivalent public surface is the primary `$ralph-specum` skill plus the installable helper skills under `platforms/codex/skills/`.
 
 | Command | What it does |
 |---------|--------------|
@@ -147,6 +235,13 @@ Tasks follow a 4-phase structure:
 2. **Refactoring** - Clean up the code
 3. **Testing** - Unit, integration, e2e tests
 4. **Quality Gates** - Lint, types, CI checks
+
+Current Ralph planning also supports:
+- `--tasks-size fine|coarse` to control task granularity
+- approval checkpoints between spec phases outside quick mode
+- `[P]` markers for low-conflict parallel tasks
+- `[VERIFY]` and VE tasks for explicit verification work
+- epic planning through `/ralph-specum:triage` or `$ralph-specum-triage`
 
 ---
 

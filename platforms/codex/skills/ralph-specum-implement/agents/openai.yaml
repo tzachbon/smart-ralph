@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Implement"
+  short_description: "Execute or resume a Ralph backlog"
+  default_prompt: "Use $ralph-specum-implement to execute the remaining tasks for the active Ralph spec."

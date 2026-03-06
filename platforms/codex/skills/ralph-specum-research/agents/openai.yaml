@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Research"
+  short_description: "Generate research for an active spec"
+  default_prompt: "Use $ralph-specum-research to generate research.md for the active Ralph spec."

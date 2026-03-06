@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Start"
+  short_description: "Create or resume a Ralph spec"
+  default_prompt: "Use $ralph-specum-start to create or resume a Ralph spec."

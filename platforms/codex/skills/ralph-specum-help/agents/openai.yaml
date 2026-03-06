@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ralph Specum Help"
+  short_description: "Explain the Ralph Codex surface"
+  default_prompt: "Use $ralph-specum-help to explain how Ralph Specum works in Codex."
