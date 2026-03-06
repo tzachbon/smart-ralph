@@ -65,7 +65,7 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 
 ## Approval Handoff
 
-- After writing `research.md`, `requirements.md`, `design.md`, `tasks.md`, `epic.md`, or refactored spec files outside quick mode:
+- After writing `research.md`, `requirements.md`, `design.md`, `tasks.md`, or refactored spec files outside quick mode:
   - name the file or files that changed
   - give a short summary
   - end with exactly one explicit choice prompt:

@@ -5,7 +5,7 @@ Use Ralph Specum as the spec workflow for this repo.
 ## Preferred Entry Surface
 
 - `$ralph-specum` for the general flow
-- `$ralph-specum-start` to create or resume a spec, then stop
+- `$ralph-specum-start` to create, resume, or run in quick mode, then stop unless quick or autonomous flow was explicit
 - `$ralph-specum-research`
 - `$ralph-specum-requirements`
 - `$ralph-specum-design`

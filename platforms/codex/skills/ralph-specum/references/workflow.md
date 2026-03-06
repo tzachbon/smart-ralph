@@ -100,7 +100,7 @@ Cascade downstream updates when upstream requirements or design changes.
 
 ## Approval Prompt Shape
 
-When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, `epic.md`, or refactored spec files outside quick mode:
+When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, or refactored spec files outside quick mode:
 
 - name the file or files that changed
 - give a short summary

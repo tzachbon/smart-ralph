@@ -262,6 +262,7 @@ expected = {
     "ralph-specum-requirements": ["approve it", "continue to design"],
     "ralph-specum-design": ["approve it", "continue to tasks"],
     "ralph-specum-tasks": ["approve it", "continue to implementation"],
+    "ralph-specum-cancel": ["whether anything was removed", "exactly what if so"],
 }
 
 for skill, tokens in expected.items():
@@ -283,7 +284,7 @@ pairs = {
     "requirements": ["brainstorming", "requirements.md", "awaitingApproval"],
     "design": ["brainstorming", "design.md", "awaitingApproval"],
     "tasks": ["granularity", "[P]", "[VERIFY]", "VE tasks", "taskIndex: first incomplete or totalTasks"],
-    "implement": ["[P]", "[VERIFY]", "VE tasks", "tasks.md", "approval", "file sets do not overlap", "Marker syntax must be explicitly present"],
+    "implement": ["[P]", "[VERIFY]", "VE tasks", "tasks.md", "approval", "quick mode", "explicit user direction", "file sets do not overlap", "Marker syntax must be explicitly present"],
     "status": [".current-epic", "approval state", "granularity", "there is no active spec"],
     "switch": [".current-spec", "approval state"],
     "cancel": [".ralph-state.json", "Safe cancel", "full removal"],
@@ -318,6 +319,21 @@ for name, tokens in expected.items():
     text = (ROOT / f"platforms/codex/skills/ralph-specum-{name}/SKILL.md").read_text()
     for token in tokens:
         assert token in text, {"skill": name, "token": token}
+' "$root"
+}
+
+@test "codex platform: bootstrap and workflow stay aligned with quick mode and triage artifacts" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+bootstrap = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md").read_text()
+primary = (ROOT / "platforms/codex/skills/ralph-specum/SKILL.md").read_text()
+workflow = (ROOT / "platforms/codex/skills/ralph-specum/references/workflow.md").read_text()
+
+assert "create, resume, or run in quick mode" in bootstrap
+assert "epic.md" not in primary.split("## Current Workflow Expectations")[0]
+assert "epic.md" not in workflow.split("Treat `continue to <named next step>` as approval of the current artifact.")[0]
 ' "$root"
 }
 

@@ -1,6 +1,6 @@
 ---
 name: ralph-specum-implement
-description: This skill should be used only when the user explicitly asks to use `$ralph-specum-implement`, or explicitly asks Ralph Specum in Codex to run implementation for an approved task plan.
+description: This skill should be used only when the user explicitly asks to use `$ralph-specum-implement`, or explicitly asks Ralph Specum in Codex to run implementation for approved tasks, quick mode, or an explicit continue request.
 metadata:
   surface: helper
   action: implement
