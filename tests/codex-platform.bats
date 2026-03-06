@@ -66,6 +66,11 @@ PY
 
     [ ! -e "$root/tests/codex-wrapper.bats" ]
 
+    if [ -e "$root/AGENTS.md" ]; then
+        run cmp -s "$root/AGENTS.md" "$root/CLAUDE.md"
+        [ "$status" -eq 0 ]
+    fi
+
     if [ -d "$root/.agents/skills" ]; then
         run find "$root/.agents/skills" -maxdepth 1 -mindepth 1 -type d \( -name 'ralph-specum' -o -name 'ralph-specum-*' \)
         [ "$status" -eq 0 ]
