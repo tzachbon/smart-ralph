@@ -59,6 +59,11 @@ Prompt to send to Codex:
 
 ```text
 Use $skill-installer to install the Smart Ralph Codex skill from repo `tzachbon/smart-ralph` at path `platforms/codex/skills/ralph-specum`.
+First ask whether to install globally under `$CODEX_HOME/skills` or project-local inside this repo.
+Before installing, check whether an existing install already has a `manifest.json` version for Smart Ralph Codex.
+Compare that installed version to `platforms/codex/manifest.json` in this repo.
+If no install exists or the versions differ, run the installer for the selected target.
+If the versions match, say it is already up to date and skip reinstalling.
 ```
 
 ```bash
@@ -88,6 +93,11 @@ Use $skill-installer to install the Smart Ralph Codex skills from repo `tzachbon
 - `platforms/codex/skills/ralph-specum-refactor`
 - `platforms/codex/skills/ralph-specum-feedback`
 - `platforms/codex/skills/ralph-specum-help`
+First ask whether to install globally under `$CODEX_HOME/skills` or project-local inside this repo.
+Before installing, check whether an existing Smart Ralph Codex install already has a `manifest.json` version.
+Compare that installed version to `platforms/codex/manifest.json` in this repo.
+If no install exists or the versions differ, run the installer for the selected target.
+If the versions match, say it is already up to date and skip reinstalling.
 ```
 
 ```bash
@@ -114,7 +124,10 @@ python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-g
 Upgrade prompt to send to Codex:
 
 ```text
-Use $skill-installer to upgrade the Smart Ralph Codex install from repo `tzachbon/smart-ralph`. Reinstall these paths so I get the latest package version from `platforms/codex/manifest.json`:
+Use $skill-installer to update the Smart Ralph Codex install from repo `tzachbon/smart-ralph`.
+First ask whether the current install lives globally under `$CODEX_HOME/skills` or project-local inside this repo.
+Check the installed Smart Ralph Codex `manifest.json` version and compare it to `platforms/codex/manifest.json` in this repo.
+Only if the versions differ, reinstall these paths into the selected target:
 - `platforms/codex/skills/ralph-specum`
 - `platforms/codex/skills/ralph-specum-start`
 - `platforms/codex/skills/ralph-specum-triage`
@@ -130,6 +143,7 @@ Use $skill-installer to upgrade the Smart Ralph Codex install from repo `tzachbo
 - `platforms/codex/skills/ralph-specum-refactor`
 - `platforms/codex/skills/ralph-specum-feedback`
 - `platforms/codex/skills/ralph-specum-help`
+If the versions match, say it is already up to date and do not reinstall.
 Then restart Codex.
 ```
 
