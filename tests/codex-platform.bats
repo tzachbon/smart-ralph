@@ -404,16 +404,19 @@ for name in must_match_exactly:
     root="$(repo_root)"
 
     assert_python '
+import re
+
 bootstrap = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md").read_text()
 settings = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md").read_text()
 count_tasks = (ROOT / "platforms/codex/skills/ralph-specum/scripts/count_tasks.py").read_text()
 merge_state = (ROOT / "platforms/codex/skills/ralph-specum/scripts/merge_state.py").read_text()
 resolve_paths = (ROOT / "platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py").read_text()
+frontmatter = settings.split("---", 2)[1]
 
 assert "$ralph-specum-start" in bootstrap
 assert ".current-spec" in bootstrap
 assert "specs_dirs" in settings
-assert "quick_mode_default" not in settings
+assert re.search(r"(?m)^quick_mode_default\\s*:", frontmatter) is None
 assert "\"total\"" in count_tasks
 assert "\"completed\"" in count_tasks
 assert "\"next_index\"" in count_tasks
