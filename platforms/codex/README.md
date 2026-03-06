@@ -2,6 +2,10 @@
 
 Installable Codex skills for Ralph Specum live in this package. This is the Codex distribution surface for this repo. It is not meant to be copied into a project root as-is.
 
+Package manifest: `platforms/codex/manifest.json`
+
+Current package version: `4.8.4`
+
 ## What Ships
 
 - Primary skill: `$ralph-specum`
@@ -120,6 +124,7 @@ Recommended destinations in the consumer repo:
 
 ## Maintainer Notes
 
+- Any change under `platforms/codex/` must bump `platforms/codex/manifest.json`.
 - Skill sources live under `platforms/codex/skills/`.
 - The primary skill contains the shared references, scripts, bootstrap assets, and canonical templates.
 - Helper skills are standalone install units. They must not depend on files outside their own installed directory.

@@ -51,7 +51,9 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ### Codex
 
-Codex support ships as installable skills under `platforms/codex/skills/`. Install the primary skill from this repo:
+Codex support ships as a versioned package under `platforms/codex/`. Current package version: `4.8.4`.
+
+Install the primary skill from this repo:
 
 Prompt to send to Codex:
 
@@ -109,7 +111,29 @@ python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-g
     platforms/codex/skills/ralph-specum-help
 ```
 
-More Codex packaging details and the same install prompts live in [`platforms/codex/README.md`](platforms/codex/README.md).
+Upgrade prompt to send to Codex:
+
+```text
+Use $skill-installer to upgrade the Smart Ralph Codex install from repo `tzachbon/smart-ralph`. Reinstall these paths so I get the latest package version from `platforms/codex/manifest.json`:
+- `platforms/codex/skills/ralph-specum`
+- `platforms/codex/skills/ralph-specum-start`
+- `platforms/codex/skills/ralph-specum-triage`
+- `platforms/codex/skills/ralph-specum-research`
+- `platforms/codex/skills/ralph-specum-requirements`
+- `platforms/codex/skills/ralph-specum-design`
+- `platforms/codex/skills/ralph-specum-tasks`
+- `platforms/codex/skills/ralph-specum-implement`
+- `platforms/codex/skills/ralph-specum-status`
+- `platforms/codex/skills/ralph-specum-switch`
+- `platforms/codex/skills/ralph-specum-cancel`
+- `platforms/codex/skills/ralph-specum-index`
+- `platforms/codex/skills/ralph-specum-refactor`
+- `platforms/codex/skills/ralph-specum-feedback`
+- `platforms/codex/skills/ralph-specum-help`
+Then restart Codex.
+```
+
+More Codex packaging details, including the package manifest at `platforms/codex/manifest.json`, live in [`platforms/codex/README.md`](platforms/codex/README.md).
 
 <details>
 <summary>Troubleshooting & alternative methods</summary>
