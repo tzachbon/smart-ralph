@@ -1,7 +1,7 @@
 ---
 name: reality-verification
-description: This skill should be used when the user asks to "verify a fix", "reproduce failure", "diagnose issue", "check BEFORE/AFTER state", "VF task", "reality check", or needs guidance on verifying fixes by reproducing failures before and after implementation.
-version: 0.1.0
+description: This skill should be used when the user asks to "verify a fix", "reproduce failure", "diagnose issue", "check BEFORE/AFTER state", "VF task", "reality check", "check test quality", "mock-only tests", or needs guidance on verifying fixes by reproducing failures before and after implementation, or detecting mock-heavy test anti-patterns.
+version: 0.2.0
 user-invocable: false
 ---
 
@@ -27,10 +27,10 @@ Classify user goals to determine if diagnosis is needed. See `references/goal-de
 | type, typescript | `pnpm check-types` or `tsc --noEmit` |
 | lint | `pnpm lint` |
 | build | `pnpm build` |
-| E2E, UI | MCP playwright |
-| API, endpoint | MCP fetch |
+| E2E, UI | Playwright MCP browser tools |
+| API, endpoint | WebFetch tool |
 
-For E2E/deployment verification, use MCP tools (playwright for UI, fetch for APIs).
+For E2E/deployment verification, use MCP tools (Playwright MCP browser tools for UI, WebFetch tool for APIs).
 
 ## BEFORE/AFTER Documentation
 
