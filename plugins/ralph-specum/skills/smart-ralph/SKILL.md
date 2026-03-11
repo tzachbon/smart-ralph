@@ -1,12 +1,13 @@
 ---
 name: smart-ralph
-description: This skill should be used when the user asks about "ralph arguments", "quick mode", "commit spec", "max iterations", "ralph state file", "execution modes", "ralph loop integration", or needs guidance on common Ralph plugin arguments and state management patterns.
-version: 0.1.0
+description: This skill should be used when the user asks about "ralph arguments", "quick mode", "commit spec", "max iterations", "ralph state file", "execution modes", "ralph loop", "coordinator behavior", "delegate to subagent", or needs guidance on Ralph plugin arguments, state management, delegation patterns, or execution loop behavior. Core behavioral skill for all Ralph Specum operations.
+version: 0.2.0
+user-invocable: false
 ---
 
 # Smart Ralph
 
-Core skill for all Ralph plugins. Defines common arguments, execution modes, and shared behaviors.
+Core skill for all Ralph plugins. Defines common arguments, execution modes, shared behaviors, and coordinator delegation rules.
 
 ## Common Arguments
 
@@ -20,29 +21,7 @@ All Ralph commands support these standard arguments:
 | `--max-task-iterations` | `-m` | Max retries per failed task before stopping | 5 |
 | `--fresh` | `-f` | Force new spec/feature, overwrite if exists | false |
 
-## Argument Parsing Rules
-
-```text
-Priority Order (highest to lowest):
-1. --no-commit (explicit disable)
-2. --commit (explicit enable)
-3. --quick mode default (false)
-4. Normal mode default (true)
-```
-
-### Parsing Logic
-
-```text
-commitSpec = true  // default
-
-if "--no-commit" in args:
-  commitSpec = false
-else if "--commit" in args:
-  commitSpec = true
-else if "--quick" in args:
-  commitSpec = false  // quick mode defaults to no commit
-// else keep default (true)
-```
+Argument precedence: `--no-commit` > `--commit` > mode default.
 
 ## Execution Modes
 
@@ -55,13 +34,13 @@ else if "--quick" in args:
 
 ### Quick Mode (`--quick`)
 
-- Skips all interactive prompts, interviews, and approval pauses
-- Runs the same phase agents (research, requirements, design, tasks) sequentially
-- Agents receive a "be more opinionated" directive since there's no user feedback
+- Skip all interactive prompts, interviews, and approval pauses
+- Run the same phase agents (research, requirements, design, tasks) sequentially
+- Agents receive a "be more opinionated" directive since there is no user feedback
 - spec-reviewer validates each artifact (max 3 iterations)
-- Immediately starts execution after all phases complete
-- Does NOT commit by default (use `--commit` to override)
-- Still delegates to subagents (delegation is mandatory)
+- Immediately start execution after all phases complete
+- Do NOT commit by default (use `--commit` to override)
+- Still delegate to subagents (delegation is mandatory)
 
 ## State File
 
@@ -104,3 +83,33 @@ All Ralph plugins follow consistent branch strategy:
 2. If on default branch (main/master): prompt for branch strategy
 3. If on feature branch: offer to continue or create new
 4. Quick mode: auto-create branch, no prompts
+
+## Coordinator Behavior
+
+The main agent is a coordinator, not an implementer. Delegate all work to subagents.
+
+### Coordinator Responsibilities
+
+1. Parse user input and determine intent
+2. Read state files for context
+3. Delegate work to subagents via Task tool
+4. Report results to user
+
+### Do Not
+
+- Write code, create files, or modify source directly
+- Run implementation commands (npm, git commit, file edits)
+- Perform research, analysis, or design directly
+- Execute task steps from tasks.md
+
+### Delegation Mapping
+
+| Work Type | Delegate To |
+|-----------|-------------|
+| Research | Research Team (parallel teammates) |
+| Requirements | product-manager subagent |
+| Design | architect-reviewer subagent |
+| Task planning | task-planner subagent |
+| Task execution | spec-executor subagent |
+
+Quick mode still requires delegation.
