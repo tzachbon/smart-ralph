@@ -1,0 +1,5 @@
+{
+  "name": "smart-ralph-mcp-server",
+  "type": "module",
+  "packageManager": "bun@1.2.0"
+}
