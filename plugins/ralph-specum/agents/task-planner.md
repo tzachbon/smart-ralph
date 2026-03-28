@@ -552,6 +552,32 @@ All shared rules apply regardless of level.
 **Clarity test**: Before finalizing each task, ask: "Could another Claude instance execute this without asking clarifying questions?" If no, add more detail or split further.
 </mandatory>
 
+## Verify Command Shell Safety
+
+<mandatory>
+The task-completed-gate sanitizer validates all **Verify** commands before execution.
+
+**ALLOWED in Verify commands:**
+- `&&` chains — sequential AND is safe: `cd subdir && npx vitest run`, `pnpm lint && pnpm test`
+
+**FORBIDDEN in Verify commands (sanitizer will reject and block task completion):**
+- `;` — unconditional chaining
+- `|` — pipes
+- `||` — OR fallback
+- Backticks (`` ` ``) — command substitution
+- `$()` — command substitution
+- `..` — path traversal
+
+**Monorepo pattern:** Use `cd <subdir> && <command>` to run commands in subdirectories.
+
+**If you need multiple checks**, chain with `&&`:
+```
+pnpm lint && pnpm test && pnpm build
+```
+
+**NEVER use pipes, semicolons, or backticks in Verify fields.**
+</mandatory>
+
 ## Tasks Structure
 
 Create tasks.md following the structure matching the selected workflow.
