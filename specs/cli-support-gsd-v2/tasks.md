@@ -29,7 +29,7 @@ This spec is not complete until ALL criteria are met:
 
 ### Scaffolding & Types (1.1-1.5)
 
-- [ ] 1.1 [P] Scaffold packages/cli with package.json, tsconfig, tsup config
+- [x] 1.1 [P] Scaffold packages/cli with package.json, tsconfig, tsup config
   - **Do**:
     1. Create `packages/cli/package.json` with name `smart-ralph-cli`, bin entry `ralph` pointing to `dist/cli.js`, dependencies (commander@^12, @anthropic-ai/sdk@^0.39, zod@^3, chalk@^5, ora@^8), devDependencies (tsup@^8, typescript@^5, vitest@^2)
     2. Create `packages/cli/tsconfig.json` targeting ES2022, module NodeNext, strict mode, outDir dist
@@ -41,7 +41,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-1, US-1_
   - _Design: File Structure_
 
-- [ ] 1.2 [P] Define all shared TypeScript types
+- [x] 1.2 [P] Define all shared TypeScript types
   - **Do**:
     1. Create `packages/cli/src/types/index.ts` with interfaces: `Provider`, `AgentContext`, `RunAgentOptions`, `AgentResult`, `SpecState`, `RalphConfig`, `ParsedTask`, `ParallelGroup`, `TaskResult`, `FixTaskEntry`, `ModificationEntry`, `RelatedSpec`
     2. Export all types from the file
@@ -52,7 +52,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-4, FR-8_
   - _Design: Key Interfaces_
 
-- [ ] 1.3 Create error classes
+- [x] 1.3 Create error classes
   - **Do**:
     1. Create `packages/cli/src/lib/errors.ts` with `RalphError` (message, suggestion, exitCode), `ConfigError`, `SpecNotFoundError`, `ProviderError`, `TaskFailedError`
     2. Each subclass sets appropriate default suggestion and exit code per design section 9
@@ -63,7 +63,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-14, US-15_
   - _Design: Error Handling Strategy_
 
-- [ ] 1.4 Create output utilities
+- [x] 1.4 Create output utilities
   - **Do**:
     1. Create `packages/cli/src/lib/output.ts` with functions: `info(msg)` (cyan `>`), `success(msg)` (green `+`), `warn(msg)` (yellow `!`), `error(msg)` (red `-`), `debug(msg)` (only when `--debug`)
     2. Add `isJsonMode()` and `isDebugMode()` checks reading from a module-level state set by CLI entry
@@ -75,7 +75,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-13, US-15_
   - _Design: User-Facing Message Format_
 
-- [ ] 1.5 [VERIFY] Quality check: type check passes
+- [x] 1.5 [VERIFY] Quality check: type check passes
   - **Do**: Run type check on the scaffolded package
   - **Verify**: `cd packages/cli && npx tsc --noEmit`
   - **Done when**: Zero type errors
@@ -83,7 +83,7 @@ This spec is not complete until ALL criteria are met:
 
 ### Monorepo Integration (1.6)
 
-- [ ] 1.6 Register packages/cli in monorepo and update CI
+- [x] 1.6 Register packages/cli in monorepo and update CI
   - **Do**:
     1. Check if root `package.json` uses workspaces; if so, add `packages/cli` to the workspaces array
     2. Update root CI config (`.github/workflows/*.yml` or equivalent) to include `packages/cli` in the build/test matrix
@@ -98,7 +98,7 @@ This spec is not complete until ALL criteria are met:
 
 ### Config & Spec Manager (1.7-1.11)
 
-- [ ] 1.7 Implement config resolver
+- [x] 1.7 Implement config resolver
   - **Do**:
     1. Create `packages/cli/src/lib/config.ts` with `resolveConfig()` that checks env vars (`RALPH_PROVIDER`, `RALPH_MODEL`) then `.ralph/config.json` then `~/.ralph/config.json`
     2. Add `writeConfig(configPath, config)` for `ralph init`
