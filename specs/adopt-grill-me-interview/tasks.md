@@ -58,7 +58,7 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
   - **Commit**: `feat(interview-framework): add Codebase-First Exploration section`
   - _Requirements: FR-5, AC-3.1, AC-3.2, AC-3.3, AC-3.4_
 
-- [ ] 1.6 Remove duplicate `<mandatory>` block from goal-interview.md
+- [x] 1.6 Remove duplicate `<mandatory>` block from goal-interview.md
   - **Do**:
     1. Open `plugins/ralph-specum/references/goal-interview.md`
     2. Delete lines 32-38: the entire `<mandatory>...</mandatory>` XML block (the codebase-fact-vs-user-decision block)
