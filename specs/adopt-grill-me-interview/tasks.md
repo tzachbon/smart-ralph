@@ -95,7 +95,7 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
 
 Focus: Clean up SKILL.md structure and ensure consistent section ordering and prose quality.
 
-- [ ] 2.1 Review SKILL.md structure and clean up section ordering and prose
+- [x] 2.1 Review SKILL.md structure and clean up section ordering and prose
   - **Do**:
     1. Read the full updated `SKILL.md` end-to-end
     2. Verify section order matches design: Option Limit Rule -> Recommendation Format -> Codebase-First Exploration -> Completion Signal Detection -> 3-Phase Algorithm (Phase 1 decision-tree, Phase 2, Phase 3) -> Adaptive Depth -> Context Accumulator
