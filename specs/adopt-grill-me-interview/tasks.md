@@ -26,7 +26,7 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
   - **Commit**: `refactor(interview-framework): remove minRequired gate from completion signal check`
   - _Requirements: FR-3, FR-4, AC-2.2, AC-2.4_
 
-- [ ] 1.3 Rewrite Phase 1 WHILE loop as decision-tree traversal
+- [x] 1.3 Rewrite Phase 1 WHILE loop as decision-tree traversal
   - **Do**:
     1. In `SKILL.md`, locate `### Phase 1: UNDERSTAND (Adaptive Dialogue)` and its fenced `text` code block (the WHILE loop)
     2. Replace the entire code block with the decision-tree pseudocode from design.md "New Phase 1 Algorithm" section (steps 1-4 + DECISION-TREE TRAVERSAL block)
