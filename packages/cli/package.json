@@ -1,0 +1,25 @@
+{
+  "name": "smart-ralph-cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "ralph": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "commander": "^12",
+    "@anthropic-ai/sdk": "^0.39",
+    "zod": "^3",
+    "chalk": "^5",
+    "ora": "^8"
+  },
+  "devDependencies": {
+    "tsup": "^8",
+    "typescript": "^5",
+    "vitest": "^2"
+  }
+}
