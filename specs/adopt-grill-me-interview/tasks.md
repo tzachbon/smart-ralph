@@ -79,7 +79,7 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
   - **Commit**: `chore(ralph-specum): bump version to 4.9.0`
   - _Requirements: FR-8, AC-6.1, AC-6.2, AC-6.3_
 
-- [ ] 1.8 Create tests/interview-framework.bats with 14 content assertions
+- [x] 1.8 Create tests/interview-framework.bats with 14 content assertions
   - **Do**:
     1. Create `tests/interview-framework.bats` (flat location matching existing test files like `tests/stop-hook.bats`)
     2. Use `#!/usr/bin/env bats` header, no `load 'helpers/setup.bash'` (file-read tests only)
