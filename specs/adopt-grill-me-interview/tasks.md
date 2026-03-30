@@ -4,7 +4,7 @@
 
 Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump versions, add bats tests.
 
-- [ ] 1.1 Delete Intent-Based Depth Scaling table from SKILL.md
+- [x] 1.1 Delete Intent-Based Depth Scaling table from SKILL.md
   - **Do**:
     1. Open `plugins/ralph-specum/skills/interview-framework/SKILL.md`
     2. Remove the entire `## Intent-Based Depth Scaling` section (heading + table rows, up to but not including `## Completion Signal Detection`)

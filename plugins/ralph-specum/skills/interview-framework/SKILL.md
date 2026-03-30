@@ -13,17 +13,6 @@ Adaptive brainstorming dialogue algorithm for all spec phases. Each phase comman
 
 Each question MUST have 2-4 options (max 4). Keep the most relevant options, combine similar ones.
 
-## Intent-Based Depth Scaling
-
-Read `.progress.md` for intent classification. Scale dialogue depth accordingly:
-
-| Intent | Questions |
-|--------|-----------|
-| TRIVIAL | 1-2 |
-| REFACTOR | 3-5 |
-| MID_SIZED | 3-7 |
-| GREENFIELD | 5-10 |
-
 ## Completion Signal Detection
 
 After each response, check if user wants to end early:
