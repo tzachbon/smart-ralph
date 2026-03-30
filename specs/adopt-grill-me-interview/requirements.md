@@ -129,7 +129,7 @@ Adopt Matt Pocock's grill-me skill patterns into the existing `interview-framewo
 - **Completion signal**: A word or phrase from the user (e.g., "done", "proceed", "skip") that signals they want to end the interview early.
 - **Codebase fact**: Information discoverable by reading the codebase (file paths, existing implementations, config values). Agents must look these up, not ask the user.
 - **User decision**: A preference or trade-off that cannot be inferred from the codebase (e.g., naming choices, scope boundaries, priority calls).
-- **minRequired**: Advisory minimum question count before a completion signal is accepted. Not a hard cap.
+- **minRequired**: Advisory minimum question count. Completion signals are accepted at any time regardless of question count. Not enforced as a gate.
 - **Recommendation-first**: Pattern where the AI presents its preferred answer as the first option, labeled `[Recommended]`, with a brief rationale.
 - **Decision-tree traversal**: Ordering questions so foundational choices are resolved before dependent ones are asked.
 

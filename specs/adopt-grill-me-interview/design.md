@@ -101,7 +101,7 @@ UNDERSTAND:
 - Reference specific things the user said ("You mentioned X -- does that mean...").
 - Never ask something `.progress.md` already answers.
 - Never ask a generic question. Every question must be grounded in the user's context.
-- If you have enough context to propose meaningful approaches, stop and move on. Do not exhaust every open node mechanically.
+- If you have enough context to propose meaningful approaches, stop and move on. Do not exhaust every open node mechanically. This is an intentional early-exit from the `while any node.status == OPEN` loop. The loop provides completeness; this rule provides efficiency.
 
 ## Codebase-First Rule (New Section for SKILL.md)
 
@@ -281,7 +281,8 @@ GOAL_INTERVIEW="plugins/ralph-specum/references/goal-interview.md"
 }
 
 @test "marketplace.json ralph-specum version is 4.9.0" {
-    grep -A5 '"name": "ralph-specum"' ".claude-plugin/marketplace.json" | grep -q '"version": "4.9.0"'
+    version=$(jq -r '.plugins[] | select(.name == "ralph-specum") | .version' ".claude-plugin/marketplace.json")
+    [ "$version" = "4.9.0" ]
 }
 ```
 
