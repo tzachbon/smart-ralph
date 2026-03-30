@@ -15,7 +15,7 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
   - **Commit**: `refactor(interview-framework): remove intent-based depth scaling table`
   - _Requirements: FR-3, AC-2.1_
 
-- [ ] 1.2 Remove `askedCount >= minRequired` guard from Completion Signal Detection
+- [x] 1.2 Remove `askedCount >= minRequired` guard from Completion Signal Detection
   - **Do**:
     1. In `SKILL.md`, locate the `## Completion Signal Detection` code block
     2. Delete the `if askedCount >= minRequired:` line and its indentation wrapper, leaving only the `for signal in completionSignals:` loop and its body

@@ -20,10 +20,9 @@ After each response, check if user wants to end early:
 ```text
 completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
 
-if askedCount >= minRequired:
-  for signal in completionSignals:
-    if signal in userResponse.lower():
-      -> SKIP remaining questions, move to PROPOSE APPROACHES
+for signal in completionSignals:
+  if signal in userResponse.lower():
+    -> SKIP remaining questions, move to PROPOSE APPROACHES
 ```
 
 ## 3-Phase Algorithm
