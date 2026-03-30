@@ -71,8 +71,8 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
 
 - [x] 1.7 Bump plugin version to 4.9.0 in both manifest files
   - **Do**:
-    1. In `plugins/ralph-specum/.claude-plugin/plugin.json`, change `"version": "4.8.4"` to `"version": "4.9.0"`
-    2. In `.claude-plugin/marketplace.json`, find the `ralph-specum` entry and change its `"version": "4.8.4"` to `"version": "4.9.0"`
+    1. Ensure `plugins/ralph-specum/.claude-plugin/plugin.json` has `"version": "4.9.0"`
+    2. Ensure `.claude-plugin/marketplace.json` ralph-specum entry has `"version": "4.9.0"`
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Done when**: Both files contain `"version": "4.9.0"` for the ralph-specum plugin
   - **Verify**: `grep -q '"version": "4.9.0"' plugins/ralph-specum/.claude-plugin/plugin.json && grep -A5 '"name": "ralph-specum"' .claude-plugin/marketplace.json | grep -q '"version": "4.9.0"' && echo PASS`
@@ -162,23 +162,26 @@ Focus: Run full bats suite and confirm all 14 new tests plus existing tests pass
   - **Do**:
     1. Verify on feature branch: `git branch --show-current`
     2. Push: `git push -u origin $(git branch --show-current)`
-    3. Create PR: `gh pr create --title "feat(interview-framework): adopt grill-me patterns" --body "$(cat <<'EOF'
-## Summary
-- Rewrites Phase 1 UNDERSTAND algorithm from a count-bounded WHILE loop to a dependency-ordered decision-tree traversal
-- Adds [Recommended] label convention to every Phase 1 question with rationale in question text
-- Adds Codebase-First Exploration section enforcing automatic lookup before asking the user
-- Removes Intent-Based Depth Scaling table and minRequired gate; completion signals are the sole exit mechanism
-- Removes duplicate <mandatory> codebase-first block from goal-interview.md (single source of truth in SKILL.md)
-- Bumps version to 4.9.0 (minor: new interview behavior)
-- Adds 14 bats content tests verifying key structural invariants in SKILL.md
+    3. Create PR:
+       ```bash
+       gh pr create --title "feat(interview-framework): adopt grill-me patterns" --body "$(cat <<'EOF'
+       ## Summary
+       - Rewrites Phase 1 UNDERSTAND algorithm from a count-bounded WHILE loop to a dependency-ordered decision-tree traversal
+       - Adds [Recommended] label convention to every Phase 1 question with rationale in question text
+       - Adds Codebase-First Exploration section enforcing automatic lookup before asking the user
+       - Removes Intent-Based Depth Scaling table and minRequired gate; completion signals are the sole exit mechanism
+       - Removes duplicate <mandatory> codebase-first block from goal-interview.md (single source of truth in SKILL.md)
+       - Bumps version to 4.9.0 (minor: new interview behavior)
+       - Adds 14 bats content tests verifying key structural invariants in SKILL.md
 
-## Test plan
-- [ ] bats tests/interview-framework.bats passes (14 tests green)
-- [ ] bats tests/ passes (full suite, no regressions)
-- [ ] plugin-version-check.yml passes (4.9.0 in both manifest files)
-- [ ] bats-tests.yml passes (all tests green in CI)
-EOF
-)"`
+       ## Test plan
+       - [ ] bats tests/interview-framework.bats passes (14 tests green)
+       - [ ] bats tests/ passes (full suite, no regressions)
+       - [ ] plugin-version-check.yml passes (4.9.0 in both manifest files)
+       - [ ] bats-tests.yml passes (all tests green in CI)
+       EOF
+       )"
+       ```
     4. Monitor CI: `gh pr checks --watch`
     5. Fix any CI failures, push, re-check
   - **Files**: None (git operations only)
