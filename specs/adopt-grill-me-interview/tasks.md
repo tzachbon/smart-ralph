@@ -48,7 +48,7 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
   - **Commit**: `feat(interview-framework): add [Recommended] label convention for Phase 1 questions`
   - _Requirements: FR-1, FR-2, AC-1.1, AC-1.2, AC-1.3, AC-1.4_
 
-- [ ] 1.5 Add Codebase-First Exploration section to SKILL.md
+- [x] 1.5 Add Codebase-First Exploration section to SKILL.md
   - **Do**:
     1. In `SKILL.md`, add a new `## Codebase-First Exploration` section after the `## Recommendation Format` section and before `## Completion Signal Detection`
     2. Use the exact content from design.md "Codebase-First Rule (New Section for SKILL.md)" (the three-bullet markdown block distinguishing codebase facts from user decisions)

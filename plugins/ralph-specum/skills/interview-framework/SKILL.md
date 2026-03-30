@@ -44,6 +44,15 @@ AskUserQuestion:
     - "Other"
 ```
 
+## Codebase-First Exploration
+
+Before asking any question, determine whether the answer is a **codebase fact** or a **user decision**:
+
+- **Codebase fact**: something discoverable by reading code, config, or existing specs (e.g., which framework is used, whether an interface already exists, what a file currently does). Use the Explore agent to find it. Never ask the user.
+- **User decision**: a preference, priority, trade-off, or constraint that only the user can answer (e.g., which approach to take, what the success criteria are, what's in scope). Ask via AskUserQuestion.
+
+Only ask what you cannot discover yourself.
+
 ## Completion Signal Detection
 
 After each response, check if user wants to end early:
