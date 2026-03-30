@@ -3,6 +3,7 @@
 # Verifies SKILL.md contains required algorithm sections and patterns.
 
 SKILL_FILE="plugins/ralph-specum/skills/interview-framework/SKILL.md"
+ALGORITHM_FILE="plugins/ralph-specum/skills/interview-framework/references/algorithm.md"
 GOAL_INTERVIEW="plugins/ralph-specum/references/goal-interview.md"
 
 @test "SKILL.md exists" {
@@ -18,10 +19,14 @@ GOAL_INTERVIEW="plugins/ralph-specum/references/goal-interview.md"
     grep -q "User decision" "$SKILL_FILE"
 }
 
-@test "SKILL.md has decision-tree traversal (not WHILE loop)" {
-    grep -q "DECISION-TREE" "$SKILL_FILE"
-    # WHILE loop should be gone
+@test "interview-framework has decision-tree traversal (not WHILE loop)" {
+    # SKILL.md references decision-tree in heading
+    grep -q "Decision-Tree" "$SKILL_FILE"
+    # Full pseudocode in algorithm.md
+    grep -q "DECISION-TREE TRAVERSAL" "$ALGORITHM_FILE"
+    # WHILE loop should be gone from both
     ! grep -q "WHILE askedCount" "$SKILL_FILE"
+    ! grep -q "WHILE askedCount" "$ALGORITHM_FILE"
 }
 
 @test "SKILL.md has [Recommended] label pattern" {
