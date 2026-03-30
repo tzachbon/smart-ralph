@@ -111,7 +111,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-5, FR-12, US-2, US-3_
   - _Design: Config Resolver_
 
-- [ ] 1.8 Implement spec manager core (create, read, write, active spec)
+- [x] 1.8 Implement spec manager core (create, read, write, active spec)
   - **Do**:
     1. Create `packages/cli/src/lib/spec-manager.ts` with `createSpec(name, goal)` that scaffolds `specs/<name>/` with stub files
     2. Add `getActiveSpec()` reading `.current-spec`, `setActiveSpec(name)` writing it
@@ -124,7 +124,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-3, FR-7, US-4, US-5_
   - _Design: Spec Manager_
 
-- [ ] 1.9 Add state management to spec manager
+- [x] 1.9 Add state management to spec manager
   - **Do**:
     1. Add `readState(specPath)` that parses `.ralph-state.json` with zod validation and default values
     2. Add `writeState(specPath, state)` with atomic write (temp file + rename)
@@ -136,7 +136,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-8, FR-11, US-12_
   - _Design: State Management_
 
-- [ ] 1.10 Implement task parser
+- [x] 1.10 Implement task parser
   - **Do**:
     1. Create `packages/cli/src/lib/task-parser.ts` with `parseTasks(content: string): ParsedTask[]`
     2. Parse `- [ ]` / `- [x]` checkboxes, extract ID, title, tags (`[P]`, `[VERIFY]`, `[RED]`, `[GREEN]`, `[YELLOW]`)
