@@ -2,7 +2,7 @@
 
 Detailed pseudocode for the adaptive brainstorming dialogue algorithm.
 
-## Phase 1: UNDERSTAND (Adaptive Dialogue)
+## Phase 1: UNDERSTAND (Decision-Tree)
 
 ```text
 UNDERSTAND:
@@ -12,48 +12,61 @@ UNDERSTAND:
      - Original goal text
   2. Read the exploration territory provided by the calling command
   3. Identify what is UNKNOWN vs what is already decided
-     - If prior phases already covered a topic, SKIP it
-     - Only ask about what still needs clarification
-  4. Set depth from intent:
-     - minRequired = intent.minQuestions
-     - maxAllowed = intent.maxQuestions
-  5. askedCount = 0
+     - If prior phases already covered a topic, mark it RESOLVED. Skip it.
+  4. Build the question tree:
+     nodes = []
+     for each area in exploration_territory:
+       nodes.append({ topic: area, status: OPEN, dependency: [], finding: null })
+     # Dependency ordering: if topic B requires knowing topic A first,
+     # set B.dependency = [A]. Do not ask B until A is RESOLVED.
 
-  WHILE askedCount < maxAllowed:
-    |
-    +-- Generate next question from context + exploration territory
-    |   (Questions emerge from what you've learned so far, NOT from a fixed pool)
-    |
-    +-- Context-based skip check:
-    |   Read .progress.md holistically. If this topic was already
-    |   answered in a prior phase, SKIP it. Log: "Already covered: [topic]"
-    |
-    +-- Ask single question:
-    |   AskUserQuestion:
-    |     question: "[Context-aware question referencing prior answers]"
-    |     options:
-    |       - "[Option 1]"
-    |       - "[Option 2]"
-    |       - "[Option 3 if needed]"
-    |       - "Other"
-    |
-    +-- askedCount++
-    |
-    +-- If user selected "Other":
-    |   -> Ask context-specific follow-up (see Adaptive Depth in SKILL.md)
-    |   -> DO NOT increment askedCount for follow-ups
-    |
-    +-- Check completion signals (see SKILL.md)
-    |
-    +-- Decide: ask another question or move to PROPOSE APPROACHES
-    |   (If you have enough context to propose meaningful approaches, move on)
+  DECISION-TREE TRAVERSAL:
+    while any node.status == OPEN:
+      # Select next node: first OPEN node whose dependencies are all RESOLVED
+      node = next_unblocked_open_node(nodes)
+      if node is null: break  # All remaining nodes are blocked (shouldn't happen)
+
+      # Codebase-first check
+      if node.topic is a codebase FACT (not a user decision):
+        finding = explore_codebase(node.topic)
+        node.status = RESOLVED
+        node.finding = finding
+        log: "Discovered: [topic] -> [finding]"
+        continue
+
+      # Ask user
+      recommended = derive_recommendation(node.topic, context, prior_answers)
+      AskUserQuestion:
+        question: "[Context-aware question]. [Recommended: recommended.rationale]"
+        options:
+          - "[Recommended] [recommended.option]"
+          - "[Alternative 1]"
+          - "[Alternative 2 if needed]"
+          - "Other"
+
+      node.status = RESOLVED
+      node.finding = user_answer
+
+      # Resolve any dependent nodes that this answer makes obvious
+      for dep_node in nodes where node in dep_node.dependency:
+        if dep_node can be inferred from node.finding:
+          dep_node.status = RESOLVED
+          dep_node.finding = inferred_value
+          log: "Inferred: [dep_topic] -> [inferred_value]"
+
+      # Completion signal check
+      if user_answer contains completion_signal:
+        break
+
+    -> Move to PROPOSE APPROACHES
 ```
 
 **Key rules for question generation:**
 - Each question builds on prior answers in THIS dialogue AND prior phases
-- Reference specific things the user said ("You mentioned X -- does that mean...")
+- Reference specific things the user said ("You mentioned X, does that mean...")
 - Never ask something .progress.md already answers
-- Never ask generic questions -- every question must be grounded in the user's context
+- Never ask generic questions. Every question must be grounded in the user's context.
+- If you have enough context to propose meaningful approaches, stop and move on. Do not exhaust every open node mechanically.
 
 ## Phase 2: PROPOSE APPROACHES
 
@@ -96,7 +109,7 @@ PROPOSE APPROACHES:
 - Always present at least 2 approaches (never just 1)
 - Maximum 3 approaches (more causes decision fatigue)
 - The recommended approach goes first
-- Trade-offs must be honest -- no straw-man alternatives
+- Trade-offs must be honest. No straw-man alternatives.
 - Apply YAGNI: strip unnecessary complexity from all approaches
 
 ## Phase 3: CONFIRM & STORE
