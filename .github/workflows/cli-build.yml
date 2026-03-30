@@ -1,0 +1,38 @@
+name: CLI Build and Type Check
+
+on:
+  push:
+    paths:
+      - 'packages/cli/**'
+      - '.github/workflows/cli-build.yml'
+  pull_request:
+    paths:
+      - 'packages/cli/**'
+      - '.github/workflows/cli-build.yml'
+
+jobs:
+  build:
+    name: Build and type check packages/cli
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: packages/cli/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/cli
+
+      - name: Type check
+        run: npx tsc --noEmit
+        working-directory: packages/cli
+
+      - name: Build
+        run: npm run build
+        working-directory: packages/cli

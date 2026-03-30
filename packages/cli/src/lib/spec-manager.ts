@@ -1,6 +1,54 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import { z } from 'zod';
 import type { SpecState } from '../types/index.js';
+
+const SpecStateSchema = z.object({
+  source: z.enum(['spec', 'plan', 'direct']).default('spec'),
+  name: z.string().default(''),
+  basePath: z.string().default(''),
+  phase: z.enum(['research', 'requirements', 'design', 'tasks', 'execution']).default('research'),
+  taskIndex: z.number().default(0),
+  totalTasks: z.number().default(0),
+  taskIteration: z.number().default(0),
+  maxTaskIterations: z.number().default(5),
+  globalIteration: z.number().default(0),
+  maxGlobalIterations: z.number().default(50),
+  recoveryMode: z.boolean().default(false),
+  granularity: z.enum(['fine', 'coarse']).optional(),
+  commitSpec: z.boolean().optional(),
+  relatedSpecs: z.array(z.object({
+    name: z.string(),
+    relevance: z.enum(['high', 'medium', 'low']),
+    reason: z.string(),
+    mayNeedUpdate: z.boolean().optional(),
+  })).optional(),
+  epicName: z.string().optional(),
+  parallelGroup: z.object({
+    startIndex: z.number(),
+    endIndex: z.number(),
+    taskIndices: z.array(z.number()),
+  }).optional(),
+  taskResults: z.record(z.object({
+    status: z.enum(['pending', 'success', 'failed']),
+    error: z.string().optional(),
+  })).optional(),
+  fixTaskMap: z.record(z.object({
+    attempts: z.number(),
+    fixTaskIds: z.array(z.string()),
+    lastError: z.string().optional(),
+  })).optional(),
+  modificationMap: z.record(z.object({
+    count: z.number(),
+    modifications: z.array(z.object({
+      id: z.string(),
+      type: z.enum(['SPLIT_TASK', 'ADD_PREREQUISITE', 'ADD_FOLLOWUP']),
+      reason: z.string().optional(),
+    })),
+  })).optional(),
+  cli_startedAt: z.string().optional(),
+  cli_lastTaskAt: z.string().optional(),
+});
 
 const SPEC_NAME_RE = /^[a-z0-9][a-z0-9\-_]*$/;
 
@@ -126,10 +174,14 @@ export async function readState(specPath: string): Promise<SpecState> {
   const statePath = path.join(specPath, '.ralph-state.json');
   try {
     const raw = await fs.readFile(statePath, 'utf8');
-    const parsed = JSON.parse(raw) as Partial<SpecState>;
-    return { ...DEFAULT_STATE, ...parsed };
+    const json = JSON.parse(raw);
+    const result = SpecStateSchema.parse(json);
+    return result as SpecState;
   } catch {
-    return { ...DEFAULT_STATE, name: path.basename(specPath), basePath: specPath };
+    return SpecStateSchema.parse({
+      name: path.basename(specPath),
+      basePath: specPath,
+    }) as SpecState;
   }
 }
 
