@@ -111,7 +111,7 @@ Focus: Clean up SKILL.md structure and ensure consistent section ordering and pr
 
 Focus: Run full bats suite and confirm all 14 new tests plus existing tests pass.
 
-- [ ] 3.1 Run full bats test suite and fix any failures
+- [x] 3.1 Run full bats test suite and fix any failures
   - **Do**:
     1. Run `bats tests/` to execute all test files including the new `tests/interview-framework.bats`
     2. For each failing test: identify the mismatch between SKILL.md content and the test assertion, fix the SKILL.md content (or the test if the assertion is wrong)
