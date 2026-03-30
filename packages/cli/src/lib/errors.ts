@@ -34,7 +34,12 @@ export class ProviderError extends RalphError {
 }
 
 export class TaskFailedError extends RalphError {
-  constructor(taskId: string, attempts: number, lastError: string) {
+  constructor(
+    public readonly taskIndex: number,
+    taskId: string,
+    attempts: number,
+    lastError: string
+  ) {
     super(
       `Task ${taskId} failed after ${attempts} attempts: ${lastError}`,
       'Fix the issue manually, then re-run "ralph run" to resume from this task.',
