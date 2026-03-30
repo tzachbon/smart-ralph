@@ -61,5 +61,6 @@ GOAL_INTERVIEW="plugins/ralph-specum/references/goal-interview.md"
 }
 
 @test "marketplace.json ralph-specum version is 4.9.0" {
-    grep -A5 '"name": "ralph-specum"' ".claude-plugin/marketplace.json" | grep -q '"version": "4.9.0"'
+    version=$(jq -r '.plugins[] | select(.name == "ralph-specum") | .version' ".claude-plugin/marketplace.json")
+    [ "$version" = "4.9.0" ]
 }

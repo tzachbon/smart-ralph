@@ -183,7 +183,7 @@ for signal in completionSignals:
 ### goal-interview.md
 
 Remove lines 32-38 (the `<mandatory>` XML block):
-```
+```xml
 <mandatory>
 **Before asking any question, check: is this a codebase fact or a user decision?**
 - Codebase fact -> Use Explore agent to find the answer automatically

@@ -27,8 +27,8 @@ Adopt Matt Pocock's grill-me skill patterns into the existing `interview-framewo
 **Acceptance Criteria:**
 - [ ] AC-2.1: The intent-based question cap table (`maxAllowed`) is removed from SKILL.md.
 - [ ] AC-2.2: The `WHILE askedCount < maxAllowed` loop condition is replaced with a completion-signal-only exit.
-- [ ] AC-2.3: Min questions remain as an advisory floor (do not exit before `minRequired` unless user explicitly signals done).
-- [ ] AC-2.4: Completion signal detection logic is preserved and documented.
+- [ ] AC-2.3: `minRequired` is advisory only. The interview may exit before `minRequired` if the user explicitly signals done. No code enforces the floor as a hard gate.
+- [ ] AC-2.4: Completion signal detection logic is preserved in the "Completion Signal Detection" section of SKILL.md, using token-based matching against the signal list: ["done", "proceed", "skip", "enough", "that's all", "continue", "next"].
 
 ### US-3: Strict Codebase-First Exploration
 

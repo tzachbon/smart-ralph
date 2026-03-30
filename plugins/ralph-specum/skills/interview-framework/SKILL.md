@@ -15,7 +15,7 @@ Each question MUST have 2-4 options (max 4). Keep the most relevant options, com
 
 ## Recommendation Format
 
-Every question asked via `AskUserQuestion` in Phase 1 leads with the recommended option:
+Every question asked via `AskUserQuestion` in Phase 1 leads with the recommended option (except when options are symmetric, in which case `[Recommended]` may be omitted):
 
 ```yaml
 AskUserQuestion:
@@ -60,8 +60,9 @@ After each response, check if user wants to end early:
 ```text
 completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
 
+tokens = tokenize(userResponse.lower())  # split on whitespace/punctuation
 for signal in completionSignals:
-  if signal in userResponse.lower():
+  if signal in tokens:  # exact token match, not substring
     -> SKIP remaining questions, move to PROPOSE APPROACHES
 ```
 
@@ -174,7 +175,7 @@ PROPOSE APPROACHES:
 - Always present at least 2 approaches (never just 1)
 - Maximum 3 approaches (more causes decision fatigue)
 - The recommended approach goes first
-- Trade-offs must be honest — no straw-man alternatives
+- Trade-offs must be honest. No straw-man alternatives.
 - Apply YAGNI: strip unnecessary complexity from all approaches
 
 ### Phase 3: CONFIRM & STORE
@@ -245,6 +246,6 @@ After each interview, update `.progress.md`:
 ### [Phase] Interview (from [phase].md)
 - [Topic 1]: [response]
 - [Topic 2]: [response]
-- Chosen approach: [name] — [brief description]
+- Chosen approach: [name] - [brief description]
 [Any follow-up responses from "Other" selections]
 ```
