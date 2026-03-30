@@ -69,7 +69,7 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
   - **Commit**: `refactor(goal-interview): remove duplicate codebase-first mandatory block`
   - _Requirements: FR-7, AC-5.1, AC-5.2, AC-5.3_
 
-- [ ] 1.7 Bump plugin version to 4.9.0 in both manifest files
+- [x] 1.7 Bump plugin version to 4.9.0 in both manifest files
   - **Do**:
     1. In `plugins/ralph-specum/.claude-plugin/plugin.json`, change `"version": "4.8.4"` to `"version": "4.9.0"`
     2. In `.claude-plugin/marketplace.json`, find the `ralph-specum` entry and change its `"version": "4.8.4"` to `"version": "4.9.0"`
