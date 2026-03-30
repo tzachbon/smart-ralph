@@ -124,7 +124,7 @@ Focus: Run full bats suite and confirm all 14 new tests plus existing tests pass
 
 ## Phase 4: Quality Gates
 
-- [ ] V4 [VERIFY] Full local CI: run bats suite + verify file contents
+- [x] V4 [VERIFY] Full local CI: run bats suite + verify file contents
   - **Do**:
     1. `bats tests/` -- all tests pass
     2. Spot-check SKILL.md for the five required patterns
@@ -134,13 +134,13 @@ Focus: Run full bats suite and confirm all 14 new tests plus existing tests pass
   - **Done when**: All commands exit 0
   - **Commit**: None (fix commits go on individual failing items)
 
-- [ ] V5 [VERIFY] CI pipeline passes
+- [x] V5 [VERIFY] CI pipeline passes
   - **Do**: Push branch and verify GitHub Actions passes
   - **Verify**: `gh pr checks --watch`
   - **Done when**: All CI checks green (plugin-version-check.yml, bats-tests.yml)
   - **Commit**: None
 
-- [ ] V6 [VERIFY] AC checklist
+- [x] V6 [VERIFY] AC checklist
   - **Do**:
     1. AC-1.1/1.2/1.3/1.4: `grep -q "\[Recommended\]" plugins/ralph-specum/skills/interview-framework/SKILL.md`
     2. AC-2.1: `! grep -q "Intent-Based Depth Scaling" plugins/ralph-specum/skills/interview-framework/SKILL.md`
@@ -158,7 +158,7 @@ Focus: Run full bats suite and confirm all 14 new tests plus existing tests pass
 
 ## Phase 5: PR Lifecycle
 
-- [ ] 5.1 Create PR and monitor CI
+- [x] 5.1 Create PR and monitor CI
   - **Do**:
     1. Verify on feature branch: `git branch --show-current`
     2. Push: `git push -u origin $(git branch --show-current)`
