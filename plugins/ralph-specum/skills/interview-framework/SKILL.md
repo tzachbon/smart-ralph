@@ -13,6 +13,37 @@ Adaptive brainstorming dialogue algorithm for all spec phases. Each phase comman
 
 Each question MUST have 2-4 options (max 4). Keep the most relevant options, combine similar ones.
 
+## Recommendation Format
+
+Every question asked via `AskUserQuestion` in Phase 1 leads with the recommended option:
+
+```yaml
+AskUserQuestion:
+  question: "[Context-aware question referencing prior answers]. [One sentence rationale for the recommendation.]"
+  options:
+    - "[Recommended] [Option text -- the AI's suggested answer]"
+    - "[Alternative 1]"
+    - "[Alternative 2 if needed]"
+    - "Other"
+```
+
+Rules:
+- `[Recommended]` is a label prefix on the first option only.
+- The rationale sits in the question text, not the option label.
+- Option count still 2-4 max (Option Limit Rule preserved).
+- If there is no meaningful recommendation (truly symmetric choice), omit the `[Recommended]` label rather than placing it arbitrarily.
+
+Example:
+
+```yaml
+AskUserQuestion:
+  question: "Where should the spec live? You only have one specs directory configured, so the default is fine unless you want to reorganize."
+  options:
+    - "[Recommended] ./specs/ (default)"
+    - "Let me configure a different path"
+    - "Other"
+```
+
 ## Completion Signal Detection
 
 After each response, check if user wants to end early:

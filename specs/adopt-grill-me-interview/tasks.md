@@ -38,7 +38,7 @@ Focus: Apply all five SKILL.md changes, clean up goal-interview.md, bump version
   - **Commit**: `feat(interview-framework): rewrite Phase 1 as decision-tree traversal`
   - _Requirements: FR-6, AC-4.1, AC-4.2, AC-4.3_
 
-- [ ] 1.4 Add `[Recommended]` convention to question format in SKILL.md
+- [x] 1.4 Add `[Recommended]` convention to question format in SKILL.md
   - **Do**:
     1. In `SKILL.md` Phase 1 pseudocode, the new decision-tree block already shows the `[Recommended]` option format -- confirm it is present from task 1.3
     2. Add a new `## Recommendation Format` section after `## Option Limit Rule` (before the Completion Signal Detection section) documenting the `[Recommended]` label convention, using the exact content from design.md "Recommendation Format" section (rules + yaml example)
