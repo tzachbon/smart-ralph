@@ -150,7 +150,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-9, US-12_
   - _Design: Task Parsing_
 
-- [ ] 1.11 [VERIFY] Quality check: type check passes
+- [x] 1.11 [VERIFY] Quality check: type check passes
   - **Do**: Run type check on all lib modules
   - **Verify**: `cd packages/cli && npx tsc --noEmit`
   - **Done when**: Zero type errors
