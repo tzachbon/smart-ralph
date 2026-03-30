@@ -158,7 +158,7 @@ This spec is not complete until ALL criteria are met:
 
 ### Provider Layer (1.12-1.15)
 
-- [ ] 1.12 Define provider interface and factory
+- [x] 1.12 Define provider interface and factory
   - **Do**:
     1. Create `packages/cli/src/providers/interface.ts` re-exporting `Provider`, `AgentContext`, `AgentResult`, `RunAgentOptions` from types (or defining them here if cleaner)
     2. Create `packages/cli/src/providers/factory.ts` with `createProvider(config: RalphConfig): Provider` using a switch on `config.provider`
@@ -169,7 +169,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-4_
   - _Design: Provider Abstraction Design_
 
-- [ ] 1.13 Implement Claude provider
+- [x] 1.13 Implement Claude provider
   - **Do**:
     1. Create `packages/cli/src/providers/claude.ts` implementing `Provider` interface
     2. Constructor reads API key from env var, creates `Anthropic` client
@@ -182,7 +182,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-4, US-8_
   - _Design: Claude Provider Implementation_
 
-- [ ] 1.14 Bundle agent prompts
+- [x] 1.14 Bundle agent prompts
   - **Do**:
     1. Create `packages/cli/src/agents/research-analyst.ts` exporting the system prompt string
     2. Create `packages/cli/src/agents/product-manager.ts` exporting the system prompt string
@@ -195,7 +195,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-6_
   - _Design: Bundled Agent Prompts_
 
-- [ ] 1.15 [P] Create spec-executor prompt and agent prompt registry
+- [x] 1.15 [P] Create spec-executor prompt and agent prompt registry
   - **Do**:
     1. Create `packages/cli/src/agents/spec-executor.ts` exporting the spec-executor system prompt
     2. Create `packages/cli/src/agents/index.ts` with `getPrompt(agentName: string): string` that returns the prompt for the given agent name
@@ -208,7 +208,7 @@ This spec is not complete until ALL criteria are met:
 
 ### Agent Runner (1.16-1.17)
 
-- [ ] 1.16 Implement agent runner
+- [x] 1.16 Implement agent runner
   - **Do**:
     1. Create `packages/cli/src/lib/agent-runner.ts` with `runAgent(agentName, specPath, config, options?)`
     2. Load system prompt via `getPrompt(agentName)`
@@ -222,7 +222,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-6, US-8_
   - _Design: Agent Runner_
 
-- [ ] 1.17 [VERIFY] Quality check: type check passes
+- [x] 1.17 [VERIFY] Quality check: type check passes
   - **Do**: Run type check on all modules so far
   - **Verify**: `cd packages/cli && npx tsc --noEmit`
   - **Done when**: Zero type errors
@@ -230,7 +230,7 @@ This spec is not complete until ALL criteria are met:
 
 ### CLI Entry & Simple Commands (1.18-1.25)
 
-- [ ] 1.18 Create CLI entry point with Commander.js
+- [x] 1.18 Create CLI entry point with Commander.js
   - **Do**:
     1. Create `packages/cli/src/cli.ts` with Commander program, version from package.json, global options (`--debug`, `--no-color`, `--json`)
     2. Register all subcommands (lazy-loaded)
