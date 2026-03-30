@@ -242,7 +242,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-1, FR-2, FR-14, US-1_
   - _Design: CLI Entry_
 
-- [ ] 1.19 Implement `ralph init` command
+- [x] 1.19 Implement `ralph init` command
   - **Do**:
     1. Create `packages/cli/src/commands/init.ts` with `--global` flag
     2. Writes `.ralph/config.json` (or `~/.ralph/config.json` with `--global`) with default values: provider `claude`, model `claude-sonnet-4-20250514`, apiKeyEnvVar `ANTHROPIC_API_KEY`
@@ -255,7 +255,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-12, US-2_
   - _Design: Command Handlers_
 
-- [ ] 1.20 Implement `ralph new` command
+- [x] 1.20 Implement `ralph new` command
   - **Do**:
     1. Create `packages/cli/src/commands/new.ts` accepting `<name>` and `"<goal>"` arguments, `--force` option
     2. Validate name with spec manager, create spec directory with stubs
@@ -268,7 +268,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-3, FR-7, US-4_
   - _Design: Command Handlers_
 
-- [ ] 1.21 [P] Implement `ralph switch` command
+- [x] 1.21 [P] Implement `ralph switch` command
   - **Do**:
     1. Create `packages/cli/src/commands/switch.ts` accepting `<name>` argument
     2. Verify spec exists, call `setActiveSpec(name)`
@@ -280,7 +280,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: US-5_
   - _Design: Command Handlers_
 
-- [ ] 1.22 [P] Implement `ralph status` command
+- [x] 1.22 [P] Implement `ralph status` command
   - **Do**:
     1. Create `packages/cli/src/commands/status.ts` accepting optional `[name]`, `--json` flag
     2. Read active spec or named spec, read state file if exists, parse tasks for completion count
@@ -293,7 +293,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: FR-13, US-5, US-6_
   - _Design: Command Handlers_
 
-- [ ] 1.23 [P] Implement `ralph cancel` command
+- [x] 1.23 [P] Implement `ralph cancel` command
   - **Do**:
     1. Create `packages/cli/src/commands/cancel.ts` accepting optional `[name]`
     2. Delete `.ralph-state.json` for the spec
@@ -305,7 +305,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: US-7_
   - _Design: Command Handlers_
 
-- [ ] 1.24 [P] Implement `ralph doctor` command
+- [x] 1.24 [P] Implement `ralph doctor` command
   - **Do**:
     1. Create `packages/cli/src/commands/doctor.ts`
     2. Check: config file or env vars present, API key env var set, Node.js >= 18, `specs/` directory exists
@@ -318,7 +318,7 @@ This spec is not complete until ALL criteria are met:
   - _Requirements: US-2, US-14_
   - _Design: Command Handlers_
 
-- [ ] 1.25 [VERIFY] Quality check: type check passes
+- [x] 1.25 [VERIFY] Quality check: type check passes
   - **Do**: Run type check on full codebase
   - **Verify**: `cd packages/cli && npx tsc --noEmit`
   - **Done when**: Zero type errors
