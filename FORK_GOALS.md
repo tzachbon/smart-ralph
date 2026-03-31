@@ -1,0 +1,183 @@
+# Fork Goals — Agentic Verification Loop
+
+> **Fork of [tzachbon/smart-ralph](https://github.com/tzachbon/smart-ralph)**
+> Maintainer: [@informatico-madrid](https://github.com/informatico-madrid)
+
+---
+
+## The Problem
+
+After nearly two years working with agents and SSD workflows, the testing layer
+remains the most painful part. Classical test coverage strategies — unit tests,
+mocks, CI suites — were designed for humans writing tests for humans to read.
+When an agent writes and executes those same tests, you get:
+
+- Tests that pass but don't verify real behavior (mock-only anti-patterns)
+- High coverage numbers that give false confidence
+- A test suite nobody maintains because the agent keeps rewriting it
+- No self-correction when something breaks mid-spec
+
+The root issue: **classical testing is a human artifact, not a verification
+mechanism designed for agentic loops.**
+
+---
+
+## The Idea
+
+> Give the agent the ability to read a user story, reason about what "working"
+> looks like, explore the system creatively, detect failures, fix them, and
+> verify the rest of the product wasn't broken — without a human holding its hand.
+
+This is not BDD with Gherkin. Gherkin was invented so humans could communicate
+intent to other humans. An agent that understands natural language doesn't need
+a formal DSL — it needs **a contract of what to observe and a license to explore**.
+
+We call this the **Verification Contract**: a lightweight, structured section in
+each spec that tells the agent *what to observe*, not *how to test*.
+
+---
+
+## Core Concepts
+
+### 1. Verification Contract (not test scripts)
+
+Each `requirements.md` spec gets a `## Verification Contract` section:
+
+```markdown
+## Verification Contract
+
+**Entry points**: routes, endpoints, or UI surfaces this story touches
+**Observable signals**: what PASS looks like (HTTP status, visible element, persisted data, log output)
+**Hard invariants**: what must NEVER break (auth, permissions, adjacent flows)
+**Seed data**: minimum system state needed to verify
+**Dependency map**: other specs/modules that share state with this one
+**Escalate if**: conditions that require human judgment
+```
+
+The agent receives this and decides *how* to probe. It can use CLI commands,
+HTTP requests, browser navigation, database queries, log inspection — whatever
+makes sense given the entry points. No scripted steps. No Gherkin.
+
+### 2. Creative Exploration over Scripted Verification
+
+The `qa-engineer` agent today runs commands and checks AC checklists. The goal
+is to extend it with **exploratory reasoning**: given a user story and a
+verification contract, derive and execute checks the original author didn't
+anticipate.
+
+Examples from a single user story ("filter invoices by date"):
+- Does the filter actually filter, or just visually sort?
+- What happens with an invalid date range?
+- Does the filter state persist across page reload?
+- Does it reflect in the URL (shareable state)?
+- What happens with zero results?
+- Does it respect the user's timezone?
+- Can it be combined with other filters?
+
+None of these come from a script. They come from reasoning about intent.
+
+### 3. Repair Loop (not just retry)
+
+Today `stop-watcher.sh` retries a failed task up to 5 times — same task, same
+approach. The repair loop is different:
+
+```
+VERIFICATION_FAIL on story X
+  → classify failure type (impl bug / env issue / spec ambiguity / flaky)
+  → if impl bug: backtrack to originating task, apply targeted fix
+  → rerun verification for story X only
+  → if pass: continue to regression sweep
+  → if fail again after 2 repair iterations: escalate to human
+```
+
+This requires a new state in `.ralph-state.json`:
+```json
+{ "phase": "repair", "failedStory": "US-3", "originTaskIndex": 7, "repairIteration": 1 }
+```
+
+### 4. Regression Sweep (impact-driven, not full suite)
+
+After a spec completes, use the `Dependency map` in each story's verification
+contract to identify which other specs share state. Run only their verification
+contracts — not their full implementation. Fast, targeted, meaningful.
+
+Three tiers:
+- **Local**: specs directly touching the same modules
+- **Invariants**: auth, navigation, persistence, error handling
+- **Full**: nightly or at final merge only
+
+### 5. Browser as one tool among many (not the centerpiece)
+
+Browser automation is valuable but fragile if it's the only signal. The
+verification agent should combine:
+
+| Signal layer | What it catches |
+|---|---|
+| CLI / test runner | Logic, edge cases, unit behavior |
+| HTTP / API | Contracts, side effects, data integrity |
+| Browser | Real user flows, render, wiring, UX regressions |
+| Logs / traces | Root cause, silent failures, perf |
+
+Browser becomes a Phase 5 addition (MCP Playwright), not the foundation.
+
+---
+
+## Phases
+
+### Phase 0 — Fork setup ✅
+- [x] Fork created
+- [x] `FORK_GOALS.md` added
+
+### Phase 1 — Verification Contract in specs
+- [ ] Add `## Verification Contract` section to `templates/requirements.md`
+- [ ] Update `product-manager.md` to populate the contract from user stories
+- Additive only. Zero risk to existing flow.
+
+### Phase 2 — Exploratory qa-engineer
+- [ ] Add `## Story Verification` mode to `agents/qa-engineer.md`
+- [ ] Agent reads user story + contract, derives checks autonomously
+- [ ] Emits structured findings: `PASS`, `FAIL`, `FINDING` (unexpected behavior worth noting)
+- [ ] No Gherkin. No scripted steps.
+
+### Phase 3 — Repair loop in stop-watcher
+- [ ] New `repair` phase in `.ralph-state.json` schema
+- [ ] `stop-watcher.sh` detects `VERIFICATION_FAIL`, classifies, backtracks
+- [ ] Max 2 repair iterations per story, then escalate
+- [ ] Surgical change to stop-watcher only
+
+### Phase 4 — Regression sweep
+- [ ] Post-spec completion: read dependency maps, run targeted verification
+- [ ] Three-tier model: local → invariants → full (nightly)
+- [ ] ~20 lines added to end of stop-watcher loop
+
+### Phase 5 — Browser tool (experimental branch)
+- [ ] MCP Playwright integration as optional qa-engineer tool
+- [ ] Activated only when entry points include UI routes
+- [ ] Separate branch `feat/browser-verification`, not merged to main until stable
+
+---
+
+## Contribution Strategy
+
+Changes in Phases 1–2 are purely additive and should be PRable upstream.
+Phases 3–4 touch `stop-watcher.sh` — open a discussion issue on upstream first.
+Phase 5 lives as a separate plugin `ralph-bdd-browser` to keep the core clean.
+
+All changes follow upstream Karpathy Rules: surgical, no speculation, version
+bump on every plugin change, no features beyond what's asked.
+
+---
+
+## What this is NOT
+
+- Not a Gherkin/BDD framework
+- Not a replacement for `qa-engineer` (it extends it)
+- Not a browser-testing tool (browser is one signal layer, not the product)
+- Not a full rewrite of smart-ralph (every phase is a small additive change)
+
+---
+
+## Status
+
+**Current phase**: 0 — Fork setup complete, strategy defined.
+**Next step**: Phase 1 — `templates/requirements.md` Verification Contract section.
