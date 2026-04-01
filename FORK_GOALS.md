@@ -144,6 +144,20 @@ Browser becomes a Phase 5 addition (MCP Playwright), not the foundation.
 Skills are referenced from `tasks.md` task entries via `**Skills**` field.
 Additive only. Zero risk to existing flow.
 
+### Phase 0.2 — task-planner auto-injection ✅
+- [x] `agents/task-planner.md` — new `### Playwright E2E Tasks: ui-map-init
+  Prerequisite` block inside `## VE Task Generation`.
+  - Detects Playwright usage in any VE task (by `Verify`/`Do` field content).
+  - Auto-inserts `VE0` task immediately before the first Playwright VE task.
+  - `VE0` checks for `ui-map.local.md` existence first; skips exploration if
+    already present (idempotent).
+  - All Playwright VE tasks get `**Skills**: skills/e2e/playwright-session.skill.md`.
+  - Quality Checklist updated with the corresponding gate.
+
+Previously, `**Skills**` had to be written manually in each `tasks.md`. Now
+`task-planner` injects the prerequisite automatically on every spec that uses
+Playwright. Zero human memory required.
+
 ### Phase 1 — Verification Contract in specs
 - [ ] Add `## Verification Contract` section to `templates/requirements.md`
 - [ ] Update `product-manager.md` to populate the contract from user stories
@@ -195,5 +209,5 @@ bump on every plugin change, no features beyond what's asked.
 
 ## Status
 
-**Current phase**: 0.1 complete — E2E skill foundation in place.
+**Current phase**: 0.2 complete — task-planner auto-injects `ui-map-init` for all Playwright specs.
 **Next step**: Phase 1 — `templates/requirements.md` Verification Contract section.
