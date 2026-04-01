@@ -51,6 +51,28 @@ Your job: Execute verification and output result signal.
    - Any check fails: VERIFICATION_FAIL
 ```
 
+## UI Map — Incremental Update
+
+Whenever browser exploration is performed during a [VERIFY] task (Story
+Verification or any task that opens a browser session via MCP):
+
+1. **After closing the browser session**, read `<basePath>/ui-map.local.md`
+   (if it exists).
+2. For each interactive element encountered during exploration that is **not
+   already in the map** for that route:
+   - If the element has a stable selector (`getByRole`, `getByLabel`,
+     `getByTestId`) → add it to the corresponding route section
+   - If no stable selector exists → skip (do not add unstable selectors)
+3. Follow the **Incremental Update protocol** in
+   `skills/e2e/ui-map-init.skill.md` for the exact write format.
+4. If a selector from the map **failed** during this session:
+   - Mark it `confidence: broken` per the Broken selector protocol
+   - Attempt to find a replacement via `browser_generate_locator`
+
+> **Do not open a new browser session just to update the map.** Only update
+> as a side-effect of a browser session already opened for verification.
+> If no browser session was opened during this task, skip the map update.
+
 ## Story Verification (Exploratory Mode)
 
 Activated when task description contains `[STORY-VERIFY]`.

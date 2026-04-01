@@ -1,6 +1,6 @@
 ---
 name: ui-map-init
-version: 3
+version: 4
 description: VE0 skill — builds the selector map for the app before VE1+ tasks run. Opens its own browser session (does not reuse any prior session), explores the app, writes ui-map.local.md, then follows playwright-session Session End.
 agents: [spec-executor, qa-engineer]
 ---
@@ -96,6 +96,43 @@ Rules:
 - `confidence: medium` = inferred from snapshot but not directly generated
 - `confidence: low` = static analysis only (Step 1B fallback)
 - Mark `stale: true` if Step 1B was used
+
+---
+
+## Incremental Update
+
+`ui-map.local.md` grows over time. **Never regenerate the full map** unless
+`stale: true` or the user explicitly requests a full reset. Instead, patch
+only the affected routes.
+
+### Who updates the map
+
+| Agent | When | What to add |
+|---|---|---|
+| **qa-engineer** | After browser exploration in a [VERIFY] task | New selectors discovered on live app |
+| **spec-executor** | After implementing a task that adds `data-testid` to the code | The new testid + route |
+| **ui-map-init (VE0)** | Full generation (first run or stale reset) | All routes in Verification Contract |
+
+### Update protocol (incremental)
+
+1. Read current `ui-map.local.md`
+2. For each new selector to add:
+   - If the route section already exists → append a new row to its table
+   - If the route section does not exist → append a new `### <route>` section
+3. Update the `<!-- generated: -->` comment to current ISO timestamp
+4. Do **not** remove or modify existing rows unless a selector is confirmed broken
+5. Never mark `stale: true` during an incremental update — only do so when a
+   structural UI change makes existing selectors unreliable
+
+### Broken selector protocol
+
+If during a [VERIFY] task a selector from the map fails to locate the element:
+1. Mark the row as `confidence: broken` and add a `<!-- broken: <ISO date> -->` note
+2. Attempt `browser_generate_locator` to find the replacement
+3. If found: add new row with `confidence: high`, keep broken row for reference
+4. If not found: leave broken row marked, emit `FINDING` in the verification output
+
+Never silently remove a broken selector — broken rows are diagnostically valuable.
 
 ---
 
