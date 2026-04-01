@@ -1,7 +1,7 @@
 ---
 name: playwright-session
-version: 3
-description: Load this skill before any Playwright browser interaction in a VE task. Covers session lifecycle, context isolation, auth flows, stable-state detection, and cleanup. Requires playwright-env to be loaded first.
+version: 4
+description: Load this skill before any Playwright browser interaction in a VE task. Covers session lifecycle, context isolation, auth flows, stable-state detection, cache isolation, and cleanup. Requires playwright-env to be loaded first.
 agents: [spec-executor, qa-engineer]
 ---
 
@@ -10,8 +10,9 @@ agents: [spec-executor, qa-engineer]
 This skill governs the **session lifecycle** for MCP Playwright interactions. Load it before any VE task that uses browser tools.
 
 **Prerequisite**: `playwright-env.skill.md` must be loaded and resolved before
-this skill runs. Session start reads `appUrl`, `authMode`, and related values
-from `.ralph-state.json → playwrightEnv` — never from hardcoded values.
+this skill runs. Session start reads `appUrl`, `authMode`, `isolated`, and
+related values from `.ralph-state.json → playwrightEnv` — never from
+hardcoded values.
 
 ---
 
@@ -20,12 +21,15 @@ from `.ralph-state.json → playwrightEnv` — never from hardcoded values.
 ### Start
 
 1. Check `mcpPlaywright` in `.ralph-state.json` — if `missing`, switch to degraded mode (see `mcp-playwright.skill.md`)
-2. Read `playwrightEnv` from `.ralph-state.json` — use `appUrl`, `browser`, `headless`, `viewport`, `locale`, `timezone`
-3. Launch MCP server with correct capability flags (baseline: `--caps=testing`)
-4. Open a new browser context — never reuse a context from a previous session
-5. If `authMode` is not `none`, complete auth flow (see Auth Flow below) before navigating to the target URL
-6. Navigate to the target URL
-7. Wait for stable state — see Stable State Detection below
+2. Read `playwrightEnv` from `.ralph-state.json` — use `appUrl`, `browser`, `headless`, `viewport`, `locale`, `timezone`, `isolated`
+3. If `isolated = false`: run lock-recovery check from `mcp-playwright.skill.md → Step 0b` before proceeding
+4. Launch MCP server with correct capability flags:
+   - `isolated = true`  → `npx @playwright/mcp --isolated --caps=testing`
+   - `isolated = false` → `npx @playwright/mcp --caps=testing`
+5. Open a new browser context — never reuse a context from a previous session
+6. If `authMode` is not `none`, complete auth flow (see Auth Flow below) before navigating to the target URL
+7. Navigate to the target URL
+8. Wait for stable state — see Stable State Detection below
 
 ### During
 
@@ -44,7 +48,20 @@ Always close the session, even if verification failed:
    jq '.lastPlaywrightSession = "closed"' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
 
-A leaked browser process will consume memory and interfere with subsequent VE tasks.
+**If `browser_close` fails or the session terminated abnormally** (timeout, tool error, unexpected disconnect):
+
+```bash
+# Remove the stale lock file so the next session can start cleanly
+# Only do this if browser_close failed — do not remove a lock that belongs to a live process
+MCP_LOCK="$HOME/.cache/ms-playwright/mcp-chrome/SingletonLock"
+LOCK_PID=$(cat "$MCP_LOCK" 2>/dev/null | cut -d- -f1)
+if [ -n "$LOCK_PID" ] && ! kill -0 "$LOCK_PID" 2>/dev/null; then
+  rm -f "$MCP_LOCK"
+  echo MCP_LOCK_STALE_REMOVED
+fi
+```
+
+A leaked browser process or stale lock will block subsequent VE tasks.
 
 ---
 
@@ -91,10 +108,21 @@ No auth step needed. Navigate directly to `appUrl`.
 ### `form`
 1. Navigate to `loginUrl` (or `appUrl` if not set)
 2. `browser_snapshot` → locate username and password fields using `browser_generate_locator`
-3. Fill credentials from env vars (`RALPH_LOGIN_USER`, `RALPH_LOGIN_PASS`)
-4. Submit the form
-5. `browser_snapshot` + stable state check → confirm authenticated state (absence of login form, presence of authenticated UI)
-6. If auth fails → emit `VERIFICATION_FAIL` with diagnosis, do not proceed
+3. **CAPTCHA / 2FA check**: before filling credentials, scan the snapshot for:
+   - CAPTCHA elements: `role=img` or visible text matching `captcha`, `I'm not a robot`, `verify you are human`
+   - 2FA / MFA fields: visible text matching `verification code`, `authenticator`, `one-time password`, `OTP`, `2FA`
+   - If found → emit `ESCALATE` immediately:
+     ```
+     ESCALATE
+       reason: login form requires CAPTCHA or 2FA
+       detected: <element description from snapshot>
+       resolution: use authMode=storage-state with a pre-authenticated session,
+                   or disable CAPTCHA/2FA in the test environment
+     ```
+4. Fill credentials from env vars (`RALPH_LOGIN_USER`, `RALPH_LOGIN_PASS`)
+5. Submit the form
+6. `browser_snapshot` + stable state check → confirm authenticated state (absence of login form, presence of authenticated UI)
+7. If auth fails → emit `VERIFICATION_FAIL` with diagnosis, do not proceed
 
 ### `token`
 
@@ -103,14 +131,23 @@ be documented in `playwright-env.local.md` as `tokenBootstrapRule`. Three
 standard patterns:
 
 **Pattern A — localStorage** (most common for JWT / SPA apps):
+
+⚠️ **Critical order**: `localStorage` is origin-scoped. Inject the token AFTER
+navigating to the app URL — never before. Injecting on `about:blank` writes to
+a different origin and the value will not be available when the app loads.
+
 ```javascript
-// Inject before navigating to the protected route
-await page.evaluate((token) => {
-  localStorage.setItem('auth_token', token);   // key name varies — check app source
-}, process.env.RALPH_AUTH_TOKEN);
+// Step 1: navigate to the app URL first to establish the correct origin
 await page.goto(appUrl);
+// Step 2: now inject the token into the correct origin's localStorage
+await page.evaluate((token, key) => {
+  localStorage.setItem(key, token);  // key = tokenLocalStorageKey from playwright-env.local.md
+}, process.env.RALPH_AUTH_TOKEN, tokenLocalStorageKey);
+// Step 3: reload so the app reads the token from localStorage on init
+await page.reload();
 ```
-Then `browser_snapshot` → confirm authenticated state.
+
+Then `browser_snapshot` + stable state check → confirm authenticated state.
 
 **Pattern B — Authorization header** (for apps that read the header on every request):
 ```javascript
@@ -132,7 +169,7 @@ ESCALATE
   reason: token auth mode requires tokenBootstrapRule
   resolution: add tokenBootstrapRule to playwright-env.local.md
               options: localStorage | authorization-header
-              key name (for localStorage): check app source for token storage key
+              key name (for localStorage): add tokenLocalStorageKey — check app source for the localStorage key name
 ```
 
 ### `cookie`
@@ -188,5 +225,6 @@ Before marking any VE task complete:
 - [ ] Browser context closed
 - [ ] No pending `browser_navigate` or action calls in flight
 - [ ] Session status written to `.ralph-state.json`
+- [ ] If `browser_close` failed: stale lock removed (see Session End above)
 - [ ] Screenshots saved to `<basePath>/screenshots/` (create dir if absent)
 - [ ] Signal emitted (`VERIFICATION_PASS`, `VERIFICATION_FAIL`, or `VERIFICATION_DEGRADED`)

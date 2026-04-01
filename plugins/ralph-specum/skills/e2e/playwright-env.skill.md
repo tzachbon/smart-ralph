@@ -1,6 +1,6 @@
 ---
 name: playwright-env
-version: 3
+version: 4
 description: Load this skill before any MCP Playwright session. Resolves browser execution context — app URL, auth mode, credentials references, seed data, browser config, and safety limits. Emits ESCALATE if critical context is missing or app is unreachable.
 agents: [spec-executor, qa-engineer]
 ---
@@ -24,6 +24,11 @@ a value:
 1. Shell environment variable (e.g. `RALPH_APP_URL`)
 2. `playwright-env.local.md` in `<basePath>` (gitignored, never committed)
 3. Non-secret values already written in `.ralph-state.json → playwrightEnv`
+   ⚠️ **State fallback warning**: values from `.ralph-state.json` may be stale
+   from a previous session. If the state file was written more than ~2 hours ago
+   or by a different task invocation, treat these values as a low-confidence hint
+   and prefer sources 1–2. Never rely on state-file values for security-sensitive
+   settings (authMode, tokenBootstrapRule).
 4. `requirements.md → Verification Contract → Entry points` (URL fallback only)
 5. `ESCALATE` — stop and ask the human
 
@@ -43,11 +48,12 @@ a value:
 | Viewport | `RALPH_VIEWPORT` | `desktop` | `desktop`, `tablet`, `mobile`, or `1280x800` |
 | Locale | `RALPH_LOCALE` | `en-US` | Affects date formats, text content assertions |
 | Timezone | `RALPH_TIMEZONE` | `UTC` | Affects time-sensitive assertions |
+| Isolated mode | `RALPH_PLAYWRIGHT_ISOLATED` | `true` | Launches MCP with `--isolated` flag (ephemeral profile, no disk cache). Set `false` only when auth persistence between steps is required and you explicitly manage the user-data-dir. |
 
 ### Authentication
 
 | Setting | Env var | Notes |
-|---|---|---|
+|---|---|
 | Auth mode | `RALPH_AUTH_MODE` | `none`, `form`, `token`, `cookie`, `oauth`, `basic`, `storage-state` |
 | Login URL | `RALPH_LOGIN_URL` | Optional. Defaults to `appUrl` if not set |
 | Username / email | `RALPH_LOGIN_USER` | Used by `form` and `basic` modes |
@@ -58,6 +64,7 @@ a value:
 | Storage state path | `RALPH_STORAGE_STATE_PATH` | Used by `storage-state` mode. Must be a readable local file |
 | Test user role | `RALPH_USER_ROLE` | Optional. `admin`, `editor`, `viewer`, etc. Documents intent |
 | Token bootstrap rule | `tokenBootstrapRule` | Required for `token` mode. `localStorage` or `authorization-header`. Set in `playwright-env.local.md`. |
+| Token localStorage key | `tokenLocalStorageKey` | Required when `tokenBootstrapRule=localStorage`. The exact key the app uses to store the token in `localStorage` (check app source). Set in `playwright-env.local.md`. |
 
 ### App state / seed
 
@@ -150,8 +157,9 @@ appEnv = production        → SKIP — never seed production
 ```
 
 ```bash
-# Run seed and capture exit code
-$RALPH_SEED_COMMAND && echo SEED_OK || echo SEED_FAILED
+# Always run via eval to correctly handle commands with arguments or spaces
+# (e.g. "npm run seed:e2e -- --env=staging" would break without eval)
+eval "$RALPH_SEED_COMMAND" && echo SEED_OK || echo SEED_FAILED
 ```
 
 ```
@@ -184,7 +192,8 @@ jq '.playwrightEnv = {
   "headless": <true|false>,
   "viewport": "<resolved>",
   "locale": "<resolved>",
-  "timezone": "<resolved>"
+  "timezone": "<resolved>",
+  "isolated": <true|false>
 }' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
 
@@ -211,7 +220,11 @@ loginPassVar: RALPH_LOGIN_PASS
 
 # For token mode — required if authMode is token:
 # tokenBootstrapRule: localStorage        # or: authorization-header
-# tokenLocalStorageKey: auth_token        # key used by the app in localStorage
+# tokenLocalStorageKey: auth_token        # exact key the app uses in localStorage (check app source)
+
+# Isolated mode (default: true)
+# isolated: true    # ephemeral browser profile, no disk cache between sessions (recommended)
+# isolated: false   # persistent profile — only use when you need cross-step auth persistence
 
 allowWrite: true
 browser: chromium
@@ -234,6 +247,7 @@ timezone: Europe/Madrid
 - **Never log or persist secrets** in progress files, state files, screenshots, commit messages, or VERIFICATION signals.
 - **Seed command** runs only in `local` or `staging`. Never in `production`.
 - **Feature flags** are informational — agent notes them but does not modify app config.
+- **`isolated` defaults to `true`**. The persistent `mcp-chrome` profile accumulates HTTP disk cache across sessions, which can cause stale-cache test contamination. Use `isolated: false` only when you explicitly need auth state to persist between separate VE tasks, and you manage cleanup manually.
 
 ---
 
@@ -262,7 +276,9 @@ ESCALATE
 - [ ] Seed command ran and succeeded — or skipped (not configured / production)
 - [ ] `playwrightEnv` written to `.ralph-state.json` (non-secret fields only)
 - [ ] `authMode` resolved
+- [ ] `isolated` setting resolved and written to state
 - [ ] `tokenBootstrapRule` documented in `playwright-env.local.md` if `authMode=token`
+- [ ] `tokenLocalStorageKey` documented in `playwright-env.local.md` if `tokenBootstrapRule=localStorage`
 - [ ] Secret env vars referenced, not stored
 - [ ] `allowWrite` posture confirmed
 - [ ] Missing critical context results in `ESCALATE`, not improvisation

@@ -1,7 +1,7 @@
 ---
 name: mcp-playwright
-version: 3
-description: Load this skill when you need to verify UI features using MCP Playwright browser tools. Covers browser verification protocol, tool selection, dependency check, degradation strategy, and signal emission.
+version: 4
+description: Load this skill when you need to verify UI features using MCP Playwright browser tools. Covers browser verification protocol, tool selection, dependency check, degradation strategy, cache/lock recovery, and signal emission.
 agents: [spec-executor, qa-engineer]
 ---
 
@@ -21,7 +21,7 @@ Load: playwright-env.skill.md
 ```
 
 `playwright-env` will:
-- Resolve `appUrl`, `authMode`, `allowWrite`, browser config, locale, timezone
+- Resolve `appUrl`, `authMode`, `allowWrite`, `isolated`, browser config, locale, timezone
 - Validate that secret env vars are exported and readable
 - Run seed command if configured (local/staging only)
 - Check app connectivity before writing state
@@ -34,12 +34,57 @@ If `playwright-env` was already run in this session (`.ralph-state.json → play
 
 ---
 
-## Step 0: Dependency Check (MANDATORY)
+## Step 0: Dependency Check + Lock Recovery (MANDATORY)
 
 After environment context is resolved, verify MCP Playwright is available.
 
+### 0a — Check availability (no download)
+
+```bash
+# Use --no-install to avoid triggering an npm download in restricted environments
+npx --no-install @playwright/mcp --version 2>/dev/null && echo MCP_PLAYWRIGHT_AVAILABLE || echo MCP_PLAYWRIGHT_MISSING
+```
+
+If `MCP_PLAYWRIGHT_MISSING`: try the full install path as a fallback **only in local environments** (`appEnv=local`):
+
 ```bash
 npx @playwright/mcp@latest --version 2>/dev/null && echo MCP_PLAYWRIGHT_AVAILABLE || echo MCP_PLAYWRIGHT_MISSING
+```
+
+For `appEnv=staging` or `appEnv=production`, if the no-install check fails, emit `ESCALATE` rather than attempting a download.
+
+### 0b — Lock recovery (run BEFORE availability check if a previous session may have crashed)
+
+The MCP Playwright server uses a persistent user-data-dir at `~/.cache/ms-playwright/mcp-chrome`.
+If a previous session terminated abnormally (timeout, SIGKILL, crash), this directory retains a
+lock file and the next session will fail with `Browser is already in use`.
+
+Check and recover before proceeding:
+
+```bash
+MCP_LOCK="$HOME/.cache/ms-playwright/mcp-chrome/SingletonLock"
+if [ -f "$MCP_LOCK" ]; then
+  # Check if the PID that holds the lock is still running
+  LOCK_PID=$(cat "$MCP_LOCK" 2>/dev/null | cut -d- -f1)
+  if [ -n "$LOCK_PID" ] && kill -0 "$LOCK_PID" 2>/dev/null; then
+    echo MCP_LOCK_HELD_BY_LIVE_PROCESS
+    # Do not remove — a live session owns the lock
+  else
+    echo MCP_LOCK_STALE_REMOVING
+    rm -f "$MCP_LOCK"
+  fi
+else
+  echo MCP_LOCK_CLEAN
+fi
+```
+
+```
+MCP_LOCK_HELD_BY_LIVE_PROCESS → emit ESCALATE:
+  reason: another MCP Playwright session is active
+  resolution: close the other session, then re-run
+
+MCP_LOCK_STALE_REMOVING       → proceed (stale lock removed)
+MCP_LOCK_CLEAN                → proceed normally
 ```
 
 Write result to `.ralph-state.json`:
@@ -76,6 +121,41 @@ MCP_PLAYWRIGHT_MISSING
 ---
 
 ## Protocol A: Full MCP Verification
+
+### Isolation Mode
+
+Read `playwrightEnv.isolated` from `.ralph-state.json`. This controls whether the MCP server
+uses an ephemeral profile or the persistent `mcp-chrome` user-data-dir.
+
+```
+isolated = true  (default)
+  → Launch MCP server with --isolated flag:
+    npx @playwright/mcp --isolated --caps=testing
+
+  Effect: each session uses a fresh in-memory browser profile.
+  No HTTP disk cache, cookies, or localStorage persists between sessions.
+  This prevents stale-cache contamination between VE tasks.
+
+isolated = false
+  → Launch MCP server WITHOUT --isolated:
+    npx @playwright/mcp --caps=testing
+
+  Effect: persistent profile at ~/.cache/ms-playwright/mcp-chrome.
+  HTTP disk cache and storage persist between sessions.
+  Use only when auth state must survive across separate VE tasks.
+  In this mode, run the lock-recovery check (Step 0b) before EVERY session.
+```
+
+> **HTTP disk cache note (isolated=false)**: Playwright browser contexts share
+> the same HTTP disk cache at the OS/browser level. `newContext()` isolates
+> cookies and localStorage, but NOT the HTTP cache. A response cached in one
+> context can be served to another context in the same browser process, causing
+> assertions to pass against stale data. This is a known Playwright limitation
+> (no `clearHttpCache()` API). In `isolated=false` mode, mitigate by adding
+> `page.route('**/*', r => r.continue({ headers: { 'Cache-Control': 'no-cache' } }))`
+> on pages with aggressive caching, or by restarting the MCP server between tasks.
+
+---
 
 ### Tool Selection Rules
 
@@ -165,9 +245,14 @@ VERIFICATION_PASS
   spec: <spec name>
   ac: <AC-x.y from requirements.md>
   flow: <brief description of what was verified>
-  evidence: <screenshot path or "snapshot-only">
+  evidence: <screenshot path>
   tools_used: [browser_snapshot, browser_navigate, ...]
 ```
+
+Evidence field policy:
+- **Screenshot is required** whenever a browser action was performed or a UI state was asserted.
+- **`snapshot-only` is allowed** for purely structural checks with no user interaction (e.g., asserting a static element exists on page load), when running headless and taking a screenshot would add no useful information.
+- When in doubt, take the screenshot. Evidence is cheap; a false PASS is not.
 
 ```
 VERIFICATION_FAIL
@@ -183,7 +268,7 @@ VERIFICATION_FAIL
   diagnosis: <root cause hypothesis>
 ```
 
-**Never emit a PASS without evidence. Never emit a FAIL without diagnosis.**
+**Never emit a PASS without evidence (screenshot or explicit snapshot-only justification). Never emit a FAIL without diagnosis.**
 
 ---
 
@@ -217,12 +302,13 @@ If spec has UI entry points, emit ESCALATE after VERIFICATION_DEGRADED.
 
 | Flag | What it enables | When to use |
 |---|---|---|
+| `--isolated` | Ephemeral browser profile, no disk cache between sessions | **Default** — use for all VE tasks unless cross-step auth persistence is required |
 | `--caps=testing` | `browser_verify_*` assertion tools | Any spec with assertions |
 | `--caps=devtools` | Devtools tracing, detailed timing | Intermittent failures, race conditions |
 | `--caps=pdf` | PDF generation | PDF export specs only |
 | Default (no flag) | Navigation, snapshot, screenshot, form interaction | Standard flows |
 
-Always use `--caps=testing` as baseline. Add `--caps=devtools` only when diagnosing.
+Baseline launch command: `npx @playwright/mcp --isolated --caps=testing`
 
 ---
 
@@ -231,9 +317,11 @@ Always use `--caps=testing` as baseline. Add `--caps=devtools` only when diagnos
 - **Never use `browser_take_screenshot` to make assertions** — use `browser_snapshot`.
 - **Never hand-write CSS selectors or XPath** — always use `browser_generate_locator`.
 - **Never retry a failed action without re-running diagnostic**.
-- **Never emit PASS without screenshot evidence**.
+- **Never emit PASS without evidence** (screenshot or explicit snapshot-only justification).
 - **Never emit FAIL without console + network inspection**.
 - **Never continue a multi-step flow after an unexpected state** — stop and diagnose.
 - **Never install `@playwright/mcp` automatically** — always escalate to human if missing.
 - **Never start a browser session without first completing Step -1**.
 - **Never skip the stable state check after navigation or action**.
+- **Never skip lock recovery (Step 0b) when isolated=false** — a stale lock from a crashed session blocks the next one.
+- **Never rely on HTTP disk cache being clean when isolated=false** — always assume the cache may contain stale responses.
