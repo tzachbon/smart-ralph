@@ -38,3 +38,13 @@ test-ac-*/
 # E2E UI map (project-specific selector map, generated per installation)
 # Never commit — regenerate with skills/e2e/ui-map-init.skill.md
 **/ui-map.local.md
+
+# E2E local environment config (contains auth mode, URLs, env var references)
+# Never commit — copy from playwright-env.local.md.example and fill in locally
+playwright-env.local.md
+**/playwright-env.local.md
+
+# E2E pre-authenticated browser state (contains session cookies/tokens)
+# Never commit — generate with: npx playwright codegen --save-storage=.ralph-auth-state.json
+.ralph-auth-state.json
+**/.ralph-auth-state.json

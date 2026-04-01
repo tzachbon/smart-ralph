@@ -1,7 +1,7 @@
 ---
 name: playwright-env
-version: 1
-description: Load this skill before any MCP Playwright session. Resolves browser execution context — app URL, auth mode, credentials references, seed data, browser config, and safety limits. Emits ESCALATE if critical context is missing.
+version: 2
+description: Load this skill before any MCP Playwright session. Resolves browser execution context — app URL, auth mode, credentials references, seed data, browser config, and safety limits. Emits ESCALATE if critical context is missing or app is unreachable.
 agents: [spec-executor, qa-engineer]
 ---
 
@@ -169,6 +169,43 @@ seedCommand: npm run seed:e2e
 
 ---
 
+## Connectivity Check (MANDATORY after appUrl is resolved)
+
+Before writing `playwrightEnv` to state and before launching any browser tool,
+verify the app is actually reachable:
+
+```bash
+curl -sf --max-time 5 "$RALPH_APP_URL" -o /dev/null \
+  && echo APP_REACHABLE \
+  || echo APP_NOT_REACHABLE
+```
+
+### Decision tree
+
+```
+APP_REACHABLE
+  └── Proceed: write playwrightEnv to .ralph-state.json, continue to playwright-session
+
+APP_NOT_REACHABLE
+  └── Emit ESCALATE and stop:
+
+ESCALATE
+  reason: app-not-reachable
+  url: <resolved appUrl>
+  appEnv: <resolved appEnv>
+  curl_exit: <exit code>
+  diagnosis:
+    - local: Is the dev server running? (npm run dev / docker compose up)
+    - staging: Is the deployment healthy? Check CI/CD pipeline.
+    - production: Is the service up? Check status page.
+  resolution: Start the app, then re-run the VE task.
+```
+
+**Do not proceed to `playwright-session` if the app is not reachable.**
+A browser timeout after 30s is a much worse failure signal than this explicit check.
+
+---
+
 ## Safety Rules
 
 - **`allowWrite` defaults to `false` for `staging` and `production`** unless explicitly set to `true` in env or local file.
@@ -203,8 +240,9 @@ Stop before launching any browser tool when critical context is missing.
 
 ## Done When
 
+- [ ] `appUrl` resolved
+- [ ] Connectivity check passed (`APP_REACHABLE`) — see Connectivity Check section above
 - [ ] `playwrightEnv` written to `.ralph-state.json` (non-secret fields only)
-- [ ] `appUrl` resolved and reachable (basic connectivity check)
 - [ ] `authMode` resolved
 - [ ] Secret env vars referenced, not stored
 - [ ] `allowWrite` posture confirmed
