@@ -1,6 +1,6 @@
 ---
 name: playwright-env
-version: 6
+version: 7
 description: Load this skill before any MCP Playwright session. Resolves browser execution context — app URL, auth mode, credentials references, seed data, browser config, and safety limits. Emits ESCALATE if critical context is missing or app is unreachable.
 agents: [spec-executor, qa-engineer]
 ---
@@ -25,11 +25,19 @@ a value:
 2. `playwright-env.local.md` in `<basePath>` (gitignored, never committed)
 3. Non-secret values already written in `.ralph-state.json → playwrightEnv`
    ⚠️ **State fallback warning**: values from `.ralph-state.json` may be stale
-   from a previous session. Check the `resolvedAt` timestamp written in the
-   state block — if it was written more than ~2 hours ago or by a different
-   task invocation, treat these values as a low-confidence hint and prefer
-   sources 1–2. Never rely on state-file values for security-sensitive settings
-   (authMode, tokenBootstrapRule).
+   from a previous session. **Always check the `resolvedAt` timestamp**:
+   - If `resolvedAt` is older than ~2 hours, treat as low-confidence and prefer sources 1–2.
+   - If `resolvedAt` is missing entirely, discard the cached block and re-resolve from sources 1–2.
+   - Never rely on state-file values for security-sensitive settings
+     (`authMode`, `tokenBootstrapRule`). Those must always come from sources 1–2.
+   ⚠️ **Circular fallback prevention**: if sources 1 and 2 are both absent and
+   source 3 is the only available value, emit a warning before using it:
+   ```
+   WARNING: playwright-env resolved from state cache only (no env vars, no local md).
+   resolvedAt: <timestamp>. Values may be stale. Proceeding with low confidence.
+   ```
+   This prevents a silent feedback loop where stale state values are treated as
+   authoritative across multiple task invocations.
 4. `requirements.md → Verification Contract → Entry points` (URL fallback only)
 5. `ESCALATE` — stop and ask the human
 
@@ -277,6 +285,8 @@ ESCALATE
 - [ ] Connectivity check passed (APP_REACHABLE)
 - [ ] Seed command ran and succeeded — or skipped (not configured / production)
 - [ ] `playwrightEnv` written to `.ralph-state.json` (non-secret fields only, including `resolvedAt`)
+- [ ] `resolvedAt` freshness verified when source 3 (state cache) was used — stale
+  values (>2 hours) must trigger re-resolution from sources 1–2, not silent reuse
 - [ ] `authMode` resolved
 - [ ] `isolated` setting resolved and written to state
 - [ ] `tokenBootstrapRule` documented in `playwright-env.local.md` if `authMode=token`
