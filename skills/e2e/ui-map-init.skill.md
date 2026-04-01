@@ -9,6 +9,12 @@
 > `ui-map.local.md` está en `.gitignore` — es específico de cada instalación
 > y nunca se commitea al repositorio.
 
+> **NOTA — Versión supersedida**: Si estás usando `ralph-specum`, utiliza
+> `plugins/ralph-specum/skills/e2e/ui-map-init.skill.md` en su lugar.
+> Esa versión incluye exploración MCP-first con fallback estático (Phase 5).
+> Este archivo se mantiene como referencia para proyectos que no usan
+> ralph-specum o que no tienen `@playwright/mcp` disponible.
+
 ---
 
 ## Cuándo ejecutar este skill
@@ -138,14 +144,8 @@ Cuando el task-planner genera las tareas de un spec con E2E, incluir:
 
 Esta tarea va siempre **antes** de cualquier tarea `[RED]` de tests E2E.
 
----
-
-## Para proyectos con MCP Playwright (Phase 5)
-
-Cuando MCP Playwright esté disponible (ver `FORK_GOALS.md` Phase 5),
-este skill se puede ejecutar con navegación real automatizada.
-Hasta entonces, el agente usa Bash + `curl` + inspección del código fuente
-para inferir los selectores de los componentes.
+**Si usas ralph-specum**: usa `plugins/ralph-specum/skills/e2e/ui-map-init.skill.md`
+que referencia `mcp-playwright.skill.md` para exploración real con browser.
 
 ---
 
