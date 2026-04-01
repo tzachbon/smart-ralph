@@ -1,6 +1,6 @@
 ---
 name: playwright-session
-version: 6
+version: 7
 description: Load this skill before any Playwright browser interaction in a VE task. Covers session lifecycle, context isolation, auth flows, stable-state detection, cache isolation, and cleanup. Requires playwright-env and mcp-playwright to be loaded first.
 agents: [spec-executor, qa-engineer]
 ---
@@ -31,10 +31,26 @@ never from hardcoded values.
 1. Check `mcpPlaywright` in `.ralph-state.json` — if `missing`, switch to degraded mode (see `mcp-playwright.skill.md`)
 2. Read `playwrightEnv` from `.ralph-state.json` — use `appUrl`, `browser`, `headless`, `viewport`, `locale`, `timezone`, `isolated`
 3. If `isolated = false`: run lock-recovery check from `mcp-playwright.skill.md → Step 0b` before proceeding
-4. Open a new browser context via `browser_navigate` to `appUrl` — the MCP server creates a fresh context on each new navigation from a clean state
-5. If `authMode` is not `none`, complete auth flow (see Auth Flow below) before navigating to the target URL
-6. Navigate to the target URL
-7. Wait for stable state — see Stable State Detection below
+4. Open the browser session and complete auth according to `authMode`. The sequence
+   **varies by authMode** — follow the table below exactly:
+
+   | authMode | Sequence |
+   |---|---|
+   | `none` | `browser_navigate(appUrl)` → stable state check |
+   | `form` | `browser_navigate(loginUrl or appUrl)` → Auth Flow → stable state check |
+   | `token` | `browser_navigate(appUrl)` → inject token (Pattern A/B) → Auth Flow confirms state |
+   | `cookie` | inject cookie into context **before any navigation** → `browser_navigate(appUrl)` → stable state check |
+   | `storage-state` | load state file **before any navigation** → `browser_navigate(appUrl)` → stable state check |
+   | `basic` | `browser_navigate(appUrl with credentials)` → stable state check |
+   | `oauth` / `sso` | emit `ESCALATE` (see Auth Flow section) |
+
+   > ⚠️ **`browser_navigate` does NOT reset browser state** (cookies, localStorage,
+   > session data) within the same server session. Isolation comes from the server
+   > being started with `--isolated` (ephemeral profile), not from per-navigation resets.
+   > Never assume a new `browser_navigate` gives you a clean slate.
+
+5. Navigate to the target URL (if different from the auth URL used above)
+6. Wait for stable state — see Stable State Detection below
 
 ### During
 
@@ -177,7 +193,12 @@ ESCALATE
 ```
 
 ### `cookie`
-1. Before navigating, inject cookie from env vars (`RALPH_SESSION_COOKIE_NAME`, `RALPH_SESSION_COOKIE_VALUE`) into the browser context
+
+⚠️ **Inject before any navigation.** Cookie injection must happen before
+`browser_navigate` — injecting after navigation sets the cookie for future
+requests but the current page load already happened without it.
+
+1. Inject cookie from env vars (`RALPH_SESSION_COOKIE_NAME`, `RALPH_SESSION_COOKIE_VALUE`) into the browser context before navigating
 2. Navigate to `appUrl`
 3. `browser_snapshot` + stable state check → confirm authenticated state
 
@@ -186,7 +207,12 @@ ESCALATE
 2. `browser_snapshot` → confirm page loaded without 401
 
 ### `storage-state`
-1. Load browser state from `RALPH_STORAGE_STATE_PATH` when creating the context
+
+⚠️ **Load before any navigation.** The storage state (cookies + localStorage)
+must be applied to the context before navigating — applying it after navigation
+has no effect on the page already loaded.
+
+1. Load browser state from `RALPH_STORAGE_STATE_PATH` when creating the context — before any `browser_navigate`
 2. Navigate to `appUrl`
 3. `browser_snapshot` + stable state check → confirm authenticated state (session may have expired — treat expired session as `VERIFICATION_FAIL`)
 

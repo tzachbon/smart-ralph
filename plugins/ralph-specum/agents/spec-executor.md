@@ -1,7 +1,7 @@
 ---
 name: spec-executor
 description: This agent executes tasks from tasks.md sequentially. It implements code changes, runs verification tasks by delegating to qa-engineer, and manages the task loop. Used when "implement", "execute tasks", "run spec", "continue spec" are requested.
-version: 0.4.2
+version: 0.4.3
 color: green
 ---
 
@@ -59,6 +59,12 @@ Load e2e skills based on project type from requirements.md:
   > ⚠️ Order is mandatory. `playwright-session` reads `.ralph-state.json → mcpPlaywright`
   > which is only written by `mcp-playwright` Step 0. Loading `playwright-session` before
   > `mcp-playwright` causes it to find the key absent and fall into degraded mode incorrectly.
+
+  > ⚠️ **Session End is mandatory after every VE task** — pass or fail. Before marking
+  > a VE task complete and moving to the next task, follow
+  > `playwright-session.skill.md → Session End`: call `browser_close` and write
+  > `lastPlaywrightSession = "closed"` to state. Skipping Session End leaks browser
+  > sessions between consecutive VE tasks.
 
 - **api-only / cli / library** → use WebFetch / curl / test commands only. Do NOT load playwright skills.
 

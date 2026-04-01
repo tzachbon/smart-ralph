@@ -1,196 +1,108 @@
 ---
 name: ui-map-init
-version: 4
-description: Load this skill to build the ui-map.local.md selector map before running Playwright tests. Explores the running app, catalogs stable selectors, and writes the map file. Includes invalidation logic and protected-route auth handling.
+version: 3
+description: VE0 skill — builds the selector map for the app before VE1+ tasks run. Opens its own browser session (does not reuse any prior session), explores the app, writes ui-map.local.md, then follows playwright-session Session End.
 agents: [spec-executor, qa-engineer]
 ---
 
-# UI Map Init Skill
+# UI Map Init Skill (VE0)
 
-This skill builds `ui-map.local.md` — a catalog of stable, verified selectors for the running app. Every Playwright VE task references this map instead of guessing selectors.
+This skill explores the app and builds a stable selector map (`ui-map.local.md`)
+before any VE1+ verification task runs. It is always the first VE task in a
+fullstack or frontend spec.
+
+> **Session ownership**: ui-map-init opens its **own** browser session. It does
+> not reuse any existing session. When exploration is complete, it **must**
+> follow `playwright-session.skill.md → Session End` to close the session and
+> write the session status to state.
+
+**Prerequisites** (already loaded by spec-executor before this skill):
+- `playwright-env.skill.md` — `playwrightEnv` written to state
+- `mcp-playwright.skill.md` — `mcpPlaywright` written to state
+- `playwright-session.skill.md` — session lifecycle rules in context
 
 ---
 
 ## When to Run
 
-Run once per spec, as task `VE0`, immediately before the first Playwright VE task.
+Run VE0 (this skill) when:
+- `ui-map.local.md` does not exist in `<basePath>`
+- OR `ui-map.local.md` exists but is marked `stale: true`
+- OR the task list explicitly includes a `VE0` task
 
-Before deciding to skip, run the **freshness check** below. A stale or incomplete map is worse than no map — it causes VE tasks to reference locators that no longer exist.
-
-### Freshness Check
-
-```bash
-MAP_FILE="<basePath>/ui-map.local.md"
-
-if [ ! -f "$MAP_FILE" ]; then
-  echo NEEDS_INIT
-else
-  # Portable mtime: works on both Linux (stat -c) and macOS (stat -f)
-  MAP_MTIME=$(stat -c %Y "$MAP_FILE" 2>/dev/null || stat -f %m "$MAP_FILE" 2>/dev/null)
-  MAP_AGE_HOURS=$(( ( $(date +%s) - MAP_MTIME ) / 3600 ))
-  if [ "$MAP_AGE_HOURS" -ge 4 ]; then
-    echo STALE_REINIT
-  else
-    echo EXISTS_FRESH
-  fi
-fi
-```
-
-```
-NEEDS_INIT    → run ui-map-init now
-STALE_REINIT  → delete old map and re-run ui-map-init
-EXISTS_FRESH  → skip, proceed to VE tasks
-```
-
-**Additional invalidation triggers** — re-run even if the map is fresh:
-- `requirements.md` was modified after the map’s last-modified timestamp
-- The agent observes a `VERIFICATION_FAIL` caused by a stale locator (element not found or wrong element matched)
-- The human explicitly requests a map refresh
-
-```bash
-# Check if requirements.md is newer than the map (portable)
-REQ_FILE="<basePath>/requirements.md"
-if [ -f "$REQ_FILE" ]; then
-  REQ_MTIME=$(stat -c %Y "$REQ_FILE" 2>/dev/null || stat -f %m "$REQ_FILE" 2>/dev/null)
-  if [ "$REQ_MTIME" -gt "$MAP_MTIME" ]; then
-    echo REQUIREMENTS_CHANGED_REINIT
-  fi
-fi
-```
+Skip VE0 (reuse existing map) when:
+- `ui-map.local.md` exists, is not stale, and no structural UI changes have been made since it was generated
 
 ---
 
-## Step -1: Resolve Environment Context (MANDATORY FIRST)
+## Step 0 — Pre-flight
 
-Before anything else, load `playwright-env.skill.md` to resolve the browser
-execution context.
-
-```
-Load: playwright-env.skill.md
-```
-
-`playwright-env` will resolve `appUrl`, validate connectivity, run seedCommand
-if configured, and write `playwrightEnv` to `.ralph-state.json`.
-
-**Do not proceed to Step 0 if `playwright-env` emits `ESCALATE`.**
-
-This step is identical to Step -1 in `mcp-playwright.skill.md`. If both skills
-are loaded in the same VE session, `playwright-env` only needs to run once —
-check `.ralph-state.json → playwrightEnv` before re-running.
-
-```bash
-jq -r '.playwrightEnv.appUrl // empty' <basePath>/.ralph-state.json
-# If non-empty: playwrightEnv already resolved, skip Step -1
-# If empty: run playwright-env now
-```
+1. Read `mcpPlaywright` from `.ralph-state.json` — if `missing`, switch to degraded mode (no browser exploration; write a minimal placeholder `ui-map.local.md` and emit `VERIFICATION_DEGRADED`)
+2. Read `playwrightEnv.appUrl` from `.ralph-state.json`
 
 ---
 
-## Step 0: Dependency Check
+## Step 1A — MCP Exploration (preferred)
 
-After environment context is resolved, verify MCP Playwright is available (read from `.ralph-state.json`):
+Use browser tools to explore the live app:
 
-```bash
-jq -r '.mcpPlaywright' <basePath>/.ralph-state.json
-```
-
-- `available` → proceed with MCP exploration (Step 1A)
-- `missing` → proceed with static exploration (Step 1B)
-- key absent → run dependency check from `mcp-playwright.skill.md` Step 0, then re-read
-
----
-
-## Step 1A: MCP Exploration (Preferred)
-
-### Auth before exploration
-
-Read `authMode` from `.ralph-state.json → playwrightEnv`.
-
-- If `authMode = none`: navigate directly to `appUrl` and begin exploration.
-- If `authMode ≠ none`: **complete the auth flow from `playwright-session.skill.md → Auth Flow` before navigating to any route.** Do not attempt to explore protected routes without an authenticated session — the app will redirect to login and the map will be incomplete or consist entirely of login-page selectors.
-
-After auth, confirm the authenticated state with `browser_snapshot` + stable state check before proceeding.
-
-### Exploration steps
-
-1. Navigate to `appUrl` (from `.ralph-state.json → playwrightEnv.appUrl`)
-2. `browser_snapshot` → read full accessibility tree
-3. For each significant UI region (nav, main, forms, modals, CTAs):
-   - `browser_generate_locator` for key interactive elements
-   - Record: element type, generated locator, visible text/label, region
-4. Navigate to each main route (if discoverable from nav)
-5. **Redirect detection**: after each navigation, snapshot and check whether the current URL differs from the target route:
-   ```
-   Target route: /dashboard
-   Actual URL after navigation: /login
-     → redirect to login detected
-     → do NOT record login-page selectors as belonging to /dashboard
-     → document the gap in the map under Notes: "Route /dashboard requires auth — redirected to login during exploration"
-     → if authMode=none: emit ESCALATE:
-         reason: protected routes discovered during map exploration
-         routes: [list of redirected routes]
-         resolution: set authMode to the appropriate value in playwright-env.local.md
-   ```
-6. Repeat snapshot + locator generation per successfully loaded route
-7. Write `ui-map.local.md` (see Output Format)
+1. Follow `playwright-session.skill.md → Session Lifecycle → Start` to open a
+   browser session. This includes completing the auth flow according to `authMode`
+   before navigating to exploration targets.
+2. For each entry point in `requirements.md → Verification Contract → Entry points`:
+   a. `browser_navigate` to the route
+   b. `browser_snapshot` → extract interactive elements (buttons, inputs, links, forms)
+   c. `browser_generate_locator` for each key element → record selector
+   d. `browser_take_screenshot` → save to `<basePath>/screenshots/ve0-<route>.png`
+3. Follow `playwright-session.skill.md → Session End` — close the session and
+   write `lastPlaywrightSession = "closed"` to state before proceeding to Step 2.
 
 ---
 
-## Step 1B: Static Exploration (Degraded)
+## Step 1B — Static Fallback
 
-When MCP is not available:
+If MCP exploration fails (browser unavailable, app unreachable after retry):
 
-1. Search source for `data-testid`, `aria-label`, `role`, `id` attributes in templates/JSX/HTML
-2. Search for route definitions
-3. Build best-effort selector map from source
-4. Mark all entries as `source: static` in the map
-5. Write `ui-map.local.md` with degradation note
+1. Read component files from the codebase to infer selectors statically
+2. Mark all selectors as `confidence: low` in the output
+3. Emit `VERIFICATION_DEGRADED` with reason: `mcp-exploration-failed`
 
 ---
 
-## Output Format: ui-map.local.md
+## Step 2 — Write `ui-map.local.md`
+
+Write to `<basePath>/ui-map.local.md`:
 
 ```markdown
-# UI Map — <spec name>
+# UI Map — <specName>
+<!-- generated: <ISO timestamp> -->
+<!-- source: mcp | static -->
+<!-- stale: false -->
 
-Generated: <ISO 8601 timestamp>
-Source: mcp | static
-App URL: <base URL>
-Auth used: <authMode value or "none">
-
-## Routes
-
-| Route | Description | Auth required |
-|---|---|---|
-| / | Home / landing | no |
-| /login | Auth entry point | no |
-| /dashboard | Main dashboard | yes |
+## Routes Explored
+- <route>: <page title or description>
 
 ## Selectors
 
-| Region | Element | Locator | Label / Text | Source |
-|---|---|---|---|---|
-| nav | Logo link | <generated locator> | Home | mcp |
-| nav | Login button | <generated locator> | Log in | mcp |
-| main | CTA button | <generated locator> | Get started | mcp |
-| login form | Email input | <generated locator> | Email | mcp |
-| login form | Submit | <generated locator> | Sign in | mcp |
-
-## Notes
-
-- <any anomalies found during exploration>
-- <elements with unstable or missing locators>
-- <routes that redirected to login — not explored>
+### <route>
+| Element | Role | Selector | Confidence |
+|---|---|---|---|
+| <label> | <button/input/link/...> | <selector string> | high/medium/low |
 ```
+
+Rules:
+- One section per explored route
+- `confidence: high` = verified via `browser_generate_locator` on live element
+- `confidence: medium` = inferred from snapshot but not directly generated
+- `confidence: low` = static analysis only (Step 1B fallback)
+- Mark `stale: true` if Step 1B was used
 
 ---
 
-## Rules
+## Done When
 
-- **Never hardcode selectors in VE tasks.** Reference `ui-map.local.md` entries by label.
-- **Check freshness before using the map.** A map older than 4 hours or outdated relative to `requirements.md` must be regenerated.
-- If a locator in the map becomes stale (element moved/renamed), re-run `ui-map-init` for that route.
-- Static-source entries are lower confidence — flag them in verification reports.
-- **Never explore protected routes without auth.** Complete auth flow before navigation if `authMode ≠ none`.
-- **Document redirect gaps in the map.** If a route redirected during exploration, record it in Notes — do not silently omit it.
-- `ui-map.local.md` is a local artifact (`.gitignore` it) — it describes the running instance, not the source of truth.
+- [ ] `ui-map.local.md` written to `<basePath>`
+- [ ] Screenshots saved to `<basePath>/screenshots/ve0-*.png`
+- [ ] Browser session closed (Session End followed)
+- [ ] `lastPlaywrightSession = "closed"` written to state
+- [ ] Signal emitted: `VERIFICATION_PASS` (full map) or `VERIFICATION_DEGRADED` (fallback/partial)

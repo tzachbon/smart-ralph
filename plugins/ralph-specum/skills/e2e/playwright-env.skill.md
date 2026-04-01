@@ -1,6 +1,6 @@
 ---
 name: playwright-env
-version: 5
+version: 6
 description: Load this skill before any MCP Playwright session. Resolves browser execution context — app URL, auth mode, credentials references, seed data, browser config, and safety limits. Emits ESCALATE if critical context is missing or app is unreachable.
 agents: [spec-executor, qa-engineer]
 ---
@@ -25,10 +25,11 @@ a value:
 2. `playwright-env.local.md` in `<basePath>` (gitignored, never committed)
 3. Non-secret values already written in `.ralph-state.json → playwrightEnv`
    ⚠️ **State fallback warning**: values from `.ralph-state.json` may be stale
-   from a previous session. If the state file was written more than ~2 hours ago
-   or by a different task invocation, treat these values as a low-confidence hint
-   and prefer sources 1–2. Never rely on state-file values for security-sensitive
-   settings (authMode, tokenBootstrapRule).
+   from a previous session. Check the `resolvedAt` timestamp written in the
+   state block — if it was written more than ~2 hours ago or by a different
+   task invocation, treat these values as a low-confidence hint and prefer
+   sources 1–2. Never rely on state-file values for security-sensitive settings
+   (authMode, tokenBootstrapRule).
 4. `requirements.md → Verification Contract → Entry points` (URL fallback only)
 5. `ESCALATE` — stop and ask the human
 
@@ -193,7 +194,8 @@ jq '.playwrightEnv = {
   "viewport": "<resolved>",
   "locale": "<resolved>",
   "timezone": "<resolved>",
-  "isolated": <true|false>
+  "isolated": <true|false>,
+  "resolvedAt": "<ISO 8601 timestamp — e.g. 2026-04-01T14:30:00Z>"
 }' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
 
@@ -274,7 +276,7 @@ ESCALATE
 - [ ] `appUrl` resolved
 - [ ] Connectivity check passed (APP_REACHABLE)
 - [ ] Seed command ran and succeeded — or skipped (not configured / production)
-- [ ] `playwrightEnv` written to `.ralph-state.json` (non-secret fields only)
+- [ ] `playwrightEnv` written to `.ralph-state.json` (non-secret fields only, including `resolvedAt`)
 - [ ] `authMode` resolved
 - [ ] `isolated` setting resolved and written to state
 - [ ] `tokenBootstrapRule` documented in `playwright-env.local.md` if `authMode=token`
