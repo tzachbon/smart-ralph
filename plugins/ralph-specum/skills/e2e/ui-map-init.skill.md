@@ -1,6 +1,6 @@
 ---
 name: ui-map-init
-version: 1
+version: 2
 description: Load this skill to build the ui-map.local.md selector map before running Playwright tests. Explores the running app, catalogs stable selectors, and writes the map file.
 agents: [spec-executor, qa-engineer]
 ---
@@ -21,9 +21,35 @@ Run once per spec, as task `VE0`, immediately before the first Playwright VE tas
 
 ---
 
+## Step -1: Resolve Environment Context (MANDATORY FIRST)
+
+Before anything else, load `playwright-env.skill.md` to resolve the browser
+execution context.
+
+```
+Load: playwright-env.skill.md
+```
+
+`playwright-env` will resolve `appUrl`, validate connectivity, run seedCommand
+if configured, and write `playwrightEnv` to `.ralph-state.json`.
+
+**Do not proceed to Step 0 if `playwright-env` emits `ESCALATE`.**
+
+This step is identical to Step -1 in `mcp-playwright.skill.md`. If both skills
+are loaded in the same VE session, `playwright-env` only needs to run once —
+check `.ralph-state.json → playwrightEnv` before re-running.
+
+```bash
+jq -r '.playwrightEnv.appUrl // empty' <basePath>/.ralph-state.json
+# If non-empty: playwrightEnv already resolved, skip Step -1
+# If empty: run playwright-env now
+```
+
+---
+
 ## Step 0: Dependency Check
 
-Before exploring, verify MCP Playwright is available (read from `.ralph-state.json`):
+After environment context is resolved, verify MCP Playwright is available (read from `.ralph-state.json`):
 
 ```bash
 jq -r '.mcpPlaywright' <basePath>/.ralph-state.json
@@ -37,7 +63,7 @@ jq -r '.mcpPlaywright' <basePath>/.ralph-state.json
 
 ## Step 1A: MCP Exploration (Preferred)
 
-1. Navigate to the app root URL
+1. Navigate to `appUrl` (from `.ralph-state.json → playwrightEnv.appUrl`)
 2. `browser_snapshot` → read full accessibility tree
 3. For each significant UI region (nav, main, forms, modals, CTAs):
    - `browser_generate_locator` for key interactive elements

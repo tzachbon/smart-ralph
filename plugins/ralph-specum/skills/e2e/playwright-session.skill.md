@@ -1,7 +1,7 @@
 ---
 name: playwright-session
-version: 2
-description: Load this skill before any Playwright browser interaction in a VE task. Covers session lifecycle, context isolation, and cleanup. Requires playwright-env to be loaded first.
+version: 3
+description: Load this skill before any Playwright browser interaction in a VE task. Covers session lifecycle, context isolation, auth flows, stable-state detection, and cleanup. Requires playwright-env to be loaded first.
 agents: [spec-executor, qa-engineer]
 ---
 
@@ -25,7 +25,7 @@ from `.ralph-state.json → playwrightEnv` — never from hardcoded values.
 4. Open a new browser context — never reuse a context from a previous session
 5. If `authMode` is not `none`, complete auth flow (see Auth Flow below) before navigating to the target URL
 6. Navigate to the target URL
-7. Wait for page to be in a stable state (no pending network requests)
+7. Wait for stable state — see Stable State Detection below
 
 ### During
 
@@ -48,6 +48,37 @@ A leaked browser process will consume memory and interfere with subsequent VE ta
 
 ---
 
+## Stable State Detection
+
+After every `browser_navigate` or significant action, confirm the page is stable
+before proceeding. Do NOT assume stability — always verify.
+
+**Step 1**: call `browser_snapshot` and inspect the accessibility tree.
+
+**Step 2**: check for loading indicators:
+- Any element with `aria-busy="true"`
+- Any element whose visible text matches: `loading`, `cargando`, `spinner`, `please wait`
+- Any skeleton element (role=`presentation` with no meaningful children)
+
+**Step 3**:
+```
+No loading indicators found
+  └── Page is stable — proceed
+
+Loading indicators found
+  └── Wait 1000ms
+  └── Call browser_snapshot again
+  └── If still loading → emit VERIFICATION_FAIL
+        actual: page not stable after 1000ms retry
+        diagnosis: slow render, failed data fetch, or infinite loading state
+  └── If stable → proceed
+```
+
+**Rule**: one retry maximum. If the page is still loading after the retry, treat
+it as a failure — do not keep waiting silently.
+
+---
+
 ## Auth Flow
 
 Read `authMode` from `.ralph-state.json → playwrightEnv`. Then follow the
@@ -62,18 +93,52 @@ No auth step needed. Navigate directly to `appUrl`.
 2. `browser_snapshot` → locate username and password fields using `browser_generate_locator`
 3. Fill credentials from env vars (`RALPH_LOGIN_USER`, `RALPH_LOGIN_PASS`)
 4. Submit the form
-5. `browser_snapshot` → confirm authenticated state (absence of login form, presence of authenticated UI)
+5. `browser_snapshot` + stable state check → confirm authenticated state (absence of login form, presence of authenticated UI)
 6. If auth fails → emit `VERIFICATION_FAIL` with diagnosis, do not proceed
 
 ### `token`
-1. Navigate to `appUrl`
-2. Inject token from env var (`RALPH_AUTH_TOKEN`) per the bootstrap rule documented in `playwright-env.local.md`
-3. `browser_snapshot` → confirm authenticated state
+
+Token injection requires knowing **how** the app consumes the token. This must
+be documented in `playwright-env.local.md` as `tokenBootstrapRule`. Three
+standard patterns:
+
+**Pattern A — localStorage** (most common for JWT / SPA apps):
+```javascript
+// Inject before navigating to the protected route
+await page.evaluate((token) => {
+  localStorage.setItem('auth_token', token);   // key name varies — check app source
+}, process.env.RALPH_AUTH_TOKEN);
+await page.goto(appUrl);
+```
+Then `browser_snapshot` → confirm authenticated state.
+
+**Pattern B — Authorization header** (for apps that read the header on every request):
+```javascript
+// Set default headers on the browser context before navigating
+await context.setExtraHTTPHeaders({
+  Authorization: `Bearer ${process.env.RALPH_AUTH_TOKEN}`
+});
+await page.goto(appUrl);
+```
+Then `browser_snapshot` → confirm authenticated state.
+
+**Pattern C — Cookie fallback** (when the token is actually a session cookie value):
+Use `cookie` authMode instead — see that section below.
+
+**Rule**: if `playwright-env.local.md` does not specify `tokenBootstrapRule`,
+emit `ESCALATE`:
+```
+ESCALATE
+  reason: token auth mode requires tokenBootstrapRule
+  resolution: add tokenBootstrapRule to playwright-env.local.md
+              options: localStorage | authorization-header
+              key name (for localStorage): check app source for token storage key
+```
 
 ### `cookie`
 1. Before navigating, inject cookie from env vars (`RALPH_SESSION_COOKIE_NAME`, `RALPH_SESSION_COOKIE_VALUE`) into the browser context
 2. Navigate to `appUrl`
-3. `browser_snapshot` → confirm authenticated state
+3. `browser_snapshot` + stable state check → confirm authenticated state
 
 ### `basic`
 1. Navigate to `appUrl` with Basic Auth credentials from env vars embedded in the request
@@ -82,7 +147,7 @@ No auth step needed. Navigate directly to `appUrl`.
 ### `storage-state`
 1. Load browser state from `RALPH_STORAGE_STATE_PATH` when creating the context
 2. Navigate to `appUrl`
-3. `browser_snapshot` → confirm authenticated state (session may have expired — treat expired session as `VERIFICATION_FAIL`)
+3. `browser_snapshot` + stable state check → confirm authenticated state (session may have expired — treat expired session as `VERIFICATION_FAIL`)
 
 ### `oauth` / `sso`
 Agent cannot complete external IdP flows or MFA autonomously.
@@ -110,7 +175,7 @@ ESCALATE
 
 Reuse the authenticated session within a spec rather than re-authenticating per sub-step:
 1. Complete auth flow once at session start
-2. `browser_snapshot` to confirm auth state before proceeding to first VE task
+2. `browser_snapshot` + stable state check to confirm auth state before proceeding to first VE task
 3. If auth expires mid-flow, treat as `VERIFICATION_FAIL` (unexpected state) and run diagnostic
 4. Do NOT re-authenticate silently — surface the expiry in the failure report
 

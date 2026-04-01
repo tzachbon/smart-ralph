@@ -1,6 +1,6 @@
 ---
 name: playwright-env
-version: 2
+version: 3
 description: Load this skill before any MCP Playwright session. Resolves browser execution context — app URL, auth mode, credentials references, seed data, browser config, and safety limits. Emits ESCALATE if critical context is missing or app is unreachable.
 agents: [spec-executor, qa-engineer]
 ---
@@ -26,24 +26,6 @@ a value:
 3. Non-secret values already written in `.ralph-state.json → playwrightEnv`
 4. `requirements.md → Verification Contract → Entry points` (URL fallback only)
 5. `ESCALATE` — stop and ask the human
-
-Write resolved non-secret values to `.ralph-state.json`:
-
-```bash
-jq '.playwrightEnv = {
-  "appUrl": "<resolved>",
-  "appEnv": "<resolved>",
-  "authMode": "<resolved>",
-  "allowWrite": <true|false>,
-  "browser": "<resolved>",
-  "headless": <true|false>,
-  "viewport": "<resolved>",
-  "locale": "<resolved>",
-  "timezone": "<resolved>"
-}' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
-```
-
-**Never write passwords, tokens, cookies, or any secret value to `.ralph-state.json`.**
 
 ---
 
@@ -75,6 +57,7 @@ jq '.playwrightEnv = {
 | Session cookie value | `RALPH_SESSION_COOKIE_VALUE` | Used by `cookie` mode |
 | Storage state path | `RALPH_STORAGE_STATE_PATH` | Used by `storage-state` mode. Must be a readable local file |
 | Test user role | `RALPH_USER_ROLE` | Optional. `admin`, `editor`, `viewer`, etc. Documents intent |
+| Token bootstrap rule | `tokenBootstrapRule` | Required for `token` mode. `localStorage` or `authorization-header`. Set in `playwright-env.local.md`. |
 
 ### App state / seed
 
@@ -99,13 +82,13 @@ Optional: `RALPH_LOGIN_URL` (separate login URL)
 
 Resolution check:
 ```bash
-# Both must be non-empty
 [ -n "$RALPH_LOGIN_USER" ] && [ -n "$RALPH_LOGIN_PASS" ] || emit ESCALATE
 ```
 
 ### `token`
-Agent injects an auth token (header or localStorage) to bootstrap authenticated state.
-Required: `appUrl`, `RALPH_AUTH_TOKEN` value, documented bootstrap rule in `playwright-env.local.md`
+Agent injects an auth token to bootstrap authenticated state.
+Required: `appUrl`, `RALPH_AUTH_TOKEN` value, `tokenBootstrapRule` in `playwright-env.local.md`
+See `playwright-session.skill.md → Auth Flow → token` for the 3 injection patterns.
 
 ### `cookie`
 Agent injects a pre-issued session cookie directly into the browser context.
@@ -125,18 +108,93 @@ Resolution check:
 ```
 
 ### `oauth` / `sso`
-External IdP flows that may involve MFA or redirect chains the agent cannot
-complete autonomously. Agent must not guess around MFA or external redirects.
+External IdP flows the agent cannot complete autonomously.
+Resolution: use `storage-state` with a pre-authenticated session, or emit `ESCALATE`.
 
-Resolution: use `storage-state` with a pre-authenticated session, or emit
-`ESCALATE` so the human prepares the session manually.
+---
+
+## Connectivity Check (MANDATORY — step 1 after appUrl resolved)
+
+Before running the seed command or writing state, verify the app is reachable:
+
+```bash
+curl -sf --max-time 5 "$RALPH_APP_URL" -o /dev/null \
+  && echo APP_REACHABLE \
+  || echo APP_NOT_REACHABLE
+```
+
+```
+APP_REACHABLE     → proceed to Seed Command step
+APP_NOT_REACHABLE → emit ESCALATE and stop:
+
+ESCALATE
+  reason: app-not-reachable
+  url: <resolved appUrl>
+  appEnv: <resolved appEnv>
+  diagnosis:
+    - local: Is the dev server running? (npm run dev / docker compose up)
+    - staging: Is the deployment healthy? Check CI/CD pipeline.
+    - production: Is the service up? Check status page.
+  resolution: Start the app, then re-run the VE task.
+```
+
+---
+
+## Seed Command (MANDATORY order — step 2, after connectivity check)
+
+If `RALPH_SEED_COMMAND` or `seedCommand` in `playwright-env.local.md` is set:
+
+```
+appEnv = local OR staging  → run seed command
+appEnv = production        → SKIP — never seed production
+```
+
+```bash
+# Run seed and capture exit code
+$RALPH_SEED_COMMAND && echo SEED_OK || echo SEED_FAILED
+```
+
+```
+SEED_OK     → proceed to write playwrightEnv to state
+SEED_FAILED → emit ESCALATE and stop:
+
+ESCALATE
+  reason: seed-command-failed
+  command: <RALPH_SEED_COMMAND value>
+  resolution: Fix the seed command, then re-run the VE task.
+```
+
+**Why this order matters**: the seed command prepares the app state (database
+records, fixtures, feature flags). Running it after the browser is open, or
+skipping it entirely, produces incorrect test state.
+
+---
+
+## Write State
+
+Only after connectivity check passes and seed command succeeds (if set):
+
+```bash
+jq '.playwrightEnv = {
+  "appUrl": "<resolved>",
+  "appEnv": "<resolved>",
+  "authMode": "<resolved>",
+  "allowWrite": <true|false>,
+  "browser": "<resolved>",
+  "headless": <true|false>,
+  "viewport": "<resolved>",
+  "locale": "<resolved>",
+  "timezone": "<resolved>"
+}' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
+```
+
+**Never write passwords, tokens, cookies, or any secret value to `.ralph-state.json`.**
 
 ---
 
 ## `playwright-env.local.md` Format
 
 Create in `<basePath>/playwright-env.local.md` and add to `.gitignore`.
-This file holds non-secret defaults and references to secret env vars.
 **Never put actual passwords, tokens, or cookies in this file.**
 
 ```markdown
@@ -148,9 +206,12 @@ authMode: form
 loginUrl: /login
 userRole: admin
 
-# References to env vars that hold the actual secrets:
 loginUserVar: RALPH_LOGIN_USER
 loginPassVar: RALPH_LOGIN_PASS
+
+# For token mode — required if authMode is token:
+# tokenBootstrapRule: localStorage        # or: authorization-header
+# tokenLocalStorageKey: auth_token        # key used by the app in localStorage
 
 allowWrite: true
 browser: chromium
@@ -159,66 +220,24 @@ viewport: desktop
 locale: es-ES
 timezone: Europe/Madrid
 
-# Optional seed command (runs before verification):
-seedCommand: npm run seed:e2e
-
-# Optional tenant / feature flags:
+# seedCommand: npm run seed:e2e
 # tenant: acme-corp
 # featureFlags: new-dashboard,beta-reports
 ```
 
 ---
 
-## Connectivity Check (MANDATORY after appUrl is resolved)
-
-Before writing `playwrightEnv` to state and before launching any browser tool,
-verify the app is actually reachable:
-
-```bash
-curl -sf --max-time 5 "$RALPH_APP_URL" -o /dev/null \
-  && echo APP_REACHABLE \
-  || echo APP_NOT_REACHABLE
-```
-
-### Decision tree
-
-```
-APP_REACHABLE
-  └── Proceed: write playwrightEnv to .ralph-state.json, continue to playwright-session
-
-APP_NOT_REACHABLE
-  └── Emit ESCALATE and stop:
-
-ESCALATE
-  reason: app-not-reachable
-  url: <resolved appUrl>
-  appEnv: <resolved appEnv>
-  curl_exit: <exit code>
-  diagnosis:
-    - local: Is the dev server running? (npm run dev / docker compose up)
-    - staging: Is the deployment healthy? Check CI/CD pipeline.
-    - production: Is the service up? Check status page.
-  resolution: Start the app, then re-run the VE task.
-```
-
-**Do not proceed to `playwright-session` if the app is not reachable.**
-A browser timeout after 30s is a much worse failure signal than this explicit check.
-
----
-
 ## Safety Rules
 
-- **`allowWrite` defaults to `false` for `staging` and `production`** unless explicitly set to `true` in env or local file.
-- **`production` environment**: require explicit human confirmation before any action that could mutate data, even if `allowWrite=true`.
+- **`allowWrite` defaults to `false` for `staging` and `production`** unless explicitly overridden.
+- **`production` environment**: require explicit human confirmation before any mutating action, even if `allowWrite=true`.
 - **Never log or persist secrets** in progress files, state files, screenshots, commit messages, or VERIFICATION signals.
-- **Seed command** runs only in `local` or `staging` environments. Never in `production`.
-- **Feature flags** are informational — the agent notes them in the verification report but does not modify app config to enable them.
+- **Seed command** runs only in `local` or `staging`. Never in `production`.
+- **Feature flags** are informational — agent notes them but does not modify app config.
 
 ---
 
 ## Missing Context — ESCALATE
-
-If any critical input cannot be resolved, emit and stop:
 
 ```
 ESCALATE
@@ -234,16 +253,16 @@ ESCALATE
     3. For oauth/sso: prepare a storage-state file with RALPH_STORAGE_STATE_PATH
 ```
 
-Stop before launching any browser tool when critical context is missing.
-
 ---
 
 ## Done When
 
 - [ ] `appUrl` resolved
-- [ ] Connectivity check passed (`APP_REACHABLE`) — see Connectivity Check section above
+- [ ] Connectivity check passed (APP_REACHABLE)
+- [ ] Seed command ran and succeeded — or skipped (not configured / production)
 - [ ] `playwrightEnv` written to `.ralph-state.json` (non-secret fields only)
 - [ ] `authMode` resolved
+- [ ] `tokenBootstrapRule` documented in `playwright-env.local.md` if `authMode=token`
 - [ ] Secret env vars referenced, not stored
 - [ ] `allowWrite` posture confirmed
 - [ ] Missing critical context results in `ESCALATE`, not improvisation

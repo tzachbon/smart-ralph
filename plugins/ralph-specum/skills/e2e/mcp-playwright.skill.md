@@ -1,6 +1,6 @@
 ---
 name: mcp-playwright
-version: 2
+version: 3
 description: Load this skill when you need to verify UI features using MCP Playwright browser tools. Covers browser verification protocol, tool selection, dependency check, degradation strategy, and signal emission.
 agents: [spec-executor, qa-engineer]
 ---
@@ -23,10 +23,14 @@ Load: playwright-env.skill.md
 `playwright-env` will:
 - Resolve `appUrl`, `authMode`, `allowWrite`, browser config, locale, timezone
 - Validate that secret env vars are exported and readable
+- Run seed command if configured (local/staging only)
+- Check app connectivity before writing state
 - Write non-secret resolved values to `.ralph-state.json → playwrightEnv`
 - Emit `ESCALATE` and stop if critical context is missing
 
 **Do not proceed to Step 0 if `playwright-env` emits `ESCALATE`.**
+
+If `playwright-env` was already run in this session (`.ralph-state.json → playwrightEnv.appUrl` is non-empty), skip re-running it.
 
 ---
 
@@ -47,6 +51,14 @@ jq '.mcpPlaywright = "available"' <basePath>/.ralph-state.json > /tmp/state.json
 # If MISSING:
 jq '.mcpPlaywright = "missing"' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
+
+> ⚠️ **Parallel execution note**: these `jq` writes use a read-modify-write pattern
+> via `/tmp/state.json`. If two VE tasks run in parallel against the same
+> `basePath`, writes can interleave and corrupt `.ralph-state.json`. To avoid
+> this, either (a) run VE tasks sequentially per basePath, or (b) use a
+> basePath-scoped lock file (`.tasks.lock`, already in `.gitignore`) before
+> each `jq` write. Parallel VE execution is not the default — flag this if
+> you enable it.
 
 ### Decision tree after check
 
@@ -88,18 +100,16 @@ Never pick tools arbitrarily. Use this table:
 For every user story or acceptance criterion with a UI entry point:
 
 1. **Navigate** to the relevant URL via `browser_navigate`
-2. **Snapshot** the page: `browser_snapshot` → read the accessibility tree
-3. **Generate locator** for each element you need to interact with: `browser_generate_locator`
-4. **Perform action** (click, fill, submit) using the generated locator
-5. **Snapshot again** → verify the DOM changed as expected
-6. **Check network** if the action should trigger a request: `browser_network_requests`
-7. **Check console** for errors: `browser_console_messages`
-8. **Screenshot** as evidence: `browser_take_screenshot` — attach to verification report
-9. **Emit signal**: `VERIFICATION_PASS` or `VERIFICATION_FAIL` (see Signal Format below)
-
-**Never skip step 3** (generate locator). Hand-written selectors are the #1 source of flaky verification. Always generate from the live page.
-
-**Never skip steps 6+7** on failure. A failed assertion without console + network context is an incomplete failure report.
+2. **Stable state check** — see `playwright-session.skill.md → Stable State Detection`
+3. **Snapshot** the page: `browser_snapshot` → read the accessibility tree
+4. **Generate locator** for each element you need to interact with: `browser_generate_locator`
+5. **Perform action** (click, fill, submit) using the generated locator
+6. **Stable state check** again after action
+7. **Snapshot again** → verify the DOM changed as expected
+8. **Check network** if the action should trigger a request: `browser_network_requests`
+9. **Check console** for errors: `browser_console_messages`
+10. **Screenshot** as evidence: `browser_take_screenshot` — attach to verification report
+11. **Emit signal**: `VERIFICATION_PASS` or `VERIFICATION_FAIL` (see Signal Format below)
 
 ---
 
@@ -108,7 +118,7 @@ For every user story or acceptance criterion with a UI entry point:
 When the spec involves a multi-step user flow (e.g., login → dashboard → action):
 
 1. Execute each step in sequence — do NOT batch
-2. After each step: `browser_snapshot` to confirm state before proceeding
+2. After each step: stable state check + `browser_snapshot` to confirm state before proceeding
 3. If a step produces an unexpected state, **stop and diagnose** (see Diagnostic Protocol below) before continuing
 4. Emit one signal per logical flow, not per step
 
@@ -131,7 +141,7 @@ When a snapshot reveals unexpected state:
    - Screenshot path
 ```
 
-Do NOT retry the same action more than once without re-running the diagnostic. Retrying without diagnosis hides the real failure.
+Do NOT retry the same action more than once without re-running the diagnostic.
 
 ---
 
@@ -144,18 +154,11 @@ Activate devtools tracing when:
 
 To activate: launch MCP server with `--caps=devtools` flag.
 
-With devtools active:
-- `browser_network_requests` includes timing data
-- `browser_console_messages` includes timestamps
-- Events are traceable in sequence
-
 Always attach trace summary to `VERIFICATION_FAIL` reports when devtools was active.
 
 ---
 
 ### Signal Format
-
-Every verification ends with exactly one signal. Emit it as a structured block in your output:
 
 ```
 VERIFICATION_PASS
@@ -180,22 +183,18 @@ VERIFICATION_FAIL
   diagnosis: <root cause hypothesis>
 ```
 
-**Never emit a PASS without evidence.** Never emit a FAIL without diagnosis.
+**Never emit a PASS without evidence. Never emit a FAIL without diagnosis.**
 
 ---
 
 ## Protocol B: Degraded Mode (MCP Missing)
 
-When `@playwright/mcp` is not available, degrade gracefully. Do NOT silently skip UI verification.
-
-### Degraded verification steps
+When `@playwright/mcp` is not available, degrade gracefully.
 
 1. **Static analysis**: grep source for expected UI elements, event handlers, route definitions
 2. **Build check**: verify the project builds without errors
-3. **curl / WebFetch**: for web apps, hit the URL and check HTTP response and basic HTML structure
-4. **Source inspection**: verify correct component is rendered by reading template/JSX output
-
-### What to emit
+3. **curl / WebFetch**: hit the URL and check HTTP response and basic HTML structure
+4. **Source inspection**: verify correct component is rendered
 
 ```
 VERIFICATION_DEGRADED
@@ -210,19 +209,7 @@ VERIFICATION_DEGRADED
   install_hint: npx @playwright/mcp@latest --version (requires Node 18+)
 ```
 
-### When to ESCALATE
-
-If the spec has UI entry points **and** MCP is missing, emit ESCALATE after VERIFICATION_DEGRADED:
-
-```
-ESCALATE
-  reason: UI verification incomplete — MCP Playwright not available
-  ac_affected: [list of AC items that require browser verification]
-  action_required: Install @playwright/mcp and re-run VE tasks
-  install: npx @playwright/mcp@latest --version
-```
-
-The stop-watcher will capture ESCALATE and notify the human.
+If spec has UI entry points, emit ESCALATE after VERIFICATION_DEGRADED.
 
 ---
 
@@ -235,17 +222,18 @@ The stop-watcher will capture ESCALATE and notify the human.
 | `--caps=pdf` | PDF generation | PDF export specs only |
 | Default (no flag) | Navigation, snapshot, screenshot, form interaction | Standard flows |
 
-Always use `--caps=testing` as baseline for verification tasks. Add `--caps=devtools` only when diagnosing.
+Always use `--caps=testing` as baseline. Add `--caps=devtools` only when diagnosing.
 
 ---
 
 ## Anti-Patterns (Never Do These)
 
-- **Never use `browser_take_screenshot` to make assertions** — it produces an image, not a queryable structure. Use `browser_snapshot` for all logic.
-- **Never hand-write CSS selectors or XPath** — always use `browser_generate_locator` from the live page.
-- **Never retry a failed action without re-running diagnostic** — retrying hides the root cause.
+- **Never use `browser_take_screenshot` to make assertions** — use `browser_snapshot`.
+- **Never hand-write CSS selectors or XPath** — always use `browser_generate_locator`.
+- **Never retry a failed action without re-running diagnostic**.
 - **Never emit PASS without screenshot evidence**.
 - **Never emit FAIL without console + network inspection**.
 - **Never continue a multi-step flow after an unexpected state** — stop and diagnose.
 - **Never install `@playwright/mcp` automatically** — always escalate to human if missing.
-- **Never start a browser session without first completing Step -1** — environment context must be resolved before any browser tool call.
+- **Never start a browser session without first completing Step -1**.
+- **Never skip the stable state check after navigation or action**.
