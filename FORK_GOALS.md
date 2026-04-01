@@ -158,27 +158,46 @@ Previously, `**Skills**` had to be written manually in each `tasks.md`. Now
 `task-planner` injects the prerequisite automatically on every spec that uses
 Playwright. Zero human memory required.
 
-### Phase 1 — Verification Contract in specs
-- [ ] Add `## Verification Contract` section to `templates/requirements.md`
-- [ ] Update `product-manager.md` to populate the contract from user stories
+### Phase 1 — Verification Contract in specs ✅
+- [x] `templates/requirements.md` — added `## Verification Contract` section
+  with all six fields: Entry points, Observable signals, Hard invariants,
+  Seed data, Dependency map, Escalate if.
+- [x] `agents/product-manager.md` — added guidelines to populate the
+  Verification Contract from user stories, plus quality checklist items.
 - Additive only. Zero risk to existing flow.
 
-### Phase 2 — Exploratory qa-engineer
-- [ ] Add `## Story Verification` mode to `agents/qa-engineer.md`
-- [ ] Agent reads user story + contract, derives checks autonomously
-- [ ] Emits structured findings: `PASS`, `FAIL`, `FINDING` (unexpected behavior worth noting)
-- [ ] No Gherkin. No scripted steps.
+### Phase 2 — Exploratory qa-engineer ✅
+- [x] `agents/qa-engineer.md` — added `## Story Verification` mode activated
+  by `[STORY-VERIFY]` tag.
+  - Reads user story + Verification Contract, derives checks autonomously.
+  - Emits structured findings: `VERIFICATION_PASS`, `VERIFICATION_FAIL`,
+    `FINDING` (unexpected behavior worth noting).
+  - No Gherkin. No scripted steps.
 
-### Phase 3 — Repair loop in stop-watcher
-- [ ] New `repair` phase in `.ralph-state.json` schema
-- [ ] `stop-watcher.sh` detects `VERIFICATION_FAIL`, classifies, backtracks
-- [ ] Max 2 repair iterations per story, then escalate
-- [ ] Surgical change to stop-watcher only
+### Phase 3 — Repair loop in stop-watcher ✅
+- [x] `plugins/ralph-specum/hooks/scripts/stop-watcher.sh` — new repair loop
+  block after transcript detection.
+  - Detects `VERIFICATION_FAIL` in transcript.
+  - Reads `repairIteration`, `failedStory`, `originTaskIndex` from
+    `.ralph-state.json`.
+  - Classifies failure type (impl_bug / env_issue / spec_ambiguity / flaky)
+    and issues targeted repair prompt.
+  - Max 2 repair iterations per story; escalates to human on exhaustion.
+  - Respects `stop_hook_active` guard to prevent infinite loops.
+  - New `.ralph-state.json` fields: `repairIteration`, `failedStory`,
+    `originTaskIndex`.
 
-### Phase 4 — Regression sweep
-- [ ] Post-spec completion: read dependency maps, run targeted verification
-- [ ] Three-tier model: local → invariants → full (nightly)
-- [ ] ~20 lines added to end of stop-watcher loop
+### Phase 4 — Regression sweep ✅
+- [x] `plugins/ralph-specum/hooks/scripts/stop-watcher.sh` — regression sweep
+  block inside `ALL_TASKS_COMPLETE` detection.
+  - Reads `**Dependency map**` from the completed spec's `requirements.md`.
+  - Resolves each dep to its spec path under `specs/`.
+  - Issues targeted `[STORY-VERIFY]` sweep prompt (verification only, no
+    re-implementation).
+  - Expects `REGRESSION_SWEEP_COMPLETE` signal when all sweeps pass.
+  - If any sweep emits `VERIFICATION_FAIL`, Phase 3 repair loop activates.
+  - Respects `stop_hook_active` guard.
+  - Local tier only (dependency map). Invariants and full-suite are nightly.
 
 ### Phase 5 — Browser tool (experimental branch)
 - [ ] MCP Playwright integration as optional qa-engineer tool
@@ -209,5 +228,5 @@ bump on every plugin change, no features beyond what's asked.
 
 ## Status
 
-**Current phase**: 0.2 complete — task-planner auto-injects `ui-map-init` for all Playwright specs.
-**Next step**: Phase 1 — `templates/requirements.md` Verification Contract section.
+**Current phase**: 4 complete — repair loop + regression sweep active in stop-watcher.
+**Next step**: Phase 5 — MCP Playwright integration (experimental branch `feat/browser-verification`).
