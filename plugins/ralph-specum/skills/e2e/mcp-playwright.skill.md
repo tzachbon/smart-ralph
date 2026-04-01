@@ -1,6 +1,6 @@
 ---
 name: mcp-playwright
-version: 5
+version: 6
 description: Load this skill when you need to verify UI features using MCP Playwright browser tools. Covers browser verification protocol, tool selection, dependency check, degradation strategy, cache/lock recovery, and signal emission.
 agents: [spec-executor, qa-engineer]
 ---
@@ -123,28 +123,65 @@ MCP_PLAYWRIGHT_MISSING
 
 ## Protocol A: Full MCP Verification
 
-### Isolation Mode
+### MCP Server Configuration (human responsibility)
 
-Read `playwrightEnv.isolated` from `.ralph-state.json`. This controls whether the MCP server
-uses an ephemeral profile or the persistent `mcp-chrome` user-data-dir.
+> ⚠️ **The agent never launches the MCP server.** The server is a long-running
+> process configured and started by the human in their MCP client
+> (`claude_desktop_config.json` or equivalent). The agent only calls
+> `browser_*` tools that the already-running server exposes.
+>
+> **Required server flags — must be set in the MCP server definition:**
+>
+> | Flag | Purpose | Required? |
+> |---|---|---|
+> | `--isolated` | Ephemeral browser profile, no HTTP disk cache between sessions | **Yes (default)** |
+> | `--caps=testing` | Enables `browser_verify_*` assertion tools | **Yes** |
+> | `--caps=devtools` | Devtools tracing for intermittent failure analysis | Optional |
+>
+> Example `claude_desktop_config.json` entry:
+> ```json
+> {
+>   "mcpServers": {
+>     "playwright": {
+>       "command": "npx",
+>       "args": ["@playwright/mcp", "--isolated", "--caps=testing"]
+>     }
+>   }
+> }
+> ```
+>
+> If `--isolated` is not set, the persistent `mcp-chrome` profile accumulates
+> HTTP disk cache across sessions, which can cause stale-cache test
+> contamination. If `--caps=testing` is not set, `browser_verify_*` tools
+> will not be available and assertions will fail silently.
+>
+> If either flag appears to be missing (e.g., `browser_verify_*` tools are
+> unavailable), emit `ESCALATE`:
+> ```
+> ESCALATE
+>   reason: mcp-server-misconfigured
+>   missing_flags: [--isolated | --caps=testing]
+>   resolution: add the missing flags to the MCP server definition in
+>               claude_desktop_config.json (or equivalent), then restart
+>               the MCP server
+> ```
+
+### Isolation Mode (informational — set by human, not by agent)
+
+Read `playwrightEnv.isolated` from `.ralph-state.json` to understand the
+behaviour of the running server:
 
 ```
-isolated = true  (default)
-  → Launch MCP server with --isolated flag:
-    npx @playwright/mcp --isolated --caps=testing
-
-  Effect: each session uses a fresh in-memory browser profile.
+isolated = true  (default, recommended)
+  Server was started with --isolated.
+  Each session uses a fresh in-memory browser profile.
   No HTTP disk cache, cookies, or localStorage persists between sessions.
-  This prevents stale-cache contamination between VE tasks.
   Lock recovery (Step 0b) is NOT needed in this mode.
 
 isolated = false
-  → Launch MCP server WITHOUT --isolated:
-    npx @playwright/mcp --caps=testing
-
-  Effect: persistent profile at ~/.cache/ms-playwright/mcp-chrome.
+  Server was started WITHOUT --isolated.
+  Persistent profile at ~/.cache/ms-playwright/mcp-chrome.
   HTTP disk cache and storage persist between sessions.
-  Use only when auth state must survive across separate VE tasks.
   Lock recovery (Step 0b) MUST run before every session in this mode.
 ```
 
@@ -152,10 +189,10 @@ isolated = false
 > the same HTTP disk cache at the OS/browser level. `newContext()` isolates
 > cookies and localStorage, but NOT the HTTP cache. A response cached in one
 > context can be served to another context in the same browser process, causing
-> assertions to pass against stale data. This is a known Playwright limitation
-> (no `clearHttpCache()` API). In `isolated=false` mode, mitigate by adding
-> `page.route('**/*', r => r.continue({ headers: { 'Cache-Control': 'no-cache' } }))`
-> on pages with aggressive caching, or by restarting the MCP server between tasks.
+> assertions to pass against stale data. In `isolated=false` mode, mitigate by
+> adding `page.route('**/*', r => r.continue({ headers: { 'Cache-Control': 'no-cache' } }))`
+> on pages with aggressive caching, or by asking the human to restart the MCP server
+> between tasks.
 
 ---
 
@@ -234,7 +271,7 @@ Activate devtools tracing when:
 - The failure is intermittent
 - You suspect a timing or render issue
 
-To activate: launch MCP server with `--caps=devtools` flag.
+To activate: the MCP server must have been started with `--caps=devtools` (human config).
 
 Always attach trace summary to `VERIFICATION_FAIL` reports when devtools was active.
 
@@ -302,15 +339,14 @@ If spec has UI entry points, emit ESCALATE after VERIFICATION_DEGRADED.
 
 ## Capability Flags Reference
 
+These flags are set in the **MCP server definition** (human config), not by the agent at runtime.
+
 | Flag | What it enables | When to use |
 |---|---|---|
-| `--isolated` | Ephemeral browser profile, no disk cache between sessions | **Default** — use for all VE tasks unless cross-step auth persistence is required |
-| `--caps=testing` | `browser_verify_*` assertion tools | Any spec with assertions |
+| `--isolated` | Ephemeral browser profile, no disk cache between sessions | **Default — always set unless cross-step auth persistence is required** |
+| `--caps=testing` | `browser_verify_*` assertion tools | **Always set** |
 | `--caps=devtools` | Devtools tracing, detailed timing | Intermittent failures, race conditions |
 | `--caps=pdf` | PDF generation | PDF export specs only |
-| Default (no flag) | Navigation, snapshot, screenshot, form interaction | Standard flows |
-
-Baseline launch command: `npx @playwright/mcp --isolated --caps=testing`
 
 ---
 
@@ -322,7 +358,7 @@ Baseline launch command: `npx @playwright/mcp --isolated --caps=testing`
 - **Never emit PASS without evidence** (screenshot or explicit snapshot-only justification).
 - **Never emit FAIL without console + network inspection**.
 - **Never continue a multi-step flow after an unexpected state** — stop and diagnose.
-- **Never install `@playwright/mcp` automatically** — always escalate to human if missing.
+- **Never attempt to launch or restart the MCP server** — it is managed by the human. If the server is missing or misconfigured, emit `ESCALATE`.
 - **Never start a browser session without first completing Step -1**.
 - **Never skip the stable state check after navigation or action**.
 - **Never skip lock recovery (Step 0b) when isolated=false** — a stale lock from a crashed session blocks the next one.
