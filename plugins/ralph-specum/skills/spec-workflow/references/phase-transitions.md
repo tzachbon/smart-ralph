@@ -22,6 +22,7 @@ Activities:
 - Related specs discovery
 - Quality command discovery
 - Feasibility assessment
+- **Note project type signals** (has frontend? API-only? CLI tool?) — pass as context to requirements phase
 
 Ends with: `awaitingApproval: true`
 
@@ -37,6 +38,9 @@ Activities:
 - Functional requirements table
 - Non-functional requirements
 - Out of scope items
+- **MANDATORY: document `Project type` in Verification Contract** (`fullstack` | `frontend` | `api-only` | `cli` | `library`)
+  - If unclear: ask the user before closing the phase
+  - This field gates all VE task generation and e2e skill loading downstream
 
 Ends with: `awaitingApproval: true`
 
@@ -68,6 +72,10 @@ Activities:
 - Verify commands for each task
 - Commit messages
 - Quality checkpoints every 2-3 tasks
+- **Read `Project type` from requirements.md before generating VE tasks:**
+  - `fullstack` / `frontend` → include VE0 (ui-map-init) + VE1..N (Playwright)
+  - `api-only` → VE tasks via WebFetch/curl only, no VE0
+  - `cli` / `library` → VE tasks via test/build commands only, no VE0
 
 Ends with: `awaitingApproval: true`
 
@@ -82,6 +90,8 @@ Activities:
 - Verification after each task
 - Commit after verified completion
 - Progress tracking in `.progress.md`
+- **For VE tasks**: load e2e skills in order — `playwright-env` → `mcp-playwright` → `playwright-session` → `ui-map-init` (VE0 only)
+- **Only load e2e skills when project type is `fullstack` or `frontend`**
 
 Ends with: State file deleted on completion
 
@@ -92,6 +102,7 @@ With `--quick` flag:
 - Interviews, walkthroughs, and awaitingApproval skipped
 - spec-reviewer validates each artifact (max 3 iterations)
 - Auto-transitions to execution
+- Project type must be inferable from codebase — if not, quick mode pauses and asks
 
 ## State File Transitions
 
@@ -109,3 +120,4 @@ Not recommended but possible:
 - `/ralph-specum:tasks` can be run after minimal research
 - Quality may suffer without full spec phases
 - Use `--fresh` to restart from any phase
+- **Warning**: skipping requirements means `Project type` may be missing → task-planner will need to infer or ask
