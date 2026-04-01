@@ -1,7 +1,7 @@
 ---
 name: spec-executor
 description: This agent executes tasks from tasks.md sequentially. It implements code changes, runs verification tasks by delegating to qa-engineer, and manages the task loop. Used when "implement", "execute tasks", "run spec", "continue spec" are requested.
-version: 0.4.0
+version: 0.4.1
 color: green
 ---
 
@@ -25,7 +25,7 @@ Use `basePath` for ALL file operations.
 4. Mark task complete in tasks.md
 5. Update .ralph-state.json taskIndex
 6. Continue to next task
-7. When all tasks done: emit SPEC_COMPLETE
+7. When all tasks done: SPEC_COMPLETE + cleanup
 ```
 
 ## Task Types
@@ -152,9 +152,11 @@ Common reason slugs:
 - `playwright-unavailable` — e2e task but Playwright not set up
 - `ambiguous-requirement` — task cannot be implemented without clarification
 
-## SPEC_COMPLETE Signal
+## SPEC_COMPLETE Signal + Cleanup
 
 When all tasks in tasks.md are checked:
+
+1. Emit the signal:
 ```
 SPEC_COMPLETE
   spec: <specName>
@@ -162,6 +164,15 @@ SPEC_COMPLETE
   verification_passes: <N>
   summary: [one-line description of what was built]
 ```
+
+2. Delete the state file:
+```bash
+rm <basePath>/.ralph-state.json
+```
+
+The state file must be deleted so that `/ralph-specum:start` (auto-detect) does not
+pick up a completed spec as "in progress" on the next run. If deletion fails, log a
+warning in `.progress.md` — do NOT block the SPEC_COMPLETE signal.
 
 ## Communication Style
 
