@@ -118,7 +118,10 @@ verification agent should combine:
 | Browser | Real user flows, render, wiring, UX regressions |
 | Logs / traces | Root cause, silent failures, perf |
 
-Browser becomes a Phase 5 addition (MCP Playwright), not the foundation.
+Browser is integrated via MCP Playwright (Phase 5) as an optional tool layer,
+not the foundation. Token cost is irrelevant — quality of verification is the
+priority. MCP maintains persistent browser state and reasons over the real
+accessibility tree, not screenshots or inferred source.
 
 ---
 
@@ -132,9 +135,10 @@ Browser becomes a Phase 5 addition (MCP Playwright), not the foundation.
 - [x] `skills/e2e/homeassistant-selector-map.skill.md` — stable Playwright
   selector strategy with Home Assistant examples. Reusable as reference
   for other projects (copy + adapt domain examples).
-- [x] `skills/e2e/ui-map-init.skill.md` — agnostic protocol for generating
-  `ui-map.local.md` in any project. Runs once per project/installation.
-  Output is gitignored — never committed.
+- [x] `skills/e2e/ui-map-init.skill.md` — legacy agnostic protocol for
+  generating `ui-map.local.md` using static source exploration. Superseded
+  by `plugins/ralph-specum/skills/e2e/ui-map-init.skill.md` (Phase 5)
+  which adds MCP-first exploration with static fallback.
 - [x] `skills/e2e/e2e-verify-integration.skill.md` — signal contract for
   ralph-specum (`VERIFICATION_PASS/FAIL` via `qa-engineer`,
   `ALL_TASKS_COMPLETE` via `stop-watcher` transcript detection; single
@@ -199,10 +203,28 @@ Playwright. Zero human memory required.
   - Respects `stop_hook_active` guard.
   - Local tier only (dependency map). Invariants and full-suite are nightly.
 
-### Phase 5 — Browser tool (experimental branch)
-- [ ] MCP Playwright integration as optional qa-engineer tool
-- [ ] Activated only when entry points include UI routes
-- [ ] Separate branch `feat/browser-verification`, not merged to main until stable
+### Phase 5 — MCP Playwright browser verification ✅
+- [x] `plugins/ralph-specum/skills/e2e/mcp-playwright.skill.md` — full
+  verification protocol for `@playwright/mcp`. Decision tree for tool
+  selection, verification sequence, multi-step flows, diagnostic protocol,
+  devtools tracing, signal format (PASS/FAIL/DEGRADED/ESCALATE), and
+  anti-patterns. Quality over token efficiency — MCP always preferred over CLI.
+- [x] `plugins/ralph-specum/skills/e2e/playwright-session.skill.md` — session
+  management for persistent browser context across VE tasks.
+- [x] `plugins/ralph-specum/skills/e2e/ui-map-init.skill.md` — upgraded
+  ui-map-init with MCP-first exploration (Step 1A) and static fallback
+  (Step 1B). Reads `.ralph-state.json` to determine mode. Supersedes
+  `skills/e2e/ui-map-init.skill.md` for projects using ralph-specum.
+- [x] Dependency check at `VE0`: agent verifies `@playwright/mcp` availability,
+  writes `mcpPlaywright: available|missing` to `.ralph-state.json`.
+- [x] Graceful degradation: if MCP missing and spec has UI entry points →
+  `VERIFICATION_DEGRADED` + `ESCALATE` to human. If no UI entry points →
+  degrade silently, note in summary.
+- [x] No automatic installation — always escalates to human if missing.
+
+**Dependency**: `@playwright/mcp` requires Node 18+.
+Install check: `npx @playwright/mcp@latest --version`
+Never auto-installed by the agent — human installs explicitly.
 
 ---
 
@@ -210,7 +232,9 @@ Playwright. Zero human memory required.
 
 Changes in Phases 0.1–2 are purely additive and should be PRable upstream.
 Phases 3–4 touch `stop-watcher.sh` — open a discussion issue on upstream first.
-Phase 5 lives as a separate plugin `ralph-bdd-browser` to keep the core clean.
+Phase 5 lives inside `plugins/ralph-specum/skills/e2e/` — it is scoped to the
+ralph-specum plugin and does not affect the core. PRable upstream as an optional
+skill set after stabilisation.
 
 All changes follow upstream Karpathy Rules: surgical, no speculation, version
 bump on every plugin change, no features beyond what's asked.
@@ -228,5 +252,5 @@ bump on every plugin change, no features beyond what's asked.
 
 ## Status
 
-**Current phase**: 4 complete — repair loop + regression sweep active in stop-watcher.
-**Next step**: Phase 5 — MCP Playwright integration (experimental branch `feat/browser-verification`).
+**Current phase**: 5 complete — MCP Playwright browser verification active in ralph-specum.
+**Next step**: stabilisation and real-world validation across projects. Upstream PR candidates: Phases 0.1–2 (additive, zero risk). Phases 3–5: discussion issue first.
