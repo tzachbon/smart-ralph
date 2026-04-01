@@ -34,3 +34,7 @@ test-ac-*/
 
 # Claude
 .claude/worktrees/**
+
+# E2E UI map (project-specific selector map, generated per installation)
+# Never commit — regenerate with skills/e2e/ui-map-init.skill.md
+**/ui-map.local.md

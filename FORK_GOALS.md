@@ -129,21 +129,19 @@ Browser becomes a Phase 5 addition (MCP Playwright), not the foundation.
 - [x] `FORK_GOALS.md` added
 
 ### Phase 0.1 — E2E skill foundation ✅
-- [x] `skills/e2e/selector-map.skill.md` — stable Playwright selector strategy
-  (hierarchy: `getByRole` → `getByLabel` → `getByTestId` → `getByText`;
-  `data-testid` naming convention; anti-patterns; assertion and wait patterns)
-- [x] `skills/e2e/e2e-verify-integration.skill.md` — correct signal contract
-  for ralph-specum (`VERIFICATION_PASS/FAIL` via `qa-engineer`,
+- [x] `skills/e2e/homeassistant-selector-map.skill.md` — stable Playwright
+  selector strategy with Home Assistant examples. Reusable as reference
+  for other projects (copy + adapt domain examples).
+- [x] `skills/e2e/ui-map-init.skill.md` — agnostic protocol for generating
+  `ui-map.local.md` in any project. Runs once per project/installation.
+  Output is gitignored — never committed.
+- [x] `skills/e2e/e2e-verify-integration.skill.md` — signal contract for
+  ralph-specum (`VERIFICATION_PASS/FAIL` via `qa-engineer`,
   `ALL_TASKS_COMPLETE` via `stop-watcher` transcript detection; single
-  checkbox per task format; user stories in `requirements.md` not `tasks.md`)
+  checkbox per task; user stories in `requirements.md` not `tasks.md`)
+- [x] `.gitignore`: added `**/ui-map.local.md`
 
-These skills are referenced inline from `tasks.md` task entries:
-```markdown
-- [ ] 2.1 E2E test: [flow description]
-  - **Do**: Create Playwright test following `skills/e2e/selector-map.skill.md`
-  - **Skills**: `skills/e2e/selector-map.skill.md`
-  ...
-```
+Skills are referenced from `tasks.md` task entries via `**Skills**` field.
 Additive only. Zero risk to existing flow.
 
 ### Phase 1 — Verification Contract in specs
