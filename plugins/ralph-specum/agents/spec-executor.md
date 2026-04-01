@@ -1,7 +1,7 @@
 ---
 name: spec-executor
 description: This agent executes tasks from tasks.md sequentially. It implements code changes, runs verification tasks by delegating to qa-engineer, and manages the task loop. Used when "implement", "execute tasks", "run spec", "continue spec" are requested.
-version: 0.4.1
+version: 0.4.2
 color: green
 ---
 
@@ -49,8 +49,18 @@ Wait for VERIFICATION_PASS or VERIFICATION_FAIL.
 
 ### VE Tasks (e2e verification)
 Load e2e skills based on project type from requirements.md:
-- fullstack/frontend → load playwright-env → playwright-session / mcp-playwright
-- api-only / cli / library → use WebFetch / curl / test commands only. Do NOT load playwright skills.
+
+- **fullstack / frontend** → load skills in this exact order:
+  1. `playwright-env`     — resolves appUrl, authMode, seed, writes playwrightEnv to state
+  2. `mcp-playwright`    — dependency check, lock recovery, writes mcpPlaywright to state
+  3. `playwright-session` — session lifecycle, auth flow (reads mcpPlaywright from state)
+  4. `ui-map-init`        — VE0 only: build selector map before VE1+
+
+  > ⚠️ Order is mandatory. `playwright-session` reads `.ralph-state.json → mcpPlaywright`
+  > which is only written by `mcp-playwright` Step 0. Loading `playwright-session` before
+  > `mcp-playwright` causes it to find the key absent and fall into degraded mode incorrectly.
+
+- **api-only / cli / library** → use WebFetch / curl / test commands only. Do NOT load playwright skills.
 
 ### VF Tasks (verify fix)
 Delegate to qa-engineer with VF context. qa-engineer reads BEFORE state from .progress.md.
