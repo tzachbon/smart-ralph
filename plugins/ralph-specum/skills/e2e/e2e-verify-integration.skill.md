@@ -2,7 +2,7 @@
 
 > Cómo integrar tests E2E Playwright dentro del loop de ralph-specum.
 > Describe el contrato entre las tareas `tasks.md`, el agente `qa-engineer`
-> y el hook `stop-watcher.sh`. No es un sustituto de `selector-map.skill.md`
+> y el hook `stop-watcher.sh`. No es un sustituto de `homeassistant-selector-map.skill.md`
 > — ambos se usan juntos en tareas E2E.
 
 ---
@@ -95,7 +95,7 @@ nunca en `tasks.md`.
 ```markdown
 - [ ] 2.1 E2E test: [descripción del flujo]
   - **Do**: Crear test Playwright en `tests/e2e/[nombre].spec.ts`
-    siguiendo `skills/e2e/selector-map.skill.md`
+    siguiendo `skills/e2e/homeassistant-selector-map.skill.md`
   - **Files**: `tests/e2e/[nombre].spec.ts`
   - **Done when**: Test pasa con `npx playwright test [nombre].spec.ts`
   - **Verify**: `npx playwright test [nombre].spec.ts --reporter=line`
@@ -162,7 +162,7 @@ stop-watcher.sh:
 - No usa señales `state_match`, `verification_ok`, `TASK_COMPLETE` en transcript
   (esas señales eran del loop externo de bash, no aplican aquí)
 - No lee las historias de usuario de `tasks.md` — las lee de `requirements.md`
-- No soporta `waitForTimeout` en tests (ver `selector-map.skill.md`)
+- No soporta `waitForTimeout` en tests (ver `homeassistant-selector-map.skill.md`)
 
 ---
 
@@ -174,5 +174,5 @@ stop-watcher.sh:
   con exit code 0/1 como señal de pass/fail
 - [ ] Las referencias a historias de usuario (`US-X`, `AC-X.Y`) están en
   la línea `_Requirements:_`, no como checkboxes
-- [ ] Los selectores del test siguen `skills/e2e/selector-map.skill.md`
+- [ ] Los selectores del test siguen `skills/e2e/homeassistant-selector-map.skill.md`
 - [ ] Ninguna señal legacy (`state_match`, `TASK_COMPLETE` en transcript) en prompts
