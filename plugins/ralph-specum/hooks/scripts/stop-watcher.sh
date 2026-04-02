@@ -97,91 +97,106 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
         # are left for nightly / final merge (out of scope for this hook).
         REQUIREMENTS_FILE="$CWD/$SPEC_PATH/requirements.md"
         if [ -f "$REQUIREMENTS_FILE" ]; then
-            # Extract the Dependency map entries from the Verification Contract section
-            DEP_SPECS=$(awk '
-                BEGIN {
-                    in_vc = 0      # inside "Verification Contract" section
-                    in_dep = 0     # currently collecting dependency map lines
-                }
+            # Guard: skip sweep if REGRESSION_SWEEP_COMPLETE already appears after
+            # the last ALL_TASKS_COMPLETE in the transcript. The transcript is
+            # append-only, so without this check the sweep would re-trigger on
+            # every subsequent stop, causing an infinite loop of sweep prompts.
+            LAST_COMPLETE_LINE=$(grep -n 'ALL_TASKS_COMPLETE' "$TRANSCRIPT_PATH" 2>/dev/null | tail -1 | cut -d: -f1)
+            if [ -n "$LAST_COMPLETE_LINE" ]; then
+                SWEEP_ALREADY_DONE=$(tail -n +"$LAST_COMPLETE_LINE" "$TRANSCRIPT_PATH" 2>/dev/null \
+                    | grep -cE '(^|\W)REGRESSION_SWEEP_COMPLETE(\W|$)' || echo "0")
+            else
+                SWEEP_ALREADY_DONE="0"
+            fi
 
-                # Enter the Verification Contract section
-                /^##[[:space:]]+Verification Contract/ {
-                    in_vc = 1
-                    next
-                }
-
-                # Any other top-level header ends the Verification Contract section
-                /^##[[:space:]]+/ {
-                    if (in_vc) {
-                        exit
+            if [ "$SWEEP_ALREADY_DONE" -gt 0 ]; then
+                echo "[ralph-specum] Phase 4 regression sweep already completed, skipping" >&2
+            else
+                # Extract the Dependency map entries from the Verification Contract section
+                DEP_SPECS=$(awk '
+                    BEGIN {
+                        in_vc = 0      # inside "Verification Contract" section
+                        in_dep = 0     # currently collecting dependency map lines
                     }
-                    next
-                }
 
-                {
-                    # Ignore everything outside the Verification Contract section
-                    if (!in_vc) {
+                    # Enter the Verification Contract section
+                    /^##[[:space:]]+Verification Contract/ {
+                        in_vc = 1
                         next
                     }
 
-                    # Start of dependency map line
-                    if (!in_dep && /\*\*Dependency map\*\*:[[:space:]]*/) {
-                        in_dep = 1
-                        # Strip label and leading whitespace; keep any inline entries
-                        sub(/.*\*\*Dependency map\*\*:[[:space:]]*/, "")
-                        if (NF > 0) {
-                            print
-                        }
-                        next
-                    }
-
-                    # While in dependency map, collect bullets and continuation lines
-                    if (in_dep) {
-                        # Blank lines are skipped but do not by themselves end the map
-                        if ($0 ~ /^[[:space:]]*$/) {
-                            next
-                        }
-
-                        # Safety: a new header also ends the dependency map
-                        if ($0 ~ /^##[[:space:]]+/) {
+                    # Any other top-level header ends the Verification Contract section
+                    /^##[[:space:]]+/ {
+                        if (in_vc) {
                             exit
                         }
+                        next
+                    }
 
-                        # Bullet items or indented continuation lines
-                        if ($0 ~ /^[[:space:]]*[-*][[:space:]]+/ || $0 ~ /^[[:space:]]+[^\-*\t ]/) {
-                            line = $0
-                            # Strip leading whitespace and optional bullet marker
-                            sub(/^[[:space:]]*[-*]?[[:space:]]*/, "", line)
-                            print line
+                    {
+                        # Ignore everything outside the Verification Contract section
+                        if (!in_vc) {
                             next
                         }
 
-                        # A non-indented, non-bullet line ends the dependency map
-                        if ($0 ~ /^[^[:space:]]/) {
-                            in_dep = 0
+                        # Start of dependency map line
+                        if (!in_dep && /\*\*Dependency map\*\*:[[:space:]]*/) {
+                            in_dep = 1
+                            # Strip label and leading whitespace; keep any inline entries
+                            sub(/.*\*\*Dependency map\*\*:[[:space:]]*/, "")
+                            if (NF > 0) {
+                                print
+                            }
                             next
+                        }
+
+                        # While in dependency map, collect bullets and continuation lines
+                        if (in_dep) {
+                            # Blank lines are skipped but do not by themselves end the map
+                            if ($0 ~ /^[[:space:]]*$/) {
+                                next
+                            }
+
+                            # Safety: a new header also ends the dependency map
+                            if ($0 ~ /^##[[:space:]]+/) {
+                                exit
+                            }
+
+                            # Bullet items or indented continuation lines
+                            if ($0 ~ /^[[:space:]]*[-*][[:space:]]+/ || $0 ~ /^[[:space:]]+[^\-*\t ]/) {
+                                line = $0
+                                # Strip leading whitespace and optional bullet marker
+                                sub(/^[[:space:]]*[-*]?[[:space:]]*/, "", line)
+                                print line
+                                next
+                            }
+
+                            # A non-indented, non-bullet line ends the dependency map
+                            if ($0 ~ /^[^[:space:]]/) {
+                                in_dep = 0
+                                next
+                            }
                         }
                     }
-                }
-            ' "$REQUIREMENTS_FILE" | tr ',' '\n' | sed 's/^[[:space:]]*//' | grep -v '^$' || true)
+                ' "$REQUIREMENTS_FILE" | tr ',' '\n' | sed 's/^[[:space:]]*//' | grep -v '^$' || true)
 
-            if [ -n "$DEP_SPECS" ]; then
-                echo "[ralph-specum] Phase 4 regression sweep: found dependency map entries" >&2
-                SWEEP_LIST=""
-                while IFS= read -r dep; do
-                    # dep may be a spec name or relative path — resolve to spec path
-                    dep=$(echo "$dep" | sed 's/^- //' | tr -d '`')
-                    # Try to find the spec directory matching the dep name
-                    DEP_REQ="$CWD/specs/$dep/requirements.md"
-                    if [ -f "$DEP_REQ" ]; then
-                        SWEEP_LIST="${SWEEP_LIST}"$'\n'"- specs/$dep"
-                    fi
-                done <<< "$DEP_SPECS"
+                if [ -n "$DEP_SPECS" ]; then
+                    echo "[ralph-specum] Phase 4 regression sweep: found dependency map entries" >&2
+                    SWEEP_LIST=""
+                    while IFS= read -r dep; do
+                        # dep may be a spec name or relative path — resolve to spec path
+                        dep=$(echo "$dep" | sed 's/^- //' | tr -d '`')
+                        # Try to find the spec directory matching the dep name
+                        DEP_REQ="$CWD/specs/$dep/requirements.md"
+                        if [ -f "$DEP_REQ" ]; then
+                            SWEEP_LIST="${SWEEP_LIST}"$'\n'"- specs/$dep"
+                        fi
+                    done <<< "$DEP_SPECS"
 
-                if [ -n "$SWEEP_LIST" ]; then
-                    STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
-                    if [ "$STOP_HOOK_ACTIVE" != "true" ]; then
-                        SWEEP_REASON=$(cat <<SWEEP_EOF
+                    if [ -n "$SWEEP_LIST" ]; then
+                        STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
+                        if [ "$STOP_HOOK_ACTIVE" != "true" ]; then
+                            SWEEP_REASON=$(cat <<SWEEP_EOF
 [ralph-specum] Regression sweep triggered by completion of: $SPEC_NAME
 
 ## Specs to sweep (from Dependency map)
@@ -201,18 +216,19 @@ For each spec listed above:
 - If any sweep emits VERIFICATION_FAIL, treat as a new repair loop (Phase 3)
 SWEEP_EOF
 )
-                        jq -n \
-                          --arg reason "$SWEEP_REASON" \
-                          --arg msg "Ralph-specum Phase 4: regression sweep for $SPEC_NAME dependencies" \
-                          '{
-                            "decision": "block",
-                            "reason": $reason,
-                            "systemMessage": $msg
-                          }'
-                        exit 0
+                            jq -n \
+                              --arg reason "$SWEEP_REASON" \
+                              --arg msg "Ralph-specum Phase 4: regression sweep for $SPEC_NAME dependencies" \
+                              '{
+                                "decision": "block",
+                                "reason": $reason,
+                                "systemMessage": $msg
+                              }'
+                            exit 0
+                        fi
                     fi
                 fi
-            fi
+            fi  # closes: if [ "$SWEEP_ALREADY_DONE" -gt 0 ]
         fi
         # --- End Phase 4 ---
 
