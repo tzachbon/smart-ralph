@@ -97,15 +97,70 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
         # are left for nightly / final merge (out of scope for this hook).
         REQUIREMENTS_FILE="$CWD/$SPEC_PATH/requirements.md"
         if [ -f "$REQUIREMENTS_FILE" ]; then
-            # Extract the Dependency map bullet list from the Verification Contract section
+            # Extract the Dependency map entries from the Verification Contract section
             DEP_SPECS=$(awk '
-                /^## Verification Contract/,0 {
-                    if (/^\*\*Dependency map\*\*:/) {
-                        # Grab rest of line after the colon
-                        sub(/^\*\*Dependency map\*\*:[[:space:]]*/, "")
-                        print
-                        # Collect continuation lines (indented or starting with -)
+                BEGIN {
+                    in_vc = 0      # inside "Verification Contract" section
+                    in_dep = 0     # currently collecting dependency map lines
+                }
+
+                # Enter the Verification Contract section
+                /^##[[:space:]]+Verification Contract/ {
+                    in_vc = 1
+                    next
+                }
+
+                # Any other top-level header ends the Verification Contract section
+                /^##[[:space:]]+/ {
+                    if (in_vc) {
+                        exit
+                    }
+                    next
+                }
+
+                {
+                    # Ignore everything outside the Verification Contract section
+                    if (!in_vc) {
                         next
+                    }
+
+                    # Start of dependency map line
+                    if (!in_dep && /\*\*Dependency map\*\*:[[:space:]]*/) {
+                        in_dep = 1
+                        # Strip label and leading whitespace; keep any inline entries
+                        sub(/.*\*\*Dependency map\*\*:[[:space:]]*/, "")
+                        if (NF > 0) {
+                            print
+                        }
+                        next
+                    }
+
+                    # While in dependency map, collect bullets and continuation lines
+                    if (in_dep) {
+                        # Blank lines are skipped but do not by themselves end the map
+                        if ($0 ~ /^[[:space:]]*$/) {
+                            next
+                        }
+
+                        # Safety: a new header also ends the dependency map
+                        if ($0 ~ /^##[[:space:]]+/) {
+                            exit
+                        }
+
+                        # Bullet items or indented continuation lines
+                        if ($0 ~ /^[[:space:]]*[-*][[:space:]]+/ || $0 ~ /^[[:space:]]+[^\-*\t ]/) {
+                            line = $0
+                            # Strip leading whitespace and optional bullet marker
+                            sub(/^[[:space:]]*[-*]?[[:space:]]*/, "", line)
+                            print line
+                            next
+                        }
+
+                        # A non-indented, non-bullet line ends the dependency map
+                        if ($0 ~ /^[^[:space:]]/) {
+                            in_dep = 0
+                            next
+                        }
                     }
                 }
             ' "$REQUIREMENTS_FILE" | tr ',' '\n' | sed 's/^[[:space:]]*//' | grep -v '^$' || true)
