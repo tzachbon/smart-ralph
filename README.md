@@ -342,13 +342,22 @@ Logs / traces      Root cause, silent failures, perf
   "mcpServers": {
     "playwright": {
       "command": "npx",
-      "args": ["@playwright/mcp@latest", "--isolated", "--caps=testing"]
+      "args": [
+        "@playwright/mcp@latest",
+        "--isolated",
+        "--caps=testing"
+      ]
     }
   }
 }
 ```
 
-> The agent never launches or kills the MCP server. `--isolated` and `--caps` must be set in the server definition above, not invoked at runtime.
+> **Important:**
+> - The agent never launches or kills the MCP server — these flags must be set in the server definition above, not invoked at runtime.
+> - `--isolated`: Uses an ephemeral browser profile with no disk cache between sessions. Always set this for staging and production verification.
+> - `--caps=testing`: Required to enable `browser_verify_*` assertion tools. Without it, those tools are unavailable and verification will degrade.
+> - `--caps=devtools`: Optional. Adds tracing support for diagnosing intermittent failures.
+> - Do not run with elevated capabilities (e.g., `--caps=all`) in production or CI environments.
 
 **Dependency:** `@playwright/mcp` requires Node 18+. Never auto-installed by the agent — human installs explicitly.
 
