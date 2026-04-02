@@ -64,10 +64,17 @@ never from hardcoded values.
 
 Always close the session, even if verification failed:
 
-```
+```bash
 1. browser_close
-2. Write session status to .ralph-state.json:
-   jq '.lastPlaywrightSession = "closed"' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
+2. Write session status to .ralph-state.json atomically using a unique temp file:
+
+   TMP_STATE_FILE=$(mktemp "<basePath>/.ralph-state.json.tmp.XXXXXX") || TMP_STATE_FILE="/tmp/.ralph-state.json.$$"
+   if jq '.lastPlaywrightSession = "closed"' <basePath>/.ralph-state.json > "$TMP_STATE_FILE"; then
+     mv "$TMP_STATE_FILE" <basePath>/.ralph-state.json
+   else
+     rm -f "$TMP_STATE_FILE" 2>/dev/null || true
+     echo "STATE_WRITE_FAILED" >&2
+   fi
 ```
 
 **If `browser_close` fails or the session terminated abnormally** (timeout, tool error, unexpected disconnect):
