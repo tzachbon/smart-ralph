@@ -630,7 +630,7 @@ After max iterations, the loop stops. Check `.progress.md` for errors. Fix manua
 Just `/ralph-specum:start` - it auto-detects and continues where you left off.
 
 **MCP Playwright not available?**
-The agent will emit `VERIFICATION_DEGRADED` and escalate. Install `@playwright/mcp` (Node 18+ required) and configure it in your MCP client. The agent never auto-installs it.
+The agent emits `VERIFICATION_DEGRADED`, continues VE1+ in degraded mode (non-browser signal layers only — CLI, HTTP, logs), and records the reason for follow-up. Browser checks are skipped; the rest of the verification loop keeps running. Install `@playwright/mcp` (Node 18+ required) and configure it in your MCP client to restore full coverage. The agent never auto-installs it.
 
 **More issues?** See the full [Troubleshooting Guide](TROUBLESHOOTING.md).
 
