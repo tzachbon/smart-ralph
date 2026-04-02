@@ -259,13 +259,56 @@ SWEEP_EOF
     fi
 
     # --- Phase 3: Repair Loop ---
-    # Detect VERIFICATION_FAIL in transcript and activate repair mode.
+    # Detect VERIFICATION_FAIL or VERIFICATION_DEGRADED in transcript.
+    # DEGRADED: MCP Playwright not available — block and escalate to human for install.
+    # FAIL: implementation bug — activate repair loop (max 2 iterations).
     # Max 2 repair iterations per story before escalating to human.
     TRANSCRIPT_TAIL=$(tail -500 "$TRANSCRIPT_PATH" 2>/dev/null || true)
-    # Only activate repair if the most recent verification signal is a FAIL.
-    if echo "$TRANSCRIPT_TAIL" | grep -qE '(^|\W)VERIFICATION_(FAIL|PASS)(\W|$)'; then
-        LAST_SIGNAL_LINE=$(echo "$TRANSCRIPT_TAIL" | grep -E '(^|\W)VERIFICATION_(FAIL|PASS)(\W|$)' | tail -1)
-        if echo "$LAST_SIGNAL_LINE" | grep -qE '(^|\W)VERIFICATION_FAIL(\W|$)'; then
+    # Only activate if the most recent verification signal is FAIL, PASS, or DEGRADED.
+    if echo "$TRANSCRIPT_TAIL" | grep -qE '(^|\W)VERIFICATION_(FAIL|PASS|DEGRADED)(\W|$)'; then
+        LAST_SIGNAL_LINE=$(echo "$TRANSCRIPT_TAIL" | grep -E '(^|\W)VERIFICATION_(FAIL|PASS|DEGRADED)(\W|$)' | tail -1)
+        if echo "$LAST_SIGNAL_LINE" | grep -qE '(^|\W)VERIFICATION_DEGRADED(\W|$)'; then
+            # DEGRADED is not a code bug — MCP Playwright is simply not installed.
+            # Do NOT enter the repair loop. Block and escalate to the human.
+            STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
+            if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
+                echo "[ralph-specum] stop_hook_active=true in DEGRADED handler, allowing stop" >&2
+                exit 0
+            fi
+            DEGRADED_REASON=$(cat <<DEGRADED_EOF
+[ralph-specum] ESCALATION REQUIRED — VERIFICATION_DEGRADED detected for: $SPEC_NAME
+
+UI verification was skipped because @playwright/mcp is not installed.
+The repair loop cannot fix a missing tool — human action is required.
+
+## What happened
+- qa-engineer emitted VERIFICATION_DEGRADED (Protocol B in mcp-playwright.skill.md)
+- @playwright/mcp was not found on PATH
+- UI interaction and visual assertions were NOT verified
+
+## Action required from human
+1. Install @playwright/mcp:
+     npm install -g @playwright/mcp   (requires Node 18+)
+   or add to project devDependencies:
+     npm install --save-dev @playwright/mcp
+2. Verify the binary is on PATH:
+     npx --no-install @playwright/mcp --version
+3. Ensure your MCP client config includes the server with --isolated --caps=testing
+   (see mcp-playwright.skill.md § MCP Server Configuration)
+4. Resume verification:
+     /ralph-specum:implement
+DEGRADED_EOF
+)
+            jq -n \
+              --arg reason "$DEGRADED_REASON" \
+              --arg msg "Ralph-specum Phase 3: ESCALATION — VERIFICATION_DEGRADED (MCP Playwright not installed)" \
+              '{
+                "decision": "block",
+                "reason": $reason,
+                "systemMessage": $msg
+              }'
+            exit 0
+        elif echo "$LAST_SIGNAL_LINE" | grep -qE '(^|\W)VERIFICATION_FAIL(\W|$)'; then
             REPAIR_ITER=$(jq -r '.repairIteration // 0' "$STATE_FILE" 2>/dev/null || echo "0")
             FAILED_STORY=$(jq -r '.failedStory // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
             ORIGIN_TASK=$(jq -r '.originTaskIndex // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
@@ -355,8 +398,8 @@ REPAIR_EOF
           }'
         exit 0
     fi
-    fi  # closes: if echo "$LAST_SIGNAL_LINE" | grep -qE VERIFICATION_FAIL
-    fi  # closes: if echo "$TRANSCRIPT_TAIL" | grep -qE VERIFICATION_(FAIL|PASS)
+    fi  # closes: elif echo "$LAST_SIGNAL_LINE" | grep -qE VERIFICATION_FAIL
+    fi  # closes: if echo "$TRANSCRIPT_TAIL" | grep -qE VERIFICATION_(FAIL|PASS|DEGRADED)
     # --- End Phase 3 ---
 fi  # closes: if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]
 
