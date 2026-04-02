@@ -64,8 +64,8 @@ silently corrupt subsequent VE tasks.
 2. **Read `mcpPlaywright`** from `.ralph-state.json`:
    - Value `"available"` → proceed with MCP exploration (Step 1A)
    - Value `"missing"` or key absent → switch to degraded mode: write a minimal
-     placeholder `ui-map.local.md` (source: static, all selectors confidence: low)
-     and emit `VERIFICATION_DEGRADED` with `reason: mcp-playwright-missing`
+     placeholder `ui-map.local.md` (source: static, all selectors confidence: low,
+     stale: true) and emit `VERIFICATION_DEGRADED` with `reason: mcp-playwright-missing`
 3. **Read `playwrightEnv.appUrl`** from `.ralph-state.json`. If `playwrightEnv`
    object is absent or `appUrl` is empty/missing, emit `ESCALATE` and stop:
     ```text
@@ -113,7 +113,10 @@ Use browser tools to explore the live app.
 
 ### Step 1A-explore — Explore Entry Points
 
-3. For each entry point in `requirements.md → Verification Contract → Entry points`:
+3. For each entry point in `requirements.md → Verification Contract → Entry points`
+   that is a browser-navigable route (skip non-browser surfaces such as API
+   endpoints — any entry point whose path starts with `/api/` or whose type is
+   not an HTML-renderable route):
    a. Classify the route as **public** (accessible without auth) or **protected** (requires auth)
    b. `browser_navigate` to the route
    c. `browser_snapshot` + stable state check — if the page is the login form
@@ -121,9 +124,9 @@ Use browser tools to explore the live app.
       treat as auth-expired: emit `VERIFICATION_FAIL` and stop.
    d. `browser_snapshot` → extract interactive elements (buttons, inputs, links, forms)
    e. `browser_generate_locator` for each key element → record selector
-   f. `browser_take_screenshot` → save to `<basePath>/screenshots/ve0-<route-slug>.png`
-      - Public routes: `ve0-public-<route-slug>.png`
-      - Protected routes: `ve0-auth-<route-slug>.png`
+   f. `browser_take_screenshot` → save using the canonical prefixed filename:
+      - Public routes: `<basePath>/screenshots/ve0-public-<route-slug>.png`
+      - Protected routes: `<basePath>/screenshots/ve0-auth-<route-slug>.png`
 4. Follow `playwright-session.skill.md → Session End` — close the session and
    write `lastPlaywrightSession = "closed"` to state before proceeding to Step 2.
 
@@ -211,7 +214,7 @@ Never silently remove a broken selector — broken rows are diagnostically valua
 
 - [ ] `ui-map.local.md` written to `<basePath>`
 - [ ] Each explored route annotated as `[public]` or `[protected]`
-- [ ] Screenshots saved to `<basePath>/screenshots/ve0-*.png`
+- [ ] Screenshots saved to `<basePath>/screenshots/`:
   - Public routes: `ve0-public-<route-slug>.png`
   - Protected routes: `ve0-auth-<route-slug>.png`
 - [ ] Browser session closed (Session End followed)
