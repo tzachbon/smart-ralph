@@ -56,11 +56,11 @@ silently corrupt subsequent VE tasks.
 
 1. **Check state file exists**: read `.ralph-state.json` from `<basePath>`. If the file
    is missing, emit `ESCALATE` and stop:
-   ```
-   ESCALATE
-     reason: state-file-missing
-     resolution: playwright-env.skill.md must run first to create .ralph-state.json
-   ```
+    ```text
+    ESCALATE
+       reason: state-file-missing
+       resolution: playwright-env.skill.md must run first to create .ralph-state.json
+    ```
 2. **Read `mcpPlaywright`** from `.ralph-state.json`:
    - Value `"available"` → proceed with MCP exploration (Step 1A)
    - Value `"missing"` or key absent → switch to degraded mode: write a minimal
@@ -68,12 +68,12 @@ silently corrupt subsequent VE tasks.
      and emit `VERIFICATION_DEGRADED` with `reason: mcp-playwright-missing`
 3. **Read `playwrightEnv.appUrl`** from `.ralph-state.json`. If `playwrightEnv`
    object is absent or `appUrl` is empty/missing, emit `ESCALATE` and stop:
-   ```
-   ESCALATE
-     reason: playwright-env-incomplete
-     resolution: playwright-env.skill.md must complete before ui-map-init;
-                 ensure RALPH_APP_URL is set and playwright-env resolves successfully
-   ```
+    ```text
+    ESCALATE
+       reason: playwright-env-incomplete
+       resolution: playwright-env.skill.md must complete before ui-map-init;
+                         ensure RALPH_APP_URL is set and playwright-env resolves successfully
+    ```
 
 ---
 
