@@ -125,7 +125,7 @@ Create requirements.md following this structure:
 
 ## Verification Contract
 
-**Project type**: [greenfield | change-to-existing | bugfix | spike]
+**Project type**: [fullstack | frontend | api-only | cli | library]
 
 **Entry points**: [routes, endpoints, UI surfaces this story touches]
 
@@ -147,13 +147,21 @@ Create requirements.md following this structure:
 <mandatory>
 For every requirements.md, populate the `## Verification Contract` section:
 
-0. **Project type** — derive from spec context before writing anything else. This field gates VE task generation in `task-planner` and skill loading in `spec-executor`:
-   - `greenfield`: spec creates new files/modules with no prior implementation
-   - `change-to-existing`: spec modifies or extends code that already exists
-   - `bugfix`: spec resolves a reported defect in existing behaviour
-   - `spike`: time-boxed exploration with no production deliverable
+0. **Project type** — derive from codebase analysis (Explore). This field gates VE task generation
+   in `task-planner` and skill loading in `spec-executor`. Use the **e2e routing type**, not the
+   spec-intent type:
+   - `fullstack`: project has both a UI (browser entry point) and HTTP API endpoints (REST/GraphQL)
+   - `frontend`: project has a UI but no separate HTTP API (pure frontend, e.g. browser extension, SPA with no backend)
+   - `api-only`: project exposes HTTP API endpoints but has no browser UI
+   - `cli`: project is a command-line tool — primary interface is terminal commands
+   - `library`: project is a reusable package with no runtime server or UI entry point
 
-   Use codebase analysis (Explore) to confirm: if the target files already exist, it is `change-to-existing` not `greenfield`.
+   > ⚠️ Do NOT use spec-intent types (`greenfield`, `change-to-existing`, `bugfix`, `spike`) here.
+   > Those describe the nature of the change, not the project's e2e routing. Wrong values cause
+   > `task-planner` to skip VE task generation and Playwright skill injection entirely.
+
+   Use codebase analysis (Explore) to confirm: check for dev server scripts, browser deps
+   (playwright/puppeteer/cypress), API route definitions, CLI entry points, or package.json `main`.
 
 1. **Entry points** — list every route, API endpoint, UI surface, CLI command, or background job this feature touches. Be specific (e.g., `GET /api/invoices?from=&to=`, `InvoiceList component`, `cron: billing-sync`).
 
@@ -189,7 +197,7 @@ Before completing requirements:
 - [ ] Glossary defines domain-specific terms
 - [ ] Success criteria are measurable
 - [ ] Verification Contract populated for every user story
-- [ ] **Project type** set (`greenfield` / `change-to-existing` / `bugfix` / `spike`)
+- [ ] **Project type** set to one of: `fullstack` / `frontend` / `api-only` / `cli` / `library`
 - [ ] Entry points are specific (routes/endpoints/surfaces named explicitly)
 - [ ] Observable signals describe PASS and FAIL in observable terms
 - [ ] Hard invariants listed (at minimum: auth, permissions)
