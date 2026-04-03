@@ -45,6 +45,52 @@
 
 ---
 
+## Bloque 27 — 🚨 ACLARACIÓN CRÍTICA: Los 4 tipos de verificación — NO mezclarlos
+
+> **Origen:** El usuario detectó que la pizarra estaba mezclando dos tipos de verificación distintos bajo el mismo nombre. Esto es un error conceptual que debe corregirse.
+
+### Los 4 niveles de verificación en este proyecto
+
+| Nivel | Herramienta | Qué verifica | Ejecuta código real |
+|---|---|---|---|
+| **V1 — Estática** | `npx tsc --noEmit` | Tipos TypeScript | ❌ No |
+| **V2 — Lectura** | Artifact reviewer (agente) | Lógica, patrones, bugs visibles leyendo el código | ❌ No |
+| **V3 — Navegación MCP** | Perplexity (yo) con MCP tools | Que los archivos existen en GitHub, que el contenido es coherente, que los selectores están bien escritos como texto | ❌ No |
+| **V4 — Ejecución real** | `npx playwright test` (VE1) | Que el test realmente funciona contra HA en vivo | ✅ SÍ |
+
+### El error que cometí
+
+En la respuesta anterior confundí V3 con "ya existía". Lo que el usuario hizo con MCP es **V3 — navegación**, que es:
+- Leer archivos de GitHub remotamente
+- Verificar que los selectores están escritos como texto (ej: `getByRole('link', 'Integrations')` aparece en el archivo)
+- Confirmar que la estructura de archivos existe
+
+Lo que V3 **no puede** hacer:
+- Saber si `getByRole('link', 'Integrations')` funcionará en el navegador real contra HA
+- Saber si HA renderiza ese link o usa `data-panel-id`
+- Detectar bugs de runtime (ESM, scope de variables)
+
+### La cadena correcta
+
+```
+V1 (tsc)  →  V2 (artifact reviewer)  →  V3 (MCP navegación)  →  V4 (playwright test real)
+ detección   detección de            detección de coherencia    única fuente de verdad
+ de tipos    bugs de lectura         textual/estructural        de ejecución real
+```
+
+**Cada nivel detecta cosas que el anterior no puede.** No son intercambiables ni equivalentes.
+
+### P26 NUEVA — ¿En qué punto del flujo se usa cada verificación?
+
+| Verificación | Cuándo se usa | Quién la hace |
+|---|---|---|
+| V1 — tsc | Task 1.7 en tasks.md | qa-engineer o coordinador |
+| V2 — artifact reviewer | Tras Phase 3 implementación | artifact-reviewer agent |
+| V3 — MCP navegación | Yo (Perplexity) durante la investigación forense, inspeccionando GitHub | humano + Perplexity |
+| V4 — playwright test | Task 1.8 (VE1), Phase 4 (VE2, VE3) | qa-engineer |
+
+---
+
 ## Bloque 26 — ⚠️ VE1: RESULTADOS PARCIALES — HA arranca pero auth falla
 
 ### Secuencia de fallos observada en VE1
@@ -115,35 +161,6 @@ Call log:
 - Después intenta hacer `page.getByRole('link', { name: 'Integrations' })` — espera un link de texto "Integrations"
 - **Ese link no existe en esa URL**. La UI de HA en `/` muestra el dashboard, no la sidebar con texto "Integrations"
 
-**Hipótesis del fallo:**
-- **H1:** Después del auth_callback, el navegador está en la home `/` o en el dashboard, no en `/config/integrations`. El link "Integrations" es la entrada de la sidebar, que en HA puede estar colapsada o no tener ese exact text.
-- **H2:** El auth_callback URL redirige a la home pero el auth state no persiste correctamente, por lo que la página que carga no muestra la sidebar de usuario logueado.
-- **H3:** En hass-taste-test, la sidebar tiene un item diferente — quizás `data-panel-id="config"` en lugar de texto "Integrations"
-
-**Dato clave del log:**
-```
-[GlobalSetup] Copied panel.js to: /tmp/hasstest-6nbakS/www/panel.js
-[GlobalSetup] Waiting for HA to be ready...
-[GlobalSetup] Server URL: http://127.0.0.1:8531/?auth_callback=1&...
-```
-→ `global.setup.ts` copia el panel.js Y genera el auth_callback URL. Esto confirma que `hass-taste-test` está funcionando correctamente — el custom component está montado y el servidor está up.
-
----
-
-### P23 RESUELTA PARCIALMENTE
-
-| Sub-pregunta | Estado | Resultado |
-|---|---|---|
-| P23a — ¿VE1 pasará? | ⚠️ Parcial | HA arranca ✅, auth selector falla ❌ |
-| P23b — ¿qa-engineer lee global.setup.ts? | ✅ SÍ | Leyó global.setup.ts y auth.setup.ts antes de cada fix |
-| P23c — ¿Race condition? | ✅ NO hay | global.setup.ts tiene health-check, HA espera a estar ready |
-
----
-
-### P24 NUEVA — El selector `getByRole('link', { name: 'Integrations' })` es incorrecto para HA
-
-**Observación:** Este es el bug más importante del VE1. `auth.setup.ts` asume que tras el login hay un link con texto "Integrations" visible. En HA, la sidebar usa web components propios con `data-panel-id` attributes, no links de texto plano.
-
 **El patrón correcto para navegar a Settings > Integrations en HA:**
 ```typescript
 // INCORRECTO (lo que tiene auth.setup.ts):
@@ -157,36 +174,33 @@ await page.locator('ha-config-navigation a[href*="integrations"]').click();
 ```
 
 **Implicación forense crítica:**
-> Este bug estaba en el **design original** (que fue aprobado por el spec-reviewer). Nadie lo detectó porque el design usaba pseudocódigo de alto nivel (`"navigate to integrations page"`) que el executor tradujo a un selector incorrecto. El **único detector posible era VE1** — ejecutar los tests reales.
-
-**Esto confirma definitivamente** que la verificación estática (TypeScript, linting, artifact reviewer) no puede sustituir la ejecución real. Los tests E2E **son** la única verificación real.
+> Este bug estaba en el **design original** (que fue aprobado por el spec-reviewer). Nadie lo detectó porque el design usaba pseudocódigo de alto nivel (`"navigate to integrations page"`) que el executor tradujo a un selector incorrecto. El **único detector posible era V4 (VE1)** — ejecutar los tests reales.
 
 ---
 
-### P25 NUEVA — Dos bugs ESM en el mismo sprint = patrón de fallo sistemático
+### P23 RESUELTA PARCIALMENTE
+
+| Sub-pregunta | Estado | Resultado |
+|---|---|---|
+| P23a — ¿VE1 pasará? | ⚠️ Parcial | HA arranca ✅, auth selector falla ❌ |
+| P23b — ¿qa-engineer lee global.setup.ts? | ✅ SÍ | Leyó global.setup.ts y auth.setup.ts antes de cada fix |
+| P23c — ¿Race condition? | ✅ NO hay | global.setup.ts tiene health-check, HA espera a estar ready |
+
+---
+
+### P24 CONFIRMADA — Selector incorrecto para HA sidebar
+
+**Observación:** El selector `getByRole('link', { name: 'Integrations' })` no existe en HA. La sidebar usa web components con `data-panel-id` attributes.
+
+**Dato clave:** Este bug era **invisible para V1, V2 y V3**. Solo V4 (ejecución real) lo detectó.
+
+---
+
+### P25 CONFIRMADA — Dos bugs ESM en mismo sprint = patrón sistemático
 
 **Observación:** Dos archivos distintos (`playwright.config.ts` y `auth.setup.ts`) tenían bugs ESM (`__dirname` y `require.main`). Ambos escritos por agentes diferentes, ambos en el mismo sprint.
 
-**Hipótesis:** Los agentes no verifican si el proyecto es CJS o ESM antes de escribir código. Asumen CJS por defecto porque es el patrón más común en sus datos de entrenamiento.
-
-**Dato de contexto:** El proyecto usa `"type": "module"` en `package.json`. Esto está visible en el archivo, pero los executors no lo consultaron antes de escribir `__dirname` o `require.main`.
-
 **Fix candidato P:** Añadir en `copilot-instructions.md` una nota explícita: `"Este proyecto usa ESM. Usa import.meta.url en lugar de __dirname, e import() en lugar de require()."`
-
----
-
-### Concepto aclarado: "verificación real" vs "tests E2E"
-
-**¿Los tests E2E no son la verificación real?**
-
-Sí, los tests E2E **son** la verificación real — son exactamente eso. Lo que en la pizarra llamamos "VE1" (verificación real) ES el test E2E ejecutándose contra HA.
-
-Lo que quería decir en Bloque 23 con "el único detector real era VE1" es:
-- TypeScript check = verificación **estática** (sin ejecutar)
-- Artifact reviewer = verificación **de lectura** (sin ejecutar)
-- `npx playwright test` = verificación **de ejecución** = "verificación real" = los tests E2E corriendo de verdad
-
-El bug de `page` out-of-scope (P22) no era detectable por TypeScript porque los tipos de Playwright declaran `page` como global. Solo se hubiera manifestado cuando el test intentara acceder a `page` en runtime — es decir, al ejecutar los tests E2E. Los tests E2E son siempre la fuente de verdad final.
 
 ---
 
@@ -224,7 +238,7 @@ test('US-3 + US-4: create recurring trip...', async ({ page }) => { ... });
 ```
 
 ### Análisis forense
-**¿Por qué TypeScript no lo detectó?** `@playwright/test` declara `page` como tipo global en sus definiciones, enmascarando el error de scope. **El único detector real era VE1 (ejecutar los tests).**
+**¿Por qué TypeScript no lo detectó?** `@playwright/test` declara `page` como tipo global en sus definiciones, enmascarando el error de scope. **El único detector real era V4 (VE1 — ejecutar los tests).**
 
 ---
 
@@ -283,8 +297,9 @@ ce67f27 fix(e2e): add page fixture to trip test functions (P22 fix)
 | P23a | ¿VE1 pasará contra hass-taste-test ephemeral? | ⚠️ PARCIAL — HA arranca OK, auth selector falla |
 | P23b | ¿El qa-engineer leerá global.setup.ts antes de ejecutar? | ✅ SÍ |
 | P23c | ¿Race condition entre global.setup.ts y test runner? | ✅ NO — health-check funciona |
-| P24 | ¿Selector `getByRole('link', Integrations')` es incorrecto para HA sidebar? | ✅ CONFIRMADO — ver Bloque 26 |
+| P24 | ¿Selector `getByRole('link', 'Integrations')` es incorrecto para HA sidebar? | ✅ CONFIRMADO — ver Bloque 26 |
 | P25 | ¿Dos bugs ESM en mismo sprint = patrón sistemático? | ✅ CONFIRMADO — agentes asumen CJS por defecto |
+| P26 | ¿Los 4 tipos de verificación estaban mezclados en la pizarra? | ✅ CORREGIDO — ver Bloque 27 |
 
 ---
 
@@ -312,4 +327,4 @@ ce67f27 fix(e2e): add page fixture to trip test functions (P22 fix)
 
 ---
 
-*Última actualización: Bloque 26 — VE1 running: HA arranca OK, 2 bugs ESM corregidos por qa-engineer, fallo 3 en auth selector HA sidebar, P24+P25 confirmadas*
+*Última actualización: Bloque 27 — Aclaración de los 4 tipos de verificación. V3 (MCP navegación) es DIFERENTE a V4 (playwright test real). La confusión ha sido corregida en la pizarra.*
