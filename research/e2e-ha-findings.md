@@ -31,10 +31,54 @@
 |---|---|---|---|
 | 1-10 | Interview (9 preguntas) | ✅ Completado | Ver Bloque 12 |
 | 11 | Phase 1 — Explore codebase | ✅ Completado | Ver Bloque 14 — resultados excelentes |
-| 12 | Phase 1 — research-analyst | ⚠️ Bloqueado/timeout | Agente no retornó. Flujo detenido. |
-| 13 | Phase 2 — scaffold | 🔍 Pendiente | Desbloqueado manualmente |
-| 14 | Phase 3 — implement | 🔍 Pendiente | |
-| 15 | qa-engineer verifica | 🔍 Pendiente | |
+| 12 | Phase 1 — research-analyst (1er intento) | ❌ Bloqueado/timeout | Agente no retornó. Ver Bloque 15 |
+| 13 | Phase 1 — research-analyst (2º intento) | ✅ Completado | Web search rota → pivotó a codebase local. Ver Bloque 16 |
+| 14 | Phase 2 — requirements | 🔍 Pendiente | Siguiente paso |
+| 15 | Phase 2 — scaffold | 🔍 Pendiente | |
+| 16 | Phase 3 — implement | 🔍 Pendiente | |
+| 17 | qa-engineer verifica | 🔍 Pendiente | |
+
+---
+
+## Bloque 16 — ✅ research-analyst (2º intento): Hallazgos
+
+### Contexto
+Web search rota (API Error 400 en los 3 intentos). El agente pivotó correctamente a leer `node_modules/hass-taste-test/` directamente — **más fiable que web search**.
+
+### Hallazgos del research
+
+- `hass-taste-test` autor real: **rianadon** (no twrecked — el primer intento de URL era incorrecto)
+- Diseñado para **Lovelace cards** — `ev-trip-planner` es un **native panel**, las APIs de card NO aplican
+- Shadow DOM: `>>` pierce combinator confirmado como patrón correcto
+- `playwright.config.ts` — **NO EXISTE** en el repo (gap crítico)
+- `tests/e2e/` — directorio **vacío/inexistente** (el workflow lo referencia pero no hay nada)
+- `auth.setup.ts` — **NO EXISTE** — nadie automatiza el Config Flow aún
+
+### Gap analysis confirmado
+
+| Item | Estado |
+|---|---|
+| `tests/e2e/` directory | **MISSING** |
+| `playwright.config.ts` | **MISSING** |
+| `auth.setup.ts` | **MISSING** |
+| `EVTripPlannerPage` POM | **MISSING** |
+| `ConfigFlowPage` POM | **MISSING** |
+| `vehicle.spec.ts` | **MISSING** |
+| `trip.spec.ts` | **MISSING** |
+
+### Preguntas abiertas (para fase requirements)
+1. Nombres exactos de campos del Config Flow (`strings.json`, `config_flow.py`)
+2. Texto del sidebar link tras Config Flow (¿"EV Trip Planner" o nombre del vehículo?)
+3. ¿HA requiere page reload para que aparezca el panel en sidebar?
+4. Entidades para entity selector en HA efímero
+
+---
+
+## Bloque 15 — ❌ research-analyst (1er intento): Incidente
+
+El agente principal se quedó esperando al research-analyst que no retornó. Flujo detenido indefinidamente.
+
+**Implicación:** El mecanismo de coordinación de subagentes no tiene timeout. ⇒ **Fix H candidato.**
 
 ---
 
@@ -49,66 +93,56 @@ Existen **dos docker-compose distintos** en el repo:
 | `docker-compose.yml` (raíz) | Manual testing. Puerto **8124**. Volumenes locales hardcodeados. | Existe, pero NO es para CI |
 | `test-ha/docker-compose.yml` | Lo que describe `copilot-instructions.md` para tests | **NO EXISTE** |
 
-`copilot-instructions.md` apunta a `test-ha/docker-compose.yml` que no existe. El agente en la interview dijo "Docker compose" asumiendo que existe. **Fix F es urgente e independiente del experimento.**
+`copilot-instructions.md` apunta a `test-ha/docker-compose.yml` que no existe. **Fix F es urgente e independiente del experimento.**
 
 ### Hallazgo 14.2 — ✅ hass-taste-test ya lo gestiona todo (invalida el Docker approach)
 
-**Esto es el hallazgo más importante de Phase 1:**
+`global.setup.ts` ya existe y usa `hass-taste-test` para levantar HA efímero. **Implicación crítica:** El agente propuso crear `test-ha/docker-compose.yml` en la interview, pero **el codebase ya tiene una solución mejor**.
 
-`global.setup.ts` ya existe y usa `hass-taste-test` para levantar HA efímero:
-```typescript
-import { HomeAssistant, PlaywrightBrowser } from 'hass-taste-test';
-const hassInstance = await HomeAssistant.create(`...yaml config...`, {
-  python: process.env.PYTHON_PATH || 'python3',
-  browser: new PlaywrightBrowser('chromium'),
-  customComponents: [evTripPlannerPath],
-});
-// Guarda server-info.json con el puerto dinámico
-```
-
-**Implicación crítica:** El agente propuso crear `test-ha/docker-compose.yml` (approach A de la interview), pero **el codebase ya tiene una solución mejor**: `hass-taste-test` levanta HA efímero sin Docker. El GitHub Actions workflow ya lo usa correctamente:
-```yaml
-- name: Get Python path for hass-taste-test
-  run: echo "PYTHON_PATH=$(which python3)" >> $GITHUB_ENV
-```
-
-**Pregunta forense activa:** ¿El agente, al leer este `global.setup.ts`, actualizará su plan y abandonará el approach Docker en favor de `hass-taste-test`? O ¿creará `test-ha/docker-compose.yml` de todas formas porque la interview lo decidió?
+**Pregunta forense P12 activa:** ¿El agente actualizará su plan Docker → hass-taste-test al ver `global.setup.ts`?
 
 ### Hallazgo 14.3 — ⚠️ Shadow DOM: Explore NO encontró `navigateViaSidebar`
 
-El Explore agent documentó correctamente las opciones de Shadow DOM:
-- `locator('ev-trip-planner-panel').locator('pierce/.trip-card')`
-- `page.evaluate()` para acceder al Shadow DOM
-
-Pero **no encontró** ningún patrón de navegación al panel. Solo documentó la URL: `/ev-trip-planner-{vehicle_id}`.
-
-❌ **NO hay `navigateViaSidebar` en el codebase** — no existe como función implementada. El agente tendrá que inventarla o usar `page.goto()` directo.
-
-**Pregunta forense:** ¿Sabe el agente que `page.goto('/ev-trip-planner-chispitas')` dará 404 sin auth correcta? ¿O asumirá que basta el storageState?
+❌ **NO hay `navigateViaSidebar` en el codebase** — no existe como función. El agente tendrá que crearla o usar `page.goto()` directo con auth correcta.
 
 ### Hallazgo 14.4 — ✅ CSS selectors del panel (disponibles)
 
-El Explore agent identificó los selectores reales del panel:
-- Botón añadir viaje: `.add-trip-btn`
-- Modal formulario: `.trip-form-overlay`, `.trip-form-container`
-- Lista viajes: `.trips-list`, `.trip-card[data-trip-id]`
-- Estado vacío: `.no-trips`
-
-**Nota:** Estos selectores están dentro del Shadow DOM de `ev-trip-planner-panel`.
+- `.add-trip-btn`, `.trip-form-overlay`, `.trip-form-container`
+- `.trips-list`, `.trip-card[data-trip-id]`, `.no-trips`
+- Todos dentro del Shadow DOM de `ev-trip-planner-panel`
 
 ### Hallazgo 14.5 — Tensión Jest vs Playwright
 
-`package.json` tiene dos frameworks mezclados:
-- `jest` ^30.3.0 (tests existentes con `.test.js`)
-- `@playwright/test` ^1.58.2 (para e2e con `.spec.ts`)
+`package.json` mezcla `jest` ^30.3.0 y `@playwright/test` ^1.58.2. Scripts de `package.json` usan jest; el workflow de GitHub Actions usa `npx playwright test`.
 
-Los scripts `test:e2e` y `test:ui` usan `jest`, no `playwright`. El workflow de GitHub Actions usa `npx playwright test tests/e2e/`. **El agente tendrá que decidir cuál usa** — si copia el patrón de `package.json` usará jest, si sigue el workflow usará playwright.
+---
 
-### Hallazgo 14.6 — Incidente: research-analyst bloqueado
+## Bloque 13 — 🦠 Archivos contaminados: global.setup.ts / global.teardown.ts
 
-El agente principal se quedó esperando al research-analyst que no retornó. El flujo se detuvo.
+### Estado: identificados, NO borrar
 
-**Implicación para el sistema:** El mecanismo de coordinación de subagentes no tiene timeout. Si un subagente falla o tarda, el agente principal se bloquea indefinidamente. ⇒ **Fix H candidato:** `phase-rules.md` debería especificar un timeout máximo de espera y cómo proceder cuando un subagente no retorna.
+Los archivos existen en el repo con bugs conocidos. Se deben **dejar para que el agente los corrija** en fase de implementación — borrarlos haría que el agente inventara algo nuevo sin aprovechar lo que ya funciona.
+
+### P11 — global.teardown.ts: path hardcodeado (bloqueador CI)
+
+```typescript
+const rootDir = '/mnt/bunker_data/ha-ev-trip-planner/ha-ev-trip-planner';
+```
+Path absoluto de la máquina de Madrid hardcodeado. Rompe en GitHub Actions y cualquier otra máquina.  
+**Fix:** `const rootDir = process.cwd();`
+
+### P12 — global.teardown.ts: servidor HA nunca se cierra
+
+`teardown` lee `server-info.json` pero **nunca llama `.close()`** en la instancia HA. El servidor efímero se queda colgado tras los tests.  
+**Fix:** Guardar PID del proceso HA en `server-info.json` durante setup y matarlo por PID en teardown.
+
+### P13 — hass-taste-test diseñado para Lovelace, no native panels
+
+Sus APIs de card (`addCard`, etc.) no aplican a `ev-trip-planner`. Hay que navegar por sidebar/URL directamente.
+
+### P14 — Web search del agente rota en este entorno
+
+Los 3 intentos de `WebSearch` fallaron con `API Error 400`. El agente tiene acceso a skills y codebase local, pero **no puede hacer web research externo**. Relevante para decidir qué poner en skills vs qué confiar en web search dinámico.
 
 ---
 
@@ -121,8 +155,6 @@ El agente principal se quedó esperando al research-analyst que no retornó. El 
 | Separate tests per action | `baseURL` dinámico / puerto efímero |
 | | `hass-taste-test` reemplaza Docker |
 
-**Progreso.md sí mencionó Shadow DOM** (de copilot-instructions). Pero no como constraint de arquitectura.
-
 ---
 
 ## Plan de investigación: estado
@@ -131,14 +163,15 @@ El agente principal se quedó esperando al research-analyst que no retornó. El 
 |---|---|---|
 | P1-P4 | Auth, 404, routing, bugs | ✅ Resueltos |
 | P5 | ¿El agente tenía info disponible? | ✅ Confirmado: sí, en copilot-instructions y global.setup.ts |
-| P6 | ¿Qué fix minimal habría evitado los fallos? | 💬 Fix F (copilot-instructions) + E (hass-taste-test skill) + G (verificar infra) |
+| P6 | ¿Qué fix minimal habría evitado los fallos? | 💬 Fix F + E + G |
 | P7 | ¿Habría llegado solo al 404/sidebar? | 🔍 A observar en Phase 3 |
 | P8 | ¿Por qué falló tras conocer la causa? | ✅ IIFE baseURL |
-| P9 | ¿Playwright-best-practices tiene info de hass-taste-test? | ⚠️ Probable sí (agente lo nombró en research) |
+| P9 | ¿Playwright-best-practices tiene info de hass-taste-test? | ⚠️ Web search rota, no verificable externamente |
 | P10 | ¿Copilot-instructions describe infra inexistente? | ✅ CONFIRMADO |
-| P11 | ¿Explore agent verifica que docker-compose no existe? | ⚠️ Parcial — detectó que `test-ha/` no existe, propuso hass-taste-test como alternativa |
+| P11 | ¿global.teardown.ts tiene path hardcodeado? | ✅ CONFIRMADO — `/mnt/bunker_data/...` |
 | P12 | ¿Agente actualiza plan Docker → hass-taste-test al ver global.setup.ts? | 🔍 A observar en Phase 2 |
 | P13 | ¿El mecanismo de subagentes tiene timeout? | ❌ NO — agente bloqueado indefinidamente |
+| P14 | ¿Web search funciona en el entorno del agente? | ❌ NO — API Error 400 en todos los intentos |
 
 ---
 
@@ -151,9 +184,11 @@ El agente principal se quedó esperando al research-analyst que no retornó. El 
 | C | `ha-e2e-testing.skill.md` | Auth HA: 404, sidebar nav | Media |
 | D | `playwright-session.skill.md` | No IIFEs en baseURL | Alta |
 | E | `playwright-best-practices` skill | `hass-taste-test`, puertos dinámicos | Alta |
-| F | `ha-ev-trip-planner/copilot-instructions.md` | Corregir infra inexistente | **Urgente** |
-| G | `phase-rules.md` | Verificar que infra descrita existe | Alta |
+| F | `ha-ev-trip-planner/copilot-instructions.md` | Corregir infra inexistente (`test-ha/docker-compose.yml`) | **Urgente** |
+| G | `phase-rules.md` | Verificar que infra descrita existe antes de usarla | Alta |
 | H | `phase-rules.md` | Timeout para subagentes + cómo proceder si no retornan | Media |
+| I | `global.teardown.ts` | Reemplazar path hardcodeado por `process.cwd()` | Alta |
+| J | `global.teardown.ts` | Llamar `.close()` en instancia HA (o matar por PID) | Alta |
 
 ---
 
@@ -164,8 +199,8 @@ El agente principal se quedó esperando al research-analyst que no retornó. El 
 | React Router (SPA) | `/`, `/config` | Redirect a login |
 | Custom Panels | `/ev-trip-planner-{id}` | **404** si no auth |
 
-**Regla:** NUNCA `page.goto('/panel-url')` directo. Confirmar si `navigateViaSidebar` existe o hay que crearlo.
+**Regla:** NUNCA `page.goto('/panel-url')` directo sin auth. Navegar via sidebar tras login.
 
 ---
 
-*Última actualización: 2026-04-03 03:32 CEST — Phase 1 Explore completado. research-analyst bloqueado. Fix H añadido. Pregunta forense P12 añadida: ¿El agente actualiza Docker → hass-taste-test?*
+*Última actualización: 2026-04-03 03:50 CEST — research-analyst 2º intento completado (web search rota, pivotó a codebase). Hallazgos P11-P14 añadidos. Fixes I y J añadidos. Phase 2 requirements es el siguiente paso.*
