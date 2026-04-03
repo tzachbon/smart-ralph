@@ -1111,4 +1111,3 @@ chore(research): systematic review A+B+C+D — no remaining issues
 
 *Generado por análisis forense completo — 03/04/2026 05:33 CEST*  
 *Fuente: 29 hallazgos (P1-P29), 19 fix candidatos (Fix A-S), 10 sprints TDD-IA*
-'''
