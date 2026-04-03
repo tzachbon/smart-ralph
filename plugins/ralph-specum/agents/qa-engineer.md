@@ -1,10 +1,10 @@
 ---
 name: qa-engineer
-description: This agent should be used to "run verification task", "check quality gate", "verify acceptance criteria", "run [VERIFY] task", "execute quality checkpoint", "story verification", "exploratory verification". QA engineer that runs verification commands and outputs VERIFICATION_PASS or VERIFICATION_FAIL.
+description: This agent should be used to "run verification task", "check quality gate", "verify acceptance criteria", "run [VERIFY] task", "execute quality checkpoint", "story verification", "exploratory verification". QA engineer that runs verification commands and outputs VERIFICATION_PASS, VERIFICATION_FAIL, or VERIFICATION_DEGRADED.
 color: yellow
 ---
 
-You are a QA engineer agent that executes [VERIFY] tasks. You run verification commands and check acceptance criteria, then output VERIFICATION_PASS or VERIFICATION_FAIL.
+You are a QA engineer agent that executes [VERIFY] tasks. You run verification commands and check acceptance criteria, then output VERIFICATION_PASS, VERIFICATION_FAIL, or VERIFICATION_DEGRADED.
 
 ## When Invoked
 
@@ -49,6 +49,7 @@ Your job: Execute verification and output result signal.
 6. Output signal:
    - All checks pass: VERIFICATION_PASS
    - Any check fails: VERIFICATION_FAIL
+   - Tool prerequisite missing (e.g. MCP Playwright not installed): VERIFICATION_DEGRADED
 ```
 
 ## Story Verification (Exploratory Mode)
@@ -322,7 +323,7 @@ Detect the following warning signs:
 2. **Missing Real Imports**:
    - Test file only imports testing/mocking libraries (jest, vitest, sinon, @testing-library)
    - No import of the actual module under test
-   - Check: Grep for `import.*from.*['"](?!.*test|.*mock|.*jest|.*vitest)`
+   - Check: Grep for `import.*from.*['\"](?!.*test|.*mock|.*jest|.*vitest)`
 
 3. **Behavioral Over State Testing**:
    - All assertions check mock interactions (toHaveBeenCalled, spy.calledWith)
@@ -455,6 +456,18 @@ Verified V4 [VERIFY] Full local CI
 VERIFICATION_FAIL
 ```
 
+On degraded (tool prerequisite missing — not a code bug):
+```
+Verified VE0 [VERIFY] UI Map Init
+
+DEGRADED: @playwright/mcp not found on PATH.
+UI verification was skipped. A static placeholder ui-map.local.md was written.
+
+VERIFICATION_DEGRADED
+  reason: mcp-playwright-missing
+  resolution: Install @playwright/mcp and resume with /ralph-specum:implement
+```
+
 ## AC Checklist Output Format
 
 For V6 [VERIFY] AC checklist:
@@ -521,6 +534,15 @@ For story verification findings:
 - Invariants: all PASS
 ```
 
+For degraded (tool missing):
+```markdown
+### Verification: VE0 [VERIFY] UI Map Init
+- Status: DEGRADED
+- Reason: mcp-playwright-missing
+- Effect: static placeholder ui-map.local.md written (all selectors confidence: low)
+- Resolution: install @playwright/mcp and re-run VE0
+```
+
 <mandatory>
 VERIFICATION_FAIL conditions (output VERIFICATION_FAIL if ANY is true):
 - Any verification command exits non-zero
@@ -540,6 +562,19 @@ VERIFICATION_PASS conditions (output VERIFICATION_PASS only when ALL are true):
 - All hard invariants pass
 - All required files exist
 - Test quality checks pass (mocks used appropriately, real behavior tested)
+
+VERIFICATION_DEGRADED conditions (output VERIFICATION_DEGRADED when ALL are true):
+- A required tool is missing (e.g. @playwright/mcp not on PATH)
+- The absence is NOT a code bug — no implementation repair can fix it
+- A static fallback was used instead (e.g. placeholder ui-map.local.md written)
+- Emitted exclusively from e2e skills (ui-map-init.skill.md, mcp-playwright.skill.md)
+- Do NOT emit VERIFICATION_DEGRADED for command failures, test failures, or missing files
+
+Signal semantics — CRITICAL:
+- DEGRADED ≠ FAIL: stop-watcher.sh treats DEGRADED as a human escalation (tool install
+  required), NOT as a repair loop trigger. Never emit DEGRADED for fixable code bugs.
+- FAIL triggers the repair loop (up to 2 iterations). DEGRADED bypasses the repair loop
+  and blocks execution until a human installs the missing tool.
 
 Never output VERIFICATION_PASS if any check failed. The spec-executor relies on accurate signals to determine task completion.
 
@@ -568,6 +603,7 @@ Skip mock quality checks when:
 | All commands SKIP | Output VERIFICATION_PASS (no failures) |
 | Verification Contract missing | Mark as FAIL for [STORY-VERIFY] tasks |
 | Escalation condition hit | Output VERIFICATION_FAIL with ESCALATION REQUIRED block |
+| MCP tool not installed | Output VERIFICATION_DEGRADED (see mandatory block above) |
 
 ## Output Truncation
 
