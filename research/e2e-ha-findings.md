@@ -52,23 +52,60 @@ No estamos testeando si el agente "pasa los tests". Estamos testeando si el agen
 
 | Paso | Comando/Acción | Estado | Observaciones |
 |---|---|---|---|
-| 1 | `/start` — prompt inicial | 🔍 Pendiente | |
-| 2 | product-manager genera spec | 🔍 Pendiente | |
-| 3 | spec-executor Phase 1 (research) | 🔍 Pendiente | ¿Lee `panel.py`? |
-| 4 | spec-executor Phase 2 (scaffold) | 🔍 Pendiente | ¿`baseURL` seguro? |
-| 5 | spec-executor Phase 3 (implement) | 🔍 Pendiente | ¿Usa `navigateViaSidebar`? |
-| 6 | qa-engineer verifica | 🔍 Pendiente | ¿Emite señal correcta? |
-| 7 | stop-watcher reacciona | 🔍 Pendiente | ¿Trata DEGRADED bien? |
+| 1 | `/start` — prompt inicial | ✅ Completado | Ver Bloque 11 |
+| 2 | goal-interview — Q1 Scope | ✅ Completado | User respondió: Happy-path only |
+| 3 | goal-interview — Q2 Structure | 🔍 En curso | User respondió: POM. ¿Mencionará Shadow DOM por su cuenta? |
+| 4 | goal-interview — Q3..Q5 | 🔍 Pendiente | ¿Preguntará sobre baseURL/hass-taste-test? |
+| 5 | spec-executor Phase 1 (research) | 🔍 Pendiente | ¿Lee `panel.py`? ¿experimenta? |
+| 6 | spec-executor Phase 2 (scaffold) | 🔍 Pendiente | ¿`baseURL` seguro? |
+| 7 | spec-executor Phase 3 (implement) | 🔍 Pendiente | ¿Usa `navigateViaSidebar`? |
+| 8 | qa-engineer verifica | 🔍 Pendiente | ¿Emite señal correcta? |
+| 9 | stop-watcher reacciona | 🔍 Pendiente | ¿Trata DEGRADED bien? |
 
 ### Prompt inicial para `/start` (Paso 1)
 
 ```
 Quiero añadir tests e2e al componente ev_trip_planner.
-El componente es un custom panel de Home Assistant.
-Los tests deben cubrir el flujo principal: abrir el panel, planificar un viaje, ver el resultado.
+Los tests deben cubrir el flujo principal: crear un vehiculo integracion ver su panel,
+crear y viaje y que se liste en el panel del vehiculo
 ```
 
 > **Por qué este prompt:** Es intencionalmente escueto — no le damos información sobre cómo funciona HA, ni sobre `navigateViaSidebar`, ni sobre el ciclo de vida de Playwright. Es una prueba de caja negra: el agente debe descubrir esas cosas por sí solo durante Phase 1 (research). Si las descubre, el sistema funciona. Si no, sabemos exactamente qué añadir y dónde.
+
+---
+
+## Bloque 11 — Observaciones /start → goal-interview (sesión 2026-04-03)
+
+### 11.1 Comportamiento en /start
+
+- ✅ **Rama detectada correctamente:** estaba en `e2e-trip-crud-tests`, preguntó si continuar o crear nueva rama
+- ✅ **Skill discovery explícito y correcto:** seleccionó `e2e-testing-patterns` + `playwright-best-practices`, descartó `home-assistant-best-practices` con justificación ("E2E patterns, not HA config")
+- ✅ **No hizo preguntas redundantes** (2ª ejecución — en la 1ª preguntó URL innecesariamente)
+- ✅ **Leyó `copilot-instructions.md`** e infirió `http://localhost:8123` sin preguntar
+- ⚠️ **No inspeccionó el único `.spec.ts` existente** — había un archivo de tests previo que podría ser el único ejemplo de patrones en el proyecto. No lo leyó.
+- ⚠️ **`playwright-results.json` leído de sesión anterior** — posible contaminación de contexto con resultados viejos
+
+### 11.2 Goal Interview — Q1 (Scope)
+
+- Pregunta bien formulada con opciones claras
+- User respondió: **Happy-path only** (correcto para primer ciclo)
+- El agente NO acotó espontáneamente el scope — esperó a que el usuario decidiera
+
+### 11.3 Goal Interview — Q2 (Structure)
+
+- Preguntó POM vs Direct. Opciones claras.
+- User respondió: **POM**
+- **🔍 PREGUNTA CLAVE:** ¿La descripción del POM en la skill menciona Shadow DOM? ¿O el agente lo tendrá en cuenta al generar los locators? Si no lo menciona aquí en la interview, probablemente tampoco lo hará al implementar → mismo bug de la sesión anterior.
+- El usuario NO dio pista de Shadow DOM. El agente debe encontrarlo en la skill o en el codebase.
+
+### 11.4 Señal crítica a vigilar en Q3..Q5
+
+Las preguntas de la interview que más importan para detectar si el agente tiene el conocimiento correcto:
+- ¿Pregunta cómo manejar `baseURL` con puerto dinámico (`hass-taste-test`)?
+- ¿Pregunta sobre `navigateViaSidebar` vs `goto` directo?
+- ¿Menciona Shadow DOM como constraint técnico?
+
+Si NO pregunta ninguna de estas tres cosas → el agente no tiene esa información en sus skills y la Phase 1 será la prueba definitiva.
 
 ---
 
@@ -80,9 +117,9 @@ Los tests deben cubrir el flujo principal: abrir el panel, planificar un viaje, 
 | P2 | ¿Por qué los paneles custom de HA devuelven 404 sin auth en lugar de redirigir? | ✅ Resuelto | Bloque 7 |
 | P3 | ¿Por qué `goto` directo a panel falla aunque estemos autenticados? | ✅ Resuelto | Bloque 7 |
 | P4 | ¿El bug de `storageState` no guardado era el único bug o había más? | ✅ Resuelto: había más | Bloque 0 |
-| P5 | ¿El agente tenía la información disponible o realmente no podía saberlo? | 🔍 A observar en prueba activa | Bloque 8 |
+| P5 | ¿El agente tenía la información disponible o realmente no podía saberlo? | 🔍 A observar — Bloque 11 activo | Bloque 8 |
 | P6 | ¿Qué cambio minimal en el sistema habría evitado todos estos fallos? | 💬 En debate | Bloque 9 |
-| P7 | ¿El agente sin empujón del usuario habría llegado a la hipótesis del 404/sidebar? | 🔍 A observar en prueba activa | Bloque 8 |
+| P7 | ¿El agente sin empujón del usuario habría llegado a la hipótesis del 404/sidebar? | 🔍 A observar — Bloque 11 activo | Bloque 8 |
 | P8 | ¿Por qué el agente sigue fallando incluso después de conocer la causa raíz del 404? | ✅ Resuelto | Bloque 10 |
 
 ---
@@ -130,7 +167,7 @@ Could not read server-info.json, using default localhost:8123   ← IIFE al carg
 
 ### 10.3 Implicación para la prueba activa
 
-🔍 **Pregunta clave del Paso 4:** ¿El agente, partiendo de cero, monta `baseURL` de forma segura (con `process.env`) o cae en el mismo patrón de IIFE?
+🔍 **Pregunta clave del Paso 6:** ¿El agente, partiendo de cero, monta `baseURL` de forma segura (con `process.env`) o cae en el mismo patrón de IIFE?
 
 ---
 
@@ -143,7 +180,7 @@ Could not read server-info.json, using default localhost:8123   ← IIFE al carg
 
 **Regla emergida:** Para HA custom panels, NUNCA `page.goto('/panel-url')`. Siempre `navigateViaSidebar()`.
 
-🔍 **Pregunta clave del Paso 3:** ¿El agente descubre esto leyendo `panel.py` durante Phase 1, o lo ignora y escribe tests con `goto` directo?
+🔍 **Pregunta clave del Paso 5:** ¿El agente descubre esto leyendo `panel.py` durante Phase 1, o lo ignora y escribe tests con `goto` directo?
 
 ---
 
@@ -194,4 +231,4 @@ Lo que le faltó al agente no era la hipótesis (podía generarla) sino el **gat
 
 ---
 
-*Última actualización: 2026-04-03 02:29 CEST — Nuevo plan de prueba activo desde `/start` con proyecto limpio*
+*Última actualización: 2026-04-03 02:55 CEST — Bloque 11 añadido: observaciones sesión activa hasta Q2 goal-interview*
