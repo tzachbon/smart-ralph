@@ -361,13 +361,7 @@ that involves browser interaction MUST include a **Skills** field and an **Anti-
     - `skills/e2e/mcp-playwright.skill.md` (verification protocol)
     - `skills/e2e/playwright-session.skill.md` (session lifecycle)
     - `skills/e2e/examples/homeassistant-selector-map.skill.md` (if HA project)
-  - **Anti-Patterns**:
-    - Do NOT use `page.goto()` for internal app routes — use sidebar/menu navigation
-    - Do NOT use `waitForTimeout()` — use condition-based waits
-    - Do NOT hardcode CSS selectors, XPath, or entity IDs — use `getByRole`/`getByTestId`
-    - Do NOT navigate to URLs with consumed auth tokens (`auth_callback`, `code=`)
-    - Do NOT write duplicate `waitForURL` calls
-    - Do NOT invent selectors — read `ui-map.local.md` or use `browser_generate_locator`
+  - **Anti-Patterns**: See `references/e2e-anti-patterns.md` — include all relevant sections for this task type
 ```
 
 **Why**: Subagents receive tasks in isolation. Without explicit skill references,

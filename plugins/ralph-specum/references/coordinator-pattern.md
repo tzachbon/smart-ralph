@@ -203,12 +203,9 @@ Task Body:
  For E2E verification: include Test Strategy section and any framework-specific decisions.]
 
 ### Anti-Patterns (DO NOT)
-[List anti-patterns that apply to verification. For E2E/VE tasks ALWAYS include:
- - "Do NOT use goto() for internal app routes — navigate via UI elements (sidebar, menus)"
- - "Do NOT use waitForTimeout() — use waitForSelector or condition-based waits"
- - "Do NOT hardcode entity IDs, dynamic IDs, or CSS class selectors"
- - "Do NOT write tests that only verify mock interactions — assert on real state/values"
- - Anti-patterns from .progress.md Learnings (especially failures from prior tasks)]
+[List anti-patterns that apply to verification. For E2E/VE tasks ALWAYS include
+ the relevant sections from `${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md`,
+ plus any project-specific anti-patterns from .progress.md Learnings]
 
 ### Required Skills (for VE tasks)
 [Same skill paths as sequential delegation — see above]
@@ -258,11 +255,9 @@ Current task from tasks.md:
 
 ### Anti-Patterns (DO NOT)
 [List specific anti-patterns from design.md or .progress.md that apply to this task.
- For E2E/VE tasks, ALWAYS include:
- - Navigation anti-patterns (e.g., "do NOT use goto() for internal app routes — use sidebar/menu navigation")
- - Selector anti-patterns (e.g., "do NOT hardcode CSS selectors — use getByRole/getByTestId")
- - Auth anti-patterns (e.g., "do NOT reuse consumed OAuth tokens")
- - Any anti-patterns recorded in .progress.md from previous task failures]
+ For E2E/VE tasks, ALWAYS include the anti-patterns from
+ `${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md` relevant to the task,
+ plus any project-specific anti-patterns from .progress.md Learnings]
 
 ### Required Skills (for VE tasks)
 [List exact skill file paths the spec-executor must load for this task type.
