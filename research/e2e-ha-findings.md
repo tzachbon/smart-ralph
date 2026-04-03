@@ -35,162 +35,119 @@
 | 13 | Phase 1 — research-analyst (2º intento) | ✅ Completado | Web search rota → pivotó a codebase local. Ver Bloque 16 |
 | 14 | Phase 2 — requirements | ✅ Completado | 9 preguntas → 6 US, 9 FR, 3 NFR. Ver Bloque 17 |
 | 15 | Phase 2 — design | ✅ Completado + Aprobado | 590 líneas. Sólido. Ver Bloque 18 |
-| 16 | Phase 3 — tasks (en ejecución) | 🔍 En curso | `/ralph-specum:tasks` corriendo ahora |
+| 16 | Phase 3 — tasks | ✅ Completado | 18 tareas coarse. P15 resuelta. Ver Bloque 19 |
+| 16b | Phase 3 — spec-reviewer (en curso) | 🔍 En curso | Validando tasks antes de implement |
 | 17 | Phase 3 — implement | 🔍 Pendiente | |
 | 18 | qa-engineer verifica | 🔍 Pendiente | |
+
+---
+
+## Bloque 19 — ✅ Phase 3 Tasks: Análisis forense
+
+### Resultado: 18 tareas coarse, 5 fases
+
+| Fase | Tareas | Contenido |
+|---|---|---|
+| Phase 1 POC | 1.1–1.8 | 6 archivos crear + TypeScript check + smoke test |
+| Phase 2 Refactor | 2.1–2.3 | Fix dialog handler, API cleanup, quality gate |
+| Phase 3 Testing | 3.1–3.2 | Selector fixes, full suite |
+| Phase 4 Quality | 4.1–4.3 + VE1–VE3 | Local CI + CI pipeline + AC checklist + infra VE |
+| Phase 5 PR | 5.1–5.2 | PR creation + CI monitor |
+
+### P15 RESUELTA ✅ — El agente detectó solo el bug de scope
+
+Tarea 2.1 incluye explícitamente:
+> *"Fix deleteTrip method — the design had `page.on('dialog', ...)` inside an instance method which is wrong"*
+
+El task-planner releyó el design con ojo crítico y detectó el bug sin que nadie se lo dijera.
+
+### P17 — global.teardown.ts NO incluido en tasks
+
+El path hardcodeado `/mnt/bunker_data/...` no aparece como tarea de fix. **Confirmado: el bug solo se descubrirá en VE3/CI.** Esto es el hallazgo esperado.
+
+### P18 — 🔍 NUEVO: Skills ausentes en tasks.md
+
+**Observación:** Ninguna tarea referencia skills del sistema (`playwright-best-practices`, `ha-e2e-testing`, etc.). Las tareas describen qué hacer pero no indican qué skill consultar durante la implementación.
+
+**Pregunta forense:** ¿Es esto un problema de diseño de ralph-specum (las skills deberían referenciarse en tasks) o es intencionado (el agente implementador las consulta por su cuenta)?
+
+**Sub-preguntas:**
+- ¿El agente de implement consultará skills proactivamente?
+- ¿Si no las consulta, escribirá código peor que si las tuviera?
+- ¿Deberían las tasks incluir `skills: [playwright-best-practices, ha-e2e-testing]` por tarea?
+
+**Impacto potencial:** Si el agente implementa sin consultar skills, podría reincidir en patrones erróneos (IIFE baseURL, `page.goto` directo sin auth) que las skills corregirían.
+
+**Fix candidato L:** `tasks.md` debería incluir campo `skills` por tarea con las skills relevantes a consultar.
 
 ---
 
 ## Bloque 18 — ✅ Phase 2 Design: Análisis forense
 
 ### Lo que hizo bien
-- **Leyó `config_flow.py` proactivamente** — mapeó los 5 pasos con campos reales (`vehicle_name`, `battery_capacity`, `charging_power`, etc.)
-- **Leyó `panel.js`** — confirmó selectores Shadow DOM reales (`.add-trip-btn`, `.trip-form-overlay`, `.trip-card[data-trip-id]`)
+- **Leyó `config_flow.py` proactivamente** — mapeó los 5 pasos con campos reales
 - **Pierce combinator `>>`** documentado correctamente con selectores específicos
-- **Separó concerns**: `global.setup.ts` (servidor) vs `auth.setup.ts` (Config Flow) — buena arquitectura
+- **Separó concerns**: `global.setup.ts` (servidor) vs `auth.setup.ts` (Config Flow)
 - **`workers: 1`** — entendió que hass-taste-test no soporta paralelismo
-- **Detectó que `global.teardown.ts` existe pero tiene bugs** — no lo tocó, lo referencia como "existente"
-- **Respondió P12** ✅ — Sí actualizó plan Docker → hass-taste-test al ver `global.setup.ts`
+- **P12 RESUELTA ✅** — actualizó plan Docker → hass-taste-test
 
-### Bugs detectados en el design (a verificar en tasks/implement)
+### Bugs detectados en el design
 
-**P15 — Bug de scope en `deleteTrip()`:**
-```typescript
-// ESCRITO (incorrecto):
-page.on('dialog', dialog => dialog.accept());  // `page` no está en scope
-
-// CORRECTO:
-this.page.on('dialog', dialog => dialog.accept());
-```
+**P15 — Bug de scope en `deleteTrip()`** → ✅ Detectado en tasks (tarea 2.1)
 
 **P16 — `auth.setup.ts` orphan — no conectado al config:**
-El agente diseñó `auth.setup.ts` como "project-level setup" pero no lo conecta en `playwright.config.ts` mediante `dependencies`. Sin esto:
+Falta en `playwright.config.ts`:
 ```typescript
-// Falta en playwright.config.ts:
 projects: [
   { name: 'setup', testMatch: /auth\.setup\.ts/ },
   { name: 'chromium', dependencies: ['setup'], use: { storageState: '...' } }
 ]
 ```
-El `auth.setup.ts` nunca se ejecutará automáticamente.
-
-### Preguntas forenses activas para phase tasks/implement
-
-| # | Pregunta | Estado |
-|---|---|---|
-| P17 | ¿Detectará el bug P15 (scope `page`) en la fase de tasks? | 🔍 A observar |
-| P18 | ¿Conectará correctamente `auth.setup.ts` como dependency en `playwright.config.ts`? | 🔍 A observar |
-| P19 | ¿Intentará corregir `global.teardown.ts` (path hardcodeado) o lo dejará? | 🔍 A observar |
+🔍 ¿Lo detectará el spec-reviewer? ¿Lo corregirá en implement?
 
 ---
 
 ## Bloque 17 — ✅ Phase 2 Requirements: Resumen
 
 - 9 preguntas al usuario (interview)
-- 6 User Stories (US-1 a US-6)
-- 9 Functional Requirements (FR-1 a FR-9)
-- 3 Non-Functional Requirements (NFR-1 a NFR-3)
-- Decisión Docker → confirmada **hass-taste-test** por el agente tras ver `global.setup.ts`
+- 6 User Stories (US-1 a US-6), 9 FR, 3 NFR
 - Commit: `spec(e2e-ev-trip-planner): add requirements for EV Trip Planner E2E test suite`
 
 ---
 
 ## Bloque 16 — ✅ research-analyst (2º intento): Hallazgos
 
-### Contexto
-Web search rota (API Error 400 en los 3 intentos). El agente pivotó correctamente a leer `node_modules/hass-taste-test/` directamente — **más fiable que web search**.
-
-### Hallazgos del research
-
-- `hass-taste-test` autor real: **rianadon** (no twrecked — el primer intento de URL era incorrecto)
-- Diseñado para **Lovelace cards** — `ev-trip-planner` es un **native panel**, las APIs de card NO aplican
-- Shadow DOM: `>>` pierce combinator confirmado como patrón correcto
-- `playwright.config.ts` — **NO EXISTE** en el repo (gap crítico)
-- `tests/e2e/` — directorio **vacío/inexistente** (el workflow lo referencia pero no hay nada)
-- `auth.setup.ts` — **NO EXISTE** — nadie automatiza el Config Flow aún
-
-### Gap analysis confirmado
-
-| Item | Estado |
-|---|---|
-| `tests/e2e/` directory | **MISSING** |
-| `playwright.config.ts` | **MISSING** |
-| `auth.setup.ts` | **MISSING** |
-| `EVTripPlannerPage` POM | **MISSING** |
-| `ConfigFlowPage` POM | **MISSING** |
-| `vehicle.spec.ts` | **MISSING** |
-| `trip.spec.ts` | **MISSING** |
+- `hass-taste-test` diseñado para Lovelace cards — native panel requiere sidebar/URL
+- Shadow DOM: `>>` pierce combinator confirmado
+- Gap analysis: 7 archivos MISSING
+- Web search rota → pivotó a `node_modules/hass-taste-test/`
 
 ---
 
 ## Bloque 15 — ❌ research-analyst (1er intento): Incidente
 
-El agente principal se quedó esperando al research-analyst que no retornó. Flujo detenido indefinidamente.
-
-**Implicación:** El mecanismo de coordinación de subagentes no tiene timeout. ⇒ **Fix H candidato.**
+Agente no retornó. Sin timeout en mecanismo de subagentes. ⇒ **Fix H candidato.**
 
 ---
 
 ## Bloque 14 — ✅ Phase 1 Explore: Hallazgos críticos
 
-### Hallazgo 14.1 — ⚠️ CONTRADICCIÓN DOCKER CONFIRMADA (Fix F validado)
-
-Existen **dos docker-compose distintos** en el repo:
-
-| Archivo | Propósito real | Estado |
-|---|---|---|
-| `docker-compose.yml` (raíz) | Manual testing. Puerto **8124**. Volumenes locales hardcodeados. | Existe, pero NO es para CI |
-| `test-ha/docker-compose.yml` | Lo que describe `copilot-instructions.md` para tests | **NO EXISTE** |
-
-`copilot-instructions.md` apunta a `test-ha/docker-compose.yml` que no existe. **Fix F es urgente e independiente del experimento.**
-
-### Hallazgo 14.2 — ✅ hass-taste-test ya lo gestiona todo (invalida el Docker approach)
-
-`global.setup.ts` ya existe y usa `hass-taste-test` para levantar HA efímero. **Implicación crítica:** El agente propuso crear `test-ha/docker-compose.yml` en la interview, pero **el codebase ya tiene una solución mejor**.
-
-**P12 RESUELTA ✅** — El agente SÍ actualizó su plan Docker → hass-taste-test al ver `global.setup.ts`.
-
-### Hallazgo 14.3 — ⚠️ Shadow DOM: Explore NO encontró `navigateViaSidebar`
-
-❌ **NO hay `navigateViaSidebar` en el codebase** — no existe como función. El agente tendrá que crearla o usar `page.goto()` directo con auth correcta.
-
-### Hallazgo 14.4 — ✅ CSS selectors del panel (disponibles)
-
-- `.add-trip-btn`, `.trip-form-overlay`, `.trip-form-container`
-- `.trips-list`, `.trip-card[data-trip-id]`, `.no-trips`
-- Todos dentro del Shadow DOM de `ev-trip-planner-panel`
-
-### Hallazgo 14.5 — Tensión Jest vs Playwright
-
-`package.json` mezcla `jest` ^30.3.0 y `@playwright/test` ^1.58.2. Scripts de `package.json` usan jest; el workflow de GitHub Actions usa `npx playwright test`.
+- `test-ha/docker-compose.yml` NO EXISTE (Fix F urgente)
+- `global.setup.ts` usa hass-taste-test (invalida Docker approach)
+- CSS selectors del panel disponibles en `panel.js`
+- Tensión Jest vs Playwright en `package.json`
 
 ---
 
-## Bloque 13 — 🦠 Archivos contaminados: global.setup.ts / global.teardown.ts
-
-### Estado: identificados, NO borrar
-
-Los archivos existen en el repo con bugs conocidos. Se deben **dejar para que el agente los corrija** en fase de implementación — borrarlos haría que el agente inventara algo nuevo sin aprovechar lo que ya funciona.
+## Bloque 13 — 🦠 Archivos contaminados
 
 ### P11 — global.teardown.ts: path hardcodeado (bloqueador CI)
-
 ```typescript
-const rootDir = '/mnt/bunker_data/ha-ev-trip-planner/ha-ev-trip-planner';
+const rootDir = '/mnt/bunker_data/ha-ev-trip-planner/ha-ev-trip-planner'; // ❌
+const rootDir = process.cwd(); // ✅
 ```
-Path absoluto de la máquina de Madrid hardcodeado. Rompe en GitHub Actions y cualquier otra máquina.  
-**Fix:** `const rootDir = process.cwd();`
 
-### P12 — global.teardown.ts: servidor HA nunca se cierra ✅ RENOMBRADA
-
-(Ver P12 → renombrada a "¿agente actualiza plan Docker?" en plan de investigación. El bug de teardown es P11 + el de `.close()` es Fix J.)
-
-### P13 — hass-taste-test diseñado para Lovelace, no native panels
-
-Sus APIs de card (`addCard`, etc.) no aplican a `ev-trip-planner`. Hay que navegar por sidebar/URL directamente.
-
-### P14 — Web search del agente rota en este entorno
-
-Los 3 intentos de `WebSearch` fallaron con `API Error 400`. El agente tiene acceso a skills y codebase local, pero **no puede hacer web research externo**.
+### global.teardown.ts: servidor HA nunca se cierra (Fix J)
 
 ---
 
@@ -198,10 +155,9 @@ Los 3 intentos de `WebSearch` fallaron con `API Error 400`. El agente tiene acce
 
 | Capturado | NO capturado |
 |---|---|
-| Happy-path, POM, Docker, CI, Chromium | Shadow DOM (`pierce/` selector) |
-| Docker test HA ≠ localhost:8123 | `page.goto` vs sidebar nav |
-| Separate tests per action | `baseURL` dinámico / puerto efímero |
-| | `hass-taste-test` reemplaza Docker |
+| Happy-path, POM, CI, Chromium | Shadow DOM pierce selector |
+| Docker test HA ≠ localhost:8123 | baseURL dinámico / puerto efímero |
+| Separate tests per action | hass-taste-test reemplaza Docker |
 
 ---
 
@@ -209,24 +165,25 @@ Los 3 intentos de `WebSearch` fallaron con `API Error 400`. El agente tiene acce
 
 | # | Pregunta | Estado |
 |---|---|---|
-| P1-P4 | Auth, 404, routing, bugs | ✅ Resueltos |
-| P5 | ¿El agente tenía info disponible? | ✅ Confirmado: sí, en copilot-instructions y global.setup.ts |
+| P1–P4 | Auth, 404, routing, bugs | ✅ Resueltos |
+| P5 | ¿El agente tenía info disponible? | ✅ Sí, en copilot-instructions y global.setup.ts |
 | P6 | ¿Qué fix minimal habría evitado los fallos? | 💬 Fix F + E + G |
-| P7 | ¿Habría llegado solo al 404/sidebar? | 🔍 A observar en Phase 3 |
+| P7 | ¿Habría llegado solo al 404/sidebar? | 🔍 A observar en Phase 3 implement |
 | P8 | ¿Por qué falló tras conocer la causa? | ✅ IIFE baseURL |
-| P9 | ¿Playwright-best-practices tiene info de hass-taste-test? | ⚠️ Web search rota, no verificable externamente |
+| P9 | ¿Playwright-best-practices tiene info de hass-taste-test? | ⚠️ Web search rota |
 | P10 | ¿Copilot-instructions describe infra inexistente? | ✅ CONFIRMADO |
-| P11 | ¿global.teardown.ts tiene path hardcodeado? | ✅ CONFIRMADO — `/mnt/bunker_data/...` |
-| P12 | ¿Agente actualiza plan Docker → hass-taste-test al ver global.setup.ts? | ✅ SÍ — lo hizo en design phase |
-| P13 | ¿El mecanismo de subagentes tiene timeout? | ❌ NO — agente bloqueado indefinidamente |
-| P14 | ¿Web search funciona en el entorno del agente? | ❌ NO — API Error 400 en todos los intentos |
-| P15 | ¿Detectará bug de scope `page` en deleteTrip()? | 🔍 A observar en tasks/implement |
-| P16 | ¿Conectará auth.setup.ts como dependency en playwright.config.ts? | 🔍 A observar en tasks/implement |
-| P17 | ¿Intentará corregir global.teardown.ts path hardcodeado? | 🔍 A observar en implement |
+| P11 | ¿global.teardown.ts tiene path hardcodeado? | ✅ CONFIRMADO |
+| P12 | ¿Agente actualiza plan Docker → hass-taste-test? | ✅ SÍ — design phase |
+| P13 | ¿Mecanismo subagentes tiene timeout? | ❌ NO |
+| P14 | ¿Web search funciona en el entorno? | ❌ NO — API Error 400 |
+| P15 | ¿Detectará bug scope `page` en deleteTrip()? | ✅ SÍ — tarea 2.1 en tasks |
+| P16 | ¿Conectará auth.setup.ts como dependency? | 🔍 A observar — ¿spec-reviewer lo detecta? |
+| P17 | ¿Corregirá global.teardown.ts path hardcodeado? | ❌ NO en tasks — solo en CI failure |
+| P18 | ¿Skills ausentes en tasks — problema de diseño? | 🔍 NUEVA — ver Bloque 19 |
 
 ---
 
-## Bloque 9 — Fixes candidatos (actualizado)
+## Bloque 9 — Fixes candidatos
 
 | Fix | Dónde | Qué | Prioridad |
 |---|---|---|---|
@@ -240,7 +197,8 @@ Los 3 intentos de `WebSearch` fallaron con `API Error 400`. El agente tiene acce
 | H | `phase-rules.md` | Timeout para subagentes + cómo proceder si no retornan | Media |
 | I | `global.teardown.ts` | Reemplazar path hardcodeado por `process.cwd()` | Alta |
 | J | `global.teardown.ts` | Llamar `.close()` en instancia HA (o matar por PID) | Alta |
-| K | `playwright.config.ts` (a crear) | `auth.setup.ts` debe ser dependency del proyecto Chromium | Alta |
+| K | `playwright.config.ts` | `auth.setup.ts` debe ser dependency del proyecto Chromium | Alta |
+| L | `tasks.md` template | Incluir campo `skills` por tarea con skills relevantes a consultar | Media |
 
 ---
 
@@ -255,4 +213,4 @@ Los 3 intentos de `WebSearch` fallaron con `API Error 400`. El agente tiene acce
 
 ---
 
-*Última actualización: 2026-04-03 04:09 CEST — design aprobado, phase tasks en ejecución. P15/P16/P17 añadidas. Fix K añadido. P12 resuelta (agente SÍ pivotó a hass-taste-test).*
+*Última actualización: 2026-04-03 04:22 CEST — tasks completado (18 tareas). P15 resuelta (agente detectó bug scope solo). P17 confirmada (teardown bug no en tasks). P18 nueva (skills ausentes). Fix L añadido. Spec-reviewer corriendo.*
