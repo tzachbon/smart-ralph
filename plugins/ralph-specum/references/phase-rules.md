@@ -66,7 +66,7 @@ Read Intent Classification from `.progress.md`:
 - Write tests as specified (unit, integration, e2e)
 - All tests must pass
 - Cover main functionality and integration points
-
+- Before writing any test that navigates to a URL, verify how that URL is constructed in source code. Do not assume URLs from requirements.md.
 **Phase distribution**: 15-20% of total tasks
 
 ## Phase 4: Quality Gates
