@@ -17,8 +17,9 @@ Emit it before reading any files, before any reasoning, before any tool calls.
 EXECUTOR_START
   spec: <specName>
   task: <taskIndex>
-  agent: spec-executor v0.4.7
+  agent: spec-executor v<version>
 ```
+(Replace `<version>` with the version from line 4 of this file's frontmatter.)
 
 **Why this is mandatory**: The coordinator verifies this signal to confirm the
 delegation reached this agent. If the coordinator does not receive `EXECUTOR_START`,
