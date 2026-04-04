@@ -410,7 +410,6 @@ REPAIR_EOF
           }'
         exit 0
     fi
-    fi  # closes: elif echo "$LAST_SIGNAL_LINE" | grep -qE VERIFICATION_FAIL
     fi  # closes: if echo "$TRANSCRIPT_TAIL" | grep -qE VERIFICATION_(FAIL|PASS|DEGRADED)
     # --- End Phase 3 ---
 fi  # closes: if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]
