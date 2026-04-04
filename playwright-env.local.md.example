@@ -8,46 +8,57 @@
 #   1. Copy to <your-project>/playwright-env.local.md
 #   2. Fill in the values for your project
 #   3. Export the actual secrets in your shell:
-#        export RALPH_LOGIN_USER='your@email.com'
-#        export RALPH_LOGIN_PASS='your-password'
+#        export YOUR_APP_USER='your@email.com'
+#        export YOUR_APP_PASS='your-password'
 #
-# Auth mode options: none | form | token | cookie | basic | oauth | storage-state
+# Auth mode options: none | form | token | cookie | basic | oauth | storage-state | login-flow
 
 # ── Core ────────────────────────────────────────────────────────────────────
-appUrl: http://localhost:3000
-appEnv: local
-allowWrite: true
+appUrl: # REQUIRED: e.g. http://localhost:3000 or http://192.168.1.100:8123
+appEnv: # REQUIRED: local | staging | production
+allowWrite: # REQUIRED: true | false
 
 # ── Browser ─────────────────────────────────────────────────────────────────
-browser: chromium
-headless: true
-viewport: desktop
-# viewport: mobile          # emulates 390x844 (iPhone 14)
-# viewport: tablet          # emulates 768x1024
-# viewport: 1440x900        # explicit size
+browser: # chromium | firefox | webkit
+headless: # true | false
+viewport: # desktop | mobile | tablet | "<width>x<height>"
+# viewport: desktop
+# viewport: "<width>x<height>"
 
-locale: en-US
-timezone: UTC
+locale: # e.g. en-US, es-ES, de-DE
+timezone: # e.g. UTC, Europe/Madrid, America/New_York
+
+# ── Auth: login-flow (REST API login flow + optional trusted network bypass) ──
+# Authenticates via a multi-step login flow API (POST /auth/login_flow).
+# Optionally combines with trusted network / localhost bypass for browser sessions.
+# Typical flow: create flow → submit credentials → exchange for token → use storage-state.
+# authMode: login-flow
+# haUrl: # REQUIRED: Base URL of the application instance
+# haToken: # REQUIRED: Long-lived access token OR credentials via env vars
+# loginFlowUrl: # REQUIRED: Path or full URL for the login flow endpoint
+# loginUserVar: # Env var name holding the username (if using user/password flow)
+# loginPassVar: # Env var name holding the password (if using user/password flow)
+# storageStatePath: # Path for Playwright storage state file (gitignored)
 
 # ── Auth: form (username + password via login page) ─────────────────────────
-authMode: form
-loginUrl: /login
-loginUserVar: RALPH_LOGIN_USER      # name of the env var holding the username
-loginPassVar: RALPH_LOGIN_PASS      # name of the env var holding the password
-userRole: admin                     # informational — documents which user type
+# authMode: form
+# loginUrl: # REQUIRED: Path or full URL to login page
+# loginUserVar: # REQUIRED: Env var name holding the username
+# loginPassVar: # REQUIRED: Env var name holding the password
+# userRole: # Optional: informational — documents which user type is used
 
 # ── Auth: token ─────────────────────────────────────────────────────────────
 # authMode: token
-# authTokenVar: RALPH_AUTH_TOKEN    # name of the env var holding the token
+# authTokenVar: # REQUIRED: Env var name holding the bearer token
 
 # ── Auth: cookie ────────────────────────────────────────────────────────────
 # authMode: cookie
-# sessionCookieNameVar: RALPH_SESSION_COOKIE_NAME
-# sessionCookieValueVar: RALPH_SESSION_COOKIE_VALUE
+# sessionCookieNameVar: # REQUIRED: Env var name for cookie name
+# sessionCookieValueVar: # REQUIRED: Env var name for cookie value
 
 # ── Auth: storage-state (reusable authenticated browser state) ──────────────
 # authMode: storage-state
-# storageStatePath: .ralph-auth-state.json   # local file, gitignored
+# storageStatePath: # REQUIRED: Local file path for storage state (gitignored)
 
 # ── Auth: oauth / sso ────────────────────────────────────────────────────────
 # authMode: oauth
@@ -56,12 +67,12 @@ userRole: admin                     # informational — documents which user typ
 
 # ── Auth: basic HTTP ────────────────────────────────────────────────────────
 # authMode: basic
-# loginUserVar: RALPH_LOGIN_USER
-# loginPassVar: RALPH_LOGIN_PASS
+# loginUserVar: # REQUIRED: Env var name holding the username
+# loginPassVar: # REQUIRED: Env var name holding the password
 
 # ── Seed / app state ────────────────────────────────────────────────────────
-# seedCommand: npm run seed:e2e     # runs before verification, local/staging only
+# seedCommand: # Optional: command to seed database/state before tests run (local/staging only)
 
 # ── Multi-tenant / feature flags ────────────────────────────────────────────
-# tenant: acme-corp
-# featureFlags: new-dashboard,beta-reports
+# tenant: # Optional: tenant identifier for multi-tenant setups
+# featureFlags: # Optional: comma-separated list of feature flags to enable

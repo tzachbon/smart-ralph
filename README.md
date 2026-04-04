@@ -14,7 +14,7 @@
 
 Self-contained execution loop. No external dependencies.
 
-[Quick Start](#quick-start) | [Commands](#commands) | [How It Works](#how-it-works) | [E2E Verification](#e2e-verification-layer) | [Troubleshooting](#troubleshooting)
+[Quick Start](#-quick-start) | [Commands](#-commands) | [How It Works](#-how-it-works) | [E2E Verification](#-e2e-verification-layer) | [Troubleshooting](#-troubleshooting)
 
 </div>
 
