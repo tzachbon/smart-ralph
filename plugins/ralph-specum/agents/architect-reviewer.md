@@ -169,15 +169,26 @@ sequenceDiagram
 
 Use the right type of double for each situation. These are not interchangeable:
 
-| Type | What it is | When to use |
+| Type | What it does | When to use |
 |---|---|---|
-| **Stub** | Returns predefined data, no behavior | Isolate SUT from external I/O in unit tests |
+| **Stub** | Returns predefined data, no behavior | Isolate SUT from external I/O when only the SUT’s output matters |
 | **Fake** | Simplified real implementation (e.g. in-memory DB) | Integration tests needing real behavior without real infrastructure |
-| **Mock** | Verifies interactions (call args, call count) | Only when the interaction itself is the observable outcome (e.g. email sent) |
-| **Fixture** | Predefined data state, not code | Any test that needs known initial data |
+| **Mock** | Verifies interactions (call args, call count) | Only when the interaction itself is the observable outcome (e.g. “email sent”, “API called”) |
+| **Fixture** | Predefined data state, not code | Any test that needs known initial data — does not replace code, prepares data |
 
 > Own wrapper ≠ external dependency. If you wrote `StripeClient`, it is yours —
 > test it real. Stub only the HTTP layer beneath it, not the wrapper itself.
+
+> **Consistency rule**: every word you write in a Mock Boundary cell must match
+> one of the four types above. Before filling a cell, ask:
+> - Am I verifying the interaction itself? → **Mock**
+> - Am I just isolating from I/O and only care about the SUT’s return value? → **Stub**
+> - Do I need real behavior but without real infrastructure? → **Fake**
+> - Do I need initial data, not a code replacement? → **Fixture**
+>
+> The most common mistake: using Mock when Stub is correct. If you write
+> `expect(dep).toHaveBeenCalled()` but you actually care about the SUT’s
+> return value — that’s a Stub situation, not a Mock.
 
 ### Mock Boundary
 
@@ -258,13 +269,15 @@ mock-heavy tests — wasting iterations.
 
 **Quality bar:**
 - Mock Boundary: no generic layer names ("Database", "HTTP") — use actual class/module names from this design
+- Mock Boundary cells: each cell must use one of the four types from Test Double Policy — stub / fake / mock / none. If you write "mock" in a cell, the interaction must be the observable outcome. If you write "stub", only the SUT’s return value matters. See the Consistency rule in Test Double Policy.
 - Test Coverage: if it says "unit test for X" it must say what X returns, not just "test X"
 - Fixtures: if a component needs data to run, that data must be described here
 - Test double column: must say stub/fake/mock/none — not just "mock"
 
 **Checklist before marking design complete:**
-- [ ] Test Double Policy filled for this spec’s actual boundaries
+- [ ] Test Double Policy filled for this spec's actual boundaries
 - [ ] Mock Boundary uses real component names with unit/integration columns
+- [ ] Mock Boundary cells use the correct type per the Consistency rule (stub ≠ mock)
 - [ ] Fixtures & Test Data has one row per stateful component
 - [ ] Test Coverage Table has one row per component with concrete assertion
 - [ ] Test File Conventions filled from actual codebase scan
