@@ -235,6 +235,42 @@ When intent is NOT GREENFIELD (TRIVIAL, REFACTOR, MID_SIZED), use TDD Red-Green-
 - Phase 1 = 60-70% of tasks, Phase 2 = 10-15%, Phase 3-4 = 15-25%.
 </mandatory>
 
+## tasks.md Output Format — CHECKBOX MANDATORY
+
+<mandatory>
+**ALL tasks in tasks.md MUST use checkbox format. NEVER use Markdown headings for individual tasks.**
+
+The spec-executor counts tasks with:
+```bash
+grep -c -e '- \[.\]' tasks.md
+```
+If tasks are written as `### X.X [TAG] title` (heading format), this grep returns 0 → the executor sees 0 tasks and halts immediately without executing anything.
+
+**CORRECT — checkbox format (mandatory):**
+```markdown
+- [ ] 1.1 [RED] Failing test: sensor id tracked after publish
+- [ ] 1.2 [GREEN] Add _published_entity_ids to EMHASSAdapter
+- [ ] 1.3 [YELLOW] Refactor: extract tracking into helper
+```
+
+**WRONG — heading format (forbidden):**
+```markdown
+### 1.1 [RED] Failing test: sensor id tracked after publish
+### 1.2 [GREEN] Add _published_entity_ids to EMHASSAdapter
+```
+
+**Heading rules:**
+- `##` headings → Phase sections ONLY (e.g., `## Phase 1: TDD Cycles`, `## Phase 2: Additional Testing`)
+- `###` headings → NEVER for individual tasks. Only allowed for named subsections inside a phase if truly needed (rare).
+- Every executable task → `- [ ] X.X [TAG] title` on a single line, followed by indented fields.
+
+**Self-check before writing tasks.md**: run mentally:
+```bash
+grep -c '- \[ \]' tasks.md
+```
+The count must equal the number of tasks you planned. If it would return 0, your format is wrong.
+</mandatory>
+
 ## Bug TDD Task Planning (BUG_FIX intent)
 
 <mandatory>
@@ -336,21 +372,14 @@ When generating Phase 3 (Testing) tasks, do NOT invent test categories generical
 
 **Protocol**:
 1. Read the Test Coverage Table from design.md. Each row is one component/function with a test type, assertion intent, and test double.
-2. Read the File Structure from design.md. Extract all component names that have a "Create" or "Modify" action.
-3. For each component in the Coverage Table, verify it exists in the File Structure (Create or Modify). If a component appears in Coverage Table but has no corresponding File Structure entry:
-   ```
-   ESCALATE
-     reason: coverage-table-component-not-in-file-structure
-     resolution: Component 'X' appears in Test Coverage Table but was not created or modified in Phase 1/2. Either add it to File Structure or remove it from Coverage Table.
-   ```
-4. Generate **one task per row** in the table. Do not merge rows or invent additional rows.
-5. For each task, use the row's data directly:
+2. Generate **one task per row** in the table. Do not merge rows or invent additional rows.
+3. For each task, use the row's data directly:
    - **Do**: Write the test described in "What to assert" for this component.
    - **Files**: Use the test file location from `## Test File Conventions` in design.md.
    - **Test double**: Use the value in the "Test double" column — `none`, `stub`, `fake`, or `mock`. Do not substitute.
    - **Fixtures**: If the component appears in `## Fixtures & Test Data`, include a sub-step to set up the specified factory/fixture before the test body.
    - **Verify**: Run the test runner scoped to this test file (e.g., `pnpm test -- <file>`).
-6. After all Coverage Table rows, add one `[VERIFY]` quality checkpoint that runs the full test suite.
+4. After all Coverage Table rows, add one `[VERIFY]` quality checkpoint that runs the full test suite.
 
 **If the Test Coverage Table is empty or missing**: do NOT generate Phase 3 tasks. ESCALATE:
 ```text
