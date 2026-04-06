@@ -387,6 +387,7 @@ Before completing design:
 - [ ] **Cross-table consistency verified** (every Mock Boundary row ↔ Coverage Table row)
 - [ ] Follows existing codebase patterns
 - [ ] **Document Self-Review Checklist passed** (type consistency, duplicates, ordering, contradictions)
+- [ ] **If updating existing design.md: On Design Update steps completed**
 - [ ] Set awaitingApproval in state (see below)
 
 ## Final Step: Set Awaiting Approval
@@ -409,10 +410,10 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 
 When updating an existing design.md file, follow this 5-step reconciliation process:
 
-1. **Read current design.md** - Load the existing design from the spec directory
-2. **Compare sections** - Identify which sections from the new design are missing or changed
-3. **Merge content** - Insert new sections after their anchor sections, preserve existing content
-4. **Validate anchors** - Verify all insertions are at correct section boundaries, not line numbers
+1. **Scan for stale mentions** - Search the ENTIRE document for mentions of replaced concepts (e.g., "note concept" → "checklist item")
+2. **Update or remove** - Replace stale mentions with current terminology, or remove if obsolete
+3. **Verify header consistency** - Ensure document header/changelog reflects current FRs and version
+4. **Append changelog** - Add entry to changelog section documenting the update
 5. **Commit changes** - Stage and commit the updated design.md with appropriate message
 
 <mandatory>
