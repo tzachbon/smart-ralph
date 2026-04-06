@@ -9,15 +9,15 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
 ### Track A — Spec Quality
 
 - [ ] 1.1 [POC] FR-A1: Insert Document Self-Review Checklist in architect-reviewer.md
-  - **Do**: Insert the `## Document Self-Review Checklist` section (with 4 steps in `<mandatory>` block) into `plugins/ralph-specum/agents/architect-reviewer.md` AFTER `## Quality Checklist` (line 347) and BEFORE `## Final Step: Set Awaiting Approval` (line 361). Also add checklist item to Quality Checklist.
+  - **Do**: Insert the `## Document Self-Review Checklist` section (with 4 steps in `<mandatory>` block) into `plugins/ralph-specum/agents/architect-reviewer.md` AFTER `## Analysis Process` section and BEFORE `## Final Step: Set Awaiting Approval`. Use section names as anchor — ## Quality Checklist appears twice in the file (once inside a code block), so use ## Analysis Process as the unambiguous preceding anchor. Also add checklist item to Quality Checklist as the penúltimo item (before "Set awaitingApproval in state").
   - **Files**: `plugins/ralph-specum/agents/architect-reviewer.md`
-  - **Done when**: Section inserted at correct anchor position; Quality Checklist has new item; all 4 step headings present (Type consistency, Duplicate section detection, Ordering and concurrency notes, Internal contradiction scan)
+  - **Done when**: Section inserted at correct anchor position; Quality Checklist has new item as penúltimo; all 4 step headings present (Type consistency, Duplicate section detection, Ordering and concurrency notes, Internal contradiction scan)
   - **Verify**: `grep -n "Document Self-Review Checklist" plugins/ralph-specum/agents/architect-reviewer.md`; `grep -n "Document Self-Review Checklist passed" plugins/ralph-specum/agents/architect-reviewer.md`
   - **Commit**: `feat(architect-reviewer): add Document Self-Review Checklist for spec quality`
   - _Requirements: FR-A1_
 
 - [ ] 1.2 [POC] FR-A3b: Insert On Design Update section in architect-reviewer.md
-  - **Do**: Insert the `## On Design Update` section (with 5-step reconciliation process in `<mandatory>` block) into `plugins/ralph-specum/agents/architect-reviewer.md` AFTER `## Document Self-Review Checklist` (FR-A1 insertion) and BEFORE `## Karpathy Rules` (line 377). Also add checklist item to Quality Checklist.
+  - **Do**: Insert the `## On Design Update` section (with 5-step reconciliation process in `<mandatory>` block) into `plugins/ralph-specum/agents/architect-reviewer.md` AFTER `## Final Step: Set Awaiting Approval` section and BEFORE `## Karpathy Rules`. After task 1.1 inserts ## Document Self-Review Checklist between ## Analysis Process and ## Final Step: Set Awaiting Approval, the correct insertion point for ## On Design Update is after ## Final Step: Set Awaiting Approval. Also add checklist item to Quality Checklist.
   - **Files**: `plugins/ralph-specum/agents/architect-reviewer.md`
   - **Done when**: Section inserted at correct anchor position; Quality Checklist has new item; 5 reconciliation steps present
   - **Verify**: `grep -n "## On Design Update" plugins/ralph-specum/agents/architect-reviewer.md`; `grep -n "If updating existing design.md" plugins/ralph-specum/agents/architect-reviewer.md`
@@ -38,9 +38,9 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
   - _Requirements: FR-A2_
 
 - [ ] 1.5 [VERIFY] Track A checkpoint 2 — design.md template
-  - **Do**: Verify FR-A2 insertion in templates/design.md is present and correctly positioned between Edge Cases and Test Strategy.
-  - **Verify**: `grep -n "Concurrency & Ordering Risks" plugins/ralph-specum/templates/design.md`; `grep -n "Edge Cases" plugins/ralph-specum/templates/design.md`; `grep -n "Test Strategy" plugins/ralph-specum/templates/design.md`; section between the two anchors
-  - **Commit**: `test(templates): verify FR-A2 Concurrency & Ordering Risks section`
+  - **Do**: Verify FR-A2 insertion in templates/design.md is present and correctly positioned between Performance Considerations and Test Strategy.
+  - **Verify**: `grep -n "Concurrency & Ordering Risks" plugins/ralph-specum/templates/design.md`; `grep -n "Performance Considerations" plugins/ralph-specum/templates/design.md`; `grep -n "Test Strategy" plugins/ralph-specum/templates/design.md`; section between the two anchors
+  - _Requirements: FR-A2_
 
 - [ ] 1.6 [POC] FR-A3: Insert On Requirements Update section in product-manager.md
   - **Do**: Insert `## On Requirements Update` section (with 5-step reconciliation process in `<mandatory>` block) into `plugins/ralph-specum/agents/product-manager.md` AFTER `## Append Learnings` section (line 55) and BEFORE `## Requirements Structure` (line 75). Add checklist item to Quality Checklist.
@@ -61,7 +61,7 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
 - [ ] 1.8 [VERIFY] Track A checkpoint 3 — product-manager.md + spec-executor.md
   - **Do**: Verify FR-A3 and FR-A4 insertions are present.
   - **Verify**: `grep -n "On Requirements Update" plugins/ralph-specum/agents/product-manager.md`; `grep -n "Type Consistency Pre-Check" plugins/ralph-specum/agents/spec-executor.md`; both non-empty
-  - **Commit**: `test(product-manager,spec-executor): verify FR-A3 and FR-A4 insertions`
+  - _Requirements: FR-A3, FR-A4_
 
 ### Track B — External Reviewer Protocol
 
@@ -76,7 +76,7 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
 - [ ] 1.10 [VERIFY] Track B checkpoint 1 — task_review.md template
   - **Do**: Verify the new task_review.md template exists with all required structure elements.
   - **Verify**: `test -f plugins/ralph-specum/templates/task_review.md && echo "EXISTS"`; all grep commands for required fields return non-empty
-  - **Commit**: `test(templates): verify task_review.md creation`
+  - _Requirements: FR-B1_
 
 - [ ] 1.11 [POC] FR-B2: Insert External Review Protocol in spec-executor.md
   - **Do**: Insert `## External Review Protocol` section (4-step logic in `<mandatory>`) into `plugins/ralph-specum/agents/spec-executor.md` AFTER `## When Invoked` section and BEFORE `## Task Loop` section. Use section names as anchor — file has been modified by prior tasks and line numbers have shifted. FAIL/PENDING/WARNING/PASS handling, appends to .progress.md.
