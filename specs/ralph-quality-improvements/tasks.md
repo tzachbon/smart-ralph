@@ -16,7 +16,7 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
   - **Commit**: `feat(architect-reviewer): add Document Self-Review Checklist for spec quality`
   - _Requirements: FR-A1_
 
-- [ ] 1.2 [POC] FR-A3b: Insert On Design Update section in architect-reviewer.md
+- [x] 1.2 [POC] FR-A3b: Insert On Design Update section in architect-reviewer.md
   - **Do**: Insert the `## On Design Update` section (with 5-step reconciliation process in `<mandatory>` block) into `plugins/ralph-specum/agents/architect-reviewer.md` AFTER `## Final Step: Set Awaiting Approval` section and BEFORE `## Karpathy Rules`. After task 1.1 inserts ## Document Self-Review Checklist between ## Analysis Process and ## Final Step: Set Awaiting Approval, the correct insertion point for ## On Design Update is after ## Final Step: Set Awaiting Approval. Also add checklist item to Quality Checklist.
   - **Files**: `plugins/ralph-specum/agents/architect-reviewer.md`
   - **Done when**: Section inserted at correct anchor position; Quality Checklist has new item; 5 reconciliation steps present
