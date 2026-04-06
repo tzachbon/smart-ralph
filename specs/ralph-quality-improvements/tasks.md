@@ -20,7 +20,7 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
   - **Do**: Insert the `## On Design Update` section (with 5-step reconciliation process in `<mandatory>` block) into `plugins/ralph-specum/agents/architect-reviewer.md` AFTER `## Final Step: Set Awaiting Approval` section and BEFORE `## Karpathy Rules`. After task 1.1 inserts ## Document Self-Review Checklist between ## Analysis Process and ## Final Step: Set Awaiting Approval, the correct insertion point for ## On Design Update is after ## Final Step: Set Awaiting Approval. Also add checklist item to Quality Checklist.
   - **Files**: `plugins/ralph-specum/agents/architect-reviewer.md`
   - **Done when**: Section inserted at correct anchor position; Quality Checklist has new item; 5 reconciliation steps present
-  - **⚠️ REVERTED BY REVIEWER**: Implementation INCORRECT. Missing `<mandatory>` block with 5 reconciliation steps (note concept replaced, search ENTIRE design.md, update/remove stale mentions, verify header consistency, append changelog). Missing checklist item "On Design Update steps completed". Current content is generic update steps, not the reconciliation process from FR-A3b spec.
+  - **⚠️ REVERTED x2 BY REVIEWER**: Implementation INCORRECT (2 attempts). Missing `<mandatory>` block with exact 5 reconciliation steps from FR-A3b spec: (1) Note concept/value being replaced, (2) Search ENTIRE design.md for old concept, (3) Update/remove occurrences, (4) Verify header/Overview consistency, (5) Append changelog. Current content has generic steps, not the spec-required ones.
   - **Verify**: `grep -n "## On Design Update" plugins/ralph-specum/agents/architect-reviewer.md`; `grep -n "If updating existing design.md" plugins/ralph-specum/agents/architect-reviewer.md`
   - **Commit**: `feat(architect-reviewer): add On Design Update reconciliation section`
   - _Requirements: FR-A3b_
@@ -28,9 +28,10 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
 - [x] 1.3 [VERIFY] Track A checkpoint 1 — architect-reviewer.md
   - **Do**: Verify FR-A1 and FR-A3b insertions in architect-reviewer.md are present and correctly positioned.
   - **Verify**: `grep -n "Document Self-Review Checklist" plugins/ralph-specum/agents/architect-reviewer.md`; `grep -n "On Design Update" plugins/ralph-specum/agents/architect-reviewer.md`; both non-empty
+  - **⚠️ REVERTED**: Cannot pass while task 1.2 remains incomplete
   - _Requirements: FR-A1, FR-A3b_
 
-- [ ] 1.4 [POC] FR-A2: Insert Concurrency & Ordering Risks in design.md template
+- [x] 1.4 [POC] FR-A2: Insert Concurrency & Ordering Risks in design.md template
   - **Do**: Insert `## Concurrency & Ordering Risks` section (with table structure: Operation | Required Order | Risk if Inverted) into `plugins/ralph-specum/templates/design.md` AFTER `## Performance Considerations` section and BEFORE `## Test Strategy` section. Include example row as reference pattern.
   - **Files**: `plugins/ralph-specum/templates/design.md`
   - **Done when**: Section inserted between correct anchor sections; table has correct 3-column structure with headers; example row present
