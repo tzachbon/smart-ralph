@@ -98,7 +98,7 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
   - **Commit**: `feat(spec-executor): add external_unmarks to stuck-detection with effectiveIterations`
   - _Requirements: FR-B3_
 
-- [ ] 1.13 [POC] FR-B4: Document external_unmarks field schema in spec-executor.md
+- [x] 1.13 [POC] FR-B4: Document external_unmarks field schema in spec-executor.md
   - **Do**: In `plugins/ralph-specum/agents/spec-executor.md`, in the Task Loop section near where `.ralph-state.json` is documented, add `## external_unmarks field` documentation (type object, default {}, written by reviewer only, read by executor for stuck detection, cumulative, NEVER reset by spec-executor). Use section names as anchor — file has been modified by prior tasks and line numbers have shifted. Include JSON example.
   - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
   - **Done when**: Field documentation present with type, default, written-by, read-by, lifetime, and example fields
@@ -106,17 +106,17 @@ Total tasks: 16 (12 implementation + 4 verification checkpoints)
   - **Commit**: `docs(spec-executor): document external_unmarks field schema`
   - _Requirements: FR-B4_
 
-- [ ] 1.14 [VERIFY] Track B checkpoint 2 — spec-executor.md external protocol
+- [x] 1.14 [VERIFY] Track B checkpoint 2 — spec-executor.md external protocol
   - **Do**: Verify FR-B2, FR-B3, FR-B4 insertions in spec-executor.md are present.
   - **Verify**: `grep -n "External Review Protocol" plugins/ralph-specum/agents/spec-executor.md`; `grep -n "effectiveIterations" plugins/ralph-specum/agents/spec-executor.md` (at least 2 occurrences); `grep -n "external-reviewer-repeated-fail" plugins/ralph-specum/agents/spec-executor.md`; `grep -n "external_unmarks" plugins/ralph-specum/agents/spec-executor.md`
   - _Requirements: FR-B2, FR-B3, FR-B4_
 
-- [ ] 1.15 [VERIFY] Regression — surrounding content unchanged
+- [x] 1.15 [VERIFY] Regression — surrounding content unchanged
   - **Do**: Verify critical sections in modified files remain intact and unchanged.
   - **Verify**: `grep -n "## Karpathy Rules" plugins/ralph-specum/agents/architect-reviewer.md`; `grep -n "## Final Step: Set Awaiting Approval" plugins/ralph-specum/agents/architect-reviewer.md`; `grep -n "## Test Strategy" plugins/ralph-specum/templates/design.md`; `grep -n "## Requirements Structure" plugins/ralph-specum/agents/product-manager.md`; `grep -n "## Stuck State Protocol" plugins/ralph-specum/agents/spec-executor.md`
   - _Requirements: NFR-1_
 
-- [ ] 1.16 [VERIFY] Final — version bump
+- [x] 1.16 [VERIFY] Final — version bump
   - **Do**: Read current version from `plugins/ralph-specum/.claude-plugin/plugin.json`, increment patch version, write updated version to both `plugins/ralph-specum/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`. Both must show the same new version (patch +1 from current).
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
   - **Done when**: Both files have identical version string bumped by +1 patch from current value
