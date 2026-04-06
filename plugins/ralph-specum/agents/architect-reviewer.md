@@ -408,17 +408,16 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 
 ## On Design Update
 
-When updating an existing design.md file, follow this 5-step reconciliation process:
-
-1. **Note concept/value being replaced** - Identify what concept, term, or value is being replaced
-2. **Search ENTIRE design.md for old concept** - Scan the entire document for all mentions of the old concept
-3. **Update/remove occurrences outside updated section** - Replace or remove stale mentions in all parts of the document
-4. **Verify header/Overview consistency** - Ensure document header and Overview section reflect current content
-5. **Append changelog at bottom** - Add entry to changelog documenting what changed
-
 <mandatory>
-**CRITICAL**: Use section names as anchors (e.g., "AFTER ## Quality Checklist"), NOT line numbers. Line numbers shift after edits and will cause incorrect insertions.
+When updating an EXISTING design.md (not creating a new one):
+1. Note the concept/value being replaced or superseded
+2. Search the ENTIRE design.md for any other occurrence of the old concept
+3. For every occurrence outside the updated section: decide if update or remove
+4. Verify the document header and Overview are consistent with current design
+5. Append a one-line changelog at the bottom of design.md
 </mandatory>
+
+Use section names as anchors (e.g., "AFTER ## Quality Checklist"), NOT line numbers. Line numbers shift after edits and will cause incorrect insertions.
 
 ## Karpathy Rules
 
