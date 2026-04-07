@@ -206,7 +206,7 @@ Total tasks: 27 (12 implementation + 4 verification checkpoints + 11 fix/feat ta
   - **Commit**: `chore(specs): add YAML frontmatter to ralph-quality-improvements spec files`
   - _Requirements: consistency_
 
-- [ ] 2.8 [FIX] product-manager.md: Align checklist item with FR-A3 spec
+- [x] 2.8 [FIX] product-manager.md: Align checklist item with FR-A3 spec
   - **Do**: Update the Quality Checklist item in product-manager.md (line 215) to exactly match FR-A3 spec. Change from:
     `- [ ] **If updating existing requirements.md: On Requirements Update steps completed**`
     To:
@@ -222,7 +222,7 @@ Total tasks: 27 (12 implementation + 4 verification checkpoints + 11 fix/feat ta
   - **Commit**: `fix(product-manager): align checklist item and changelog format with FR-A3 spec`
   - _Requirements: FR-A3_
 
-- [ ] 2.9 [FIX] spec-executor.md: Integrate effectiveIterations as the escalation trigger in Stuck State Protocol
+- [x] 2.9 [FIX] spec-executor.md: Integrate effectiveIterations as the escalation trigger in Stuck State Protocol
   - **Do**: The Stuck State Protocol currently has `effectiveIterations` as a NOTE after the main ESCALATE block. The hardcoded `reason: stuck-state-unresolved` with `attempts: 5` is the primary trigger. This must be replaced so that effectiveIterations is the actual decision point.
     Replace step 6 in the Stuck State Protocol:
     ```
@@ -248,7 +248,7 @@ Total tasks: 27 (12 implementation + 4 verification checkpoints + 11 fix/feat ta
 
 ## Phase 3: External Reviewer Agent
 
-- [ ] 2.10 [FEAT] Create agents/external-reviewer.md — prompt del agente revisor paralelo
+- [x] 2.10 [FEAT] Create agents/external-reviewer.md — prompt del agente revisor paralelo
   - **Do**: Create `plugins/ralph-specum/agents/external-reviewer.md` with el prompt completo del agente revisor externo. El archivo debe contener:
 
     **Sección 1 — Identidad y contexto**
@@ -339,7 +339,7 @@ Total tasks: 27 (12 implementation + 4 verification checkpoints + 11 fix/feat ta
   - **Commit**: `feat(agents): add external-reviewer agent prompt for parallel review workflow`
   - _Requirements: FR-B2, FR-B3_
 
-- [ ] 2.11 [FEAT] interview-framework: Add parallel reviewer onboarding question
+- [x] 2.11 [FEAT] interview-framework: Add parallel reviewer onboarding question
   - **Do**: Añadir una pregunta al flujo de entrevista (`plugins/ralph-specum/agents/interview-framework.md` o equivalente) que, **al inicio de la fase de implementación** (`/implement`), pregunte al humano si va a ejecutar un revisor externo paralelo.
 
     **Comportamiento esperado**:
@@ -379,8 +379,8 @@ Total tasks: 27 (12 implementation + 4 verification checkpoints + 11 fix/feat ta
          Revisor externo configurado.
 
          Para lanzar el revisor en paralelo:
-         1. Abre una segunda sesión de Claude Code en el mismo repositorio
-         2. Carga el agente: @external-reviewer
+         1. Abre una segunda sesión de un agente en el mismo repositorio
+         2. Carga prompt para el agente: @external-reviewer
          3. Dile: "Revisa la spec <specName> mientras spec-executor implementa"
          4. El revisor leerá y escribirá en specs/<specName>/task_review.md
 

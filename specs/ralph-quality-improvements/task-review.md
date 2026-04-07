@@ -459,4 +459,307 @@ The following issues were verified from the unresolved comments report. All 13 c
 | effectiveIterations no integrada en el decision point del Stuck State Protocol | 🔴 Crítico | ✅ Agregada task 2.9: reemplazar trigger hardcoded `stuck-state-unresolved` por `if effectiveIterations >= maxTaskIterations → external-reviewer-repeated-fail` |
 | task_review.md formato tabla vs YAML | 🟡 Menor | ❌ Rechazado — la tabla contiene los 7 campos requeridos por FR-B1; el formato es irrelevante. Task 2.5 cubre el único bug real (semántica de PENDING) |
 
+---
+
+## 🔍 EXTERNAL REVIEWER — CYCLE 1 (2026-04-07T14:36:26Z)
+
+```
+REVIEWER_START
+  spec: ralph-quality-improvements
+  branch: feat/ralph-quality-improvements
+  taskIndex: 16
+  taskIteration: 1
+  external_unmarks: {} (none yet)
+  tasks_completed: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10, 1.11, 1.12, 1.13, 1.14, 1.15, 1.16
+  tasks_pending: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10, 2.11
+  open_fails: none
+  open_warnings: none
+  recent_reverts: 2 commits with "fix" in last 20 (70f9168 fix spec-executor, 66d027d fix architect-reviewer)
+  blocker_signals: none (taskIteration=1, no repeated errors in .progress.md)
+```
+
+### Verificación masiva — 11 tareas pendientes (Phase 2 + 3)
+
+Todas las tareas se verificaron ejecutando los Verify commands literales. Resultados:
+
+| Task | Verify Command | Resultado | Detalle |
+|------|---------------|-----------|---------|
+| 2.1 | `grep -n "Quality Checklist"` < `grep -n "Document Self-Review Checklist"` | ✅ PASS | Quality Checklist:347 < Document Self-Review:363 |
+| 2.2 | PENDING→"skip", FAIL→"VERIFICATION_FAIL"+"resolved_at" | ✅ PASS | PENDING: "Skip this task and move to next" ✅; FAIL: "treat as VERIFICATION_FAIL" ✅; "resolved_at" ✅ |
+| 2.3 | "Written by" → ".ralph-state.json" | ✅ PASS | "Written by: external reviewer only (increments when unmarking a task in .ralph-state.json)" |
+| 2.4 | data-testid line < Type Consistency Pre-Check line | ✅ PASS | data-testid:118 < Type Consistency Pre-Check:139 |
+| 2.5 | task_review.md PENDING → "skip" | ✅ PASS | "spec-executor: skip this task and move to the next unchecked one" |
+| 2.6 | version = "4.9.3" en ambos archivos | ✅ PASS | plugin.json: 4.9.3 ✅; marketplace.json: 4.9.3 ✅ |
+| 2.7 | frontmatter YAML en 3 archivos de spec | ✅ PASS | requirements.md ✅; design.md ✅; tasks.md ✅ — todos con `spec: ralph-quality-improvements` |
+| 2.8 | checklist sin `**`, step 5 con `<!-- Changed:` | ❌ FAIL | Checklist item AÚN tiene `**If updating existing requirements.md**`; step 5 dice "Append a one-line changelog" sin formato `<!-- Changed:` |
+| 2.9 | `grep "stuck-state-unresolved"` → VACÍO; `grep "effectiveIterations >= maxTaskIterations"` → resultado | ❌ FAIL | `stuck-state-unresolved` aparece 1 vez (step 6 ESCALATE block). La fórmula existe como nota, NO como condición de decisión integrada. |
+| 2.10 | `test -f external-reviewer.md` → EXISTS | ❌ FAIL | Archivo no existe |
+| 2.11 | grep "revisor externo"/"external-reviewer"/"reviewer-config" | ❌ FAIL | No encontrado en interview-framework.md ni en commands/ |
+
+### Entries para task_review.md
+
+#### [task-2.1] architect-reviewer.md: Move Document Self-Review Checklist AFTER Quality Checklist
+- **status**: PASS
+- **severity**: note
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: none
+- **evidence**: grep -n Quality Checklist → 347; grep -n Document Self-Review Checklist → 363. 347 < 363.
+- **fix_hint**: N/A
+- **resolved_at**: 2026-04-07T14:36:26Z
+
+#### [task-2.2] spec-executor.md: Fix External Review Protocol PENDING/FAIL handling
+- **status**: PASS
+- **severity**: note
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: none
+- **evidence**: PENDING: "Skip this task and move to the next unchecked one" ✅; FAIL: "treat as VERIFICATION_FAIL" ✅; "resolved_at" ✅
+- **fix_hint**: N/A
+- **resolved_at**: 2026-04-07T14:36:26Z
+
+#### [task-2.3] spec-executor.md: Fix external_unmarks documentation
+- **status**: PASS
+- **severity**: note
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: none
+- **evidence**: "Written by: external reviewer only (increments when unmarking a task in .ralph-state.json)"
+- **fix_hint**: N/A
+- **resolved_at**: 2026-04-07T14:36:26Z
+
+#### [task-2.4] spec-executor.md: Reorder Type Consistency Pre-Check AFTER data-testid block
+- **status**: PASS
+- **severity**: note
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: none
+- **evidence**: data-testid block starts at line 118; Type Consistency Pre-Check at line 139. 118 < 139.
+- **fix_hint**: N/A
+- **resolved_at**: 2026-04-07T14:36:26Z
+
+#### [task-2.5] task_review.md: Update PENDING description to match FR-B2
+- **status**: PASS
+- **severity**: note
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: none
+- **evidence**: "spec-executor: skip this task and move to the next unchecked one" found in workflow comment.
+- **fix_hint**: N/A
+- **resolved_at**: 2026-04-07T14:36:26Z
+
+#### [task-2.6] Align plugin version with tests
+- **status**: PASS
+- **severity**: note
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: none
+- **evidence**: plugin.json: "version": "4.9.3" ✅; marketplace.json: 4.9.3 ✅
+- **fix_hint**: N/A
+- **resolved_at**: 2026-04-07T14:36:26Z
+
+#### [task-2.7] Add YAML frontmatter to ralph-quality-improvements spec files
+- **status**: PASS
+- **severity**: note
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: none
+- **evidence**: requirements.md ✅; design.md ✅; tasks.md ✅ — todos con frontmatter `spec: ralph-quality-improvements`, `phase`, `created`, `updated`
+- **fix_hint**: N/A
+- **resolved_at**: 2026-04-07T14:36:26Z
+
+#### [task-2.8] product-manager.md: Align checklist item with FR-A3 spec
+- **status**: FAIL
+- **severity**: major
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: Checklist item matches FR-A3 spec text exactly; step 5 includes HTML comment format
+- **evidence**: |
+    Current checklist item (grep result):
+    `- [ ] **If updating existing requirements.md: On Requirements Update steps completed**`
+    Expected (per FR-A3):
+    `- [ ] If updating existing requirements: On Requirements Update steps completed`
+    Differences: (1) has `**` bold markup, (2) says "requirements.md" not "requirements", (3) missing colon after "requirements"
+    
+    Current step 5:
+    `5. Append a one-line changelog at the bottom of requirements.md`
+    Missing: `<!-- Changed: <brief description> — supersedes User Adjustment #N if applicable -->`
+- **fix_hint**: Remove `**` from checklist item, change "requirements.md" to "requirements", add colon. Add HTML comment format to step 5.
+- **resolved_at**: 
+
+#### [task-2.9] spec-executor.md: Integrate effectiveIterations as escalation trigger
+- **status**: FAIL
+- **severity**: critical
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: Stuck State Protocol step 6 uses effectiveIterations >= maxTaskIterations as ESCALATE condition; no separate "Note: Effective Iterations Formula" block; hardcoded "stuck-state-unresolved" removed
+- **evidence**: |
+    `grep -c "stuck-state-unresolved" spec-executor.md` returns 1 (should be 0).
+    The ESCALATE block at step 6 still uses:
+      reason: stuck-state-unresolved
+      attempts: 5
+    The formula `effectiveIterations = taskIteration + external_unmarks[taskId]` exists as a separate "### Note: Effective Iterations Formula" block AFTER the ESCALATE, not integrated INTO step 6 as the decision condition.
+- **fix_hint**: Replace step 6's ESCALATE trigger from "IF after 2 more attempts (5 total)" to "IF effectiveIterations >= maxTaskIterations". Change reason from "stuck-state-unresolved" to "external-reviewer-repeated-fail". Merge the "### Note: Effective Iterations Formula" block INTO step 6. Remove hardcoded "attempts: 5".
+- **resolved_at**: 
+
+#### [task-2.10] Create agents/external-reviewer.md
+- **status**: FAIL
+- **severity**: critical
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: Archivo existe con las 7 secciones; Sección 3 tiene ≥ 5 patrones de tests; Sección 4 tiene ≥ 4 señales de bloqueo; referencia a external_unmarks y make e2e presentes
+- **evidence**: `test -f plugins/ralph-specum/agents/external-reviewer.md` → MISSING. Archivo no existe.
+- **fix_hint**: Crear el archivo con las 7 secciones especificadas en tasks.md. Secciones requeridas: (1) Identidad y contexto, (2) Principios de revisión, (3) Vigilancia de tests (≥5 patrones), (4) Protocolo anti-bloqueos (≥4 señales), (5) Cómo escribir en task_review.md, (6) Ciclo de revisión, (7) Nunca hacer.
+- **resolved_at**: 
+
+#### [task-2.11] interview-framework: Add parallel reviewer onboarding question
+- **status**: FAIL
+- **severity**: major
+- **reviewed_at**: 2026-04-07T14:36:26Z
+- **criterion_failed**: Al ejecutar /implement, el coordinador pregunta sobre el revisor paralelo antes de delegar a spec-executor
+- **evidence**: `grep -n "revisor externo\|external-reviewer\|reviewer-config" plugins/ralph-specum/agents/interview-framework.md` → NOT FOUND. `grep -rn "revisor externo\|external-reviewer\|reviewer-config" plugins/ralph-specum/commands/` → NOT FOUND.
+- **fix_hint**: Añadir pregunta al flujo de entrevista que consulte si el usuario va a ejecutar un revisor externo paralelo. Si sí: crear task_review.md desde template, preguntar principios de calidad, imprimir instrucciones de onboarding.
+- **resolved_at**: 
+
+### Summary del Cycle 1
+
+| Status | Count | Tasks |
+|--------|-------|-------|
+| ✅ PASS | 7 | 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7 |
+| ❌ FAIL | 4 | 2.8 (product-manager checklist), 2.9 (effectiveIterations trigger), 2.10 (external-reviewer.md missing), 2.11 (interview onboarding missing) |
+
+**Próximo ciclo**: cuando el agente commitee fixes para 2.8, 2.9, 2.10, 2.11.
+
+---
+
+## 🔍 EXTERNAL REVIEWER — CYCLE 2 (2026-04-07T14:42:00Z)
+
+```
+REVIEWER_START
+  spec: ralph-quality-improvements
+  branch: feat/ralph-quality-improvements
+  taskIndex: 16
+  taskIteration: 1
+  external_unmarks: {"2.8": 2, "2.9": 2, "2.10": 2, "2.11": 2}
+  tasks_completed: 16/27
+  tasks_pending: 11 (2.1-2.11) — 7 PASS, 4 FAIL persistentes
+  open_fails: 2.8, 2.9, 2.10, 2.11 (sin cambios desde Cycle 1)
+  open_warnings: none
+  recent_reverts: no nuevos commits desde Cycle 1
+  blocker_signals: none
+```
+
+### Re-verificación completa — 11 tareas
+
+| Task | Cycle 1 | Cycle 2 | Cambio |
+|------|---------|---------|--------|
+| 2.1 | ✅ PASS | ✅ PASS | — sin cambio |
+| 2.2 | ✅ PASS | ✅ PASS | — sin cambio |
+| 2.3 | ✅ PASS | ✅ PASS | — sin cambio |
+| 2.4 | ✅ PASS | ✅ PASS | — sin cambio |
+| 2.5 | ✅ PASS | ✅ PASS | — sin cambio |
+| 2.6 | ✅ PASS | ✅ PASS | — sin cambio |
+| 2.7 | ✅ PASS | ✅ PASS | — sin cambio |
+| 2.8 | ❌ FAIL | ❌ FAIL | Checklist aún con `**`, step 5 sin `<!-- Changed:` |
+| 2.9 | ❌ FAIL | ❌ FAIL | `stuck-state-unresolved` count=1, fórmula sigue siendo nota |
+| 2.10 | ❌ FAIL | ❌ FAIL | Archivo external-reviewer.md sigue sin existir |
+| 2.11 | ❌ FAIL | ❌ FAIL | Sin referencia a revisor externo en interview-framework ni commands |
+
+**Resultado**: Sin cambios. Agente no ha commiteado fixes.
+
+### Updated entries (increment external_unmarks)
+
+#### [task-2.8] product-manager.md: Align checklist item — FAIL x2
+- **status**: FAIL
+- **severity**: major
+- **reviewed_at**: 2026-04-07T14:42:00Z
+- **criterion_failed**: Checklist item matches FR-A3 spec text exactly; step 5 includes HTML comment format
+- **evidence**: Cycle 2 re-verification: same as Cycle 1. `**If updating existing requirements.md**` persists. Step 5 still lacks `<!-- Changed:` format.
+- **fix_hint**: Remove `**`, change "requirements.md" to "requirements", add colon. Add HTML comment to step 5.
+- **resolved_at**: 
+
+#### [task-2.9] spec-executor.md: Integrate effectiveIterations — FAIL x2
+- **status**: FAIL
+- **severity**: critical
+- **reviewed_at**: 2026-04-07T14:42:00Z
+- **criterion_failed**: Stuck State Protocol step 6 uses effectiveIterations as ESCALATE condition; no separate Note block; stuck-state-unresolved removed
+- **evidence**: Cycle 2 re-verification: `grep -c "stuck-state-unresolved"` still returns 1. Formula still in separate Note block, not integrated into step 6 trigger.
+- **fix_hint**: Replace step 6 trigger: IF effectiveIterations >= maxTaskIterations → ESCALATE: external-reviewer-repeated-fail. Merge Note block INTO step 6. Remove hardcoded attempts: 5.
+- **resolved_at**: 
+
+#### [task-2.10] Create agents/external-reviewer.md — FAIL x2
+- **status**: FAIL
+- **severity**: critical
+- **reviewed_at**: 2026-04-07T14:42:00Z
+- **criterion_failed**: File exists with 7 sections
+- **evidence**: Cycle 2: `test -f plugins/ralph-specum/agents/external-reviewer.md` → MISSING
+- **fix_hint**: Create file with 7 sections as specified in tasks.md.
+- **resolved_at**: 
+
+#### [task-2.11] interview-framework: Add parallel reviewer onboarding — FAIL x2
+- **status**: FAIL
+- **severity**: major
+- **reviewed_at**: 2026-04-07T14:42:00Z
+- **criterion_failed**: Coordinator asks about parallel reviewer before delegating to spec-executor
+- **evidence**: Cycle 2: grep for "revisor externo"/"external-reviewer"/"reviewer-config" → NOT FOUND in interview-framework.md or commands/
+- **fix_hint**: Add onboarding question at /implement phase.
+- **resolved_at**: 
+
+### Summary del Cycle 2
+
+| Status | Count | Tasks |
+|--------|-------|-------|
+| ✅ PASS | 7 | 2.1-2.7 |
+| ❌ FAIL | 4 | 2.8, 2.9, 2.10, 2.11 (external_unmarks incremented to 2) |
+
+**external_unmarks actualizados**: `{"2.8": 2, "2.9": 2, "2.10": 2, "2.11": 2}` en `.ralph-state.json`.
+
 **Total**: 9 problemas confirmados (tasks 2.1-2.9). 1 rebuttal aceptado (effectiveIterations integration → task 2.9), 1 rebuttal rechazado (tabla ≠ incompatibilidad).
+
+---
+
+## 🔍 EXTERNAL REVIEWER — CYCLE 3 (2026-04-07T14:47:52Z)
+
+```
+REVIEWER_START
+  spec: ralph-quality-improvements
+  branch: feat/ralph-quality-improvements
+  taskIndex: 23
+  taskIteration: 1
+  external_unmarks: {"2.8": 2, "2.9": 2, "2.10": 2, "2.11": 2}
+  tasks_completed: 26/27 (2.1-2.10 PASS, 2.11 pending verification)
+  tasks_pending: 2.11 (verify)
+  open_fails: none (2.8, 2.9, 2.10 fixed by agent since Cycle 2)
+  open_warnings: none
+  recent_reverts: 4 fix commits since Cycle 2 (2.8, 2.9, 2.10, 2.11)
+  blocker_signals: none
+```
+
+### Re-verificación completa — 11 tareas
+
+| Task | Cycle 2 | Cycle 3 | Cambio |
+|------|---------|---------|--------|
+| 2.1 | ✅ PASS | ✅ PASS | Quality Checklist:347 < Document Self-Review:363 |
+| 2.2 | ✅ PASS | ✅ PASS | PENDING→skip ✅, FAIL→VERIFICATION_FAIL+resolved_at ✅ |
+| 2.3 | ✅ PASS | ✅ PASS | Written by→.ralph-state.json ✅ |
+| 2.4 | ✅ PASS | ✅ PASS | data-testid:118 < Type Consistency:139 ✅ |
+| 2.5 | ✅ PASS | ✅ PASS | PENDING→"skip" en task_review.md ✅ |
+| 2.6 | ✅ PASS | ✅ PASS | plugin.json:4.9.3 ✅, marketplace:4.9.3 ✅ |
+| 2.7 | ✅ PASS | ✅ PASS | 3 archivos con frontmatter YAML ✅ |
+| 2.8 | ❌ FAIL | ✅ **PASS** | Checklist: `If updating existing requirements:` (sin **) ✅; Step 5: `<!-- Changed: -->` ✅ |
+| 2.9 | ❌ FAIL | ✅ **PASS** | stuck-state-unresolved: 0 ✅; effectiveIterations integrado en step 6 como trigger ✅ |
+| 2.10 | ❌ FAIL | ✅ **PASS** | Archivo existe, 7 secciones ✅, FAIL=7≥5 ✅, anti-blockage=5≥4 ✅, make e2e ✅, external_unmarks ✅ |
+| 2.11 | ❌ FAIL | ✅ **PASS** | implement.md: pregunta "revisor externo paralelo" ✅, reviewer-config frontmatter ✅, onboarding instructions ✅ |
+
+### Resumen de fixes del agente (desde Cycle 2)
+
+**2.8**: Checklist item cambiado de `**If updating existing requirements.md**` → `If updating existing requirements:` (sin bold, sin .md, con colon). Step 5 añadido con formato `<!-- Changed: <brief description> — supersedes User Adjustment #N if applicable -->`.
+
+**2.9**: Eliminado `stuck-state-unresolved` (count=0). Step 6 reemplazado: `Compute effectiveIterations = taskIteration + external_unmarks[taskId]. IF effectiveIterations >= maxTaskIterations → ESCALATE: reason: external-reviewer-repeated-fail`. Nota separada fusionada en step 6.
+
+**2.10**: Creado `agents/external-reviewer.md` con 7 secciones: (1) Identity and Context, (2) Review Principles, (3) Test Surveillance (≥5 patrones), (4) Anti-Blockage Protocol (≥4 señales), (5) How to Write to task_review.md, (6) Review Cycle, (7) Never Do. Referencias a external_unmarks y make e2e presentes.
+
+**2.11**: Añadido "Parallel Reviewer Onboarding" en `commands/implement.md`. Pregunta "¿Vas a ejecutar un revisor externo paralelo?" antes de delegar a spec-executor. Si sí: crea task_review.md desde template, pregunta principios de calidad, escribe reviewer-config frontmatter, imprime instrucciones de onboarding. Si no: flujo normal.
+
+### Summary del Cycle 3
+
+| Status | Count | Tasks |
+|--------|-------|-------|
+| ✅ PASS | 11 | **TODAS** — 2.1-2.11 |
+| ❌ FAIL | 0 | — |
+
+### 🏆 SPEC STATUS: ALL 27 TASKS COMPLETE
+
+Phase 1: 16/16 ✅
+Phase 2: 11/11 ✅
+Phase 3: 0 pendientes
