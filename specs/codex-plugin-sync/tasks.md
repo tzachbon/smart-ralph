@@ -43,13 +43,13 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-10.1, AC-10.2, AC-10.3_
   - _Design: Marketplace Entry_
 
-- [ ] 1.3 [VERIFY] Quality checkpoint: plugin.json + marketplace.json valid
+- [x] 1.3 [VERIFY] Quality checkpoint: plugin.json + marketplace.json valid
   - **Do**: Verify both JSON files are valid and versions match
   - **Verify**: `jq -r .version plugins/ralph-specum-codex/.codex-plugin/plugin.json && jq -r '.[0].version' .agents/plugins/marketplace.json && echo PASS`
   - **Done when**: Both commands exit 0, both print `4.9.1`
   - **Commit**: none
 
-- [ ] 1.4 [P] Copy Python scripts from platforms/codex with path fixes
+- [x] 1.4 [P] Copy Python scripts from platforms/codex with path fixes
   - **Do**:
     1. Copy `platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py` to `plugins/ralph-specum-codex/scripts/`
     2. Copy `platforms/codex/skills/ralph-specum/scripts/merge_state.py` to `plugins/ralph-specum-codex/scripts/`
@@ -62,7 +62,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-5.4_
   - _Design: Python Scripts_
 
-- [ ] 1.5 [P] Copy JSON schema
+- [x] 1.5 [P] Copy JSON schema
   - **Do**: Copy `plugins/ralph-specum/schemas/spec.schema.json` to `plugins/ralph-specum-codex/schemas/spec.schema.json`
   - **Files**: `plugins/ralph-specum-codex/schemas/spec.schema.json`
   - **Done when**: File exists and is valid JSON
@@ -70,13 +70,13 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): copy spec schema`
   - _Requirements: AC-5.3_
 
-- [ ] 1.6 [VERIFY] Quality checkpoint: scripts + schema exist
+- [x] 1.6 [VERIFY] Quality checkpoint: scripts + schema exist
   - **Do**: Verify all 3 scripts and schema exist
   - **Verify**: `for f in resolve_spec_paths.py merge_state.py count_tasks.py; do [ -f "plugins/ralph-specum-codex/scripts/$f" ] || exit 1; done && [ -f plugins/ralph-specum-codex/schemas/spec.schema.json ] && echo PASS`
   - **Done when**: All files present
   - **Commit**: none
 
-- [ ] 1.7 [P] Copy templates from Claude plugin (9 existing + epic.md)
+- [x] 1.7 [P] Copy templates from Claude plugin (9 existing + epic.md)
   - **Do**:
     1. Copy all 9 templates from `plugins/ralph-specum/templates/` to `plugins/ralph-specum-codex/templates/`: `component-spec.md`, `design.md`, `external-spec.md`, `index-summary.md`, `progress.md`, `requirements.md`, `research.md`, `settings-template.md`, `tasks.md`
     2. Copy `plugins/ralph-specum/templates/epic.md` to `plugins/ralph-specum-codex/templates/epic.md` (this template was missing from platforms/codex)
@@ -87,7 +87,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-5.1, AC-4.3, FR-5, FR-6_
   - _Design: Templates_
 
-- [ ] 1.8 [P] Copy bootstrap assets from platforms/codex
+- [x] 1.8 [P] Copy bootstrap assets from platforms/codex
   - **Do**:
     1. Copy `platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md` to `plugins/ralph-specum-codex/assets/bootstrap/AGENTS.md`
     2. Copy `platforms/codex/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md` to `plugins/ralph-specum-codex/assets/bootstrap/ralph-specum.local.md`
@@ -97,7 +97,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): copy bootstrap assets`
   - _Design: Bootstrap assets_
 
-- [ ] 1.9 [VERIFY] Quality checkpoint: templates + assets present
+- [x] 1.9 [VERIFY] Quality checkpoint: templates + assets present
   - **Do**: Count templates and verify bootstrap assets
   - **Verify**: `ls plugins/ralph-specum-codex/templates/*.md | wc -l | grep -q 10 && ls plugins/ralph-specum-codex/assets/bootstrap/ | wc -l | grep -q 2 && echo PASS`
   - **Done when**: 10 templates, 2 bootstrap assets
@@ -118,7 +118,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-4.1, AC-9.4, US-9_
   - _Design: References_
 
-- [ ] 1.11 [VERIFY] Quality checkpoint: all 4 references present and updated
+- [x] 1.11 [VERIFY] Quality checkpoint: all 4 references present and updated
   - **Do**: Verify reference files exist and have required sections
   - **Verify**: `for f in workflow.md state-contract.md path-resolution.md parity-matrix.md; do [ -f "plugins/ralph-specum-codex/references/$f" ] || exit 1; done && echo PASS`
   - **Done when**: All 4 files present
@@ -143,7 +143,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-8.1, AC-8.2, AC-8.3, FR-10_
   - _Design: Stop Hook_
 
-- [ ] 1.13 [VERIFY] Quality checkpoint: hook is executable and handles no-state gracefully
+- [x] 1.13 [VERIFY] Quality checkpoint: hook is executable and handles no-state gracefully
   - **Do**: Run hook with no state file, verify exit 0
   - **Verify**: `echo '{"cwd":"/nonexistent/path"}' | bash plugins/ralph-specum-codex/hooks/stop-watcher.sh && echo PASS`
   - **Done when**: Exit 0 when no state file present
@@ -189,7 +189,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-research skill`
   - _Requirements: AC-3.1, AC-7.1_
 
-- [ ] 1.17 [VERIFY] Quality checkpoint: first 3 skills created
+- [x] 1.17 [VERIFY] Quality checkpoint: first 3 skills created
   - **Do**: Verify skills exist and have spawn_agent
   - **Verify**: `for s in ralph-specum ralph-specum-start ralph-specum-research; do [ -f "plugins/ralph-specum-codex/skills/$s/SKILL.md" ] || exit 1; done && echo PASS`
   - **Done when**: All 3 SKILL.md files present
@@ -234,7 +234,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-tasks skill`
   - _Requirements: AC-3.1, AC-7.4_
 
-- [ ] 1.21 [VERIFY] Quality checkpoint: requirements/design/tasks skills created
+- [x] 1.21 [VERIFY] Quality checkpoint: requirements/design/tasks skills created
   - **Do**: Verify 3 new skills exist with correct agent references
   - **Verify**: `for s in ralph-specum-requirements ralph-specum-design ralph-specum-tasks; do [ -f "plugins/ralph-specum-codex/skills/$s/SKILL.md" ] || exit 1; done && echo PASS`
   - **Done when**: All 3 present
@@ -282,7 +282,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-status skill`
   - _Requirements: AC-3.1, AC-9.3_
 
-- [ ] 1.25 [VERIFY] Quality checkpoint: implement/cancel/status skills created
+- [x] 1.25 [VERIFY] Quality checkpoint: implement/cancel/status skills created
   - **Do**: Verify 3 skills exist
   - **Verify**: `for s in ralph-specum-implement ralph-specum-cancel ralph-specum-status; do [ -f "plugins/ralph-specum-codex/skills/$s/SKILL.md" ] || exit 1; done && echo PASS`
   - **Done when**: All 3 present
@@ -326,13 +326,13 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-refactor skill`
   - _Requirements: AC-3.1_
 
-- [ ] 1.29 [VERIFY] Quality checkpoint: switch/triage/refactor skills created
+- [x] 1.29 [VERIFY] Quality checkpoint: switch/triage/refactor skills created
   - **Do**: Verify 3 skills exist
   - **Verify**: `for s in ralph-specum-switch ralph-specum-triage ralph-specum-refactor; do [ -f "plugins/ralph-specum-codex/skills/$s/SKILL.md" ] || exit 1; done && echo PASS`
   - **Done when**: All 3 present
   - **Commit**: none
 
-- [ ] 1.30 [P] Write ralph-specum-index skill
+- [x] 1.30 [P] Write ralph-specum-index skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-index/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-index/SKILL.md` — preserve: `specs/.index`, dry run, deterministic tokens
@@ -344,7 +344,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-index skill`
   - _Requirements: AC-3.1_
 
-- [ ] 1.31 [P] Write ralph-specum-feedback skill
+- [x] 1.31 [P] Write ralph-specum-feedback skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-feedback/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-feedback/SKILL.md` — preserve: GitHub issue, Codex package, Claude plugin tokens
@@ -355,7 +355,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-feedback skill`
   - _Requirements: AC-3.1_
 
-- [ ] 1.32 [P] Write ralph-specum-help skill
+- [x] 1.32 [P] Write ralph-specum-help skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-help/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-help/SKILL.md` — preserve: `$ralph-specum-triage`, Large effort flow, `.current-epic` tokens
@@ -367,7 +367,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-help skill`
   - _Requirements: AC-3.1_
 
-- [ ] 1.33 [VERIFY] Quality checkpoint: all 15 skills created
+- [x] 1.33 [VERIFY] Quality checkpoint: all 15 skills created
   - **Do**: Count all SKILL.md files
   - **Verify**: `find plugins/ralph-specum-codex/skills -name 'SKILL.md' | wc -l | grep -q 15 && echo PASS`
   - **Done when**: Exactly 15 SKILL.md files found
@@ -395,13 +395,13 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-6.1, AC-6.2, AC-6.4, FR-7, FR-9_
   - _Design: Agent Bootstrap Templates_
 
-- [ ] 1.35 [VERIFY] Quality checkpoint: agent configs complete
+- [x] 1.35 [VERIFY] Quality checkpoint: agent configs complete
   - **Do**: Count templates and verify README
   - **Verify**: `ls plugins/ralph-specum-codex/agent-configs/*.toml.template | wc -l | grep -q 9 && [ -f plugins/ralph-specum-codex/agent-configs/README.md ] && echo PASS`
   - **Done when**: 9 templates + README present
   - **Commit**: none
 
-- [ ] 1.36 Write plugin README.md (installation + migration guide)
+- [x] 1.36 Write plugin README.md (installation + migration guide)
   - **Do**:
     1. Create `plugins/ralph-specum-codex/README.md`
     2. Include sections:
