@@ -36,10 +36,10 @@ Use `scripts/resolve_spec_paths.py`.
 Examples for this source repo, run them from the repo root:
 
 ```bash
-python3 ./platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py --cwd "$PWD"
-python3 ./platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py --cwd "$PWD" --current
-python3 ./platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py --cwd "$PWD" --name api-auth
-python3 ./platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py --cwd "$PWD" --list
+python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD"
+python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --current
+python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --name api-auth
+python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --list
 ```
 
 Exit behavior:
