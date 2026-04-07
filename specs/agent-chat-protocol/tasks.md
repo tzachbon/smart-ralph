@@ -50,7 +50,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-14_
   - _Design: Per-Agent State section_
 
-- [ ] 1.3 Add Chat Protocol section to spec-executor.md — core infrastructure
+- [x] 1.3 Add Chat Protocol section to spec-executor.md — core infrastructure
   - **Do**:
     1. Read `plugins/ralph-specum/agents/spec-executor.md`
     2. Add new section "## Chat Protocol (FLOC)" after the "## External Review Protocol" section

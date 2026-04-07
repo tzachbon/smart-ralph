@@ -68,6 +68,39 @@ This protocol enables an external reviewer agent to communicate task outcomes
 without shared process state — filesystem-only communication.
 </mandatory>
 
+## Chat Protocol (FLOC)
+
+<mandatory>
+Before starting each task, check for and process new chat messages:
+
+**Chat file path**: `<basePath>/chat.md`
+
+**Activation threshold**: chat.md exists AND has >= 1 message
+
+**Read at task START**: Before starting each task, read chat.md using Read tool,
+parse new messages after `lastReadIndex` (stored in `.ralph-state.json`).
+
+**Atomic append pattern** (CRITICAL — chat.md is append-only):
+```bash
+# Write new message to temp file
+TMPFILE="/tmp/chat.tmp.${AGENT}.$(date +%s%N)"
+cat > "$TMPFILE" << 'CHATEOF'
+### [<writer> → <addressee>] <HH:MM:SS> | <task-ID> | <SIGNAL>
+<message body>
+CHATEOF
+# Append atomically to chat.md (NOT mv — that overwrites!)
+cat "$TMPFILE" >> <basePath>/chat.md && rm "$TMPFILE"
+```
+
+**NEVER use `mv` to write to chat.md** — it overwrites the entire file.
+Always use `cat "$TMPFILE" >> <basePath>/chat.md && rm "$TMPFILE"` for appends.
+
+**Update lastReadIndex**: After reading, update via atomic jq pattern:
+```bash
+jq --argjson idx N '.chat.executor.lastReadIndex = $idx' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
+```
+</mandatory>
+
 ## Task Loop
 
 ```text
