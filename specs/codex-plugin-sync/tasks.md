@@ -32,7 +32,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-1.1, AC-1.2, AC-8.4_
   - _Design: Plugin Manifest_
 
-- [ ] 1.2 Create marketplace.json with ralph-specum-codex entry
+- [x] 1.2 Create marketplace.json with ralph-specum-codex entry
   - **Do**:
     1. Create `.agents/plugins/` directory
     2. Write `.agents/plugins/marketplace.json` as a JSON array containing one entry: `name: "ralph-specum-codex"`, `description`, `version: "4.9.1"`, `source: {source: "local", path: "./plugins/ralph-specum-codex"}`, `policy: {installation: "AVAILABLE"}`
