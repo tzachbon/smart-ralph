@@ -34,3 +34,4 @@ test-ac-*/
 
 # Claude
 .claude/worktrees/**
+.omc/**
