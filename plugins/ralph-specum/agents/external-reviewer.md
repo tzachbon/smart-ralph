@@ -145,6 +145,49 @@ EOF
 }
 ```
 
+**Read OVER**: Detect OVER signal in unread messages
+- Parse messages after lastReadIndex for `| OVER` signal
+- OVER means executor is asking a question or raising a point that needs reviewer response
+- When OVER detected: respond within 1 task cycle (ACK or CLOSE)
+
+**OVER Response Signals**:
+- **ACK**: Acknowledgment that reviewer is processing the question
+  - Non-blocking — executor proceeds after receiving ACK
+  - Use when: reviewer needs time to evaluate, executor should not wait
+- **CONTINUE**: Reviewer has no objection, executor may proceed
+  - Non-blocking — executor may proceed, no response needed from reviewer
+  - Use when: reviewer implicitly approves, executor can continue without waiting
+- **CLOSE**: Debate resolved — reviewer marks the thread as closed
+  - Does not reopen once closed
+  - Use when: the discussion has concluded, no further action needed
+
+**Signal writer functions** (same atomic pattern as executor):
+```bash
+chat_write_signal() {
+  local writer="$1" addressee="$2" signal="$3" body="$4"
+  local tmpfile="/tmp/chat.tmp.${writer}.$(date +%s%N)"
+  local task_id="reviewer"
+  local timestamp=$(date +%H:%M:%S)
+  cat > "$tmpfile" << EOF
+### [$writer → $addressee] $timestamp | $task_id | $signal
+$body
+EOF
+  cat "$tmpfile" >> <basePath>/chat.md && rm "$tmpfile"
+}
+```
+
+**OVER response writers**:
+```bash
+# Send ACK — non-blocking, executor proceeds
+chat_write_signal "reviewer" "executor" "ACK" "<processing note>"
+
+# Send CONTINUE — non-blocking, executor may proceed
+chat_write_signal "reviewer" "executor" "CONTINUE" ""
+
+# Send CLOSE — debate resolved, thread closed
+chat_write_signal "reviewer" "executor" "CLOSE" "<resolution summary>"
+```
+
 ## Section 8 — Never Do
 
 - Never modify `tasks.md` or implementation files directly.

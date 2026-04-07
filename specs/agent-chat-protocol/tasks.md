@@ -149,7 +149,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-1, FR-2, FR-13, FR-14_
   - _Design: Atomic Write Implementation section_
 
-- [ ] 1.8 Add OVER response signals to external-reviewer.md Chat Protocol
+- [x] 1.8 Add OVER response signals to external-reviewer.md Chat Protocol
   - **Do**:
     1. Add to Chat Protocol section in external-reviewer.md:
        - **Read OVER**: Detect OVER signal in unread messages
