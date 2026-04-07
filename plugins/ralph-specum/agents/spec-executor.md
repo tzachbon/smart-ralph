@@ -218,28 +218,16 @@ not progress.
    - Update the task description to reflect the redesigned scope
    - Do NOT continue trying to mock the full entry point
 
-6. **IF after 2 more attempts (5 total) the test still fails** → ESCALATE:
+6. Compute `effectiveIterations = taskIteration + external_unmarks[taskId]`.
+   **IF** `effectiveIterations >= maxTaskIterations` → ESCALATE:
    ```text
    ESCALATE
-     reason: stuck-state-unresolved
+     reason: external-reviewer-repeated-fail
      task: <taskId — task title>
-     attempts: 5
-     root_cause: <one sentence from step 3>
-     last_error: <exact error text>
-     resolution: Human investigation required. The test may need architectural
-                 redesign that exceeds autonomous agent scope.
+     attempts: <effectiveIterations>
+     Note: external_unmarks contributed <N> reviewer cycles
+     resolution: External reviewer has unmarked this task N times. Human investigation required.
    ```
-
-### Note: Effective Iterations Formula
-
-For stuck detection, use `effectiveIterations = taskIteration + external_unmarks[taskId]` where:
-- `taskIteration`: current session retries (reset on each session)
-- `external_unmarks`: reviewer cycles from prior sessions (cumulative, NEVER reset by spec-executor)
-
-When `effectiveIterations >= maxTaskIterations`, escalate with reason `external-reviewer-repeated-fail`:
-```text
-External reviewer has unmarked this task N times. Human investigation required.
-```
 </mandatory>
 
 ---
