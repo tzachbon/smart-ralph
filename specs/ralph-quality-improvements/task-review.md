@@ -339,3 +339,124 @@ Quality Checklist addition:
 If agent fails again after HINT, consider:
 1. Manually editing architect-reviewer.md to wrap steps in `<mandatory>`
 2. Unblocking the spec so agent can proceed to tasks 1.5+
+
+---
+
+## 🔍 VERIFIED UNRESOLVED COMMENTS (2026-04-07)
+
+The following issues were verified from the unresolved comments report. All 13 claims were evaluated — 11 confirmed as real problems, 2 partially false positives but with real underlying issues.
+
+### Phase 2: Fix Verified Issues
+
+- [ ] 2.1 [FIX] architect-reviewer.md: Move Document Self-Review Checklist AFTER Quality Checklist
+  - **Do**: The `## Document Self-Review Checklist` section (currently at line 347) is positioned BEFORE `## Quality Checklist` (line 382). Per FR-A1 spec, it must be positioned AFTER `## Quality Checklist` and BEFORE `## Final Step: Set Awaiting Approval`. Move the entire section (lines 347-380) to between the Quality Checklist section and the Final Step section.
+  - **Files**: `plugins/ralph-specum/agents/architect-reviewer.md`
+  - **Done when**: Document Self-Review Checklist appears AFTER Quality Checklist section, BEFORE Final Step
+  - **Verify**: `grep -n "Quality Checklist" plugins/ralph-specum/agents/architect-reviewer.md` shows Quality Checklist at lower line number than Document Self-Review Checklist
+  - **Commit**: `fix(architect-reviewer): reposition Document Self-Review Checklist after Quality Checklist per FR-A1`
+  - _Requirements: FR-A1_
+
+- [ ] 2.2 [FIX] spec-executor.md: Fix External Review Protocol PENDING/FAIL handling
+  - **Do**: Update the External Review Protocol section (lines 53-65) to match FR-B2 spec:
+    - **PENDING**: Change from "Task needs review. Proceed but note in .progress.md." to "do NOT start the task. Append to .progress.md: 'External review PENDING for task X — waiting one cycle'. Skip this task and move to the next unchecked one."
+    - **FAIL**: Add "treat as VERIFICATION_FAIL. Apply fix using fix_hint as starting point, then mark the entry's resolved_at with timestamp before marking the task complete in tasks.md"
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
+  - **Done when**: PENDING handling says to skip task, FAIL handling mentions resolved_at and VERIFICATION_FAIL
+  - **Verify**: `grep -A 3 "PENDING" plugins/ralph-specum/agents/spec-executor.md | grep -i "skip"`; `grep -A 3 "FAIL" plugins/ralph-specum/agents/spec-executor.md | grep -i "resolved_at"`
+  - **Commit**: `fix(spec-executor): correct External Review Protocol PENDING/FAIL handling per FR-B2`
+  - _Requirements: FR-B2_
+
+- [ ] 2.3 [FIX] spec-executor.md: Fix external_unmarks documentation
+  - **Do**: Update the external_unmarks field documentation (lines 88-96) to correctly state where the field lives. Change "Written by: External reviewer only (task_review.md)" to "Written by: external reviewer only (increments when unmarking a task in .ralph-state.json)". The field lives in `.ralph-state.json`, not in `task_review.md`.
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
+  - **Done when**: Documentation correctly states external_unmarks is written to .ralph-state.json
+  - **Verify**: `grep -A 2 "Written by" plugins/ralph-specum/agents/spec-executor.md | grep ".ralph-state.json"`
+  - **Commit**: `docs(spec-executor): correct external_unmarks documentation to reference .ralph-state.json`
+  - _Requirements: FR-B4_
+
+- [ ] 2.4 [FIX] spec-executor.md: Reorder Type Consistency Pre-Check AFTER data-testid block
+  - **Do**: Move the `### Type Consistency Pre-Check` section (lines 107-123) to AFTER the data-testid update block (which ends around line 145). Per FR-A4 spec, Type Consistency Pre-Check must be "positioned after the existing data-testid update block". Also fix step 5: change from "Add a usage example" to "If both the type AND the usage are ambiguous (neither clearly implies sync or async): ESCALATE before implementing, do not guess."
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
+  - **Done when**: Type Consistency Pre-Check appears AFTER data-testid block; step 5 says ESCALATE if both ambiguous
+  - **Verify**: `grep -n "data-testid" plugins/ralph-specum/agents/spec-executor.md` shows lower line number than `grep -n "Type Consistency Pre-Check"`
+  - **Commit**: `fix(spec-executor): reposition Type Consistency Pre-Check after data-testid block per FR-A4`
+  - _Requirements: FR-A4_
+
+- [ ] 2.5 [FIX] task_review.md: Update PENDING description to match FR-B2
+  - **Do**: Update the task_review.md template workflow comment (lines 9-15) to change PENDING description from "Task needs review - proceed but note status" to match FR-B2: "PENDING: reviewer is working on it, spec-executor should not re-mark this task until status changes. spec-executor: skip this task and move to the next unchecked one."
+  - **Files**: `plugins/ralph-specum/templates/task_review.md`
+  - **Done when**: PENDING description in workflow comment matches FR-B2 spec
+  - **Verify**: `grep -A 2 "PENDING" plugins/ralph-specum/templates/task_review.md | grep -i "skip"`
+  - **Commit**: `fix(templates): update task_review.md PENDING description to match FR-B2`
+  - _Requirements: FR-B1_
+
+- [ ] 2.6 [FIX] Align plugin version with tests
+  - **Do**: The tests/interview-framework.bats expects version 4.9.3 but plugin.json and marketplace.json have 4.9.2. Either update the tests to expect 4.9.2 OR bump the version to 4.9.3. Since NFR-3 of this spec already bumped from 4.9.1 → 4.9.2, and the tests expect 4.9.3, bump both files from 4.9.2 → 4.9.3.
+  - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`
+  - **Done when**: Both files show version 4.9.3
+  - **Verify**: `grep '"version"' plugins/ralph-specum/.claude-plugin/plugin.json | grep "4.9.3"`; `jq -r '.plugins[] | select(.name == "ralph-specum") | .version' .claude-plugin/marketplace.json | grep "4.9.3"`
+  - **Commit**: `chore(version): bump 4.9.2 → 4.9.3 to align with interview-framework.bats tests`
+  - _Requirements: NFR-3_
+
+- [ ] 2.7 [FIX] Add YAML frontmatter to ralph-quality-improvements spec files
+  - **Do**: Add standard YAML frontmatter to the three spec files that are missing it:
+    - `specs/ralph-quality-improvements/requirements.md`
+    - `specs/ralph-quality-improvements/design.md`
+    - `specs/ralph-quality-improvements/tasks.md`
+    
+    Each file should have:
+    ```yaml
+    ---
+    spec: ralph-quality-improvements
+    phase: <requirements|design|tasks>
+    created: <date from git history>
+    updated: <date from git history>
+    ---
+    ```
+    
+    Use the git history to determine created/updated dates.
+  - **Files**: `specs/ralph-quality-improvements/requirements.md`, `specs/ralph-quality-improvements/design.md`, `specs/ralph-quality-improvements/tasks.md`
+  - **Done when**: All three files have valid YAML frontmatter at the top
+  - **Verify**: `head -6 specs/ralph-quality-improvements/requirements.md | grep "spec: ralph-quality-improvements"`; same for design.md and tasks.md
+  - **Commit**: `chore(specs): add YAML frontmatter to ralph-quality-improvements spec files`
+  - _Requirements: consistency_
+
+- [ ] 2.8 [FIX] product-manager.md: Align checklist item with FR-A3 spec
+  - **Do**: Update the Quality Checklist item in product-manager.md (line 215) to exactly match FR-A3 spec. Change from:
+    `- [ ] **If updating existing requirements.md: On Requirements Update steps completed**`
+    To:
+    `- [ ] If updating existing requirements: On Requirements Update steps completed`
+    
+    Also update step 5 of the On Requirements Update section to include the HTML comment format:
+    ```
+    5. Append a one-line changelog at the bottom of requirements.md:
+       `<!-- Changed: <brief description> — supersedes User Adjustment #N if applicable -->`
+    ```
+  - **Files**: `plugins/ralph-specum/agents/product-manager.md`
+  - **Done when**: Checklist item matches FR-A3 spec text exactly; step 5 includes HTML comment format
+  - **Verify**: `grep "If updating existing requirements:" plugins/ralph-specum/agents/product-manager.md`; `grep -A 1 "Append a one-line changelog" plugins/ralph-specum/agents/product-manager.md | grep "<!-- Changed:"`
+  - **Commit**: `fix(product-manager): align checklist item and changelog format with FR-A3 spec`
+  - _Requirements: FR-A3_
+
+### Verified Issues Summary
+
+| # | File | Issue | Severity | Status |
+|---|------|-------|----------|--------|
+| 1 | architect-reviewer.md:352 | Document Self-Review Checklist posicionado ANTES de Quality Checklist (debería ser DESPUÉS) | 🟠 Importante | ✅ Confirmado — agregar task 2.1 |
+| 2 | spec-executor.md:62 | External Review Protocol: PENDING dice "proceed" (debería "skip"), FAIL sin resolved_at | 🔴 Crítico | ✅ Confirmado — agregar task 2.2 |
+| 3 | spec-executor.md:95 | external_unmarks dice "Written by: (task_review.md)" pero debería ser ".ralph-state.json" | 🟡 Menor | ✅ Confirmado — agregar task 2.3 |
+| 4 | spec-executor.md:123 | Type Consistency Pre-Check ANTES de data-testid (debería ser DESPUÉS), paso 5 diverge | 🟡 Menor | ✅ Confirmado — agregar task 2.4 |
+| 5 | spec-executor.md:233 | Stuck State Protocol: effectiveIterations es nota post-hoc, NO el trigger de escalación (reason: stuck-state-unresolved hardcoded sigue siendo el trigger principal) | 🔴 Crítico | ✅ Confirmado post-rebuttal — agregar task 2.9 |
+| 6 | task_review.md:27 | PENDING descripción dice "proceed" en vez de "skip task" | 🔴 Crítico | ✅ Confirmado — agregar task 2.5 |
+| 7 | plugin.json + marketplace.json | Tests esperan 4.9.3 pero archivos tienen 4.9.2 | 🔴 Crítico | ✅ Confirmado — agregar task 2.6 |
+| 8 | specs/ralph-quality-improvements/ | Falta frontmatter YAML en 3 archivos | 🟡 Menor | ✅ Confirmado — agregar task 2.7 |
+| 9 | product-manager.md:83 | Checklist item no coincide exactamente con FR-A3, paso 5 sin formato HTML | 🟠 Importante | ✅ Confirmado — agregar task 2.8 |
+
+### Post-Rebuttal Corrections
+
+| Gap identificado | Severidad | Acción |
+|-----------------|----------|--------|
+| effectiveIterations no integrada en el decision point del Stuck State Protocol | 🔴 Crítico | ✅ Agregada task 2.9: reemplazar trigger hardcoded `stuck-state-unresolved` por `if effectiveIterations >= maxTaskIterations → external-reviewer-repeated-fail` |
+| task_review.md formato tabla vs YAML | 🟡 Menor | ❌ Rechazado — la tabla contiene los 7 campos requeridos por FR-B1; el formato es irrelevante. Task 2.5 cubre el único bug real (semántica de PENDING) |
+
+**Total**: 9 problemas confirmados (tasks 2.1-2.9). 1 rebuttal aceptado (effectiveIterations integration → task 2.9), 1 rebuttal rechazado (tabla ≠ incompatibilidad).
