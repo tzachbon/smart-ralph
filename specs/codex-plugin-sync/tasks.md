@@ -373,7 +373,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Done when**: Exactly 15 SKILL.md files found
   - **Commit**: none
 
-- [ ] 1.34 Write 9 agent-config TOML templates
+- [x] 1.34 Write 9 agent-config TOML templates
   - **Do**:
     1. Create `plugins/ralph-specum-codex/agent-configs/README.md` with install instructions: explain that these are bootstrap templates to paste into `.codex/config.toml`, show example merge procedure
     2. For each of 9 agents, create `agent-configs/<name>.toml.template` by adapting the corresponding `plugins/ralph-specum/agents/<name>.md`:
