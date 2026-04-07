@@ -123,6 +123,10 @@ jq --argjson idx N '.chat.executor.lastReadIndex = $idx' <basePath>/.ralph-state
 **Signal writer functions** — executor uses these to send signals to reviewer:
 
 ```bash
+# NOTE: These are PATTERNS for the agent to follow inline.
+# The agent does not source or call these functions.
+# It writes equivalent inline bash at each use point.
+
 # Timestamp helper
 chat_timestamp() {
   date +%H:%M:%S
