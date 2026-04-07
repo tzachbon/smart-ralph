@@ -103,7 +103,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Done when**: 10 templates, 2 bootstrap assets
   - **Commit**: none
 
-- [ ] 1.10 Copy and adapt reference files from platforms/codex
+- [x] 1.10 Copy and adapt reference files from platforms/codex
   - **Do**:
     1. Copy `platforms/codex/skills/ralph-specum/references/workflow.md` to `plugins/ralph-specum-codex/references/workflow.md`
     2. Copy `platforms/codex/skills/ralph-specum/references/state-contract.md` to `plugins/ralph-specum-codex/references/state-contract.md`
