@@ -144,9 +144,9 @@ Create a bidirectional real-time chat channel between executor and reviewer base
 
 ### FR-14: chat.lastReadIndex State
 
-**Given** each agent tracks read position **When** reading chat **Then** lastReadIndex stored in per-agent state files: `.chat-state.executor.json` and `.chat-state.reviewer.json`
+**Given** each agent tracks read position **When** reading chat **Then** lastReadIndex stored in `chat` field inside `.ralph-state.json` as `chat.executor.lastReadIndex` and `chat.reviewer.lastReadIndex`
 
-**And** state updates use atomic JSON write pattern: `jq ... > /tmp/state.json && mv /tmp/state.json .chat-state.{agent}.json`
+**And** state updates use atomic JSON write pattern: `jq --argjson idx N '.chat.executor.lastReadIndex = $idx' .ralph-state.json > /tmp/state.json && mv /tmp/state.json .ralph-state.json`
 
 **And** executor reads chat at task START only, using lastReadIndex to find new messages since last read
 
@@ -236,7 +236,7 @@ Create a bidirectional real-time chat channel between executor and reviewer base
 | `spec-executor.md` | Must modify | Add Chat Protocol section: read chat at task start, respect HOLD signal |
 | `external-reviewer.md` | Must modify | Implement FLOC signals, send ALIVE/INTENT-FAIL |
 | `task_review.md` template | No change | Remains authoritative formal channel |
-| `.ralph-state.json` schema | No change (add `chat` key optional) | Optional per-agent lastReadIndex stored separately |
+| `.ralph-state.json` schema | No change (No change — lastReadIndex stored in .chat-state.executor.json and .chat-state.reviewer.json) | Optional per-agent lastReadIndex stored separately |
 | reviewer-subagent spec | Related | Defines external-reviewer agent that implements FLOC |
 | iterative-failure-recovery spec | Related | OVER timeout interacts with effectiveIterations |
 

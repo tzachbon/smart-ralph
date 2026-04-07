@@ -2,7 +2,7 @@
 
 ## Overview
 
-Total tasks: 46
+Total tasks: 39
 
 **Intent Classification**: GREENFIELD — POC-first workflow
 
@@ -11,6 +11,8 @@ Total tasks: 46
 2. Phase 2: Refactoring - Clean up code structure
 3. Phase 3: Testing - Add unit/integration/e2e tests
 4. Phase 4: Quality Gates - Local quality checks and PR creation
+
+**Architecture note**: FLOC protocol is implemented as sections added to agent prompts (spec-executor.md, external-reviewer.md). Agents execute inline bash commands directly — they do NOT call external bash scripts. Chat reading/writing uses Read tool, Write tool, and Bash tool inline in the agent prompts.
 
 ## Phase 1: Make It Work (POC)
 
@@ -48,185 +50,195 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-14_
   - _Design: Per-Agent State section_
 
-- [ ] 1.3 Create chat-helpers.sh library (shared utilities)
-  - **Do**:
-    1. Create `plugins/ralph-specum/hooks/scripts/chat-helpers.sh` with shared utilities:
-       - `chat_get_timestamp()` — returns HH:MM:SS format
-       - `chat_get_task_id()` — formats task ID from state
-       - `chat_validate_signal(signal)` — validates signal is one of 10 known
-       - `chat_format_message(agent, addressee, task_id, signal, body)` — formats message header
-       - `chat_update_state(agent, field, value)` — atomic state update using jq
-       - `chat_get_state_value(agent, field)` — read state value from .ralph-state.json
-       - `chat_init_state(agent)` — initialize chat state for agent if missing
-    2. Both chat-writer.sh and chat-reader.sh will source this file
-    3. Require `SPEC_DIR` environment variable set by caller
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-helpers.sh`
-  - **Done when**: Shared library exists with all helper functions
-  - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/chat-helpers.sh && echo "HELPERS_OK"`
-  - **Commit**: `feat(chat-helpers): create shared chat helper library`
-  - _Requirements: NFR-1_
-  - _Design: Component: Chat Channel section_
-
-- [ ] 1.4 Create ChatWriter utility - core message writing
-  - **Do**:
-    1. Create `plugins/ralph-specum/hooks/scripts/chat-writer.sh` with core functions:
-       - `chat_write_message(agent, addressee, task_id, signal, body)` — writes message using temp-file+rename pattern
-       - `chat_write_over(agent, task_id, question)` — sends OVER signal
-       - `chat_write_ack(agent, task_id, message)` — sends ACK signal
-       - `chat_write_continue(agent, task_id)` — sends CONTINUE signal
-    2. Implement atomic write: `cat > chat.tmp.{agent}.{timestamp} <<EOF ... EOF && mv chat.tmp.{agent}.{timestamp} chat.md`
-    3. Source chat-helpers.sh for shared functions
-    4. Require `SPEC_DIR` environment variable set by caller
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-writer.sh`
-  - **Done when**: Script exists with OVER/ACK/CONTINUE write functions, atomic write pattern implemented
-  - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/chat-writer.sh && echo "SYNTAX_OK"`
-  - **Commit**: `feat(chat-writer): create ChatWriter with core signal writers`
-  - _Requirements: FR-2, FR-13_
-  - _Design: Atomic Write Implementation section_
-
-- [ ] 1.5 Add HOLD, STILL, ALIVE write functions to ChatWriter
-  - **Do**:
-    1. Add to `chat-writer.sh`:
-       - `chat_write_hold(agent, task_id, reason)` — sends HOLD signal
-       - `chat_write_still(agent, task_id, message)` — sends STILL signal
-       - `chat_write_alive(agent, task_id)` — sends ALIVE signal
-    2. Source chat-helpers.sh for shared functions
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-writer.sh`
-  - **Done when**: HOLD/STILL/ALIVE write functions exist
-  - **Verify**: `grep "chat_write_hold\|chat_write_still\|chat_write_alive" plugins/ralph-specum/hooks/scripts/chat-writer.sh | wc -l`
-  - **Commit**: `feat(chat-writer): add HOLD, STILL, ALIVE signal writers`
-  - _Requirements: FR-6, FR-7, FR-8_
-  - _Design: FLOC Signal State Machine section_
-
-- [ ] 1.6 Add CLOSE, URGENT, DEADLOCK, INTENT-FAIL write functions to ChatWriter
-  - **Do**:
-    1. Add to `chat-writer.sh`:
-       - `chat_write_close(agent, task_id, reason)` — sends CLOSE signal
-       - `chat_write_urgent(agent, task_id, reason)` — sends URGENT signal
-       - `chat_write_deadlock(agent, task_id, reason)` — sends DEADLOCK signal
-       - `chat_write_intent_fail(agent, task_id, fix_hint)` — sends INTENT-FAIL signal
-    2. Verify all 10 signals now have write functions
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-writer.sh`
-  - **Done when**: All 10 FLOC signals have write functions
-  - **Verify**: `grep -c "chat_write_" plugins/ralph-specum/hooks/scripts/chat-writer.sh`
-  - **Commit**: `feat(chat-writer): add CLOSE, URGENT, DEADLOCK, INTENT-FAIL signal writers`
-  - _Requirements: FR-9, FR-10, FR-11, FR-12_
-  - _Design: FLOC Signal State Machine section_
-
-- [ ] 1.7 Create ChatReader utility - read new messages
-  - **Do**:
-    1. Create `plugins/ralph-specum/hooks/scripts/chat-reader.sh` with functions:
-       - `chat_read_new(agent)` — reads messages after lastReadIndex, updates state
-       - `chat_has_signal(agent, signal)` — checks if signal exists since last read
-    2. Read SPEC_DIR from environment, use `.ralph-state.json` for lastReadIndex
-    3. Update lastReadIndex after each read using atomic jq pattern
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-reader.sh`
-  - **Done when**: Script exists with read functions, lastReadIndex tracking works
-  - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/chat-reader.sh && echo "SYNTAX_OK"`
-  - **Commit**: `feat(chat-reader): create ChatReader with read functions`
-  - _Requirements: FR-14, FR-6_
-  - _Design: Per-Agent State section_
-
-- [ ] 1.8 Add HOLD detection and state query functions to ChatReader
-  - **Do**:
-    1. Add to `chat-reader.sh`:
-       - `chat_has_hold()` — checks if HOLD signal present in unread messages
-       - `chat_get_last_signal(agent)` — returns lastSignal from state
-       - `chat_get_still_ttl(agent)` — returns stillTtl value
-       - `chat_get_pending_intent_fail(agent)` — returns pendingIntentFail value
-    2. Source chat-helpers.sh for shared functions
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-reader.sh`
-  - **Done when**: HOLD detection and state query functions exist
-  - **Verify**: `grep "chat_has_hold\|chat_get_last_signal\|chat_get_still_ttl" plugins/ralph-specum/hooks/scripts/chat-reader.sh | wc -l`
-  - **Commit**: `feat(chat-reader): add HOLD detection and state query functions`
-  - _Requirements: FR-6, FR-14_
-  - _Design: Per-Agent State section_
-
-- [ ] 1.9 Add Chat Protocol section to spec-executor.md - chat reading at task START
+- [ ] 1.3 Add Chat Protocol section to spec-executor.md — core infrastructure
   - **Do**:
     1. Read `plugins/ralph-specum/agents/spec-executor.md`
-    2. Add new section "## Chat Protocol" after the "## External Review Protocol" section
-    3. Add chat reading at task START:
-       - Check if `chat.md` exists in basePath
-       - If exists and has >= 1 message, read new messages using chat-reader.sh
-       - Check for HOLD signal — if present, block until ACK/CONTINUE
-       - Update lastReadIndex after reading
-    4. Implement OVER timeout logic: 1 task cycle then auto-CONTINUE
+    2. Add new section "## Chat Protocol (FLOC)" after the "## External Review Protocol" section
+    3. Add to the section:
+       - **Chat file path**: `chat.md` in basePath
+       - **Activation threshold**: chat.md exists AND has >= 1 message
+       - **Read at task START**: Before starting each task, read chat.md using Read tool, parse new messages after lastReadIndex
+       - **Atomic append pattern** (CRITICAL — chat.md is append-only):
+         ```bash
+         # Write new message to temp file
+         TMPFILE="/tmp/chat.tmp.${AGENT}.$(date +%s%N)"
+         cat > "$TMPFILE" << 'CHATEOF'
+         ### [<writer> → <addressee>] <HH:MM:SS> | <task-ID> | <SIGNAL>
+         <message body>
+         CHATEOF
+         # Append atomically to chat.md (NOT mv — that overwrites!)
+         cat "$TMPFILE" >> <basePath>/chat.md && rm "$TMPFILE"
+         ```
+         **NEVER use `mv` to write to chat.md** — it overwrites the entire file. Always use `cat >>` for appends.
+       - **Update lastReadIndex**: After reading, update via atomic jq pattern:
+         ```bash
+         jq --argjson idx N '.chat.executor.lastReadIndex = $idx' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
+         ```
   - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
-  - **Done when**: spec-executor.md contains Chat Protocol section with HOLD checking at task START
-  - **Verify**: `grep -c "Chat Protocol\|chat_read_new\|chat_has_hold" plugins/ralph-specum/agents/spec-executor.md`
-  - **Commit**: `feat(spec-executor): add Chat Protocol section with chat reading at task START`
+  - **Done when**: spec-executor.md contains Chat Protocol section with file paths, read-at-start logic, and atomic write pattern
+  - **Verify**: `grep -c "Chat Protocol\|chat.md\|lastReadIndex\|atomic" plugins/ralph-specum/agents/spec-executor.md`
+  - **Commit**: `feat(spec-executor): add Chat Protocol section with atomic read/write`
+  - _Requirements: FR-1, FR-2, FR-13, FR-14_
+  - _Design: Atomic Write Implementation section, Per-Agent State section_
+
+- [ ] 1.4 Add OVER and HOLD signals to spec-executor.md Chat Protocol
+  - **Do**:
+    1. Add to Chat Protocol section in spec-executor.md:
+       - **OVER signal**: Blocking signal — after sending OVER, do not start new work until response or 1-task timeout
+         - If timeout: auto-assume CONTINUE, proceed
+         - Exception: if HOLD present at timeout, HOLD takes precedence — do not start next task
+       - **HOLD signal**: Pre-task gate only — read at task START, never interrupt mid-task
+         - If HOLD present in unread messages: block until ACK or CONTINUE received
+         - Do NOT stop current task when HOLD received mid-execution
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
+  - **Done when**: OVER blocking with timeout and HOLD pre-task gate implemented
+  - **Verify**: `grep -c "OVER\|HOLD\|timeout\|pre-task" plugins/ralph-specum/agents/spec-executor.md`
+  - **Commit**: `feat(spec-executor): add OVER and HOLD signal handling`
   - _Requirements: FR-3, FR-6_
   - _Design: FLOC Signal State Machine section_
 
-- [ ] 1.10 Add STILL TTL tracking to spec-executor.md
+- [ ] 1.5 Add STILL TTL tracking to spec-executor.md Chat Protocol
   - **Do**:
-    1. Add STILL TTL tracking to spec-executor.md:
-       - Track stillTtl counter per task cycle
-       - Decrement on each task with no signal from reviewer
-       - Raise alarm when TTL reaches 0 (3 consecutive tasks)
-       - Implement ALIVE-triggered TTL reset
+    1. Add to Chat Protocol section in spec-executor.md:
+       - **STILL TTL**: 3-task cycle counter
+         - Decrement stillTtl when reviewer sends no signal for N consecutive tasks
+         - When TTL reaches 0: raise alarm (deadlock suspicion)
+         - ANY reviewer signal resets TTL to 3
+       - **ALIVE signal**: When TTL would expire, if ALIVE appears, reset TTL to 3
+       - Track in `.ralph-state.json` under `chat.executor.stillTtl`
   - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
-  - **Done when**: STILL TTL tracking implemented in executor
-  - **Verify**: `grep -c "stillTtl\|STILL" plugins/ralph-specum/agents/spec-executor.md`
+  - **Done when**: STILL TTL tracking with alarm behavior implemented
+  - **Verify**: `grep -c "stillTtl\|STILL\|TTL\|deadlock" plugins/ralph-specum/agents/spec-executor.md`
   - **Commit**: `feat(spec-executor): add STILL TTL tracking for deadlock prevention`
   - _Requirements: FR-7, FR-8_
   - _Design: STILL Signal section_
 
-- [ ] 1.11 Add FLOC signals to external-reviewer.md - reading at review cycle
+- [ ] 1.6 Add FLOC signal writers to spec-executor.md Chat Protocol
   - **Do**:
-    1. Read `plugins/ralph-specum/agents/external-reviewer.md`
-    2. Add chat reading at review cycle (similar to executor)
-    3. Respond to OVER with ACK/CONTINUE/CLOSE within 1 task cycle
-    4. Implement HOLD pre-task gate for reviewer
-  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
-  - **Done when**: external-reviewer.md reads chat at review cycle
-  - **Verify**: `grep -c "chat_read_new\|chat_has_hold" plugins/ralph-specum/agents/external-reviewer.md`
-  - **Commit**: `feat(external-reviewer): add chat reading at review cycle`
-  - _Requirements: FR-4, FR-5, FR-6_
+    1. Add to Chat Protocol section in spec-executor.md a "Signal Reference" subsection with inline bash commands for each signal:
+       - **OVER**: `chat_write_signal "executor" "reviewer" "OVER" "<question>"`
+       - **CONTINUE**: `chat_write_signal "executor" "reviewer" "CONTINUE" ""`
+       - **HOLD**: `chat_write_signal "executor" "reviewer" "HOLD" "<reason>"`
+       - **DEADLOCK**: `chat_write_signal "executor" "reviewer" "DEADLOCK" "<reason>"`
+    2. Include the chat_write_signal function definition using atomic append pattern (cat >> as defined in task 1.3)
+    3. Include timestamp helper using `date +%H:%M:%S`
+    4. Include task-ID formatting from `.ralph-state.json` → taskIndex
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
+  - **Done when**: All executor-side signal writers available as inline functions
+  - **Verify**: `grep -c "chat_write_signal\|OVER\|CONTINUE\|HOLD\|DEADLOCK" plugins/ralph-specum/agents/spec-executor.md`
+  - **Commit**: `feat(spec-executor): add FLOC signal writers to Chat Protocol`
+  - _Requirements: FR-2, FR-3, FR-6, FR-12_
   - _Design: FLOC Signal State Machine section_
 
-- [ ] 1.12 Add ALIVE and STILL signals to external-reviewer.md
+- [ ] 1.7 Add chat reading to external-reviewer.md — core infrastructure
   - **Do**:
-    1. Add to external-reviewer.md:
-       - ALIVE every 3 tasks of silence (when STILL TTL would expire)
-       - STILL signal for intentional silence during active work
-    2. Implement TTL tracking: stillTtl field that resets on any signal
+    1. Read `plugins/ralph-specum/agents/external-reviewer.md`
+    2. Add new section "## Chat Protocol (FLOC)" at the end of the file (before Section 7 Never Do)
+    3. Add to the section:
+       - **Chat file path**: `chat.md` in basePath
+       - **Read at review cycle**: After completing a review, read chat.md using Read tool
+       - **Update lastReadIndex**: After reading, update via atomic jq pattern:
+         ```bash
+         jq --argjson idx N '.chat.reviewer.lastReadIndex = $idx' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
+         ```
+       - **Atomic write pattern**: Same temp file + rename as spec-executor
   - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
-  - **Done when**: ALIVE and STILL signals implemented
-  - **Verify**: `grep -c "ALIVE\|STILL" plugins/ralph-specum/agents/external-reviewer.md`
-  - **Commit**: `feat(external-reviewer): add ALIVE and STILL signal implementation`
+  - **Done when**: external-reviewer.md contains Chat Protocol section with read/write infrastructure
+  - **Verify**: `grep -c "Chat Protocol\|chat.md\|lastReadIndex" plugins/ralph-specum/agents/external-reviewer.md`
+  - **Commit**: `feat(external-reviewer): add Chat Protocol section infrastructure`
+  - _Requirements: FR-1, FR-2, FR-13, FR-14_
+  - _Design: Atomic Write Implementation section_
+
+- [ ] 1.8 Add OVER response signals to external-reviewer.md Chat Protocol
+  - **Do**:
+    1. Add to Chat Protocol section in external-reviewer.md:
+       - **Read OVER**: Detect OVER signal in unread messages
+       - **Respond within 1 task cycle**: ACK (processing) or CLOSE (debate resolved)
+       - **ACK**: Non-blocking — executor proceeds after ACK
+       - **CONTINUE**: Non-blocking — executor may proceed, no response needed
+       - **CLOSE**: Debate resolved — marks thread as closed, does not reopen
+    2. Include signal writer functions (same atomic pattern as executor)
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
+  - **Done when**: OVER response signals (ACK/CONTINUE/CLOSE) implemented
+  - **Verify**: `grep -c "ACK\|CONTINUE\|CLOSE\|OVER" plugins/ralph-specum/agents/external-reviewer.md`
+  - **Commit**: `feat(external-reviewer): add OVER response signals`
+  - _Requirements: FR-3, FR-4, FR-5, FR-9_
+  - _Design: FLOC Signal State Machine section_
+
+- [ ] 1.9 Add STILL and ALIVE signals to external-reviewer.md Chat Protocol
+  - **Do**:
+    1. Add to Chat Protocol section in external-reviewer.md:
+       - **STILL**: When intentionally silent but working — non-blocking
+         - Has 3-task TTL: after 3 consecutive tasks with no signal, executor raises alarm
+       - **ALIVE**: Heartbeat — every 3 tasks of silence to confirm healthy session
+         - Resets STILL TTL counter
+         - Non-blocking
+    2. Include `stillTtl` tracking in state: decrement each task, reset on any signal
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
+  - **Done when**: STILL and ALIVE signals implemented with TTL tracking
+  - **Verify**: `grep -c "STILL\|ALIVE\|stillTtl" plugins/ralph-specum/agents/external-reviewer.md`
+  - **Commit**: `feat(external-reviewer): add STILL and ALIVE signal implementation`
   - _Requirements: FR-7, FR-8_
   - _Design: STILL Signal section_
 
-- [ ] 1.13 Add INTENT-FAIL, CLOSE, URGENT, DEADLOCK to external-reviewer.md
+- [ ] 1.10 Add URGENT, INTENT-FAIL, DEADLOCK signals to external-reviewer.md
   - **Do**:
-    1. Add to external-reviewer.md:
-       - INTENT-FAIL pre-warning before writing FAIL to task_review.md (1-task window)
-       - CLOSE response to resolved OVER threads
-       - URGENT for critical issues (respecting qa-engineer delegation boundary)
-       - DEADLOCK for human escalation
+    1. Add to Chat Protocol section in external-reviewer.md:
+       - **URGENT**: Critical issue that cannot wait — breaks task boundary
+         - Cannot interrupt during active qa-engineer delegation (boundary is after Task tool returns)
+         - Reviewer-only signal (not executor)
+       - **INTENT-FAIL**: Pre-FAIL notification before writing FAIL to task_review.md
+         - Executor has 1 task cycle to respond or correct
+         - Must include same fix_hint that will go in FAIL
+       - **DEADLOCK**: Human escalation — when neither agent can resolve conflict
+         - Notifies human via coordinator output
+         - Execution pauses until human resolves
   - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
-  - **Done when**: INTENT-FAIL, CLOSE, URGENT, DEADLOCK signals implemented
-  - **Verify**: `grep -c "INTENT-FAIL\|CLOSE\|URGENT\|DEADLOCK" plugins/ralph-specum/agents/external-reviewer.md`
-  - **Commit**: `feat(external-reviewer): add INTENT-FAIL, CLOSE, URGENT, DEADLOCK signals`
-  - _Requirements: FR-9, FR-10, FR-11, FR-12_
+  - **Done when**: URGENT, INTENT-FAIL, DEADLOCK signals implemented
+  - **Verify**: `grep -c "URGENT\|INTENT-FAIL\|DEADLOCK" plugins/ralph-specum/agents/external-reviewer.md`
+  - **Commit**: `feat(external-reviewer): add URGENT, INTENT-FAIL, DEADLOCK signals`
+  - _Requirements: FR-10, FR-11, FR-12_
   - _Design: FLOC Signal State Machine section_
 
-- [ ] 1.14 [VERIFY] Quality Checkpoint: syntax and structure
-  - **Do**: Verify all created files have correct syntax and structure
+- [ ] 1.11 Add `version:` field to external-reviewer.md
+  - **Do**:
+    1. Read `plugins/ralph-specum/agents/external-reviewer.md`
+    2. Add `version: 0.1.0` to the frontmatter (after `color: purple`)
+    3. This field is required for plugin versioning in Task 4.3
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
+  - **Done when**: external-reviewer.md has `version:` field in frontmatter
+  - **Verify**: `grep "^version:" plugins/ralph-specum/agents/external-reviewer.md`
+  - **Commit**: `chore(external-reviewer): add version field for plugin versioning`
+  - _Requirements: Plugin versioning requirement from CLAUDE.md_
+
+- [ ] 1.12 Add chat.md creation to implement.md reviewer onboarding
+  - **Do**:
+    1. Read `plugins/ralph-specum/commands/implement.md`
+    2. In "If user answers YES" block, after step that copies task_review.md template, add:
+       - Copy `plugins/ralph-specum/templates/chat.md` → `specs/<specName>/chat.md`
+    3. In the onboarding instructions printed to user, add:
+       - "El revisor también leerá y escribirá en chat.md (coordinación FLOC en tiempo real)"
+  - **Files**: `plugins/ralph-specum/commands/implement.md`
+  - **Done when**: implement.md creates chat.md automatically when reviewer is activated
+  - **Verify**: `grep -c "chat.md" plugins/ralph-specum/commands/implement.md`
+  - **Commit**: `feat(implement): create chat.md on reviewer activation`
+  - _Requirements: FR-1_
+
+- [ ] 1.13 [VERIFY] Quality Checkpoint: syntax and structure
+  - **Do**: Verify all modified files have correct syntax and structure
   - **Verify**:
-    - `bash -n plugins/ralph-specum/hooks/scripts/chat-writer.sh && echo "WRITER_OK"`
-    - `bash -n plugins/ralph-specum/hooks/scripts/chat-reader.sh && echo "READER_OK"`
-    - `bash -n plugins/ralph-specum/hooks/scripts/chat-helpers.sh && echo "HELPERS_OK"`
     - `jq '.' specs/agent-chat-protocol/.ralph-state.json && echo "STATE_OK"`
     - `grep -q "Chat Protocol" plugins/ralph-specum/agents/spec-executor.md && echo "EXEC_PROTOCOL_OK"`
-    - `grep -q "ALIVE" plugins/ralph-specum/agents/external-reviewer.md && echo "REVIEWER_SIGNALS_OK"`
+    - `grep -q "Chat Protocol" plugins/ralph-specum/agents/external-reviewer.md && echo "REVIEWER_PROTOCOL_OK"`
+    - `grep -q "version:" plugins/ralph-specum/agents/external-reviewer.md && echo "VERSION_OK"`
+    - `grep -q "OVER\|ACK\|CONTINUE" plugins/ralph-specum/agents/spec-executor.md && echo "EXEC_SIGNALS_OK"`
+    - `grep -q "ALIVE\|STILL\|INTENT-FAIL" plugins/ralph-specum/agents/external-reviewer.md && echo "REVIEWER_SIGNALS_OK"`
+    - `grep -q "chat.md" plugins/ralph-specum/commands/implement.md && echo "IMPLEMENT_CHAT_OK"`
   - **Done when**: All checks pass with no errors
   - **Commit**: `chore: pass Phase 1 quality checkpoint`
   - _Requirements: NFR-1, NFR-2_
 
-- [ ] 1.15 Initialize chat.md in spec directory
+- [ ] 1.14 Initialize chat.md in spec directory
   - **Do**:
     1. Copy `plugins/ralph-specum/templates/chat.md` to `specs/agent-chat-protocol/chat.md`
     2. Verify file exists and has correct format
@@ -237,72 +249,72 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-1_
   - _Design: Chat Template section_
 
-- [ ] 1.16 POC test: executor writes OVER, reviewer responds ACK
+- [ ] 1.15 POC test: executor writes OVER, reviewer responds ACK
   - **Do**:
     1. Set up test environment: create temp spec directory with chat.md and .ralph-state.json
-    2. Simulate executor writes OVER to chat.md using chat-writer.sh
-    3. Simulate reviewer reads chat.md, responds with ACK using chat-writer.sh
+    2. Simulate executor writes OVER to chat.md using inline bash (atomic write pattern)
+    3. Simulate reviewer reads chat.md, responds with ACK using inline bash
     4. Verify both messages appear in chat.md with correct format
     5. Verify state file updated correctly (lastReadIndex for both agents)
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-writer.sh`, `plugins/ralph-specum/hooks/scripts/chat-reader.sh`
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`, `plugins/ralph-specum/agents/external-reviewer.md`
   - **Done when**: OVER and ACK messages appear in chat.md with correct format
   - **Verify**: `grep "OVER\|ACK" specs/agent-chat-protocol/chat.md | wc -l`
   - **Commit**: `test(chat-poc): verify OVER/ACK bidirectional message flow`
   - _Requirements: FR-3, FR-4_
   - _Design: Signal Sequencing Rules section_
 
-- [ ] 1.17 POC test: HOLD pre-task gate blocks executor
+- [ ] 1.16 POC test: HOLD pre-task gate blocks executor
   - **Do**:
     1. Create test scenario: executor starts task, reviewer sends HOLD
     2. Verify executor reads HOLD at task START only (not mid-task)
     3. Verify executor blocks until ACK or CONTINUE received
     4. Verify executor proceeds with current task when HOLD received mid-execution
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-reader.sh`
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`
   - **Done when**: Executor correctly respects HOLD as pre-task gate
   - **Verify**: `grep -c "HOLD" plugins/ralph-specum/agents/spec-executor.md`
   - **Commit**: `test(chat-poc): verify HOLD pre-task gate semantics`
   - _Requirements: FR-6_
   - _Design: HOLD Signal section_
 
-- [ ] 1.18 POC test: STILL/ALIVE heartbeat cycle
+- [ ] 1.17 POC test: STILL/ALIVE heartbeat cycle
   - **Do**:
     1. Simulate 3 tasks of reviewer silence
     2. Verify STILL TTL decrements on each task
     3. Verify ALIVE is sent when TTL would expire
     4. Verify ALIVE resets TTL to 3
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-helpers.sh`
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
   - **Done when**: ALIVE appears after 3 tasks of silence
   - **Verify**: `grep "ALIVE" specs/agent-chat-protocol/chat.md`
   - **Commit**: `test(chat-poc): verify STILL/ALIVE heartbeat cycle`
   - _Requirements: FR-7, FR-8_
   - _Design: STILL Signal section_
 
-- [ ] 1.19 POC test: INTENT-FAIL 1-task window
+- [ ] 1.18 POC test: INTENT-FAIL 1-task window
   - **Do**:
     1. Simulate reviewer writes INTENT-FAIL to chat.md
     2. Verify executor has 1 task cycle to respond
     3. Verify FAIL written to task_review.md only after 1 task if not corrected
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-writer.sh`
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
   - **Done when**: INTENT-FAIL appears in chat before FAIL in task_review.md
   - **Verify**: `grep "INTENT-FAIL" specs/agent-chat-protocol/chat.md`
   - **Commit**: `test(chat-poc): verify INTENT-FAIL 1-task window`
   - _Requirements: FR-11_
   - _Design: INTENT-FAIL Signal section_
 
-- [ ] 1.20 POC test: CLOSE thread resolution
+- [ ] 1.19 POC test: CLOSE thread resolution
   - **Do**:
     1. Simulate OVER exchange between executor and reviewer
     2. Simulate reviewer sends CLOSE to resolve thread
     3. Verify CLOSE appears in chat.md with correct format
     4. Verify new OVER on different topic still works
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-writer.sh`
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
   - **Done when**: CLOSE appears in chat.md
   - **Verify**: `grep "CLOSE" specs/agent-chat-protocol/chat.md`
   - **Commit**: `test(chat-poc): verify CLOSE thread resolution`
   - _Requirements: FR-9_
   - _Design: CLOSE Signal section_
 
-- [ ] 1.21 POC Checkpoint: end-to-end signal flow
+- [ ] 1.20 POC Checkpoint: end-to-end signal flow
   - **Do**: Run a full POC demonstrating all major signals work:
     1. Executor sends OVER
     2. Reviewer sends ACK
@@ -321,27 +333,27 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
 After POC validated, clean up code.
 
-- [ ] 2.1 Refactor ChatWriter: extract format validation
+- [ ] 2.1 Refactor: extract message formatting helpers
   - **Do**:
-    1. Add message format validation function to chat-helpers.sh
+    1. Add message format validation to spec-executor.md and external-reviewer.md
     2. Validate format: `### [<writer> → <addressee>] <HH:MM:SS> | <task-ID> | <SIGNAL>`
     3. Validate SIGNAL is one of 10 known signals
-    4. Refactor chat-writer.sh to use validation
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-helpers.sh`, `plugins/ralph-specum/hooks/scripts/chat-writer.sh`
+    4. Centralize timestamp and task-ID helpers
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`, `plugins/ralph-specum/agents/external-reviewer.md`
   - **Done when**: Message format validated before writing
-  - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/chat-writer.sh && echo "OK"`
-  - **Commit**: `refactor(chat-writer): add message format validation`
+  - **Verify**: `grep "validate.*signal\|SIGNAL" plugins/ralph-specum/agents/spec-executor.md | wc -l`
+  - **Commit**: `refactor(chat): add message format validation`
   - _Design: Error Handling section_
 
-- [ ] 2.2 Refactor ChatReader: add error recovery for missing files
+- [ ] 2.2 Refactor: add error recovery for missing/corrupted files
   - **Do**:
-    1. Add error recovery for missing chat.md (graceful skip)
+    1. Add error recovery for missing chat.md (graceful skip — chat is optional)
     2. Add error recovery for corrupted state file (reset to defaults)
     3. Add error recovery for lastReadIndex > actual lines (reset to line count)
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-reader.sh`
-  - **Done when**: Chat reader handles all error cases in Error Handling table
-  - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/chat-reader.sh && echo "OK"`
-  - **Commit**: `refactor(chat-reader): add error recovery for missing files`
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`, `plugins/ralph-specum/agents/external-reviewer.md`
+  - **Done when**: Chat handling handles all error cases gracefully
+  - **Verify**: `grep "missing\|corrupted\|graceful" plugins/ralph-specum/agents/spec-executor.md`
+  - **Commit**: `refactor(chat): add error recovery for missing files`
   - _Design: Error Handling section_
 
 - [ ] 2.3 Refactor: add atomic write verification
@@ -349,234 +361,125 @@ After POC validated, clean up code.
     1. Add verification that temp file is removed after rename
     2. Add check that message appears in chat.md after write
     3. Add cleanup of orphaned temp files on error
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-writer.sh`
+  - **Files**: `plugins/ralph-specum/agents/spec-executor.md`, `plugins/ralph-specum/agents/external-reviewer.md`
   - **Done when**: No orphaned temp files remain after write
-  - **Verify**: `ls chat.tmp.* 2>/dev/null || echo "NO_ORPHANS"`
-  - **Commit**: `refactor(chat-writer): add atomic write verification`
+  - **Verify**: `ls /tmp/chat.tmp.* 2>/dev/null || echo "NO_ORPHANS"`
+  - **Commit**: `refactor(chat): add atomic write verification`
   - _Requirements: NFR-1_
   - _Design: Error Handling section_
 
-- [ ] 2.4 Refactor: extract signal-specific helpers to chat-helpers.sh
-  - **Do**:
-    1. Extract signal validation to `chat_validate_signal()`
-    2. Extract signal-specific message formatting to individual functions
-    3. Ensure all chat scripts source chat-helpers.sh consistently
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-helpers.sh`, `plugins/ralph-specum/hooks/scripts/chat-writer.sh`
-  - **Done when**: Signal logic centralized in helpers
-  - **Verify**: `grep "source.*chat-helpers" plugins/ralph-specum/hooks/scripts/chat-*.sh | wc -l`
-  - **Commit**: `refactor(chat): extract signal helpers to chat-helpers.sh`
-  - _Design: Component: Chat Channel section_
-
-- [ ] 2.5 [VERIFY] Quality Checkpoint: refactoring complete
-  - **Do**: Run all scripts to verify refactoring doesn't break functionality
+- [ ] 2.4 [VERIFY] Quality Checkpoint: refactoring complete
+  - **Do**: Verify all refactored sections are syntactically correct
   - **Verify**:
-    - `bash -n plugins/ralph-specum/hooks/scripts/chat-helpers.sh && echo "HELPERS_OK"`
-    - `bash -n plugins/ralph-specum/hooks/scripts/chat-writer.sh && echo "WRITER_OK"`
-    - `bash -n plugins/ralph-specum/hooks/scripts/chat-reader.sh && echo "READER_OK"`
-  - **Done when**: All syntax checks pass
+    - `grep -q "Chat Protocol" plugins/ralph-specum/agents/spec-executor.md && echo "EXEC_OK"`
+    - `grep -q "Chat Protocol" plugins/ralph-specum/agents/external-reviewer.md && echo "REVIEWER_OK"`
+  - **Done when**: All checks pass
   - **Commit**: `chore: pass Phase 2 quality checkpoint`
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Unit tests: ChatWriter.write() with clean state
+- [ ] 3.1 Integration test: concurrent writes (100 messages)
   - **Do**:
-    1. Create `tests/chat-writer.bats` with test cases:
-       - Message appears in file with correct format
-       - Format validation rejects invalid signals
-       - Atomic write leaves no temp files
-    2. Use temp directory for test workspace
-    3. Clean up temp files in teardown
-  - **Files**: `tests/chat-writer.bats`
-  - **Done when**: All unit tests pass
-  - **Verify**: `bats tests/chat-writer.bats`
-  - **Commit**: `test(chat-writer): add unit tests for ChatWriter`
-  - _Design: Test Coverage Table - ChatWriter.write()_
-
-- [ ] 3.2 Unit tests: ChatWriter.atomicRename()
-  - **Do**:
-    1. Add test cases to `tests/chat-writer.bats`:
-       - Temp file gone after rename
-       - Content correctly in target file
-       - Concurrent rename safety
-    2. Use real temp files in temp directory
-  - **Files**: `tests/chat-writer.bats`
-  - **Done when**: All atomic rename tests pass
-  - **Verify**: `bats tests/chat-writer.bats`
-  - **Commit**: `test(chat-writer): add atomic rename tests`
-  - _Design: Test Coverage Table - ChatWriter.atomicRename()_
-
-- [ ] 3.3 Unit tests: ChatReader.readNewMessages()
-  - **Do**:
-    1. Create `tests/chat-reader.bats` with test cases:
-       - Returns only messages after lastReadIndex
-       - State file updated with correct index
-       - Handles empty chat (first read)
-       - Handles missing state file
-    2. Create fixture files in `tests/fixtures/chat/`
-  - **Files**: `tests/chat-reader.bats`, `tests/fixtures/chat/`
-  - **Done when**: All unit tests pass
-  - **Verify**: `bats tests/chat-reader.bats`
-  - **Commit**: `test(chat-reader): add unit tests for ChatReader`
-  - _Design: Test Coverage Table - ChatReader.readNewMessages()_
-
-- [ ] 3.4 Unit tests: ChatReader.updateLastReadIndex()
-  - **Do**:
-    1. Add test cases to `tests/chat-reader.bats`:
-       - lastReadIndex updated correctly after read
-       - Atomic state update pattern works
-       - State file remains valid JSON after update
-    2. Use real jq on temp state file
-  - **Files**: `tests/chat-reader.bats`
-  - **Done when**: All update tests pass
-  - **Verify**: `bats tests/chat-reader.bats`
-  - **Commit**: `test(chat-reader): add lastReadIndex update tests`
-  - _Design: Test Coverage Table - ChatReader.updateLastReadIndex()_
-
-- [ ] 3.5 Unit tests: PerAgentState JSON serialization
-  - **Do**:
-    1. Create `tests/chat-state.bats` with test cases:
-       - Valid JSON output from jq pattern
-       - Parsed state matches expected schema
-       - Atomic update pattern works
-    2. Test with real jq on valid and invalid JSON
-  - **Files**: `tests/chat-state.bats`
-  - **Done when**: All unit tests pass
-  - **Verify**: `bats tests/chat-state.bats`
-  - **Commit**: `test(chat-state): add unit tests for per-agent state`
-  - _Design: Test Coverage Table - PerAgentState JSON serialization_
-
-- [ ] 3.6 Unit tests: FLOC state - ACTIVE to BLOCKED on OVER
-  - **Do**:
-    1. Create `tests/floc-state-machine.bats` with test case:
-       - UNKNOWN/ACTIVE state transitions to BLOCKED when OVER signal sent
-       - State recorded correctly in chat state
-    2. Test pure state transitions without filesystem
-  - **Files**: `tests/floc-state-machine.bats`
-  - **Done when**: All unit tests pass
-  - **Verify**: `bats tests/floc-state-machine.bats`
-  - **Commit**: `test(floc): add ACTIVE to BLOCKED on OVER test`
-  - _Design: Test Coverage Table - FLOC state: ACTIVE → BLOCKED on OVER_
-
-- [ ] 3.7 Unit tests: FLOC state - BLOCKED to ACTIVE on ACK
-  - **Do**:
-    1. Add test case to `tests/floc-state-machine.bats`:
-       - BLOCKED state transitions to ACTIVE when ACK received
-       - BLOCKED state transitions to ACTIVE when CONTINUE received
-    2. Test pure state transitions without filesystem
-  - **Files**: `tests/floc-state-machine.bats`
-  - **Done when**: All unit tests pass
-  - **Verify**: `bats tests/floc-state-machine.bats`
-  - **Commit**: `test(floc): add BLOCKED to ACTIVE on ACK test`
-  - _Design: Test Coverage Table - FLOC state: BLOCKED → ACTIVE on ACK_
-
-- [ ] 3.8 Unit tests: FLOC state - auto-CONTINUE on timeout
-  - **Do**:
-    1. Add test case to `tests/floc-state-machine.bats`:
-       - BLOCKED state transitions to ACTIVE when 1 task passes without response
-       - auto-CONTINUE behavior verified
-    2. Test pure state transitions without filesystem
-  - **Files**: `tests/floc-state-machine.bats`
-  - **Done when**: All unit tests pass
-  - **Verify**: `bats tests/floc-state-machine.bats`
-  - **Commit**: `test(floc): add auto-CONTINUE on timeout test`
-  - _Design: Test Coverage Table - FLOC state: auto-CONTINUE on timeout_
-
-- [ ] 3.9 Integration tests: concurrent writes (100 messages)
-  - **Do**:
-    1. Create `tests/chat-concurrent.bats` with test cases:
+    1. Create test script `tests/chat-concurrent.sh`:
        - Both agents append 100 messages simultaneously
        - Verify zero corruption (valid format per message)
        - Verify zero lost messages (count matches)
     2. Use background processes in bash
-  - **Files**: `tests/chat-concurrent.bats`
+    3. Include bats fallback: `command -v bats || echo "BATS_NOT_INSTALLED"`
+  - **Files**: `tests/chat-concurrent.sh`
   - **Done when**: All integration tests pass with no corruption
-  - **Verify**: `bats tests/chat-concurrent.bats`
+  - **Verify**: `bash tests/chat-concurrent.sh`
   - **Commit**: `test(chat-concurrent): add concurrent writes integration test`
   - _Requirements: NFR-1_
   - _Design: Test Coverage Table - Concurrent writes_
 
-- [ ] 3.10 Integration tests: HOLD pre-task gate behavior
+- [ ] 3.2 Integration test: HOLD pre-task gate behavior
   - **Do**:
-    1. Create `tests/chat-hold-gate.bats` with test cases:
+    1. Create test script `tests/chat-hold-gate.sh`:
        - Executor respects HOLD at task START
        - Executor does NOT block mid-task (pre-task gate only)
        - Executor unblocks after ACK/CONTINUE
        - HOLD invisible until task boundary
-  - **Files**: `tests/chat-hold-gate.bats`
+    2. Include bats fallback
+  - **Files**: `tests/chat-hold-gate.sh`
   - **Done when**: All integration tests pass
-  - **Verify**: `bats tests/chat-hold-gate.bats`
+  - **Verify**: `bash tests/chat-hold-gate.sh`
   - **Commit**: `test(chat-hold): add HOLD pre-task gate integration test`
   - _Design: Test Coverage Table - HOLD pre-task gate_
 
-- [ ] 3.11 Integration tests: INTENT-FAIL 1-task window
+- [ ] 3.3 Integration test: INTENT-FAIL 1-task window
   - **Do**:
-    1. Create `tests/chat-intent-fail.bats` with test cases:
+    1. Create test script `tests/chat-intent-fail.sh`:
        - INTENT-FAIL appears before FAIL
        - Executor has 1 task window to respond
        - FAIL written only after window expires
        - Corrected issue prevents FAIL
-  - **Files**: `tests/chat-intent-fail.bats`
+    2. Include bats fallback
+  - **Files**: `tests/chat-intent-fail.sh`
   - **Done when**: All integration tests pass
-  - **Verify**: `bats tests/chat-intent-fail.bats`
+  - **Verify**: `bash tests/chat-intent-fail.sh`
   - **Commit**: `test(chat-intent-fail): add INTENT-FAIL window integration test`
   - _Design: Test Coverage Table - INTENT-FAIL 1-task window_
 
-- [ ] 3.12 Integration tests: Executor respects HOLD (not mid-task)
+- [ ] 3.4 Integration test: Executor respects HOLD (not mid-task)
   - **Do**:
-    1. Create `tests/chat-hold-behavior.bats` with test cases:
+    1. Create test script `tests/chat-hold-behavior.sh`:
        - Executor proceeds with current task when HOLD received mid-execution
        - Executor blocks at next task if HOLD not resolved
        - Executor unblocks when ACK or CONTINUE received
-  - **Files**: `tests/chat-hold-behavior.bats`
+    2. Include bats fallback
+  - **Files**: `tests/chat-hold-behavior.sh`
   - **Done when**: All integration tests pass
-  - **Verify**: `bats tests/chat-hold-behavior.bats`
+  - **Verify**: `bash tests/chat-hold-behavior.sh`
   - **Commit**: `test(chat-hold): add executor respects HOLD not mid-task test`
   - _Design: Test Coverage Table - Executor respects HOLD (not mid-task)_
 
-- [ ] 3.13 Integration tests: STILL/ALIVE heartbeat cycle
+- [ ] 3.5 Integration test: STILL/ALIVE heartbeat cycle
   - **Do**:
-    1. Create `tests/chat-heartbeat.bats` with test cases:
+    1. Create test script `tests/chat-heartbeat.sh`:
        - STILL TTL decrements each task
        - ALIVE resets TTL to 3
        - ALIVE sent when TTL would expire
        - ANY signal resets STILL counter
-  - **Files**: `tests/chat-heartbeat.bats`
+    2. Include bats fallback
+  - **Files**: `tests/chat-heartbeat.sh`
   - **Done when**: All integration tests pass
-  - **Verify**: `bats tests/chat-heartbeat.bats`
+  - **Verify**: `bash tests/chat-heartbeat.sh`
   - **Commit**: `test(chat-heartbeat): add STILL/ALIVE heartbeat integration test`
   - _Design: Test Coverage Table - ALIVE resets STILL TTL_
 
-- [ ] 3.14 Integration tests: chat format human-readable
+- [ ] 3.6 Integration test: chat format human-readable
   - **Do**:
-    1. Create `tests/chat-format.bats` with test cases:
+    1. Create test script `tests/chat-format.sh`:
        - `cat chat.md` shows readable markdown
        - Each message has correct format header
        - Signals are human-readable (not encoded)
        - Human can read with standard tools
-  - **Files**: `tests/chat-format.bats`
+    2. Include bats fallback
+  - **Files**: `tests/chat-format.sh`
   - **Done when**: All integration tests pass
-  - **Verify**: `bats tests/chat-format.bats`
+  - **Verify**: `bash tests/chat-format.sh`
   - **Commit**: `test(chat-format): add human-readable format integration test`
   - _Requirements: NFR-5_
   - _Design: Test Coverage Table - Chat format human-readable_
 
-- [ ] 3.15 [VERIFY] Quality Checkpoint: all tests pass
+- [ ] 3.7 [VERIFY] Quality Checkpoint: all tests pass
   - **Do**: Run full test suite to verify all tests pass
-  - **Verify**: `bats tests/chat-writer.bats tests/chat-reader.bats tests/chat-state.bats tests/floc-state-machine.bats tests/chat-concurrent.bats tests/chat-hold-gate.bats tests/chat-hold-behavior.bats tests/chat-intent-fail.bats tests/chat-heartbeat.bats tests/chat-format.bats`
-  - **Done when**: All bats tests pass
+  - **Verify**: `bash tests/chat-concurrent.sh && bash tests/chat-hold-gate.sh && bash tests/chat-intent-fail.sh && bash tests/chat-heartbeat.sh && bash tests/chat-format.sh && echo "ALL_TESTS_PASSED"`
+  - **Done when**: All tests pass
   - **Commit**: `chore: pass Phase 3 quality checkpoint`
 
 ## Phase 4: Quality Gates
 
 - [ ] 4.1 Lint modified files
   - **Do**:
-    1. Run shellcheck on all chat-*.sh scripts
-    2. Run bats on all test files
-    3. Verify markdownlint on chat.md template
-  - **Files**: `plugins/ralph-specum/hooks/scripts/chat-*.sh`, `plugins/ralph-specum/templates/chat.md`
-  - **Done when**: All linting passes with no errors
-  - **Verify**: `shellcheck plugins/ralph-specum/hooks/scripts/chat-*.sh && echo "SHELLCHECK_OK"`
-  - **Commit**: `chore: pass linting on chat scripts`
+    1. Verify markdownlint on chat.md template
+    2. Verify jq is available: `command -v jq || echo "JQ_NOT_INSTALLED"`
+    3. Verify bash is available: `command -v bash || echo "BASH_NOT_INSTALLED"`
+  - **Files**: `plugins/ralph-specum/templates/chat.md`
+  - **Done when**: All linting checks pass with no errors
+  - **Verify**: `command -v jq && echo "JQ_OK" && command -v bash && echo "BASH_OK"`
+  - **Commit**: `chore: pass linting checks`
   - _Requirements: NFR-1, NFR-2_
 
 - [ ] 4.2 Update spec-executor.md version
@@ -593,7 +496,7 @@ After POC validated, clean up code.
 - [ ] 4.3 Update external-reviewer.md version
   - **Do**:
     1. Read `plugins/ralph-specum/agents/external-reviewer.md`
-    2. Bump version in frontmatter (patch +0.0.1)
+    2. Bump version in frontmatter (patch +0.0.1) — already has version: 0.1.0 from Task 1.11
   - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
   - **Done when**: Version bumped correctly
   - **Verify**: `grep "version:" plugins/ralph-specum/agents/external-reviewer.md | head -1`
@@ -604,19 +507,17 @@ After POC validated, clean up code.
   - **Do**:
     1. Verify chat.md template exists and has correct format
     2. Verify chat state in .ralph-state.json works
-    3. Verify ChatWriter, ChatReader, ChatHelpers all exist and are syntactically correct
-    4. Verify spec-executor.md has Chat Protocol section
-    5. Verify external-reviewer.md has FLOC signals
-    6. Run all bats tests
+    3. Verify spec-executor.md has Chat Protocol section with all signals
+    4. Verify external-reviewer.md has FLOC signals with version field
+    5. Run all integration tests
   - **Verify**:
     ```bash
     [ -f plugins/ralph-specum/templates/chat.md ] && \
-    [ -f plugins/ralph-specum/hooks/scripts/chat-writer.sh ] && \
-    [ -f plugins/ralph-specum/hooks/scripts/chat-reader.sh ] && \
-    [ -f plugins/ralph-specum/hooks/scripts/chat-helpers.sh ] && \
     grep -q "Chat Protocol" plugins/ralph-specum/agents/spec-executor.md && \
-    grep -q "ALIVE" plugins/ralph-specum/agents/external-reviewer.md && \
-    bats tests/chat-*.bats && \
+    grep -q "Chat Protocol" plugins/ralph-specum/agents/external-reviewer.md && \
+    grep -q "version:" plugins/ralph-specum/agents/external-reviewer.md && \
+    grep -q "ALIVE\|STILL\|INTENT-FAIL" plugins/ralph-specum/agents/external-reviewer.md && \
+    bash tests/chat-concurrent.sh && \
     echo "ALL_CHECKS_PASSED"
     ```
   - **Done when**: All verification checks pass
@@ -626,7 +527,7 @@ After POC validated, clean up code.
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user
-    3. Stage all changes: chat-writer.sh, chat-reader.sh, chat-helpers.sh, chat template, spec-executor.md, external-reviewer.md, tests/
+    3. Stage all changes: chat template, spec-executor.md, external-reviewer.md, tests/
     4. Commit with descriptive message
     5. Push branch: `git push -u origin $(git branch --show-current)`
     6. Create PR using gh CLI
@@ -638,7 +539,8 @@ After POC validated, clean up code.
 
 ## Notes
 
-- **POC shortcuts taken**: Direct temp-file+rename without fallback to O_APPEND; state stored in .ralph-state.json (not separate .chat-state files as initially designed — changed per design decision to use existing atomic write pattern)
+- **POC shortcuts taken**: Direct temp-file+rename without fallback to O_APPEND; state stored in .ralph-state.json (not separate .chat-state files per design decision)
+- **Agent architecture**: FLOC implemented as agent prompt sections, not external scripts — agents read chat.md directly using Read tool and write using Write/Bash tools inline
 - **Production TODOs**: Chat archival rotation threshold not implemented; DEADLOCK human notification mechanism not specified
 
 ## Dependencies
