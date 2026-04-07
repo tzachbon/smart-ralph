@@ -1,3 +1,10 @@
+---
+spec: ralph-quality-improvements
+phase: tasks
+created: 2026-04-06
+updated: 2026-04-06
+---
+
 # Tasks: ralph-quality-improvements
 
 Total tasks: 27 (12 implementation + 4 verification checkpoints + 11 fix/feat tasks)

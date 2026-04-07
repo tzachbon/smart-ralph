@@ -1,3 +1,10 @@
+---
+spec: ralph-quality-improvements
+phase: design
+created: 2026-04-06
+updated: 2026-04-06
+---
+
 # Design: ralph-quality-improvements
 
 ## Goal

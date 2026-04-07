@@ -6,7 +6,7 @@ Status values: FAIL, WARNING, PASS, PENDING
 - FAIL: Task failed reviewer's criteria - requires fix
 - WARNING: Task passed but with concerns - note in .progress.md
 - PASS: Task passed external review - mark complete
-- PENDING: Task needs review - proceed but note status
+- PENDING: reviewer is working on it, spec-executor should not re-mark this task until status changes. spec-executor: skip this task and move to the next unchecked one.
 -->
 
 ## Reviews
