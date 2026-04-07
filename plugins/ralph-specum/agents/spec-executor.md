@@ -47,6 +47,27 @@ You receive via Task delegation:
 
 Use `basePath` for ALL file operations.
 
+## External Review Protocol
+
+<mandatory>
+Before processing each task, read the external reviewer's task_review.md file if it exists:
+
+**Step 1 — Check existence**: Look for `<basePath>/task_review.md`
+**Step 2 — Read reviews**: Parse review entries from the file
+**Step 3 — Apply rules by status**:
+   - **FAIL**: Task failed reviewer's criteria. Must fix before proceeding.
+     - treat as VERIFICATION_FAIL
+     - Apply fix using fix_hint as starting point
+     - Mark the entry's resolved_at with timestamp before marking the task complete
+   - **PENDING**: Do NOT start the task. Append to .progress.md: "External review PENDING for task X — waiting one cycle". Skip this task and move to the next unchecked one.
+   - **WARNING**: Task passed but with concerns. Note in .progress.md.
+   - **PASS**: Task passed external review. Mark complete if implementation done.
+**Step 4 — Append to .progress.md**: Log review outcome in `<basePath>/.progress.md`
+
+This protocol enables an external reviewer agent to communicate task outcomes
+without shared process state — filesystem-only communication.
+</mandatory>
+
 ## Task Loop
 
 ```text
@@ -58,6 +79,36 @@ Use `basePath` for ALL file operations.
 6. Continue to next task
 7. When all tasks done: SPEC_COMPLETE + cleanup
 ```
+
+> **Note**: For stuck detection, use `effectiveIterations = taskIteration + external_unmarks[taskId]`.
+
+### external_unmarks field
+
+**Field**: `external_unmarks` (object, default `{}`)
+
+- **Type**: Map of `taskId` (string) → `count` (integer)
+- **Default**: `{}`
+- **Written by**: external reviewer only (increments when unmarking a task in .ralph-state.json)
+- **Read by**: spec-executor for stuck detection
+- **Lifetime**: Cumulative across sessions, NEVER reset by spec-executor
+- **Example**:
+  ```json
+  {
+    "1.2": 3,
+    "2.4": 1
+  }
+  ```
+- **Lifetime**: Cumulative across sessions, NEVER reset by spec-executor
+- **Example**:
+  ```json
+  {
+    "1.2": 3,
+    "2.4": 1
+  }
+  ```
+
+This field tracks how many times an external reviewer has unmarked a task for rework.
+It is used in the effectiveIterations formula for stuck detection.
 
 ## Task Types
 
@@ -84,6 +135,23 @@ attributes into source files:
 3. If `ui-map.local.md` does not exist, skip — the map will be built at VE0
 
 This step adds at most a few rows per task. It never regenerates the full map.
+
+### Type Consistency Pre-Check (typed Python or TypeScript tasks)
+
+Before implementing typed Python or TypeScript tasks, verify type annotations match usage:
+
+1. **Extract the signature** from the type annotation (e.g., `Callable[[str], int]`)
+2. **Find the usage example** in the same document (usually in a code block)
+3. **Check sync/async consistency**:
+   - If the type is `Callable[..., None]` and the example uses `await`, this is a MISMATCH
+   - If the type is `Awaitable[T]` and the example does NOT use `await`, this is a MISMATCH
+4. **If mismatch found**:
+   - Update the type annotation to match the usage example
+   - OR update the usage example to match the type annotation
+   - Document the change in `.progress.md`
+5. **If both the type AND the usage are ambiguous** (neither clearly implies sync or async): ESCALATE before implementing, do not guess.
+
+This check catches type annotation errors before implementation begins.
 
 ---
 
@@ -150,16 +218,15 @@ not progress.
    - Update the task description to reflect the redesigned scope
    - Do NOT continue trying to mock the full entry point
 
-6. **IF after 2 more attempts (5 total) the test still fails** → ESCALATE:
+6. Compute `effectiveIterations = taskIteration + external_unmarks[taskId]`.
+   **IF** `effectiveIterations >= maxTaskIterations` → ESCALATE:
    ```text
    ESCALATE
-     reason: stuck-state-unresolved
+     reason: external-reviewer-repeated-fail
      task: <taskId — task title>
-     attempts: 5
-     root_cause: <one sentence from step 3>
-     last_error: <exact error text>
-     resolution: Human investigation required. The test may need architectural
-                 redesign that exceeds autonomous agent scope.
+     attempts: <effectiveIterations>
+     Note: external_unmarks contributed <N> reviewer cycles
+     resolution: External reviewer has unmarked this task N times. Human investigation required.
    ```
 </mandatory>
 

@@ -48,3 +48,5 @@ playwright-env.local.md
 # Never commit — generate with: npx playwright codegen --save-storage=.ralph-auth-state.json
 .ralph-auth-state.json
 **/.ralph-auth-state.json
+node_modules
+.claude/settings.json

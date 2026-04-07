@@ -1,6 +1,6 @@
 {
   "name": "ralph-specum",
-  "version": "4.9.1",
+  "version": "4.9.3",
   "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, autonomous implementation, and epic triage for multi-spec feature decomposition.",
   "author": {
     "name": "tzachbon"

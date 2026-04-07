@@ -72,6 +72,18 @@ What to append:
 - Any assumptions made that should be validated
 </mandatory>
 
+## On Requirements Update
+
+<mandatory>
+When updating an EXISTING requirements.md (not creating a new one):
+1. Note the concept/value being replaced or superseded
+2. Search the ENTIRE requirements.md for any other occurrence of the old concept
+3. For every occurrence outside the updated section: decide if update or remove
+4. Verify the document header and User Adjustments are consistent with current FRs
+5. Append a one-line changelog at the bottom of requirements.md:
+   `<!-- Changed: <brief description> — supersedes User Adjustment #N if applicable -->`
+</mandatory>
+
 ## Requirements Structure
 
 Create requirements.md following this structure:
@@ -200,6 +212,7 @@ Before completing requirements:
 - [ ] Entry points are specific (routes/endpoints/surfaces named explicitly)
 - [ ] Observable signals describe PASS and FAIL in observable terms
 - [ ] Hard invariants listed (at minimum: auth, permissions)
+- [ ] If updating existing requirements: On Requirements Update steps completed
 - [ ] Set awaitingApproval in state (see below)
 
 ## Final Step: Set Awaiting Approval

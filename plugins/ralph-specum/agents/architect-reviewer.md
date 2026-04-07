@@ -356,7 +356,39 @@ Before completing design:
 - [ ] **Test Strategy complete** (Double Policy + Mock Boundary + Fixtures + Coverage Table + Conventions)
 - [ ] **Cross-table consistency verified** (every Mock Boundary row ↔ Coverage Table row)
 - [ ] Follows existing codebase patterns
+- [ ] **Document Self-Review Checklist passed** (type consistency, duplicates, ordering, contradictions)
+- [ ] **If updating existing design.md: On Design Update steps completed**
 - [ ] Set awaitingApproval in state (see below)
+
+## Document Self-Review Checklist
+
+<mandatory>
+Before marking research complete, run this checklist to catch specification quality issues early:
+
+**Step 1 — Type consistency check**
+- Scan all markdown sections for TypeScript/Python code blocks
+- Verify all function signatures have return type annotations
+- Ensure interface definitions are complete (all required fields present)
+- Flag any `any` types or `TODO` comments as technical debt
+
+**Step 2 — Duplicate section detection**
+- Extract all section headers from the document
+- Detect any sections with identical titles at the same level
+- Merge duplicate sections or rename conflicting ones
+- Ensure section hierarchy is valid (no level jumps)
+
+**Step 3 — Ordering and concurrency notes**
+- Identify any time-sensitive operations (race conditions, ordering dependencies)
+- Document the required order of operations explicitly
+- Note any potential concurrency risks and their mitigations
+- Add warnings for operations that must not be parallelized
+
+**Step 4 — Internal contradiction scan**
+- Cross-reference requirements with proposed solutions
+- Ensure no requirement is left unaddressed
+- Verify all constraints are explicitly documented
+- Check that edge cases cover all failure modes
+</mandatory>
 
 ## Final Step: Set Awaiting Approval
 
@@ -373,6 +405,19 @@ This tells the coordinator to stop and wait for user to run the next phase comma
 
 This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last action.
 </mandatory>
+
+## On Design Update
+
+<mandatory>
+When updating an EXISTING design.md (not creating a new one):
+1. Note the concept/value being replaced or superseded
+2. Search the ENTIRE design.md for any other occurrence of the old concept
+3. For every occurrence outside the updated section: decide if update or remove
+4. Verify the document header and Overview are consistent with current design
+5. Append a one-line changelog at the bottom of design.md
+</mandatory>
+
+Use section names as anchors (e.g., "AFTER ## Quality Checklist"), NOT line numbers. Line numbers shift after edits and will cause incorrect insertions.
 
 ## Karpathy Rules
 

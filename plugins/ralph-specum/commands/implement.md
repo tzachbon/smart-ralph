@@ -132,7 +132,61 @@ jq --argjson taskIndex <first_incomplete> \
 
 ## Step 4: Execute Task Loop
 
-After writing the state file, output the coordinator prompt below. This starts the execution loop.
+### Parallel Reviewer Onboarding
+
+Before starting execution, check if the user wants to run an external parallel reviewer:
+
+**Ask the user:**
+```
+¿Vas a ejecutar un revisor externo paralelo durante esta implementación? [s/n]
+
+Si dices sí:
+- Se creará specs/<specName>/task_review.md (desde el template de FR-B1)
+- Recibirás instrucciones para lanzar el revisor en una segunda sesión de Claude Code
+- El spec-executor leerá automáticamente task_review.md en cada tarea
+```
+
+**If user answers YES:**
+1. Copy `plugins/ralph-specum/templates/task_review.md` → `specs/<specName>/task_review.md`
+2. Ask which quality principles to activate:
+   ```
+   ¿Qué principios de calidad quieres que el revisor enforece?
+
+   Principios detectados en el codebase: <listar convenciones encontradas en el repo>
+   Principios recomendados estándar:
+   - SOLID (Single Responsibility, Open/Closed, Liskov, Interface Segregation, Dependency Inversion)
+   - DRY (Don't Repeat Yourself)
+   - FAIL FAST (validaciones al inicio de funciones)
+   - TDD (Red-Green-Refactor)
+
+   ¿Cuáles quieres activar? ("todos", lista, o "ninguno adicional")
+   ```
+3. Write selected principles to `specs/<specName>/task_review.md` frontmatter:
+   ```yaml
+   <!-- reviewer-config
+   principles: [SOLID, DRY, FAIL_FAST, TDD]
+   codebase-conventions: <detectadas automáticamente>
+   -->
+   ```
+4. Print onboarding instructions:
+   ```
+   Revisor externo configurado.
+
+   Para lanzar el revisor en paralelo:
+   1. Abre una segunda sesión de Claude Code en el mismo repositorio
+   2. Carga el agente: @external-reviewer
+   3. Dile: "Revisa la spec <specName> mientras spec-executor implementa"
+   4. El revisor leerá y escribirá en specs/<specName>/task_review.md
+
+   El spec-executor ya está configurado para leer task_review.md antes de cada tarea.
+   Cuando el revisor marque algo como FAIL, spec-executor se detendrá y aplicará el fix.
+   ```
+
+**If user answers NO:** continue normal flow without creating task_review.md.
+
+---
+
+After writing the state file (and optionally setting up external reviewer), output the coordinator prompt below. This starts the execution loop.
 The stop-hook will continue the loop by blocking stops and prompting the coordinator to check state.
 
 ### Coordinator Prompt

@@ -102,6 +102,16 @@ interface {{ComponentOutput}} {
 
 - {{Performance approach or constraint}}
 
+## Concurrency & Ordering Risks
+
+This section documents sequence-critical operations and their required order. If no risks identified, explicitly state "None identified."
+
+| Operation | Required Order | Risk if Inverted |
+|---|---|---|
+| Example: Initialize resource before concurrent access | Resource must be initialized before any concurrent readers/writers | Race condition: readers may see uninitialized state |
+
+> **Note**: If no concurrency risks exist for this design, write "None identified." in the table body.
+
 ## Test Strategy
 
 <!-- MANDATORY: architect-reviewer must fill every row before marking design complete.
