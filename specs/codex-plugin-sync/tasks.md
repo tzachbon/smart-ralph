@@ -124,7 +124,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Done when**: All 4 files present
   - **Commit**: none
 
-- [ ] 1.12 Write stop-watcher.sh hook (Codex output format)
+- [x] 1.12 Write stop-watcher.sh hook (Codex output format)
   - **Do**:
     1. Create `plugins/ralph-specum-codex/hooks/stop-watcher.sh`
     2. Read stdin JSON, extract `cwd` field with jq
