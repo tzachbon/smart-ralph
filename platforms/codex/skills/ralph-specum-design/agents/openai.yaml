@@ -1,6 +1,0 @@
-interface:
-  display_name: "Ralph Specum Design"
-  short_description: "Generate technical design for an active spec"
-  default_prompt: "Use $ralph-specum-design to write design.md, then ask me to `approve current artifact`, `request changes`, or `continue to tasks`."
-policy:
-  allow_implicit_invocation: false

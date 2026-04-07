@@ -1,6 +1,0 @@
-interface:
-  display_name: "Ralph Specum Requirements"
-  short_description: "Generate requirements for an active spec"
-  default_prompt: "Use $ralph-specum-requirements to write requirements.md, then ask me to `approve current artifact`, `request changes`, or `continue to design`."
-policy:
-  allow_implicit_invocation: false

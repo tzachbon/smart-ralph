@@ -1,6 +1,0 @@
-interface:
-  display_name: "Ralph Specum Triage"
-  short_description: "Split a large effort into dependency-aware specs"
-  default_prompt: "Use $ralph-specum-triage to decompose a large Ralph effort into an epic, then ask me to `approve current artifact`, `request changes`, or `continue to the next spec`."
-policy:
-  allow_implicit_invocation: false

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Ralph Specum Tasks"
-  short_description: "Generate implementation tasks for an active spec"
-  default_prompt: "Use $ralph-specum-tasks to write tasks.md, then ask me to `approve current artifact`, `request changes`, or `continue to implementation`."
-policy:
-  allow_implicit_invocation: false

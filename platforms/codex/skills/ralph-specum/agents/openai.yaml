@@ -1,6 +1,0 @@
-interface:
-  display_name: "Ralph Specum"
-  short_description: "Run Ralph Specum workflows in Codex"
-  default_prompt: "Use $ralph-specum to run Ralph step by step in this repo and ask me to `approve current artifact`, `request changes`, or `continue to <named next step>`."
-policy:
-  allow_implicit_invocation: false

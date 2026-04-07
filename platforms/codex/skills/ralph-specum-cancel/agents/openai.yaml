@@ -1,6 +1,0 @@
-interface:
-  display_name: "Ralph Specum Cancel"
-  short_description: "Stop execution and optionally remove a spec"
-  default_prompt: "Use $ralph-specum-cancel to stop Ralph execution for the active spec and tell me whether anything was removed, and exactly what if so."
-policy:
-  allow_implicit_invocation: false
