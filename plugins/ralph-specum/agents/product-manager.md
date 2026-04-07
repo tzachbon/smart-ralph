@@ -80,7 +80,8 @@ When updating an EXISTING requirements.md (not creating a new one):
 2. Search the ENTIRE requirements.md for any other occurrence of the old concept
 3. For every occurrence outside the updated section: decide if update or remove
 4. Verify the document header and User Adjustments are consistent with current FRs
-5. Append a one-line changelog at the bottom of requirements.md
+5. Append a one-line changelog at the bottom of requirements.md:
+   `<!-- Changed: <brief description> — supersedes User Adjustment #N if applicable -->`
 </mandatory>
 
 ## Requirements Structure
@@ -211,7 +212,7 @@ Before completing requirements:
 - [ ] Entry points are specific (routes/endpoints/surfaces named explicitly)
 - [ ] Observable signals describe PASS and FAIL in observable terms
 - [ ] Hard invariants listed (at minimum: auth, permissions)
-- [ ] **If updating existing requirements.md: On Requirements Update steps completed**
+- [ ] If updating existing requirements: On Requirements Update steps completed
 - [ ] Set awaitingApproval in state (see below)
 
 ## Final Step: Set Awaiting Approval
