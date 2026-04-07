@@ -3,15 +3,15 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-03-30T13:26:39Z
+**Last updated:** 2026-04-07T11:17:53Z
 
 ## Directories (1)
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 32 | Yes |
+| ./specs | 33 | Yes |
 
-## All Specs (32)
+## All Specs (33)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
@@ -41,6 +41,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | iterative-failure-recovery | ./specs | tasks | 14/20 tasks |
 | reviewer-subagent | ./specs | completed | done |
 | goal-interview | ./specs | completed | done |
+| codex-plugin-sync | ./specs | execution | 33/61 tasks |
 | adaptive-interview | ./specs | completed | done |
 | add-autonomous-e2e-verify | ./specs | tasks | 54/55 tasks |
 | remove-ralph-wiggum | ./specs | completed | done |

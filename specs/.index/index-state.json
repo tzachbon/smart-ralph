@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-03-30T13:26:39Z",
+  "updated": "2026-04-07T11:17:53Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 32,
+      "specsCount": 33,
       "isDefault": true
     }
   ],
@@ -190,6 +190,13 @@
       "phase": "completed",
       "taskIndex": 14,
       "totalTasks": 14
+    },
+    {
+      "name": "codex-plugin-sync",
+      "path": "./specs/codex-plugin-sync",
+      "phase": "execution",
+      "taskIndex": 33,
+      "totalTasks": 61
     },
     {
       "name": "adaptive-interview",

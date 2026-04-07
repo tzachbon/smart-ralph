@@ -515,7 +515,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Commit**: `test(codex-plugin): add version-sync.sh helper`
   - _Requirements: AC-2.2, AC-12.1, AC-12.2_
 
-- [ ] 3.2 [VERIFY] Quality checkpoint: version-sync passes for current versions
+- [x] 3.2 [VERIFY] Quality checkpoint: version-sync passes for current versions
   - **Do**: Run version-sync helper
   - **Verify**: `bash tests/helpers/version-sync.sh && echo PASS`
   - **Done when**: Exits 0 (all 3 version fields match `4.9.1`)
@@ -551,7 +551,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Commit**: `test(codex-plugin): add codex-plugin.bats structure tests`
   - _Requirements: AC-11.1, AC-11.2, AC-11.3, AC-11.4, AC-11.5_
 
-- [ ] 3.4 [VERIFY] Quality checkpoint: new BATS tests pass
+- [x] 3.4 [VERIFY] Quality checkpoint: new BATS tests pass
   - **Do**: Run new test file
   - **Verify**: `bats tests/codex-plugin.bats && echo PASS`
   - **Done when**: All tests green, zero failures
@@ -581,7 +581,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Commit**: `test(codex-plugin): rewrite codex-platform.bats for new plugin structure`
   - _Requirements: AC-13.2, AC-13.3_
 
-- [ ] 3.7 [VERIFY] Quality checkpoint: both test files pass
+- [x] 3.7 [VERIFY] Quality checkpoint: both test files pass
   - **Do**: Run both BATS test files
   - **Verify**: `bats tests/codex-plugin.bats tests/codex-platform.bats && echo PASS`
   - **Done when**: All tests pass
@@ -623,7 +623,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
 
 ## Phase 4: Quality Gates
 
-- [ ] V4 [VERIFY] Full test suite passes
+- [x] V4 [VERIFY] Full test suite passes
   - **Do**:
     1. Run all BATS test files: `bats tests/*.bats`
     2. Fix any remaining failures
@@ -632,7 +632,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Commit**: `fix(codex-plugin): address remaining test failures` (if fixes needed)
   - _Requirements: AC-11.5, AC-13.3_
 
-- [ ] V5 [VERIFY] AC checklist verification
+- [x] V5 [VERIFY] AC checklist verification
   - **Do**: For each acceptance criterion, verify programmatically:
     - AC-1.1: `jq . plugins/ralph-specum-codex/.codex-plugin/plugin.json > /dev/null`
     - AC-1.2: `jq -e '.name == "ralph-specum-codex" and .version == "4.9.1"' plugins/ralph-specum-codex/.codex-plugin/plugin.json`
@@ -648,7 +648,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Done when**: All AC checks pass
   - **Commit**: none
 
-- [ ] 4.1 Create PR and push feature branch
+- [x] 4.1 Create PR and push feature branch
   - **Do**:
     1. Verify current branch: `git branch --show-current`
     2. Push branch: `git push -u origin <branch-name>`
@@ -661,19 +661,19 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
 
 ## Phase 5: PR Lifecycle and Cleanup
 
-- [ ] 5.1 [VERIFY] CI pipeline passes
+- [x] 5.1 [VERIFY] CI pipeline passes
   - **Do**:
     1. Monitor CI: `gh pr checks --watch`
     2. If any check fails: read failure output, fix locally, push
   - **Verify**: `gh pr checks | grep -v pass | grep -qv fail && echo CI_GREEN || gh pr checks`
   - **Done when**: All CI checks green
 
-- [ ] 5.2 [VERIFY] Version sync CI check passes
+- [x] 5.2 [VERIFY] Version sync CI check passes
   - **Do**: Verify the new codex-version-check workflow passes in CI
   - **Verify**: `gh pr checks | grep -q 'version' && echo PASS`
   - **Done when**: Version sync job green
 
-- [ ] 5.3 Cleanup commit: delete platforms/codex/ (separate commit)
+- [x] 5.3 Cleanup commit: delete platforms/codex/ (separate commit)
   - **Do**:
     1. Verify all tests pass first: `bats tests/*.bats`
     2. Remove `platforms/codex/` directory: `git rm -r platforms/codex/`
@@ -688,12 +688,12 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Commit**: `chore(cleanup): remove platforms/codex/ after plugin migration`
   - _Requirements: AC-14.1, AC-14.2, AC-14.3, AC-14.4_
 
-- [ ] 5.4 [VERIFY] Post-cleanup test suite passes
+- [x] 5.4 [VERIFY] Post-cleanup test suite passes
   - **Do**: Run full test suite after platforms/codex deletion to confirm no dead references
   - **Verify**: `bats tests/*.bats && echo PASS`
   - **Done when**: All tests pass with no `platforms/codex` references active
 
-- [ ] 5.5 [VERIFY] Final AC checklist post-cleanup
+- [x] 5.5 [VERIFY] Final AC checklist post-cleanup
   - **Do**:
     1. Confirm `platforms/codex/` is absent: `[ ! -d platforms/codex ]`
     2. Confirm no test references old path: `! grep -r 'platforms/codex' tests/`
