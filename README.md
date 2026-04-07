@@ -51,34 +51,24 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ### Codex
 
-Smart Ralph ships as a Codex plugin at `plugins/ralph-specum-codex/`, version-synced with the Claude Code plugin. This repo already includes the marketplace entry at `.agents/plugins/marketplace.json`.
-
-**If you cloned this repo**, Codex picks up the plugin automatically:
-
 ```bash
-# Restart Codex, then install from the plugin directory
+git clone https://github.com/tzachbon/smart-ralph.git
+cd smart-ralph
 codex
-# Open plugin directory -> "Smart Ralph Plugins" -> Install
 ```
 
-**If you want Smart Ralph in a different project**, tell Codex to install it:
+The repo includes a marketplace entry. Codex discovers the plugin on startup. Open the plugin directory and install `ralph-specum-codex`.
 
-```text
-Use $plugin-creator to install the Smart Ralph plugin from repo tzachbon/smart-ralph
-at path plugins/ralph-specum-codex. Add it to a local marketplace and restart.
-```
-
-Or copy the plugin folder and marketplace entry manually. See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for the full walkthrough.
-
-**Enable the Stop hook** (recommended) for automatic task-by-task execution:
+To enable the auto-execution loop, add this to `~/.codex/config.toml`:
 
 ```toml
-# ~/.codex/config.toml
 [features]
 codex_hooks = true
 ```
 
-Without hooks, you run `$ralph-specum-implement` once per task. With hooks, the loop runs to completion.
+Then run `$ralph-specum-start my-feature "your goal"` to get started.
+
+See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for agent config setup and migration from older installs.
 
 <details>
 <summary>Migrating from old skills (platforms/codex/)?</summary>
