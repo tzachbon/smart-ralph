@@ -212,6 +212,40 @@ chat_write_signal "reviewer" "executor" "ALIVE" ""
 chat_write_signal "reviewer" "executor" "STILL" "<reason for silence>"
 ```
 
+**URGENT signal**: Critical issue that cannot wait — breaks task boundary
+- **Boundary**: Cannot interrupt during active qa-engineer delegation (boundary is after Task tool returns)
+- **Usage**: When a critical issue is discovered that must be addressed before any more tasks are completed
+- **Reviewer-only**: This signal is sent by the reviewer, not the executor
+- **Effect**: Executor must stop current work and address the urgent issue at next task boundary
+- **Cannot interrupt**: If qa-engineer delegation is active, URGENT is queued until Task tool returns
+
+```bash
+# Send URGENT — critical issue, breaks task boundary
+chat_write_signal "reviewer" "executor" "URGENT" "<critical issue description>"
+```
+
+**INTENT-FAIL signal**: Pre-FAIL notification before writing FAIL to task_review.md
+- **Purpose**: Gives executor 1 task cycle to respond or correct before formal FAIL is recorded
+- **Must include**: Same fix_hint that will go in the FAIL entry
+- **Executor window**: If executor corrects the issue within 1 task cycle, reviewer cancels the FAIL
+- **Timeout**: If no correction after 1 task cycle, reviewer writes FAIL to task_review.md
+
+```bash
+# Send INTENT-FAIL — pre-FAIL warning with 1-task correction window
+chat_write_signal "reviewer" "executor" "INTENT-FAIL" "<issue description>; fix_hint: <same hint that will go in FAIL>"
+```
+
+**DEADLOCK signal**: Human escalation — when neither agent can resolve the conflict
+- **Purpose**: Signals that both agents are stuck and human intervention is required
+- **Effect**: Notifies human via coordinator output; execution pauses until human resolves
+- **Usage**: When executor and reviewer are in an unresolvable loop (e.g., repeated INTENT-FAIL with no correction, circular dependencies)
+- **Human notification**: Coordinator outputs DEADLOCK to alert the human operator
+
+```bash
+# Send DEADLOCK — human escalation required
+chat_write_signal "reviewer" "executor" "DEADLOCK" "<reason why neither agent can resolve>"
+```
+
 ## Section 8 — Never Do
 
 - Never modify `tasks.md` or implementation files directly.

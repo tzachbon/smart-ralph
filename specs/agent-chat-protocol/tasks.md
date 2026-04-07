@@ -165,7 +165,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-3, FR-4, FR-5, FR-9_
   - _Design: FLOC Signal State Machine section_
 
-- [ ] 1.9 Add STILL and ALIVE signals to external-reviewer.md Chat Protocol
+- [x] 1.9 Add STILL and ALIVE signals to external-reviewer.md Chat Protocol
   - **Do**:
     1. Add to Chat Protocol section in external-reviewer.md:
        - **STILL**: When intentionally silent but working — non-blocking
@@ -181,7 +181,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-7, FR-8_
   - _Design: STILL Signal section_
 
-- [ ] 1.10 Add URGENT, INTENT-FAIL, DEADLOCK signals to external-reviewer.md
+- [x] 1.10 Add URGENT, INTENT-FAIL, DEADLOCK signals to external-reviewer.md
   - **Do**:
     1. Add to Chat Protocol section in external-reviewer.md:
        - **URGENT**: Critical issue that cannot wait — breaks task boundary
