@@ -6,47 +6,74 @@ Transforms feature requests into structured specs (research, requirements, desig
 
 ## Installation
 
-### Step 1: Add marketplace entry
+Pick one of these two methods.
 
-Create or update `$REPO_ROOT/.agents/plugins/marketplace.json`:
+### Personal install (available in every project)
 
-```json
+```bash
+# Download and copy the plugin
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+mkdir -p ~/.codex/plugins
+cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
+rm -rf /tmp/smart-ralph
+
+# Register in your personal marketplace
+mkdir -p ~/.agents/plugins
+cat > ~/.agents/plugins/marketplace.json << 'EOF'
 {
-  "name": "local-repo",
-  "interface": { "displayName": "Local Plugins" },
-  "plugins": [
-    {
-      "name": "ralph-specum-codex",
-      "source": { "source": "local", "path": "./plugins/ralph-specum-codex" },
-      "policy": { "installation": "AVAILABLE" },
-      "category": "Productivity"
-    }
-  ]
+  "name": "smart-ralph",
+  "plugins": [{
+    "name": "ralph-specum-codex",
+    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
+    "policy": {"installation": "AVAILABLE"},
+    "category": "Productivity"
+  }]
 }
+EOF
 ```
 
-### Step 2: Restart Codex
+Restart Codex. Open the plugin directory. Install `ralph-specum-codex`.
 
-Restart Codex so it discovers the new marketplace entry.
+### Per-project install (one repo only)
 
-### Step 3: Install the plugin
+```bash
+# From your project root
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+mkdir -p ./plugins
+cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
 
-Open the plugin directory in Codex, find "ralph-specum-codex", and install it.
+# Add marketplace entry
+mkdir -p ./.agents/plugins
+cat > ./.agents/plugins/marketplace.json << 'EOF'
+{
+  "name": "smart-ralph",
+  "plugins": [{
+    "name": "ralph-specum-codex",
+    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
+    "policy": {"installation": "AVAILABLE"},
+    "category": "Productivity"
+  }]
+}
+EOF
+rm -rf /tmp/smart-ralph
+```
 
-### Step 4: Enable hooks (recommended)
+Restart Codex. Open the plugin directory. Install `ralph-specum-codex`.
 
-The execution loop uses the Stop hook to auto-advance through tasks. Add to `~/.codex/config.toml`:
+### Enable hooks (recommended)
+
+The Stop hook auto-advances through tasks during execution. Add to `~/.codex/config.toml`:
 
 ```toml
 [features]
 codex_hooks = true
 ```
 
-Without hooks, you run `$ralph-specum-implement` manually for each task (see Manual Fallback in references/workflow.md).
+Without hooks, you run `$ralph-specum-implement` once per task manually (see `references/workflow.md` for the fallback workflow).
 
-### Step 5: Install agent configs (optional)
+### Agent configs (optional)
 
-Copy agent templates from `agent-configs/*.toml.template` into your `.codex/config.toml`. See `agent-configs/README.md` for details.
+Copy templates from `agent-configs/*.toml.template` into your `.codex/config.toml` for specialized subagents. See `agent-configs/README.md`.
 
 ## Migration from Old Skills (platforms/codex/)
 

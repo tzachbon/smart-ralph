@@ -51,24 +51,54 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ### Codex
 
+**Personal install** (available in every project you open with Codex):
+
 ```bash
-git clone https://github.com/tzachbon/smart-ralph.git
-cd smart-ralph
-codex
+# 1. Download the plugin
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+mkdir -p ~/.codex/plugins
+cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
+rm -rf /tmp/smart-ralph
+
+# 2. Register it in your personal marketplace
+mkdir -p ~/.agents/plugins
+cat > ~/.agents/plugins/marketplace.json << 'EOF'
+{
+  "name": "smart-ralph",
+  "plugins": [{
+    "name": "ralph-specum-codex",
+    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
+    "policy": {"installation": "AVAILABLE"},
+    "category": "Productivity"
+  }]
+}
+EOF
+
+# 3. Restart Codex, open the plugin directory, install ralph-specum-codex
 ```
 
-The repo includes a marketplace entry. Codex discovers the plugin on startup. Open the plugin directory and install `ralph-specum-codex`.
+**Per-project install** (available only in one repo):
 
-To enable the auto-execution loop, add this to `~/.codex/config.toml`:
+```bash
+# From your project root
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+mkdir -p ./plugins
+cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
+cp -R /tmp/smart-ralph/.agents ./.agents
+rm -rf /tmp/smart-ralph
+
+# Restart Codex, open the plugin directory, install ralph-specum-codex
+```
+
+**Optional**: Enable the Stop hook for automatic task execution:
 
 ```toml
+# ~/.codex/config.toml
 [features]
 codex_hooks = true
 ```
 
-Then run `$ralph-specum-start my-feature "your goal"` to get started.
-
-See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for agent config setup and migration from older installs.
+See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for agent configs and migration from older installs.
 
 <details>
 <summary>Migrating from old skills (platforms/codex/)?</summary>
