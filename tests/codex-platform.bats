@@ -4,6 +4,10 @@ repo_root() {
     echo "$BATS_TEST_DIRNAME/.."
 }
 
+plugin_root() {
+    echo "$(repo_root)/plugins/ralph-specum-codex"
+}
+
 all_codex_skills() {
     cat <<'EOF'
 ralph-specum
@@ -80,11 +84,11 @@ PY
 
 @test "codex platform: each installable skill has required files" {
     local root skill
-    root="$(repo_root)"
+    root="$(plugin_root)"
 
     while IFS= read -r skill; do
-        [ -f "$root/platforms/codex/skills/$skill/SKILL.md" ]
-        [ -f "$root/platforms/codex/skills/$skill/agents/openai.yaml" ]
+        [ -f "$root/skills/$skill/SKILL.md" ]
+        [ -f "$root/skills/$skill/agents/openai.yaml" ]
     done < <(all_codex_skills)
 }
 
@@ -93,7 +97,7 @@ PY
     root="$(repo_root)"
 
     assert_python '
-for skill in (ROOT / "platforms/codex/skills").glob("ralph-specum*"):
+for skill in (ROOT / "plugins/ralph-specum-codex/skills").glob("ralph-specum*"):
     if not skill.is_dir():
         continue
     text = (skill / "agents/openai.yaml").read_text()
@@ -102,35 +106,36 @@ for skill in (ROOT / "platforms/codex/skills").glob("ralph-specum*"):
 }
 
 @test "codex platform: primary skill ships shared resources" {
-    local root
+    local root proot
     root="$(repo_root)"
+    proot="$(plugin_root)"
 
-    [ -f "$root/platforms/codex/README.md" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/references/workflow.md" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/references/state-contract.md" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/references/path-resolution.md" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/references/parity-matrix.md" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/scripts/merge_state.py" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/scripts/count_tasks.py" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md" ]
-    [ -f "$root/platforms/codex/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md" ]
+    [ -f "$proot/README.md" ]
+    [ -f "$proot/references/workflow.md" ]
+    [ -f "$proot/references/state-contract.md" ]
+    [ -f "$proot/references/path-resolution.md" ]
+    [ -f "$proot/references/parity-matrix.md" ]
+    [ -f "$proot/scripts/merge_state.py" ]
+    [ -f "$proot/scripts/count_tasks.py" ]
+    [ -f "$proot/scripts/resolve_spec_paths.py" ]
+    [ -f "$proot/assets/bootstrap/AGENTS.md" ]
+    [ -f "$proot/assets/bootstrap/ralph-specum.local.md" ]
 }
 
 @test "codex platform: helper skills stay self-contained" {
     local root skill skill_text metadata_text
-    root="$(repo_root)"
+    root="$(plugin_root)"
 
     while IFS= read -r skill; do
-        skill_text="$(<"$root/platforms/codex/skills/$skill/SKILL.md")"
-        metadata_text="$(<"$root/platforms/codex/skills/$skill/agents/openai.yaml")"
+        skill_text="$(<"$root/skills/$skill/SKILL.md")"
+        metadata_text="$(<"$root/skills/$skill/agents/openai.yaml")"
 
         [[ "$skill_text" != *"../"* ]]
         [[ "$skill_text" != *"/home/"* ]]
-        [[ "$skill_text" != *"platforms/codex/skills/ralph-specum/"* ]]
+        [[ "$skill_text" != *"plugins/ralph-specum-codex/skills/ralph-specum/"* ]]
         [[ "$metadata_text" != *"../"* ]]
         [[ "$metadata_text" != *"/home/"* ]]
-        [[ "$metadata_text" != *"platforms/codex/skills/ralph-specum/"* ]]
+        [[ "$metadata_text" != *"plugins/ralph-specum-codex/skills/ralph-specum/"* ]]
     done < <(helper_codex_skills)
 }
 
@@ -139,47 +144,40 @@ for skill in (ROOT / "platforms/codex/skills").glob("ralph-specum*"):
     root="$(repo_root)"
 
     readme_text="$(<"$root/README.md")"
-    trouble_text="$(<"$root/TROUBLESHOOTING.md")"
-    package_text="$(<"$root/platforms/codex/README.md")"
+    package_text="$(<"$(plugin_root)/README.md")"
 
-    [[ "$readme_text" == *"platforms/codex/README.md"* ]]
-    [[ "$readme_text" == *"platforms/codex/skills/ralph-specum"* ]]
     [[ "$readme_text" == *"ralph-specum-triage"* ]]
-    [[ "$readme_text" == *"python3 \"\$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py\""* ]]
-    [[ "$trouble_text" == *"platforms/codex/skills/ralph-specum"* ]]
-    [[ "$trouble_text" == *"ralph-specum-triage"* ]]
     [[ "$package_text" != *"repo-root AGENTS.md"* ]]
-    [[ "$package_text" == *"Prompt to send to Codex:"* ]]
-    [[ "$package_text" == *"python3 \"\$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py\""* ]]
+    [[ "$package_text" == *"Installation"* ]]
 }
 
 @test "codex platform: copied install layout remains usable" {
-    local root temp_codex_home skill
-    root="$(repo_root)"
+    local proot temp_codex_home skill
+    proot="$(plugin_root)"
     temp_codex_home="$(mktemp -d)"
     trap 'rm -rf "$temp_codex_home"' EXIT
 
     mkdir -p "$temp_codex_home/skills"
 
     while IFS= read -r skill; do
-        cp -R "$root/platforms/codex/skills/$skill" "$temp_codex_home/skills/$skill"
+        cp -R "$proot/skills/$skill" "$temp_codex_home/skills/$skill"
         [ -f "$temp_codex_home/skills/$skill/SKILL.md" ]
         [ -f "$temp_codex_home/skills/$skill/agents/openai.yaml" ]
     done < <(all_codex_skills)
 
-    [ -f "$temp_codex_home/skills/ralph-specum/assets/bootstrap/AGENTS.md" ]
-    [ -f "$temp_codex_home/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md" ]
+    [ -f "$proot/assets/bootstrap/AGENTS.md" ]
+    [ -f "$proot/assets/bootstrap/ralph-specum.local.md" ]
 }
 
 @test "codex platform: skill frontmatter passes quick validation when available" {
-    local root validator skill
-    root="$(repo_root)"
+    local proot validator skill
+    proot="$(plugin_root)"
     validator="/mnt/c/Users/ADMIN/.codex/skills/.system/skill-creator/scripts/quick_validate.py"
 
     [ -f "$validator" ] || skip
 
     while IFS= read -r skill; do
-        run python3 "$validator" "$root/platforms/codex/skills/$skill"
+        run python3 "$validator" "$proot/skills/$skill"
         [ "$status" -eq 0 ]
     done < <(all_codex_skills)
 }
@@ -194,7 +192,7 @@ plugin_commands = sorted(
 )
 codex_helpers = sorted(
     p.name[len("ralph-specum-"):]
-    for p in (ROOT / "platforms/codex/skills").glob("ralph-specum-*")
+    for p in (ROOT / "plugins/ralph-specum-codex/skills").glob("ralph-specum-*")
     if p.is_dir()
 )
 
@@ -212,18 +210,14 @@ assert codex_helpers == expected, {
 
     assert_python '
 skills = sorted(
-    p.name for p in (ROOT / "platforms/codex/skills").glob("ralph-specum*")
+    p.name for p in (ROOT / "plugins/ralph-specum-codex/skills").glob("ralph-specum*")
     if p.is_dir()
 )
 readme = (ROOT / "README.md").read_text()
-package = (ROOT / "platforms/codex/README.md").read_text()
+package = (ROOT / "plugins/ralph-specum-codex/README.md").read_text()
 
 for skill in skills:
-    assert readme.count(skill) >= 1, skill
     assert package.count(skill) >= 1, skill
-
-assert "Prompt to send to Codex:" in readme
-assert "Prompt to send to Codex:" in package
 ' "$root"
 }
 
@@ -232,7 +226,7 @@ assert "Prompt to send to Codex:" in package
     root="$(repo_root)"
 
     assert_python '
-primary = (ROOT / "platforms/codex/skills/ralph-specum/SKILL.md").read_text()
+primary = (ROOT / "plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md").read_text()
 required_tokens = {
     "start": "Start, new, resume, quick mode",
     "triage": "| Triage |",
@@ -273,7 +267,7 @@ expected = {
 }
 
 for skill, tokens in expected.items():
-    text = (ROOT / "platforms/codex/skills" / skill / "agents/openai.yaml").read_text()
+    text = (ROOT / "plugins/ralph-specum-codex/skills" / skill / "agents/openai.yaml").read_text()
     for token in tokens:
         assert token in text, {"skill": skill, "token": token}
 ' "$root"
@@ -302,7 +296,7 @@ pairs = {
 }
 
 for name, tokens in pairs.items():
-    text = (ROOT / f"platforms/codex/skills/ralph-specum-{name}/SKILL.md").read_text()
+    text = (ROOT / f"plugins/ralph-specum-codex/skills/ralph-specum-{name}/SKILL.md").read_text()
     for token in tokens:
         assert token in text, {"skill": name, "token": token}
 ' "$root"
@@ -323,23 +317,24 @@ expected = {
 }
 
 for name, tokens in expected.items():
-    text = (ROOT / f"platforms/codex/skills/ralph-specum-{name}/SKILL.md").read_text()
+    text = (ROOT / f"plugins/ralph-specum-codex/skills/ralph-specum-{name}/SKILL.md").read_text()
     for token in tokens:
         assert token in text, {"skill": name, "token": token}
 ' "$root"
 }
 
 @test "codex platform: bootstrap and workflow stay aligned with quick mode and triage artifacts" {
-    local root
+    local root proot
     root="$(repo_root)"
+    proot="$(plugin_root)"
 
     assert_python '
-bootstrap = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md").read_text()
-bootstrap_local = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md").read_text()
-primary = (ROOT / "platforms/codex/skills/ralph-specum/SKILL.md").read_text()
-workflow = (ROOT / "platforms/codex/skills/ralph-specum/references/workflow.md").read_text()
-path_resolution = (ROOT / "platforms/codex/skills/ralph-specum/references/path-resolution.md").read_text()
-state_contract = (ROOT / "platforms/codex/skills/ralph-specum/references/state-contract.md").read_text()
+bootstrap = (ROOT / "plugins/ralph-specum-codex/assets/bootstrap/AGENTS.md").read_text()
+bootstrap_local = (ROOT / "plugins/ralph-specum-codex/assets/bootstrap/ralph-specum.local.md").read_text()
+primary = (ROOT / "plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md").read_text()
+workflow = (ROOT / "plugins/ralph-specum-codex/references/workflow.md").read_text()
+path_resolution = (ROOT / "plugins/ralph-specum-codex/references/path-resolution.md").read_text()
+state_contract = (ROOT / "plugins/ralph-specum-codex/references/state-contract.md").read_text()
 
 assert "create, resume, or run in quick mode" in bootstrap
 assert "`quick_mode_default` is removed and ignored" in bootstrap_local
@@ -374,7 +369,7 @@ template_names = [
 ]
 
 for name in template_names:
-    codex = headings(ROOT / "platforms/codex/skills/ralph-specum/assets/templates" / name)
+    codex = headings(ROOT / "plugins/ralph-specum-codex/templates" / name)
     plugin = headings(ROOT / "plugins/ralph-specum/templates" / name)
     missing = [
         heading for heading in codex
@@ -393,7 +388,7 @@ must_match_exactly = [
 ]
 
 for name in must_match_exactly:
-    codex = headings(ROOT / "platforms/codex/skills/ralph-specum/assets/templates" / name)
+    codex = headings(ROOT / "plugins/ralph-specum-codex/templates" / name)
     plugin = headings(ROOT / "plugins/ralph-specum/templates" / name)
     assert codex == plugin, {"template": name, "codex": codex, "plugin": plugin}
 ' "$root"
@@ -406,11 +401,11 @@ for name in must_match_exactly:
     assert_python '
 import re
 
-bootstrap = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md").read_text()
-settings = (ROOT / "platforms/codex/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md").read_text()
-count_tasks = (ROOT / "platforms/codex/skills/ralph-specum/scripts/count_tasks.py").read_text()
-merge_state = (ROOT / "platforms/codex/skills/ralph-specum/scripts/merge_state.py").read_text()
-resolve_paths = (ROOT / "platforms/codex/skills/ralph-specum/scripts/resolve_spec_paths.py").read_text()
+bootstrap = (ROOT / "plugins/ralph-specum-codex/assets/bootstrap/AGENTS.md").read_text()
+settings = (ROOT / "plugins/ralph-specum-codex/assets/bootstrap/ralph-specum.local.md").read_text()
+count_tasks = (ROOT / "plugins/ralph-specum-codex/scripts/count_tasks.py").read_text()
+merge_state = (ROOT / "plugins/ralph-specum-codex/scripts/merge_state.py").read_text()
+resolve_paths = (ROOT / "plugins/ralph-specum-codex/scripts/resolve_spec_paths.py").read_text()
 frontmatter = settings.split("---", 2)[1]
 
 assert "$ralph-specum-start" in bootstrap

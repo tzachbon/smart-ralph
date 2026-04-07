@@ -3,7 +3,7 @@ name: Codex Version Check
 on:
   pull_request:
     paths:
-      - 'platforms/codex/**'
+      - 'plugins/ralph-specum-codex/**'
 
 jobs:
   check-version-bump:
@@ -18,7 +18,7 @@ jobs:
       - name: Check Codex manifest version
         run: |
           BASE_BRANCH="${{ github.base_ref }}"
-          MANIFEST="platforms/codex/manifest.json"
+          MANIFEST="plugins/ralph-specum-codex/.codex-plugin/plugin.json"
 
           version_greater() {
             local v1=$1 v2=$2
@@ -50,8 +50,8 @@ jobs:
             exit 1
           fi
 
-          if ! git diff --quiet "origin/${BASE_BRANCH}...HEAD" -- platforms/codex/; then
-            echo "Detected changes under platforms/codex/"
+          if ! git diff --quiet "origin/${BASE_BRANCH}...HEAD" -- plugins/ralph-specum-codex/; then
+            echo "Detected changes under plugins/ralph-specum-codex/"
           else
             echo "No Codex package changes detected"
             exit 0

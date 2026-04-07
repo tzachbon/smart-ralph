@@ -419,7 +419,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): write README with installation and migration guide`
   - _Requirements: AC-1.5, AC-8.5, US-13 (migration guide)_
 
-- [ ] 1.37 [VERIFY] POC Checkpoint: full plugin structure verification
+- [x] 1.37 [VERIFY] POC Checkpoint: full plugin structure verification
   - **Do**:
     1. Verify plugin.json is valid JSON with required fields
     2. Count SKILL.md files (must be 15)
@@ -441,7 +441,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
 
 Focus: Clean up POC shortcuts, verify content quality, consolidate.
 
-- [ ] 2.1 Audit skill word counts and trim any over-2000-word files
+- [x] 2.1 Audit skill word counts and trim any over-2000-word files
   - **Do**:
     1. For each of the 15 SKILL.md files, count words with `wc -w`
     2. For any file exceeding 2000 words, trim: remove verbose explanations, use bullet points, move extended examples to referenced files
@@ -451,7 +451,7 @@ Focus: Clean up POC shortcuts, verify content quality, consolidate.
   - **Commit**: `refactor(codex-plugin): trim skills to under 2000 words`
   - _Requirements: AC-3.4, NFR-1_
 
-- [ ] 2.2 Audit parity matrix for completeness
+- [x] 2.2 Audit parity matrix for completeness
   - **Do**:
     1. Read `plugins/ralph-specum-codex/references/parity-matrix.md`
     2. Verify "Version Delta (v4.8.4 -> v4.9.1)" section documents all 5 known changes: epic.md, tasks.md expansion, settings-template.md expansion, 3 new agent configs, workflow.md additions
@@ -463,13 +463,13 @@ Focus: Clean up POC shortcuts, verify content quality, consolidate.
   - **Commit**: `refactor(codex-plugin): complete parity matrix with full delta and feature table`
   - _Requirements: AC-3.5, AC-4.1_
 
-- [ ] 2.3 [VERIFY] Quality checkpoint: parity matrix complete
+- [x] 2.3 [VERIFY] Quality checkpoint: parity matrix complete
   - **Do**: Verify parity matrix has required sections
   - **Verify**: `grep -q "Version Delta" plugins/ralph-specum-codex/references/parity-matrix.md && grep -q "Feature Parity" plugins/ralph-specum-codex/references/parity-matrix.md && echo PASS`
   - **Done when**: Both sections present
   - **Commit**: none
 
-- [ ] 2.4 Remove any remaining platforms/codex path references from plugin files
+- [x] 2.4 Remove any remaining platforms/codex path references from plugin files
   - **Do**:
     1. Search all files under `plugins/ralph-specum-codex/` for any remaining `platforms/codex` substring
     2. Replace each with the correct `plugins/ralph-specum-codex` equivalent
@@ -479,7 +479,7 @@ Focus: Clean up POC shortcuts, verify content quality, consolidate.
   - **Commit**: `refactor(codex-plugin): remove all platforms/codex path references`
   - _Requirements: AC-1.3_
 
-- [ ] 2.5 Verify Python scripts still work with new paths
+- [x] 2.5 Verify Python scripts still work with new paths
   - **Do**:
     1. Run `python3 plugins/ralph-specum-codex/scripts/count_tasks.py --help 2>&1 || true` and verify no import errors
     2. Run `python3 plugins/ralph-specum-codex/scripts/merge_state.py --help 2>&1 || true` and verify no import errors
@@ -490,7 +490,7 @@ Focus: Clean up POC shortcuts, verify content quality, consolidate.
   - **Commit**: `refactor(codex-plugin): verify python scripts compile cleanly`
   - _Requirements: AC-5.4_
 
-- [ ] 2.6 [VERIFY] Quality checkpoint: no stale refs, scripts valid
+- [x] 2.6 [VERIFY] Quality checkpoint: no stale refs, scripts valid
   - **Do**: Final cleanup check
   - **Verify**: `! grep -r 'platforms/codex' plugins/ralph-specum-codex/ && python3 -m py_compile plugins/ralph-specum-codex/scripts/resolve_spec_paths.py && echo PASS`
   - **Done when**: No stale refs, scripts compile
@@ -502,7 +502,7 @@ Focus: Clean up POC shortcuts, verify content quality, consolidate.
 
 Focus: BATS tests for new plugin, version-sync helper, update old tests, CI config.
 
-- [ ] 3.1 Create tests/helpers/version-sync.sh
+- [x] 3.1 Create tests/helpers/version-sync.sh
   - **Do**:
     1. Create `tests/helpers/version-sync.sh`
     2. Script compares 3 version fields: Claude plugin (`plugins/ralph-specum/.claude-plugin/plugin.json`), Codex plugin (`plugins/ralph-specum-codex/.codex-plugin/plugin.json`), marketplace (`.agents/plugins/marketplace.json` entry for `ralph-specum-codex`)
@@ -521,7 +521,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Done when**: Exits 0 (all 3 version fields match `4.9.1`)
   - **Commit**: none
 
-- [ ] 3.3 Create tests/codex-plugin.bats (plugin structure tests)
+- [x] 3.3 Create tests/codex-plugin.bats (plugin structure tests)
   - **Do**:
     1. Create `tests/codex-plugin.bats`
     2. Add `repo_root()` helper (same pattern as `codex-platform.bats`)
@@ -557,7 +557,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Done when**: All tests green, zero failures
   - **Commit**: none
 
-- [ ] 3.5 Update tests/codex-platform.bats paths for new plugin location
+- [x] 3.5 Update tests/codex-platform.bats paths for new plugin location
   - **Do**:
     1. Read `tests/codex-platform.bats` in full
     2. Replace all `platforms/codex/skills/` path references with `plugins/ralph-specum-codex/skills/` (the test file currently checks `platforms/codex/skills/<skill>/SKILL.md` and `agents/openai.yaml`)
@@ -568,7 +568,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Commit**: `test(codex-plugin): update codex-platform.bats paths to new plugin location`
   - _Requirements: AC-13.1_
 
-- [ ] 3.6 Rewrite codex-platform.bats tests for new plugin structure
+- [x] 3.6 Rewrite codex-platform.bats tests for new plugin structure
   - **Do**:
     1. The old tests check for `agents/openai.yaml` which the new plugin does not use (skills use SKILL.md only, no yaml metadata file)
     2. Rewrite tests that reference `openai.yaml` to instead verify the new plugin structure: check for `SKILL.md` existence and basic content tokens
@@ -587,7 +587,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Done when**: All tests pass
   - **Commit**: none
 
-- [ ] 3.8 Update tests/codex-platform-scripts.bats paths
+- [x] 3.8 Update tests/codex-platform-scripts.bats paths
   - **Do**:
     1. Replace all `platforms/codex/skills/ralph-specum/scripts/` references with `plugins/ralph-specum-codex/scripts/`
     2. Update `merge_state_script()` and `resolve_spec_paths_script()` helper functions to point to new paths
@@ -597,7 +597,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Commit**: `test(codex-plugin): update codex-platform-scripts.bats to new plugin paths`
   - _Requirements: AC-13.1, AC-13.3_
 
-- [ ] 3.9 Update .github/workflows/bats-tests.yml trigger paths
+- [x] 3.9 Update .github/workflows/bats-tests.yml trigger paths
   - **Do**:
     1. Add `plugins/ralph-specum-codex/**` to both `push.paths` and `pull_request.paths` in `.github/workflows/bats-tests.yml`
     2. Also add `.agents/plugins/**` to trigger paths (marketplace.json changes should trigger CI)
@@ -607,7 +607,7 @@ Focus: BATS tests for new plugin, version-sync helper, update old tests, CI conf
   - **Commit**: `ci: add codex plugin to bats-tests.yml trigger paths`
   - _Requirements: AC-11.5_
 
-- [ ] 3.10 Create .github/workflows/codex-version-check.yml
+- [x] 3.10 Create .github/workflows/codex-version-check.yml
   - **Do**:
     1. Create `.github/workflows/codex-version-check.yml`
     2. Trigger on `push` and `pull_request` with paths: `plugins/ralph-specum*/**`, `.agents/plugins/marketplace.json`
