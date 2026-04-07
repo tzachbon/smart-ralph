@@ -1,0 +1,14 @@
+{
+  "name": "ralph-specum-codex",
+  "version": "4.9.1",
+  "description": "Spec-driven development for OpenAI Codex. Research, requirements, design, tasks, autonomous implementation, and epic triage for multi-spec feature decomposition.",
+  "author": {
+    "name": "tzachbon"
+  },
+  "license": "MIT",
+  "keywords": ["ralph", "spec-driven", "research", "requirements", "design", "tasks", "autonomous", "loop", "epic", "triage"],
+  "skills": "./skills",
+  "hooks": {
+    "Stop": "./hooks/stop-watcher.sh"
+  }
+}

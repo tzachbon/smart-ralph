@@ -21,7 +21,7 @@
 
 Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. Get structure right.
 
-- [ ] 1.1 Create plugin directory skeleton and manifest
+- [x] 1.1 Create plugin directory skeleton and manifest
   - **Do**:
     1. Create directory tree: `plugins/ralph-specum-codex/.codex-plugin/`, `skills/`, `agent-configs/`, `hooks/`, `templates/`, `references/`, `schemas/`, `scripts/`, `assets/bootstrap/`
     2. Write `.codex-plugin/plugin.json` with: `name: "ralph-specum-codex"`, `version: "4.9.1"`, `description`, `author`, `license`, `keywords`, `skills: "./skills"`, `hooks: {"Stop": "./hooks/stop-watcher.sh"}`
