@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ralph Specum Switch"
+  short_description: "Switch the active Ralph spec"
+  default_prompt: "Use $ralph-specum-switch to change the active Ralph spec and report the current approval state and next explicit action."
+policy:
+  allow_implicit_invocation: false

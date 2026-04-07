@@ -149,7 +149,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Done when**: Exit 0 when no state file present
   - **Commit**: none
 
-- [ ] 1.14 Write ralph-specum primary skill (bootstrap/help)
+- [x] 1.14 Write ralph-specum primary skill (bootstrap/help)
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md`
     2. Content: adapt `platforms/codex/skills/ralph-specum/SKILL.md` — keep all routing table rows (`| Start |`, `| Triage |`, etc.), approval handoff text, "Use only when the user explicitly invokes `$ralph-specum`" instruction, "## Response Handoff" section
@@ -162,7 +162,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-3.1, AC-3.2_
   - _Design: Skill inventory_
 
-- [ ] 1.15 [P] Write ralph-specum-start skill (merges start+new)
+- [x] 1.15 [P] Write ralph-specum-start skill (merges start+new)
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-start/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-start/SKILL.md` — preserve: quick mode, granularity, `.current-epic` check, `awaitingApproval` handling
@@ -176,7 +176,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-start skill (merges start+new)`
   - _Requirements: AC-3.1, AC-3.3, AC-7.1, FR-3_
 
-- [ ] 1.16 [P] Write ralph-specum-research skill
+- [x] 1.16 [P] Write ralph-specum-research skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-research/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-research/SKILL.md` — preserve: brainstorming, research.md, verification tooling tokens
@@ -195,7 +195,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Done when**: All 3 SKILL.md files present
   - **Commit**: none
 
-- [ ] 1.18 [P] Write ralph-specum-requirements skill
+- [x] 1.18 [P] Write ralph-specum-requirements skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-requirements/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-requirements/SKILL.md` — preserve: brainstorming, requirements.md, awaitingApproval tokens
@@ -208,7 +208,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-requirements skill`
   - _Requirements: AC-3.1, AC-7.2_
 
-- [ ] 1.19 [P] Write ralph-specum-design skill
+- [x] 1.19 [P] Write ralph-specum-design skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-design/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-design/SKILL.md` — preserve: brainstorming, design.md, awaitingApproval tokens
@@ -221,7 +221,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-design skill`
   - _Requirements: AC-3.1, AC-7.3_
 
-- [ ] 1.20 [P] Write ralph-specum-tasks skill
+- [x] 1.20 [P] Write ralph-specum-tasks skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-tasks/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-tasks/SKILL.md` — preserve: granularity, `[P]`, `[VERIFY]`, VE tasks, `taskIndex: first incomplete or totalTasks` tokens
@@ -240,7 +240,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Done when**: All 3 present
   - **Commit**: none
 
-- [ ] 1.22 Write ralph-specum-implement skill (hook loop + manual fallback)
+- [x] 1.22 Write ralph-specum-implement skill (hook loop + manual fallback)
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-implement/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-implement/SKILL.md`
@@ -256,7 +256,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - _Requirements: AC-4.4, AC-7.5, AC-8.5, AC-9.1, AC-9.2, FR-11_
   - _Design: Skill inventory (implement special structure)_
 
-- [ ] 1.23 [P] Write ralph-specum-cancel skill
+- [x] 1.23 [P] Write ralph-specum-cancel skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-cancel/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-cancel/SKILL.md` — preserve: `.ralph-state.json`, Safe cancel, full removal tokens
@@ -269,7 +269,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-cancel skill`
   - _Requirements: AC-3.1_
 
-- [ ] 1.24 [P] Write ralph-specum-status skill
+- [x] 1.24 [P] Write ralph-specum-status skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-status/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-status/SKILL.md` — preserve: `.current-epic`, approval state, granularity, "there is no active spec" tokens
@@ -288,7 +288,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Done when**: All 3 present
   - **Commit**: none
 
-- [ ] 1.26 [P] Write ralph-specum-switch skill
+- [x] 1.26 [P] Write ralph-specum-switch skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-switch/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-switch/SKILL.md` — preserve: `.current-spec`, approval state tokens
@@ -300,7 +300,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-switch skill`
   - _Requirements: AC-3.1_
 
-- [ ] 1.27 [P] Write ralph-specum-triage skill
+- [x] 1.27 [P] Write ralph-specum-triage skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-triage/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-triage/SKILL.md` — preserve: `specs/_epics`, `.current-epic`, `.epic-state.json`, dependencies tokens
@@ -313,7 +313,7 @@ Focus: Build the plugin. Skip polish. Accept hardcoded content, minimal prose. G
   - **Commit**: `feat(codex-plugin): add ralph-specum-triage skill`
   - _Requirements: AC-3.1, AC-7.6_
 
-- [ ] 1.28 [P] Write ralph-specum-refactor skill
+- [x] 1.28 [P] Write ralph-specum-refactor skill
   - **Do**:
     1. Create `plugins/ralph-specum-codex/skills/ralph-specum-refactor/SKILL.md`
     2. Adapt `platforms/codex/skills/ralph-specum-refactor/SKILL.md` — preserve: requirements.md, design.md, tasks.md, `[VERIFY]` tokens

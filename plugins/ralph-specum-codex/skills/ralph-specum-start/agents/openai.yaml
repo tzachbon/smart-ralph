@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ralph Specum Start"
+  short_description: "Create or resume a Ralph spec"
+  default_prompt: "Use $ralph-specum-start to create or resume a Ralph spec, then wait for explicit direction to continue to research unless I asked for quick or autonomous flow."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ralph Specum Help"
+  short_description: "Explain the Ralph Codex surface"
+  default_prompt: "Use $ralph-specum-help to explain the Ralph step by step flow in Codex and how approval handoffs work."
+policy:
+  allow_implicit_invocation: false

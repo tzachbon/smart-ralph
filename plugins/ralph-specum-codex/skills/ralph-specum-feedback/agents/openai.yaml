@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ralph Specum Feedback"
+  short_description: "Draft or submit Ralph feedback"
+  default_prompt: "Use $ralph-specum-feedback to draft or submit feedback for Ralph Specum."
+policy:
+  allow_implicit_invocation: false
