@@ -98,7 +98,28 @@ rm -rf /tmp/smart-ralph
 codex_hooks = true
 ```
 
-See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for agent configs and migration from older installs.
+**Or just ask Codex to do it for you:**
+
+Install prompt:
+```text
+Install the Smart Ralph Codex plugin from repo tzachbon/smart-ralph.
+The plugin is at plugins/ralph-specum-codex. Copy it to my personal
+plugins directory at ~/.codex/plugins/ralph-specum-codex, create a
+personal marketplace entry at ~/.agents/plugins/marketplace.json,
+and restart Codex.
+```
+
+Migrate prompt (if upgrading from the old `platforms/codex/` skills):
+```text
+Migrate from the old Smart Ralph Codex skills to the new plugin.
+Remove all ralph-specum* skills from ~/.codex/skills/ and
+$CODEX_HOME/skills/. Then install the Smart Ralph plugin from
+repo tzachbon/smart-ralph at plugins/ralph-specum-codex into
+my personal plugins directory. Create the marketplace entry
+and restart Codex.
+```
+
+See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for agent configs and full details.
 
 <details>
 <summary>Migrating from old skills (platforms/codex/)?</summary>
