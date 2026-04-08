@@ -36,7 +36,7 @@ Codex:
 
 Claude uses subagents like `research-analyst` and `spec-executor`.
 
-Codex skills should preserve the same responsibilities, but the skill itself may execute the work in one session instead of requiring Claude plugin subagent dispatch.
+Codex skills MUST delegate phase work to sub-agents, matching the Claude Code delegation model. The skill acts as coordinator: gather context, run interview, delegate to the appropriate agent type, validate output, present for approval. The skill MUST NOT write spec artifacts (research.md, requirements.md, design.md, tasks.md) directly.
 
 ### Worktrees
 
