@@ -5,10 +5,10 @@
   },
   "plugins": [
     {
-      "name": "ralph-specum-codex",
+      "name": "ralph-specum",
       "source": {
         "source": "local",
-        "path": "./plugins/ralph-specum-codex"
+        "path": "./plugins/codex"
       },
       "policy": {
         "installation": "AVAILABLE"
