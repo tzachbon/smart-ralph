@@ -46,7 +46,7 @@ The coordinator MUST NOT write spec artifacts directly. If sub-agent delegation 
 
 1. Resolve current repo state, branch, and spec roots.
 2. Start or resume a spec.
-3. STOP and wait for explicit direction to continue to research unless `--quick`.
+3. STOP. Wait for explicit direction to continue to research unless `--quick`.
 4. Delegate `research.md` to `research-analyst` sub-agent. STOP and request approval unless `--quick`.
 5. Delegate `requirements.md` to `product-manager` sub-agent. STOP and request approval unless `--quick`.
 6. Delegate `design.md` to `architect-reviewer` sub-agent. STOP and request approval unless `--quick`.
