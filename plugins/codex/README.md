@@ -4,6 +4,11 @@ Spec-driven development plugin for OpenAI Codex. Full parity with the Claude Cod
 
 Transforms feature requests into structured specs (research, requirements, design, tasks) then executes them task-by-task with fresh context per task.
 
+## Prerequisites
+
+- [OpenAI Codex CLI](https://github.com/openai/codex) installed: `npm install -g @openai/codex`
+- A ChatGPT account (Plus, Pro, Team, Edu, or Enterprise) or an OpenAI API key
+
 ## Installation
 
 Pick one of these two methods.
@@ -32,8 +37,6 @@ cat > ~/.agents/plugins/marketplace.json << 'EOF'
 EOF
 ```
 
-Restart Codex. Open the plugin directory. Install `ralph-specum`.
-
 ### Per-project install (one repo only)
 
 ```bash
@@ -58,7 +61,7 @@ EOF
 rm -rf /tmp/smart-ralph
 ```
 
-Restart Codex. Open the plugin directory. Install `ralph-specum`.
+After either method: restart Codex, open the plugin directory, and install `ralph-specum`.
 
 ### Enable hooks (recommended)
 
@@ -71,7 +74,24 @@ codex_hooks = true
 
 Without hooks, you run `$ralph-specum-implement` once per task manually (see `references/workflow.md` for the fallback workflow).
 
-### Agent configs (optional)
+## Updating
+
+Re-run the install steps to pull the latest version:
+
+```bash
+rm -rf /tmp/smart-ralph
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+cp -R /tmp/smart-ralph/plugins/codex ~/.codex/plugins/codex
+rm -rf /tmp/smart-ralph
+```
+
+For per-project installs, replace `~/.codex/plugins/codex` with `./plugins/codex`.
+
+Check your version in `.codex-plugin/plugin.json`. Compare against the [latest release](https://github.com/tzachbon/smart-ralph/releases).
+
+Restart Codex after updating.
+
+## Agent configs (optional)
 
 Copy templates from `agent-configs/*.toml.template` into your `.codex/config.toml` for specialized subagents. See `agent-configs/README.md`.
 
@@ -82,11 +102,7 @@ If you previously installed Ralph Specum skills from `platforms/codex/skills/` v
 ### Step 1: Remove old skills
 
 ```bash
-# Remove each old skill (adjust path for your install location)
-for skill in ralph-specum ralph-specum-start ralph-specum-triage ralph-specum-research ralph-specum-requirements ralph-specum-design ralph-specum-tasks ralph-specum-implement ralph-specum-status ralph-specum-switch ralph-specum-cancel ralph-specum-index ralph-specum-refactor ralph-specum-feedback ralph-specum-help; do
-  rm -rf "$CODEX_HOME/skills/$skill" 2>/dev/null
-  rm -rf "$HOME/.codex/skills/$skill" 2>/dev/null
-done
+rm -rf ~/.codex/skills/ralph-specum*
 ```
 
 ### Step 2: Install the new plugin
@@ -111,7 +127,7 @@ Run `$ralph-specum-status` to confirm the plugin is active and can find your spe
 | Manual skill updates | Plugin version tracking |
 | Skills at `platforms/codex/skills/` | Plugin at `plugins/codex/` |
 
-## What Ships
+## Skills Reference
 
 | Skill | Description |
 |-------|-------------|
@@ -153,6 +169,4 @@ This starts the spec-driven workflow: research, requirements, design, tasks, the
 
 ## Version
 
-Current version: 4.9.1 (synced with Claude Code plugin)
-
-Package manifest: `.codex-plugin/plugin.json`
+Check `.codex-plugin/plugin.json` for the current version.
