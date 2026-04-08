@@ -199,7 +199,7 @@ Each agent delegation in steps 11-15 includes this directive in the Task prompt:
 
 ```text
 Autonomous Mode Context:
-Running in quick mode with no user feedback. You MUST:
+Running in autonomous mode with no user feedback. You MUST:
 - Make strong, opinionated decisions instead of deferring to user
 - Choose the simplest, most conventional approach
 - Be more critical of your own output
