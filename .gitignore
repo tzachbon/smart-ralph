@@ -51,3 +51,8 @@ playwright-env.local.md
 node_modules
 .claude/settings.json
 .serena/project.yml
+.serena/
+.gitignore
+.qwen/settings.json.orig
+.qwen/settings.json
+.serena
