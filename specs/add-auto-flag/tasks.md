@@ -117,7 +117,7 @@ Focus: Apply all file edits in dependency order. Skill-first (SKILL.md), then co
 
 ---
 
-- [ ] 1.9 Update commands/start.md (ralph-speckit)
+- [x] 1.9 Update commands/start.md (ralph-speckit)
   - **Files**: `plugins/ralph-speckit/commands/start.md`
   - **Do**:
     1. After the Parse Arguments section, add a "Flag Parsing" block: detect --quick (plan-only) and --auto (full autonomous). Add mutual-exclusivity check: if both present, output "Error: --quick and --auto are mutually exclusive. Use one or the other." and STOP before creating any feature directory.
@@ -164,7 +164,7 @@ Focus: Apply all file edits in dependency order. Skill-first (SKILL.md), then co
   - _Requirements: FR-9, AC-5.3, AC-5.4_
   - _Design: ralph-speckit section 2_
 
-- [ ] 1.11 [P] Create quick-mode-guard.sh (ralph-speckit) and register hook
+- [x] 1.11 [P] Create quick-mode-guard.sh (ralph-speckit) and register hook
   - **Files**: `plugins/ralph-speckit/hooks/scripts/quick-mode-guard.sh` (new), `plugins/ralph-speckit/.claude-plugin/plugin.json`
   - **Do**:
     1. Create `plugins/ralph-speckit/hooks/scripts/quick-mode-guard.sh` mirroring the ralph-specum guard but using `.speckit-state.json` and `.specify/specs/$FEATURE_NAME/` path:
