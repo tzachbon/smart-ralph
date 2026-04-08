@@ -2,9 +2,9 @@
 
 ## Overview
 
-Total tasks: 39
+Total tasks: 39 (original) + 15 (PR #9 fixes) = 54
 
-**Intent Classification**: GREENFIELD — POC-first workflow
+**Intent Classification**: GREENFIELD — POC-first workflow (original); BUG_FIX (Phase 5)
 
 **POC-first workflow**:
 1. Phase 1: Make It Work (POC) - Validate idea end-to-end
@@ -548,3 +548,243 @@ After POC validated, clean up code.
 ```
 Phase 1 (POC) → Phase 2 (Refactor) → Phase 3 (Testing) → Phase 4 (Quality)
 ```
+
+---
+
+## Phase 5: PR #9 Review Fixes
+
+> These tasks address review feedback from PR #9. Original Phase 1-4 tasks (above) are complete and left intact.
+
+**Total**: 13 new tasks
+**Intent**: BUG_FIX / REFACTOR — fix review feedback from PR #9
+**Critical path**: CRITICAL issues (atomic write bug, issues 1-4) must be fixed in all 4 files before proceeding
+
+### CRITICAL PATH: Atomic Write Bug
+
+The atomic write strategy in the original spec is broken. `cat chat.md chat.tmp > chat.md.tmp && mv chat.md.tmp chat.md` causes lost updates when two agents write concurrently. The `mv chat.tmp chat.md` alternative overwrites the entire history.
+
+**Correct fix**: `flock` for exclusive access + `cat >>` for safe append.
+
+- [ ] 5.1 [FIX] Fix atomic write pattern in design.md
+  - **Do**:
+    1. Read `specs/agent-chat-protocol/design.md` — find "Atomic Write Implementation" section
+    2. Replace the broken pattern with `flock`-based atomic append:
+       ```bash
+       (
+         exec 200>"$basePath/chat.md.lock"
+         flock -e 200 || exit 1
+         cat >> "$basePath/chat.md" << 'MSGEOF'
+       ### [<writer> → <addressee>] <HH:MM:SS> | <task-ID> | <SIGNAL>
+       <message body>
+       MSGEOF
+       ) 200>"$basePath/chat.md.lock"
+       ```
+    3. Rename `lastReadIndex` → `lastReadLine` throughout (messages are multi-line)
+    4. Delete the "Alternative (Single Write)" section — `mv` overwrites, it does not append
+    5. Fix "Concurrent Write Safety" to describe flock behavior
+  - **Files**: `specs/agent-chat-protocol/design.md`
+  - **Done when**: Atomic write uses flock, lastReadLine used, broken alternatives removed
+  - **Verify**: `grep -n "flock\|lastReadLine" specs/agent-chat-protocol/design.md | head -10`
+  - **Commit**: `fix(atomic-write): use flock for safe concurrent append`
+  - _Review issues: CRITICAL #1 (line 247), CRITICAL #2 (line 217)_
+
+- [ ] 5.2 [FIX] Fix FR-13 in requirements.md
+  - **Do**:
+    1. Read `specs/agent-chat-protocol/requirements.md` — find FR-13 Atomic Writes
+    2. Fix "rename to append position" — rename does NOT append, it overwrites
+    3. Change to: "implementation uses flock-based exclusive access + cat >> for append"
+    4. Clarify: "cat >> WITHOUT flock is NOT atomic on concurrent writes"
+  - **Files**: `specs/agent-chat-protocol/requirements.md`
+  - **Done when**: FR-13 correctly describes flock-based atomic append
+  - **Verify**: `grep -n "flock\|atomic" specs/agent-chat-protocol/requirements.md | head -5`
+  - **Commit**: `fix(requirements): clarify FR-13 atomic write — flock required`
+  - _Review issue: CRITICAL #3 (line 143)_
+
+- [ ] 5.3 [FIX] Fix tasks.md task 1.3 atomic write pattern
+  - **Do**:
+    1. Read task 1.3 in `specs/agent-chat-protocol/tasks.md`
+    2. Update the atomic append pattern to use flock (same as task 5.1)
+    3. Add clarification: "cat >> WITHOUT flock is also broken for concurrent writes"
+  - **Files**: `specs/agent-chat-protocol/tasks.md`
+  - **Done when**: Task 1.3 describes flock-based atomic write
+  - **Verify**: `grep -n "flock" specs/agent-chat-protocol/tasks.md | head -5`
+  - **Commit**: `fix(tasks): add flock to atomic write pattern in task 1.3`
+  - _Review issue: CRITICAL #4 (task 1.3)_
+
+- [ ] 5.4 [FIX] Fix external-reviewer.md atomic write pattern
+  - **Do**:
+    1. Read `plugins/ralph-specum/agents/external-reviewer.md` — find chat_write_signal function
+    2. Replace bare `cat >>` with flock-based pattern:
+       ```bash
+       (
+         exec 200>"${basePath}/chat.md.lock"
+         flock -e 200 || exit 1
+         cat "$tmpfile" >> "${basePath}/chat.md"
+         rm -f "$tmpfile"
+       ) 200>"${basePath}/chat.md.lock"
+       ```
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
+  - **Done when**: external-reviewer.md uses flock-based atomic append
+  - **Verify**: `grep -n "flock" plugins/ralph-specum/agents/external-reviewer.md`
+  - **Commit**: `fix(external-reviewer): use flock for atomic chat append`
+  - _Review issue: CRITICAL #4 (external-reviewer.md)_
+
+- [ ] 5.5 [VERIFY] Critical path: atomic write consistency across all 4 files
+  - **Do**: Verify all 4 files now use consistent flock-based atomic write pattern
+  - **Verify**:
+    ```bash
+    for f in specs/agent-chat-protocol/design.md specs/agent-chat-protocol/requirements.md specs/agent-chat-protocol/tasks.md plugins/ralph-specum/agents/external-reviewer.md; do
+      echo "=== $f ===" && grep -l "flock" "$f" && echo "flock: OK" || echo "flock: MISSING"
+    done
+    ```
+  - **Done when**: All 4 files contain flock
+  - **Commit**: `chore: verify atomic write fix consistency`
+
+### Phase 5.2: Inconsistencies
+
+- [ ] 5.6 [FIX] Fix design.md architecture diagram — remove .chat-state.*.json
+  - **Do**:
+    1. Read `specs/agent-chat-protocol/design.md` — Mermaid diagram
+    2. Remove `.chat-state.executor.json` and `.chat-state.reviewer.json` boxes
+    3. Add `.ralph-state.json` box showing per-agent state inside
+  - **Files**: `specs/agent-chat-protocol/design.md`
+  - **Done when**: Diagram shows `.ralph-state.json` (not separate `.chat-state.*.json`)
+  - **Verify**: `grep -n "chat-state" specs/agent-chat-protocol/design.md`
+  - **Commit**: `fix(design): update architecture diagram to use .ralph-state.json`
+  - _Review issue: MAJOR #3 (line 96)_
+
+- [ ] 5.7 [FIX] Fix Component: Chat Channel section — remove .chat-state references
+  - **Do**:
+    1. Read `specs/agent-chat-protocol/design.md` — "Component: Chat Channel" section
+    2. Change all `.chat-state.{agent}.json` references to `.ralph-state.json` → `chat.{executor|reviewer}`
+    3. Change `lastReadIndex` → `lastReadLine` throughout
+  - **Files**: `specs/agent-chat-protocol/design.md`
+  - **Done when**: All .chat-state references removed from Chat Channel section
+  - **Verify**: `grep "chat-state" specs/agent-chat-protocol/design.md`
+  - **Commit**: `fix(design): remove .chat-state references, use .ralph-state.json`
+  - _Review issue: MAJOR #3_
+
+- [ ] 5.8 [FIX] Rename lastReadIndex → lastReadLine across all spec files
+  - **Do**:
+    1. Replace all `lastReadIndex` with `lastReadLine` in design.md
+    2. Replace all `lastReadIndex` with `lastReadLine` in requirements.md (FR-14 references it)
+    3. Replace all `lastReadIndex` with `lastReadLine` in spec-executor.md agent (JSON field name)
+    4. Replace all `lastReadIndex` with `lastReadLine` in external-reviewer.md agent (JSON field name)
+    5. Add note: "lastReadLine is a line cursor, not message index — messages are multi-line (header + blank line + body)"
+  - **Files**: `specs/agent-chat-protocol/design.md`, `specs/agent-chat-protocol/requirements.md`, `plugins/ralph-specum/agents/spec-executor.md`, `plugins/ralph-specum/agents/external-reviewer.md`
+  - **Done when**: `lastReadIndex` gone from all 4 files, `lastReadLine` used with explanatory note
+  - **Verify**:
+    ```bash
+    echo "=== design.md ===" && grep "lastReadIndex" specs/agent-chat-protocol/design.md || echo "CLEAN"
+    echo "=== requirements.md ===" && grep "lastReadIndex" specs/agent-chat-protocol/requirements.md || echo "CLEAN"
+    echo "=== spec-executor.md ===" && grep "lastReadIndex" plugins/ralph-specum/agents/spec-executor.md || echo "CLEAN"
+    echo "=== external-reviewer.md ===" && grep "lastReadIndex" plugins/ralph-specum/agents/external-reviewer.md || echo "CLEAN"
+    ```
+  - **Commit**: `fix(design): rename lastReadIndex to lastReadLine across all spec files`
+  - _Review issue: MAJOR #4 (line 130) — also covers requirements.md FR-14 and agent files_
+
+- [ ] 5.9 [FIX] Fix requirements.md — remove all .chat-state.*.json references
+  - **Do**:
+    1. Read `specs/agent-chat-protocol/requirements.md`
+    2. Fix Dependencies table (around line 240): change "No change" to "Must modify"; remove "lastReadIndex stored separately"
+    3. Fix FR-14 section (around lines 147-150): remove `.chat-state.executor.json` and `.chat-state.reviewer.json` references — these files do not exist, state is in `.ralph-state.json`
+    4. Fix Dependency map section: remove `.chat-state.executor.json` and `.chat-state.reviewer.json` from the map
+  - **Files**: `specs/agent-chat-protocol/requirements.md`
+  - **Done when**: All `.chat-state.*.json` references gone from requirements.md; Dependencies table reflects `.ralph-state.json` design decision
+  - **Verify**: `grep -n "chat-state" specs/agent-chat-protocol/requirements.md`
+  - **Commit**: `fix(requirements): remove all .chat-state.*.json references — state in .ralph-state.json`
+  - _Review issue: MAJOR #5 (line 240) — also covers lines 147-150 (FR-14 section) and Dependency map_
+
+- [ ] 5.10 [FIX] Fix design.md test runner inconsistency — remove vitest, use bats
+  - **Do**:
+    1. Read `specs/agent-chat-protocol/design.md` — Test Strategy section
+    2. Remove vitest/TypeScript references (lines 356-361)
+    3. Make bats the only test runner mentioned throughout
+  - **Files**: `specs/agent-chat-protocol/design.md`
+  - **Done when**: Only bats mentioned, no vitest references
+  - **Verify**: `grep "vitest" specs/agent-chat-protocol/design.md && echo "STILL HAS vitest" || echo "CLEAN"`
+  - **Commit**: `fix(design): remove vitest references, use bats consistently`
+  - _Review issue: MAJOR #6 (lines 356-361 vs 418-429)_
+
+- [ ] 5.11 [FIX] Add language identifiers to fenced code blocks (markdownlint MD040)
+  - **Do**:
+    1. Read `specs/agent-chat-protocol/design.md`:
+       - Line 278: ` ``` ` → ` ```bash `
+       - Line 282: ` ``` ` → ` ```text `
+       - Line 289: ` ``` ` → ` ```text `
+       - Line 306: ` ``` ` → ` ```text `
+    2. Read `specs/agent-chat-protocol/requirements.md`:
+       - Line 43: ` ``` ` → ` ```text `
+  - **Files**: `specs/agent-chat-protocol/design.md`, `specs/agent-chat-protocol/requirements.md`
+  - **Done when**: All fenced code blocks have language identifiers
+  - **Verify**: `grep -n "^```$" specs/agent-chat-protocol/design.md specs/agent-chat-protocol/requirements.md`
+  - **Commit**: `fix(lint): add language identifiers to fenced code blocks`
+  - _Review issues: MINOR #9, #10_
+
+### Phase 5.3: external-reviewer.md Improvements
+
+- [ ] 5.12 [IMPROVE] Add tool permissions, Judge pattern, convergence detection, human as participant
+  - **Do**:
+    1. Read `plugins/ralph-specum/agents/external-reviewer.md`
+    2. Add Section 1b — Tool Permissions (allowed/forbidden/conditional)
+    3. Add Judge Pattern subsection — structured HOLD/DEADLOCK format with EVIDENCE required
+    4. Add Convergence Detection — after 3 rounds without resolution, auto-escalate
+    5. Add Human as Participant — human can use ACK/HOLD/CONTINUE, human voice always final
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
+  - **Done when**: All 4 improvements present in external-reviewer.md
+  - **Verify**:
+    ```bash
+    grep -c "Tools ALLOWED" plugins/ralph-specum/agents/external-reviewer.md
+    grep -c "Judge Pattern" plugins/ralph-specum/agents/external-reviewer.md
+    grep -c "Convergence Detection" plugins/ralph-specum/agents/external-reviewer.md
+    grep -c "Human as Participant" plugins/ralph-specum/agents/external-reviewer.md
+    ```
+  - **Commit**: `feat(external-reviewer): add tool permissions, Judge pattern, convergence detection, human as participant`
+  - _Review issues: Improvements A, B, C, D_
+
+### Phase 5.4: Quality Gates
+
+- [ ] 5.13 [LINT] Run markdownlint on modified spec files
+  - **Do**:
+    1. Run markdownlint on: design.md, requirements.md
+    2. Fix any MD040 or other lint errors
+  - **Files**: `specs/agent-chat-protocol/design.md`, `specs/agent-chat-protocol/requirements.md`
+  - **Done when**: No markdownlint errors
+  - **Verify**: `command -v mdl && mdl specs/agent-chat-protocol/design.md || echo "MDL_SKIP"`
+  - **Commit**: `chore: pass markdownlint on modified spec files`
+
+- [ ] 5.14 [VERSION] Bump external-reviewer.md version for improvements
+  - **Do**:
+    1. Read `plugins/ralph-specum/agents/external-reviewer.md` frontmatter
+    2. Bump version: 0.1.0 → 0.2.0 (minor — additive improvements)
+  - **Files**: `plugins/ralph-specum/agents/external-reviewer.md`
+  - **Done when**: Version bumped to 0.2.0
+  - **Verify**: `grep "^version:" plugins/ralph-specum/agents/external-reviewer.md`
+  - **Commit**: `chore(external-reviewer): bump version to 0.2.0 for reviewer improvements`
+
+- [ ] 5.15 [PR] Update PR #9 with review fixes
+  - **Do**:
+    1. Stage all changes
+    2. Commit: `fix(agent-chat-protocol): address PR #9 review feedback — atomic write bug, inconsistencies, reviewer improvements`
+    3. Push to remote
+  - **Files**: All modified files
+  - **Done when**: Changes pushed and PR updated
+  - **Commit**: `fix(agent-chat-protocol): address PR #9 review feedback`
+
+## Review Issues Summary
+
+| # | Issue | Severity | File(s) | Task |
+|---|-------|----------|---------|------|
+| 1 | Atomic write race condition | CRITICAL | design.md | 5.1 |
+| 2 | lines=$(wc -l) before append | CRITICAL | design.md | 5.1 |
+| 3 | FR-13 "rename to append" ambiguous | CRITICAL | requirements.md | 5.2 |
+| 4 | Broken atomic patterns | CRITICAL | tasks.md, external-reviewer.md | 5.3, 5.4 |
+| 5 | .chat-state.*.json vs .ralph-state.json | MAJOR | design.md | 5.6, 5.7 |
+| 6 | lastReadIndex ambiguous (line ≠ message) | MAJOR | design.md | 5.8 |
+| 7 | Dependencies table contradictory | MAJOR | requirements.md | 5.9 |
+| 8 | vitest vs bats inconsistent | MAJOR | design.md | 5.10 |
+| 9-10 | Code blocks without language id | MINOR | design.md, requirements.md | 5.11 |
+| A | Tool permissions for reviewer | Improvement | external-reviewer.md | 5.12 |
+| B | Judge pattern for structured escalation | Improvement | external-reviewer.md | 5.12 |
+| C | Convergence detection (3 rounds) | Improvement | external-reviewer.md | 5.12 |
+| D | Human as participant | Improvement | external-reviewer.md | 5.12 |
