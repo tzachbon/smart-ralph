@@ -630,7 +630,7 @@ The atomic write strategy in the original spec is broken. `cat chat.md chat.tmp 
   - **Commit**: `fix(external-reviewer): use flock for atomic chat append`
   - _Review issue: CRITICAL #4 (external-reviewer.md)_
 
-- [ ] 5.5 [VERIFY] Critical path: atomic write consistency across all 4 files
+- [x] 5.5 [VERIFY] Critical path: atomic write consistency across all 4 files
   - **Do**: Verify all 4 files now use consistent flock-based atomic write pattern
   - **Verify**:
     ```bash
