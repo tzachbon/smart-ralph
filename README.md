@@ -51,6 +51,8 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ### Codex
 
+> **Prerequisite:** Install the [Codex CLI](https://github.com/openai/codex) first: `npm install -g @openai/codex`
+
 **Personal install** (available in every project you open with Codex):
 
 ```bash
@@ -98,37 +100,25 @@ rm -rf /tmp/smart-ralph
 codex_hooks = true
 ```
 
-**Or just ask Codex to do it for you:**
-
-Install prompt:
-```text
-Install the Smart Ralph Codex plugin from repo tzachbon/smart-ralph.
-The plugin is at plugins/codex. Copy it to my personal
-plugins directory at ~/.codex/plugins/codex, create a
-personal marketplace entry at ~/.agents/plugins/marketplace.json,
-and restart Codex.
-```
-
-Migrate prompt (if upgrading from the old `platforms/codex/` skills):
-```text
-Migrate from the old Smart Ralph Codex skills to the new plugin.
-Remove all ralph-specum* skills from ~/.codex/skills/ and
-$CODEX_HOME/skills/. Then install the Smart Ralph plugin from
-repo tzachbon/smart-ralph at plugins/codex into
-my personal plugins directory. Create the marketplace entry
-and restart Codex.
-```
-
 See [`plugins/codex/README.md`](plugins/codex/README.md) for agent configs and full details.
+
+**Updating:**
+
+```bash
+rm -rf /tmp/smart-ralph
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+cp -R /tmp/smart-ralph/plugins/codex ~/.codex/plugins/codex
+rm -rf /tmp/smart-ralph
+# Restart Codex
+```
+
+For per-project installs, replace the destination path with `./plugins/codex`.
 
 <details>
 <summary>Migrating from old skills (platforms/codex/)?</summary>
 
-The old `platforms/codex/` skill-installer approach is deprecated. Remove your old skill installs and switch to the plugin:
-
 1. Remove old skills: `rm -rf $CODEX_HOME/skills/ralph-specum*`
 2. Follow the plugin install steps above
-3. All 15 skills ship in one package now
 
 See the [migration guide](plugins/codex/README.md#migration-from-old-skills-platformscodex) for full details.
 
