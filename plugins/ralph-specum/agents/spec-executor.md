@@ -68,7 +68,7 @@ This protocol enables an external reviewer agent to communicate task outcomes
 without shared process state — filesystem-only communication.
 </mandatory>
 
-## Chat Protocol (FLOC)
+## Chat Protocol (Bidirectional Chat)
 
 <mandatory>
 Before starting each task, check for and process new chat messages:
@@ -80,13 +80,35 @@ Before starting each task, check for and process new chat messages:
 **Read at task START**: Before starting each task, read chat.md using Read tool,
 parse new messages after `lastReadIndex` (stored in `.ralph-state.json`).
 
+**State tracking**: Update `.ralph-state.json` with chat state:
+```json
+{
+  "chat": {
+    "executor": {
+      "lastReadIndex": 0,
+      "lastReadLength": 0,
+      "stillTtl": 3
+    },
+    "reviewer": {
+      "lastReadIndex": 0,
+      "lastReadLength": 0,
+      "stillTtl": 3
+    }
+  }
+}
+```
+
 **Atomic append pattern** (CRITICAL — chat.md is append-only):
 ```bash
 # Write new message to temp file
 TMPFILE="/tmp/chat.tmp.${AGENT}.$(date +%s%N)"
 cat > "$TMPFILE" << 'CHATEOF'
-### [<writer> → <addressee>] <HH:MM:SS> | <task-ID> | <SIGNAL>
+### [YYYY-MM-DD HH:MM:SS] Writer → Addressee
+**Task**: T<taskIndex>
+
 <message body>
+
+**Expected Response**: ACK | BLOCK | PENDING
 CHATEOF
 # Append atomically to chat.md (NOT mv — that overwrites!)
 cat "$TMPFILE" >> <basePath>/chat.md && rm "$TMPFILE"
@@ -101,96 +123,29 @@ jq --argjson idx N '.chat.executor.lastReadIndex = $idx' <basePath>/.ralph-state
 ```
 
 **Signal Reference**:
-- **OVER signal**: Blocking signal — after sending OVER, do not start new work until response or 1-task timeout
-  - If timeout: auto-assume CONTINUE, proceed
-  - Exception: if HOLD present at timeout, HOLD takes precedence — do not start next task
-- **HOLD signal**: Pre-task gate only — read at task START, never interrupt mid-task
-  - If HOLD present in unread messages: block until ACK or CONTINUE received
-  - Do NOT stop current task when HOLD received mid-execution
-- **STILL TTL**: 3-task cycle deadlock detection counter
-  - Decrement `stillTtl` (from `.ralph-state.json → chat.executor.stillTtl`) when reviewer sends no signal for N consecutive tasks
-  - At task START: if no new reviewer signal since last task, decrement stillTtl by 1
-  - When stillTtl reaches 0: raise DEADLOCK alarm (suspicion of reviewer-side deadlock)
-  - ANY reviewer signal (ACK, OVER response, CONTINUE, ALIVE, etc.) resets stillTtl to 3
-  - If ALIVE appears when TTL would expire: reset stillTtl to 3 instead of raising alarm
-- **ALIVE signal**: Heartbeat response — reviewer sends ALIVE to reset TTL before deadlock alarm fires
-  - When executor would decrement stillTtl to 0, check for ALIVE in unread messages first
-  - If ALIVE present: reset stillTtl to 3, do not raise alarm
-  - Resets the stillTtl counter on the executor side
+- **ACK**: "I agree with this approach, you can proceed" — executor can advance to next task
+- **BLOCK**: "Stop. I disagree with this approach or you're proceeding too quickly" — executor MUST NOT advance
+- **PENDING**: "I need more time to think about this" — executor waits, cannot advance
 
-### Signal Reference (Executor-Side Writers)
+**Blocking conditions** (executor MUST NOT advance to next task if):
+1. chat.md contains BLOCK status for current task
+2. chat.md contains PENDING status for current task  
+3. chat.md contains any message from reviewer that hasn't been ACKed
 
-**Signal writer functions** — executor uses these to send signals to reviewer:
+**When to initiate chat** (executor should write to chat.md):
+1. Making an architectural decision that affects the overall system
+2. About to proceed to a task that depends on a previous task's implementation
+3. Wanting to explain the rationale behind a design choice
+4. Detecting that the reviewer might have concerns about the current approach
+5. After completing a task, before advancing to the next one
 
-```bash
-# NOTE: These are PATTERNS for the agent to follow inline.
-# The agent does not source or call these functions.
-# It writes equivalent inline bash at each use point.
-
-# Timestamp helper
-chat_timestamp() {
-  date +%H:%M:%S
-}
-
-# Task-ID formatter — reads taskIndex from .ralph-state.json
-chat_task_id() {
-  local basePath="$1"
-  jq -r '.taskIndex' "${basePath}/.ralph-state.json" 2>/dev/null || echo "?"
-}
-
-# Atomic signal writer — appends message to chat.md
-# Usage: chat_write_signal <writer> <addressee> <SIGNAL> "<message>"
-chat_write_signal() {
-  local writer="$1"
-  local addressee="$2"
-  local signal="$3"
-  local message="$4"
-  local basePath="${5:-$(pwd)}"
-
-  local tmpfile="/tmp/chat.tmp.${writer}.$(date +%s%N)"
-  local ts
-  ts="$(chat_timestamp)"
-  local tid
-  tid="$(chat_task_id "$basePath")"
-
-  cat > "$tmpfile" << EOF
-### [${writer} → ${addressee}] ${ts} | ${tid} | ${signal}
-${message}
-EOF
-
-  cat "$tmpfile" >> "${basePath}/chat.md" && rm "$tmpfile"
-}
-
-# OVER: Ask reviewer a question, block until response or 1-task timeout
-# Usage: chat_write_signal "executor" "reviewer" "OVER" "<question>"
-chat_send_over() {
-  chat_write_signal "executor" "reviewer" "OVER" "$1"
-}
-
-# CONTINUE: Acknowledge, proceed without waiting
-# Usage: chat_write_signal "executor" "reviewer" "CONTINUE" ""
-chat_send_continue() {
-  chat_write_signal "executor" "reviewer" "CONTINUE" ""
-}
-
-# HOLD: Pause new task starts, require ACK or CONTINUE to resume
-# Usage: chat_write_signal "executor" "reviewer" "HOLD" "<reason>"
-chat_send_hold() {
-  chat_write_signal "executor" "reviewer" "HOLD" "$1"
-}
-
-# DEADLOCK: Escalate to human — neither agent can resolve
-# Usage: chat_write_signal "executor" "reviewer" "DEADLOCK" "<reason>"
-chat_send_deadlock() {
-  chat_write_signal "executor" "reviewer" "DEADLOCK" "$1"
-}
-```
-
-**Usage examples**:
-- Ask a question: `chat_send_over "Should I refactor task 1.2 or skip it?"`
-- Proceed without waiting: `chat_send_continue`
-- Pause new tasks: `chat_send_hold "Waiting for design decision on API shape"`
-- Deadlock: `chat_send_deadlock "Reviewer keeps requesting changes that conflict with each other"`
+**Protocol rules**:
+1. Read chat.md BEFORE starting each task
+2. Check for BLOCK/PENDING status — if present, do NOT advance
+3. If reviewer has sent a message, respond before proceeding
+4. After completing a task, write to chat.md explaining what was done
+5. Request ACK from reviewer before advancing to next task
+6. If BLOCK received, explain your reasoning in chat.md before formal FAIL in task_review.md
 </mandatory>
 
 ## Task Loop

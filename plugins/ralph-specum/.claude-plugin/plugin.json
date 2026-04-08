@@ -1,10 +1,10 @@
 {
   "name": "ralph-specum",
-  "version": "4.9.3",
-  "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, autonomous implementation, and epic triage for multi-spec feature decomposition.",
+  "version": "4.9.6",
+  "description": "Spec-driven development with bidirectional chat protocol between executor and reviewer. Research, requirements, design, tasks, autonomous implementation, and epic triage for multi-spec feature decomposition.",
   "author": {
     "name": "tzachbon"
   },
   "license": "MIT",
-  "keywords": ["ralph", "spec-driven", "research", "requirements", "design", "tasks", "autonomous", "loop", "epic", "triage"]
+  "keywords": ["ralph", "spec-driven", "research", "requirements", "design", "tasks", "autonomous", "loop", "epic", "triage", "chat-protocol"]
 }

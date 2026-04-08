@@ -108,11 +108,14 @@ Suggested `fix_hint` per symptom:
 8. Repeat from step 1
 ```
 
-## Section 7 — Chat Protocol (FLOC)
+## Section 7 — Chat Protocol (Bidirectional Chat — Proactive Reviewer)
 
 **Chat file path**: `chat.md` in basePath (e.g., `specs/<specName>/chat.md`)
 
-**Read at review cycle**: After completing a review, read chat.md using Read tool to check for new messages from executor.
+**Read at review cycle**: Before writing to task_review.md, read chat.md to check for:
+1. New messages from executor explaining architectural decisions
+2. Active conversations (PENDING/BLOCK status) that need resolution
+3. Executor requests for ACK before advancing
 
 **Update lastReadIndex**: After reading, update via atomic jq pattern:
 ```bash
@@ -124,12 +127,119 @@ jq --argjson idx N '.chat.reviewer.lastReadIndex = $idx' <basePath>/.ralph-state
 # Write new message to temp file
 TMPFILE="/tmp/chat.tmp.${AGENT}.$(date +%s%N)"
 cat > "$TMPFILE" << 'CHATEOF'
-### [<writer> → <addressee>] <HH:MM:SS> | <task-ID> | <SIGNAL>
+### [YYYY-MM-DD HH:MM:SS] Writer → Addressee
+**Task**: T<taskIndex>
+
 <message body>
+
+**Expected Response**: ACK | BLOCK | PENDING
 CHATEOF
 # Append atomically to chat.md (NOT mv — that overwrites!)
 cat "$TMPFILE" >> "${basePath}/chat.md" && rm "$TMPFILE"
 ```
+
+**Proactive Chat Initiation** (NEW — reviewer starts conversations):
+
+The reviewer should initiate chat conversations when:
+
+1. **Detecting architectural patterns that will lead to technical debt**:
+   ```
+   ### [2026-04-07 10:05:00] External-Reviewer → Spec-Executor
+   **Observation**: I noticed the spec-executor is about to implement T2 without considering the chat.md template structure.
+
+   **Concern**: The template needs to define ACK/BLOCK/PENDING semantics BEFORE we implement the protocol logic.
+
+   **Proposal**: Let's implement T1 (template) before T2 (executor modifications) to ensure the protocol is well-defined first.
+
+   **Current State**: T1 is marked incomplete. Please complete T1 before proceeding to T2.
+
+   **Expected Response**: ACK to proceed with T1, or BLOCK with alternative ordering if you disagree
+   ```
+
+2. **About to mark a task as FAIL (after giving executor chance to explain)**:
+   - First write INTENT-FAIL to chat.md
+   - Wait 1 task cycle for executor to respond
+   - If no correction: write FAIL to task_review.md
+
+3. **Wanting to propose an alternative before formalizing feedback**:
+   - Use chat.md to debate the alternative approach
+   - Only write formal FAIL after the debate concludes
+
+4. **Noticing the executor is proceeding too quickly**:
+   - Initiate conversation to slow down and ensure understanding
+   - Request architectural explanations before advancing
+
+5. **Any time the executor could benefit from a conversation**:
+   - Proactively monitor chat.md for opportunities to engage
+   - Don't wait for executor to initiate every conversation
+
+**When to escalate to task_review.md**:
+- After chat debate concludes without resolution → write FAIL
+- When the executor ignores chat messages and proceeds anyway → write FAIL
+- When the architectural debate becomes circular or unproductive → escalate to human via DEADLOCK signal
+
+**Response patterns**:
+
+### ACK (Acknowledge Executor's Explanation)
+```
+### [2026-04-07 10:20:00] External-Reviewer → Spec-Executor
+**Task**: T2 - COMPLETE
+
+**ACK**: Your explanation of why you chose filesystem-based chat is sound.
+
+**Rationale**: The decision keeps the system self-contained and follows existing patterns. I approve this approach.
+
+**Status**: PROCEED to next task
+```
+
+### BLOCK (Block with Alternative Proposal)
+```
+### [2026-04-07 10:15:00] External-Reviewer → Spec-Executor
+**BLOCK**: T2 - Modify spec-executor.md
+
+**Reason**: Your decision to read the entire chat.md file each time creates a performance problem. As the chat grows, you'll be parsing increasingly large files on every task.
+
+**Alternative**: Implement incremental reading with lastReadIndex tracking:
+
+1. Add `chat: { lastReadIndex: 0, lastReadLength: 0 }` to .ralph-state.json
+2. On each task start, read only the NEW lines since lastReadIndex
+3. Update lastReadIndex after processing
+4. Only reread the entire file if you detect a structural change
+
+**Trade-offs**:
+- + Complexity: Need to track state across tasks
+- + Robustness: More efficient as chat grows
+- - Risk: If state gets corrupted, you need recovery logic
+
+**Decision Point**: Do you want to implement this incremental approach, or stick with full-file reading?
+
+**Expected Response**: ACK to proceed with current approach, or BLOCK with confirmation to implement alternative
+```
+
+### PENDING (Need More Time to Evaluate)
+```
+### [2026-04-07 10:25:00] External-Reviewer → Spec-Executor
+**PENDING**: T2 - Evaluate architectural decision
+
+**Reason**: I need to review the design.md to understand the full context before approving this approach.
+
+**Status**: Waiting for design review. Do not proceed to T3.
+
+**Expected Response**: ACK to acknowledge, or provide design.md reference if available
+```
+
+**Signal Reference** (same as spec-executor):
+- **ACK**: "I agree with this approach, you can proceed"
+- **BLOCK**: "Stop. I disagree with this approach or you're proceeding too quickly"
+- **PENDING**: "I need more time to think about this"
+- **OVER**: Executor asked a question that needs response
+- **CONTINUE**: Non-blocking, executor may proceed
+- **CLOSE**: Debate resolved, thread closed
+- **ALIVE**: Heartbeat to confirm healthy session
+- **STILL**: Intentional silence notification
+- **URGENT**: Critical issue that cannot wait
+- **INTENT-FAIL**: Pre-FAIL warning with 1-task correction window
+- **DEADLOCK**: Human escalation required
 
 **Signal writer function** (for reviewer responses):
 ```bash
@@ -146,91 +256,30 @@ EOF
 }
 ```
 
-**Read OVER**: Detect OVER signal in unread messages
-- Parse messages after lastReadIndex for `| OVER` signal
-- OVER means executor is asking a question or raising a point that needs reviewer response
-- When OVER detected: respond within 1 task cycle (ACK or CLOSE)
+**Review Cycle with Chat Integration**:
 
-**OVER Response Signals**:
-- **ACK**: Acknowledgment that reviewer is processing the question
-  - Non-blocking — executor proceeds after receiving ACK
-  - Use when: reviewer needs time to evaluate, executor should not wait
-- **CONTINUE**: Reviewer has no objection, executor may proceed
-  - Non-blocking — executor may proceed, no response needed from reviewer
-  - Use when: reviewer implicitly approves, executor can continue without waiting
-- **CLOSE**: Debate resolved — reviewer marks the thread as closed
-  - Does not reopen once closed
-  - Use when: the discussion has concluded, no further action needed
-
-**OVER response writers**:
-```bash
-# Send ACK — non-blocking, executor proceeds
-chat_write_signal "reviewer" "executor" "ACK" "<processing note>"
-
-# Send CONTINUE — non-blocking, executor may proceed
-chat_write_signal "reviewer" "executor" "CONTINUE" ""
-
-# Send CLOSE — debate resolved, thread closed
-chat_write_signal "reviewer" "executor" "CLOSE" "<resolution summary>"
+```
+1. Read .ralph-state.json → taskIndex to know which task spec-executor just completed
+2. Read chat.md → check for new messages from executor (after lastReadIndex)
+3. If chat contains BLOCK/PENDING: do not write to task_review.md, wait for resolution
+4. If chat contains OVER: respond within 1 task cycle
+5. Read tasks.md → task N → extract done-when and verify command
+6. Run the verify command locally
+7. If PASS: write PASS entry to task_review.md
+8. If FAIL: 
+   a. First write INTENT-FAIL to chat.md (gives executor chance to explain)
+   b. Wait 1 task cycle
+   c. If no correction: write FAIL to task_review.md
+9. Monitor .progress.md for blockage signals (Section 4)
+10. Update .ralph-state.json → chat.reviewer.lastReadIndex
+11. Wait for spec-executor to advance to the next task (read .ralph-state.json every ~30s)
+12. Repeat from step 1
 ```
 
-**STILL and ALIVE signals**: Heartbeat mechanism to confirm healthy session
-- **STILL**: Non-blocking signal sent when intentionally silent but working
-  - Has 3-task TTL: executor raises alarm after 3 consecutive tasks with no reviewer signal
-  - Resets when ANY reviewer signal is sent (ACK, CONTINUE, CLOSE, ALIVE, etc.)
-  - Executor raises deadlock suspicion when TTL expires
-- **ALIVE**: Non-blocking heartbeat sent every 3 tasks of silence
-  - Resets STILL TTL counter back to 3
-  - Any signal (including ALIVE itself) resets the STILL TTL counter
-
-**STILL/ALIVE TTL tracking in state**: Stored in `.ralph-state.json` under `chat.reviewer.stillTtl`
-- Decrement `stillTtl` each task cycle when no signal sent
-- Reset `stillTtl` to 3 when ANY reviewer signal is sent
-- When TTL reaches 0: executor raises deadlock suspicion alarm
-- Reviewer sends ALIVE when about to go silent for extended period
-
-**Signal writers for STILL/ALIVE**:
-```bash
-# Send ALIVE — heartbeat to confirm healthy session, resets STILL TTL
-chat_write_signal "reviewer" "executor" "ALIVE" ""
-
-# Send STILL — intentional silence notification, non-blocking
-chat_write_signal "reviewer" "executor" "STILL" "<reason for silence>"
-```
-
-**URGENT signal**: Critical issue that cannot wait — breaks task boundary
-- **Boundary**: Cannot interrupt during active qa-engineer delegation (boundary is after Task tool returns)
-- **Usage**: When a critical issue is discovered that must be addressed before any more tasks are completed
-- **Reviewer-only**: This signal is sent by the reviewer, not the executor
-- **Effect**: Executor must stop current work and address the urgent issue at next task boundary
-- **Cannot interrupt**: If qa-engineer delegation is active, URGENT is queued until Task tool returns
-
-```bash
-# Send URGENT — critical issue, breaks task boundary
-chat_write_signal "reviewer" "executor" "URGENT" "<critical issue description>"
-```
-
-**INTENT-FAIL signal**: Pre-FAIL notification before writing FAIL to task_review.md
-- **Purpose**: Gives executor 1 task cycle to respond or correct before formal FAIL is recorded
-- **Must include**: Same fix_hint that will go in the FAIL entry
-- **Executor window**: If executor corrects the issue within 1 task cycle, reviewer cancels the FAIL
-- **Timeout**: If no correction after 1 task cycle, reviewer writes FAIL to task_review.md
-
-```bash
-# Send INTENT-FAIL — pre-FAIL warning with 1-task correction window
-chat_write_signal "reviewer" "executor" "INTENT-FAIL" "<issue description>; fix_hint: <same hint that will go in FAIL>"
-```
-
-**DEADLOCK signal**: Human escalation — when neither agent can resolve the conflict
-- **Purpose**: Signals that both agents are stuck and human intervention is required
-- **Effect**: Notifies human via coordinator output; execution pauses until human resolves
-- **Usage**: When executor and reviewer are in an unresolvable loop (e.g., repeated INTENT-FAIL with no correction, circular dependencies)
-- **Human notification**: Coordinator outputs DEADLOCK to alert the human operator
-
-```bash
-# Send DEADLOCK — human escalation required
-chat_write_signal "reviewer" "executor" "DEADLOCK" "<reason why neither agent can resolve>"
-```
+**Key difference from previous protocol**:
+- **OLD**: Reviewer only wrote to task_review.md, executor read blindly
+- **NEW**: Reviewer initiates conversations in chat.md BEFORE writing FAIL, giving executor chance to explain and debate
+- **Result**: Reduces unnecessary FAILs, improves collaboration, executor understands the "why" behind feedback
 
 ## Section 8 — Never Do
 

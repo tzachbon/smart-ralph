@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated": "2026-04-07T17:55:56Z",
+  "updated": "2026-04-07T19:53:30Z",
   "directories": [
     {
       "path": "./specs",
@@ -243,10 +243,9 @@
     {
       "name": "agent-chat-protocol",
       "path": "./specs/agent-chat-protocol",
-      "phase": "tasks",
-      "taskIndex": 0,
-      "totalTasks": 39,
-      "awaitingApproval": true
+      "phase": "execution",
+      "taskIndex": 14,
+      "totalTasks": 39
     }
   ]
 }

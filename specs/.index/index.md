@@ -3,7 +3,7 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-04-07T17:55:56Z
+**Last updated:** 2026-04-07T19:53:30Z
 
 ## Directories (1)
 
@@ -48,7 +48,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | update-index-on-complete | ./specs | completed | done |
 | when-creating-worktree | ./specs | completed | done |
 | ralph-quality-improvements | ./specs | complete |  |
-| agent-chat-protocol | ./specs | tasks | awaiting approval |
+| agent-chat-protocol | ./specs | execution | 14/39 tasks |
 
 ---
 

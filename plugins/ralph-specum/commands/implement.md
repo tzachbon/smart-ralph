@@ -148,7 +148,8 @@ Si dices sí:
 
 **If user answers YES:**
 1. Copy `plugins/ralph-specum/templates/task_review.md` → `specs/<specName>/task_review.md`
-2. Ask which quality principles to activate:
+2. Copy `plugins/ralph-specum/templates/chat.md` → `specs/<specName>/chat.md`
+3. Ask which quality principles to activate:
    ```
    ¿Qué principios de calidad quieres que el revisor enforece?
 
@@ -176,10 +177,11 @@ Si dices sí:
    1. Abre una segunda sesión de Claude Code en el mismo repositorio
    2. Carga el agente: @external-reviewer
    3. Dile: "Revisa la spec <specName> mientras spec-executor implementa"
-   4. El revisor leerá y escribirá en specs/<specName>/task_review.md
+   4. El revisor leerá y escribirá en specs/<specName>/task_review.md y chat.md (coordinación FLOC en tiempo real)
 
    El spec-executor ya está configurado para leer task_review.md antes de cada tarea.
-   Cuando el revisor marque algo como FAIL, spec-executor se detendrá y aplicará el fix.
+   El revisor también leerá y escribirá en chat.md (coordinación FLOC en tiempo real)
+   Cuando el revisor marque algo como FAIL, spec-executor se detendra y aplicara el fix.
    ```
 
 **If user answers NO:** continue normal flow without creating task_review.md.

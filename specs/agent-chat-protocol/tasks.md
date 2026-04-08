@@ -200,7 +200,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-10, FR-11, FR-12_
   - _Design: FLOC Signal State Machine section_
 
-- [ ] 1.11 Add `version:` field to external-reviewer.md
+- [x] 1.11 Add `version:` field to external-reviewer.md
   - **Do**:
     1. Read `plugins/ralph-specum/agents/external-reviewer.md`
     2. Add `version: 0.1.0` to the frontmatter (after `color: purple`)
@@ -211,7 +211,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Commit**: `chore(external-reviewer): add version field for plugin versioning`
   - _Requirements: Plugin versioning requirement from CLAUDE.md_
 
-- [ ] 1.12 Add chat.md creation to implement.md reviewer onboarding
+- [x] 1.12 Add chat.md creation to implement.md reviewer onboarding
   - **Do**:
     1. Read `plugins/ralph-specum/commands/implement.md`
     2. In "If user answers YES" block, after step that copies task_review.md template, add:
@@ -224,7 +224,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Commit**: `feat(implement): create chat.md on reviewer activation`
   - _Requirements: FR-1_
 
-- [ ] 1.13 [VERIFY] Quality Checkpoint: syntax and structure
+- [x] 1.13 [VERIFY] Quality Checkpoint: syntax and structure
   - **Do**: Verify all modified files have correct syntax and structure
   - **Verify**:
     - `jq '.' specs/agent-chat-protocol/.ralph-state.json && echo "STATE_OK"`
@@ -238,7 +238,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - **Commit**: `chore: pass Phase 1 quality checkpoint`
   - _Requirements: NFR-1, NFR-2_
 
-- [ ] 1.14 Initialize chat.md in spec directory
+- [x] 1.14 Initialize chat.md in spec directory
   - **Do**:
     1. Copy `plugins/ralph-specum/templates/chat.md` to `specs/agent-chat-protocol/chat.md`
     2. Verify file exists and has correct format
@@ -249,7 +249,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-1_
   - _Design: Chat Template section_
 
-- [ ] 1.15 POC test: executor writes OVER, reviewer responds ACK
+- [x] 1.15 POC test: executor writes OVER, reviewer responds ACK
   - **Do**:
     1. Set up test environment: create temp spec directory with chat.md and .ralph-state.json
     2. Simulate executor writes OVER to chat.md using inline bash (atomic write pattern)
@@ -263,7 +263,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-3, FR-4_
   - _Design: Signal Sequencing Rules section_
 
-- [ ] 1.16 POC test: HOLD pre-task gate blocks executor
+- [x] 1.16 POC test: HOLD pre-task gate blocks executor
   - **Do**:
     1. Create test scenario: executor starts task, reviewer sends HOLD
     2. Verify executor reads HOLD at task START only (not mid-task)
@@ -276,7 +276,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-6_
   - _Design: HOLD Signal section_
 
-- [ ] 1.17 POC test: STILL/ALIVE heartbeat cycle
+- [x] 1.17 POC test: STILL/ALIVE heartbeat cycle
   - **Do**:
     1. Simulate 3 tasks of reviewer silence
     2. Verify STILL TTL decrements on each task
@@ -289,7 +289,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-7, FR-8_
   - _Design: STILL Signal section_
 
-- [ ] 1.18 POC test: INTENT-FAIL 1-task window
+- [x] 1.18 POC test: INTENT-FAIL 1-task window
   - **Do**:
     1. Simulate reviewer writes INTENT-FAIL to chat.md
     2. Verify executor has 1 task cycle to respond
@@ -301,7 +301,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-11_
   - _Design: INTENT-FAIL Signal section_
 
-- [ ] 1.19 POC test: CLOSE thread resolution
+- [x] 1.19 POC test: CLOSE thread resolution
   - **Do**:
     1. Simulate OVER exchange between executor and reviewer
     2. Simulate reviewer sends CLOSE to resolve thread
@@ -314,7 +314,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
   - _Requirements: FR-9_
   - _Design: CLOSE Signal section_
 
-- [ ] 1.20 POC Checkpoint: end-to-end signal flow
+- [x] 1.20 POC Checkpoint: end-to-end signal flow
   - **Do**: Run a full POC demonstrating all major signals work:
     1. Executor sends OVER
     2. Reviewer sends ACK
@@ -333,7 +333,7 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
 
 After POC validated, clean up code.
 
-- [ ] 2.1 Refactor: extract message formatting helpers
+- [x] 2.1 Refactor: extract message formatting helpers
   - **Do**:
     1. Add message format validation to spec-executor.md and external-reviewer.md
     2. Validate format: `### [<writer> → <addressee>] <HH:MM:SS> | <task-ID> | <SIGNAL>`
@@ -345,7 +345,7 @@ After POC validated, clean up code.
   - **Commit**: `refactor(chat): add message format validation`
   - _Design: Error Handling section_
 
-- [ ] 2.2 Refactor: add error recovery for missing/corrupted files
+- [x] 2.2 Refactor: add error recovery for missing/corrupted files
   - **Do**:
     1. Add error recovery for missing chat.md (graceful skip — chat is optional)
     2. Add error recovery for corrupted state file (reset to defaults)
@@ -356,7 +356,7 @@ After POC validated, clean up code.
   - **Commit**: `refactor(chat): add error recovery for missing files`
   - _Design: Error Handling section_
 
-- [ ] 2.3 Refactor: add atomic write verification
+- [x] 2.3 Refactor: add atomic write verification
   - **Do**:
     1. Add verification that temp file is removed after rename
     2. Add check that message appears in chat.md after write
@@ -368,7 +368,7 @@ After POC validated, clean up code.
   - _Requirements: NFR-1_
   - _Design: Error Handling section_
 
-- [ ] 2.4 [VERIFY] Quality Checkpoint: refactoring complete
+- [x] 2.4 [VERIFY] Quality Checkpoint: refactoring complete
   - **Do**: Verify all refactored sections are syntactically correct
   - **Verify**:
     - `grep -q "Chat Protocol" plugins/ralph-specum/agents/spec-executor.md && echo "EXEC_OK"`
@@ -378,7 +378,7 @@ After POC validated, clean up code.
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Integration test: concurrent writes (100 messages)
+- [x] 3.1 Integration test: concurrent writes (100 messages)
   - **Do**:
     1. Create test script `tests/chat-concurrent.sh`:
        - Both agents append 100 messages simultaneously
@@ -393,7 +393,7 @@ After POC validated, clean up code.
   - _Requirements: NFR-1_
   - _Design: Test Coverage Table - Concurrent writes_
 
-- [ ] 3.2 Integration test: HOLD pre-task gate behavior
+- [x] 3.2 Integration test: HOLD pre-task gate behavior
   - **Do**:
     1. Create test script `tests/chat-hold-gate.sh`:
        - Executor respects HOLD at task START
@@ -407,7 +407,7 @@ After POC validated, clean up code.
   - **Commit**: `test(chat-hold): add HOLD pre-task gate integration test`
   - _Design: Test Coverage Table - HOLD pre-task gate_
 
-- [ ] 3.3 Integration test: INTENT-FAIL 1-task window
+- [x] 3.3 Integration test: INTENT-FAIL 1-task window
   - **Do**:
     1. Create test script `tests/chat-intent-fail.sh`:
        - INTENT-FAIL appears before FAIL
@@ -421,7 +421,7 @@ After POC validated, clean up code.
   - **Commit**: `test(chat-intent-fail): add INTENT-FAIL window integration test`
   - _Design: Test Coverage Table - INTENT-FAIL 1-task window_
 
-- [ ] 3.4 Integration test: Executor respects HOLD (not mid-task)
+- [x] 3.4 Integration test: Executor respects HOLD (not mid-task)
   - **Do**:
     1. Create test script `tests/chat-hold-behavior.sh`:
        - Executor proceeds with current task when HOLD received mid-execution
@@ -434,7 +434,7 @@ After POC validated, clean up code.
   - **Commit**: `test(chat-hold): add executor respects HOLD not mid-task test`
   - _Design: Test Coverage Table - Executor respects HOLD (not mid-task)_
 
-- [ ] 3.5 Integration test: STILL/ALIVE heartbeat cycle
+- [x] 3.5 Integration test: STILL/ALIVE heartbeat cycle
   - **Do**:
     1. Create test script `tests/chat-heartbeat.sh`:
        - STILL TTL decrements each task
@@ -448,7 +448,7 @@ After POC validated, clean up code.
   - **Commit**: `test(chat-heartbeat): add STILL/ALIVE heartbeat integration test`
   - _Design: Test Coverage Table - ALIVE resets STILL TTL_
 
-- [ ] 3.6 Integration test: chat format human-readable
+- [x] 3.6 Integration test: chat format human-readable
   - **Do**:
     1. Create test script `tests/chat-format.sh`:
        - `cat chat.md` shows readable markdown
@@ -463,7 +463,7 @@ After POC validated, clean up code.
   - _Requirements: NFR-5_
   - _Design: Test Coverage Table - Chat format human-readable_
 
-- [ ] 3.7 [VERIFY] Quality Checkpoint: all tests pass
+- [x] 3.7 [VERIFY] Quality Checkpoint: all tests pass
   - **Do**: Run full test suite to verify all tests pass
   - **Verify**: `bash tests/chat-concurrent.sh && bash tests/chat-hold-gate.sh && bash tests/chat-intent-fail.sh && bash tests/chat-heartbeat.sh && bash tests/chat-format.sh && echo "ALL_TESTS_PASSED"`
   - **Done when**: All tests pass
@@ -471,7 +471,7 @@ After POC validated, clean up code.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Lint modified files
+- [x] 4.1 Lint modified files
   - **Do**:
     1. Verify markdownlint on chat.md template
     2. Verify jq is available: `command -v jq || echo "JQ_NOT_INSTALLED"`
@@ -482,7 +482,7 @@ After POC validated, clean up code.
   - **Commit**: `chore: pass linting checks`
   - _Requirements: NFR-1, NFR-2_
 
-- [ ] 4.2 Update spec-executor.md version
+- [x] 4.2 Update spec-executor.md version
   - **Do**:
     1. Read `plugins/ralph-specum/agents/spec-executor.md`
     2. Bump version in frontmatter (patch +0.0.1)
@@ -493,7 +493,7 @@ After POC validated, clean up code.
   - **Commit**: `chore: bump spec-executor version for chat protocol`
   - _Requirements: Plugin versioning requirement from CLAUDE.md_
 
-- [ ] 4.3 Update external-reviewer.md version
+- [x] 4.3 Update external-reviewer.md version
   - **Do**:
     1. Read `plugins/ralph-specum/agents/external-reviewer.md`
     2. Bump version in frontmatter (patch +0.0.1) — already has version: 0.1.0 from Task 1.11
@@ -503,7 +503,7 @@ After POC validated, clean up code.
   - **Commit**: `chore: bump external-reviewer version for chat protocol`
   - _Requirements: Plugin versioning requirement from CLAUDE.md_
 
-- [ ] 4.4 [VERIFY] Final verification: all tasks complete
+- [x] 4.4 [VERIFY] Final verification: all tasks complete
   - **Do**:
     1. Verify chat.md template exists and has correct format
     2. Verify chat state in .ralph-state.json works
@@ -523,7 +523,7 @@ After POC validated, clean up code.
   - **Done when**: All verification checks pass
   - **Commit**: `chore: final verification complete`
 
-- [ ] 4.5 Create PR for agent-chat-protocol
+- [x] 4.5 Create PR for agent-chat-protocol
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user
