@@ -95,7 +95,7 @@ Focus: Apply all file edits in dependency order. Skill-first (SKILL.md), then co
   - _Requirements: FR-5, FR-6, AC-1.7, AC-2.7_
   - _Design: ralph-specum section 3_
 
-- [ ] 1.7 [P] Update quick-mode-guard.sh (ralph-specum)
+- [x] 1.7 [P] Update quick-mode-guard.sh (ralph-specum)
   - **Files**: `plugins/ralph-specum/hooks/scripts/quick-mode-guard.sh`
   - **Do**:
     1. After the existing `QUICK_MODE` read line, add: `AUTO_MODE=$(jq -r '.autoMode // false' "$STATE_FILE" 2>/dev/null || echo "false")`
