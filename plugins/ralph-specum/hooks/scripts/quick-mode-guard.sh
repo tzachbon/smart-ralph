@@ -32,16 +32,17 @@ if [ ! -f "$STATE_FILE" ]; then
     exit 0
 fi
 
-# Check quickMode flag
+# Check quickMode and autoMode flags
 QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
-if [ "$QUICK_MODE" != "true" ]; then
+AUTO_MODE=$(jq -r '.autoMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+if [ "$QUICK_MODE" != "true" ] && [ "$AUTO_MODE" != "true" ]; then
     exit 0
 fi
 
-# Quick mode is active — block AskUserQuestion
+# Autonomous mode is active — block AskUserQuestion
 jq -n '{
   "hookSpecificOutput": {
     "permissionDecision": "deny"
   },
-  "systemMessage": "Quick mode active: do NOT ask the user any questions. Make opinionated decisions autonomously. Choose the simplest, most conventional approach."
+  "systemMessage": "Autonomous mode active: do NOT ask the user any questions. Make opinionated decisions autonomously. Choose the simplest, most conventional approach."
 }'
