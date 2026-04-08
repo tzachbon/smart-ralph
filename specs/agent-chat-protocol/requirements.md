@@ -136,11 +136,11 @@ Create a bidirectional real-time chat channel between executor and reviewer base
 
 **Given** two agents write to chat concurrently **When** writing messages **Then** writes must be atomic to prevent file corruption
 
-**And** implementation uses temp file + atomic rename: `chat.tmp.{agent}.{timestamp}` -> rename to append position
+**And** implementation uses flock-based exclusive access + `cat >>` for append: `flock` acquires exclusive lock, then `cat >>` appends safely
 
-**Or** uses Unix O_APPEND flag for writes under 4KB
+**Note**: `cat >>` WITHOUT flock is NOT atomic on concurrent writes — without locking, appends can interleave or overwrite each other
 
-**And** NO direct append without atomicity mechanism
+**And** NO bare `cat >>` without atomicity mechanism
 
 ### FR-14: chat.lastReadIndex State
 
