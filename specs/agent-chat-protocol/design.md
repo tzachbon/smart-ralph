@@ -18,8 +18,7 @@ A filesystem-based bidirectional chat channel between executor and reviewer usin
 graph TB
     subgraph SpecDirectory["specs/<specName>/"]
         chat[("chat.md")]
-        chatStateExec[(".chat-state.executor.json")]
-        chatStateReview[(".chat-state.reviewer.json")]
+        ralphState[(".ralph-state.json")]
         taskReview["task_review.md"]
     end
     subgraph Executor["spec-executor agent"]
@@ -31,9 +30,9 @@ graph TB
         reviewWrite["write FLOC signals"]
     end
     Executor --> chat
-    Executor --> chatStateExec
+    Executor --> ralphState
     Reviewer --> chat
-    Reviewer --> chatStateReview
+    Reviewer --> ralphState
     Reviewer --> taskReview
 ```
 
@@ -76,7 +75,7 @@ sequenceDiagram
 - Support future rotation (archive old chat, start new)
 
 ### State
-No central state. Each agent tracks its own position via `.chat-state.{agent}.json`.
+No central state. Each agent tracks its own position via the `chat` field inside `.ralph-state.json`.
 
 ### Interface
 
@@ -84,10 +83,10 @@ No central state. Each agent tracks its own position via `.chat-state.{agent}.js
 1. Write content to `chat.tmp.{agent}.{timestamp}`
 2. Read current `chat.md` line count to determine append position
 3. Atomic rename `chat.tmp.{agent}.{timestamp}` → `chat.md`
-4. Update `lastReadLine` in `.chat-state.{agent}.json` (atomic write)
+4. Update `lastReadLine` in `chat.{agent}` inside `.ralph-state.json` (atomic write)
 
 **Read new messages:**
-1. Read `.chat-state.{agent}.json` → `lastReadLine`
+1. Read `chat.{agent}` section of `.ralph-state.json` → `lastReadLine`
 2. Read `chat.md` lines from `lastReadLine + 1` to end
 3. Update `lastReadLine` to new end
 
@@ -420,7 +419,7 @@ npm test 2>&1 | head -5  # smoke run
 
 1. Create `plugins/ralph-specum/templates/chat.md` — chat template with format header and signals legend
 2. Create `specs/<specName>/chat.md` — initialize from template when reviewer activates
-3. Create `.chat-state.executor.json` and `.chat-state.reviewer.json` — initialize with `{agent, lastReadLine: 0, lastSignal: null, stillTtl: 0}` and `updatedAt: now`
+3. Add `chat` field to `.ralph-state.json` — initialize with `executor` and `reviewer` subsections each containing `{lastReadLine: 0, lastSignal: null, lastSignalTask: null, stillTtl: 0}` and `updatedAt: now`
 4. Modify `spec-executor.md` — add Chat Protocol section: at task START, read chat.md for new messages, check HOLD, block if present
 5. Modify `external-reviewer.md` — add FLOC signal implementation: ALIVE every 3 tasks, INTENT-FAIL pre-warning, CLOSE for resolved threads, URGENT for critical, DEADLOCK for escalation
 6. Implement `ChatWriter` utility with atomic temp-file+rename pattern
