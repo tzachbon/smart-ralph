@@ -55,13 +55,13 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 4. Keep `.current-spec` in the default specs root.
 5. Merge state fields. Do not replace the whole state object.
 6. Preserve `source`, `name`, `basePath`, `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`.
-7. Also preserve newer state fields when present, especially `awaitingApproval`, `quickMode`, `granularity`, `epicName`, `discoveredSkills`, and native task sync metadata.
+7. Also preserve newer state fields when present, especially `awaitingApproval`, `quickMode`, `autoMode`, `granularity`, `epicName`, `discoveredSkills`, and native task sync metadata.
 8. Write `.progress.md` after every phase and after every implementation attempt.
 9. Honor approval checkpoints between phases unless quick mode is active.
 10. Honor the `Commit` line in tasks during implementation unless the user explicitly disables task commits.
 11. Use branch creation or worktree creation when the user asks for branch isolation or the repo policy requires it.
-12. Enter quick mode only when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
-13. In quick mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
+12. `--quick` and `--auto` are mutually exclusive. `--quick` means plan-only: generate all artifacts autonomously, then stop with `awaitingApproval: true` before implementation. `--auto` means full autonomous: generate all artifacts and continue directly into implementation without stopping.
+13. In `--auto` mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session. In `--quick` mode, do the same but stop before implementation.
 
 ## Response Handoff
 

@@ -215,7 +215,7 @@ Focus: Apply all file edits in dependency order. Skill-first (SKILL.md), then co
 
 ---
 
-- [ ] 1.13 [P] Update ralph-specum-codex skills
+- [x] 1.13 [P] Update ralph-specum-codex skills
   - **Files**: `plugins/ralph-specum-codex/skills/ralph-specum-start/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md`
   - **Do**:
     1. In `ralph-specum-start/SKILL.md` Step 1 (parse): add `--auto` to the flag list. Add mutual-exclusivity check: "If both --quick and --auto present: Respond 'Error: --quick and --auto are mutually exclusive. Use one or the other.' STOP."
