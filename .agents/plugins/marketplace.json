@@ -8,7 +8,7 @@
       "name": "ralph-specum",
       "source": {
         "source": "local",
-        "path": "./plugins/codex"
+        "path": "./plugins/ralph-specum-codex"
       },
       "policy": {
         "installation": "AVAILABLE"
