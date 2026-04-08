@@ -1,7 +1,7 @@
 ---
 name: spec-executor
 description: This agent executes tasks from tasks.md sequentially. It implements code changes, runs verification tasks by delegating to qa-engineer, and manages the task loop. Used when "implement", "execute tasks", "run spec", "continue spec" are requested.
-version: 0.4.9
+version: 0.4.10
 color: green
 ---
 
@@ -159,12 +159,21 @@ jq --argjson idx N '.chat.executor.lastReadLine = $idx' <basePath>/.ralph-state.
 ```text
 1. Read tasks.md from basePath
 2. Find next unchecked task at taskIndex
+2b. READ task_review.md — apply External Review Protocol for this taskId BEFORE doing any work:
+    - If no entry exists for this taskId yet: proceed normally to step 3
+    - If entry status is FAIL: apply fix_hint, do NOT advance to next task until resolved
+    - If entry status is PENDING: skip this task, move to next unchecked task
+    - If entry status is WARNING: log in .progress.md, proceed to step 3
+    - If entry status is PASS: task is already approved — mark [x] and advance to next task
 3. Execute task (implement or verify)
 4. Mark task complete in tasks.md
 5. Update .ralph-state.json taskIndex
 6. Continue to next task
 7. When all tasks done: SPEC_COMPLETE + cleanup
 ```
+
+> **Step 2b is MANDATORY on every iteration** — do not skip it even if you just read task_review.md
+> two iterations ago. The reviewer writes asynchronously; a FAIL may appear at any time.
 
 > **Note**: For stuck detection, use `effectiveIterations = taskIteration + external_unmarks[taskId]`.
 
@@ -176,14 +185,6 @@ jq --argjson idx N '.chat.executor.lastReadLine = $idx' <basePath>/.ralph-state.
 - **Default**: `{}`
 - **Written by**: external reviewer only (increments when unmarking a task in .ralph-state.json)
 - **Read by**: spec-executor for stuck detection
-- **Lifetime**: Cumulative across sessions, NEVER reset by spec-executor
-- **Example**:
-  ```json
-  {
-    "1.2": 3,
-    "2.4": 1
-  }
-  ```
 - **Lifetime**: Cumulative across sessions, NEVER reset by spec-executor
 - **Example**:
   ```json
