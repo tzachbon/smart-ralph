@@ -142,13 +142,15 @@ Create a bidirectional real-time chat channel between executor and reviewer base
 
 **And** NO bare `cat >>` without atomicity mechanism
 
-### FR-14: chat.lastReadIndex State
+### FR-14: chat.lastReadLine State
 
-**Given** each agent tracks read position **When** reading chat **Then** lastReadIndex stored in `chat` field inside `.ralph-state.json` as `chat.executor.lastReadIndex` and `chat.reviewer.lastReadIndex`
+**Note**: `lastReadLine` is a line cursor, not a message index — messages in chat.md are multi-line (header line + blank line + body), so a line cursor accurately tracks position.
 
-**And** state updates use atomic JSON write pattern: `jq --argjson idx N '.chat.executor.lastReadIndex = $idx' .ralph-state.json > /tmp/state.json && mv /tmp/state.json .ralph-state.json`
+**Given** each agent tracks read position **When** reading chat **Then** lastReadLine stored in `chat` field inside `.ralph-state.json` as `chat.executor.lastReadLine` and `chat.reviewer.lastReadLine`
 
-**And** executor reads chat at task START only, using lastReadIndex to find new messages since last read
+**And** state updates use atomic JSON write pattern: `jq --argjson idx N '.chat.executor.lastReadLine = $idx' .ralph-state.json > /tmp/state.json && mv /tmp/state.json .ralph-state.json`
+
+**And** executor reads chat at task START only, using lastReadLine to find new messages since last read
 
 ## Non-Functional Requirements
 
@@ -217,7 +219,7 @@ Create a bidirectional real-time chat channel between executor and reviewer base
 | Urgency escalation | Gap #4: mechanism to interrupt task boundary for critical issues |
 | Debate closure | Gap #5: marking threads as resolved so they don't stay open forever |
 | Pre-task gate | HOLD semantics: signal read at task START only, not during execution |
-| lastReadIndex | Per-agent cursor tracking which chat messages have been read |
+| lastReadLine | Per-agent line cursor tracking read position in chat.md (multi-line messages require line cursor, not message index) |
 
 ## Out of Scope
 
@@ -236,7 +238,7 @@ Create a bidirectional real-time chat channel between executor and reviewer base
 | `spec-executor.md` | Must modify | Add Chat Protocol section: read chat at task start, respect HOLD signal |
 | `external-reviewer.md` | Must modify | Implement FLOC signals, send ALIVE/INTENT-FAIL |
 | `task_review.md` template | No change | Remains authoritative formal channel |
-| `.ralph-state.json` schema | No change (No change — lastReadIndex stored in .chat-state.executor.json and .chat-state.reviewer.json) | Optional per-agent lastReadIndex stored separately |
+| `.ralph-state.json` schema | No change (No change — lastReadLine stored in .chat-state.executor.json and .chat-state.reviewer.json) | Optional per-agent lastReadLine stored separately |
 | reviewer-subagent spec | Related | Defines external-reviewer agent that implements FLOC |
 | iterative-failure-recovery spec | Related | OVER timeout interacts with effectiveIterations |
 

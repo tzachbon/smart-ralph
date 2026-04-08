@@ -78,19 +78,22 @@ Before starting each task, check for and process new chat messages:
 **Activation threshold**: chat.md exists AND has >= 1 message
 
 **Read at task START**: Before starting each task, read chat.md using Read tool,
-parse new messages after `lastReadIndex` (stored in `.ralph-state.json`).
+parse new messages after `lastReadLine` (stored in `.ralph-state.json`).
+
+**Note**: `lastReadLine` is a line cursor, not a message index — messages in chat.md are
+multi-line (header line + blank line + body), so a line cursor accurately tracks position.
 
 **State tracking**: Update `.ralph-state.json` with chat state:
 ```json
 {
   "chat": {
     "executor": {
-      "lastReadIndex": 0,
+      "lastReadLine": 0,
       "lastReadLength": 0,
       "stillTtl": 3
     },
     "reviewer": {
-      "lastReadIndex": 0,
+      "lastReadLine": 0,
       "lastReadLength": 0,
       "stillTtl": 3
     }
@@ -117,9 +120,9 @@ cat "$TMPFILE" >> <basePath>/chat.md && rm "$TMPFILE"
 **NEVER use `mv` to write to chat.md** — it overwrites the entire file.
 Always use `cat "$TMPFILE" >> <basePath>/chat.md && rm "$TMPFILE"` for appends.
 
-**Update lastReadIndex**: After reading, update via atomic jq pattern:
+**Update lastReadLine**: After reading, update via atomic jq pattern:
 ```bash
-jq --argjson idx N '.chat.executor.lastReadIndex = $idx' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
+jq --argjson idx N '.chat.executor.lastReadLine = $idx' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
 
 **Signal Reference**:

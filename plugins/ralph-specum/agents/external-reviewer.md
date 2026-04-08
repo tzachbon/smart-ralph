@@ -117,9 +117,9 @@ Suggested `fix_hint` per symptom:
 2. Active conversations (PENDING/BLOCK status) that need resolution
 3. Executor requests for ACK before advancing
 
-**Update lastReadIndex**: After reading, update via atomic jq pattern:
+**Update lastReadLine**: After reading, update via atomic jq pattern:
 ```bash
-jq --argjson idx N '.chat.reviewer.lastReadIndex = $idx' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
+jq --argjson idx N '.chat.reviewer.lastReadLine = $idx' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
 ```
 
 **Atomic append pattern**: Same as spec-executor — use temp file + cat append:
@@ -199,11 +199,11 @@ The reviewer should initiate chat conversations when:
 
 **Reason**: Your decision to read the entire chat.md file each time creates a performance problem. As the chat grows, you'll be parsing increasingly large files on every task.
 
-**Alternative**: Implement incremental reading with lastReadIndex tracking:
+**Alternative**: Implement incremental reading with lastReadLine tracking:
 
-1. Add `chat: { lastReadIndex: 0, lastReadLength: 0 }` to .ralph-state.json
-2. On each task start, read only the NEW lines since lastReadIndex
-3. Update lastReadIndex after processing
+1. Add `chat: { lastReadLine: 0, lastReadLength: 0 }` to .ralph-state.json
+2. On each task start, read only the NEW lines since lastReadLine
+3. Update lastReadLine after processing
 4. Only reread the entire file if you detect a structural change
 
 **Trade-offs**:
@@ -265,7 +265,7 @@ EOF
 
 ```
 1. Read .ralph-state.json → taskIndex to know which task spec-executor just completed
-2. Read chat.md → check for new messages from executor (after lastReadIndex)
+2. Read chat.md → check for new messages from executor (after lastReadLine)
 3. If chat contains BLOCK/PENDING: do not write to task_review.md, wait for resolution
 4. If chat contains OVER: respond within 1 task cycle
 5. Read tasks.md → task N → extract done-when and verify command
@@ -276,7 +276,7 @@ EOF
    b. Wait 1 task cycle
    c. If no correction: write FAIL to task_review.md
 9. Monitor .progress.md for blockage signals (Section 4)
-10. Update .ralph-state.json → chat.reviewer.lastReadIndex
+10. Update .ralph-state.json → chat.reviewer.lastReadLine
 11. Wait for spec-executor to advance to the next task (read .ralph-state.json every ~30s)
 12. Repeat from step 1
 ```

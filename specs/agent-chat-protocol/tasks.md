@@ -666,7 +666,7 @@ The atomic write strategy in the original spec is broken. `cat chat.md chat.tmp 
   - _Review issue: MAJOR #3_
   - **Note**: Already fixed — task 5.6 update to architecture diagram propagated to entire file. Verification: `grep "chat-state" specs/agent-chat-protocol/design.md` returns no matches. `lastReadLine` already used throughout.
 
-- [ ] 5.8 [FIX] Rename lastReadIndex → lastReadLine across all spec files
+- [x] 5.8 [FIX] Rename lastReadIndex → lastReadLine across all spec files
   - **Do**:
     1. Replace all `lastReadIndex` with `lastReadLine` in design.md
     2. Replace all `lastReadIndex` with `lastReadLine` in requirements.md (FR-14 references it)
