@@ -165,33 +165,37 @@ Set fields based on parsed flags:
 - If `quickMode` is `true`: set `"quickMode": true` in the state file
 - If `autoMode` is `true`: set `"autoMode": true` in the state file
 
-## Autonomous Mode Routing
-
-After state init, check flags:
-
-If neither `quickMode` nor `autoMode` is set: continue to normal interactive flow (output feature created message, suggest next step).
-
-If `quickMode=true` or `autoMode=true`:
-1. Skip all interactive prompts.
-2. Run all spec phases sequentially, delegating to each subagent with the directive: "Autonomous Mode: skip all questions, make reasonable decisions based on the goal and constitution."
-   - Phase 1: Research (delegate to research-analyst agent)
-   - Phase 2: Requirements (delegate to product-manager agent)
-   - Phase 3: Design (delegate to architect-reviewer agent)
-   - Phase 4: Tasks (delegate to task-planner agent)
-3. After tasks phase completes:
-   - If `quickMode=true`:
-     - Set `awaitingApproval: true` in state file
-     - Output: "Plan complete for '$FEATURE_ID-$feature-name'. Review the spec in .specify/specs/$FEATURE_ID-$feature-name/ and run /speckit:implement to start execution."
-     - STOP - do not proceed to implementation
-   - If `autoMode=true`:
-     - Set `phase: "execution"` in state file
-     - Transition directly to implementation (continue to execution loop)
-
 ## Update Current Feature Pointer
 
 ```bash
 echo "$FEATURE_ID-$feature-name" > .specify/.current-feature
 ```
+
+## Autonomous Mode Routing
+
+After state init and writing `.current-feature`, check flags:
+
+If neither `quickMode` nor `autoMode` is set: continue to normal interactive flow (output feature created message, suggest next step).
+
+If `quickMode=true` or `autoMode=true`:
+1. Verify `.specify/.current-feature` was written (guards depend on it).
+2. Skip all interactive prompts.
+3. Run all spec phases sequentially, delegating to each subagent with the directive: "Autonomous Mode: skip all questions, make reasonable decisions based on the goal and constitution."
+   - Phase 1: Research (delegate to research-analyst agent)
+   - Phase 2: Requirements (delegate to product-manager agent)
+   - Phase 3: Design (delegate to architect-reviewer agent)
+   - Phase 4: Tasks (delegate to task-planner agent)
+4. After tasks phase completes, compute totalTasks (count `- [ ]` checkboxes in tasks.md) and update state with shared execution bootstrap fields:
+   ```json
+   { "phase": "execution", "taskIndex": 0, "totalTasks": <count> }
+   ```
+   Then branch by mode:
+   - If `quickMode=true`:
+     - Also set `awaitingApproval: true` in state file
+     - Output: "Plan complete for '$FEATURE_ID-$feature-name'. Review the spec in .specify/specs/$FEATURE_ID-$feature-name/ and run /speckit:implement to start execution."
+     - STOP - do not proceed to implementation
+   - If `autoMode=true`:
+     - Transition directly to implementation (continue to execution loop)
 
 ## Initialize Progress File
 

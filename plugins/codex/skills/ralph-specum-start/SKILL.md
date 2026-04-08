@@ -49,7 +49,7 @@ Use this for the `start` and `new` entrypoints.
 8. Update `.current-spec`.
 9. Write `.progress.md` with goal, current phase, next step, blockers, learnings, and skill discovery results when used.
 10. On resume, prefer `tasks.md` and present files over stale state when they disagree.
-11. With `--quick`: generate all artifacts (research, requirements, design, tasks) autonomously in order, skip normal approval pauses, then set `awaitingApproval: true`, output "Plan complete. Run implement to execute.", and STOP.
+11. With `--quick`: generate all artifacts (research, requirements, design, tasks) autonomously in order, skip normal approval pauses, then set `awaitingApproval: true`. Output a summary listing each generated artifact with a one-sentence description, then end with exactly one explicit choice prompt: "Approve plan and run implement" or "Request changes". STOP.
 12. With `--auto`: generate all artifacts autonomously in order, skip normal approval pauses, and continue directly into implementation without stopping.
 13. **Without `--quick` or `--auto`: STOP HERE after setup. Do NOT proceed to research. Wait for the user to explicitly ask to continue.** This is non-negotiable.
 
