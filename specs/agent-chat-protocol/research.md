@@ -109,9 +109,9 @@ Sí, correcto. FR-A4 tiene precedencia. Sigue.
 - **Human intervention always possible** — human can read/intervene anytime, voice is final
 - **HOLD is pre-task gate** — executor reads chat only at task start, not mid-task execution
 - Si chat.md no existe → spec-executor no debe buscar ni esperar señales OVER/HOLD de él (igual que hoy no busca task_review.md si no existe)
-Si chat.md existe pero está vacío → ningún agente está conectado todavía, silencio = UNKNOWN (tu Regla 6 corregida)
-Si chat.md tiene al menos 1 mensaje → protocolo FLOC activo
-La condición de activación es simplemente: "el archivo existe". Igual que task_review.md. El product-manager preguntará al humano si activa el revisor → si dice sí, se crea task_review.md y chat.md. Si dice no, ninguno existe y el executor no los busca. Este es el mínimo cambio real: una línea en el interview-framework que crea dos archivos en lugar de uno.
+- Si chat.md existe pero está vacío → ningún agente está conectado todavía, silencio = UNKNOWN (tu Regla 6 corregida)
+- Si chat.md tiene al menos 1 mensaje → protocolo FLOC activo
+- **Activación tiene dos umbrales**: la **existencia** del archivo activa la búsqueda (el executor lo lee si existe); la **existencia + 1 mensaje** activa el protocolo FLOC completo. La condición mínima es "el archivo existe" — igual que task_review.md. El product-manager preguntará al humano si activa el revisor → si dice sí, se crea task_review.md y chat.md. Si dice no, ninguno existe y el executor no los busca. Este es el mínimo cambio real: una línea en el interview-framework que crea dos archivos en lugar de uno.
 ---
 
 ## Feasibility Assessment

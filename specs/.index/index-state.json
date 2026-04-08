@@ -236,7 +236,7 @@
     {
       "name": "ralph-quality-improvements",
       "path": "./specs/ralph-quality-improvements",
-      "phase": "complete",
+      "phase": "completed",
       "taskIndex": 27,
       "totalTasks": 27
     },

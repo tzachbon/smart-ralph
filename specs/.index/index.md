@@ -47,7 +47,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | token-efficient-executor | ./specs | completed | done |
 | update-index-on-complete | ./specs | completed | done |
 | when-creating-worktree | ./specs | completed | done |
-| ralph-quality-improvements | ./specs | complete |  |
+| ralph-quality-improvements | ./specs | completed | done|
 | agent-chat-protocol | ./specs | execution | 51/51 tasks |
 
 ---
