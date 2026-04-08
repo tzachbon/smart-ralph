@@ -746,7 +746,7 @@ The atomic write strategy in the original spec is broken. `cat chat.md chat.tmp 
 
 ### Phase 5.4: Quality Gates
 
-- [ ] 5.13 [LINT] Run markdownlint on modified spec files
+- [x] 5.13 [LINT] Run markdownlint on modified spec files
   - **Do**:
     1. Run markdownlint on: design.md, requirements.md
     2. Fix any MD040 or other lint errors
