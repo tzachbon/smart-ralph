@@ -5,11 +5,11 @@ repo_root() {
 }
 
 merge_state_script() {
-    echo "$(repo_root)/plugins/ralph-specum-codex/scripts/merge_state.py"
+    echo "$(repo_root)/plugins/codex/scripts/merge_state.py"
 }
 
 resolve_spec_paths_script() {
-    echo "$(repo_root)/plugins/ralph-specum-codex/scripts/resolve_spec_paths.py"
+    echo "$(repo_root)/plugins/codex/scripts/resolve_spec_paths.py"
 }
 
 json_query() {

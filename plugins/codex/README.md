@@ -14,7 +14,7 @@ Pick one of these two methods.
 # Download and copy the plugin
 git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
 mkdir -p ~/.codex/plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
+cp -R /tmp/smart-ralph/plugins/codex ~/.codex/plugins/codex
 rm -rf /tmp/smart-ralph
 
 # Register in your personal marketplace
@@ -23,8 +23,8 @@ cat > ~/.agents/plugins/marketplace.json << 'EOF'
 {
   "name": "smart-ralph",
   "plugins": [{
-    "name": "ralph-specum-codex",
-    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
+    "name": "ralph-specum",
+    "source": {"source": "local", "path": "~/.codex/plugins/codex"},
     "policy": {"installation": "AVAILABLE"},
     "category": "Productivity"
   }]
@@ -32,7 +32,7 @@ cat > ~/.agents/plugins/marketplace.json << 'EOF'
 EOF
 ```
 
-Restart Codex. Open the plugin directory. Install `ralph-specum-codex`.
+Restart Codex. Open the plugin directory. Install `ralph-specum`.
 
 ### Per-project install (one repo only)
 
@@ -40,7 +40,7 @@ Restart Codex. Open the plugin directory. Install `ralph-specum-codex`.
 # From your project root
 git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
 mkdir -p ./plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
+cp -R /tmp/smart-ralph/plugins/codex ./plugins/codex
 
 # Add marketplace entry
 mkdir -p ./.agents/plugins
@@ -48,8 +48,8 @@ cat > ./.agents/plugins/marketplace.json << 'EOF'
 {
   "name": "smart-ralph",
   "plugins": [{
-    "name": "ralph-specum-codex",
-    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
+    "name": "ralph-specum",
+    "source": {"source": "local", "path": "./plugins/codex"},
     "policy": {"installation": "AVAILABLE"},
     "category": "Productivity"
   }]
@@ -58,7 +58,7 @@ EOF
 rm -rf /tmp/smart-ralph
 ```
 
-Restart Codex. Open the plugin directory. Install `ralph-specum-codex`.
+Restart Codex. Open the plugin directory. Install `ralph-specum`.
 
 ### Enable hooks (recommended)
 
@@ -95,7 +95,7 @@ Follow the Installation steps above. The new plugin replaces all 15 standalone s
 
 ### Step 3: Update references
 
-Update any scripts, docs, or automation that reference `platforms/codex/` paths to use `plugins/ralph-specum-codex/` instead.
+Update any scripts, docs, or automation that reference `platforms/codex/` paths to use `plugins/codex/` instead.
 
 ### Step 4: Verify
 
@@ -109,7 +109,7 @@ Run `$ralph-specum-status` to confirm the plugin is active and can find your spe
 | No marketplace entry | Discoverable via plugin directory |
 | No hooks | Stop hook for auto-execution |
 | Manual skill updates | Plugin version tracking |
-| Skills at `platforms/codex/skills/` | Plugin at `plugins/ralph-specum-codex/` |
+| Skills at `platforms/codex/skills/` | Plugin at `plugins/codex/` |
 
 ## What Ships
 

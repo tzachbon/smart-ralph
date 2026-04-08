@@ -1,5 +1,5 @@
 {
-  "name": "ralph-specum-codex",
+  "name": "ralph-specum",
   "version": "4.10.0",
   "description": "Spec-driven development for OpenAI Codex. Research, requirements, design, tasks, autonomous implementation, and epic triage for multi-spec feature decomposition.",
   "author": {
