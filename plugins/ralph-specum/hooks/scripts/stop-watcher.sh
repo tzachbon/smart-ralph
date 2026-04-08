@@ -144,7 +144,13 @@ TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+AUTO_MODE=$(jq -r '.autoMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
 NATIVE_SYNC=$(jq -r '.nativeSyncEnabled // true' "$STATE_FILE" 2>/dev/null || echo "true")
+
+AUTONOMOUS_MODE="false"
+if [ "$QUICK_MODE" = "true" ] || [ "$AUTO_MODE" = "true" ]; then
+    AUTONOMOUS_MODE="true"
+fi
 
 # Check global iteration limit
 GLOBAL_ITERATION=$(jq -r '.globalIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
@@ -156,25 +162,25 @@ if [ "$GLOBAL_ITERATION" -ge "$MAX_GLOBAL" ]; then
     exit 0
 fi
 
-# Quick mode guard: block stop during ANY phase when quickMode is active
-if [ "$QUICK_MODE" = "true" ] && [ "$PHASE" != "execution" ]; then
+# Autonomous mode guard: block stop during ANY phase when quickMode or autoMode is active
+if [ "$AUTONOMOUS_MODE" = "true" ] && [ "$PHASE" != "execution" ]; then
     STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
     if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
-        echo "[ralph-specum] stop_hook_active=true in quick mode, allowing stop to prevent loop" >&2
+        echo "[ralph-specum] stop_hook_active=true in autonomous mode, allowing stop to prevent loop" >&2
         exit 0
     fi
 
     REASON=$(cat <<EOF
-Quick mode active — do NOT stop. Continue spec phase: $PHASE for $SPEC_NAME.
+Autonomous mode active — do NOT stop. Continue spec phase: $PHASE for $SPEC_NAME.
 
-You are running in quick mode. Do NOT stop, do NOT ask the user questions.
+You are running in autonomous mode. Do NOT stop, do NOT ask the user questions.
 Continue generating artifacts for the current phase ($PHASE) and proceed to the next phase.
 Make strong, opinionated decisions autonomously.
 EOF
 )
     jq -n \
       --arg reason "$REASON" \
-      --arg msg "Ralph-specum quick mode: continue $PHASE phase" \
+      --arg msg "Ralph-specum autonomous mode: continue $PHASE phase" \
       '{
         "decision": "block",
         "reason": $reason,

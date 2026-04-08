@@ -279,7 +279,7 @@ for skill, tokens in expected.items():
 
     assert_python '
 pairs = {
-    "start": ["quick mode", "granularity", ".current-epic", "awaitingApproval"],
+    "start": ["--quick", "granularity", ".current-epic", "awaitingApproval"],
     "triage": ["specs/_epics", ".current-epic", ".epic-state.json", "dependencies"],
     "research": ["brainstorming", "research.md", "verification tooling"],
     "requirements": ["brainstorming", "requirements.md", "awaitingApproval"],

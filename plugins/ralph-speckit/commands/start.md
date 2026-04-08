@@ -30,10 +30,22 @@ If CONSTITUTION_MISSING:
 From `$ARGUMENTS`, extract:
 - **feature-name**: Required, kebab-case name for the feature
 - **goal**: Optional description of what the feature should accomplish
+- **--quick**: Optional flag. Run all planning phases (research, requirements, design, tasks) but STOP before implementation. Presents the plan and awaits approval.
+- **--auto**: Optional flag. Full end-to-end autonomous execution. Skips interactive prompts and runs all phases including implementation without stopping.
 
 Examples:
 - `/speckit:start user-auth` - Create feature named user-auth
 - `/speckit:start user-auth Add OAuth2 support` - Create with goal
+- `/speckit:start user-auth Add OAuth2 support --quick` - Plan only, no implementation
+- `/speckit:start user-auth Add OAuth2 support --auto` - Full autonomous execution
+
+Mutual exclusivity check: if both `--quick` and `--auto` are present in `$ARGUMENTS`:
+1. Output: "Error: --quick and --auto are mutually exclusive. Use one or the other."
+2. STOP - do not create any feature directory or continue
+
+Parse flags (strip from goal text after extraction):
+- `quickMode`: set to `true` if `--quick` is present, `false` otherwise
+- `autoMode`: set to `true` if `--auto` is present, `false` otherwise
 
 If no feature-name provided:
 1. Output: "Usage: /speckit:start <feature-name> [goal]"
@@ -143,15 +155,47 @@ Write `.specify/specs/$FEATURE_ID-$feature-name/.speckit-state.json`:
   "maxTaskIterations": 5,
   "globalIteration": 1,
   "maxGlobalIterations": 100,
-  "awaitingApproval": false
+  "awaitingApproval": false,
+  "quickMode": false,
+  "autoMode": false
 }
 ```
+
+Set fields based on parsed flags:
+- If `quickMode` is `true`: set `"quickMode": true` in the state file
+- If `autoMode` is `true`: set `"autoMode": true` in the state file
 
 ## Update Current Feature Pointer
 
 ```bash
 echo "$FEATURE_ID-$feature-name" > .specify/.current-feature
 ```
+
+## Autonomous Mode Routing
+
+After state init and writing `.current-feature`, check flags:
+
+If neither `quickMode` nor `autoMode` is set: continue to normal interactive flow (output feature created message, suggest next step).
+
+If `quickMode=true` or `autoMode=true`:
+1. Verify `.specify/.current-feature` was written (guards depend on it).
+2. Skip all interactive prompts.
+3. Run all spec phases sequentially, delegating to each subagent with the directive: "Autonomous Mode: skip all questions, make reasonable decisions based on the goal and constitution."
+   - Phase 1: Research (delegate to research-analyst agent)
+   - Phase 2: Requirements (delegate to product-manager agent)
+   - Phase 3: Design (delegate to architect-reviewer agent)
+   - Phase 4: Tasks (delegate to task-planner agent)
+4. After tasks phase completes, compute totalTasks (count `- [ ]` checkboxes in tasks.md) and update state with shared execution bootstrap fields:
+   ```json
+   { "phase": "execution", "taskIndex": 0, "totalTasks": <count> }
+   ```
+   Then branch by mode:
+   - If `quickMode=true`:
+     - Also set `awaitingApproval: true` in state file
+     - Output: "Plan complete for '$FEATURE_ID-$feature-name'. Review the spec in .specify/specs/$FEATURE_ID-$feature-name/ and run /speckit:implement to start execution."
+     - STOP - do not proceed to implementation
+   - If `autoMode=true`:
+     - Transition directly to implementation (continue to execution loop)
 
 ## Initialize Progress File
 

@@ -20,7 +20,7 @@ Use this for the `start` and `new` entrypoints.
 
 ## Action
 
-1. Parse explicit name, goal, `--quick`, commit flags, optional specs root, and optional `--tasks-size fine|coarse`.
+1. Parse explicit name, goal, `--quick`, `--auto`, commit flags, optional specs root, and optional `--tasks-size fine|coarse`. If both `--quick` and `--auto` are present: Respond "Error: --quick and --auto are mutually exclusive. Use one or the other." STOP.
 2. Resolve the target by explicit path, exact name, or `.current-spec`.
 3. If the same name exists in multiple configured roots, stop and require a full path.
 4. Check active epic context from `specs/.current-epic` when no explicit spec was chosen.
@@ -40,15 +40,18 @@ Use this for the `start` and `new` entrypoints.
    - `commitSpec: settings auto_commit_spec or true`
    - `relatedSpecs: []`
    - `awaitingApproval: true` when the run will stop after setup and wait for explicit direction
-   - `awaitingApproval: false` when quick mode or explicit autonomy will continue without pausing
-   - preserve or set `quickMode`
+   - `awaitingApproval: false` when `--auto` will continue without pausing
+   - `quickMode: true, autoMode: false` when `--quick` was supplied
+   - `quickMode: false, autoMode: true` when `--auto` was supplied
+   - preserve or set `quickMode` and `autoMode`
    - preserve or set `granularity` when `--tasks-size` was supplied
    - preserve or set `epicName` when starting from an epic suggestion
 8. Update `.current-spec`.
 9. Write `.progress.md` with goal, current phase, next step, blockers, learnings, and skill discovery results when used.
 10. On resume, prefer `tasks.md` and present files over stale state when they disagree.
-11. In quick mode, generate missing artifacts in order, skip normal approval pauses, and continue into implementation in the same run.
-12. **Without quick mode or explicit autonomy: STOP HERE after setup. Do NOT proceed to research. Wait for the user to explicitly ask to continue.** This is non-negotiable.
+11. With `--quick`: generate all artifacts (research, requirements, design, tasks) autonomously in order, skip normal approval pauses, then set `awaitingApproval: true`. Output a summary listing each generated artifact with a one-sentence description, then end with exactly one explicit choice prompt: "Approve plan and run implement" or "Request changes". STOP.
+12. With `--auto`: generate all artifacts autonomously in order, skip normal approval pauses, and continue directly into implementation without stopping.
+13. **Without `--quick` or `--auto`: STOP HERE after setup. Do NOT proceed to research. Wait for the user to explicitly ask to continue.** This is non-negotiable.
 
 ## Branch Isolation
 
@@ -61,4 +64,4 @@ Use this for the `start` and `new` entrypoints.
 - End with exactly one explicit choice prompt:
   - `request changes`
   - `continue to research`
-- Do not run research until the user explicitly asks to continue or explicitly asked for quick or autonomous flow.
+- Do not run research until the user explicitly asks to continue or explicitly asked for `--quick` or `--auto` flow.

@@ -10,7 +10,7 @@
     {
       "name": "ralph-specum",
       "description": "Spec-driven development with research, requirements, design, tasks, autonomous execution, and epic triage. Fresh context per task.",
-      "version": "4.9.1",
+      "version": "4.10.0",
       "author": {
         "name": "tzachbon"
       },
@@ -29,7 +29,7 @@
     {
       "name": "ralph-speckit",
       "description": "Spec-driven development using GitHub spec-kit methodology. Constitution-first approach with specify, plan, tasks, and implement phases.",
-      "version": "0.5.2",
+      "version": "0.5.3",
       "author": {
         "name": "tzachbon"
       },

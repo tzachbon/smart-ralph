@@ -1,40 +1,34 @@
 #!/usr/bin/env bash
-# PreToolUse hook: Block AskUserQuestion in quick mode
-# Reads .ralph-state.json and denies the call if quickMode is true.
-
+# PreToolUse hook: Block AskUserQuestion in autonomous modes (quickMode or autoMode)
 set -euo pipefail
 
 INPUT=$(cat)
 
-# Bail out if jq is unavailable
 command -v jq >/dev/null 2>&1 || exit 0
 
-# Get working directory
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty' 2>/dev/null || true)
-if [ -z "$CWD" ]; then
-    exit 0
-fi
+[ -z "$CWD" ] && exit 0
 
-# Source path resolver
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RALPH_CWD="$CWD"
-export RALPH_CWD
-source "$SCRIPT_DIR/path-resolver.sh"
+# Find the current feature's state file
+CURRENT_FEATURE_FILE="$CWD/.specify/.current-feature"
+[ ! -f "$CURRENT_FEATURE_FILE" ] && exit 0
 
-# Resolve current spec
-SPEC_PATH=$(ralph_resolve_current 2>/dev/null) || true
-if [ -z "$SPEC_PATH" ]; then
-    exit 0
-fi
+FEATURE_NAME=$(cat "$CURRENT_FEATURE_FILE" 2>/dev/null | tr -d '[:space:]')
+[ -z "$FEATURE_NAME" ] && exit 0
 
-STATE_FILE="$CWD/$SPEC_PATH/.ralph-state.json"
-if [ ! -f "$STATE_FILE" ]; then
-    exit 0
-fi
+# Try .speckit-state.json first, then .ralph-state.json for compatibility
+STATE_FILE=""
+for candidate in "$CWD/.specify/specs/$FEATURE_NAME/.speckit-state.json" "$CWD/.specify/specs/"*"-$FEATURE_NAME/.speckit-state.json"; do
+    if [ -f "$candidate" ]; then
+        STATE_FILE="$candidate"
+        break
+    fi
+done
+[ -z "$STATE_FILE" ] && exit 0
 
-# Check quickMode and autoMode flags
 QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
 AUTO_MODE=$(jq -r '.autoMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+
 if [ "$QUICK_MODE" != "true" ] && [ "$AUTO_MODE" != "true" ]; then
     exit 0
 fi

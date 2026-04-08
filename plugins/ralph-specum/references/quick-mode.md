@@ -4,6 +4,10 @@
 
 This reference contains the full quick mode flow triggered by the `--quick` flag, including input detection, validation, execution sequence, review loops, and rollback.
 
+## Mode Selector
+
+This reference is used for both --quick (plan-only) and --auto (full autonomous) flows. The flows are identical through the Tasks Phase. They diverge at the Transition to Execution step.
+
 ## Quick Mode Input Detection
 
 Parse arguments before `--quick` flag and classify input type:
@@ -68,11 +72,16 @@ Validation Sequence:
 4. Create spec directory: mkdir -p "$basePath"
 4a. Ensure gitignore entries exist (.current-spec, .progress.md)
 5. Write .ralph-state.json:
-   { source: "plan", name, basePath, phase: "research",
+   For --quick: { source: "plan", name, basePath, phase: "research",
      taskIndex: 0, totalTasks: 0, taskIteration: 1,
      maxTaskIterations: 5, globalIteration: 1,
      maxGlobalIterations: 100, commitSpec: $commitSpec,
-     quickMode: true, discoveredSkills: [] }
+     quickMode: true, autoMode: false, discoveredSkills: [] }
+   For --auto: { source: "plan", name, basePath, phase: "research",
+     taskIndex: 0, totalTasks: 0, taskIteration: 1,
+     maxTaskIterations: 5, globalIteration: 1,
+     maxGlobalIterations: 100, commitSpec: $commitSpec,
+     quickMode: false, autoMode: true, discoveredSkills: [] }
 6. Write .progress.md with original goal
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
@@ -117,7 +126,9 @@ Validation Sequence:
     - Count total tasks (number of `- [ ]` checkboxes)
     - Update state: phase="execution", totalTasks=<count>, taskIndex=0
     - If commitSpec: stage, commit, push spec files
-17. Invoke spec-executor for task 1
+    - **--quick path**: set awaitingApproval: true in state, output "Plan complete for '$name'. All 4 artifacts generated. Run /ralph-specum:implement to execute, or review the spec files first.", then STOP. Do NOT invoke spec-executor.
+    - **--auto path**: continue to step 17 (count tasks, transition to execution, invoke spec-executor for task 1).
+17. [--auto only] Invoke spec-executor for task 1
 ```
 
 ## Step 9: Skill Discovery Pass 1
@@ -182,13 +193,13 @@ Re-scan skills with enriched context after research completes:
    ```
    If no new skills match: `- No new skills matched`
 
-## Quick Mode Directive
+## Autonomous Mode Directive
 
 Each agent delegation in steps 11-15 includes this directive in the Task prompt:
 
 ```text
-Quick Mode Context:
-Running in quick mode with no user feedback. You MUST:
+Autonomous Mode Context:
+Running in autonomous mode with no user feedback. You MUST:
 - Make strong, opinionated decisions instead of deferring to user
 - Choose the simplest, most conventional approach
 - Be more critical of your own output
