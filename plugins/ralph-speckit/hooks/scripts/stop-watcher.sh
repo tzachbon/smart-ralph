@@ -109,6 +109,8 @@ PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
 TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
+QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+AUTO_MODE=$(jq -r '.autoMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
 
 # Check global iteration limit
 GLOBAL_ITERATION=$(jq -r '.globalIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
@@ -120,6 +122,16 @@ if [ "$GLOBAL_ITERATION" -ge "$MAX_GLOBAL" ]; then
     exit 0
 fi
 
+# Autonomous mode planning guard: block stops during non-execution phases
+if { [ "$QUICK_MODE" = "true" ] || [ "$AUTO_MODE" = "true" ]; } && [ "$PHASE" != "execution" ]; then
+    STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
+    if [ "$STOP_HOOK_ACTIVE" = "true" ]; then exit 0; fi
+    REASON="Autonomous mode active — continue spec phase: $PHASE for $FEATURE_NAME."
+    MSG="Ralph-speckit autonomous mode: continue $PHASE phase"
+    jq -n --arg reason "$REASON" --arg msg "$MSG" '{"decision": "block", "reason": $reason, "systemMessage": $msg}'
+    exit 0
+fi
+
 # Log current state
 if [ "$PHASE" = "execution" ]; then
     echo "[ralph-speckit] Session stopped during feature: $FEATURE_NAME | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Attempt: $TASK_ITERATION" >&2
@@ -127,6 +139,12 @@ fi
 
 # Loop control: output continuation prompt if more tasks remain
 if [ "$PHASE" = "execution" ] && [ "$TASK_INDEX" -lt "$TOTAL_TASKS" ]; then
+    AWAITING=$(jq -r '.awaitingApproval // false' "$STATE_FILE" 2>/dev/null || echo "false")
+    if [ "$AWAITING" = "true" ]; then
+        echo "[ralph-speckit] awaitingApproval=true, allowing stop for user gate" >&2
+        exit 0
+    fi
+
     # Read recovery mode for prompt customization
     RECOVERY_MODE=$(jq -r '.recoveryMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
     MAX_TASK_ITER=$(jq -r '.maxTaskIterations // 5' "$STATE_FILE" 2>/dev/null || echo "5")
