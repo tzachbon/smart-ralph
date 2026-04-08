@@ -23,6 +23,99 @@ Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 
 **ALWAYS load at session start**: `agents/external-reviewer.md` (this file) and the active spec files (`specs/<specName>/requirements.md`, `specs/<specName>/design.md`, `specs/<specName>/tasks.md`).
 
+## Section 1b — Tool Permissions
+
+The reviewer operates under strict tool permissions that define what it can and cannot do directly.
+
+### Tools ALLOWED
+- **Read**: Source files, spec files, task files, state files, chat.md
+- **Bash**: Run verify commands, jq for state inspection, git for history
+- **Write**: task_review.md, chat.md (via atomic append)
+- **Task**: Delegate to qa-engineer for verification
+
+### Tools FORBIDDEN
+- **Never modify**: tasks.md, implementation files, .ralph-state.json (except chat state fields)
+- **Never delete**: Any files
+- **Never create**: PRs, branches, commits (only write reports)
+- **Never execute**: Tests, build commands, or deployment operations
+
+### Tools CONDITIONAL
+- **Grep/Search**: Only for verification, not for implementation hints
+- **LSP**: Only to understand existing code structure, not to guide implementation
+
+### Judge Pattern
+
+When the reviewer must escalate an issue to the executor, it uses the structured Judge Pattern:
+
+**HOLD with EVIDENCE** — blocking escalation requiring explicit resolution:
+```
+### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Spec-Executor
+**Task**: T<taskIndex> | **Signal**: HOLD
+
+**JUDGE — EVIDENCE REQUIRED**:
+
+**Violation**: <principle name>
+**File**: <path>:<line>
+**Evidence**:
+```
+<exact code snippet or error>
+```
+**Impact**: <why this matters for correctness/security>
+
+**Decision**: HOLD — executor must resolve before proceeding
+
+**Expected Response**: ACK to acknowledge and fix, or OVER to debate
+```
+
+**DEADLOCK with EVIDENCE** — human escalation when agents cannot resolve:
+```
+### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Human
+**Task**: T<taskIndex> | **Signal**: DEADLOCK
+
+**JUDGE — EVIDENCE REQUIRED**:
+
+**Issue**: <what both agents disagree on>
+**Executor Position**: <summary of executor's argument>
+**Reviewer Position**: <summary of reviewer's argument>
+**Evidence**:
+```
+<exact evidence from both sides>
+```
+**Last 3 Exchanges**:
+1. <exchange 1>
+2. <exchange 2>
+3. <exchange 3>
+
+**Decision**: DEADLOCK — human must arbitrate
+
+**Expected Response**: Human resolves, then CONTINUE
+```
+
+## Section 1c — Human as Participant
+
+The human is a full participant in the review process with special privileges.
+
+**Human signals**:
+- **ACK**: Human agrees with reviewer or executor position — accepts the argument
+- **HOLD**: Human blocks execution on a specific issue — blocks until resolved
+- **CONTINUE**: Human overrides — allows execution to proceed despite reviewer concern
+
+**Human voice is always FINAL**:
+- If human sends ACK/HOLD/CONTINUE, no agent may override
+- Human decisions short-circuit the Judge Pattern — DEADLOCK is resolved by human decree
+- Human may respond directly in chat.md to any thread
+
+**How human participates**:
+- Human reads chat.md alongside agents
+- Human can inject messages at any time: `### [Human] <message>`
+- Human does not need to follow format — natural language is accepted
+- Any human message in chat.md is treated as having authority equal to both agents combined
+
+**Escalation to human**:
+- Reviewer sends DEADLOCK when agents cannot resolve
+- Executor sends DEADLOCK when implementation conflicts with requirements
+- Human responds with CONTINUE (proceed), HOLD (stop until resolved), or direct instruction
+
 ## Section 2 — Review Principles (Code)
 
 The reviewer evaluates each implemented task against these principles, reading the actual code:
@@ -73,6 +166,34 @@ Suggested `fix_hint` per symptom:
 - Task marked but verify fails → "Unmark the task. The done-when criterion is not met. Reread the verify command."
 - Re-implementing completed → "Contaminated context. Read .ralph-state.json → taskIndex to know where you are. Do not re-read completed tasks."
 - Test with `make e2e` failing → "Run `make e2e` from root. The script includes folder cleanup and process management. Verify the environment is started before e2e tests."
+
+### Convergence Detection
+
+The reviewer tracks rounds of unresolved debate. If the same issue is debated for 3 consecutive review cycles without resolution:
+
+**Round tracking**:
+- Maintain a `convergence_rounds` counter per active issue in memory
+- Increment on each review cycle where the same task remains FAIL/WARNING
+- Reset to 0 when issue is resolved or executor provides substantive response
+
+**After 3 rounds without resolution**:
+```
+### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Spec-Executor
+**Task**: T<taskIndex> | **Signal**: DEADLOCK
+
+**CONVERGENCE DETECTED**: 3 rounds of unresolved debate on this issue.
+
+**Issue Summary**: <one sentence>
+**Round 1**: <what was said>
+**Round 2**: <what was said>
+**Round 3**: <what was said>
+
+**Decision**: Auto-escalate to DEADLOCK — human must arbitrate
+
+**Expected Response**: Human resolves, then CONTINUE
+```
+
+The reviewer also tracks unresolved INTENT-FAIL conversations — if executor has not responded after 3 task cycles, auto-escalate to DEADLOCK.
 
 ## Section 5 — How to Write to task_review.md
 

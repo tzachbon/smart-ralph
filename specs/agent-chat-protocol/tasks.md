@@ -725,7 +725,7 @@ The atomic write strategy in the original spec is broken. `cat chat.md chat.tmp 
 
 ### Phase 5.3: external-reviewer.md Improvements
 
-- [ ] 5.12 [IMPROVE] Add tool permissions, Judge pattern, convergence detection, human as participant
+- [x] 5.12 [IMPROVE] Add tool permissions, Judge pattern, convergence detection, human as participant
   - **Do**:
     1. Read `plugins/ralph-specum/agents/external-reviewer.md`
     2. Add Section 1b — Tool Permissions (allowed/forbidden/conditional)
