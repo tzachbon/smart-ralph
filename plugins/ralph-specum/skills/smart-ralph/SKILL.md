@@ -15,13 +15,16 @@ All Ralph commands support these standard arguments:
 
 | Argument | Short | Description | Default |
 |----------|-------|-------------|---------|
-| `--quick` | `-q` | Skip interactive phases, auto-generate artifacts, start execution immediately | false |
+| `--quick` | `-q` | Run all planning phases autonomously (research, requirements, design, tasks), then stop before implementation | false |
+| `--auto` | `-a` | Run all phases including implementation autonomously, no stopping | false |
 | `--commit` | `-c` | Commit and push spec/feature files after generation | true (normal), false (quick) |
 | `--no-commit` | | Explicitly disable committing files | - |
 | `--max-task-iterations` | `-m` | Max retries per failed task before stopping | 5 |
 | `--fresh` | `-f` | Force new spec/feature, overwrite if exists | false |
 
 Argument precedence: `--no-commit` > `--commit` > mode default.
+
+`--quick` and `--auto` are mutually exclusive.
 
 ## Execution Modes
 
@@ -32,7 +35,17 @@ Argument precedence: `--no-commit` > `--commit` > mode default.
 - Each phase sets `awaitingApproval: true`
 - Commits spec files by default
 
-### Quick Mode (`--quick`)
+### Plan-Only Mode (`--quick`)
+
+- Skip all interactive prompts, interviews, and approval pauses
+- Run the same phase agents (research, requirements, design, tasks) sequentially
+- Agents receive a "be more opinionated" directive since there is no user feedback
+- spec-reviewer validates each artifact (max 3 iterations)
+- Stop after all planning phases complete, before implementation
+- Do NOT commit by default (use `--commit` to override)
+- Still delegate to subagents (delegation is mandatory)
+
+### Full Autonomous Mode (`--auto`)
 
 - Skip all interactive prompts, interviews, and approval pauses
 - Run the same phase agents (research, requirements, design, tasks) sequentially
@@ -82,7 +95,7 @@ All Ralph plugins follow consistent branch strategy:
 1. Check current branch before starting
 2. If on default branch (main/master): prompt for branch strategy
 3. If on feature branch: offer to continue or create new
-4. Quick mode: auto-create branch, no prompts
+4. Quick or auto mode: auto-create branch, no prompts
 
 ## Coordinator Behavior
 
