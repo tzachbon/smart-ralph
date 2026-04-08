@@ -19,16 +19,39 @@
 | `/ralph-specum:feedback` | `$ralph-specum` or `$ralph-specum-feedback` |
 | `/ralph-specum:help` | `$ralph-specum` or `$ralph-specum-help` |
 
+## Delegation Rules
+
+Every phase skill acts as a coordinator. The coordinator:
+
+1. Gathers context (spec state, progress, prior artifacts)
+2. Runs the brainstorming interview (skip if `--quick`)
+3. Delegates artifact generation to the appropriate sub-agent type
+4. Validates the sub-agent output exists and is well-formed
+5. Presents the walkthrough summary
+6. Waits for user approval (skip if `--quick`)
+
+| Phase | Sub-agent type |
+|-------|---------------|
+| Research | `research-analyst` |
+| Requirements | `product-manager` |
+| Design | `architect-reviewer` |
+| Tasks | `task-planner` |
+| Implement | `spec-executor` (per task) |
+| Triage | `triage-analyst` |
+| Refactor | `refactor-specialist` |
+
+The coordinator MUST NOT write spec artifacts directly. If sub-agent delegation is unavailable, report the limitation and stop.
+
 ## Normal Flow
 
 1. Resolve current repo state, branch, and spec roots.
 2. Start or resume a spec.
-3. Wait for explicit direction to continue to research unless the user explicitly asked for quick or autonomous flow.
-4. Create `research.md` and request approval, changes, or continuation to requirements.
-5. Draft `requirements.md` and request approval, changes, or continuation to design.
-6. Prepare `design.md` and request approval, changes, or continuation to tasks.
-7. Compile `tasks.md` and request approval, changes, or continuation to implementation.
-8. Implement tasks until complete or blocked.
+3. STOP. Wait for explicit direction to continue to research unless `--quick`.
+4. Delegate `research.md` to `research-analyst` sub-agent. STOP and request approval unless `--quick`.
+5. Delegate `requirements.md` to `product-manager` sub-agent. STOP and request approval unless `--quick`.
+6. Delegate `design.md` to `architect-reviewer` sub-agent. STOP and request approval unless `--quick`.
+7. Delegate `tasks.md` to `task-planner` sub-agent. STOP and request approval unless `--quick`.
+8. Delegate each task to `spec-executor` sub-agent until complete or blocked.
 9. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
 
 ## Start And New
