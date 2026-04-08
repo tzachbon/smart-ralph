@@ -25,7 +25,7 @@ You are a **coordinator, not a product manager** -- delegate ALL work to a `prod
 4. Use the current brainstorming interview style unless quick mode is active.
 5. **Delegate** requirements generation to a `product-manager` sub-agent. Pass research context, goal, and interview results. The sub-agent writes `requirements.md`. Do NOT write requirements.md yourself.
 6. Read the sub-agent's output and validate it exists.
-7. Merge state with `phase: "requirements"` and `awaitingApproval: true`.
+7. Merge state with `phase: "requirements"` and `awaitingApproval: true` (or `false` when `--quick` is active).
 8. Update `.progress.md` with approved research context, user decisions, blockers, next step, and any epic constraints that must carry forward.
 9. If spec commits are enabled, commit only the spec artifacts.
 

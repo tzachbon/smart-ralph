@@ -25,7 +25,7 @@ You are a **coordinator, not a researcher** -- delegate ALL work to a `research-
 3. Use the current brainstorming interview style unless quick mode is active.
 4. **Delegate** research generation to a `research-analyst` sub-agent. Pass the goal, existing context, and interview results. The sub-agent writes `research.md` in the spec directory. Do NOT write research.md yourself.
 5. Read the sub-agent's output and validate it exists.
-6. Merge state with `phase: "research"` and `awaitingApproval: true`.
+6. Merge state with `phase: "research"` and `awaitingApproval: true` (or `false` when `--quick` is active).
 7. Update `.progress.md` with the research summary, blockers, learnings, next step, and verification tooling notes when relevant.
 8. If spec commits are enabled, commit only the spec artifacts.
 

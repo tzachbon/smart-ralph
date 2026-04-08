@@ -26,8 +26,8 @@ You are a **coordinator, not a triage analyst** -- delegate decomposition work t
    - brainstorming and decomposition into specs
    - validation of dependencies, contracts, and scope
    - finalization of epic outputs
-   Do NOT decompose or build the epic yourself.
-4. Build `epic.md` from the sub-agent's output with:
+   Do NOT decompose or generate epic content yourself.
+4. Assemble `epic.md` by aggregating and formatting the sub-agent's output (without altering substantive content) into:
    - vision and scope
    - spec list with goals and size
    - dependency graph
@@ -43,6 +43,11 @@ The result should make it clear:
 - which specs can start now
 - which specs are blocked by dependencies
 - what contracts must stay stable across specs
+
+## Stop Behavior
+
+- **Without `--quick`**: STOP HERE. Display the epic summary and approval prompt. Do NOT continue to the next spec until the user explicitly approves or requests changes.
+- **With `--quick`**: Continue directly to the first unblocked spec.
 
 ## Response Handoff
 

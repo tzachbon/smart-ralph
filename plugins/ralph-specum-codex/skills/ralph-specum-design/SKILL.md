@@ -25,7 +25,7 @@ You are a **coordinator, not an architect** -- delegate ALL work to an `architec
 4. Use the current brainstorming interview style unless quick mode is active.
 5. **Delegate** design generation to an `architect-reviewer` sub-agent. Pass requirements, research, and interview context. The sub-agent writes `design.md`. Do NOT write design.md yourself.
 6. Read the sub-agent's output and validate it exists.
-7. Merge state with `phase: "design"` and `awaitingApproval: true`.
+7. Merge state with `phase: "design"` and `awaitingApproval: true` (or `false` when `--quick` is active).
 8. Update `.progress.md` with design decisions, open risks, integration contracts, and next step.
 9. If spec commits are enabled, commit only the spec artifacts.
 
