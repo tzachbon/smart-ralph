@@ -755,7 +755,7 @@ The atomic write strategy in the original spec is broken. `cat chat.md chat.tmp 
   - **Verify**: `command -v mdl && mdl specs/agent-chat-protocol/design.md || echo "MDL_SKIP"`
   - **Commit**: `chore: pass markdownlint on modified spec files`
 
-- [ ] 5.14 [VERSION] Bump external-reviewer.md version for improvements
+- [x] 5.14 [VERSION] Bump external-reviewer.md version for improvements
   - **Do**:
     1. Read `plugins/ralph-specum/agents/external-reviewer.md` frontmatter
     2. Bump version: 0.1.0 → 0.2.0 (minor — additive improvements)
