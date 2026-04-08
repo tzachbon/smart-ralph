@@ -6,5 +6,12 @@
     "name": "tzachbon"
   },
   "license": "MIT",
-  "keywords": ["ralph", "speckit", "spec-driven", "constitution", "specify", "plan", "tasks", "implement"]
+  "keywords": ["ralph", "speckit", "spec-driven", "constitution", "specify", "plan", "tasks", "implement"],
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "AskUserQuestion",
+      "command": "hooks/scripts/quick-mode-guard.sh"
+    }
+  ]
 }
