@@ -22,7 +22,7 @@ Focus: Apply all file edits in dependency order. Skill-first (SKILL.md), then co
 
 ---
 
-- [ ] 1.2 [P] Update intent-classification.md with --auto parsing
+- [x] 1.2 [P] Update intent-classification.md with --auto parsing
   - **Files**: `plugins/ralph-specum/references/intent-classification.md`
   - **Do**:
     1. Add `--auto` row to the Argument Parsing table
@@ -36,7 +36,7 @@ Focus: Apply all file edits in dependency order. Skill-first (SKILL.md), then co
   - _Requirements: FR-4, AC-3.1_
   - _Design: ralph-specum section 5_
 
-- [ ] 1.3 [P] Update quick-mode.md to branch on --quick vs --auto
+- [x] 1.3 [P] Update quick-mode.md to branch on --quick vs --auto
   - **Files**: `plugins/ralph-specum/references/quick-mode.md`
   - **Do**:
     1. Add "Mode Selector" section at top: "This reference is used for both --quick (plan-only) and --auto (full autonomous) flows. The flows are identical through the Tasks Phase. They diverge at the Transition to Execution step."

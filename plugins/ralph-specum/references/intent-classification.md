@@ -15,13 +15,16 @@ From `$ARGUMENTS`, extract:
 - **--no-commit-spec**: Explicitly disable committing spec files
 - **--specs-dir <path>**: Create spec in specified directory (must be in configured specs_dirs array)
 - **--tasks-size <fine|coarse>**: Task granularity level for task generation
+- **--auto**: Run all phases including implementation autonomously, full end-to-end
 
 ### Commit Spec Flag Logic
 
 ```text
+0. If both --quick and --auto in $ARGUMENTS -> Error: '--quick and --auto are mutually exclusive. Use one or the other.' STOP before creating any files.
 1. Check if --no-commit-spec in $ARGUMENTS -> commitSpec = false
 2. Else if --commit-spec in $ARGUMENTS -> commitSpec = true
 3. Else if --quick in $ARGUMENTS -> commitSpec = false (quick mode default)
+3b. Else if --auto in $ARGUMENTS -> commitSpec = false (auto mode default)
 4. Else -> commitSpec = true (normal mode default)
 ```
 
@@ -38,6 +41,9 @@ From `$ARGUMENTS`, extract:
 - `/ralph-specum:start my-feature --quick` -> Quick mode using existing plan.md
 - `/ralph-specum:start my-feature "Add logging" --tasks-size coarse` -> Coarse granularity (10-20 tasks)
 - `/ralph-specum:start my-feature --quick --tasks-size fine` -> Quick mode with fine granularity
+- `/ralph-specum:start "Build auth with JWT" --auto` -> Auto mode with goal string
+- `/ralph-specum:start my-feature "Add logging" --auto` -> Auto mode with name+goal
+- `/ralph-specum:start my-feature ./plan.md --auto` -> Auto mode with file input
 
 ## Detection Logic (Normal Mode)
 
@@ -252,3 +258,5 @@ For fix goals: run reproduction command, document BEFORE state in .progress.md.
 | No name + no active spec | Ask for name and goal, new flow |
 | --quick with goal/file | Quick mode flow (skip interactive phases) |
 | --quick with zero args | Error: "Quick mode requires a goal or plan file" |
+| --auto with goal/file | Auto mode flow (full autonomous) |
+| Both --quick and --auto | Error: mutually exclusive |
