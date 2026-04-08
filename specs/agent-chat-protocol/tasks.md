@@ -588,7 +588,7 @@ The atomic write strategy in the original spec is broken. `cat chat.md chat.tmp 
   - **Commit**: `fix(atomic-write): use flock for safe concurrent append`
   - _Review issues: CRITICAL #1 (line 247), CRITICAL #2 (line 217)_
 
-- [ ] 5.2 [FIX] Fix FR-13 in requirements.md
+- [x] 5.2 [FIX] Fix FR-13 in requirements.md
   - **Do**:
     1. Read `specs/agent-chat-protocol/requirements.md` — find FR-13 Atomic Writes
     2. Fix "rename to append position" — rename does NOT append, it overwrites
