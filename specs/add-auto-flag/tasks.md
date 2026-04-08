@@ -75,7 +75,7 @@ Focus: Apply all file edits in dependency order. Skill-first (SKILL.md), then co
 
 ---
 
-- [ ] 1.6 [P] Update stop-watcher.sh (ralph-specum)
+- [x] 1.6 [P] Update stop-watcher.sh (ralph-specum)
   - **Files**: `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
   - **Do**:
     1. After the existing `QUICK_MODE` read (line ~146), add: `AUTO_MODE=$(jq -r '.autoMode // false' "$STATE_FILE" 2>/dev/null || echo "false")`
