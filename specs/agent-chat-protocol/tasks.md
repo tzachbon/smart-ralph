@@ -612,7 +612,7 @@ The atomic write strategy in the original spec is broken. `cat chat.md chat.tmp 
   - **Commit**: `fix(tasks): add flock to atomic write pattern in task 1.3`
   - _Review issue: CRITICAL #4 (task 1.3)_
 
-- [ ] 5.4 [FIX] Fix external-reviewer.md atomic write pattern
+- [x] 5.4 [FIX] Fix external-reviewer.md atomic write pattern
   - **Do**:
     1. Read `plugins/ralph-specum/agents/external-reviewer.md` — find chat_write_signal function
     2. Replace bare `cat >>` with flock-based pattern:
