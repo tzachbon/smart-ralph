@@ -61,11 +61,11 @@ GOAL_INTERVIEW="plugins/ralph-specum/references/goal-interview.md"
     grep -q "skills/interview-framework/SKILL.md" "$GOAL_INTERVIEW"
 }
 
-@test "plugin.json version is 4.9.1" {
-    grep -q '"version": "4.9.1"' "plugins/ralph-specum/.claude-plugin/plugin.json"
+@test "plugin.json version is 4.10.0" {
+    grep -q '"version": "4.10.0"' "plugins/ralph-specum/.claude-plugin/plugin.json"
 }
 
-@test "marketplace.json ralph-specum version is 4.9.1" {
+@test "marketplace.json ralph-specum version is 4.10.0" {
     version=$(jq -r '.plugins[] | select(.name == "ralph-specum") | .version' ".claude-plugin/marketplace.json")
-    [ "$version" = "4.9.1" ]
+    [ "$version" = "4.10.0" ]
 }
