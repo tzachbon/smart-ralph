@@ -3,7 +3,7 @@ name: Codex Version Check
 on:
   pull_request:
     paths:
-      - 'plugins/ralph-specum-codex/**'
+      - 'plugins/codex/**'
 
 jobs:
   check-version-bump:
@@ -18,7 +18,7 @@ jobs:
       - name: Check Codex manifest version
         run: |
           BASE_BRANCH="${{ github.base_ref }}"
-          MANIFEST="plugins/ralph-specum-codex/.codex-plugin/plugin.json"
+          MANIFEST="plugins/codex/.codex-plugin/plugin.json"
 
           version_greater() {
             local v1=$1 v2=$2
@@ -50,8 +50,8 @@ jobs:
             exit 1
           fi
 
-          if ! git diff --quiet "origin/${BASE_BRANCH}...HEAD" -- plugins/ralph-specum-codex/; then
-            echo "Detected changes under plugins/ralph-specum-codex/"
+          if ! git diff --quiet "origin/${BASE_BRANCH}...HEAD" -- plugins/codex/; then
+            echo "Detected changes under plugins/codex/"
           else
             echo "No Codex package changes detected"
             exit 0
@@ -64,8 +64,8 @@ jobs:
           echo "manifest name:    $PR_NAME"
           echo "manifest version: ${BASE_VERSION} -> ${PR_VERSION}"
 
-          if [ "$PR_NAME" != "ralph-specum-codex" ]; then
-            echo "ERROR: Expected manifest name ralph-specum-codex"
+          if [ "$PR_NAME" != "ralph-specum" ]; then
+            echo "ERROR: Expected manifest name ralph-specum"
             exit 1
           fi
 

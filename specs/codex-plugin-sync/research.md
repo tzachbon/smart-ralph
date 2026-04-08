@@ -8,7 +8,7 @@ created: 2026-04-07
 
 ## Executive Summary
 
-The OpenAI Codex plugin system (launched March 2026) uses a `.codex-plugin/plugin.json` manifest with skills as the primary authoring format. The existing `platforms/codex/` distribution (v4.8.4) already ships 15 skills in the correct SKILL.md format but lacks a proper plugin wrapper. Creating a real Codex plugin at `plugins/ralph-specum-codex/` requires: adding `.codex-plugin/plugin.json`, migrating skills, adding custom agent TOML definitions, adding a marketplace entry, and closing content gaps from the v4.8.4-to-v4.9.1 delta. The Stop hook (needed for the execution loop) is experimental and behind a feature flag, making it the single highest-risk dependency.
+The OpenAI Codex plugin system (launched March 2026) uses a `.codex-plugin/plugin.json` manifest with skills as the primary authoring format. The existing `platforms/codex/` distribution (v4.8.4) already ships 15 skills in the correct SKILL.md format but lacks a proper plugin wrapper. Creating a real Codex plugin at `plugins/codex/` requires: adding `.codex-plugin/plugin.json`, migrating skills, adding custom agent TOML definitions, adding a marketplace entry, and closing content gaps from the v4.8.4-to-v4.9.1 delta. The Stop hook (needed for the execution loop) is experimental and behind a feature flag, making it the single highest-risk dependency.
 
 ## External Research
 
@@ -72,8 +72,8 @@ Repo-scoped: `$REPO_ROOT/.agents/plugins/marketplace.json`
 {
   "name": "local-repo",
   "plugins": [{
-    "name": "ralph-specum-codex",
-    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
+    "name": "ralph-specum",
+    "source": {"source": "local", "path": "./plugins/codex"},
     "policy": {"installation": "AVAILABLE"}
   }]
 }
@@ -163,8 +163,8 @@ Install cache: `~/.codex/plugins/cache/$MARKETPLACE/$PLUGIN/$VERSION/`
 
 ## Recommendations for Requirements
 
-1. Create `plugins/ralph-specum-codex/` with proper `.codex-plugin/plugin.json` manifest
-2. Migrate all 15 skills from `platforms/codex/skills/` to `plugins/ralph-specum-codex/skills/`
+1. Create `plugins/codex/` with proper `.codex-plugin/plugin.json` manifest
+2. Migrate all 15 skills from `platforms/codex/skills/` to `plugins/codex/skills/`
 3. Close content gaps: sync tasks.md template, add missing agent guidance, add epic.md template
 4. Create custom agent TOML definitions for key agents (spec-executor, research-analyst, etc.)
 5. Add Stop hook configuration for execution loop (with fallback guidance for when hooks are disabled)

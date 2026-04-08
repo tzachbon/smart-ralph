@@ -8,7 +8,7 @@ created: 2026-04-07
 
 ## Overview
 
-Replace `platforms/codex/` (v4.8.4, skills-only) with `plugins/ralph-specum-codex/` (v4.9.1, full Codex plugin). The plugin ships 15 skills as the user-facing interface, 9 agent bootstrap config templates that users merge into `.codex/config.toml`, a Stop hook for automated task looping, and all templates/references/scripts from the Claude plugin. A single CI script enforces version parity across three files (Claude plugin, Codex plugin, marketplace).
+Replace `platforms/codex/` (v4.8.4, skills-only) with `plugins/codex/` (v4.9.1, full Codex plugin). The plugin ships 15 skills as the user-facing interface, 9 agent bootstrap config templates that users merge into `.codex/config.toml`, a Stop hook for automated task looping, and all templates/references/scripts from the Claude plugin. A single CI script enforces version parity across three files (Claude plugin, Codex plugin, marketplace).
 
 ---
 
@@ -20,7 +20,7 @@ graph TB
         Invoke["$ralph-specum-start\n$ralph-specum-implement\n...15 skills"]
     end
 
-    subgraph Plugin["plugins/ralph-specum-codex/"]
+    subgraph Plugin["plugins/codex/"]
         subgraph Skills["skills/ (15 SKILL.md files)"]
             Start["ralph-specum-start"]
             Impl["ralph-specum-implement"]
@@ -54,7 +54,7 @@ graph TB
     end
 
     subgraph Marketplace[".agents/plugins/marketplace.json"]
-        MarketEntry["ralph-specum-codex entry\npolicy: AVAILABLE"]
+        MarketEntry["ralph-specum entry\npolicy: AVAILABLE"]
     end
 
     subgraph UserConfig[".codex/config.toml (user workspace)"]
@@ -76,7 +76,7 @@ graph TB
 ## Plugin Directory Structure
 
 ```
-plugins/ralph-specum-codex/
+plugins/codex/
 ├── .codex-plugin/
 │   └── plugin.json                          # Manifest (only file here)
 ├── skills/
@@ -291,7 +291,7 @@ Else → output {"decision": "block", "reason": "Continue to task N/M: <task tit
 
 ```json
 {
-  "name": "ralph-specum-codex",
+  "name": "ralph-specum",
   "version": "4.9.1",
   "description": "Spec-driven development with task-by-task execution. Research, requirements, design, tasks, autonomous implementation, and epic triage.",
   "author": { "name": "tzachbon" },
@@ -312,12 +312,12 @@ File: `.agents/plugins/marketplace.json` (append to existing file)
 
 ```json
 {
-  "name": "ralph-specum-codex",
+  "name": "ralph-specum",
   "description": "Spec-driven development: research, requirements, design, tasks, autonomous implementation.",
   "version": "4.9.1",
   "source": {
     "source": "local",
-    "path": "./plugins/ralph-specum-codex"
+    "path": "./plugins/codex"
   },
   "policy": {
     "installation": "AVAILABLE"
@@ -337,7 +337,7 @@ All 3 scripts copy from `platforms/codex/skills/ralph-specum/scripts/` with path
 | `merge_state.py` | None expected |
 | `count_tasks.py` | None expected |
 
-Scripts remain callable from skills via `bash -c "python3 plugins/ralph-specum-codex/scripts/..."`.
+Scripts remain callable from skills via `bash -c "python3 plugins/codex/scripts/..."`.
 
 ---
 
@@ -388,7 +388,7 @@ The `ralph-specum-implement` skill must include state-reading logic to know whic
 
 ### Phase 1: Create plugin (new commit)
 
-1. Create `plugins/ralph-specum-codex/` directory tree
+1. Create `plugins/codex/` directory tree
 2. Write `.codex-plugin/plugin.json`
 3. Migrate 15 skills from `platforms/codex/skills/ralph-specum/` with content sync
 4. Sync templates (add `epic.md`, update `tasks.md`, update `settings-template.md`)
@@ -403,7 +403,7 @@ The `ralph-specum-implement` skill must include state-reading logic to know whic
 ### Phase 2: Tests and CI (same or next commit)
 
 12. Create `tests/codex-plugin.bats` (new test file for plugin structure)
-13. Update `tests/codex-platform.bats` paths from `platforms/codex/` to `plugins/ralph-specum-codex/`
+13. Update `tests/codex-platform.bats` paths from `platforms/codex/` to `plugins/codex/`
 14. Update `tests/codex-platform-scripts.bats` paths
 15. Write `tests/helpers/version-sync.sh` (CI version-check script)
 16. Update `.github/workflows/bats-tests.yml` trigger paths
@@ -448,20 +448,20 @@ The `ralph-specum-implement` skill must include state-reading logic to know whic
 
 | File | Purpose | Effort |
 |------|---------|--------|
-| `plugins/ralph-specum-codex/.codex-plugin/plugin.json` | Manifest | XS |
-| `plugins/ralph-specum-codex/skills/*/SKILL.md` (15 files) | Skill definitions | L (content sync per skill) |
-| `plugins/ralph-specum-codex/agent-configs/*.toml.template` (9 files) | Agent bootstrap templates | M (extract from Claude agents/) |
-| `plugins/ralph-specum-codex/agent-configs/README.md` | Install instructions | S |
-| `plugins/ralph-specum-codex/hooks/stop-watcher.sh` | Execution loop controller | M |
-| `plugins/ralph-specum-codex/templates/epic.md` | Missing template | XS (copy from Claude) |
-| `plugins/ralph-specum-codex/templates/*.md` (9 other templates) | Spec templates | S (copy + sync) |
-| `plugins/ralph-specum-codex/references/parity-matrix.md` | Feature mapping + delta | M |
-| `plugins/ralph-specum-codex/references/workflow.md` | Execution paths | M (add missing content) |
-| `plugins/ralph-specum-codex/references/state-contract.md` | State file spec | XS (copy) |
-| `plugins/ralph-specum-codex/references/path-resolution.md` | Path resolution docs | XS (copy) |
-| `plugins/ralph-specum-codex/schemas/spec.schema.json` | JSON schema | XS (copy) |
-| `plugins/ralph-specum-codex/scripts/*.py` (3 files) | Python helpers | S (copy + path fix) |
-| `plugins/ralph-specum-codex/README.md` | Plugin docs | S |
+| `plugins/codex/.codex-plugin/plugin.json` | Manifest | XS |
+| `plugins/codex/skills/*/SKILL.md` (15 files) | Skill definitions | L (content sync per skill) |
+| `plugins/codex/agent-configs/*.toml.template` (9 files) | Agent bootstrap templates | M (extract from Claude agents/) |
+| `plugins/codex/agent-configs/README.md` | Install instructions | S |
+| `plugins/codex/hooks/stop-watcher.sh` | Execution loop controller | M |
+| `plugins/codex/templates/epic.md` | Missing template | XS (copy from Claude) |
+| `plugins/codex/templates/*.md` (9 other templates) | Spec templates | S (copy + sync) |
+| `plugins/codex/references/parity-matrix.md` | Feature mapping + delta | M |
+| `plugins/codex/references/workflow.md` | Execution paths | M (add missing content) |
+| `plugins/codex/references/state-contract.md` | State file spec | XS (copy) |
+| `plugins/codex/references/path-resolution.md` | Path resolution docs | XS (copy) |
+| `plugins/codex/schemas/spec.schema.json` | JSON schema | XS (copy) |
+| `plugins/codex/scripts/*.py` (3 files) | Python helpers | S (copy + path fix) |
+| `plugins/codex/README.md` | Plugin docs | S |
 | `tests/codex-plugin.bats` | Plugin structure tests | M |
 | `tests/helpers/version-sync.sh` | Version comparison script | S |
 
@@ -469,10 +469,10 @@ The `ralph-specum-implement` skill must include state-reading logic to know whic
 
 | File | Change | Effort |
 |------|--------|--------|
-| `tests/codex-platform.bats` | Update paths to `plugins/ralph-specum-codex/` | S |
+| `tests/codex-platform.bats` | Update paths to `plugins/codex/` | S |
 | `tests/codex-platform-scripts.bats` | Update paths | S |
 | `.agents/plugins/marketplace.json` | Append plugin entry | XS |
-| `.github/workflows/bats-tests.yml` | Add trigger paths for `plugins/ralph-specum-codex/` | XS |
+| `.github/workflows/bats-tests.yml` | Add trigger paths for `plugins/codex/` | XS |
 | `.github/workflows/codex-version-check.yml` | Update or create version-sync job | S |
 
 ### Deleted Files (Phase 3)
@@ -500,7 +500,7 @@ The `ralph-specum-implement` skill must include state-reading logic to know whic
 @test "spec.schema.json exists"
 @test "all 3 python scripts exist"
 @test "stop-watcher.sh is executable"
-@test "marketplace.json contains ralph-specum-codex entry"
+@test "marketplace.json contains ralph-specum entry"
 @test "marketplace version matches plugin.json version"
 ```
 
@@ -510,8 +510,8 @@ The `ralph-specum-implement` skill must include state-reading logic to know whic
 #!/usr/bin/env bash
 # Compares versions across three files. Exits 1 if any mismatch.
 CLAUDE_VER=$(jq -r .version plugins/ralph-specum/.claude-plugin/plugin.json)
-CODEX_VER=$(jq -r .version plugins/ralph-specum-codex/.codex-plugin/plugin.json)
-MARKET_VER=$(jq -r '.plugins[] | select(.name=="ralph-specum-codex") | .version' .agents/plugins/marketplace.json)
+CODEX_VER=$(jq -r .version plugins/codex/.codex-plugin/plugin.json)
+MARKET_VER=$(jq -r '.plugins[] | select(.name=="ralph-specum") | .version' .agents/plugins/marketplace.json)
 
 if [ "$CLAUDE_VER" != "$CODEX_VER" ] || [ "$CODEX_VER" != "$MARKET_VER" ]; then
   echo "VERSION MISMATCH: claude=$CLAUDE_VER codex=$CODEX_VER marketplace=$MARKET_VER"
@@ -521,12 +521,12 @@ fi
 
 ### Updated Tests
 
-- `tests/codex-platform.bats`: Replace `platforms/codex/` with `plugins/ralph-specum-codex/` throughout
+- `tests/codex-platform.bats`: Replace `platforms/codex/` with `plugins/codex/` throughout
 - `tests/codex-platform-scripts.bats`: Same path update
 
 ### CI Changes
 
-- `.github/workflows/bats-tests.yml`: Add `plugins/ralph-specum-codex/**` to trigger paths
+- `.github/workflows/bats-tests.yml`: Add `plugins/codex/**` to trigger paths
 - Version sync job: run `tests/helpers/version-sync.sh` on PRs touching `plugins/ralph-specum*/` or `marketplace.json`
 
 ---
@@ -565,7 +565,7 @@ fi
 ## Implementation Steps
 
 1. Verify Codex plugin API docs for Stop hook declaration syntax and TOML agent field names (research-first)
-2. Create `plugins/ralph-specum-codex/` directory and `.codex-plugin/plugin.json`
+2. Create `plugins/codex/` directory and `.codex-plugin/plugin.json`
 3. Copy + adapt all 15 skills (content-sync from `platforms/codex/skills/` + apply v4.8.4->v4.9.1 delta)
 4. Write `hooks/stop-watcher.sh` (adapt Claude stop-watcher for Codex `decision:block` output format)
 5. Sync all 10 templates (add `epic.md`, replace `tasks.md` and `settings-template.md` with Claude versions)
@@ -574,7 +574,7 @@ fi
 8. Write 9 `agent-configs/*.toml.template` files (adapt from `plugins/ralph-specum/agents/*.md`)
 9. Write `agent-configs/README.md` with install instructions
 10. Append entry to `.agents/plugins/marketplace.json`
-11. Write `plugins/ralph-specum-codex/README.md`
+11. Write `plugins/codex/README.md`
 12. Create `tests/codex-plugin.bats` with all structure tests
 13. Write `tests/helpers/version-sync.sh`
 14. Update `tests/codex-platform.bats` and `tests/codex-platform-scripts.bats` (path migration)

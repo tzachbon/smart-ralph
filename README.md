@@ -57,7 +57,7 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 # 1. Download the plugin
 git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
 mkdir -p ~/.codex/plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
+cp -R /tmp/smart-ralph/plugins/codex ~/.codex/plugins/codex
 rm -rf /tmp/smart-ralph
 
 # 2. Register it in your personal marketplace
@@ -66,15 +66,15 @@ cat > ~/.agents/plugins/marketplace.json << 'EOF'
 {
   "name": "smart-ralph",
   "plugins": [{
-    "name": "ralph-specum-codex",
-    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
+    "name": "ralph-specum",
+    "source": {"source": "local", "path": "~/.codex/plugins/codex"},
     "policy": {"installation": "AVAILABLE"},
     "category": "Productivity"
   }]
 }
 EOF
 
-# 3. Restart Codex, open the plugin directory, install ralph-specum-codex
+# 3. Restart Codex, open the plugin directory, install ralph-specum
 ```
 
 **Per-project install** (available only in one repo):
@@ -83,11 +83,11 @@ EOF
 # From your project root
 git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
 mkdir -p ./plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
+cp -R /tmp/smart-ralph/plugins/codex ./plugins/codex
 cp -R /tmp/smart-ralph/.agents ./.agents
 rm -rf /tmp/smart-ralph
 
-# Restart Codex, open the plugin directory, install ralph-specum-codex
+# Restart Codex, open the plugin directory, install ralph-specum
 ```
 
 **Optional**: Enable the Stop hook for automatic task execution:
@@ -103,8 +103,8 @@ codex_hooks = true
 Install prompt:
 ```text
 Install the Smart Ralph Codex plugin from repo tzachbon/smart-ralph.
-The plugin is at plugins/ralph-specum-codex. Copy it to my personal
-plugins directory at ~/.codex/plugins/ralph-specum-codex, create a
+The plugin is at plugins/codex. Copy it to my personal
+plugins directory at ~/.codex/plugins/codex, create a
 personal marketplace entry at ~/.agents/plugins/marketplace.json,
 and restart Codex.
 ```
@@ -114,12 +114,12 @@ Migrate prompt (if upgrading from the old `platforms/codex/` skills):
 Migrate from the old Smart Ralph Codex skills to the new plugin.
 Remove all ralph-specum* skills from ~/.codex/skills/ and
 $CODEX_HOME/skills/. Then install the Smart Ralph plugin from
-repo tzachbon/smart-ralph at plugins/ralph-specum-codex into
+repo tzachbon/smart-ralph at plugins/codex into
 my personal plugins directory. Create the marketplace entry
 and restart Codex.
 ```
 
-See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for agent configs and full details.
+See [`plugins/codex/README.md`](plugins/codex/README.md) for agent configs and full details.
 
 <details>
 <summary>Migrating from old skills (platforms/codex/)?</summary>
@@ -130,7 +130,7 @@ The old `platforms/codex/` skill-installer approach is deprecated. Remove your o
 2. Follow the plugin install steps above
 3. All 15 skills ship in one package now
 
-See the [migration guide](plugins/ralph-specum-codex/README.md#migration-from-old-skills-platformscodex) for full details.
+See the [migration guide](plugins/codex/README.md#migration-from-old-skills-platformscodex) for full details.
 
 </details>
 
@@ -197,7 +197,7 @@ Codex Ralph is approval-gated by default. After each spec artifact, Ralph stops 
 
 ## Commands
 
-For Codex, the equivalent surface is `$ralph-specum` plus 14 helper skills installed via the `ralph-specum-codex` plugin.
+For Codex, the equivalent surface is `$ralph-specum` plus 14 helper skills installed via the `ralph-specum` plugin.
 
 | Command | What it does |
 |---------|--------------|
@@ -384,7 +384,7 @@ smart-ralph/
 │   │   ├── hooks/              # Stop watcher (controls execution loop)
 │   │   ├── templates/          # Spec templates
 │   │   └── schemas/            # Validation schemas
-│   ├── ralph-specum-codex/     # Codex plugin (full parity)
+│   ├── codex/                  # Codex plugin (full parity)
 │   │   ├── .codex-plugin/
 │   │   │   └── plugin.json
 │   │   ├── skills/             # 15 skills ($ralph-specum-*)

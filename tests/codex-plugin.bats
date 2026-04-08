@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 repo_root() { echo "$BATS_TEST_DIRNAME/.."; }
-plugin_root() { echo "$(repo_root)/plugins/ralph-specum-codex"; }
+plugin_root() { echo "$(repo_root)/plugins/codex"; }
 
 all_skills() {
     cat <<'EOF'

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex plugin at `plugins/ralph-specum-codex/` using the OpenAI Codex plugin API, reaching full feature parity with the Claude ralph-specum plugin (v4.9.1).
+Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex plugin at `plugins/codex/` using the OpenAI Codex plugin API, reaching full feature parity with the Claude ralph-specum plugin (v4.9.1).
 
 ---
 
@@ -16,11 +16,11 @@ Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex 
 **So that** I get the full skill set without manually copying files
 
 **Acceptance Criteria:**
-- [ ] AC-1.1: `plugins/ralph-specum-codex/.codex-plugin/plugin.json` exists and passes Codex plugin schema validation
-- [ ] AC-1.2: `plugin.json` declares `name: "ralph-specum-codex"`, `version: "4.9.1"`, and a non-empty `description`
-- [ ] AC-1.3: All skills, agents, templates, references, schemas, and scripts live under `plugins/ralph-specum-codex/` (nothing scattered elsewhere)
+- [ ] AC-1.1: `plugins/codex/.codex-plugin/plugin.json` exists and passes Codex plugin schema validation
+- [ ] AC-1.2: `plugin.json` declares `name: "ralph-specum"`, `version: "4.9.1"`, and a non-empty `description`
+- [ ] AC-1.3: All skills, agents, templates, references, schemas, and scripts live under `plugins/codex/` (nothing scattered elsewhere)
 - [ ] AC-1.4: Only `plugin.json` lives inside `.codex-plugin/`; no other files are placed there
-- [ ] AC-1.5: Plugin directory tree matches the structure documented in `plugins/ralph-specum-codex/README.md`
+- [ ] AC-1.5: Plugin directory tree matches the structure documented in `plugins/codex/README.md`
 
 #### US-2: Version Parity
 **As a** maintainer
@@ -28,9 +28,9 @@ Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex 
 **So that** users and CI can detect drift immediately
 
 **Acceptance Criteria:**
-- [ ] AC-2.1: `plugins/ralph-specum-codex/.codex-plugin/plugin.json` version equals `plugins/ralph-specum/.claude-plugin/plugin.json` version at the time of merge
+- [ ] AC-2.1: `plugins/codex/.codex-plugin/plugin.json` version equals `plugins/ralph-specum/.claude-plugin/plugin.json` version at the time of merge
 - [ ] AC-2.2: A CI check (shell script or test file) compares the two version fields and fails if they differ
-- [ ] AC-2.3: `CLAUDE.md` version-bump rule applies to `plugins/ralph-specum-codex/.codex-plugin/plugin.json` and `.agents/plugins/marketplace.json`
+- [ ] AC-2.3: `CLAUDE.md` version-bump rule applies to `plugins/codex/.codex-plugin/plugin.json` and `.agents/plugins/marketplace.json`
 
 ---
 
@@ -46,7 +46,7 @@ Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex 
 - [ ] AC-3.2: Each skill has a `SKILL.md` under `skills/<skill-name>/SKILL.md` and conforms to the Agent Skills standard (name, description, instructions sections present)
 - [ ] AC-3.3: `ralph-specum-start` incorporates the behavior of both `start` and `new` from the Claude plugin (no separate `new` skill required)
 - [ ] AC-3.4: Each SKILL.md stays under 2000 words (progressive disclosure: full body loads on demand, not at startup)
-- [ ] AC-3.5: All 15 skills from `platforms/codex/skills/` are content-audited against their Claude plugin counterparts, with differences logged in `plugins/ralph-specum-codex/references/parity-matrix.md`
+- [ ] AC-3.5: All 15 skills from `platforms/codex/skills/` are content-audited against their Claude plugin counterparts, with differences logged in `plugins/codex/references/parity-matrix.md`
 
 #### US-4: Content Delta Resolved (v4.8.4 -> v4.9.1)
 **As a** Codex user
@@ -54,7 +54,7 @@ Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex 
 **So that** I don't miss capabilities available to Claude Code users
 
 **Acceptance Criteria:**
-- [ ] AC-4.1: A diff between `platforms/codex/` skills and their Claude equivalents is documented in `plugins/ralph-specum-codex/references/parity-matrix.md` under a "Version Delta" section
+- [ ] AC-4.1: A diff between `platforms/codex/` skills and their Claude equivalents is documented in `plugins/codex/references/parity-matrix.md` under a "Version Delta" section
 - [ ] AC-4.2: Every behavioral change identified in the delta is reflected in the corresponding Codex skill body
 - [ ] AC-4.3: The `tasks.md` template in the plugin matches the Claude plugin's template in structure (both must include verification layers, failure recovery guidance, and POC-first workflow sections)
 - [ ] AC-4.4: `ralph-specum-implement` SKILL.md documents the manual fallback workflow for running the execution loop without Stop hooks
@@ -124,7 +124,7 @@ Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex 
 - [ ] AC-9.1: `ralph-specum-implement` SKILL.md contains a "Manual Loop" section that shows exact re-invocation steps
 - [ ] AC-9.2: Manual fallback instructions reference `.ralph-state.json` fields (`taskIndex`, `totalTasks`, `phase`) so users can monitor progress
 - [ ] AC-9.3: `ralph-specum-status` skill outputs hook availability (reads whether Stop hook is active) and shows fallback instructions if unavailable
-- [ ] AC-9.4: `plugins/ralph-specum-codex/references/workflow.md` documents both the hook-driven and manual execution paths
+- [ ] AC-9.4: `plugins/codex/references/workflow.md` documents both the hook-driven and manual execution paths
 
 ---
 
@@ -136,7 +136,7 @@ Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex 
 **So that** teams can install it via standard Codex install flows
 
 **Acceptance Criteria:**
-- [ ] AC-10.1: `.agents/plugins/marketplace.json` contains an entry for `ralph-specum-codex` with `name`, `description`, `version`, and `path` fields
+- [ ] AC-10.1: `.agents/plugins/marketplace.json` contains an entry for `ralph-specum` with `name`, `description`, `version`, and `path` fields
 - [ ] AC-10.2: Install policy is set to `AVAILABLE` (not `INSTALLED_BY_DEFAULT`, not `NOT_AVAILABLE`)
 - [ ] AC-10.3: Marketplace `version` field matches `plugin.json` version
 - [ ] AC-10.4: A CI check verifies that marketplace version equals plugin.json version (can be same script as AC-2.2)
@@ -163,17 +163,17 @@ Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex 
 **So that** version gaps like v4.8.4 vs v4.9.1 are caught before merge
 
 **Acceptance Criteria:**
-- [ ] AC-12.1: CI script compares `plugins/ralph-specum/.claude-plugin/plugin.json` version with `plugins/ralph-specum-codex/.codex-plugin/plugin.json` version and exits non-zero if they differ
-- [ ] AC-12.2: CI script compares `plugins/ralph-specum-codex/.codex-plugin/plugin.json` version with `.agents/plugins/marketplace.json` entry version and exits non-zero if they differ
+- [ ] AC-12.1: CI script compares `plugins/ralph-specum/.claude-plugin/plugin.json` version with `plugins/codex/.codex-plugin/plugin.json` version and exits non-zero if they differ
+- [ ] AC-12.2: CI script compares `plugins/codex/.codex-plugin/plugin.json` version with `.agents/plugins/marketplace.json` entry version and exits non-zero if they differ
 - [ ] AC-12.3: Both checks run on every PR touching `plugins/ralph-specum*/` or `marketplace.json`
 
 #### US-13: Existing Codex Tests Updated
 **As a** test suite
-**I want** all old `platforms/codex/` path references replaced with `plugins/ralph-specum-codex/`
+**I want** all old `platforms/codex/` path references replaced with `plugins/codex/`
 **So that** tests pass after the migration and no dead paths remain
 
 **Acceptance Criteria:**
-- [ ] AC-13.1: All test files referencing `platforms/codex/` are updated to `plugins/ralph-specum-codex/`
+- [ ] AC-13.1: All test files referencing `platforms/codex/` are updated to `plugins/codex/`
 - [ ] AC-13.2: No test file references `platforms/codex/` after migration (verified by grep in CI)
 - [ ] AC-13.3: Full test suite passes after update
 
@@ -278,7 +278,7 @@ Replace the skills-based `platforms/codex/` approach (v4.8.4) with a real Codex 
 ## Next Steps
 
 1. Resolve unresolved questions (TOML field names, Stop hook declaration syntax) by fetching Codex plugin API docs
-2. Author `plugins/ralph-specum-codex/` directory structure (plugin.json, skills, agents, templates, hooks)
+2. Author `plugins/codex/` directory structure (plugin.json, skills, agents, templates, hooks)
 3. Run content diff between each `platforms/codex/` skill and its Claude counterpart; document delta in parity-matrix.md
 4. Author the 3 net-new agent TOML files (spec-reviewer, qa-engineer, refactor-specialist)
 5. Write CI version-sync check script
