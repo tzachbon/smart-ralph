@@ -238,7 +238,7 @@ Create a bidirectional real-time chat channel between executor and reviewer base
 | `spec-executor.md` | Must modify | Add Chat Protocol section: read chat at task start, respect HOLD signal |
 | `external-reviewer.md` | Must modify | Implement FLOC signals, send ALIVE/INTENT-FAIL |
 | `task_review.md` template | No change | Remains authoritative formal channel |
-| `.ralph-state.json` schema | No change (No change — lastReadLine stored in .chat-state.executor.json and .chat-state.reviewer.json) | Optional per-agent lastReadLine stored separately |
+| `.ralph-state.json` schema | Must modify | lastReadLine stored in `chat.executor.lastReadLine` and `chat.reviewer.lastReadLine` within `.ralph-state.json` |
 | reviewer-subagent spec | Related | Defines external-reviewer agent that implements FLOC |
 | iterative-failure-recovery spec | Related | OVER timeout interacts with effectiveIterations |
 
@@ -282,8 +282,7 @@ FAIL looks like:
 **Dependency map**:
 - `specs/<specName>/chat.md` — shared by executor and reviewer
 - `specs/<specName>/task_review.md` — reviewer writes formal decisions
-- `.chat-state.executor.json` — executor read position
-- `.chat-state.reviewer.json` — reviewer read position
+- `.ralph-state.json` — per-agent `chat.executor.lastReadLine` and `chat.reviewer.lastReadLine`
 
 **Escalate if**:
 - DEADLOCK signal appears — human must arbitrate
