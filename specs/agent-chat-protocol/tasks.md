@@ -60,16 +60,17 @@ Focus: Validate the idea works end-to-end. Skip tests, accept hardcoded values.
        - **Read at task START**: Before starting each task, read chat.md using Read tool, parse new messages after lastReadIndex
        - **Atomic append pattern** (CRITICAL — chat.md is append-only):
          ```bash
-         # Write new message to temp file
-         TMPFILE="/tmp/chat.tmp.${AGENT}.$(date +%s%N)"
-         cat > "$TMPFILE" << 'CHATEOF'
+         # Append atomically to chat.md using flock-based exclusive access
+         (
+           exec 200>"${basePath}/chat.md.lock"
+           flock -e 200 || exit 1
+           cat >> "${basePath}/chat.md" << 'MSGEOF'
          ### [<writer> → <addressee>] <HH:MM:SS> | <task-ID> | <SIGNAL>
          <message body>
-         CHATEOF
-         # Append atomically to chat.md (NOT mv — that overwrites!)
-         cat "$TMPFILE" >> <basePath>/chat.md && rm "$TMPFILE"
+         MSGEOF
+         ) 200>"${basePath}/chat.md.lock"
          ```
-         **NEVER use `mv` to write to chat.md** — it overwrites the entire file. Always use `cat >>` for appends.
+         **IMPORTANT**: `cat >>` WITHOUT flock is also broken for concurrent writes — always use flock for exclusive access. **NEVER use `mv` to write to chat.md** — it overwrites the entire file.
        - **Update lastReadIndex**: After reading, update via atomic jq pattern:
          ```bash
          jq --argjson idx N '.chat.executor.lastReadIndex = $idx' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
