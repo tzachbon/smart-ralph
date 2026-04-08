@@ -59,7 +59,7 @@ Focus: Apply all file edits in dependency order. Skill-first (SKILL.md), then co
 
 ---
 
-- [ ] 1.5 Update commands/start.md (ralph-specum)
+- [x] 1.5 Update commands/start.md (ralph-specum)
   - **Files**: `plugins/ralph-specum/commands/start.md`
   - **Do**:
     1. Add `--auto` to the argument-hint line alongside existing flags

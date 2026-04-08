@@ -1,6 +1,6 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
-argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>] [--tasks-size fine|coarse]
+argument-hint: [name] [goal] [--fresh] [--quick] [--auto] [--commit-spec] [--no-commit-spec] [--specs-dir <path>] [--tasks-size fine|coarse]
 allowed-tools: "*"
 ---
 
@@ -37,7 +37,11 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/intent-classification.md` and follow the 
 
 ### Quick Mode Check
 
+If both `--quick` and `--auto` flags are detected in $ARGUMENTS, output: "Error: --quick and --auto are mutually exclusive. Use one or the other." and STOP immediately before creating any files.
+
 If `--quick` flag detected in $ARGUMENTS, skip to **Step 5: Quick Mode Flow**.
+
+If `--auto` flag detected in $ARGUMENTS, skip to **Step 5: Quick Mode Flow**.
 
 ## Step 3: Scan Existing Specs
 
@@ -135,7 +139,7 @@ Continuing...
      "phase": "research", "taskIndex": 0, "totalTasks": 0,
      "taskIteration": 1, "maxTaskIterations": 5,
      "globalIteration": 1, "maxGlobalIterations": 100,
-     "commitSpec": true, "quickMode": false,
+     "commitSpec": true, "quickMode": false, "autoMode": false,
      "discoveredSkills": []
    }
    ```
@@ -254,7 +258,7 @@ End response immediately.
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/quick-mode.md` and follow the full quick mode execution sequence.
 
-**Summary**: Validates input, infers name, creates spec directory, initializes state with quickMode=true, then runs all phases sequentially (research, requirements, design, tasks) delegating to subagents with Quick Mode Directive. Each artifact gets a review loop (max 3 iterations). After all artifacts generated, transitions to execution and invokes spec-executor for task 1.
+**Summary**: Validates input, infers name, creates spec directory, initializes state with quickMode=true or autoMode=true, then runs all phases sequentially (research, requirements, design, tasks) delegating to subagents with Quick Mode Directive. Each artifact gets a review loop (max 3 iterations). After all artifacts generated, transitions to execution and invokes spec-executor for task 1.
 
 **IMPORTANT**: Each phase MUST be tracked as a native Claude task via `TaskCreate` / `TaskUpdate`. Create a task at phase start (with `activeForm` for spinner text), mark it completed when the phase finishes. This provides visible progress in the UI. See quick-mode.md steps 11-15 for the exact pattern.
 
@@ -304,7 +308,7 @@ After ANY subagent returns in normal mode (no `--quick` flag):
 
 **The user must explicitly run the next command.** This gives them time to review artifacts.
 
-Exception: `--quick` mode runs all phases without stopping.
+Exception: `--quick` or `--auto` mode runs all phases without stopping.
 </mandatory>
 
 ## Quick Mode Execution (Stop-Hook)
