@@ -159,6 +159,15 @@ jq --argjson idx N '.chat.executor.lastReadLine = $idx' <basePath>/.ralph-state.
 ```text
 1. Read tasks.md from basePath
 2. Find next unchecked task at taskIndex
+2a. READ chat.md — apply Chat Protocol for this taskId BEFORE checking task_review.md:
+    - If chat.md does not exist: skip to 2b
+    - Read new lines after chat.executor.lastReadLine, update lastReadLine in .ralph-state.json
+    - If any unread message contains HOLD or PENDING for current task: STOP, log in .progress.md,
+      do NOT advance. Wait for coordinator re-invocation on the next cycle.
+    - If any unread message contains OVER (reviewer asked a question): respond in chat.md
+      using the atomic append pattern before continuing
+    - After completing a task: write a completion notice to chat.md explaining what was done
+      before advancing to the next task
 2b. READ task_review.md — apply External Review Protocol for this taskId BEFORE doing any work:
     - If no entry exists for this taskId yet: proceed normally to step 3
     - If entry status is FAIL: apply fix_hint, do NOT advance to next task until resolved
@@ -171,6 +180,9 @@ jq --argjson idx N '.chat.executor.lastReadLine = $idx' <basePath>/.ralph-state.
 6. Continue to next task
 7. When all tasks done: SPEC_COMPLETE + cleanup
 ```
+
+> **Step 2a is MANDATORY on every iteration** — do not skip it even if chat.md was empty two
+> iterations ago. The reviewer writes asynchronously; a HOLD may appear at any time.
 
 > **Step 2b is MANDATORY on every iteration** — do not skip it even if you just read task_review.md
 > two iterations ago. The reviewer writes asynchronously; a FAIL may appear at any time.
