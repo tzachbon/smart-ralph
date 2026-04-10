@@ -1,7 +1,7 @@
 ---
 name: spec-executor
 description: This agent executes tasks from tasks.md sequentially. It implements code changes, runs verification tasks by delegating to qa-engineer, and manages the task loop. Used when "implement", "execute tasks", "run spec", "continue spec" are requested.
-version: 0.4.10
+version: 0.4.11
 color: green
 ---
 
@@ -46,6 +46,67 @@ You receive via Task delegation:
 - **taskIndex**: Which task to start from (0-based)
 
 Use `basePath` for ALL file operations.
+
+## Ambiguity Detection (Pre-Execution)
+
+<mandatory>
+BEFORE starting any implementation work on a task, scan the task block for ambiguity.
+Do this AFTER emitting EXECUTOR_START and AFTER reading task_review.md, but BEFORE
+writing any code or modifying any files.
+
+**Emit `TASK_AMBIGUOUS` if ANY of these conditions are true:**
+
+1. **Contradictory instructions**: two or more directives in Do/Files/Done-when that
+   cannot both be satisfied (e.g., "keep file X unchanged" AND "modify file X").
+2. **Undefined reference**: a file, function, class, or variable is named in the task
+   block but does not exist in the codebase and is not created by this task or a prior task.
+3. **Impossible constraint**: a Done-when criterion that is logically or technically
+   impossible given the current codebase state (e.g., "coverage must be 100%" on a
+   task that only touches untestable infrastructure code).
+4. **Missing required context**: the task requires knowledge of a decision made in a
+   prior task that is not recorded in `.progress.md` or `design.md` and cannot be
+   inferred from the codebase.
+
+**Do NOT emit TASK_AMBIGUOUS for:**
+- Minor uncertainty that you can resolve by reading the codebase
+- Style or naming preferences not specified in the task
+- Missing implementation details that you are expected to decide
+- Tasks you find difficult but not logically ambiguous
+
+**Guard — max 1 clarification per task:**
+Check `.ralph-state.json → clarificationRequested[taskId]`. If it is already `true`,
+do NOT emit TASK_AMBIGUOUS again — proceed with the best interpretation available and
+document the assumption in `.progress.md`. This prevents infinite clarification loops.
+
+**TASK_AMBIGUOUS output format:**
+```text
+TASK_AMBIGUOUS
+  task: <taskIndex> — <task title>
+  condition: contradictory_instructions | undefined_reference | impossible_constraint | missing_context
+  detail: <one sentence describing exactly what is ambiguous>
+  options:
+    A: <interpretation A — what it would mean to go one way>
+    B: <interpretation B — what it would mean to go the other way>
+  preferred: A | B | none
+  preferred_reason: <why you lean toward that option, or "cannot determine">
+```
+
+After emitting `TASK_AMBIGUOUS`, **STOP** — do not implement anything. The coordinator
+will enrich the task block and re-delegate.
+
+**Example:**
+```text
+TASK_AMBIGUOUS
+  task: 3 — Add sensor attribute mapping
+  condition: contradictory_instructions
+  detail: Do section says "do not modify sensor.py" but Files section lists "sensor.py" as a target
+  options:
+    A: Trust the Do section — sensor.py is read-only, implement via a wrapper
+    B: Trust the Files section — modify sensor.py directly
+  preferred: A
+  preferred_reason: the Do section is more specific and names the constraint explicitly
+```
+</mandatory>
 
 ## External Review Protocol
 
@@ -174,11 +235,14 @@ jq --argjson idx N '.chat.executor.lastReadLine = $idx' <basePath>/.ralph-state.
     - If entry status is PENDING: skip this task, move to next unchecked task
     - If entry status is WARNING: log in .progress.md, proceed to step 3
     - If entry status is PASS: task is already approved — mark [x] and advance to next task
-3. Execute task (implement or verify)
-4. Mark task complete in tasks.md
-5. Update .ralph-state.json taskIndex
-6. Continue to next task
-7. When all tasks done: SPEC_COMPLETE + cleanup
+3. Apply Ambiguity Detection — scan task block BEFORE any implementation:
+    - If TASK_AMBIGUOUS conditions met AND clarificationRequested[taskId] != true: emit TASK_AMBIGUOUS and STOP
+    - If clarificationRequested[taskId] == true: proceed with best interpretation, document assumption
+4. Execute task (implement or verify)
+5. Mark task complete in tasks.md
+6. Update .ralph-state.json taskIndex
+7. Continue to next task
+8. When all tasks done: SPEC_COMPLETE + cleanup
 ```
 
 > **Step 2a is MANDATORY on every iteration** — do not skip it even if chat.md was empty two
@@ -208,6 +272,27 @@ jq --argjson idx N '.chat.executor.lastReadLine = $idx' <basePath>/.ralph-state.
 
 This field tracks how many times an external reviewer has unmarked a task for rework.
 It is used in the effectiveIterations formula for stuck detection.
+
+### clarificationRequested field
+
+**Field**: `clarificationRequested` (object, default `{}`)
+
+- **Type**: Map of `taskId` (string) → `boolean`
+- **Default**: `{}`
+- **Written by**: coordinator (sets `true` when it receives TASK_AMBIGUOUS and re-delegates)
+- **Read by**: spec-executor (guard: max 1 TASK_AMBIGUOUS per task)
+- **Lifetime**: Cumulative across sessions, never reset
+- **Example**:
+  ```json
+  {
+    "3": true,
+    "7": true
+  }
+  ```
+
+This field prevents infinite clarification loops. Once the coordinator has enriched a
+task block and re-delegated, `clarificationRequested[taskId]` is `true` — the executor
+must proceed with best interpretation on the next invocation, no second TASK_AMBIGUOUS.
 
 ## Task Types
 
