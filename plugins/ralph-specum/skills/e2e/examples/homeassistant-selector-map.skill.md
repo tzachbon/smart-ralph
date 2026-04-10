@@ -180,3 +180,50 @@ await page.waitForTimeout(2000)
 - [ ] Ningún entity_id ni ID dinámico de HA en selectores
 - [ ] Los `data-testid` siguen el formato `{dominio}-{entidad}-{variante}-{acción}`
 - [ ] No hay testids duplicados en la misma vista
+
+---
+
+## HA Native Navigation
+
+Native System navigation paths in Home Assistant (not custom Lovelace panels). Tests that need to reach native HA pages should navigate using UI controls (sidebar and links), not `page.goto()` to an internal route.
+
+> **Important**: HA sidebar labels are **localized** (e.g., "Settings" in English, "Configuración" in Spanish). Prefer `data-panel-id` selectors for sidebar items — they are locale-independent. Use `getByRole` with accessible names only as fallback and document the expected locale in `ui-map.local.md`.
+
+Recommended navigation steps (Playwright examples):
+
+1. Sidebar → Settings (system configuration)
+
+```typescript
+// Open Settings via sidebar — use data-panel-id (locale-independent)
+await page.locator('[data-panel-id="config"]').click();
+// Wait for the Settings dashboard to render (not the sidebar item, which was already visible)
+await page.locator('ha-config-dashboard').waitFor({ state: 'visible', timeout: 15000 });
+```
+
+2. Settings → Developer tools
+
+```typescript
+// In Settings, click Developer tools link
+await page.getByRole('link', { name: 'Developer tools' }).click();
+// Note: inner links within Settings panels are generally English, but verify with browser_snapshot
+await page.getByRole('heading', { name: 'Developer tools' }).waitFor({ state: 'visible' });
+```
+
+3. Developer tools → States / Devices tabs
+
+```typescript
+// Switch to the States tab
+await page.getByRole('tab', { name: 'States' }).click();
+await page.getByRole('tab', { name: 'States' }).waitFor({ state: 'visible' });
+
+// Or switch to Devices
+await page.getByRole('tab', { name: 'Devices' }).click();
+await page.getByRole('tab', { name: 'Devices' }).waitFor({ state: 'visible' });
+```
+
+Notes:
+- Do NOT use `page.goto()` to navigate to internal HA routes (e.g., `/config/developer-tools/state`) — these are client-side routes and bypass app initialization and auth state.
+- Use `data-panel-id` selectors for sidebar items (locale-independent). For inner links, `getByRole` names may vary by HA language — always verify with `browser_snapshot` first and record in `ui-map.local.md`.
+- After navigating, always run a `browser_snapshot` + stable state detection (see `playwright-session.skill.md`) before asserting selectors.
+
+These steps are examples; prefer `ui-map.local.md` entries if they exist for a specific instance under test.

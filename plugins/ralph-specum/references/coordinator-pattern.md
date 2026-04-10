@@ -370,20 +370,39 @@ Task Body:
 [Extract relevant design decisions from design.md for the verification scope.
  For E2E verification: include Test Strategy section and any framework-specific decisions.]
 
-### Anti-Patterns (DO NOT)
-[List anti-patterns that apply to verification. For E2E/VE tasks ALWAYS include
- the relevant sections from `${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md`,
- plus any project-specific anti-patterns from .progress.md Learnings]
+### Anti-Patterns (DO NOT) — MANDATORY for ALL VE tasks
+ALWAYS load and include the full Navigation and Selector anti-pattern sections from:
+  `${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md`
 
-### Required Skills (for VE tasks)
-[Same skill paths as sequential delegation — see above]
+Critical rules (non-negotiable):
+- NEVER use `page.goto()` for internal app routes — navigate via UI elements (sidebar, menu clicks)
+- NEVER invent selectors — read `ui-map.local.md` or use `browser_generate_locator` from live snapshot
+- If you land on a 404, login page, or unexpected URL: run Unexpected Page Recovery (see playwright-session.skill.md)
+  DO NOT assume the element does not exist. The wrong navigation is the bug, not the missing element.
+- NEVER simplify a test to remove the user flow — a passing test that bypasses the real flow is worthless
+
+Plus project-specific anti-patterns from .progress.md Learnings.
+
+### Required Skills (ALL VE tasks — load BEFORE writing any browser code)
+
+Load these base skills in order — they are mandatory for every VE task regardless of platform:
+1. `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-env.skill.md`
+2. `${CLAUDE_PLUGIN_ROOT}/skills/e2e/mcp-playwright.skill.md`
+3. `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-session.skill.md`
+
+Then load any **platform-specific skills** listed in the task's `Skills:` metadata field
+(the task-planner writes those during planning, based on what it discovered in research.md).
+
+**CRITICAL**: Do NOT start writing browser interactions before loading ALL listed skills.
+The Navigation Anti-Patterns section of playwright-session.skill.md is MANDATORY reading.
 
 ### Source of Truth
-[Point to the authoritative files the qa-engineer MUST read before writing any code:
+Point to the authoritative files the qa-engineer MUST read before writing any code:
  - design.md → ## Test Strategy (mock boundaries, test conventions, runner)
  - requirements.md → ## Verification Contract (project type, entry points)
  - .progress.md → Learnings (what failed before and why)
- - If HA project: skills/e2e/examples/homeassistant-selector-map.skill.md]
+ - ui-map.local.md → selectors to use (never invent selectors not in this file)
+ - Any platform-specific skill files listed in the task's `Skills:` metadata
 
 Instructions:
 1. Execute the verification as specified
@@ -423,18 +442,24 @@ Current task from tasks.md:
 
 ### Anti-Patterns (DO NOT)
 [List specific anti-patterns from design.md or .progress.md that apply to this task.
- For E2E/VE tasks, ALWAYS include the anti-patterns from
- `${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md` relevant to the task,
- plus any project-specific anti-patterns from .progress.md Learnings]
+ For E2E/VE tasks, ALWAYS include the full Navigation and Selector sections from
+ `${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md` — do NOT summarize, paste the rules.
+ Plus any project-specific anti-patterns from .progress.md Learnings.
+ Critical: if the task type is VE or [VERIFY], paste this verbatim:
+   "NEVER use page.goto() for internal app routes — navigate via UI elements.
+    If you land on 404/login/unexpected page: do NOT assume element is missing.
+    Run Unexpected Page Recovery from playwright-session.skill.md instead."]
 
-### Required Skills (for VE tasks)
-[List exact skill file paths the spec-executor must load for this task type.
- For fullstack/frontend VE tasks:
- - plugins/ralph-specum/skills/e2e/playwright-env.skill.md
- - plugins/ralph-specum/skills/e2e/mcp-playwright.skill.md
- - plugins/ralph-specum/skills/e2e/playwright-session.skill.md
- If project uses Home Assistant:
- - plugins/ralph-specum/skills/e2e/examples/homeassistant-selector-map.skill.md]
+### Required Skills (for VE and [VERIFY] tasks — MANDATORY)
+[When this task is a VE task or has [VERIFY] marker, list the skills the spec-executor
+ must load in order BEFORE writing any browser code:
+ - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-env.skill.md`
+ - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/mcp-playwright.skill.md`
+ - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-session.skill.md`
+ - Any platform-specific skills listed in this task's `Skills:` metadata
+   (written there by the task-planner based on research.md discovery)
+
+For non-VE/non-[VERIFY] tasks, omit this section.]
 
 ### Success Criteria
 [Copy the Done when + Verify sections from the task, plus any additional

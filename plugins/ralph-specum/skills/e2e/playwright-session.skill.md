@@ -344,6 +344,64 @@ For platform-specific navigation (Home Assistant sidebar, etc.), load the domain
 
 ---
 
+## Unexpected Page Recovery
+
+<mandatory>
+After any navigation action (`browser_navigate`, click that triggers navigation, form submit), run this check BEFORE asserting anything:
+
+### Step 1 — Snapshot and identify current page
+
+Call `browser_snapshot` and inspect:
+1. Current URL (from snapshot title or accessibility tree root)
+2. Page title and visible H1
+
+### Step 2 — Classify the page
+
+| What you see | Classification | Action |
+|---|---|---|
+| Login form / `username` + `password` fields | **Auth redirect** | Run Step 3 |
+| HTTP 404 / "Page not found" / blank page | **Bad URL** | Run Step 3 |
+| Unexpected panel / wrong path in URL | **Wrong route** | Run Step 3 |
+| Expected content | **OK** | Proceed normally |
+
+### Step 3 — Diagnose BEFORE fixing
+
+**Do NOT**:
+- Assume the element you were looking for does not exist
+- Simplify the test to avoid the problematic navigation
+- Try harder on the wrong page
+
+**DO**:
+1. Identify which navigation step caused the unexpected landing:
+   - Was `page.goto()` used on an internal route? → That is the bug. See Navigation Anti-Patterns above.
+   - Was `auth_callback` URL used? → That is the bug. Use `new URL(url).origin` instead.
+   - Was a UI element clicked that does not navigate to the right place?
+2. Note the diagnosis in your output.
+
+### Step 4 — Recover
+
+1. Navigate back to the base URL: `browser_navigate(appUrl)` — use `appUrl` from `playwrightEnv`
+2. Run Stable State Detection
+3. Re-navigate using the **correct** UI path (sidebar click, menu click, etc.) per `ui-map.local.md`
+4. If the recovery succeeds: continue the test from the correct page
+5. If the recovery fails twice (still landing on unexpected page): emit `VERIFICATION_FAIL`:
+   ```
+   VERIFICATION_FAIL
+     actual: unexpected page after navigation recovery
+     expected: <expected route/panel>
+     diagnosis: <root cause identified in Step 3>
+     recovery_attempts: 2
+   ```
+
+### Golden rule
+
+> The unexpected page is evidence that a **previous navigation step was wrong**.
+> It is never evidence that the target element does not exist.
+> Roll back, fix the navigation, then try again.
+</mandatory>
+
+---
+
 ## Cleanup Checklist
 
 Before marking any VE task complete:

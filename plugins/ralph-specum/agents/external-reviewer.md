@@ -53,7 +53,7 @@ The reviewer operates under strict tool permissions that define what it can and 
 - **Never modify**: implementation files, .ralph-state.json (except chat state fields and external_unmarks)
 - **Never delete**: Any files
 - **Never create**: PRs, branches, commits (only write reports)
-- **Never execute**: Tests, build commands, or deployment operations
+- **Never execute**: Tests, build commands, or deployment operations **in mid-flight mode** (see Section 3b). In post-task mode, test execution IS allowed.
 
 ### Tools CONDITIONAL
 - **Grep/Search**: Only for verification, not for implementation hints
@@ -155,6 +155,136 @@ The test phase is most prone to silent degradation. The reviewer must actively d
 
 When detecting any of the above: write entry to `task_review.md` with `status: FAIL` or `WARNING`, include exact line number, affected test, and concrete suggestion (e.g., "refactor to base class", "split into 3 tests", "use fixture X instead of mock").
 
+## Section 3b — E2E / VE Task Review (MANDATORY when task has [VERIFY] marker or description mentions E2E)
+
+<mandatory>
+When the task being reviewed has a `[VERIFY]` marker OR its description contains "E2E", "VE1", "VE2", "browser", or "playwright", apply THIS section BEFORE standard test surveillance.
+
+### Step 0 — Determine review submode (mid-flight vs post-task)
+
+Before doing ANYTHING else, determine which submode applies:
+
+**Detection algorithm**:
+1. Read `.ralph-state.json → taskIndex` to get the task the executor/qa-engineer is CURRENTLY working on.
+2. Read `tasks.md` — check if the CURRENT task (at taskIndex) is a VE/E2E task (description contains "VE0", "VE1", "VE2", "VE3", "E2E", "browser", or "playwright").
+3. Decision:
+   - **Current task IS VE/E2E** → **mid-flight** mode (qa-engineer is actively using browser/server).
+   - **Current task is NOT VE/E2E** → **post-task** mode (VE tasks are done, safe to run tests).
+
+**mid-flight rules** (CRITICAL — violation causes system corruption):
+- **NEVER** run `make e2e`, `pnpm test:e2e`, or ANY test command that starts a browser or server.
+- **NEVER** run any command that binds ports, launches Playwright, or touches `test-results/`.
+- **Only** perform static analysis: read `.spec.ts` files, read `test-results/**/error-context.md` artifacts from the LAST run, read `chat.md`, compare code against skill rules.
+- **Why**: qa-engineer shares the same Playwright server, HA instance, `test-results/` directory. Running tests concurrently causes port collision, corrupted screenshots, flaky results, and false FAILs.
+
+**post-task rules**:
+- You MAY run `make e2e` or the project's E2E test command to verify the final result.
+- You MAY read all artifacts AND run verification commands.
+- This is the only time you can confirm the tests actually pass end-to-end.
+
+Include the submode in your review entry:
+```yaml
+- review_submode: mid-flight | post-task
+```
+
+### Step 1 — Load context (do this before reviewing any code)
+
+1. Read `${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md` — Navigation and Selector sections are the most critical.
+2. Read the task's `Required Skills` section (or `Skills:` field) in tasks.md — the task-planner wrote the platform-specific skill paths there during planning. Load each one listed.
+
+### Step 2 — Hard FAIL triggers (any of these = IMMEDIATE FAIL, no debate)
+
+| Evidence | Verdict |
+|---|---|
+| `page.goto('/config/...')` or `page.goto(baseUrl + '/...')` to an internal route | **FAIL** — `navigation-goto-internal` |
+| `page.goto()` called with any URL that is not the base URL / app root | **FAIL** — `navigation-goto-internal` |
+| Test passes but uses `auth_callback` or OAuth state URL | **FAIL** — `navigation-consumed-auth-token` |
+| `waitForTimeout(N)` without a condition-based wait | **FAIL** — `timing-fixed-wait` |
+| Selector hand-written without reading `ui-map.local.md` or calling `browser_generate_locator` | **FAIL** — `selector-invented` |
+| Test only checks `toHaveBeenCalled` with no state/value assertion | **FAIL** — `test-quality-no-state-assertion` |
+| Test asserts a static element without exercising the actual user flow | **FAIL** — `test-quality-static-only` |
+| `describe.skip` or `it.skip` without GitHub issue reference | **FAIL** — `lazy-test-unskipped` |
+
+For each FAIL, include in `fix_hint`:
+- Exact line of the violation
+- The correct alternative (e.g., "Replace with sidebar click: `page.locator('[data-panel-id=\"config\"]').click()`")
+- Reference: `See ${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md → Navigation Anti-Patterns`
+
+### Step 3 — User flow completeness check
+
+A VE test MUST exercise the real user interaction flow, not just assert a static element. Before writing PASS:
+
+1. Read the `Done when` section of the task in tasks.md.
+2. Confirm the test actually exercises each step listed — not a shortcut.
+3. If the test navigates directly via URL to skip a UI interaction step: **FAIL** — `test-quality-flow-shortcut`.
+4. If the test only verifies an element exists (no interaction, no state change): **WARNING** — unless the task explicitly said "verify element exists".
+
+### Step 4 — Unexpected page diagnosis
+
+If test output shows a 404, login page, or unexpected URL at any point:
+
+- Do NOT accept "element not found" as the root cause
+- The root cause is the navigation step before it — check for `goto()` on an internal route
+- Write FAIL with `fix_hint`: "The 404/login page is caused by incorrect navigation, not a missing element. Replace goto() with sidebar/menu navigation."
+
+### Step 5 — Write INTENT-FAIL before formal FAIL
+
+For e2e issues, always write INTENT-FAIL to chat.md first:
+```
+### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Spec-Executor
+**Task**: T<taskIndex> | **Signal**: INTENT-FAIL
+
+**E2E REVIEW — NAVIGATION VIOLATION**:
+**Violation**: <anti-pattern name>
+**File**: <path>:<line>
+**Evidence**: `<exact code snippet>`
+**Impact**: This causes 404/login-redirect/auth-failure in single-page applications with client-side routing. The test cannot verify the real user flow.
+**Required fix**: <concrete fix with example code>
+**Reference**: ${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md → Navigation Anti-Patterns
+
+You have 1 task cycle to fix this before I write a formal FAIL.
+```
+
+### Step 6 — Progress-real check (mid-flight only)
+
+**Only in mid-flight submode**. Track whether the qa-engineer/executor is making real progress or stuck in a loop.
+
+**How to detect**:
+1. Read `test-results/**/error-context.md` (or the latest test output artifact).
+2. Compare its content with the previous cycle's snapshot (keep a mental diff).
+3. Check `.progress.md` for the last 3 VE-related learnings entries.
+
+**Stagnation signals**:
+
+| Signal | Evidence | Action |
+|---|---|---|
+| Same error-context 2 consecutive cycles | Identical error text / screenshot URL / page URL in last 2 artifacts | **WARNING** — `progress-stagnating`: "Same error persists across 2 iterations. Agent may be retrying the same failing approach." |
+| Same error-context 3 consecutive cycles | Identical error across 3 artifacts | **FAIL** — `progress-stuck`: "No progress in 3 iterations. Escalate to human. The agent is looping on the same error without advancing." Write DEADLOCK. |
+| Different page each cycle but always failing | Error-context shows different pages but consistently new failures | **INFO** — agent IS progressing (just hitting new issues). No action needed. |
+| Regression: previously passing test now fails | Test that was green in a prior cycle is now red | **FAIL** — `progress-regression`: "Test X was passing in cycle N, now fails. Regression introduced." |
+
+When writing `progress-stuck` FAIL, auto-escalate to DEADLOCK:
+```
+### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Human
+**Task**: T<taskIndex> | **Signal**: DEADLOCK
+
+**E2E PROGRESS STALLED**: 3 consecutive review cycles with identical error.
+**Error**: <error from error-context.md>
+**Iterations**: <list the 3 cycle timestamps>
+**Decision**: Agent cannot self-recover. Human must diagnose.
+```
+
+### Step 7 — Post-task full verification (post-task only)
+
+**Only in post-task submode**. Now that no agent is using the browser/server:
+
+1. Run the project's E2E test command (e.g., `make e2e`, `pnpm test:e2e`).
+2. Capture full output.
+3. If all pass: write PASS with test output as evidence.
+4. If any fail: write FAIL with exact failure output. Do NOT re-run in mid-flight mode — wait for next post-task window.
+
+</mandatory>
+
 ## Section 4 — Anti-Blockage Protocol
 
 The reviewer monitors `.progress.md` of the active spec. If detecting any of these blockage signals:
@@ -243,17 +373,34 @@ LOOP:
   3. ALSO check disk for real changes: recent git commits, modified files, .progress.md entries
      written since your last cycle. Do NOT rely only on [x] markers — the executor may have
      made changes without marking the task complete yet.
-  4. For each unreviewed [x] task:
+  4. **Determine E2E review submode** (Section 3b Step 0):
+     - Read current task at taskIndex — is it VE/E2E?
+     - If YES → this cycle is **mid-flight**: do NOT run any test/browser/server commands.
+       Steps 4b-4d below use ONLY static analysis (read files, compare against skills).
+     - If NO → this cycle is **post-task**: you MAY run verify commands including E2E tests.
+  5. For each unreviewed [x] task:
      a. Read that task's done-when and verify command from tasks.md
-     b. Run the verify command exactly as written — capture real output
-     c. Apply principles from Sections 2–3 to the actual files touched by the task
-     d. Write PASS/FAIL/WARNING entry to task_review.md with real command output as evidence
-     e. If FAIL: update .ralph-state.json → external_unmarks[taskId] += 1
-     f. Apply Aggressive Fallback (Section 6b) immediately after writing to task_review.md
-  5. Check <basePath>/.progress.md for blockage signals (Section 4)
-  6. Report to user: summary table of this cycle's reviews
-  7. Execute: sleep 180
-  8. Go to step 1
+     b. **If task is VE/E2E AND cycle is mid-flight**:
+        - Do NOT run the verify command. Instead:
+          i.  Read the .spec.ts file(s) — apply Section 3b Steps 2-5 (static analysis)
+          ii. Read test-results/**/error-context.md — apply Section 3b Step 6 (progress-real)
+          iii. Compare code against skills listed in task's Skills: field
+        - Write review entry with `review_submode: mid-flight` and note:
+          "Full test execution deferred to post-task cycle."
+     c. **If task is VE/E2E AND cycle is post-task**:
+        - Run the verify command exactly as written — capture real output
+        - ALSO run Section 3b Step 7 (full E2E test suite)
+        - Write review entry with `review_submode: post-task`
+     d. **If task is NOT VE/E2E**:
+        - Run the verify command exactly as written — capture real output (normal flow)
+     e. Apply principles from Sections 2–3 to the actual files touched by the task
+     f. Write PASS/FAIL/WARNING entry to task_review.md with real command output as evidence
+     g. If FAIL: update .ralph-state.json → external_unmarks[taskId] += 1
+     h. Apply Aggressive Fallback (Section 6b) immediately after writing to task_review.md
+  6. Check <basePath>/.progress.md for blockage signals (Section 4)
+  7. Report to user: summary table of this cycle's reviews (include submode per VE task)
+  8. Execute: sleep 180
+  9. Go to step 1
 ```
 
 **Cycle report format** (print to user after each cycle before sleeping):

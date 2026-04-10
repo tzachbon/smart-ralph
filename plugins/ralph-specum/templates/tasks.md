@@ -333,9 +333,18 @@ After POC validated, clean up code.
   - **Done when**: Original failure no longer reproduces, BEFORE/AFTER comparison documented
   - **Note**: This task only applies when goal was classified as "fix" type. Skip if goal was "add" or "enhance".
 
-<!-- VE Tasks: VE1 (startup), VE2 (check), VE3 (cleanup) — generated from research.md Verification Tooling section -->
+<!-- VE Tasks: VE0 (ui-map-init), VE1 (startup), VE2 (check), VE3 (cleanup) — generated from research.md Verification Tooling section -->
+<!-- Skills field is REQUIRED on every VE task. task-planner: replace the comment placeholders below with actual platform-specific skills discovered in research.md (e.g., homeassistant-selector-map). Remove the HTML comment if no platform skills apply. -->
+
+- [ ] VE0 [VERIFY] Build selector map (ui-map-init)
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, ui-map-init<!-- task-planner: append platform-specific skills here (e.g., homeassistant-selector-map) if research.md discovered them -->
+  - **Do**: Follow `${CLAUDE_PLUGIN_ROOT}/skills/e2e/ui-map-init.skill.md` in full — open a fresh browser session, explore app routes, write `ui-map.local.md` to spec basePath.
+  - **Verify**: `test -f {{basePath}}/ui-map.local.md && echo PASS`
+  - **Done when**: `ui-map.local.md` exists with at least one route entry
+  - **Commit**: None
 
 - [ ] VE1 [VERIFY] E2E startup: launch dev server and verify health
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session<!-- task-planner: append platform-specific skills here if research.md discovered them -->
   - **Do**:
     1. Start dev server: `{{dev_cmd}}` (background, save PID to /tmp/ve-pids.txt)
     2. Wait for server ready: poll `{{health_endpoint}}` on port `{{port}}` until 200 (timeout 30s)
@@ -344,6 +353,7 @@ After POC validated, clean up code.
   - **Commit**: None
 
 - [ ] VE2 [VERIFY] E2E check: run critical flow verification
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, selector-map<!-- task-planner: append platform-specific skills here if research.md discovered them -->
   - **Do**:
     1. Run critical flow check: `{{critical_flow_cmd}}`
     2. Verify output matches expected behavior
@@ -352,6 +362,7 @@ After POC validated, clean up code.
   - **Commit**: None
 
 - [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session
   - **Do**:
     1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
     2. Fallback port cleanup: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`
@@ -545,9 +556,18 @@ Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
 
 > (Same structure as POC Phase 4 above)
 
-<!-- VE Tasks: VE1 (startup), VE2 (check), VE3 (cleanup) — generated from research.md Verification Tooling section -->
+<!-- VE Tasks: VE0 (ui-map-init), VE1 (startup), VE2 (check), VE3 (cleanup) — generated from research.md Verification Tooling section -->
+<!-- Skills field is REQUIRED on every VE task. task-planner: replace the comment placeholders below with actual platform-specific skills discovered in research.md (e.g., homeassistant-selector-map). Remove the HTML comment if no platform skills apply. -->
+
+- [ ] VE0 [VERIFY] Build selector map (ui-map-init)
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, ui-map-init<!-- task-planner: append platform-specific skills here (e.g., homeassistant-selector-map) if research.md discovered them -->
+  - **Do**: Follow `${CLAUDE_PLUGIN_ROOT}/skills/e2e/ui-map-init.skill.md` in full — open a fresh browser session, explore app routes, write `ui-map.local.md` to spec basePath.
+  - **Verify**: `test -f {{basePath}}/ui-map.local.md && echo PASS`
+  - **Done when**: `ui-map.local.md` exists with at least one route entry
+  - **Commit**: None
 
 - [ ] VE1 [VERIFY] E2E startup: launch dev server and verify health
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session<!-- task-planner: append platform-specific skills here if research.md discovered them -->
   - **Do**:
     1. Start dev server: `{{dev_cmd}}` (background, save PID to /tmp/ve-pids.txt)
     2. Wait for server ready: poll `{{health_endpoint}}` on port `{{port}}` until 200 (timeout 30s)
@@ -556,6 +576,7 @@ Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
   - **Commit**: None
 
 - [ ] VE2 [VERIFY] E2E check: run critical flow verification
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, selector-map<!-- task-planner: append platform-specific skills here if research.md discovered them -->
   - **Do**:
     1. Run critical flow check: `{{critical_flow_cmd}}`
     2. Verify output matches expected behavior
@@ -564,6 +585,7 @@ Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
   - **Commit**: None
 
 - [ ] VE3 [VERIFY] E2E cleanup: stop server and release resources
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session
   - **Do**:
     1. Kill processes by PID: `kill $(cat /tmp/ve-pids.txt) 2>/dev/null; sleep 2; kill -9 $(cat /tmp/ve-pids.txt) 2>/dev/null || true`
     2. Fallback port cleanup: `lsof -ti :{{port}} | xargs -r kill 2>/dev/null || true`

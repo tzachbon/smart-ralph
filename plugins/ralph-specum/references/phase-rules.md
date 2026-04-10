@@ -301,6 +301,41 @@ VE tasks follow this structure:
 2. **VE2 (Check)** — Test critical user flows via browser (using selectors from `ui-map.local.md`), curl, or CLI. Verify expected output.
 3. **VE3 (Cleanup)** — Kill by PID, kill by port fallback, remove PID file, verify port free
 
+### VE2 Task Requirements — Minimum Spec for User Flow Verification
+
+**VE2 tasks MUST describe a complete user interaction flow**, not just a static element check. A VE2 task is rejected if its `Done when` or `Do` section only asserts that an element is visible — it must verify interaction and state change.
+
+**Minimum required structure for any VE2 task**:
+```markdown
+- [ ] VE2 [VERIFY] E2E check: <user-facing feature being verified>
+  - **Do**:
+    1. Read `ui-map.local.md` to find selectors for <panel/route>
+    2. Navigate to the app root (`appUrl` from `playwrightEnv`) — do NOT use goto() to an internal route
+    3. Navigate via UI: click `<selector from ui-map.local.md>` to open <panel>
+    4. Interact with the feature: <specific interaction — click, fill, toggle, etc.>
+    5. Verify state changed: <observable change — entity updated, config saved, UI reflected, etc.>
+  - **Done when**:
+    - [ ] Navigated to <panel> via sidebar/menu click (not page.goto to internal route)
+    - [ ] <interaction> completed without error
+    - [ ] <state change> is visible in the UI or confirmed via assertion
+    - [ ] No 404, login page, or unexpected URL encountered during the flow
+  - **Verify**: `<test runner command> 2>&1 | tail -20`
+  - **Commit**: `test(scope): E2E VE2 verify <feature>`
+```
+
+**Platform-specific navigation patterns**
+
+The task-planner discovers the target platform during research (from requirements.md / research.md)
+and writes the required navigation selectors and skill paths directly into the VE2 task body under
+`Required Skills` and `Do`. Those details live in the spec artifacts — NOT in this file.
+
+For reference examples of platform-specific patterns, see `${CLAUDE_PLUGIN_ROOT}/skills/e2e/examples/`.
+
+**Anti-pattern explicitly banned in Done when** — reject any VE2 task that includes these as Done when criteria:
+- "Element `<selector>` is visible" (static check, no interaction)
+- "Page loaded without error" (load check, no flow)
+- "`page.goto()` navigated to the config URL" (goto is the anti-pattern)
+
 ### UI Map Lifecycle
 
 `ui-map.local.md` is a **living document** — it grows incrementally as the spec progresses.

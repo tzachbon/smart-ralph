@@ -158,6 +158,32 @@ Cross-reference implementation against the design.md Components section. Each ta
 - No Hallucinations PASS: Code references `agents/spec-reviewer.md` which exists in the file structure.
 - No Hallucinations FAIL: Code imports from `utils/review-engine.js` which doesn't exist anywhere in the codebase.
 
+### E2E Review Rubric
+
+When `artifactType` is `e2e-review`, apply this rubric instead of the Execution Rubric. The coordinator passes this type when Layer 3 review triggers on a phase that includes VE tasks.
+
+**Context the coordinator provides**: test file(s) content, `test-results/**/error-context.md` artifacts, `ui-map.local.md`, task's `Skills:` field, and `.progress.md` VE-related learnings.
+
+| Dimension | PASS Criteria | FAIL Criteria |
+|-----------|--------------|---------------|
+| No goto internal | No `page.goto()` to any route other than base URL / app root | Any `page.goto('/config/...')` or `page.goto(baseUrl + '/...')` to internal route |
+| Selectors grounded | Selectors come from `ui-map.local.md`, OR from `browser_generate_locator` output documented in error-context, OR derived from a `browser_snapshot` explicitly taken during this session | Selectors hand-written without evidence in ANY of the three valid sources (ui-map, error-context, session snapshot) |
+| No fixed waits | No `waitForTimeout()` anywhere in test code | Any `waitForTimeout(N)` present in test code |
+| User flow real | Test exercises the full user interaction flow listed in task's `Done when` | Test navigates directly via URL to skip UI steps, or only checks static elements |
+| Progress real | Each VE iteration shows different page/state in error-context (agent is advancing) | Same error-context.md content repeated across 3+ consecutive iterations — agent is stuck |
+| No fake E2E | Test uses `browser_*` MCP tools or Playwright API to interact with a real browser | Test passes by running grep/shell commands on source code disguised as "E2E verification" |
+
+**Examples**:
+- No goto internal PASS: Test navigates via `page.getByRole('link', { name: 'Settings' }).click()` then `page.getByRole('link', { name: 'Developer tools' }).click()`.
+- No goto internal FAIL: `page.goto('/config/developer-tools/state')` — bypasses SPA routing, causes 404/auth failure.
+- Selectors grounded PASS: `page.getByTestId('ev-route-card')` — matches entry in `ui-map.local.md`.
+- Selectors grounded PASS (alt): `page.getByRole('button', { name: 'Save' })` — derived from `browser_snapshot` taken during this session (documented in error-context).
+- Selectors grounded FAIL: `page.locator('.MuiCard-root:nth-child(3)')` — no source for this selector in ui-map, error-context, or session snapshot.
+- No fake E2E PASS: Test calls `browser_navigate`, `browser_snapshot`, `browser_click` to interact with live app.
+- No fake E2E FAIL: Test runs `grep -q "Settings" src/components/Sidebar.tsx && echo PASS` — this is source code inspection, not E2E.
+- Progress real PASS: Iteration 1 error on login page, iteration 2 error on dashboard, iteration 3 passes — agent is making progress.
+- Progress real FAIL: Iterations 1, 2, 3 all show `error-context.md` with "404 Not Found at /config/developer-tools" — agent is stuck.
+
 ## Iteration Awareness
 
 <mandatory>
@@ -177,7 +203,7 @@ When `iteration` > 1:
 | Empty artifact (no content) | REVIEW_FAIL with finding: "Artifact is empty. No content to review." Skip all rubric dimensions. |
 | Artifact has only frontmatter (no body) | REVIEW_FAIL with finding: "Artifact contains only frontmatter with no substantive content." |
 | Missing upstream artifacts | Review what's available; note missing upstream in findings as INFO (not FAIL). Do not FAIL dimensions that require cross-referencing if upstream is unavailable. |
-| Artifact type not recognized | REVIEW_FAIL with finding: "Unknown artifact type: $type. Expected one of: research, requirements, design, tasks, execution." |
+| Artifact type not recognized | REVIEW_FAIL with finding: "Unknown artifact type: $type. Expected one of: research, requirements, design, tasks, execution, e2e-review." |
 | Partial artifact (some sections exist) | Review existing sections; FAIL missing required sections per rubric |
 | Missing iteration number | Default to iteration 1; do not reference prior findings |
 

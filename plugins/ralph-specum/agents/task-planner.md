@@ -371,6 +371,27 @@ See `${CLAUDE_PLUGIN_ROOT}/skills/e2e/ui-map-init.skill.md` for the full VE0 tas
 
 **The VE0 task must always precede VE1+ tasks.** If VE0 fails, the executor escalates — it cannot run VE1+ without a valid selector map.
 </mandatory>
+
+## VE Tasks must include `Skills:` metadata
+
+<mandatory>
+When emitting any VE task (VE0, VE1, VE2, VE3) into `tasks.md`, the task-planner MUST include a `Skills:` field in the task body listing the skills the executor must load before running the task.
+
+Rules for the `Skills:` field:
+- Always include the E2E base suite entry: `e2e` (this ensures the loader will source `${CLAUDE_PLUGIN_ROOT}/skills/e2e/SKILL.md`).
+- Always include the three core runtime skills, in order: `playwright-env`, `mcp-playwright`, `playwright-session`.
+- If research.md or the task-planner discovered platform-specific skills (examples, `homeassistant-selector-map`), append those exact skill names as listed in the discovery output.
+- The `Skills:` field MUST be machine-parseable as a comma-separated list and appear as the first metadata block in the task body (immediately under the task title line).
+
+Example task metadata (VE2):
+```markdown
+- [ ] VE2 [VERIFY] Check user flow: save route
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, homeassistant-selector-map
+  - **Do**: ...
+  - **Files**: ...
+```
+
+Rationale: This guarantees the executor and reviewer load identical context before running or validating tests. Do NOT rely on implicit discovery at execution time — the planner must propagate discovered skills into the task artifacts.
 </mandatory>
 
 ## Phase 3 Testing — Derive Tasks from Test Coverage Table
