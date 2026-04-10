@@ -102,9 +102,26 @@ Upstream artifacts (for cross-referencing):
 
 $priorFindings
 
-Apply the execution rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
-If REVIEW_FAIL, provide specific, actionable feedback for revision. Reference file names and line numbers.
+$artifactTypeInstruction
 ```
+
+**Artifact type selection**:
+- If the task being reviewed is VE/E2E (description contains "VE0", "VE1", "VE2", "VE3", "E2E", or "playwright"):
+  Set `$artifactTypeInstruction` to:
+  ```
+  Apply the e2e-review rubric. Include as additional context:
+  - test-results/**/error-context.md artifacts (if available)
+  - ui-map.local.md (if available)
+  - Task's Skills: field contents
+  - Last 3 VE-related entries from .progress.md
+  Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+  ```
+- Otherwise:
+  Set `$artifactTypeInstruction` to:
+  ```
+  Apply the execution rubric. Output structured findings with REVIEW_PASS or REVIEW_FAIL.
+  If REVIEW_FAIL, provide specific, actionable feedback for revision. Reference file names and line numbers.
+  ```
 
 `$priorFindings` is empty on reviewIteration 1. On subsequent iterations:
 ```

@@ -180,3 +180,47 @@ await page.waitForTimeout(2000)
 - [ ] Ningún entity_id ni ID dinámico de HA en selectores
 - [ ] Los `data-testid` siguen el formato `{dominio}-{entidad}-{variante}-{acción}`
 - [ ] No hay testids duplicados en la misma vista
+
+---
+
+## HA Native Navigation
+
+Add this section to document the native System navigation paths in Home Assistant that are not part of custom Lovelace panels. These routes and labels are part of the native HA UI and are consistently English-labelled across locales. Tests that need to reach native HA pages should navigate using UI controls (sidebar and links), not `page.goto()` to an internal route.
+
+Recommended navigation steps (Playwright examples):
+
+1. Sidebar → Settings (system configuration)
+
+```typescript
+// Open Settings via sidebar
+await page.getByRole('link', { name: 'Settings' }).click();
+await page.waitForSelector('[data-panel-id="config"]', { state: 'visible', timeout: 15000 });
+```
+
+2. Settings → Developer tools
+
+```typescript
+// In Settings, click Developer tools link (native UI element)
+await page.getByRole('link', { name: 'Developer tools' }).click();
+// Developer tools is a native HA label — always English: 'Developer tools'
+await page.getByRole('heading', { name: 'Developer tools' }).waitFor({ state: 'visible' });
+```
+
+3. Developer tools → States / Devices tabs
+
+```typescript
+// Switch to the States tab
+await page.getByRole('tab', { name: 'States' }).click();
+await page.getByRole('tab', { name: 'States' }).waitFor({ state: 'visible' });
+
+// Or switch to Devices
+await page.getByRole('tab', { name: 'Devices' }).click();
+await page.getByRole('tab', { name: 'Devices' }).waitFor({ state: 'visible' });
+```
+
+Notes:
+- Do NOT use `page.goto()` to navigate to internal HA routes (e.g., `/config/developer-tools/state`) — these are client-side routes and bypass app initialization and auth state.
+- Use `getByRole('link', { name: 'Developer tools' })` and `getByRole('tab', { name: 'States' })` because these native labels are stable and English across locales.
+- After navigating, always run a `browser_snapshot` + stable state detection (see `playwright-session.skill.md`) before asserting selectors.
+
+These steps are examples; prefer `ui-map.local.md` entries if they exist for a specific instance under test.
