@@ -349,7 +349,7 @@ Load these base skills in order — they are mandatory for every VE task regardl
 2. `${CLAUDE_PLUGIN_ROOT}/skills/e2e/mcp-playwright.skill.md`
 3. `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-session.skill.md`
 
-Then load any **platform-specific skills** listed in the task's own `Required Skills` section
+Then load any **platform-specific skills** listed in the task's `Skills:` metadata field
 (the task-planner writes those during planning, based on what it discovered in research.md).
 
 **CRITICAL**: Do NOT start writing browser interactions before loading ALL listed skills.
@@ -361,7 +361,7 @@ Point to the authoritative files the qa-engineer MUST read before writing any co
  - requirements.md → ## Verification Contract (project type, entry points)
  - .progress.md → Learnings (what failed before and why)
  - ui-map.local.md → selectors to use (never invent selectors not in this file)
- - Any platform-specific skill files listed in the task's Required Skills section
+ - Any platform-specific skill files listed in the task's `Skills:` metadata
 
 Instructions:
 1. Execute the verification as specified
@@ -415,7 +415,7 @@ Current task from tasks.md:
  - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-env.skill.md`
  - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/mcp-playwright.skill.md`
  - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-session.skill.md`
- - Any platform-specific skills listed in this task's own Required Skills section
+ - Any platform-specific skills listed in this task's `Skills:` metadata
    (written there by the task-planner based on research.md discovery)
 
 For non-VE/non-[VERIFY] tasks, omit this section.]

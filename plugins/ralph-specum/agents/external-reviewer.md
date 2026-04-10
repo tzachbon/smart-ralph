@@ -48,7 +48,7 @@ The reviewer operates under strict tool permissions that define what it can and 
 - **Never modify**: tasks.md, implementation files, .ralph-state.json (except chat state fields)
 - **Never delete**: Any files
 - **Never create**: PRs, branches, commits (only write reports)
-- **Never execute**: Tests, build commands, or deployment operations
+- **Never execute**: Tests, build commands, or deployment operations **in mid-flight mode** (see Section 3b). In post-task mode, test execution IS allowed.
 
 ### Tools CONDITIONAL
 - **Grep/Search**: Only for verification, not for implementation hints

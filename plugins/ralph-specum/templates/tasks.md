@@ -337,7 +337,7 @@ After POC validated, clean up code.
 <!-- Skills field is REQUIRED on every VE task. task-planner: replace the comment placeholders below with actual platform-specific skills discovered in research.md (e.g., homeassistant-selector-map). Remove the HTML comment if no platform skills apply. -->
 
 - [ ] VE0 [VERIFY] Build selector map (ui-map-init)
-  - **Skills**: e2e, playwright-env, mcp-playwright, ui-map-init<!-- task-planner: append platform-specific skills here (e.g., homeassistant-selector-map) if research.md discovered them -->
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, ui-map-init<!-- task-planner: append platform-specific skills here (e.g., homeassistant-selector-map) if research.md discovered them -->
   - **Do**: Follow `${CLAUDE_PLUGIN_ROOT}/skills/e2e/ui-map-init.skill.md` in full — open a fresh browser session, explore app routes, write `ui-map.local.md` to spec basePath.
   - **Verify**: `test -f {{basePath}}/ui-map.local.md && echo PASS`
   - **Done when**: `ui-map.local.md` exists with at least one route entry
@@ -353,7 +353,7 @@ After POC validated, clean up code.
   - **Commit**: None
 
 - [ ] VE2 [VERIFY] E2E check: run critical flow verification
-  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session<!-- task-planner: append platform-specific skills here if research.md discovered them -->
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, selector-map<!-- task-planner: append platform-specific skills here if research.md discovered them -->
   - **Do**:
     1. Run critical flow check: `{{critical_flow_cmd}}`
     2. Verify output matches expected behavior
@@ -560,7 +560,7 @@ Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
 <!-- Skills field is REQUIRED on every VE task. task-planner: replace the comment placeholders below with actual platform-specific skills discovered in research.md (e.g., homeassistant-selector-map). Remove the HTML comment if no platform skills apply. -->
 
 - [ ] VE0 [VERIFY] Build selector map (ui-map-init)
-  - **Skills**: e2e, playwright-env, mcp-playwright, ui-map-init<!-- task-planner: append platform-specific skills here (e.g., homeassistant-selector-map) if research.md discovered them -->
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, ui-map-init<!-- task-planner: append platform-specific skills here (e.g., homeassistant-selector-map) if research.md discovered them -->
   - **Do**: Follow `${CLAUDE_PLUGIN_ROOT}/skills/e2e/ui-map-init.skill.md` in full — open a fresh browser session, explore app routes, write `ui-map.local.md` to spec basePath.
   - **Verify**: `test -f {{basePath}}/ui-map.local.md && echo PASS`
   - **Done when**: `ui-map.local.md` exists with at least one route entry
@@ -576,7 +576,7 @@ Focus: Integration and E2E tests beyond the unit tests written in Phase 1.
   - **Commit**: None
 
 - [ ] VE2 [VERIFY] E2E check: run critical flow verification
-  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session<!-- task-planner: append platform-specific skills here if research.md discovered them -->
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, selector-map<!-- task-planner: append platform-specific skills here if research.md discovered them -->
   - **Do**:
     1. Run critical flow check: `{{critical_flow_cmd}}`
     2. Verify output matches expected behavior

@@ -168,7 +168,7 @@ When `artifactType` is `e2e-review`, apply this rubric instead of the Execution 
 |-----------|--------------|---------------|
 | No goto internal | No `page.goto()` to any route other than base URL / app root | Any `page.goto('/config/...')` or `page.goto(baseUrl + '/...')` to internal route |
 | Selectors grounded | Selectors come from `ui-map.local.md`, OR from `browser_generate_locator` output documented in error-context, OR derived from a `browser_snapshot` explicitly taken during this session | Selectors hand-written without evidence in ANY of the three valid sources (ui-map, error-context, session snapshot) |
-| No fixed waits | No `waitForTimeout()` anywhere in test code | Any `waitForTimeout(N)` without condition-based wait alternative |
+| No fixed waits | No `waitForTimeout()` anywhere in test code | Any `waitForTimeout(N)` present in test code |
 | User flow real | Test exercises the full user interaction flow listed in task's `Done when` | Test navigates directly via URL to skip UI steps, or only checks static elements |
 | Progress real | Each VE iteration shows different page/state in error-context (agent is advancing) | Same error-context.md content repeated across 3+ consecutive iterations — agent is stuck |
 | No fake E2E | Test uses `browser_*` MCP tools or Playwright API to interact with a real browser | Test passes by running grep/shell commands on source code disguised as "E2E verification" |

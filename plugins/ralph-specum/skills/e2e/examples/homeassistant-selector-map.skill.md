@@ -185,15 +185,17 @@ await page.waitForTimeout(2000)
 
 ## HA Native Navigation
 
-Add this section to document the native System navigation paths in Home Assistant that are not part of custom Lovelace panels. These routes and labels are part of the native HA UI and are consistently English-labelled across locales. Tests that need to reach native HA pages should navigate using UI controls (sidebar and links), not `page.goto()` to an internal route.
+Native System navigation paths in Home Assistant (not custom Lovelace panels). Tests that need to reach native HA pages should navigate using UI controls (sidebar and links), not `page.goto()` to an internal route.
+
+> **Important**: HA sidebar labels are **localized** (e.g., "Settings" in English, "Configuración" in Spanish). Prefer `data-panel-id` selectors for sidebar items — they are locale-independent. Use `getByRole` with accessible names only as fallback and document the expected locale in `ui-map.local.md`.
 
 Recommended navigation steps (Playwright examples):
 
 1. Sidebar → Settings (system configuration)
 
 ```typescript
-// Open Settings via sidebar
-await page.getByRole('link', { name: 'Settings' }).click();
+// Open Settings via sidebar — use data-panel-id (locale-independent)
+await page.locator('[data-panel-id="config"]').click();
 // Wait for the Settings dashboard to render (not the sidebar item, which was already visible)
 await page.locator('ha-config-dashboard').waitFor({ state: 'visible', timeout: 15000 });
 ```
@@ -201,9 +203,9 @@ await page.locator('ha-config-dashboard').waitFor({ state: 'visible', timeout: 1
 2. Settings → Developer tools
 
 ```typescript
-// In Settings, click Developer tools link (native UI element)
+// In Settings, click Developer tools link
 await page.getByRole('link', { name: 'Developer tools' }).click();
-// Developer tools is a native HA label — always English: 'Developer tools'
+// Note: inner links within Settings panels are generally English, but verify with browser_snapshot
 await page.getByRole('heading', { name: 'Developer tools' }).waitFor({ state: 'visible' });
 ```
 
@@ -221,7 +223,7 @@ await page.getByRole('tab', { name: 'Devices' }).waitFor({ state: 'visible' });
 
 Notes:
 - Do NOT use `page.goto()` to navigate to internal HA routes (e.g., `/config/developer-tools/state`) — these are client-side routes and bypass app initialization and auth state.
-- Use `getByRole('link', { name: 'Developer tools' })` and `getByRole('tab', { name: 'States' })` because these native labels are stable and English across locales.
+- Use `data-panel-id` selectors for sidebar items (locale-independent). For inner links, `getByRole` names may vary by HA language — always verify with `browser_snapshot` first and record in `ui-map.local.md`.
 - After navigating, always run a `browser_snapshot` + stable state detection (see `playwright-session.skill.md`) before asserting selectors.
 
 These steps are examples; prefer `ui-map.local.md` entries if they exist for a specific instance under test.

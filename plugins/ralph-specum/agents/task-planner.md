@@ -386,13 +386,12 @@ Rules for the `Skills:` field:
 Example task metadata (VE2):
 ```markdown
 - [ ] VE2 [VERIFY] Check user flow: save route
-  - Skills: e2e, playwright-env, mcp-playwright, playwright-session, homeassistant-selector-map
-  - Do: ...
-  - Files: ...
+  - **Skills**: e2e, playwright-env, mcp-playwright, playwright-session, homeassistant-selector-map
+  - **Do**: ...
+  - **Files**: ...
 ```
 
 Rationale: This guarantees the executor and reviewer load identical context before running or validating tests. Do NOT rely on implicit discovery at execution time — the planner must propagate discovered skills into the task artifacts.
-</mandatory>
 </mandatory>
 
 ## Phase 3 Testing — Derive Tasks from Test Coverage Table
