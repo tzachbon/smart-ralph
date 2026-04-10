@@ -194,7 +194,8 @@ Recommended navigation steps (Playwright examples):
 ```typescript
 // Open Settings via sidebar
 await page.getByRole('link', { name: 'Settings' }).click();
-await page.waitForSelector('[data-panel-id="config"]', { state: 'visible', timeout: 15000 });
+// Wait for the Settings dashboard to render (not the sidebar item, which was already visible)
+await page.locator('ha-config-dashboard').waitFor({ state: 'visible', timeout: 15000 });
 ```
 
 2. Settings → Developer tools
