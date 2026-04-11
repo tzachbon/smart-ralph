@@ -35,3 +35,6 @@ test-ac-*/
 # Claude
 .claude/worktrees/**
 .omc/**
+node_modules/
+.serena/
+.qwen/
