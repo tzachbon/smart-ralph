@@ -133,6 +133,7 @@ Atomic append (CRITICAL — never use mv, always flock):
   cat >> "${basePath}/chat.md" << 'MSGEOF'
 ### [YYYY-MM-DD HH:MM:SS] Spec-Executor → External-Reviewer
 **Task**: T<taskIndex>
+**Signal**: <SIGNAL>
 
 <message body>
 
@@ -211,7 +212,14 @@ After implementation tasks: if new `data-testid` attributes added AND `ui-map.lo
 <exit_code_gate>
 For test tasks: test runner exit code is single source of truth.
 
-- Exit ≠ 0 → VERIFICATION_FAIL. Increment taskIteration, attempt fix, retry.
+- Exit ≠ 0 → Attribute the failure before attempting a fix:
+  1. Extract the failing file(s) from the error output.
+  2. Check whether that file is in this task's **Files** list OR in `git diff --name-only HEAD`.
+  3. **If YES** (error is in code I modified) → the failure is mine. Increment taskIteration, attempt fix, retry.
+  4. **If NO** (error is in code I did not touch) → do NOT attempt a workaround.
+     Investigate breadth-first: `.progress.md` learnings → codebase patterns (`rg`/`grep`) → framework docs (WebFetch, max 3 calls).
+     - Found a real fix → apply it and retry normally.
+     - No fix found → emit `TASK_MODIFICATION_REQUEST` with `type: SPEC_ADJUSTMENT` (see `<modifications>`).
 - taskIteration > max → ESCALATE. Never mark complete while runner exits non-0.
 - Agent judgment cannot override a non-0 exit code.
 </exit_code_gate>
@@ -292,7 +300,7 @@ Signal format:
 TASK_MODIFICATION_REQUEST
 ```json
 {
-  "type": "SPLIT_TASK" | "ADD_PREREQUISITE" | "ADD_FOLLOWUP",
+  "type": "SPLIT_TASK" | "ADD_PREREQUISITE" | "ADD_FOLLOWUP" | "SPEC_ADJUSTMENT",
   "originalTaskId": "X.Y",
   "reasoning": "Why this modification is needed",
   "proposedTasks": [
@@ -301,11 +309,28 @@ TASK_MODIFICATION_REQUEST
 }
 ```
 
+For `SPEC_ADJUSTMENT`, use this shape instead of `proposedTasks`:
+```json
+{
+  "type": "SPEC_ADJUSTMENT",
+  "originalTaskId": "X.Y",
+  "reasoning": "Verify command fails on errors outside this task's scope",
+  "investigation": "What was checked and what was found",
+  "proposedChange": {
+    "field": "Verify",
+    "original": "original command",
+    "amended": "amended command",
+    "affectedTasks": ["X.Y", "X.Z"]
+  }
+}
+```
+
 | Type | When | TASK_COMPLETE? |
 |------|------|----------------|
 | SPLIT_TASK | Current task too complex | Yes (original done, sub-tasks inserted) |
 | ADD_PREREQUISITE | Missing dependency discovered | No (blocked until prereq completes) |
 | ADD_FOLLOWUP | Cleanup/extension needed | Yes (current task done, followup added) |
+| SPEC_ADJUSTMENT | Verify/Done-when criterion fails on code outside task scope; proposes amendment | No (coordinator evaluates) |
 
 Rules: max 3 modifications per task, standard format (Do/Files/Done when/Verify/Commit), max 4 Do steps + 3 files each.
 </modifications>

@@ -46,7 +46,7 @@ The reviewer operates under strict tool permissions that define what it can and 
 ### Tools ALLOWED
 - **Read**: Source files, spec files, task files, state files, chat.md
 - **Bash**: Run verify commands, jq for state inspection, git for history
-- **Write**: task_review.md, chat.md (via atomic append), tasks.md (via atomic flock — unmark only)
+- **Write**: task_review.md, chat.md (via atomic append), tasks.md (via atomic flock — unmark + inline reviewer diagnosis)
 - **Task**: Delegate to qa-engineer for verification
 
 ### Tools FORBIDDEN
@@ -66,7 +66,8 @@ When the reviewer must escalate an issue to the executor, it uses the structured
 **HOLD with EVIDENCE** — blocking escalation requiring explicit resolution:
 ```
 ### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Spec-Executor
-**Task**: T<taskIndex> | **Signal**: HOLD
+**Task**: T<taskIndex>
+**Signal**: HOLD
 
 **JUDGE — EVIDENCE REQUIRED**:
 
@@ -86,7 +87,8 @@ When the reviewer must escalate an issue to the executor, it uses the structured
 **DEADLOCK with EVIDENCE** — human escalation when agents cannot resolve:
 ```
 ### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Human
-**Task**: T<taskIndex> | **Signal**: DEADLOCK
+**Task**: T<taskIndex>
+**Signal**: DEADLOCK
 
 **JUDGE — EVIDENCE REQUIRED**:
 
@@ -274,7 +276,8 @@ If test output shows a 404, login page, or unexpected URL at any point:
 For e2e issues, always write INTENT-FAIL to chat.md first:
 ```
 ### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Spec-Executor
-**Task**: T<taskIndex> | **Signal**: INTENT-FAIL
+**Task**: T<taskIndex>
+**Signal**: INTENT-FAIL
 
 **E2E REVIEW — NAVIGATION VIOLATION**:
 **Violation**: <anti-pattern name>
@@ -308,7 +311,8 @@ You have 1 task cycle to fix this before I write a formal FAIL.
 When writing `progress-stuck` FAIL, auto-escalate to DEADLOCK:
 ```
 ### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Human
-**Task**: T<taskIndex> | **Signal**: DEADLOCK
+**Task**: T<taskIndex>
+**Signal**: DEADLOCK
 
 **E2E PROGRESS STALLED**: 3 consecutive review cycles with identical error.
 **Error**: <error from error-context.md>
@@ -367,7 +371,8 @@ The reviewer tracks rounds of unresolved debate. If the same issue is debated fo
 **After 3 rounds without resolution**:
 ```
 ### [YYYY-MM-DD HH:MM:SS] External-Reviewer → Spec-Executor
-**Task**: T<taskIndex> | **Signal**: DEADLOCK
+**Task**: T<taskIndex>
+**Signal**: DEADLOCK
 
 **CONVERGENCE DETECTED**: 3 rounds of unresolved debate on this issue.
 
@@ -468,16 +473,32 @@ After writing any FAIL or WARNING to `task_review.md`, **immediately also**:
    <!-- END REVIEWER INTERVENTION -->
    ```
 
-2. **For FAIL only — unmark directly in tasks.md** using atomic flock (same pattern as chat.md):
+2. **For FAIL only — unmark and annotate directly in tasks.md** using atomic flock:
    ```bash
    (
      exec 201>"${basePath}/tasks.md.lock"
      flock -e 201 || exit 1
-     # Read current content, replace [x] with [ ] for this task only
+     # Unmark: replace [x] with [ ] for this task only
      sed -i "s/^- \[x\] ${TASK_ID} /- [ ] ${TASK_ID} /" "${basePath}/tasks.md"
+     # Annotate: insert reviewer diagnosis block after the task header line
+     python3 -c "
+import sys
+content = open('${basePath}/tasks.md').read()
+marker = '- [ ] ${TASK_ID} '
+idx = content.find(marker)
+if idx >= 0:
+    end = content.find('\n', idx) + 1
+    diagnosis = '  <!-- reviewer-diagnosis\n    what: ${WHAT_IS_WRONG}\n    why: ${WHY}\n    fix: ${FIX_HINT}\n  -->\n'
+    content = content[:end] + diagnosis + content[end:]
+    open('${basePath}/tasks.md', 'w').write(content)
+"
    ) 201>"${basePath}/tasks.md.lock"
    ```
    Then increment `.ralph-state.json → external_unmarks[taskId]`.
+
+   > **Purpose of the diagnosis block**: the spec-executor reads tasks.md before each task. The inline diagnosis ensures it sees what failed and how to fix it without needing to cross-reference task_review.md.
+
+   > **If the FAIL is caused by a spec deficiency** (the criterion is impossible to meet cleanly, not a bug in the implementation): additionally write `SPEC-ADJUSTMENT` to chat.md with the proposed amendment. The coordinator will process it before delegating the re-run.
 
    > **Why flock here**: the coordinator reads tasks.md to advance taskIndex concurrently.
    > Without exclusive locking, the coordinator could read a partially-written tasks.md

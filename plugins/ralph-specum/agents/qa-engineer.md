@@ -402,7 +402,22 @@ pnpm typecheck
 # If exit code != 0, stop and report VERIFICATION_FAIL
 ```
 
-## Test Quality Verification
+### Pre-existing Error Detection
+
+When a command exits non-0, before emitting `VERIFICATION_FAIL`, check whether the failure is caused by code outside this task's scope:
+
+1. Extract the failing file(s) from the error output.
+2. Run `git diff --name-only HEAD` to get files modified by this spec so far.
+3. Cross-reference with the task's **Files** field.
+4. **If ALL failing files are outside both the task's Files list AND git diff** → the failure is caused by external or pre-existing code. Do NOT emit `VERIFICATION_FAIL`.
+   Instead, investigate briefly (check `.progress.md` learnings and codebase patterns), then emit `TASK_MODIFICATION_REQUEST` with `type: SPEC_ADJUSTMENT` (see spec-executor `<modifications>` for the format), then emit `VERIFICATION_PASS` with a note:
+   ```text
+   VERIFICATION_PASS
+     note: pre-existing errors outside task scope detected — SPEC_ADJUSTMENT proposed
+   ```
+5. **If ANY failing file is in this task's scope** → proceed with `VERIFICATION_FAIL` as normal.
+
+
 
 When running test verification commands (e.g., `pnpm test`, `npm test`), analyze test files for mock-only test anti-patterns:
 

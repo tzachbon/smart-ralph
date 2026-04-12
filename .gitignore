@@ -38,3 +38,4 @@ test-ac-*/
 node_modules/
 .serena/
 .qwen/
+.mcp.json

@@ -172,6 +172,8 @@ Before generating a fix task, verify nesting depth is within limits:
 
 ## Generate Fix Task Markdown
 
+Before generating, check `.progress.md` under `## Spec Adjustments` for any approved amendment to this task's `Verify` field. If an amendment exists for `$taskId`, use the amended command as `$originalTask.verify` instead of the original.
+
 Use the failure object to create a fix task:
 
 ```text

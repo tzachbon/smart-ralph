@@ -193,6 +193,8 @@ jq --argjson idx "$LINES" '.chat.executor.lastReadLine = $idx' \
 | **CLOSE** | Thread resolved. No-op. Proceed normally. |
 | **ALIVE** / **STILL** | Heartbeat signals. Ignore, do not block. |
 | **ACK** | Reviewer acknowledged coordinator's last message. Proceed normally. |
+| **SPEC-ADJUSTMENT** | An agent proposes amending a `Verify` or `Done when` field. Process the amendment: validate scope (auto-approve if only Verify/Done-when fields change AND `investigation` is non-empty AND `affectedTasks` ≤ half of `totalTasks`). If approved, apply to all affected tasks and log under `## Spec Adjustments` in `.progress.md`. If rejected (scope too large or field affects acceptance criteria), write `SPEC-DEFICIENCY` to chat.md, set `awaitingHumanInput: true` in state, and halt. |
+| **SPEC-DEFICIENCY** | Human decision required on a spec criterion. HARD STOP. Do NOT delegate. Halt until human responds. |
 
 **Atomic append for OVER response**:
 ```bash
@@ -412,8 +414,18 @@ Instructions:
 ```
 
 Handle qa-engineer response:
+
+**Step 1 — Check for TASK_MODIFICATION_REQUEST** (before checking verification signal):
+- Scan qa-engineer output for `TASK_MODIFICATION_REQUEST` JSON block.
+- If found with `type: SPEC_ADJUSTMENT`: process it using the same SPEC_ADJUSTMENT handler
+  used for spec-executor (validate scope, auto-approve or escalate to SPEC-DEFICIENCY).
+- Continue to Step 2 regardless of whether a modification was processed.
+
+**Step 2 — Handle verification signal**:
 - VERIFICATION_PASS: Treat as TASK_COMPLETE, mark task [x], update .progress.md
 - VERIFICATION_FAIL: Do NOT mark complete, increment taskIteration, retry or error if max reached
+- VERIFICATION_DEGRADED: Do NOT increment taskIteration, do NOT attempt fix. ESCALATE with
+  `reason: verification-degraded`.
 
 **VE Recovery Mode**: VE tasks (description contains "E2E") have recovery mode always enabled regardless of the state file `recoveryMode` flag. The coordinator should treat VE tasks as if `recoveryMode=true` for fix task generation purposes. VE failures are expected and recoverable — the verify-fix-reverify loop (see `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "Verify-Fix-Reverify Loop") handles them automatically via `fixTaskMap` and `maxFixTasksPerOriginal`.
 
@@ -882,7 +894,8 @@ Extract the JSON payload:
 2. Count: `modificationMap[originalTaskId].count` (default 0)
 3. If count >= 3: REJECT, log "Max modifications (3) reached for task $taskId" in .progress.md, skip modification
 4. Depth check: count dots in proposed task IDs. If dots > 3 (depth > 2 levels): REJECT
-5. Verify proposed tasks have required fields: Do, Files, Done when, Verify, Commit
+5. For SPLIT_TASK/ADD_PREREQUISITE/ADD_FOLLOWUP: verify proposed tasks have required fields: Do, Files, Done when, Verify, Commit
+6. For SPEC_ADJUSTMENT: verify `proposedChange` has `field`, `original`, `amended`, `affectedTasks`; and `investigation` is non-empty
 
 **Process by Type**:
 
@@ -911,6 +924,27 @@ Extract the JSON payload:
 4. Update modificationMap
 5. Normal advancement -- followup will be picked up as next task
 6. Log in .progress.md: "Added followup $followupId after $taskId. Reason: $reasoning"
+
+**SPEC_ADJUSTMENT**:
+1. Validate scope — auto-approve if ALL of the following:
+   - `proposedChange.field` is `"Verify"` or `"Done when"` (task criteria fields only, not acceptance criteria)
+   - `investigation` field is non-empty (agent gathered evidence)
+   - `proposedChange.affectedTasks.length` ≤ `totalTasks / 2` (not a wholesale spec rewrite)
+2. If **auto-approved**:
+   a. For each task ID in `affectedTasks`: edit that task's `Verify:` or `Done when:` field in tasks.md to `proposedChange.amended` using Edit tool.
+   b. Log in `.progress.md` under `## Spec Adjustments`:
+      ```
+      - [SPEC-ADJUSTMENT] task $originalTaskId → amended $field for tasks $affectedTasks
+        Reason: $reasoning
+        Evidence: $investigation
+        Original: $original
+        Amended: $amended
+      ```
+   c. Continue execution — the next delegation will use the amended criteria. Do NOT count against `modificationMap` limit.
+3. If **not auto-approved** (field is not Verify/Done-when, no investigation, or scope too large):
+   a. Write `SPEC-DEFICIENCY` to chat.md via atomic append with the full proposal and why it cannot be auto-applied.
+   b. Set `awaitingHumanInput: true` in `.ralph-state.json`.
+   c. Halt execution until human responds.
 
 **Parallel Batch Interaction**:
 - If current task is in a [P] batch and executor requests modification: break out of parallel batch
