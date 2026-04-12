@@ -478,10 +478,8 @@ After writing any FAIL or WARNING to `task_review.md`, **immediately also**:
    (
      exec 201>"${basePath}/tasks.md.lock"
      flock -e 201 || exit 1
-     # Unmark: replace [x] with [ ] for this task only
-     sed -i "s/^- \[x\] ${TASK_ID} /- [ ] ${TASK_ID} /" "${basePath}/tasks.md"
-     # Annotate: insert reviewer diagnosis block after the task header line
-     # Use env vars + heredoc to safely handle quotes, backslashes, and newlines in evidence text
+     # Unmark + annotate inside Python to avoid sed regex issues with dots in TASK_ID
+     # (e.g., "1.3.1" → sed treats "." as any char, matching wrong task)
      TASKS_MD_PATH="${basePath}/tasks.md" \
      TASK_ID_VALUE="${TASK_ID}" \
      WHAT_IS_WRONG_VALUE="${WHAT_IS_WRONG}" \
@@ -495,19 +493,23 @@ what_is_wrong = os.environ['WHAT_IS_WRONG_VALUE']
 why = os.environ['WHY_VALUE']
 fix_hint = os.environ['FIX_HINT_VALUE']
 content = open(tasks_md_path).read()
-marker = f'- [ ] {task_id} '
-idx = content.find(marker)
-if idx >= 0:
-    end = content.find('\n', idx) + 1
-    diagnosis = (
-        '  <!-- reviewer-diagnosis\n'
-        f'    what: {what_is_wrong}\n'
-        f'    why: {why}\n'
-        f'    fix: {fix_hint}\n'
-        '  -->\n'
-    )
-    content = content[:end] + diagnosis + content[end:]
-    open(tasks_md_path, 'w').write(content)
+lines = content.splitlines(keepends=True)
+marker_prefix = f'- [x] {task_id} '
+for i, line in enumerate(lines):
+    stripped = line.lstrip()
+    if stripped.startswith('- [x] ') and task_id in stripped:
+        lines[i] = line.replace('- [x] ', '- [ ] ', 1)
+        # Insert diagnosis block after the unmarked task line
+        diagnosis = (
+            '  <!-- reviewer-diagnosis\n'
+            f'    what: {what_is_wrong}\n'
+            f'    why: {why}\n'
+            f'    fix: {fix_hint}\n'
+            '  -->\n'
+        )
+        lines.insert(i + 1, diagnosis)
+        break
+open(tasks_md_path, 'w').write(''.join(lines))
 PY
    ) 201>"${basePath}/tasks.md.lock"
    ```

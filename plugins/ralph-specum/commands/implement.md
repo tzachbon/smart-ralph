@@ -232,7 +232,9 @@ Then Read and follow these references in order. They contain the complete coordi
 - **Task delegation.** Extract full task block from tasks.md, delegate to spec-executor (or qa-engineer for [VERIFY] tasks).
   - **MANDATORY: Validate VE task Skills: field before delegating to qa-engineer.** If the task has a `[VERIFY]` tag AND contains "VE", "E2E", "browser", or "playwright" in its description:
     - Check that the task body contains a `**Skills**:` or `**Skills:**` field with at least `e2e` or `playwright-env`.
-    - If `Skills:` is missing or empty: DO NOT delegate. Log error: `"VE task T<taskIndex> missing Skills: field. Cannot delegate to qa-engineer without skill metadata."` Advance to next task or block until resolved.
+    - If `Skills:` is missing or empty: DO NOT delegate. DO NOT advance to the next task. DO NOT mark complete.
+      Log: `"VE task T<taskIndex> missing Skills: field. Cannot delegate to qa-engineer without skill metadata."`
+      Generate a fix task to populate the Skills: field, then re-run this task. If unable to generate the fix task, halt with error.
     - **Why**: qa-engineer loads skills from the `Skills:` field. Without it, the agent runs with no E2E context and will produce incorrect verifications.
 - **After TASK_COMPLETE.** Run all 3 verification layers, then update state (advance taskIndex, reset taskIteration).
 - **On failure.** Parse failure output, increment taskIteration. If recovery-mode: generate fix task. If max retries exceeded: error and stop.

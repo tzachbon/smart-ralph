@@ -50,6 +50,7 @@ Read `<basePath>/task_review.md` if it exists. Look for the current task's entry
 Read `<basePath>/chat.md` if it exists. Check for active signals targeting this task:
 
 - **HOLD**: DO NOT proceed. Output `VERIFICATION_FAIL` with reason `hold-signal-from-reviewer`.
+- **PENDING**: DO NOT proceed. Output `VERIFICATION_FAIL` with reason `pending-signal-from-reviewer`. The reviewer is still evaluating — do not advance until the signal resolves.
 - **DEADLOCK**: DO NOT proceed. Output `VERIFICATION_FAIL` with reason `deadlock-requires-human`.
 - **INTENT-FAIL**: This is a pre-warning. Proceed with verification but include the INTENT-FAIL context in your output.
 - **No signals**: Proceed normally.
