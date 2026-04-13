@@ -25,9 +25,9 @@ Fix 5 critical gaps in Ralph Specum engine internals where rules are enforced th
 **So that** blocking signals are never missed due to LLM text interpretation failures
 
 **Acceptance Criteria:**
-- [ ] AC-2.1: `implement.md` coordinator prompt includes a pre-delegation step: `grep -c "\[HOLD\]\|\[PENDING\]\|\[URGENT\]" "$SPEC_PATH/chat.md"` (exit code > 0 = block)
-- [ ] AC-2.2: When HOLD detected, delegation is blocked and logged to `.progress.md`: `"COORDINATOR BLOCKED: active HOLD/PENDING/URGENT signal in chat.md for task $taskIndex"`
-- [ ] AC-2.3: Resolved signals tracked: either `[HOLD:resolved]` markup in chat.md or signals moved under `## Resolved Signals` section
+- [ ] AC-2.1: `implement.md` coordinator prompt includes a pre-delegation step: `grep -c "^\[HOLD\]$\|^\[PENDING\]$\|^\[URGENT\]$" "$SPEC_PATH/chat.md"` (count > 0 = block). Only exact line matches (not partial text).
+- [ ] AC-2.2: When active HOLD detected, delegation is blocked and logged to `.progress.md`: `"COORDINATOR BLOCKED: active HOLD/PENDING/URGENT signal in chat.md for task $taskIndex"`
+- [ ] AC-2.3: Resolved signals are marked as `[RESOLVED]` in chat.md (the original `[HOLD]`, `[PENDING]`, or `[URGENT]` line is replaced with this marker). Resolved signals are NOT matched by grep.
 
 ### US-3: State Integrity Validation
 
@@ -59,8 +59,8 @@ Fix 5 critical gaps in Ralph Specum engine internals where rules are enforced th
 **So that** passing task-level checks don't mask project-wide CI failures (and vice versa)
 
 **Acceptance Criteria:**
-- [ ] AC-5.1: `implement.md` coordinator prompt includes a rule: task `Verify` command results (task-scoped) must be reported separately from global CI commands (`ruff check .`, `mypy .`, project-wide linting)
-- [ ] AC-5.2: Anti-fabrication Layer 3 must run BOTH the task's `Verify` command AND any global CI check independently; both must pass for the layer to pass
+- [ ] AC-5.1: `implement.md` coordinator prompt includes a rule: task `Verify` command results (task-scoped) must be reported separately from global CI commands (project-wide linting, type-checking)
+- [ ] AC-5.2: Anti-fabrication Layer 3 must run BOTH the task's `Verify` command AND any available global CI check independently; both must pass for the layer to pass. **CI command discovery is deferred** — this spec adds the conceptual rule with generic wording only. Specific command discovery per project type is planned for a future improvement (see `docs/ENGINE_ROADMAP.md` section "Spec 4: loop-safety-infra")
 - [ ] AC-5.3: If task Verify passes but global CI fails: log `"TASK VERIFY PASS but GLOBAL CI FAIL"` to `.progress.md`, do NOT advance taskIndex
 
 ## Functional Requirements
@@ -79,7 +79,7 @@ Fix 5 critical gaps in Ralph Specum engine internals where rules are enforced th
 | FR-10 | Schema defines nativeTaskMap, nativeSyncEnabled, nativeSyncFailureCount | High | AC-4.1, AC-4.2, AC-4.3 |
 | FR-11 | Schema defines chat.executor.lastReadLine | High | AC-4.4 |
 | FR-12 | Task Verify and global CI reported separately | High | AC-5.1 |
-| FR-13 | Anti-fabrication layer runs both task and global checks | High | AC-5.2 |
+| FR-13 | Anti-fabrication layer runs both task and available global checks | High | AC-5.2 |
 | FR-14 | Task passes + global fails = no advance | High | AC-5.3 |
 
 ## Non-Functional Requirements
