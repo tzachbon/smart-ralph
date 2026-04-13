@@ -132,6 +132,30 @@ jq --argjson taskIndex <first_incomplete> \
 
 ## Step 4: Execute Task Loop
 
+### State Integrity Check (before loop starts)
+
+Before delegating any task, verify state consistency:
+
+```bash
+COMPLETED=$(grep -c -e '- \[x\]' "$SPEC_PATH/tasks.md" 2>/dev/null || echo 0)
+CURRENT_INDEX=$(jq '.taskIndex' "$SPEC_PATH/.ralph-state.json")
+TOTAL=$(jq '.totalTasks' "$SPEC_PATH/.ralph-state.json")
+```
+
+**Drift Detection Logic:**
+
+1. **If `CURRENT_INDEX < COMPLETED`**: state drift detected (state lags behind tasks.md)
+   - Log: `"STATE DRIFT: taskIndex was $CURRENT_INDEX, corrected to $COMPLETED"`
+   - Update: `jq --argjson idx "$COMPLETED" '.taskIndex = $idx' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"`
+
+2. **If `CURRENT_INDEX > COMPLETED` and `CURRENT_INDEX < TOTAL`**: state ahead of tasks.md (possible unmarking)
+   - Log: `"STATE WARNING: taskIndex $CURRENT_INDEX exceeds completed count $COMPLETED — tasks may have been unmarked intentionally"`
+   - No correction: allow execution to continue with current state
+
+3. **If `CURRENT_INDEX == COMPLETED`**: normal state, no action needed
+
+---
+
 ### Parallel Reviewer Onboarding
 
 Before starting execution, check if the user wants to run an external parallel reviewer:
@@ -222,12 +246,21 @@ Then Read and follow these references in order. They contain the complete coordi
 - **Fully autonomous.** Never ask questions or wait for user input.
 - **State-driven loop.** Read .ralph-state.json each iteration to determine current task.
 - **MANDATORY: Read task_review.md BEFORE delegating.** Before every task delegation, read `<basePath>/task_review.md` if it exists. If the current task is marked FAIL, DO NOT delegate—add a fix task first. If marked PENDING, treat it as a blocking state: do not delegate or advance to another task until the review is resolved.
+- **MANDATORY: Mechanical HOLD check BEFORE delegation.** Before delegating, run:
+  ```bash
+  grep -c '^\[HOLD\]$\|^\[PENDING\]$\|^\[URGENT\]$' "$SPEC_PATH/chat.md" 2>/dev/null
+  ```
+  If count > 0 (active signals found): block delegation immediately. Log to `.progress.md`: `"COORDINATOR BLOCKED: active HOLD/PENDING/URGENT signal in chat.md for task $taskIndex"`.
+  
+  When signals are resolved (by external-reviewer or coordinator), the signal line is changed to `[RESOLVED]` (e.g., `[HOLD]` → `[RESOLVED]`). This marker is not matched by the grep check.
+
 - **MANDATORY: Read chat.md BEFORE delegating.** Before every task delegation, read `<basePath>/chat.md` for signals from external-reviewer. Obey HOLD, PENDING, DEADLOCK signals immediately—do not delegate if blocked.
 - **CRITICAL: Verify independently, never trust executor.** The executor may FABRICATE verification results (claimed tests passed when they failed, claimed coverage when coverage was 0%). 
   - **Rule**: NEVER trust pasted verification output from spec-executor. ALWAYS run the verify command independently.
   - Extract verify command from tasks.md → run it yourself → compare actual result with claimed result.
   - If executor claimed "PASSED" but command exits non-zero → REJECT, increment taskIteration, log "FABRICATION detected".
   - This is non-negotiable: executor has fabricated results multiple times in past.
+- **CI snapshot separation.** Task Verify commands (task-scoped) and global CI commands (project-wide linting, type-checking) must be reported separately. Both must pass. If task Verify passes but global CI fails: log `"TASK VERIFY PASS but GLOBAL CI FAIL"` to `.progress.md`, do NOT advance taskIndex. **Note**: Specific CI command discovery is deferred to Spec 4. The coordinator should check for available project CI commands if they exist.
 - **Completion check.** If taskIndex >= totalTasks, verify all [x] marks, delete state file, output ALL_TASKS_COMPLETE.
 - **Task delegation.** Extract full task block from tasks.md, delegate to spec-executor (or qa-engineer for [VERIFY] tasks).
   - **MANDATORY: Validate VE task Skills: field before delegating to qa-engineer.** If the task has a `[VERIFY]` tag AND contains "VE", "E2E", "browser", or "playwright" in its description:
@@ -236,7 +269,7 @@ Then Read and follow these references in order. They contain the complete coordi
       Log: `"VE task T<taskIndex> missing Skills: field. Cannot delegate to qa-engineer without skill metadata."`
       Generate a fix task to populate the Skills: field, then re-run this task. If unable to generate the fix task, halt with error.
     - **Why**: qa-engineer loads skills from the `Skills:` field. Without it, the agent runs with no E2E context and will produce incorrect verifications.
-- **After TASK_COMPLETE.** Run all 3 verification layers, then update state (advance taskIndex, reset taskIteration).
+- **After TASK_COMPLETE.** Run all 5 verification layers, then update state (advance taskIndex, reset taskIteration).
 - **On failure.** Parse failure output, increment taskIteration. If recovery-mode: generate fix task. If max retries exceeded: error and stop.
 - **Modification requests.** If TASK_MODIFICATION_REQUEST in output, process SPLIT_TASK / ADD_PREREQUISITE / ADD_FOLLOWUP per coordinator-pattern.md.
 
