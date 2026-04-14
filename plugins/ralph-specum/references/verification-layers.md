@@ -63,7 +63,7 @@ Additionally, run global CI checks (project-wide linting, type-checking) indepen
 
 ## Layer 4: Artifact Review
 
-After Layers 1-2 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
+After Layers 1-3 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
 
 ### When to Run
 
