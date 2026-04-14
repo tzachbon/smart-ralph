@@ -140,7 +140,7 @@ Surgical edits to 4 files. Each task = one atomic change.
 
 ### Coordinator Pattern (coordinator-pattern.md)
 
-- [ ] 1.13 Update "Layer 3 artifact review" reference at line 304 to "Layer 4"
+- [x] 1.13 Update "Layer 3 artifact review" reference at line 304 to "Layer 4"
   - **Do**: Change "used by Layer 3 artifact review" to "used by Layer 4 artifact review" at line 304
   - **Files**: plugins/ralph-specum/references/coordinator-pattern.md
   - **Done when**: `grep -c "Layer 3 artifact review" plugins/ralph-specum/references/coordinator-pattern.md` returns 0
@@ -148,7 +148,9 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `fix(cp): update Layer 3 artifact review ref to Layer 4`
   - _Requirements: FR-3_
 
-- [ ] 1.14 Replace inline Layer definitions (lines 620-686) with VL reference
+- [x] 1.14 Replace inline Layer definitions (lines 620-686) with VL reference
+- [x] 1.15 Update "Layer 3: Artifact Review" reference at line 686 to "Layer 4"
+- [x] 1.16 [VERIFY] Quality checkpoint: verify CP layer refs consistent
   - **Do**: Replace the inline Layer 0-4 definitions at lines 620-686 with a short reference block pointing to verification-layers.md as canonical source. Keep key rules as quick reference.
   - **Files**: plugins/ralph-specum/references/coordinator-pattern.md
   - **Done when**: `grep -c "canonical source for all 5 verification layers" plugins/ralph-specum/references/coordinator-pattern.md` returns >= 1 AND inline layer definitions replaced
@@ -212,7 +214,8 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `feat(im): add CI snapshot separation rule`
   - _Requirements: FR-12, FR-13, FR-14, AC-5.1, AC-5.2, AC-5.3_
 
-- [ ] 1.22 [VERIFY] Quality checkpoint: verify implement.md changes complete
+- [x] 1.22 [VERIFY] Quality checkpoint: verify implement.md changes complete
+- [x] 1.23 POC Checkpoint: validate all 4 files modified correctly
   - **Do**: Verify all 4 implement.md changes are in place
   - **Verify**: `grep -c "5 layers" plugins/ralph-specum/commands/implement.md | awk '{if($1>=2) print "PASS: 5-layers refs found"; else print "FAIL: need >=2, found "$1}'` && `grep -c "COORDINATOR BLOCKED" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS: HOLD check present"; else print "FAIL"}'` && `grep -c "STATE DRIFT" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS: state integrity present"; else print "FAIL"}'` && `grep -c "GLOBAL CI" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS: CI separation present"; else print "FAIL"}'`
   - **Done when**: All 4 grep checks pass
@@ -228,7 +231,13 @@ Surgical edits to 4 files. Each task = one atomic change.
 
 Cross-reference consistency cleanup between files.
 
-- [ ] 2.1 Verify VL Layer 0 is self-contained (no circular CP reference)
+- [x] 2.1 Verify VL Layer 0 is self-contained (no circular CP reference)
+- [x] 2.2 Verify VL Layer 3 has CI separation with generic wording (no hardcoded commands)
+- [x] 2.3 Verify CP reference block lists correct layer descriptions
+- [x] 2.4 Verify implement.md HOLD check text matches AC-2.1 exact grep pattern
+- [x] 2.5 Verify implement.md state integrity check matches AC-3.1/3.2/3.3 logic
+- [x] 2.6 [VERIFY] Quality checkpoint: full cross-reference consistency
+- [x] 2.7 Clean up any duplicate content between VL and CP
   - **Do**: Read VL Layer 0 section. Ensure it does NOT reference coordinator-pattern.md. ESCALATE instructions must be inline (log to .progress.md, stop iteration). CP keeps its own Layer 0 in Task Delegation section for delegation-specific context, but VL is the canonical self-contained source.
   - **Files**: plugins/ralph-specum/references/verification-layers.md
   - **Done when**: `grep -c "coordinator-pattern.md" plugins/ralph-specum/references/verification-layers.md` returns 0 in Layer 0 section
@@ -236,7 +245,7 @@ Cross-reference consistency cleanup between files.
   - **Commit**: `refactor(vl): ensure Layer 0 is self-contained` (only if changes needed)
   - _Requirements: FR-1_
 
-- [ ] 2.2 Verify VL Layer 3 has CI separation with generic wording (no hardcoded commands)
+- [x] 2.2 Verify VL Layer 3 has CI separation with generic wording (no hardcoded commands)
   - **Do**: Read VL Layer 3. Ensure it has CI snapshot separation with generic wording ("project-wide linting, type-checking") — NOT hardcoded ruff/mypy. Verify note about Spec 4 deferral is present.
   - **Files**: plugins/ralph-specum/references/verification-layers.md
   - **Done when**: VL Layer 3 contains "GLOBAL CI" separation rule AND no hardcoded "ruff" or "mypy"
@@ -244,34 +253,34 @@ Cross-reference consistency cleanup between files.
   - **Commit**: `refactor(vl): ensure Layer 3 uses generic CI wording`
   - _Requirements: FR-13_
 
-- [ ] 2.3 Verify CP reference block lists correct layer descriptions
+- [x] 2.3 Verify CP reference block lists correct layer descriptions
   - **Do**: Re-read the CP reference block from task 1.14. Ensure quick-reference bullets match VL content exactly (Layer 0 hard gate, Layers 1-2 text checks, Layer 3 anti-fabrication, Layer 4 periodic).
   - **Files**: plugins/ralph-specum/references/coordinator-pattern.md
   - **Done when**: CP quick reference bullets are consistent with VL content
   - **Verify**: `grep -A5 "Key rules.*quick reference" plugins/ralph-specum/references/coordinator-pattern.md | grep -c "Layer" | awk '{if($1>=4) print "PASS"; else print "FAIL"}'`
   - **Commit**: `refactor(cp): verify reference block consistency` (only if changes needed)
 
-- [ ] 2.4 Verify implement.md HOLD check text matches AC-2.1 exact grep pattern
+- [x] 2.4 Verify implement.md HOLD check text matches AC-2.1 exact grep pattern
   - **Do**: Read the HOLD check inserted in task 1.19. Verify the grep pattern is exactly `grep -c "^\[HOLD\]$|^\[PENDING\]$|^\[URGENT\]$" "$SPEC_PATH/chat.md"` (exact line matching, anchors required) and the blocking logic matches AC-2.1/AC-2.2.
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: HOLD grep pattern exactly matches AC-2.1 spec (anchors + dollar signs)
   - **Verify**: `grep -c '\^.*HOLD.*\^.*PENDING.*\^.*URGENT' plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS"; else print "FAIL"}'`
   - **Commit**: `refactor(im): verify HOLD grep pattern alignment` (only if changes needed)
 
-- [ ] 2.5 Verify implement.md state integrity check matches AC-3.1/3.2/3.3 logic
+- [x] 2.5 Verify implement.md state integrity check matches AC-3.1/3.2/3.3 logic
   - **Do**: Read state integrity check. Verify: (1) counts `[x]` in tasks.md, (2) compares with taskIndex, (3) corrects if taskIndex < completed, (4) warns if taskIndex > completed, (5) no action if equal.
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: All 3 drift scenarios (AC-3.1, AC-3.2, AC-3.3) covered in check
   - **Verify**: `grep -c "STATE DRIFT" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS"}'` && `grep -c "STATE WARNING" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS: AC-3.3 warn present"; else print "FAIL: AC-3.3 missing"}'`
   - **Commit**: `refactor(im): verify state integrity check completeness` (only if changes needed)
 
-- [ ] 2.6 [VERIFY] Quality checkpoint: full cross-reference consistency
+- [x] 2.6 [VERIFY] Quality checkpoint: full cross-reference consistency
   - **Do**: Verify all files reference each other correctly and all layer counts are consistent
   - **Verify**: `echo "=== Cross-ref check ===" && grep -c "verification-layers.md" plugins/ralph-specum/references/coordinator-pattern.md | awk '{if($1>=2) print "PASS: CP refs VL ("$1" refs)"; else print "FAIL: need >=2 VL refs"}' && grep -c "coordinator-pattern.md" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=1) print "PASS: VL refs CP"; else print "FAIL"}' && echo "=== Layer count consistency ===" && grep -cE "3 layers|3 verification|Three verification|all 3" plugins/ralph-specum/references/verification-layers.md plugins/ralph-specum/commands/implement.md plugins/ralph-specum/references/coordinator-pattern.md 2>/dev/null | grep -v ":0$" | wc -l | awk '{if($1==0) print "PASS: no stale 3-layer refs"; else print "FAIL: stale refs found"}'`
   - **Done when**: CP references VL, VL references CP, zero stale "3 layers" across all 3 files
   - **Commit**: `chore(engine): pass cross-reference quality checkpoint` (only if fixes needed)
 
-- [ ] 2.7 Clean up any duplicate content between VL and CP
+- [x] 2.7 Clean up any duplicate content between VL and CP
   - **Do**: Final sweep. Ensure no content is duplicated between VL and CP that should be single-source. CP should only have quick-reference bullets + Layer 0 Task Delegation inline. All full layer definitions should be in VL only.
   - **Files**: plugins/ralph-specum/references/coordinator-pattern.md, plugins/ralph-specum/references/verification-layers.md
   - **Done when**: No full layer definitions duplicated in CP (only quick-ref + L0 delegation)
@@ -284,7 +293,24 @@ Systematic verification of every acceptance criterion via grep/jq.
 
 ### US-1: Unify Verification Layer Documentation
 
-- [ ] 3.1 Verify AC-1.1: VL defines 5 layers (0-4)
+- [x] 3.1 Verify AC-1.1: VL defines 5 layers (0-4)
+- [x] 3.2 Verify AC-1.2: VL contains no "3 layers" references
+- [x] 3.3 Verify AC-1.3: implement.md references 5 layers (line 211)
+- [x] 3.4 Verify AC-1.4: CP defers to VL (contains verification-layers.md reference)
+- [x] 3.5 Verify AC-2.1: implement.md has HOLD grep check
+- [x] 3.6 Verify AC-2.2: implement.md has COORDINATOR BLOCKED log
+- [x] 3.7 Verify AC-2.3: implement.md has RESOLVED signal tracking
+- [x] 3.8 Verify AC-3.1: implement.md has state integrity check
+- [x] 3.9 Verify AC-3.2: implement.md has STATE DRIFT correction
+- [x] 3.10 Verify AC-3.3: implement.md has STATE WARNING
+- [x] 3.11 Verify AC-4.1: schema has nativeTaskMap
+- [x] 3.12 Verify AC-4.2: schema has nativeSyncEnabled
+- [x] 3.13 Verify AC-4.3: schema has nativeSyncFailureCount
+- [x] 3.14 Verify AC-4.4: schema has chat.executor.lastReadLine
+- [x] 3.15 Verify AC-5.1: implement.md has CI separation rule
+- [x] 3.16 Verify AC-5.2: implement.md has GLOBAL CI guidance
+- [x] 3.17 Verify AC-5.3: implement.md has "TASK VERIFY PASS but GLOBAL CI FAIL" log
+- [x] 3.18 [VERIFY] Phase 3 complete: all AC verified
   - **Do**: Run grep for each layer heading in verification-layers.md
   - **Verify**: `grep -c "Layer 0: EXECUTOR_START" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=1) print "PASS: L0 present"; else print "FAIL: L0 missing"}'` && `grep -c "Layer 1: Contradiction" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=1) print "PASS: L1 present"; else print "FAIL: L1 missing"}'` && `grep -c "Layer 2: TASK_COMPLETE" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=1) print "PASS: L2 present"; else print "FAIL: L2 missing"}'` && `grep -c "Layer 3: Anti-fabrication" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=1) print "PASS: L3 present"; else print "FAIL: L3 missing"}'` && `grep -c "Layer 4: Artifact Review" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=1) print "PASS: L4 present"; else print "FAIL: L4 missing"}'`
   - **Done when**: All 5 layer headings found
@@ -366,32 +392,32 @@ Systematic verification of every acceptance criterion via grep/jq.
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Verify schema defaults are backwards compatible
+- [x] 4.1 Verify schema defaults are backwards compatible
   - **Do**: Check that all new schema fields have defaults. Validate schema structure with jq.
   - **Files**: plugins/ralph-specum/schemas/spec.schema.json
   - **Done when**: `jq '.definitions.state.properties.nativeTaskMap.default' plugins/ralph-specum/schemas/spec.schema.json` returns `{}` and all other fields have defaults
   - **Verify**: `jq '.definitions.state.properties.nativeTaskMap.default' plugins/ralph-specum/schemas/spec.schema.json && jq '.definitions.state.properties.nativeSyncEnabled.default' plugins/ralph-specum/schemas/spec.schema.json && jq '.definitions.state.properties.nativeSyncFailureCount.default' plugins/ralph-specum/schemas/spec.schema.json && jq '.definitions.state.properties.chat.properties.executor.properties.lastReadLine.default' plugins/ralph-specum/schemas/spec.schema.json`
   - **Commit**: `fix(schema): ensure all new fields have backwards-compatible defaults` (only if fixes needed)
 
-- [ ] 4.2 Verify no agent files were modified
+- [x] 4.2 Verify no agent files were modified
   - **Do**: Check git diff -- no agent files should appear
   - **Verify**: `git diff --name-only HEAD~30 -- plugins/ralph-specum/agents/ | wc -l | awk '{if($1==0) print "PASS: no agent changes"; else print "FAIL: "$1" agent files changed"}'`
   - **Done when**: Zero agent files modified
   - **Commit**: None (verification only)
 
-- [ ] 4.3 Verify no new files created
+- [x] 4.3 Verify no new files created
   - **Do**: Check git status for untracked files in plugin directory
   - **Verify**: `git status --porcelain plugins/ralph-specum/ | grep "^??" | wc -l | awk '{if($1==0) print "PASS: no new files"; else print "FAIL: "$1" new files found"}'`
   - **Done when**: Zero new files in plugin directory
   - **Commit**: None (verification only)
 
-- [ ] 4.4 Verify diff size within NFR-1 bounds (< 30 lines per file, excluding VL)
+- [x] 4.4 Verify diff size within NFR-1 bounds (< 30 lines per file, excluding VL)
   - **Do**: Count changed lines per file via git diff
   - **Verify**: `for f in plugins/ralph-specum/schemas/spec.schema.json plugins/ralph-specum/commands/implement.md plugins/ralph-specum/references/coordinator-pattern.md; do echo "$f:"; git diff HEAD -- "$f" | grep -c "^[+-]" | awk '{if($1<=60) print " PASS ("$1" lines)"; else print " WARN ("$1" lines -- check NFR-1)"}'; done`
   - **Done when**: Diff sizes within bounds
   - **Commit**: None (verification only)
 
-- [ ] 4.5 [P] Bump version in plugin.json
+- [x] 4.5 [P] Bump version in plugin.json
   - **Do**: Increment patch version from 4.11.0 to 4.12.0 in plugin.json
   - **Files**: plugins/ralph-specum/.claude-plugin/plugin.json
   - **Done when**: Version is 4.12.0
@@ -413,7 +439,10 @@ Systematic verification of every acceptance criterion via grep/jq.
 
 ## Phase 5: PR Lifecycle
 
-- [ ] 5.1 Create feature branch and push
+- [x] 5.1 Create feature branch and push
+- [x] 5.2 Create PR via gh CLI
+- [x] 5.3 Monitor CI and resolve any failures
+- [x] 5.4 Final validation: all completion criteria met
   - **Do**:
     1. Verify on feature branch: `git branch --show-current`
     2. Stage all changed files: `git add plugins/ralph-specum/schemas/spec.schema.json plugins/ralph-specum/references/verification-layers.md plugins/ralph-specum/references/coordinator-pattern.md plugins/ralph-specum/commands/implement.md plugins/ralph-specum/.claude-plugin/plugin.json .claude-plugin/marketplace.json`
