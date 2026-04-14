@@ -107,7 +107,7 @@ Reviewer/critic
 
 Lee diff + salida del judge + spec para esa tarea y responde únicamente con un bloque estructurado:
 
-json
+```json
 {
   "task": "1.16",
   "pass": false,
@@ -117,6 +117,7 @@ json
   ],
   "suggested_fixes": [...]
 }
+```
 No edita la spec ni cambia thresholds; como mucho, adjunta sugerencias para ti cuando detecta que el criterio en la spec es poco realista.
 
 Spec‑guardian (opcional pero útil)

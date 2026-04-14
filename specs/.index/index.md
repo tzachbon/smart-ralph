@@ -47,7 +47,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | token-efficient-executor | ./specs | completed | done |
 | update-index-on-complete | ./specs | completed | done |
 | when-creating-worktree | ./specs | completed | done |
-| ralph-quality-improvements | ./specs | complete |  |
+| ralph-quality-improvements | ./specs | completed | done |
 | agent-chat-protocol | ./specs | completed | done |
 | codex-plugin-sync | ./specs | completed | done |
 | remove-codex-prefix | ./specs | tasks | 2/16 tasks |

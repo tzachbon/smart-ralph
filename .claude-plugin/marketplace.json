@@ -10,7 +10,7 @@
     {
       "name": "ralph-specum",
       "description": "Spec-driven development with bidirectional chat protocol between executor and reviewer. Research, requirements, design, tasks, autonomous execution, and epic triage. Fresh context per task.",
-      "version": "4.11.1",
+      "version": "4.12.0",
       "author": {
         "name": "tzachbon"
       },

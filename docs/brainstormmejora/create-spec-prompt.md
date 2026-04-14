@@ -13,7 +13,7 @@ This spec will harden smart-ralph's execution engine to make autonomous executio
 ## Context
 
 Read these files BEFORE creating the spec:
-1. `/mnt/bunker_data/ai/smart-ralph/docs/brainstormmejora/gap-analysis-and-roadmap.md` — Full gap analysis with evidence
+1. `docs/brainstormmejora/gap-analysis-and-roadmap.md` — Full gap analysis with evidence
 2. `plugins/ralph-specum/templates/requirements.md` — Requirements template
 3. `plugins/ralph-specum/templates/design.md` — Design template
 4. `plugins/ralph-specum/templates/tasks.md` — Tasks template
