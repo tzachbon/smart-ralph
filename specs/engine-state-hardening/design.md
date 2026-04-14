@@ -55,7 +55,7 @@ If `EXECUTOR_START` is absent:
 - The delegation silently failed — coordinator must NOT implement the task itself
 - Do NOT run Layers 1-4
 - Do NOT advance taskIndex or increment taskIteration
-- ESCALATE immediately (see coordinator-pattern.md Task Delegation section)
+- ESCALATE immediately: log "EXECUTOR_START absent for task $taskIndex — delegation may have failed" to .progress.md, stop iteration
 
 This is a hard gate. Layer 1 contradiction check does NOT catch self-implementation — Layer 0 does.
 ```
@@ -73,11 +73,11 @@ For EVERY task that reports a verify command result, run the verify command inde
    - Executor said "N passed" but actual count differs -> FABRICATION -> REJECT
    - Outputs match -> proceed
 
-Additionally, run global CI checks (project-wide linting, type-checking) independently:
-- `ruff check .`, `mypy .`, or equivalent project-wide commands
+Additionally, run global CI checks (project-wide linting, type-checking) independently when available:
 - Task Verify and global CI are reported SEPARATELY
 - Both must pass for this layer to pass
 - If task Verify passes but global CI fails: log "TASK VERIFY PASS but GLOBAL CI FAIL", do NOT advance
+- **CI command discovery is deferred to Spec 4 (loop-safety-infra)**. This spec adds the conceptual rule only. Specific command discovery (ruff/mypy for Python, eslint/tsc for JS) is not implemented here.
 ```
 
 ### 2. implement.md (Coordinator Entry Point)
@@ -96,11 +96,13 @@ Additionally, run global CI checks (project-wide linting, type-checking) indepen
 
 **New HOLD check bullet** (insert before line 225 "MANDATORY: Read chat.md BEFORE delegating"):
 ```markdown
-- **MANDATORY: Mechanical HOLD check BEFORE chat.md read.** Before reading chat.md for signals, run:
+- **MANDATORY: Mechanical HOLD check BEFORE delegation.** Before delegating, run:
   ```bash
-  grep -c '\[HOLD\]\|\[PENDING\]\|\[URGENT\]' "$SPEC_PATH/chat.md" 2>/dev/null
+  grep -c '^\[HOLD\]$\|^\[PENDING\]$\|^\[URGENT\]$' "$SPEC_PATH/chat.md" 2>/dev/null
   ```
-  If exit code is 0 (matches found) AND the matching line does NOT contain `[HOLD:resolved]` and is NOT under a `## Resolved Signals` section: block delegation immediately. Log to `.progress.md`: `"COORDINATOR BLOCKED: active HOLD/PENDING/URGENT signal in chat.md for task $taskIndex"`.
+  If count > 0 (active signals found): block delegation immediately. Log to `.progress.md`: `"COORDINATOR BLOCKED: active HOLD/PENDING/URGENT signal in chat.md for task $taskIndex"`.
+  
+  When signals are resolved (by external-reviewer or coordinator), the signal line is changed to `[RESOLVED]` (e.g., `[HOLD]` → `[RESOLVED]`). This marker is not matched by the grep check.
 ```
 
 **New state integrity check** (insert after Step 4 heading, before the parallel reviewer section ~line 135):
@@ -125,7 +127,7 @@ TOTAL=$(jq '.totalTasks' "$SPEC_PATH/.ralph-state.json")
 
 **New CI snapshot rule** (insert after the "CRITICAL: Verify independently" bullet ~after line 230):
 ```markdown
-- **CI snapshot separation.** Task Verify commands (task-scoped) and global CI commands (`ruff check .`, `mypy .`, project-wide linting) must be reported separately. Both must pass. If task Verify passes but global CI fails: log `"TASK VERIFY PASS but GLOBAL CI FAIL"` to `.progress.md`, do NOT advance taskIndex.
+- **CI snapshot separation.** Task Verify commands (task-scoped) and global CI commands (project-wide linting, type-checking) must be reported separately. Both must pass. If task Verify passes but global CI fails: log `"TASK VERIFY PASS but GLOBAL CI FAIL"` to `.progress.md`, do NOT advance taskIndex. **Note**: Specific CI command discovery is deferred to Spec 4. The coordinator should check for available project CI commands if they exist.
 ```
 
 ### 3. coordinator-pattern.md (Coordinator Logic Reference)
@@ -147,9 +149,10 @@ Replace the inline definitions with:
 ```markdown
 Layer definitions and full logic are defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md`.
 This document is the canonical source for all 5 verification layers (Layer 0 through Layer 4).
+Layer 0 in verification-layers.md is self-contained (no need to reference this document for escalation rules).
 
 Key rules (quick reference — see verification-layers.md for full details):
-- Layer 0 (EXECUTOR_START) is a hard gate. If absent, ESCALATE immediately.
+- Layer 0 (EXECUTOR_START) is a hard gate. If absent, log and ESCALATE immediately.
 - Layers 1-2 check output text for contradictions and TASK_COMPLETE signal.
 - Layer 3 (Anti-fabrication) independently runs verify commands. NEVER trust executor output.
 - Layer 4 (Artifact Review) runs periodically per rules defined in verification-layers.md.
@@ -232,6 +235,8 @@ sequenceDiagram
 |----------|-------------------|--------|-----------|
 | Layer 0 source location | Inline in VL only, Inline in CP only, Both with reference | VL canonical + CP Task Delegation keeps inline | CP needs Layer 0 context for delegation flow; VL is canonical for layer count |
 | HOLD check placement | Before chat.md read, After chat.md read, Replace chat.md read | Before chat.md read | Mechanical check first catches what LLM might skip; text read handles resolution tracking |
+| CI command discovery | Hardcode ruff/mypy, Add ciCommands to state, Defer to Spec 4 | Defer to Spec 4 | Spec 4 already plans CI snapshot tracking; hardcoding Python commands is wrong for JS/other projects; state schema addition fits Spec 4 scope better |
+| VL Layer 0 self-containment | Reference CP for escalation, Inline all rules in VL | Inline all rules in VL | VL is canonical source — referencing CP creates circular dependency; VL must be self-contained |
 | State drift correction timing | Pre-loop only, Per-iteration, Post-verification | Pre-loop only (Step 4 start) | Corrects stale resume state; per-iteration adds overhead for rare edge case |
 | coordinator-pattern inline layers | Keep all inline, Remove all, Replace with reference | Replace Verification Layers section with reference, keep Task Delegation Layer 0 | Reduces duplication; Layer 0 in Task Delegation has delegation-specific context |
 | Schema backwards compat | Add required fields, Add optional with defaults | Optional with defaults | Existing state files lack these fields; defaults prevent breakage |
