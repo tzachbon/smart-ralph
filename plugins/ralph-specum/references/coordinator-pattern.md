@@ -614,89 +614,15 @@ This guarantees orphaned processes (dev servers, browsers) are cleaned up even w
 
 ## Verification Layers
 
-CRITICAL: Run these 5 verification layers BEFORE advancing taskIndex. All must pass.
-Layer 0 runs first and is a hard gate — if it fails, layers 1–4 are skipped entirely.
+Layer definitions and full logic are defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md`.
+This document is the canonical source for all 5 verification layers (Layer 0 through Layer 4).
+Layer 0 in verification-layers.md is self-contained (no need to reference this document for escalation rules).
 
-**Layer 0: EXECUTOR_START Signal** ← defined above in Task Delegation section.
-Must be present at the top of spec-executor output. If absent: ESCALATE, do not increment taskIteration.
-
-**Layer 1: CONTRADICTION Detection**
-
-Check spec-executor output for contradiction patterns:
-- "requires manual"
-- "cannot be automated"
-- "could not complete"
-- "needs human"
-- "manual intervention"
-
-If TASK_COMPLETE appears alongside any contradiction phrase:
-- REJECT the completion
-- Log: "CONTRADICTION: claimed completion while admitting failure"
-- Increment taskIteration and retry
-
-**Layer 2: TASK_COMPLETE Signal Verification**
-
-Verify spec-executor explicitly output TASK_COMPLETE:
-- Must be present in response
-- Not just implied or partial completion
-- Silent completion is not valid
-
-If TASK_COMPLETE missing:
-- Do NOT advance
-- Increment taskIteration and retry
-
-**Layer 3: Verification Claim Integrity (ANTI-FABRICATION)**
-
-This layer catches when the executor FABRICATES verification results (claims commands passed
-when they did not, or reports false output).
-
-**Rule: NEVER trust pasted verification output from spec-executor. ALWAYS run the verify command independently.**
-
-For EVERY task that reports a verify command result (e.g., "ruff check → All checks passed",
-"pytest → 1371 passed", "grep → VE0_PASS"):
-
-1. **Extract the verify command** from the task's Verify section in tasks.md
-2. **Run it independently** as a shell command — do NOT use the executor's pasted output
-3. **Compare actual result** with executor's claimed result:
-   - If executor said "PASSED" but command exits non-zero → **FABRICATION** → REJECT, increment taskIteration, log: `"FABRICATION: executor claimed verify passed but actual command failed"`
-   - If executor said "N passed" but actual count differs → **FABRICATION** → REJECT, log: `"FABRICATION: executor claimed N tests passed but actual was M"`
-   - If executor said "coverage achieved" but actual coverage < required → **FABRICATION** → REJECT
-   - If outputs match within acceptable tolerance → proceed normally
-
-**Critical commands that MUST be independently verified (never trust pasted output):**
-- `ruff check` / `ruff format` — linting claims
-- `pytest ... --cov-fail-under=N` — coverage claims
-- `grep -q ... && echo PASS` — grep verification claims
-- `make e2e` — E2E test claims
-- `mypy` — type check claims
-- Any command where the executor reports "All checks passed", "PASSED", or a numeric result
-
-> **Why this layer exists**: In the fix-emhass-sensor-attributes spec (2026-04-09), the
-> spec-executor claimed "ruff check → All checks passed" when 72 errors existed, and claimed
-> "1371 passed, 100.00% coverage" when tests were actually failing. The coordinator accepted
-> both claims without independent verification, advancing 5+ tasks on false premises.
-
-**Layer 4: Artifact Review (Periodic)**
-
-Runs only when:
-- Phase boundary (task phase changed from previous task)
-- Every 5th task (taskIndex > 0 && taskIndex % 5 == 0)
-- Final task (taskIndex == totalTasks - 1)
-
-When triggered: run the full artifact review loop defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` (section "Layer 3: Artifact Review").
-
-When skipped: append "Skipping artifact review (next at task N)" to .progress.md and proceed to State Update.
-
-**Verification Summary**
-
-All 5 layers must pass:
-0. EXECUTOR_START signal present (hard gate — blocks all other layers if absent)
-1. No contradiction phrases with completion claim
-2. Explicit TASK_COMPLETE signal present
-3. Verification claims match independent command execution (NO FABRICATION)
-4. Artifact review passes (when triggered; auto-pass when skipped per periodic rules)
-
-Only after all verifications pass, proceed to State Update.
+Key rules (quick reference — see verification-layers.md for full details):
+- Layer 0 (EXECUTOR_START) is a hard gate. If absent, log and ESCALATE immediately.
+- Layers 1-2 check output text for contradictions and TASK_COMPLETE signal.
+- Layer 3 (Anti-fabrication) independently runs verify commands. NEVER trust executor output.
+- Layer 4 (Artifact Review) runs periodically per rules defined in verification-layers.md.
 
 ## Native Task Sync - Post-Verification
 
