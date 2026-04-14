@@ -2,7 +2,20 @@
 
 > Used by: implement.md
 
-Three verification layers run BEFORE advancing taskIndex after a task reports TASK_COMPLETE. All must pass.
+Five verification layers run BEFORE advancing taskIndex after a task reports TASK_COMPLETE. All must pass.
+
+## Layer 0: EXECUTOR_START Signal (MANDATORY — blocks all other layers)
+
+After every delegation to spec-executor, verify the response begins with `EXECUTOR_START`
+BEFORE running any other verification layer.
+
+If `EXECUTOR_START` is absent:
+- The delegation silently failed — coordinator must NOT implement the task itself
+- Do NOT run Layers 1-4
+- Do NOT advance taskIndex or increment taskIteration
+- ESCALATE immediately: log "EXECUTOR_START absent for task $taskIndex — delegation may have failed" to .progress.md, stop iteration
+
+This is a hard gate. Layer 1 contradiction check does NOT catch self-implementation — Layer 0 does.
 
 ## Layer 1: Contradiction Detection
 
@@ -31,13 +44,30 @@ If TASK_COMPLETE missing:
 - Do NOT advance
 - Increment taskIteration and retry
 
-## Layer 3: Artifact Review
+## Layer 3: Anti-fabrication (Verification Claim Integrity)
 
-After Layers 1-2 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
+For EVERY task that reports a verify command result, run the verify command independently:
+
+1. Extract the verify command from the task's Verify section in tasks.md
+2. Run it independently — do NOT use executor's pasted output
+3. Compare actual result with claimed result:
+   - Executor said "PASSED" but command exits non-zero -> FABRICATION -> REJECT
+   - Executor said "N passed" but actual count differs -> FABRICATION -> REJECT
+   - Outputs match -> proceed
+
+Additionally, run global CI checks (project-wide linting, type-checking) independently when available:
+- Task Verify and global CI are reported SEPARATELY
+- Both must pass for this layer to pass
+- If task Verify passes but global CI fails: log "TASK VERIFY PASS but GLOBAL CI FAIL", do NOT advance
+- **CI command discovery is deferred to Spec 4 (loop-safety-infra)**. This spec adds the conceptual rule only. Specific command discovery (ruff/mypy for Python, eslint/tsc for JS) is not implemented here.
+
+## Layer 4: Artifact Review
+
+After Layers 1-3 pass, invoke the `spec-reviewer` agent to validate the implementation against the spec.
 
 ### When to Run
 
-Layer 3 runs only when ANY of these conditions are true:
+Layer 4 runs only when ANY of these conditions are true:
 - **Phase boundary**: Current task is the first task of a new phase (phase number in task ID changed from previous completed task)
 - **Every 5th task**: taskIndex > 0 && taskIndex % 5 == 0
 - **Final task**: taskIndex == totalTasks - 1 (accepts either TASK_COMPLETE or ALL_TASKS_COMPLETE from spec-executor)
@@ -160,7 +190,7 @@ After each review iteration (regardless of outcome), append to `$SPEC_PATH/.prog
 
 ### Parallel Batch Note
 
-When Layer 3 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description.
+When Layer 4 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description.
 
 ### Error Handling
 
@@ -170,10 +200,14 @@ When Layer 3 runs after a parallel batch, use `parallelGroup.startIndex` as the 
 
 ## Verification Summary
 
-All 3 layers must pass before advancing:
-1. No contradiction phrases with completion claim
-2. Explicit TASK_COMPLETE signal present
-3. Artifact review passes (when triggered by periodic rules; otherwise auto-pass)
+All 5 layers must pass before advancing:
+1. Layer 0 (EXECUTOR_START Signal) — blocks if absent
+2. Layer 1 (Contradiction Detection) — no failure phrases with completion
+3. Layer 2 (TASK_COMPLETE Signal) — explicit signal present
+4. Layer 3 (Anti-fabrication) — verify commands run independently
+5. Layer 4 (Artifact Review) — periodic spec-reviewer validation
+
+Only after all verifications pass, proceed to State Update.
 
 Only after all verifications pass, proceed to State Update.
 
@@ -191,9 +225,11 @@ Coordinator layers focus on higher-order checks: contradictions, signal presence
 
 **ALL_TASKS_COMPLETE handling**: When spec-executor outputs ALL_TASKS_COMPLETE instead of TASK_COMPLETE, Layer 2 treats it as satisfying the TASK_COMPLETE signal requirement. Layer 3's final-task trigger (taskIndex == totalTasks - 1) accepts either signal when deciding to run final-task verification.
 
-The coordinator enforces 3 verification layers:
-1. Contradiction detection - rejects "requires manual... TASK_COMPLETE"
-2. Signal verification - requires TASK_COMPLETE
-3. Periodic artifact review - validates implementation against spec
+The coordinator enforces 5 verification layers:
+1. Layer 0 (EXECUTOR_START) - blocks if delegation response is missing signal
+2. Layer 1 (Contradiction detection) - rejects "requires manual... TASK_COMPLETE"
+3. Layer 2 (Signal verification) - requires TASK_COMPLETE
+4. Layer 3 (Anti-fabrication) - independently runs verify commands
+5. Layer 4 (Artifact review) - periodic spec-reviewer validation
 
 False completion WILL be caught and retried with a specific error message.

@@ -3,15 +3,15 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-04-08T16:53:35Z
+**Last updated:** 2026-04-14T05:56:33Z
 
 ## Directories (1)
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 34 | Yes |
+| ./specs | 37 | Yes |
 
-## All Specs (34)
+## All Specs (37)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
@@ -47,8 +47,11 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | token-efficient-executor | ./specs | completed | done |
 | update-index-on-complete | ./specs | completed | done |
 | when-creating-worktree | ./specs | completed | done |
-| ralph-quality-improvements | ./specs | completed | done|
-| agent-chat-protocol | ./specs | execution | 51/51 tasks |
+| ralph-quality-improvements | ./specs | completed | done |
+| agent-chat-protocol | ./specs | completed | done |
+| codex-plugin-sync | ./specs | completed | done |
+| remove-codex-prefix | ./specs | tasks | 2/16 tasks |
+| engine-state-hardening | ./specs | completed | done |
 
 ---
 

@@ -1,0 +1,330 @@
+Tienes razón en matizar esto, y haces bien en pararme aquí. Con la lectura del README y del spec-workflow/SKILL.md se ve claro que tu diseño de smart‑ralph está bastante más pensado (y alineado con Ralph / Kitchen Loop) de lo que yo había dejado entrever.
+
+Te aclaro en qué puntos me faltaba contexto y cómo encaja ahora mi análisis con tu flujo real:
+
+1. Flujo completo de smart‑ralph (ya lo tienes muy bien montado)
+Revisado el SKILL y el README, el flujo es:
+
+Inicio de spec
+
+/ralph-specum:start o :new → crea raíz specs/<name>/.
+
+Phase research — research-analyst
+
+research.md: explora el código, patrones, contexto, viabilidad.
+
+Phase requirements — product-manager
+
+requirements.md: user stories, FR/NFR y, muy importante, Verification Contract con Project type y entry points.
+
+Phase design — architect-reviewer
+
+design.md: arquitectura, componentes, interfaces, file matrix.
+
+Phase tasks — task-planner
+
+tasks.md: breakdown por fases, VE tasks numeradas, reglas específicas según Project type (fullstack/api/cli/library) y dominio (Home Assistant → selector‑map HA, etc.).
+
+Phase implement — spec-executor
+
+Ejecuta tasks una a una, con compaction, usando .ralph-state.json + .ralph-progress.md para mantener estado.
+
+Además tienes epic triage con _epics, interviews, quick mode con auto‑validación por fase, etc. — esto no es un “script suelto”: es un SDLC agentic bastante completo.
+
+Mi crítica nunca fue a estas fases; de hecho, esta parte está muy en línea con lo que recomiendan ADLC/Kitchen Loop: investigación, requirements sólidos, diseño, tareas, y sólo al final ejecución autónoma.
+
+2. Qué estaba criticando exactamente (y qué no)
+Los problemas que señalé siguen siendo reales, pero están concentrados en cómo se comporta el motor en la fase implement, no en cómo diseñas la spec:
+
+Desincronización de estado durante ejecución:
+En la spec fix-emhass-sensor-attributes se ha visto que tasks.md afirma “38/38 tasks completas, VE tasks pasando” mientras task_review.md deja 4.3–4.5 en WARNING/FAIL y el reviewer tiene que resetear taskIndex y recrear .ralph-state.json.
+
+Coordinador ignorando señales del reviewer:
+Hay mensajes claros de HOLD/STOP pidiendo no avanzar a 4.6 mientras 4.5 no está cerrada, y aun así el coordinator delega 4.6 y Phase 5. El reviewer corrige eso a posteriori.
+
+Anti‑fabrication débil en la práctica:
+A pesar de que tienes verification-layers.md y comandos VERIFY definidos, se documentan casos donde el executor declara “ruff ok / make e2e ok” con errores en la salida real, y es el reviewer el que detecta la fabricación.
+
+Eso es lo que estoy intentando endurecer: el comportamiento del loop de ejecución y de la coordinación, no las fases altas de research/requirements/design/tasks, que ya están hechas con mucho mimo.
+
+3. Dónde mi análisis sonaba a “mal acoplado” y cómo lo corregiría
+Te señalo los malentendidos concretos y cómo los reencuadraría ahora viendo tu SKILL:
+
+“Te falta capa de dominio/portabilidad”
+
+En realidad, ya la tienes: Verification Contract con Project type + Entry points y reglas explícitas de carga de skills UI/API/CLI, incluyendo detección de Home Assistant para cargar selector maps específicos.
+
+Mi propuesta no es “meter otra capa”, sino apoyarse aún más en esa config para que el verify‑runner y el coordinador dependan de ese contrato, no de heurísticas a mano en cada repo.
+
+“.ralph-state.json no está bien definido”
+
+El README deja claro que existe y es el archivo de estado del loop, borrado al completar.
+
+El problema que vimos no es que falte, sino que en la práctica puede ser borrado o regenerado de forma inconsistente (caso en el que el reviewer lo recrea y resetea taskIndex a 29 para Phase 4).
+
+Aquí la mejora no es “inventar un estado nuevo”, sino fortalecer la semántica y la autoridad de ese estado: que sea la única fuente de verdad y que nadie (ni coordinator ni reviewer) pueda escaparse de sus reglas sin que el sistema lo detecte.
+
+“Falta separación de roles”
+
+Tu SKILL ya define agentes de rol claros (research-analyst, product-manager, architect-reviewer, task-planner, spec-executor, external-reviewer).
+
+Mi crítica es más fina: en la ejecución de fix-emhass-sensor-attributes el external-reviewer a veces asume responsabilidad de coordinador (resetea .ralph-state, reescribe tasks.md) para salvar la situación, lo que indica que el coordinador no está aplicando bien su propio patrón.
+
+La mejora aquí es reforzar el contrato operativo: qué archivos toca cada rol en tiempo de ejecución, apoyándote en estos agentes que ya tienes bien definidos.
+
+En resumen: el diseño conceptual de smart‑ralph (phases, roles, interviews, epics) está fuerte; lo que está “verde” es cómo se comporta el motor de ejecución bajo presión real (como m401/fix‑emhass) y cómo se convergen todos esos artefactos durante la fase implement.
+
+4. Qué haría antes de seguir proponiendo cambios
+Dado este contexto, el siguiente paso, bien alineado con tu intención, sería:
+
+Escribir una spec interna “Improve Execution Engine” dentro de smart‑ralph, usando tu propio flujo completo (research → requirements → design → tasks → implement).
+
+En research.md juntaríamos toda la evidencia que ya hemos recogido de chat.md, .progress.md, task_review.md y .ralph-state.json de fix-emhass-sensor-attributes como casos reales de fallo del loop.
+
+En requirements.md explicitaríamos criterios de éxito:
+
+Imposible avanzar de tarea/fase si hay FAIL/HOLD anterior.
+
+Imposible marcar tarea como PASS si VERIFY no ha sido ejecutado y pasa.
+
+Roles y archivos que cada agente puede tocar durante implement.
+
+Dejar que sea tu propio pipeline (research → requirements → design → tasks) el que refine los detalles, y usar yo mis sugerencias sólo como “inputs” para esa spec, no como si estuviera rediseñando el sistema desde cero.
+
+A partir de ahí, sí tiene sentido entrar en el nivel exacto: qué campos debe tener .ralph-state.json, cómo se procesan task_review.md y chat.md, etc., pero dentro de la forma de pensar de smart‑ralph, no en abstracto.
+
+Si te parece, en el próximo mensaje podemos empezar por esa spec “Improve Execution Engine” escribiendo juntos el bloque de Requirements (con FR/NFR y criterios de verificación) basado 100% en la evidencia real de fix-emhass-sensor-attributes, y así todo lo que definamos encajará completamente con tu flujo actual.
+
+Preparado por Deep Research
+pero es que alomejor lo que esoty haciendo es sobre ingenieria y en bmalph no necesitan todo eso porque ya lo han solucioando. Investiga bien las issues el codigo fuente de mi fork smat ralph y de bmalph. issues abierta scerradas pr abiertos cerrados etc... para ver si es que alomejor lo que esoty haciendo es complicarme la vida demasiado porque hay caminos mas faciles de hacer lo que quiero
+4 pasos completados
+No parece que estés “reinventando la rueda” respecto a Bmalph, pero sí estás metiendo en tu loop cosas que Bmalph deliberadamente mantiene fuera (y eso lo vuelve más complejo y frágil).
+
+Qué hace Bmalph y qué problemas está resolviendo
+Bmalph es un CLI que pega BMAD (planning) con el loop Ralph original: fases 1‑3 son agentes de planificación (analista, PM, arquitecto) y la fase 4 es Ralph ejecutando historias hasta que el tablero se vacía o salta el circuit breaker.
+
+El propio autor dice que usar Bmalph en tareas pequeñas es “over‑engineering”; está pensado para features grandes donde el riesgo principal es perder decisiones y contexto, no tanto la micro‑calidad de cada test o cada línea de mypy.
+
+Si miras sus issues y PRs recientes, el foco está en:
+
+Robustez del loop: pre‑loop git checkpoint para rollback, heartbeat de escritura para detectar repos read‑only, metrics append‑only de rendimiento, inyección de fallos de test concretos en el contexto del loop, swarm mode para multi‑agente paralelo.
+
+Infra y DX: scripts de calidad, upgrades de dependencias, mejoras en documentación, soporte cross‑plataforma (coreutils en macOS, etc.).
+
+Es decir: su energía no se va a diseñar un mega‑sistema de juez/coordinador super sofisticado, sino a que el loop de Ralph sea seguro, observable y relativamente fácil de recuperar si la IA la lía.
+
+Qué muestra tu fork de smart‑ralph (frente a eso)
+Tu fork de smart‑ralph está más centrado en specs muy densas, mucha capa de verificación semántica y multi‑agente coordinador/revisor, con archivos como tasks.md, task_review.md, .progress, chat entre agentes, reglas estrictas de cobertura, mypy, ruff, etc.
+
+Además lo estás probando en un entorno muy “hostil” (custom_components de HA con tests frágiles y tipos raros), lo que hace aflorar todos los problemas de mocks, coverage, errores de typing y trampas del modelo.
+
+Comparado con Bmalph:
+
+Tú estás apretando muchísimo más la tuerca de la calidad local (cada spec, cada módulo, cada prueba).
+
+Bmalph está más centrado en que “el loop no destroce el repo y avance razonablemente” y menos en tener un juez hiperestructurado por tarea.
+
+¿Estás sobre‑ingenierizando?
+Hay dos cosas distintas:
+
+Nivel de ambición
+
+Bmalph aspira a: “Plan bien hecho + loop que implementa historias de forma autónoma, con circuit breaker y herramientas de rollback/metrics, y luego un dev humano revisa y mergea”.
+
+Tú aspiras a: “Cuando termina la spec, el PR esté casi listo para mergear sin intervención, con quality gates fuertes y reviews automáticos que casi sustituyen al humano”.
+
+Para ese objetivo, necesitas más mecanismo que Bmalph, sí o sí. Desde ese punto de vista, no es sobre‑ingeniería, es que estás apuntando a un nivel de autonomía distinto.
+
+Dónde estás metiendo la complejidad
+
+Bmalph mete complejidad en: infra del loop (rollback git, circuit breaker, métricas), integración BMAD, y ahora “swarm mode” multi‑agente a nivel de historias.
+
+Tú la metes dentro del propio flujo de una spec: multi‑agente coordinador/reviewer, files de estado ricos, reglas de cobertura/mypy super estrictas, etc., pero con menos soporte infra “duro” (rollback automático, circuit breaker configurable, métricas de loop, etc.).
+
+Aquí sí creo que te estás complicando la vida en el sitio más frágil: en vez de endurecer el loop base y los quality gates como hace Bmalph, estás intentando que los agentes “piensen mejor” y se corrijan entre ellos dentro de un entorno más caótico.
+
+Qué puedes aprovechar de Bmalph para simplificar
+A partir de lo que se ve en issues/PRs de Bmalph:
+
+Copiar el enfoque de “seguridad de loop primero, sofisticación de agentes después”:
+
+Pre‑loop git checkpoint para poder tirar marcha atrás si una iteración rompe medio repo.
+
+Circuit breaker y métricas claras (nº historias completadas, nº iteraciones, ratio de fallos de tests, etc.).
+
+Inspirarte en sus features de inyección de fallos de test y swarm mode pero aplicados a tu motor:
+
+En vez de un revisor textual súper complejo, puedes dejar que un “CI‑bot” pase los tests y meta errores concretos en el contexto del implementador (lo que Bmalph hace con “inject specific test failures into loop context”).
+
+El “swarm mode” sugiere que varias instancias del implementador pueden trabajar en historias distintas en paralelo, mientras un loop relativamente simple coordina. No necesitas que cada agente individual sea ultra‑inteligente; la orquestación hace gran parte del trabajo.
+
+Aceptar el “contrato Bmalph”:
+
+Bmalph no promete que el output de Ralph sea merge‑ready sin ojos humanos; promete que está lo bastante bien y que el loop no se descontrola.
+
+Si acercas tus expectativas a eso (tu motor deja la rama en estado “ready for human review” con quality gates pasando), puedes simplificar bastante tu capa de revisor, y dejar de batallar por ese último 10 % de autonomía que hoy te cuesta muchísimo esfuerzo.
+
+Respuesta directa a tu duda
+¿Ellos ya han resuelto lo que tú estás intentando y tú te estás complicando?
+Han resuelto bien otra parte del problema: cómo pegar planning y ejecución (BMAD + Ralph) y cómo hacer que el loop sea robusto y seguro. No han puesto el mismo énfasis que tú en un revisor multi‑agente hiper estricto que deje todo listo para merge.
+
+¿Tendrías caminos más fáciles si “te alineas más con Bmalph”?
+Sí, si ajustas tu objetivo a algo más parecido al de Bmalph:
+
+Deja que tu sistema aspire a “branch lista para revisión humana” con un loop muy seguro (rollback, circuit breaker, metrics) y quality gates fuertes.
+
+Quita complejidad innecesaria del diálogo coordinador/reviewer; apóyate más en scripts y en un juez simple que lea salidas de CI, como hace Bmalph.
+
+Si quieres, en el siguiente mensaje podemos concretar: por ejemplo, diseñar un “smart‑ralph‑style loop” inspirado en las features de Bmalph (checkpoint git, circuit breaker, métricas básicas) y ver qué piezas de tu arquitectura actual podrías recortar sin perder tu objetivo real.
+
+Preparado por Deep Research
+a ver mi objetivo es porque estoy tratando de pensar y ir dos pasos por delante. me quiero adelantar a lo obvio porque la ia va muy rapido. y conozco de primera mano que la he usado mucho tengo mucha experiencia de senior con arquitecturas y programando y me he enfrentado a los problemas de los agentes en proeycto de arquitectura hexagonal y symfony. para que te hagas una idea. y se que la ia va a llegar ha hacer esto que es tan rigido bien a la primera sin necesidad de humanos o con minima intervención . estoy investigando eso porque creo que es el camino el futuro donde quiero estar mañana. Sobre lo que me estoy complicando. El punto de complicarme es porque la naturaleza del desrrollo de software parece determinista pero alfinal cuando bajas al barro no lo es. en el papel es ideal . pero cuando te arremangas las mangas y te pones manos a la obra surgen destalles de implementación que acabo discutiendo con otra ia y me veo en medio de dos o tres ias solamente moviendo información entre una y otra. y al final es algo que podrian hacer sin mi. me explico ? es realmente sobre complicarme o es un paso natural hacia la autonomia ?
+
+Lo que estás haciendo (bajarte al barro, discutir detalles con varias IAs, mover info entre ellas) no es una rareza tuya ni mera sobre‑ingeniería caprichosa; es casi el paso natural intermedio hacia la autonomía que tú quieres, sobre todo con el nivel de ambición que tienes.
+
+1. Tu objetivo concreto (y por qué es duro)
+Tú no quieres “solo acelerar al dev humano”, quieres llegar a un punto en el que una spec rígida y seria se implemente casi perfecta a la primera, con mínima intervención humana, incluso en arquitectura hexagonal, Symfony, HA, etc.
+
+Eso es dos niveles por encima de lo que buscan muchos frameworks de agentes actuales (Ralph, Bmalph, etc.), que se conforman con dejar el repo “listo para revisión” y asumir que siempre habrá un humano al final.
+
+Mientras mantengas ese objetivo, es normal que tu flujo parezca “demasiado complejo” comparado con lo que hace hoy la mayoría de la comunidad: tú estás intentando resolver el tramo donde casi nadie ha llegado todavía.
+
+2. Por qué sientes caos (determinismo vs barro)
+En teoría, la spec SSD que haces es rígida y determinista: requisitos claros, diseño, tareas, criterios de DONE; la IA solo debería seguir el camino.
+
+En la práctica, cuando tocas código real (hexagonal, Symfony, HA), emergen detalles que nunca caen en el papel: mocks, edge cases, decisiones arquitectónicas “no obvias”, regresiones cruzadas… y ahí aparecen las discusiones entre IAs y tú en medio de mensajero.
+
+Ese “no determinismo” emergente es justo lo que hay que domar si quieres autonomía fuerte; no se arregla sólo con más prompts, se arregla con:
+
+Mejor infra (tests, fixtures, fake data realistas, circuit breakers).
+
+Mejores contratos entre agentes (quién decide qué, qué es fuente de verdad).
+
+Mejores representaciones de estado (artefactos estructurados, no sólo texto).
+
+Es decir, justo las cosas en las que ya estás trabajando.
+
+3. ¿Sobre‑ingeniería o paso natural?
+Yo lo vería así:
+
+Si tu objetivo fuera “solo” tener un buen copiloto para un dev senior, sí: todo lo de múltiples agentes, spec SSD en epochs, revisores dedicados, etc., sería claramente sobre‑ingeniería. Bastaría con un buen modelo+IDE y revisar tú.
+
+Pero tu objetivo es quitar al humano de la cadena casi por completo en tareas serias de software, y tú ya has visto en primera persona que un único agente “grande” no basta: se pierde contexto, fabrica cosas, rompe arquitectura, etc.
+
+Desde ahí:
+
+El hecho de que ahora seas tú quien mueve información entre 2–3 IAs es un síntoma de que te falta un nivel más de orquestación, no de que el camino esté mal.
+
+Estás haciendo de “orchestrator/juez humano” porque todavía no has encapsulado ese rol en un agente / protocolo / motor; en cuanto lo encapsules bien, esa misma complejidad deja de estar en tu cabeza y pasa a estar en el sistema.
+
+Eso es muy parecido a cómo se construyen sistemas complejos en cualquier disciplina: primero hay un humano pegando todo a mano, luego se abstrae esa capa y se vuelve parte de la “infra invisible”.
+
+4. Dónde sí hay riesgo de sobre‑ingeniería
+Hay, eso sí, un punto donde puedes pasarte de rosca:
+
+Si inviertes mucha energía en detallar micro‑reglas de comportamiento del agente, chat súper elaborado entre roles, etc., sin asegurar antes fuentes de verdad objetivas (scripts, tests buenos, fixtures correctos, rollback, métricas), corres el riesgo de construir castillos muy complejos sobre un suelo que todavía se mueve.
+
+Si te obsesionas con que el sistema sea perfectamente autónomo “todo el camino hasta el merge” ya hoy, en vez de aceptar fases intermedias (por ejemplo, autonomía hasta “ready for human review de verdad”), puedes quemarte y sentir que todo es inútil.
+
+La clave es que tu complejidad esté primero en la infraestructura (pruebas, calidad, orquestación mínima, estados) y sólo después en la psicología de los agentes.
+
+5. Cómo reinterpretar lo que estás viviendo
+Lo que te pasa —verte en medio de varias IAs pasándose contexto— es literalmente el trabajo que falta por hacer para llegar a la autonomía que imaginas: diseñar el agente (o capa) que haga de tú‑pero‑robot.
+
+No es “te estás complicando la vida porque sí”; es la marca de que estás en el borde del estado del arte: muy por delante de “usar LLM como autocompletar”, pero todavía sin la capa de orquestación madura que haga invisibles todas esas decisiones intermedias.
+
+Dicho de otro modo: sí, es un paso natural; pero puedes hacerlo menos doloroso si aceptas fases intermedias y si vas moviendo, poco a poco, tus tareas actuales de “mensajero entre IAs” a protocolos y agentes dedicados en tu propio framework.
+
+Preparado por Deep Research
+exacto no quiero que sea perfectamente autonomo. no es el objetivo . el humano esta ahi siempre en ultima estancia cuando sea necesario pero que no me escalen los problemas por cosas que al final le voy a preguntar a otra IA que realmente me escalen los problemas por cosas que debe elegir un humano. no por cosas que se solucionan investigando y con conocimiento. es aceptable que se escale al humano de echo ya lo tengo previsto en mi smar-ralph y ya me han escalado algun problema y eso ha funcioando bien. otra cosa esacto las microreglas es el mal. se pierde el foco. hay que tener el contexto claro y enfocado para el agente esto es determiante para que sea efectivo. asique creo entonces que ya hemos aterrizado los conceptos vamos a agregar a los objetivos un agregador de bmad nos vamos a subir a su ola. como una "plugin" o como lo quieras llamar. vamos a usar la potencia de bmad para poder generar specificaciones rigidias y deterministaas que necesitamos para la autonomia que buscamos , vamos a mantener nuestros propios agentes para generar specificaciones para cosas las ligeras o agiles. asique hay que aterrizar todo esto en nuestro smar-ralph ahora mismo tiene dos plugins speckit y el specum. la verdad que el spekit nunca lo he usado no se muy bien de que viene. quizas podria ser otro plugin el integrador para aprovechar la arquitectura que tenemos?
+2 pasos completados
+Tiene todo el sentido: tu objetivo no es eliminar al humano, sino que solo te lleguen los problemas que requieren juicio humano, y que todo lo que sea “investigar y aplicar conocimiento” lo resuelvan los agentes. Con esa definición, enganchar BMAD como generador de specs rígidas encima de tu smart‑ralph es un movimiento lógico.
+
+Voy a concretar cómo aterrizarlo en tu arquitectura actual.
+
+1. Modelo mental: BMAD como “motor de specs”, smart‑ralph como “motor de ejecución”
+BMAD/Bmalph: lo usas como fábrica de especificaciones sólidas para epics gordos, con PRD, historias, criterios, etc.
+
+smart‑ralph: sigue siendo tu loop de implementación y verificación, con tus agentes (implementador, revisor, QA, escalado al humano cuando toca).
+
+Para tareas ligeras/ágiles, mantienes tus propios generadores de spec (specum, etc.) como hasta ahora.
+
+La pieza nueva es un plugin BMAD‑bridge dentro de plugins/ que convierte artefactos BMAD → spec SSD para smart‑ralph.
+
+2. Dónde encaja este “plugin BMAD” en tu repo
+En tu fork actual tienes:
+
+Carpeta plugins/ con:
+
+ralph-speckit/
+
+ralph-specum/
+
+ralph-specum-codex/
+
+Es decir, ya tienes una convención de “plugins Ralph‑X” que smart‑ralph puede invocar como generadores de specs.
+
+Lo natural sería crear algo tipo:
+
+plugins/ralph-bmad-spec/ (nombre inventado, pero siguiendo la misma convención).
+
+Responsabilidad de ese plugin:
+
+Consumir los artefactos de BMAD (por ejemplo _bmad/config.yaml, PRD/Historias exportadas, etc.).
+
+Mapearlos a tu formato SSD (requirements, research, design, tasks) que ya usas en smart‑ralph.
+
+Dejar la spec resultante en specs/ o donde tu loop ya sabe recogerla, igual que hacen speckit/specum.
+
+Así no rompes nada de lo que tienes, sólo añades un generador de specs “de lujo” cuando el proyecto lo justifica.
+
+3. Rol de speckit y specum en este nuevo esquema
+Por lo que se ve en el repo:
+
+ralph-specum y ralph-specum-codex ya están orientados a generar specs (SSD / Open Spec) con distintas variantes de modelo/contexto.
+
+ralph-speckit parece otro plugin de generación/transformación de specs (aunque no lo estés usando aún).
+
+Con BMAD en la ecuación, puedes:
+
+Reservar BMAD‑plugin para “macro‑features” donde quieres la full BMAD (mercado, PRD largo, historias, etc.).
+
+Usar specum para specs medianas/ligeras locales (refactors, features pequeñas, cosas rápidas en HA/Symfony).
+
+Dejar speckit o bien como plugin experimental, o reciclarlo para otro rol (por ejemplo, un “spec‑linter” que refine/compacte la salida de BMAD antes de pasarla al loop).
+
+La clave es que tu entry‑point para el loop de ejecución no cambie: siempre recibe una spec en tu formato SSD; sólo cambia quién la produce.
+
+4. Qué NO debes hacer (para no caer en micro‑reglas)
+Dado lo que has dicho de que las micro‑reglas son el mal:
+
+No conviertas el plugin BMAD en un monstruo de prompts con 200 reglas finas; su trabajo debe ser estructural, no “psicológico”:
+
+Leer config/artefactos BMAD.
+
+Mapear campos a secciones SSD (Requirements, Design, Tasks, Verification…).
+
+Ajustar sólo lo imprescindible para que encaje con smart‑ralph.
+
+Deja que la rigidez venga de:
+
+El propio modelo de BMAD (PRD/historias bien formateadas).
+
+Tus quality gates y tu loop (tests, mypy, ruff, escalado al humano cuando hay ambigüedad).
+
+Tu ventaja es que ya tienes claro que el foco es el contexto adecuado, no 1000 micro‑normas.
+
+5. Siguiente paso práctico
+Te propondría como siguiente paso para smart‑ralph:
+
+Decidir el nombre y scope del plugin (p.ej. plugins/ralph-bmad-spec/).
+
+Especificar, en una mini‑spec, el contrato:
+
+Entrada: ruta de los artefactos BMAD (o repo con _bmad/).
+
+Salida: un spec.md en tu formato SSD en specs/ listo para que lo consuma tu loop actual.
+
+Integrar ese plugin en tu flujo de comandos: algo tipo smart-ralph spec --from-bmad que llama al plugin, igual que ahora puedes llamar a specum.
+
+Si quieres, en el siguiente mensaje podemos bajar a nivel muy concreto: definir el mapeo BMAD → SSD (qué campos van a Requirements, qué va a Design, cómo se generan Tasks) o incluso diseñar el contrato de CLI de ese nuevo plugin para que se sienta natural con lo que ya tienes.

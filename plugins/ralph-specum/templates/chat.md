@@ -44,4 +44,19 @@ Example message body (signal in body):
 **Signal**: OVER
 ```
 
+### Blocking Signals (HOLD, PENDING, URGENT)
+
+When sending a blocking signal, write it as a **standalone bracketed line** at the top of the message body so the coordinator's mechanical grep can detect it:
+
+```text
+### [2026-04-12 09:02:00] external-reviewer → spec-executor
+[HOLD]
+**Task**: task-1.1
+
+The implementation does not match the spec. The verify command fails with exit code 1.
+```
+
+The coordinator runs: `grep -c '^\[HOLD\]$\|^\[PENDING\]$\|^\[URGENT\]$' "$SPEC_PATH/chat.md"`
+This only matches lines that are exactly `[HOLD]`, `[PENDING]`, or `[URGENT]` — not `**Signal**: HOLD`.
+
 <!-- Messages accumulate here. Append only. Do not edit or delete. -->

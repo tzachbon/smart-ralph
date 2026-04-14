@@ -190,6 +190,42 @@
           "type": "string",
           "enum": ["fine", "coarse"],
           "description": "Task sizing level: fine (40-60+ tasks) or coarse (10-20 tasks)"
+        },
+        "nativeTaskMap": {
+          "type": "object",
+          "description": "Maps taskIndex to native task IDs for external sync",
+          "default": {},
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "nativeSyncEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether native task sync is active"
+        },
+        "nativeSyncFailureCount": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Consecutive native sync failures (disables at 3)"
+        },
+        "chat": {
+          "type": "object",
+          "description": "Chat protocol state for external reviewer coordination",
+          "properties": {
+            "executor": {
+              "type": "object",
+              "properties": {
+                "lastReadLine": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 0,
+                  "description": "Last line read in chat.md by executor"
+                }
+              }
+            }
+          }
         }
       }
     },
