@@ -67,7 +67,7 @@ After Layers 1-2 pass, invoke the `spec-reviewer` agent to validate the implemen
 
 ### When to Run
 
-Layer 3 runs only when ANY of these conditions are true:
+Layer 4 runs only when ANY of these conditions are true:
 - **Phase boundary**: Current task is the first task of a new phase (phase number in task ID changed from previous completed task)
 - **Every 5th task**: taskIndex > 0 && taskIndex % 5 == 0
 - **Final task**: taskIndex == totalTasks - 1 (accepts either TASK_COMPLETE or ALL_TASKS_COMPLETE from spec-executor)
@@ -190,7 +190,7 @@ After each review iteration (regardless of outcome), append to `$SPEC_PATH/.prog
 
 ### Parallel Batch Note
 
-When Layer 3 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description.
+When Layer 4 runs after a parallel batch, use `parallelGroup.startIndex` as the representative `$taskIndex`, union all tasks' Files lists when collecting changed files, and concatenate all task blocks for the task description.
 
 ### Error Handling
 

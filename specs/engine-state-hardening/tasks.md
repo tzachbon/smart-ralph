@@ -68,7 +68,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `feat(schema): add nativeSyncFailureCount property to state definition`
   - _Requirements: FR-10, AC-4.3_
 
-- [ ] 1.4 Add chat.executor.lastReadLine nested property to schema
+- [x] 1.4 Add chat.executor.lastReadLine nested property to schema
   - **Do**: Add `"chat"` object property after `nativeSyncFailureCount`. Structure: chat (object, description "Chat protocol state") -> executor (object) -> lastReadLine (integer, minimum 0, default 0, description "Last line read in chat.md by executor").
   - **Files**: plugins/ralph-specum/schemas/spec.schema.json
   - **Done when**: `jq '.definitions.state.properties.chat.properties.executor.properties | has("lastReadLine")' plugins/ralph-specum/schemas/spec.schema.json` returns `true`
@@ -76,7 +76,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `feat(schema): add chat.executor.lastReadLine to state definition`
   - _Requirements: FR-11, AC-4.4_
 
-- [ ] 1.5 [VERIFY] Quality checkpoint: validate schema JSON syntax
+- [x] 1.5 [VERIFY] Quality checkpoint: validate schema JSON syntax
   - **Do**: Verify spec.schema.json is valid JSON and all 4 new fields exist
   - **Verify**: `jq empty plugins/ralph-specum/schemas/spec.schema.json && jq '.definitions.state.properties | has("nativeTaskMap") and has("nativeSyncEnabled") and has("nativeSyncFailureCount") and has("chat")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo PASS`
   - **Done when**: JSON valid, all 4 new fields present
@@ -84,7 +84,7 @@ Surgical edits to 4 files. Each task = one atomic change.
 
 ### Verification Layers Document (verification-layers.md)
 
-- [ ] 1.6 Update intro line 5: "Three" to "Five"
+- [x] 1.6 Update intro line 5: "Three" to "Five"
   - **Do**: Replace "Three verification layers" with "Five verification layers" on line 5
   - **Files**: plugins/ralph-specum/references/verification-layers.md
   - **Done when**: `grep -c "Three verification" plugins/ralph-specum/references/verification-layers.md` returns 0
@@ -92,7 +92,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `feat(vl): update intro from 3 to 5 verification layers`
   - _Requirements: FR-1, AC-1.2_
 
-- [ ] 1.7 Add Layer 0 (EXECUTOR_START) section after intro
+- [x] 1.7 Add Layer 0 (EXECUTOR_START) section after intro
   - **Do**: Insert new `## Layer 0: EXECUTOR_START Signal (MANDATORY -- blocks all other layers)` section after line 6 (after `> Used by: implement.md` and the intro paragraph). Content: EXECUTOR_START verification rules, hard gate logic, ESCALATE on absence. **IMPORTANT**: Layer 0 must be self-contained — do NOT reference coordinator-pattern.md. Include escalation instructions directly (log "EXECUTOR_START absent for task $taskIndex" to .progress.md, stop iteration).
   - **Files**: plugins/ralph-specum/references/verification-layers.md
   - **Done when**: `grep -c "Layer 0: EXECUTOR_START" plugins/ralph-specum/references/verification-layers.md` returns >= 1
@@ -100,7 +100,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `feat(vl): add Layer 0 EXECUTOR_START section`
   - _Requirements: FR-1, AC-1.1_
 
-- [ ] 1.8 Add Layer 3 (Anti-fabrication) section before current Layer 3
+- [x] 1.8 Add Layer 3 (Anti-fabrication) section before current Layer 3
   - **Do**: Insert new `## Layer 3: Anti-fabrication (Verification Claim Integrity)` section before the current Layer 3. Content: independent verify command execution, fabrication detection, CI snapshot separation with generic wording (no hardcoded ruff/mypy). CI command discovery deferred to Spec 4.
   - **Files**: plugins/ralph-specum/references/verification-layers.md
   - **Done when**: `grep -c "Layer 3: Anti-fabrication" plugins/ralph-specum/references/verification-layers.md` returns >= 1
@@ -108,7 +108,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `feat(vl): add Layer 3 Anti-fabrication section`
   - _Requirements: FR-1, AC-1.1, FR-13_
 
-- [ ] 1.9 Rename Layer 3 to Layer 4 (Artifact Review)
+- [x] 1.9 Rename Layer 3 to Layer 4 (Artifact Review)
   - **Do**: Change `## Layer 3: Artifact Review` to `## Layer 4: Artifact Review` and update all internal references to "Layer 3" within that section to "Layer 4"
   - **Files**: plugins/ralph-specum/references/verification-layers.md
   - **Done when**: `grep -c "^## Layer 4: Artifact Review" plugins/ralph-specum/references/verification-layers.md` returns >= 1 and no old "Layer 3: Artifact Review" heading exists
@@ -116,7 +116,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `refactor(vl): rename Layer 3 to Layer 4 Artifact Review`
   - _Requirements: FR-1, AC-1.1_
 
-- [ ] 1.10 Update "All 3 layers" to "All 5 layers" in Verification Summary
+- [x] 1.10 Update "All 3 layers" to "All 5 layers" in Verification Summary
   - **Do**: Change "All 3 layers must pass" to "All 5 layers must pass" (~line 173). Update the numbered list from 3 items to 5 items (0-4).
   - **Files**: plugins/ralph-specum/references/verification-layers.md
   - **Done when**: `grep -c "All 3 layers" plugins/ralph-specum/references/verification-layers.md` returns 0
@@ -124,7 +124,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `fix(vl): update verification summary from 3 to 5 layers`
   - _Requirements: FR-1, AC-1.2_
 
-- [ ] 1.11 Update "3 verification layers" to "5 verification layers" at bottom
+- [x] 1.11 Update "3 verification layers" to "5 verification layers" at bottom
   - **Do**: Change "The coordinator enforces 3 verification layers:" to "The coordinator enforces 5 verification layers:" (~line 194). Update the numbered list from 3 items to 5 items.
   - **Files**: plugins/ralph-specum/references/verification-layers.md
   - **Done when**: `grep -c "3 verification layers" plugins/ralph-specum/references/verification-layers.md` returns 0
@@ -132,7 +132,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `fix(vl): update enforcement summary from 3 to 5 layers`
   - _Requirements: FR-1, AC-1.2_
 
-- [ ] 1.12 [VERIFY] Quality checkpoint: verify verification-layers.md has 5 layers, no "3" refs
+- [x] 1.12 [VERIFY] Quality checkpoint: verify verification-layers.md has 5 layers, no "3" refs
   - **Do**: Grep for layer count consistency
   - **Verify**: `grep -c "Layer [0-4]" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=5) print "PASS"; else print "FAIL: found "$1" layer refs, need >=5"}'` AND `grep -cE "all 3|All 3|3 layers|3 verification|Three verification" plugins/ralph-specum/references/verification-layers.md | awk '{if($1==0) print "PASS"; else print "FAIL: found "$1" stale 3-layer refs"}'`
   - **Done when**: 5+ layer headings found, zero "3 layers" references remain
@@ -158,7 +158,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `refactor(cp): replace inline layer definitions with VL reference`
   - _Requirements: FR-3, AC-1.4_
 
-- [ ] 1.15 Update "Layer 3: Artifact Review" reference at line 686 to "Layer 4"
+- [x] 1.15 Update "Layer 3: Artifact Review" reference at line 686 to "Layer 4"
   - **Do**: In the artifact review trigger section, update "section 'Layer 3: Artifact Review'" to "section 'Layer 4: Artifact Review'"
   - **Files**: plugins/ralph-specum/references/coordinator-pattern.md
   - **Done when**: `grep "Layer 4: Artifact Review" plugins/ralph-specum/references/coordinator-pattern.md | grep verification-layers | head -1`
@@ -166,7 +166,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `fix(cp): update Layer 3 Artifact Review ref to Layer 4 in trigger section`
   - _Requirements: FR-3_
 
-- [ ] 1.16 [VERIFY] Quality checkpoint: verify CP layer refs consistent
+- [x] 1.16 [VERIFY] Quality checkpoint: verify CP layer refs consistent
   - **Do**: Verify coordinator-pattern.md has no stale "Layer 3" refs in layer context, still has Layer 0 inline in Task Delegation
   - **Verify**: `grep -c "Layer 3: Artifact Review" plugins/ralph-specum/references/coordinator-pattern.md | awk '{if($1==0) print "PASS"; else print "FAIL: "$1" stale refs"}'` && `grep -c "Layer 0: EXECUTOR_START" plugins/ralph-specum/references/coordinator-pattern.md | awk '{if($1>=1) print "PASS: L0 inline kept"; else print "FAIL: L0 missing"}'`
   - **Done when**: Zero "Layer 3: Artifact Review" refs, Layer 0 still inline in Task Delegation
@@ -174,7 +174,7 @@ Surgical edits to 4 files. Each task = one atomic change.
 
 ### Implement Command (implement.md)
 
-- [ ] 1.17 Update "3 layers" to "5 layers" at line 211
+- [x] 1.17 Update "3 layers" to "5 layers" at line 211
   - **Do**: Change "This covers: 3 layers (contradiction detection, TASK_COMPLETE signal, periodic artifact review via spec-reviewer). All must pass before advancing." to "This covers: 5 layers (EXECUTOR_START, contradiction detection, TASK_COMPLETE signal, anti-fabrication, periodic artifact review via spec-reviewer). All must pass before advancing."
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: `grep "5 layers" plugins/ralph-specum/commands/implement.md | grep -c "EXECUTOR_START"` returns >= 1
@@ -182,7 +182,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `fix(im): update layer count from 3 to 5 in coordinator reference`
   - _Requirements: FR-2, AC-1.3_
 
-- [ ] 1.18 Update "all 3 verification layers" to "all 5 verification layers" at line 239
+- [x] 1.18 Update "all 3 verification layers" to "all 5 verification layers" at line 239
   - **Do**: Change "Run all 3 verification layers" to "Run all 5 verification layers"
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: `grep -c "all 3 verification" plugins/ralph-specum/commands/implement.md` returns 0
@@ -190,7 +190,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `fix(im): update verification layer count from 3 to 5`
   - _Requirements: FR-2, AC-1.3_
 
-- [ ] 1.19 Add mechanical HOLD grep check before line 225
+- [x] 1.19 Add mechanical HOLD grep check before line 225
   - **Do**: Insert new bullet before "MANDATORY: Read chat.md BEFORE delegating" (~line 225). Content: grep-based HOLD/PENDING/URGENT check with exact line matching, resolved signal tracking ([RESOLVED] marker), log to .progress.md.
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: `grep -c "\^\\\[HOLD\\\]\$\|\^\\\[PENDING\\\]\$\|\^\\\[URGENT\\\]\$" plugins/ralph-specum/commands/implement.md` returns >= 1 AND `grep -c "COORDINATOR BLOCKED" plugins/ralph-specum/commands/implement.md` returns >= 1
@@ -198,7 +198,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `feat(im): add mechanical HOLD grep check before delegation`
   - _Requirements: FR-4, FR-5, AC-2.1, AC-2.2_
 
-- [ ] 1.20 Add state integrity check before coordinator prompt output
+- [x] 1.20 Add state integrity check before coordinator prompt output
   - **Do**: Insert `### State Integrity Check (before loop starts)` section after the "Execute Task Loop" heading (~line 134, before Parallel Reviewer Onboarding). Content: bash commands to count [x], compare taskIndex, drift correction logic.
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: `grep -c "STATE DRIFT" plugins/ralph-specum/commands/implement.md` returns >= 1
@@ -206,7 +206,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Commit**: `feat(im): add state integrity check before task loop`
   - _Requirements: FR-7, FR-8, FR-9, AC-3.1, AC-3.2, AC-3.3_
 
-- [ ] 1.21 Add CI snapshot separation rule after anti-fabrication bullet
+- [x] 1.21 Add CI snapshot separation rule after anti-fabrication bullet
   - **Do**: Insert new bullet after the "CRITICAL: Verify independently, never trust executor" section (~line 231). Content: task Verify and global CI reported separately, both must pass, "TASK VERIFY PASS but GLOBAL CI FAIL" log rule. Use generic wording — no hardcoded ruff/mypy commands. CI command discovery is deferred to Spec 4 (loop-safety-infra).
   - **Files**: plugins/ralph-specum/commands/implement.md
   - **Done when**: `grep -c "GLOBAL CI" plugins/ralph-specum/commands/implement.md` returns >= 1
@@ -221,7 +221,7 @@ Surgical edits to 4 files. Each task = one atomic change.
   - **Done when**: All 4 grep checks pass
   - **Commit**: `chore(im): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.23 POC Checkpoint: validate all 4 files modified correctly
+- [x] 1.23 POC Checkpoint: validate all 4 files modified correctly
   - **Do**: Run all Success Criteria commands from requirements.md
   - **Done when**: All 9 grep/jq success criteria pass
   - **Verify**: `echo "=== SC1: no 'all 3' in VL ===" && grep -c "all 3" plugins/ralph-specum/references/verification-layers.md && echo "=== SC2: 5+ layer refs in VL ===" && grep -c "Layer [0-4]" plugins/ralph-specum/references/verification-layers.md && echo "=== SC3: HOLD in IM ===" && grep -c '\[HOLD\]' plugins/ralph-specum/commands/implement.md && echo "=== SC4: STATE DRIFT in IM ===" && grep -c "STATE DRIFT" plugins/ralph-specum/commands/implement.md && echo "=== SC5: nativeTaskMap ===" && jq '.definitions.state.properties | has("nativeTaskMap")' plugins/ralph-specum/schemas/spec.schema.json && echo "=== SC6: nativeSyncEnabled ===" && jq '.definitions.state.properties | has("nativeSyncEnabled")' plugins/ralph-specum/schemas/spec.schema.json && echo "=== SC7: nativeSyncFailureCount ===" && jq '.definitions.state.properties | has("nativeSyncFailureCount")' plugins/ralph-specum/schemas/spec.schema.json && echo "=== SC8: chat.executor.lastReadLine ===" && jq '.definitions.state.properties.chat.properties.executor.properties | has("lastReadLine")' plugins/ralph-specum/schemas/spec.schema.json && echo "=== SC9: GLOBAL CI in IM ===" && grep -c "GLOBAL CI" plugins/ralph-specum/commands/implement.md`
@@ -316,19 +316,19 @@ Systematic verification of every acceptance criterion via grep/jq.
   - **Done when**: All 5 layer headings found
   - **Commit**: None (verification only)
 
-- [ ] 3.2 Verify AC-1.2: VL contains no "3 layers" references
+-[x] 3.2 Verify AC-1.2: VL contains no "3 layers" references
   - **Do**: Grep for any remaining "3 layers", "all 3", "All 3", "3 verification", "Three verification" in VL
   - **Verify**: `grep -cE "all 3|All 3|3 layers|3 verification|Three verification" plugins/ralph-specum/references/verification-layers.md | awk '{if($1==0) print "PASS: no stale 3-layer refs"; else print "FAIL: "$1" refs found"}'`
   - **Done when**: Zero matches
   - **Commit**: None (verification only)
 
-- [ ] 3.3 Verify AC-1.3: IM references "5 layers"
+-[x] 3.3 Verify AC-1.3: IM references "5 layers"
   - **Do**: Grep implement.md for "5 layers" and "5 verification"
   - **Verify**: `grep -cE "5 layers|5 verification" plugins/ralph-specum/commands/implement.md | awk '{if($1>=2) print "PASS: "$1" 5-layer refs found"; else print "FAIL: need >=2, found "$1}'`
   - **Done when**: At least 2 references to "5 layers" in implement.md
   - **Commit**: None (verification only)
 
-- [ ] 3.4 Verify AC-1.4: CP defers to VL for layer definitions
+-[x] 3.4 Verify AC-1.4: CP defers to VL for layer definitions
   - **Do**: Grep coordinator-pattern.md Verification Layers section for "verification-layers.md" reference
   - **Verify**: `grep "Verification Layers" -A20 plugins/ralph-specum/references/coordinator-pattern.md | grep -c "verification-layers.md" | awk '{if($1>=1) print "PASS: CP defers to VL"; else print "FAIL: no VL ref in CP Verification Layers section"}'`
   - **Done when**: CP Verification Layers section references verification-layers.md
@@ -336,13 +336,13 @@ Systematic verification of every acceptance criterion via grep/jq.
 
 ### US-2: Mechanical HOLD Signal Detection
 
-- [ ] 3.5 Verify AC-2.1: HOLD grep check in IM
+-[x] 3.5 Verify AC-2.1: HOLD grep check in IM
   - **Do**: Grep implement.md for HOLD/PENDING/URGENT with exact line matching (anchors)
   - **Verify**: `grep -c '\^.*HOLD.*\$.*\^.*PENDING.*\$.*\^.*URGENT' plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS: HOLD grep check present with anchors"; else print "FAIL"}'`
   - **Done when**: Anchored HOLD/PENDING/URGENT grep pattern found in implement.md
   - **Commit**: None (verification only)
 
-- [ ] 3.6 Verify AC-2.2: HOLD block logs to .progress.md
+-[x] 3.6 Verify AC-2.2: HOLD block logs to .progress.md
   - **Do**: Grep implement.md for "COORDINATOR BLOCKED" log message
   - **Verify**: `grep -c "COORDINATOR BLOCKED" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS"; else print "FAIL"}'`
   - **Done when**: "COORDINATOR BLOCKED" log present
@@ -350,13 +350,13 @@ Systematic verification of every acceptance criterion via grep/jq.
 
 ### US-3: State Integrity Validation
 
-- [ ] 3.7 Verify AC-3.1: State integrity check in IM
+-[x] 3.7 Verify AC-3.1: State integrity check in IM
   - **Do**: Grep implement.md for `[x]` count and taskIndex comparison
   - **Verify**: `grep -c "STATE DRIFT" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS"; else print "FAIL"}'`
   - **Done when**: State drift detection present
   - **Commit**: None (verification only)
 
-- [ ] 3.8 Verify AC-3.2/3.3: Drift correction and warning logic in IM
+-[x] 3.8 Verify AC-3.2/3.3: Drift correction and warning logic in IM
   - **Do**: Verify both correction (taskIndex < completed) and warning (taskIndex > completed) logic present
   - **Verify**: `grep -c "STATE DRIFT.*taskIndex" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS: AC-3.2 correction present"; else print "FAIL"}'` && `grep -c "STATE WARNING" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS: AC-3.3 warning present"; else print "FAIL"}'`
   - **Done when**: Both drift correction and warning present
@@ -364,7 +364,7 @@ Systematic verification of every acceptance criterion via grep/jq.
 
 ### US-4: Schema Completeness
 
-- [ ] 3.9 Verify AC-4.1 through AC-4.4: Schema has all 4 new fields
+-[x] 3.9 Verify AC-4.1 through AC-4.4: Schema has all 4 new fields
   - **Do**: Run jq for each field
   - **Verify**: `jq '.definitions.state.properties | has("nativeTaskMap")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo "AC-4.1 PASS"` && `jq '.definitions.state.properties | has("nativeSyncEnabled")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo "AC-4.2 PASS"` && `jq '.definitions.state.properties | has("nativeSyncFailureCount")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo "AC-4.3 PASS"` && `jq '.definitions.state.properties.chat.properties.executor.properties | has("lastReadLine")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo "AC-4.4 PASS"`
   - **Done when**: All 4 jq commands return true
@@ -372,19 +372,19 @@ Systematic verification of every acceptance criterion via grep/jq.
 
 ### US-5: CI Snapshot Separation
 
-- [ ] 3.10 Verify AC-5.1: CI separation rule in IM
+-[x] 3.10 Verify AC-5.1: CI separation rule in IM
   - **Do**: Grep implement.md for "GLOBAL CI" separation rule
   - **Verify**: `grep -c "GLOBAL CI" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS"; else print "FAIL"}'`
   - **Done when**: GLOBAL CI separation rule present
   - **Commit**: None (verification only)
 
-- [ ] 3.11 Verify AC-5.2/5.3: Anti-fabrication runs both, no-advance rule (generic wording)
+-[x] 3.11 Verify AC-5.2/5.3: Anti-fabrication runs both, no-advance rule (generic wording)
   - **Do**: Verify VL Layer 3 has CI separation with generic wording (no ruff/mypy) and implement.md has no-advance rule
   - **Verify**: `grep -c "TASK VERIFY PASS but GLOBAL CI FAIL" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "PASS: AC-5.3 no-advance rule"; else print "FAIL"}'` && `grep -c "GLOBAL CI" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=1) print "PASS: AC-5.2 in VL"; else print "FAIL"}'` && `grep -cE "ruff|mypy" plugins/ralph-specum/references/verification-layers.md | awk '{if($1==0) print "PASS: generic wording only"; else print "FAIL: hardcoded CI commands"}'`
   - **Done when**: Both rules present, no hardcoded CI commands
   - **Commit**: None (verification only)
 
-- [ ] 3.12 [VERIFY] Quality checkpoint: run ALL requirements.md Success Criteria
+-[x] 3.12 [VERIFY] Quality checkpoint: run ALL requirements.md Success Criteria
   - **Do**: Execute all 9 success criteria commands from requirements.md in sequence
   - **Verify**: `SC_PASS=0 && SC_FAIL=0 && grep -c "all 3" plugins/ralph-specum/references/verification-layers.md | awk '{if($1==0) SC_PASS++; else SC_FAIL++}' ; grep -c "Layer [0-4]" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=5) SC_PASS++; else SC_FAIL++}' ; grep -c '\[HOLD\]' plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) SC_PASS++; else SC_FAIL++}' ; grep -c "STATE DRIFT" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) SC_PASS++; else SC_FAIL++}' ; jq -e '.definitions.state.properties | has("nativeTaskMap")' plugins/ralph-specum/schemas/spec.schema.json && SC_PASS=$((SC_PASS+1)) || SC_FAIL=$((SC_FAIL+1)) ; jq -e '.definitions.state.properties | has("nativeSyncEnabled")' plugins/ralph-specum/schemas/spec.schema.json && SC_PASS=$((SC_PASS+1)) || SC_FAIL=$((SC_FAIL+1)) ; jq -e '.definitions.state.properties | has("nativeSyncFailureCount")' plugins/ralph-specum/schemas/spec.schema.json && SC_PASS=$((SC_PASS+1)) || SC_FAIL=$((SC_FAIL+1)) ; jq -e '.definitions.state.properties.chat.properties.executor.properties | has("lastReadLine")' plugins/ralph-specum/schemas/spec.schema.json && SC_PASS=$((SC_PASS+1)) || SC_FAIL=$((SC_FAIL+1)) ; grep -c "GLOBAL CI" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) SC_PASS++; else SC_FAIL++}' ; echo "PASS: $SC_PASS / FAIL: $SC_FAIL"`
   - **Done when**: All 9 criteria pass
@@ -424,14 +424,14 @@ Systematic verification of every acceptance criterion via grep/jq.
   - **Verify**: `jq '.version' plugins/ralph-specum/.claude-plugin/plugin.json | grep -q "4.12.0" && echo PASS`
   - **Commit**: `chore(plugin): bump version to 4.12.0`
 
-- [ ] 4.6 [P] Bump version in marketplace.json
+-[x] 4.6 [P] Bump version in marketplace.json
   - **Do**: Update ralph-specum entry version from 4.11.0 to 4.12.0 in marketplace.json
   - **Files**: .claude-plugin/marketplace.json
   - **Done when**: ralph-specum version in marketplace.json is 4.12.0
   - **Verify**: `jq '.plugins[] | select(.name=="ralph-specum") | .version' .claude-plugin/marketplace.json | grep -q "4.12.0" && echo PASS`
   - **Commit**: `chore(marketplace): bump ralph-specum version to 4.12.0`
 
-- [ ] 4.7 [VERIFY] Final full CI: run all success criteria one last time
+-[x] 4.7 [VERIFY] Final full CI: run all success criteria one last time
   - **Do**: Execute complete success criteria suite
   - **Verify**: `grep -c "all 3" plugins/ralph-specum/references/verification-layers.md | awk '{if($1==0) print "SC1 PASS"; else print "SC1 FAIL"}' && grep -c "Layer [0-4]" plugins/ralph-specum/references/verification-layers.md | awk '{if($1>=5) print "SC2 PASS"; else print "SC2 FAIL"}' && grep -c '\[HOLD\]' plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "SC3 PASS"; else print "SC3 FAIL"}' && grep -c "STATE DRIFT" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "SC4 PASS"; else print "SC4 FAIL"}' && jq -e '.definitions.state.properties | has("nativeTaskMap")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo "SC5 PASS" && jq -e '.definitions.state.properties | has("nativeSyncEnabled")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo "SC6 PASS" && jq -e '.definitions.state.properties | has("nativeSyncFailureCount")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo "SC7 PASS" && jq -e '.definitions.state.properties.chat.properties.executor.properties | has("lastReadLine")' plugins/ralph-specum/schemas/spec.schema.json | grep -q true && echo "SC8 PASS" && grep -c "GLOBAL CI" plugins/ralph-specum/commands/implement.md | awk '{if($1>=1) print "SC9 PASS"; else print "SC9 FAIL"}'`
   - **Done when**: All 9 criteria pass
@@ -452,19 +452,19 @@ Systematic verification of every acceptance criterion via grep/jq.
   - **Verify**: `git log --oneline -5`
   - **Commit**: None (push only)
 
-- [ ] 5.2 Create PR via gh CLI
+-[x] 5.2 Create PR via gh CLI
   - **Do**: Create PR with title and body summarizing the 5 engine fixes
   - **Verify**: `gh pr view --json url -q .url`
   - **Done when**: PR URL returned
   - **Commit**: None
 
-- [ ] 5.3 Monitor CI and resolve any failures
+-[x] 5.3 Monitor CI and resolve any failures
   - **Do**: Watch CI checks, fix any issues
   - **Verify**: `gh pr checks 2>&1 | head -20`
   - **Done when**: All CI checks green (or no CI configured)
   - **Commit**: `fix(engine): resolve CI failures` (if needed)
 
-- [ ] 5.4 Final validation: all completion criteria met
+-[x] 5.4 Final validation: all completion criteria met
   - **Do**: Re-run all success criteria + diff size check + version check
   - **Verify**: `echo "=== Final Validation ===" && jq '.version' plugins/ralph-specum/.claude-plugin/plugin.json && jq '.plugins[] | select(.name=="ralph-specum") | .version' .claude-plugin/marketplace.json && echo "--- SC ---" && grep -c "all 3" plugins/ralph-specum/references/verification-layers.md && grep -c "Layer [0-4]" plugins/ralph-specum/references/verification-layers.md && grep -c '\[HOLD\]' plugins/ralph-specum/commands/implement.md && grep -c "STATE DRIFT" plugins/ralph-specum/commands/implement.md && jq -e '.definitions.state.properties | has("nativeTaskMap") and has("nativeSyncEnabled") and has("nativeSyncFailureCount") and has("chat")' plugins/ralph-specum/schemas/spec.schema.json && grep -c "GLOBAL CI" plugins/ralph-specum/commands/implement.md`
   - **Done when**: All checks pass, versions match, PR created

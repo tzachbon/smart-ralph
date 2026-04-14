@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated": "2026-04-13T20:48:38Z",
+  "updated": "2026-04-14T05:55:03Z",
   "directories": [
     {
       "path": "./specs",
@@ -264,8 +264,9 @@
     {
       "name": "engine-state-hardening",
       "path": "./specs/engine-state-hardening",
-      "phase": "design",
-      "awaitingApproval": true
+      "phase": "completed",
+      "taskIndex": 78,
+      "totalTasks": 78
     }
   ]
 }
