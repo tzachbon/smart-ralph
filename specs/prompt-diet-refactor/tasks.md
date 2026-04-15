@@ -79,7 +79,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-1, AC-1.1, AC-1.4_
   - _Design: ve-verification-contract.md section_
 
-- [ ] 1.3 [P] Create task-modification.md with SPLIT/PREREQ/FOLLOWUP/ADJUST operations
+- [x] 1.3 [P] Create task-modification.md with SPLIT/PREREQ/FOLLOWUP/ADJUST operations
   - **Do**:
     1. Create `plugins/ralph-specum/references/task-modification.md`
     2. Copy from coordinator-pattern.md: lines 756-908 (task modification, Native Task Sync modification)
@@ -92,7 +92,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-1, AC-1.1, AC-1.4_
   - _Design: task-modification.md section_
 
-- [ ] 1.4 [P] Create pr-lifecycle.md with PR management and CI monitoring
+- [x] 1.4 [P] Create pr-lifecycle.md with PR management and CI monitoring
   - **Do**:
     1. Create `plugins/ralph-specum/references/pr-lifecycle.md`
     2. Copy from coordinator-pattern.md: lines 756-908 subset (PR lifecycle management sections)
@@ -104,7 +104,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-1, AC-1.1, AC-1.4_
   - _Design: pr-lifecycle.md section_
 
-- [ ] 1.5 [P] Create git-strategy.md with commit and push strategy
+- [x] 1.5 [P] Create git-strategy.md with commit and push strategy
   - **Do**:
     1. Create `plugins/ralph-specum/references/git-strategy.md`
     2. Copy from coordinator-pattern.md: lines 909-1023 (final cleanup, git push)
@@ -116,7 +116,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-1, AC-1.1, AC-1.4_
   - _Design: git-strategy.md section_
 
-- [ ] 1.6 [VERIFY] Quality checkpoint: verify all 5 modules created
+- [x] 1.6 [VERIFY] Quality checkpoint: verify all 5 modules created
   - **Do**:
     1. Check all 5 module files exist
     2. Verify each file has expected header content
