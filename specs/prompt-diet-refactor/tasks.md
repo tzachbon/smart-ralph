@@ -65,7 +65,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-1, AC-1.1, AC-1.4_
   - _Design: coordinator-core.md section_
 
-- [ ] 1.2 [P] Create ve-verification-contract.md with VE delegation rules
+- [x] 1.2 [P] Create ve-verification-contract.md with VE delegation rules
   - **Do**:
     1. Create `plugins/ralph-specum/references/ve-verification-contract.md`
     2. Copy from coordinator-pattern.md: lines 178-280 (task delegation, Native Task Sync pre-delegation), lines 281-513 (parallel handling, Native Task Sync parallel/failure)
