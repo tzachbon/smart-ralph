@@ -136,7 +136,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
 
 ### Script Extraction
 
-- [ ] 1.7 [P] Extract chat-md-protocol.sh to hooks/scripts/
+- [x] 1.7 [P] Extract chat-md-protocol.sh to hooks/scripts/
   - **Do**:
     1. Create `plugins/ralph-specum/hooks/scripts/chat-md-protocol.sh`
     2. Copy atomic append with flock logic from coordinator-pattern.md (lines 200-249)
@@ -150,7 +150,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-5, AC-4.1, AC-4.6_
   - _Design: Script extraction section_
 
-- [ ] 1.8 [P] Extract state-update-pattern.md to hooks/scripts/
+- [x] 1.8 [P] Extract state-update-pattern.md to hooks/scripts/
   - **Do**:
     1. Create `plugins/ralph-specum/hooks/scripts/state-update-pattern.md`
     2. Copy jq state merge pattern from coordinator-pattern.md (line 642)
@@ -163,7 +163,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-5, AC-4.2_
   - _Design: Script extraction section_
 
-- [ ] 1.9 [P] Extract ve-skip-forward.md to hooks/scripts/
+- [x] 1.9 [P] Extract ve-skip-forward.md to hooks/scripts/
   - **Do**:
     1. Create `plugins/ralph-specum/hooks/scripts/ve-skip-forward.md`
     2. Copy VE-cleanup pseudocode from quality-checkpoints.md
@@ -176,7 +176,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-5, AC-4.3_
   - _Design: Script extraction section_
 
-- [ ] 1.10 [P] Extract native-sync-pattern.md to hooks/scripts/
+- [x] 1.10 [P] Extract native-sync-pattern.md to hooks/scripts/
   - **Do**:
     1. Create `plugins/ralph-specum/hooks/scripts/native-sync-pattern.md`
     2. Copy Native Task Sync algorithm from coordinator-pattern.md (lines 48-76)
@@ -189,7 +189,7 @@ Focus: Validate the modular structure works end-to-end. Create modules, split co
   - _Requirements: FR-5, AC-4.4_
   - _Design: Script extraction section_
 
-- [ ] 1.11 [VERIFY] Quality checkpoint: verify all 4 scripts extracted
+- [x] 1.11 [VERIFY] Quality checkpoint: verify all 4 scripts extracted
   - **Do**:
     1. Check all 4 script files exist
     2. Verify chat-md-protocol.sh is executable
