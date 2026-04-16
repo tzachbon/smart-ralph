@@ -28,17 +28,42 @@ Before outputting ALL_TASKS_COMPLETE:
 
 This is the "iterate-all-and-complete" logic that was lost during the refactor. The coordinator MUST complete ALL native tasks in the map when finishing, not just the current task.
 
-Before iterating:
-```bash
+**PSEUDOCODE WARNING**: The following is pseudo-code notation, NOT executable bash. `GetNativeTaskStatus` and `TaskUpdate` are Claude Code Tool calls, not shell commands. Do NOT copy-paste this into a shell.
+
+Before iterating (pseudocode):
+```text
 synced_count=0
+for task_id in nativeTaskMap.keys():
+    native_id = nativeTaskMap[task_id]
+    if native_id is not null:
+        native_status = GetNativeTaskStatus(native_id)
+        if native_status != "completed":
+            TaskUpdate(taskId=native_id, status="completed")
+            synced_count += 1
+print "Native task sync finalized: $synced_count tasks synced"
+```
+
+OR as a reference bash-style sketch (pseudo-code, not executable):
+```bash
+# PSEUDOCODE ONLY - Do NOT execute (GetNativeTaskStatus and TaskUpdate are not shell commands)
+# Sync all native tasks to completed before ALL_TASKS_COMPLETE
+if [ "$(jq -r '.nativeSyncEnabled // false' "$SPEC_PATH/.ralph-state.json")" = "false" ]; then
+    exit 0
+fi
+
+synced_count=0
+
 for task_id in $(jq -r '.nativeTaskMap | keys[]' "$SPEC_PATH/.ralph-state.json"); do
     native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
     if [ -n "$native_id" ]; then
-        native_status=$(GetNativeTaskStatus "$native_id")
-        if [ "$native_status" != "completed" ]; then
-            TaskUpdate taskId="$native_id" status="completed" 2>/dev/null && \
-            synced_count=$((synced_count + 1))
-        fi
+        # PSEUDOCODE: This would be TaskUpdate via Claude Code Tool
+        # native_status=$(GetNativeTaskStatus "$native_id")
+        # if [ "$native_status" != "completed" ]; then
+        #     TaskUpdate taskId="$native_id" status="completed"
+        #     synced_count=$((synced_count + 1))
+        # fi
+        # For now, just log the iteration
+        :
     fi
 done
 echo "Native task sync finalized: $synced_count tasks synced" >> "$SPEC_PATH/.progress.md"
