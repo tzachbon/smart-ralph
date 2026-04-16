@@ -61,9 +61,13 @@ fi
 
 ## Native Task Sync - Bidirectional Check
 
-Before each task delegation, reconcile tasks.md with native task state:
+Before each task delegation, reconcile `tasks.md` with native task state. NOTE: the runtime `nativeTaskMap` schema maps *taskIndex* (integer, 0-based) → native task ID. The example below therefore reconciles by numeric task index rather than by human-visible labels such as `1.2`.
 
 ```bash
+# PSEUDOCODE (non-executable example). The goal is explicit: build a taskIndex → status map
+# from tasks.md, then iterate the keys of nativeTaskMap (which are numeric indices) and
+# reconcile native state using a proper TaskGet/TaskUpdate tool rather than hardcoded placeholders.
+
 if [ "$(jq -r '.nativeSyncEnabled // false' "$SPEC_PATH/.ralph-state.json")" = "false" ]; then
     exit 0
 fi
@@ -72,22 +76,52 @@ if ! jq -e '.nativeTaskMap' "$SPEC_PATH/.ralph-state.json" >/dev/null 2>&1; then
     exit 0
 fi
 
-# Scan tasks.md for completed tasks
-completedTasks=$(grep -oE '\- \[x\] [0-9]+\.[0-9]+' "$SPEC_PATH/tasks.md" | awk '{print $3}')
+# Build an indexed array of task statuses (0-based taskIndex)
+declare -a task_status
+idx=0
+while IFS= read -r line; do
+    # Lines that start a task list item (e.g. "- [ ] ..." or "- [x] ...")
+    if [[ "$line" =~ ^-\ \[[ xX]\] ]]; then
+        if [[ "$line" =~ ^-\ \[x\] ]]; then
+            task_status[$idx]="completed"
+        else
+            task_status[$idx]="todo"
+        fi
+        idx=$((idx+1))
+    fi
+done < "$SPEC_PATH/tasks.md"
 
-# For each completed task in tasks.md, check native state
-for task_id in $completedTasks; do
-    native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
+# Iterate all numeric keys in nativeTaskMap (these are taskIndex values)
+for key in $(jq -r '.nativeTaskMap | keys[]' "$SPEC_PATH/.ralph-state.json"); do
+    # Skip non-integer keys (defensive)
+    if ! [[ "$key" =~ ^[0-9]+$ ]]; then
+        echo "Skipping non-integer nativeTaskMap key: $key"
+        continue
+    fi
+
+    native_id=$(jq -r ".nativeTaskMap[$key] // \"\"" "$SPEC_PATH/.ralph-state.json")
     if [ -n "$native_id" ]; then
-        # Check native task status (pseudo-code: GetNativeTaskStatus depends on Claude Code API)
-        # Actual implementation would use Claude Code's TaskGet tool or equivalent
-        native_status="in_progress"  # Placeholder - actual status check via API
-        if [ "$native_status" != "completed" ]; then
+        # Use the platform's TaskGet/TaskGetStatus API (pseudocode) to fetch current native status
+        # Example (pseudocode, not a shell command):
+        # native_status=$(TaskGet taskId="$native_id" fields=status)
+        # For documentation examples, always show TaskGet/TaskUpdate pseudocode instead of hardcoded placeholders.
+
+        native_status=$(TaskGet taskId="$native_id" fields=status 2>/dev/null || echo "unknown")
+
+        # If tasks.md marks it completed but native is not completed, update native
+        if [ "${task_status[$key]}" = "completed" ] && [ "$native_status" != "completed" ]; then
             TaskUpdate taskId="$native_id" status="completed" 2>/dev/null || \
-            { echo "Warning: TaskUpdate failed"; }
+            { echo "Warning: TaskUpdate failed for $native_id"; }
         fi
     fi
 done
+
+# Notes for implementers:
+# - Do not assume tasks.md numerical labels (like 1.2) map to taskIndex integers. Use a deterministic
+#   enumeration of task list items (0-based) as shown above to build the index → status array.
+# - Always use TaskGet (or equivalent) to read native status; do not hardcode native_status="in_progress".
+# - This block is intentionally pseudocode: actual integration must use the host environment's TaskGet
+#   and TaskUpdate tools/functions rather than shell placeholders.
 ```
 
 ---

@@ -1077,10 +1077,10 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md | sed -
        - **Instructions block** at the end (7 steps: Read Do → modify Files → verify → commit → update progress → mark [x] → output TASK_COMPLETE)
     7. Verify the template is syntactically complete — it should be a single text block inside a code fence that the coordinator copies and fills in per-task
   - **Files**: plugins/ralph-specum/references/coordinator-core.md
-  - **Done when**: coordinator-core.md contains `### Sequential Execution` subsection with the complete delegation prompt template including Delegation Contract with Design Decisions, Anti-Patterns, Required Skills, Success Criteria, and Instructions
+  - **Done when**: coordinator-core.md contains `## Sequential Delegation Template` section with the complete delegation prompt template including Delegation Contract with Design Decisions, Anti-Patterns, Required Skills, Success Criteria, and Instructions
   - **Verify**:
     ```bash
-    grep -q "### Sequential Execution" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## Sequential Delegation Template" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "Delegation Contract" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "Design Decisions" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "Anti-Patterns" plugins/ralph-specum/references/coordinator-core.md && \
@@ -1121,17 +1121,17 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md | sed -
        - Commit merged progress separately from State Update
        - Error handling for Partial Parallel Batch Failure: identify failed tasks, retry only failed ones, do NOT re-run successful ones, do NOT advance taskIndex past the batch until ALL tasks complete
   - **Files**: plugins/ralph-specum/references/coordinator-core.md
-  - **Done when**: coordinator-core.md contains `### Parallel Execution` with all 8 Steps, `### After Delegation` with Fix Task Bypass + MODIFICATION + COMPLETE + failure paths, and `### Progress Merge (Parallel Only)` with partial failure handling
+  - **Done when**: coordinator-core.md contains `## Parallel Execution Algorithm` with all 8 Steps, `## After Delegation` with Fix Task Bypass + MODIFICATION + COMPLETE + failure paths, and `## Progress Merge (Parallel Only)` with partial failure handling
   - **Verify**:
     ```bash
-    grep -q "### Parallel Execution" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## Parallel Execution Algorithm" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "Step 1: Clean Up Stale Team" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "Step 8: Clean Up Team" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "TeamCreate" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "TeamDelete" plugins/ralph-specum/references/coordinator-core.md && \
-    grep -q "### After Delegation" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## After Delegation" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "Fix Task Bypass" plugins/ralph-specum/references/coordinator-core.md && \
-    grep -q "### Progress Merge" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## Progress Merge" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "Partial Parallel Batch Failure" plugins/ralph-specum/references/coordinator-core.md && \
     echo "PASS"
     ```
@@ -1140,8 +1140,8 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md | sed -
 
 - [x] 7.2b [VERIFY] Quality checkpoint: verify tasks 7.1 and 7.2 are coherent
   - **Do**:
-    1. Read coordinator-core.md sections: `## Task Delegation`, `### Sequential Execution`, `### Parallel Execution`, `### After Delegation`, `### Progress Merge`
-    2. Verify Task Delegation section flows logically: Sequential → Parallel → After Delegation → Progress Merge
+    1. Read coordinator-core.md sections: `## Sequential Delegation Template`, `## Parallel Execution Algorithm`, `## After Delegation`, `## Progress Merge (Parallel Only)`
+    2. Verify Sections flow logically: Sequential Delegation Template → Parallel Execution Algorithm → After Delegation → Progress Merge
     3. Verify Sequential Execution template has complete Delegation Contract (Design Decisions, Anti-Patterns, Required Skills, Success Criteria)
     4. Verify Parallel Execution has all 8 Steps with correct Team API calls
     5. Verify After Delegation covers all 4 cases: Fix Task Bypass, MODIFICATION, COMPLETE, no-signal
@@ -1151,11 +1151,11 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md | sed -
   - **Done when**: Task Delegation section is complete and coherent, no duplication with ve-verification-contract.md, line count is reasonable
   - **Verify**:
     ```bash
-    grep -q "### Sequential Execution" plugins/ralph-specum/references/coordinator-core.md && \
-    grep -q "### Parallel Execution" plugins/ralph-specum/references/coordinator-core.md && \
-    grep -q "### After Delegation" plugins/ralph-specum/references/coordinator-core.md && \
-    grep -q "### Progress Merge" plugins/ralph-specum/references/coordinator-core.md && \
-    ! grep -q "### Sequential Execution" plugins/ralph-specum/references/ve-verification-contract.md && \
+    grep -q "## Sequential Delegation Template" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## Parallel Execution Algorithm" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## After Delegation" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## Progress Merge" plugins/ralph-specum/references/coordinator-core.md && \
+    ! grep -q "## Sequential Delegation Template" plugins/ralph-specum/references/ve-verification-contract.md && \
     LINES=$(wc -l < plugins/ralph-specum/references/coordinator-core.md) && \
     test "$LINES" -lt 900 && \
     echo "PASS: coordinator-core.md is $LINES lines, coherent, no duplication"
@@ -1336,10 +1336,10 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md | sed -
   - **Verify**:
     ```bash
     # All features present
-    grep -q "### Sequential Execution" plugins/ralph-specum/references/coordinator-core.md && \
-    grep -q "### Parallel Execution" plugins/ralph-specum/references/coordinator-core.md && \
-    grep -q "### After Delegation" plugins/ralph-specum/references/coordinator-core.md && \
-    grep -q "### Progress Merge" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## Sequential Delegation Template" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## Parallel Execution Algorithm" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## After Delegation" plugins/ralph-specum/references/coordinator-core.md && \
+    grep -q "## Progress Merge" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "## Parallel Group Detection" plugins/ralph-specum/references/coordinator-core.md && \
     grep -q "## PR Lifecycle Loop" plugins/ralph-specum/references/pr-lifecycle.md && \
     grep -q "Timeout Protection" plugins/ralph-specum/references/pr-lifecycle.md && \

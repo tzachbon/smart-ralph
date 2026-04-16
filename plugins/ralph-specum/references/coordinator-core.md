@@ -722,6 +722,11 @@ Expected first signal:
 
 When `parallelGroup.isParallel = false` and task has no `[VERIFY]` marker, delegate ONE task to spec-executor via Task tool.
 
+Before delegating, record the current commit SHA for Layer 4 artifact review:
+```bash
+TASK_START_SHA=$(git rev-parse HEAD)
+```
+
 **Delegation Contract**:
 
 ```text
@@ -745,24 +750,10 @@ Current task from tasks.md:
 
 ### Anti-Patterns (DO NOT)
 [List specific anti-patterns from design.md or .progress.md that apply to this task.
- For E2E/VE tasks, ALWAYS include the full Navigation and Selector sections from
- `${CLAUDE_PLUGIN_ROOT}/references/e2e-anti-patterns.md` — do NOT summarize, paste the rules.
- Plus any project-specific anti-patterns from .progress.md Learnings.
- Critical: if the task type is VE or [VERIFY], paste this verbatim:
-   "NEVER use page.goto() for internal app routes — navigate via UI elements.
-    If you land on 404/login/unexpected page: do NOT assume element is missing.
-    Run Unexpected Page Recovery from playwright-session.skill.md instead."]
-
-### Required Skills (for VE and [VERIFY] tasks — MANDATORY)
-[When this task is a VE task or has [VERIFY] marker, list the skills the spec-executor
- must load in order BEFORE writing any browser code:
- - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-env.skill.md`
- - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/mcp-playwright.skill.md`
- - `${CLAUDE_PLUGIN_ROOT}/skills/e2e/playwright-session.skill.md`
- - Any platform-specific skills listed in this task's `Skills:` metadata
-   (written there by the task-planner based on research.md discovery)
-
-For non-VE/non-[VERIFY] tasks, omit this section.]
+ Include project-specific anti-patterns from .progress.md Learnings and any
+ task-specific constraints that must not be violated.
+ Do NOT include VE / [VERIFY]-specific browser-navigation or skill-loading rules
+ in this template; those belong in `ve-verification-contract.md`.]
 
 ### Success Criteria
 [Copy the Done when + Verify sections from the task, plus any additional
@@ -817,3 +808,47 @@ Proceed to Progress Merge and State Update.
 
 **Step 8: Clean Up Team**
 `TeamDelete()`. If fails, cleaned up on next invocation via Step 1.
+
+---
+
+## After Delegation
+
+Decision tree when spec-executor returns. Applies to both sequential and parallel (per-task result):
+
+**Case 1 — Fix Task Bypass:**
+If the just-completed task description contains `[FIX` (e.g. `[FIX-layer2]`), skip all 5 verification layers and proceed directly to retrying the original task per `failure-recovery.md`. When delegating a fix task, pass `fix_type: <xxx>` explicitly in the prompt.
+
+**Case 2 — TASK_MODIFICATION_REQUEST:**
+Processing order:
+1. Parse the modification request (SPLIT_TASK / ADD_PREREQUISITE / ADD_FOLLOWUP).
+2. If TASK_COMPLETE is also present in the same output → process modification then proceed to verification (Case 3).
+3. If ADD_PREREQUISITE only (no TASK_COMPLETE) → delegate the prerequisite task, then retry the original.
+4. All modification ops: update tasks.md, run Native Task Sync - Modification per `task-modification.md`.
+
+**Case 3 — TASK_COMPLETE / VERIFICATION_PASS:**
+Run all 5 verification layers (see `references/verification-layers.md`) before advancing `taskIndex`. Only advance on VERIFICATION_PASS.
+
+**Case 4 — No completion signal:**
+Executor output has neither TASK_COMPLETE nor VERIFICATION_PASS:
+1. Parse failure output for error context.
+2. Increment `taskIteration` in state.
+3. If `taskIteration < maxTaskIterations`: retry delegation with failure context appended.
+4. If `taskIteration >= maxTaskIterations`: mark task as blocked in .progress.md, stop with error.
+
+---
+
+## Progress Merge (Parallel Only)
+
+After all parallel teammates complete (Step 7 above), merge their progress files:
+
+1. For each taskIndex N in parallelGroup.taskIndices: read `.progress-task-N.md`.
+2. Extract completed task entries and Learnings sections.
+3. Append to main `.progress.md` in task index order (smallest N first).
+4. Delete each `.progress-task-N.md` after merging.
+5. Commit merged progress separately from State Update: `git add .progress.md && git commit -m "chore: merge parallel progress for tasks $startIndex-$endIndex"`.
+
+**Partial Parallel Batch Failure:**
+- If some teammates completed and some failed: identify the failed `taskIndex` values from `.ralph-state.json` `taskResults`.
+- Retry ONLY the failed tasks (re-run Steps 1-8 for the failed subset with a new parallelGroup containing only the failed indices).
+- Do NOT re-run tasks that already succeeded.
+- Do NOT advance `taskIndex` past the batch end until ALL tasks in the batch are complete.
