@@ -24,9 +24,9 @@ jq --argjson idx "$LINES" '.chat.executor.lastReadLine = $idx' \
 Common pattern for updating state with multiple fields atomically:
 
 ```bash
-jq --arg taskIndex "$TASK_INDEX" \
-   --arg taskIteration "$TASK_ITERATION" \
-   --arg globalIteration "$GLOBAL_ITERATION" \
+jq --argjson taskIndex "$TASK_INDEX" \
+   --argjson taskIteration "$TASK_ITERATION" \
+   --argjson globalIteration "$GLOBAL_ITERATION" \
    '
    .taskIndex = $taskIndex |
    .taskIteration = $taskIteration |

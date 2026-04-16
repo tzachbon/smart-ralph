@@ -79,8 +79,9 @@ completedTasks=$(grep -oE '\- \[x\] [0-9]+\.[0-9]+' "$SPEC_PATH/tasks.md" | awk 
 for task_id in $completedTasks; do
     native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
     if [ -n "$native_id" ]; then
-        # Check native task status (pseudo-code, depends on Claude Code API)
-        native_status=$(GetNativeTaskStatus "$native_id")
+        # Check native task status (pseudo-code: GetNativeTaskStatus depends on Claude Code API)
+        # Actual implementation would use Claude Code's TaskGet tool or equivalent
+        native_status="in_progress"  # Placeholder - actual status check via API
         if [ "$native_status" != "completed" ]; then
             TaskUpdate taskId="$native_id" status="completed" 2>/dev/null || \
             { echo "Warning: TaskUpdate failed"; }

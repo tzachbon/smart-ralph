@@ -232,9 +232,9 @@ Then Read and follow these references in order. They contain the complete coordi
 
 **Load on-demand based on task type:**
 
-2. **VE/E2E Verification tasks** (tasks with `[VERIFY]` tag containing "VE", "E2E", "browser", "playwright"):
-   Read `${CLAUDE_PLUGIN_ROOT}/references/ve-verification-contract.md`.
-   This covers: VE task delegation rules (VE0-VE3), Skills loading for verification layers, Native Task Sync pre-delegation logic.
+2. **[VERIFY] tasks** (tasks with `[VERIFY]` tag):
+    Read `${CLAUDE_PLUGIN_ROOT}/references/ve-verification-contract.md`.
+    This covers: VE task delegation rules (VE0-VE3), Skills loading for verification layers, Native Task Sync pre-delegation logic.
 
 3. **TASK_MODIFICATION_REQUEST** (when executor requests SPLIT/PREREQ/FOLLOWUP/ADJUST):
    Read `${CLAUDE_PLUGIN_ROOT}/references/task-modification.md`.

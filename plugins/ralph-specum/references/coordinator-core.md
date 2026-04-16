@@ -428,34 +428,11 @@ fi
 
 **3. Bidirectional check** (reconcile tasks.md with native state):
 
-```bash
-# Scan tasks.md for completed tasks and update native tasks
-completedTasks=$(grep -oE '\- \[x\] [0-9]+\.[0-9]+' "$SPEC_PATH/tasks.md" | awk '{print $3}')
-
-for task_id in $completedTasks; do
-    native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
-    if [ -n "$native_id" ]; then
-        native_status=$(GetNativeTaskStatus "$native_id")
-        if [ "$native_status" != "completed" ]; then
-            TaskUpdate taskId="$native_id" status="completed" 2>/dev/null || \
-            { echo "Warning: TaskUpdate failed for $native_id"; }
-        fi
-    fi
-done
-```
+> **Reference**: See `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/native-sync-pattern.md` for detailed bidirectional sync algorithm.
 
 **4. Parallel group handling** (when [P] tasks start):
 
-```bash
-for task_id in "${parallelGroup[taskIndices[@]}]"; do
-    native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
-    if [ -n "$native_id" ]; then
-        activeForm="Executing [P] $task_id $TASK_TITLE"
-        # ALL TaskUpdate calls in ONE message (parallel tool calls)
-        TaskUpdate taskId="$native_id" status="in_progress" activeForm="$activeForm"
-    fi
-done
-```
+> **Reference**: See `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/native-sync-pattern.md` for parallel group handling algorithm.
 
 ### After Completion
 
