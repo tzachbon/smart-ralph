@@ -7,6 +7,27 @@ Loaded for: SPLIT, PREREQ, FOLLOWUP, ADJUST tasks.
 **Native Task Sync** (completion, modification operations):
 See coordinator-core.md 'Native Task Sync - After Completion' section.
 
+### Native Task Sync - Modification
+
+When TASK_MODIFICATION_REQUEST is processed and new tasks are inserted into tasks.md:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. For SPLIT_TASK:
+   - `TaskUpdate` original task status: `"completed"`
+   - For each new split task: `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")`, add returned ID to `nativeTaskMap`
+3. For ADD_PREREQUISITE:
+   - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for prerequisite, add returned ID to `nativeTaskMap`
+   - `TaskUpdate` original task with `addBlockedBy: [prerequisite task ID]`
+4. For ADD_FOLLOWUP:
+   - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for followup, add returned ID to `nativeTaskMap`
+5. Update `nativeTaskMap` in .ralph-state.json with new entries
+6. Re-indexing: rebuild `nativeTaskMap` to match the updated tasks.md order.
+   - Parse tasks.md in order after insertion.
+   - Keep existing native task IDs for unchanged task identities (match by task ID pattern `X.Y` in subject, not title alone).
+   - Assign newly created IDs to inserted tasks at their actual indices.
+   - Persist the fully re-keyed map to .ralph-state.json.
+7. If any TaskCreate/TaskUpdate fails: log warning, continue
+
 Before outputting:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup execution state)

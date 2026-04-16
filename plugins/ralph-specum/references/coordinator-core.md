@@ -369,6 +369,70 @@ BEFORE entering the Chat Protocol and BEFORE delegating any task, the coordinato
 
 Bidirectional sync between tasks.md and Claude Code's native task system via `.ralph-state.json`.
 
+## Native Task Sync - Initial Setup
+
+If `nativeSyncEnabled` is not `false` in state AND (`nativeTaskMap` is missing or empty, OR existing IDs are stale):
+
+**Stale ID detection**: If `nativeTaskMap` is non-empty, validate by calling `TaskGet(taskId: nativeTaskMap["0"])`. If it fails (task not found), the IDs are stale from a prior session. Clear `nativeTaskMap` and rebuild.
+
+1. Parse all tasks from tasks.md (same parsing as existing task count logic)
+2. For each task at index `i`:
+   - Extract title (first line after `- [ ]` or `- [x]`)
+   - Extract first 1-2 sub-items as description
+   - Detect markers: [P], [VERIFY], or none
+   - Format subject per FR-11:
+     - Regular: "1.1 Task title"
+     - Parallel: "[P] 2.1 Task title"
+     - Verify: "[VERIFY] 1.4 Quality checkpoint"
+   - Format activeForm per FR-12:
+     - Regular: "Executing 1.1 Task title"
+     - Parallel: "Executing [P] 2.1 Task title"
+     - Verify: "Verifying 1.4 Quality checkpoint"
+   - Call TaskCreate(subject, description, activeForm)
+   - On success: reset `nativeSyncFailureCount` to 0 in state
+   - On failure: increment `nativeSyncFailureCount` in state. If count >= 3: set `nativeSyncEnabled` to `false`, log "Native sync disabled after 3 consecutive failures" to .progress.md, stop creating remaining tasks and continue without sync
+   - Store mapping: nativeTaskMap[i] = returned task ID
+   - If task already completed ([x]): immediately TaskUpdate(taskId: nativeTaskMap[i], status: "completed")
+3. Write updated nativeTaskMap to .ralph-state.json
+
+If `nativeSyncEnabled` is `false`: skip all sync operations silently.
+
+> **Graceful degradation pattern**: All other sync sections (Bidirectional, Pre-Delegation, Post-Verification, Failure, Modification, Completion, Parallel) follow the same counter logic on their TaskCreate/TaskUpdate calls: reset `nativeSyncFailureCount` to 0 on success, increment on failure, disable sync at >= 3 consecutive failures. The Initial Setup section is most likely to trigger this (many TaskCreate calls), but the pattern applies uniformly.
+
+## Native Task Sync - Bidirectional Check
+
+Before each task delegation, reconcile tasks.md with native task state:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Scan tasks.md for any tasks marked `[x]` whose native counterpart is NOT completed
+3. For each such mismatch: `TaskUpdate(taskId, status: "completed")`
+4. This handles: manual task completion, external edits to tasks.md, recovery from sync gaps
+5. If any TaskUpdate fails: log warning, continue
+
+## Native Task Sync - Parallel
+
+When parallel [P] group starts:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. For each taskIndex in `parallelGroup.taskIndices`:
+   - Look up native task ID from `nativeTaskMap`
+   - Format activeForm per FR-12: "Executing [P] 2.1 Task title"
+   - `TaskUpdate(taskId: nativeTaskMap[taskIndex], status: "in_progress", activeForm: "<FR-12 format>")`
+3. ALL TaskUpdate calls in ONE message (parallel tool calls)
+4. If any TaskUpdate fails: log warning, continue
+5. As each executor completes: `TaskUpdate(taskId: nativeTaskMap[taskIndex], status: "completed")`
+
+## Native Task Sync - Pre-Delegation
+
+Before delegating the current task:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - Format activeForm per FR-12: "Executing 1.1 Task title", "Executing [P] 2.1 Task title", or "Verifying 1.4 Quality checkpoint"
+   - `TaskUpdate(taskId, status: "in_progress", activeForm: "<FR-12 format>")`
+4. If TaskUpdate fails: log warning, continue
+
 ## Native Task Sync - Before Delegation
 
 ### graceful degradation pattern
@@ -485,6 +549,52 @@ if [ -n "$native_id" ]; then
 fi
 ```
 
+**Native Task Sync - Failure**
+
+When task fails and taskIteration increments:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - Format subject per FR-11 retry: "1.3 Task title [retry 2/5]"
+   - Format activeForm per FR-12 retry: "Retrying 1.3 Task title (attempt 2)"
+   - `TaskUpdate(taskId, subject: "<FR-11 retry format>", activeForm: "<FR-12 retry format>")`
+4. If TaskUpdate fails: log warning, continue
+
+### VE Task Exception (Cleanup Guarantee)
+
+When a VE1 (startup) or VE2 (check) task hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
+
+1. Log VE failure in .progress.md: "VE-check failed after N retries — skipping to VE-cleanup"
+2. Scan forward in tasks.md to find VE-cleanup task index (see pseudocode below)
+3. Skip taskIndex forward to the VE-cleanup task
+4. Execute VE-cleanup via qa-engineer (standard `[VERIFY]` delegation)
+5. After VE-cleanup completes (pass or fail), THEN output the max retries error and stop
+
+**VE3 (cleanup) edge case**: If VE3 itself fails after max retries, stop immediately with error — there is nothing to skip forward to. Log: "VE-cleanup failed after N retries — aborting. Manual cleanup may be needed (check port {{port}})."
+
+**Skip-forward pseudocode**:
+```text
+# Only applies to VE1/VE2 failures. VE3 failures stop immediately.
+cleanupIndex = null
+for i in range(currentTaskIndex + 1, totalTasks):
+    task = tasks[i]
+    if task.description contains "E2E cleanup":
+        cleanupIndex = i
+        break
+
+if cleanupIndex is null:
+    # No VE-cleanup found — log error and stop immediately
+    log("ERROR: No VE-cleanup task found after VE failure")
+    stop()
+
+# Skip all intervening VE-check tasks
+taskIndex = cleanupIndex
+# Execute VE-cleanup, then stop with error
+```
+
+This guarantees orphaned processes (dev servers, browsers) are cleaned up even when verification fails. VE-cleanup uses PID-based kill (`kill -9` PIDs from `/tmp/ve-pids.txt`) with port-based kill as fallback (`lsof -ti :$PORT | xargs kill -9`). See `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "VE-Cleanup Guarantee" section for cleanup strategy details.
+
 **3. Modification path** (TASK_MODIFICATION_REQUEST):
 
 **SPLIT_TASK**:
@@ -525,4 +635,56 @@ jq --arg key "$followupTaskId" --arg val "$followup_native_id" \
    '.nativeTaskMap[$key] = $val' "$SPEC_PATH/.ralph-state.json" > /tmp/state.json && \
    mv /tmp/state.json "$SPEC_PATH/.ralph-state.json"
 ```
-</mandatory>
+
+## Verification Layers
+
+Layer definitions and full logic are defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md`.
+This document is the canonical source for all 5 verification layers (Layer 0 through Layer 4).
+Layer 0 in verification-layers.md is self-contained (no need to reference this document for escalation rules).
+
+Key rules (quick reference — see verification-layers.md for full details):
+- Layer 0 (EXECUTOR_START) is a hard gate. If absent, log and ESCALATE immediately.
+- Layers 1-2 check output text for contradictions and TASK_COMPLETE signal.
+- Layer 3 (Anti-fabrication) independently runs verify commands. NEVER trust executor output.
+- Layer 4 (Artifact Review) runs periodically per rules defined in verification-layers.md.
+
+### Layer 0: EXECUTOR_START Verification (MANDATORY — blocks all other layers)
+
+After every delegation to spec-executor (sequential or parallel), verify the response
+begins with the `EXECUTOR_START` signal BEFORE running any other verification layer.
+
+```text
+Expected first signal:
+  EXECUTOR_START
+    spec: <specName>
+    task: <taskIndex>
+    agent: spec-executor v...
+```
+
+**If `EXECUTOR_START` is absent from spec-executor output:**
+- The delegation silently failed — the coordinator must NOT implement the task itself
+- Do NOT run Layers 1–4
+- Do NOT advance taskIndex
+- Do NOT mark the task complete
+- Do NOT increment taskIteration (this is an invocation failure, not a task failure)
+- ESCALATE immediately:
+  ```text
+  ESCALATE
+    reason: executor-not-invoked
+    task: <taskIndex — task title>
+    diagnosis: spec-executor subagent did not emit EXECUTOR_START.
+               This means either (A) the subagent was never invoked (wrong
+               subagent_type, plugin not loaded), (B) it timed out before
+               emitting the signal, or (C) the coordinator fell back to direct
+               implementation which is forbidden.
+    resolution:
+      1. Verify ralph-specum plugin is loaded (check Claude Code plugin config)
+      2. Verify subagent_type is "spec-executor" (not "ralph-specum:spec-executor")
+      3. Retry: /ralph-specum:implement --recovery-mode
+  ```
+
+> ⚠️ **Anti-pattern: coordinator self-implementation**
+> The absence of `EXECUTOR_START` in a response that nonetheless contains
+> TASK_COMPLETE is a strong signal that the coordinator implemented the task
+> itself. This MUST be treated as an invocation failure, not a success.
+> Layer 1 contradiction check does NOT catch this — Layer 0 does.

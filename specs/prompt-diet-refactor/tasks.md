@@ -907,7 +907,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
 
 ### Critical Native Task Sync Restoration
 
-- [ ] 6.1 Restore Native Task Sync Initial Setup in coordinator-core.md
+- [x] 6.1 Restore Native Task Sync Initial Setup in coordinator-core.md
   - **Do**:
     1. Extract "Native Task Sync - Initial Setup" section from commit `c20e962f:plugins/ralph-specum/references/coordinator-pattern.md` (lines ~398-440)
     2. Add to `coordinator-core.md` after "Native Task Sync - Overview" section
@@ -919,7 +919,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
   - **Commit**: `fix(coordinator): restore Native Task Sync Initial Setup with stale ID detection`
   - _Requirements: FR-9, LOSS-1_
 
-- [ ] 6.2 Restore Bidirectional Check algorithm in coordinator-core.md
+- [x] 6.2 Restore Bidirectional Check algorithm in coordinator-core.md
   - **Do**:
     1. Extract bidirectional check algorithm from commit `c20e962f` coordinator-pattern.md (lines ~429-444)
     2. Replace the current reference-only placeholder in coordinator-core.md with the actual algorithm
@@ -931,7 +931,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
   - **Commit**: `fix(coordinator): restore bidirectional check algorithm`
   - _Requirements: FR-10, LOSS-2_
 
-- [ ] 6.3 Restore Parallel Group native sync in coordinator-core.md
+- [x] 6.3 Restore Parallel Group native sync in coordinator-core.md
   - **Do**:
     1. Extract parallel group handling from commit `c20e962f` coordinator-pattern.md (lines ~447-457)
     2. Replace the current reference-only placeholder with the actual algorithm
@@ -943,7 +943,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
   - **Commit**: `fix(coordinator): restore parallel group native sync`
   - _Requirements: FR-11, LOSS-3_
 
-- [ ] 6.4 Restore Pre-delegation native update in coordinator-core.md
+- [x] 6.4 Restore Pre-delegation native update in coordinator-core.md
   - **Do**:
     1. Verify the pre-delegation update section in coordinator-core.md already exists (lines ~406-426)
     2. If missing, extract from commit `c20e962f` coordinator-pattern.md
@@ -955,7 +955,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
   - **Commit**: `fix(coordinator): restore pre-delegation native update` (if changes needed)
   - _Requirements: FR-12, LOSS-4_
 
-- [ ] 6.5 Restore Post-verification and Failure path native sync in coordinator-core.md
+- [x] 6.5 Restore Post-verification and Failure path native sync in coordinator-core.md
   - **Do**:
     1. Verify post-verification success path exists (sync to completed after VERIFY layers)
     2. Verify failure path exists (reset to todo on task failure)
@@ -967,7 +967,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
   - **Commit**: `fix(coordinator): restore post-verification and failure native sync` (if changes needed)
   - _Requirements: FR-13, FR-14, LOSS-5, LOSS-6_
 
-- [ ] 6.6 Restore Modification path native sync in task-modification.md
+- [x] 6.6 Restore Modification path native sync in task-modification.md
   - **Do**:
     1. Extract modification path native sync from commit `c20e962f` coordinator-pattern.md (lines ~511-527)
     2. Add SPLIT_TASK, ADD_PREREQUISITE, ADD_FOLLOWUP native sync sections to task-modification.md
@@ -979,7 +979,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
   - **Commit**: `fix(coordinator): restore modification path native sync in task-modification.md`
   - _Requirements: FR-15, LOSS-7_
 
-- [ ] 6.7 Restore Completion path native sync in pr-lifecycle.md
+- [x] 6.7 Restore Completion path native sync in pr-lifecycle.md
   - **Do**:
     1. Extract completion path native sync from commit `c20e962f` coordinator-pattern.md
     2. Add to pr-lifecycle.md "Native Task Sync - Completion" section
@@ -993,7 +993,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
 
 ### Verification Layer Restoration
 
-- [ ] 6.8 Restore 5-Layer Verification details in coordinator-core.md
+- [x] 6.8 Restore 5-Layer Verification details in coordinator-core.md
   - **Do**:
     1. Extract 5-layer verification section from commit `c20e962f` coordinator-pattern.md
     2. Verify all 5 layers are documented: Layer 0 (EXECUTOR_START), Layer 1 (Contradiction), Layer 2 (Signal), Layer 3 (Anti-fabrication), Layer 4 (Artifact review)
@@ -1007,7 +1007,7 @@ git show c20e962f:plugins/ralph-specum/references/coordinator-pattern.md > /tmp/
 
 ### Quality Gate
 
-- [ ] 6.9 [VERIFY] Validate all restored functionality against commit c20e962f
+- [x] 6.9 [VERIFY] Validate all restored functionality against commit c20e962f
   - **Do**:
     1. Extract full coordinator-pattern.md from commit `c20e962f`
     2. For each LOSS-1 through LOSS-12, verify the capability exists in the new modular files

@@ -24,6 +24,28 @@ Before outputting ALL_TASKS_COMPLETE:
 4. If any TaskUpdate fails: log warning, continue
 5. Log "Native task sync finalized: N tasks synced" to .progress.md
 
+**Original implementation from coordinator-pattern.md commit c20e962f:**
+
+This is the "iterate-all-and-complete" logic that was lost during the refactor. The coordinator MUST complete ALL native tasks in the map when finishing, not just the current task.
+
+Before iterating:
+```bash
+synced_count=0
+for task_id in $(jq -r '.nativeTaskMap | keys[]' "$SPEC_PATH/.ralph-state.json"); do
+    native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
+    if [ -n "$native_id" ]; then
+        native_status=$(GetNativeTaskStatus "$native_id")
+        if [ "$native_status" != "completed" ]; then
+            TaskUpdate taskId="$native_id" status="completed" 2>/dev/null && \
+            synced_count=$((synced_count + 1))
+        fi
+    fi
+done
+echo "Native task sync finalized: $synced_count tasks synced" >> "$SPEC_PATH/.progress.md"
+```
+
+This ensures all native tasks are marked complete when the spec finishes, even tasks that were created via SPLIT/FOLLOWUP/ADJUST operations.
+
 Before outputting:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup execution state)
