@@ -241,9 +241,10 @@ Then Read and follow these references in order. They contain the complete coordi
    This covers: modification operation handling, task tree restructuring, state map updates.
 
 4. **PR_COMMIT / Commit tasks** (tasks involving git commits, PRs, branches):
-   Read `${CLAUDE_PLUGIN_ROOT}/references/pr-lifecycle.md` AND `${CLAUDE_PLUGIN_ROOT}/references/git-strategy.md`.
+   Read `${CLAUDE_PLUGIN_ROOT}/references/pr-lifecycle.md` AND `${CLAUDE_PLUGIN_ROOT}/references/git-strategy.md` AND `${CLAUDE_PLUGIN_ROOT}/references/commit-discipline.md`.
    - pr-lifecycle: PR management, CI monitoring, completion checklist, git operations.
    - git-strategy: commit format, branch naming, push strategy, final cleanup.
+   - commit-discipline: commit message format, when to commit, staging rules.
 
 5. **Failure recovery** (when task fails and recovery-mode is enabled):
    Read `${CLAUDE_PLUGIN_ROOT}/references/failure-recovery.md`.
