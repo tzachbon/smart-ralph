@@ -849,6 +849,51 @@ Executor output has neither TASK_COMPLETE nor VERIFICATION_PASS:
 
 ---
 
+## State Update
+
+After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
+
+**CRITICAL: Always use jq merge pattern to preserve all existing fields (source, name, basePath, commitSpec, relatedSpecs, etc.). Never write a new object from scratch.**
+
+**Sequential Update**:
+1. Read current `.ralph-state.json`
+2. Increment `taskIndex` by 1
+3. Reset `taskIteration` to 1
+4. Increment `globalIteration` by 1
+5. Write updated state (merge, preserving all existing fields)
+6. Commit all spec file changes (skip if nothing staged):
+   ```bash
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git diff --cached --quiet || git commit -m "chore(spec): update progress for task $taskIndex"
+   ```
+
+**Parallel Batch Update**:
+1. Read current `.ralph-state.json`
+2. Set `taskIndex` to `parallelGroup.endIndex + 1` (jump past entire batch)
+3. Reset `taskIteration` to 1
+4. Increment `globalIteration` by 1
+5. Write updated state (merge, preserving all existing fields)
+6. Commit all spec file changes (skip if nothing staged):
+   ```bash
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git diff --cached --quiet || git commit -m "chore(spec): update progress for parallel batch"
+   ```
+
+Updated fields (all other fields preserved as-is):
+```json
+{
+  "taskIndex": "<next task after current/batch>",
+  "taskIteration": 1,
+  "globalIteration": "<previous + 1>"
+}
+```
+
+Check if all tasks complete:
+- If `taskIndex >= totalTasks`: proceed to Completion Signal
+- If `taskIndex < totalTasks`: continue to next iteration (loop re-invokes coordinator)
+
+---
+
 ## Progress Merge (Parallel Only)
 
 After all parallel teammates complete (Step 7 above), merge their progress files:
