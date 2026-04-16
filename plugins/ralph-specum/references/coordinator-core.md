@@ -150,6 +150,17 @@ State transition rules:
 
 If taskIndex >= totalTasks:
 1. Verify all tasks marked [x] in tasks.md
+
+**Phase 5 Detection**: Before outputting ALL_TASKS_COMPLETE, check if Phase 5 (PR Lifecycle) is required:
+- Read tasks.md to detect Phase 5 tasks (look for "Phase 5: PR Lifecycle" section)
+- If Phase 5 exists AND all non-Phase-5 tasks are `[x]`:
+  - Load `${CLAUDE_PLUGIN_ROOT}/references/pr-lifecycle.md`
+  - Enter PR Lifecycle Loop (see pr-lifecycle.md § "PR Lifecycle Loop (Phase 5)")
+  - Do NOT output ALL_TASKS_COMPLETE yet
+- If NO Phase 5 OR Phase 5 complete:
+  - Proceed with standard completion below
+
+**Standard Completion** (no Phase 5 or Phase 5 done):
 2. Delete state file explicitly:
    ```bash
    rm -f "$SPEC_PATH/.ralph-state.json"
@@ -193,6 +204,35 @@ Detect markers in task description:
 - [P] = parallel task (can run with adjacent [P] tasks)
 - [VERIFY] = verification task (delegate to qa-engineer)
 - No marker = sequential task
+
+## Parallel Group Detection
+
+If current task has [P] marker, scan for consecutive [P] tasks starting from taskIndex.
+
+Build parallelGroup structure:
+```json
+{
+  "startIndex": "<first [P] task index>",
+  "endIndex": "<last consecutive [P] task index>",
+  "taskIndices": ["startIndex", "startIndex+1", "...", "endIndex"],
+  "isParallel": true
+}
+```
+
+Rules:
+- Adjacent [P] tasks form a single parallel batch
+- Non-[P] task breaks the sequence
+- Single [P] task treated as sequential (no parallelism benefit)
+
+If no [P] marker on current task, set:
+```json
+{
+  "startIndex": "<taskIndex>",
+  "endIndex": "<taskIndex>",
+  "taskIndices": ["taskIndex"],
+  "isParallel": false
+}
+```
 
 ## Signal Protocol
 
@@ -369,6 +409,70 @@ BEFORE entering the Chat Protocol and BEFORE delegating any task, the coordinato
 
 Bidirectional sync between tasks.md and Claude Code's native task system via `.ralph-state.json`.
 
+## Native Task Sync - Initial Setup
+
+If `nativeSyncEnabled` is not `false` in state AND (`nativeTaskMap` is missing or empty, OR existing IDs are stale):
+
+**Stale ID detection**: If `nativeTaskMap` is non-empty, validate by calling `TaskGet(taskId: nativeTaskMap["0"])`. If it fails (task not found), the IDs are stale from a prior session. Clear `nativeTaskMap` and rebuild.
+
+1. Parse all tasks from tasks.md (same parsing as existing task count logic)
+2. For each task at index `i`:
+   - Extract title (first line after `- [ ]` or `- [x]`)
+   - Extract first 1-2 sub-items as description
+   - Detect markers: [P], [VERIFY], or none
+   - Format subject per FR-11:
+     - Regular: "1.1 Task title"
+     - Parallel: "[P] 2.1 Task title"
+     - Verify: "[VERIFY] 1.4 Quality checkpoint"
+   - Format activeForm per FR-12:
+     - Regular: "Executing 1.1 Task title"
+     - Parallel: "Executing [P] 2.1 Task title"
+     - Verify: "Verifying 1.4 Quality checkpoint"
+   - Call TaskCreate(subject, description, activeForm)
+   - On success: reset `nativeSyncFailureCount` to 0 in state
+   - On failure: increment `nativeSyncFailureCount` in state. If count >= 3: set `nativeSyncEnabled` to `false`, log "Native sync disabled after 3 consecutive failures" to .progress.md, stop creating remaining tasks and continue without sync
+   - Store mapping: nativeTaskMap[i] = returned task ID
+   - If task already completed ([x]): immediately TaskUpdate(taskId: nativeTaskMap[i], status: "completed")
+3. Write updated nativeTaskMap to .ralph-state.json
+
+If `nativeSyncEnabled` is `false`: skip all sync operations silently.
+
+> **Graceful degradation pattern**: All other sync sections (Bidirectional, Pre-Delegation, Post-Verification, Failure, Modification, Completion, Parallel) follow the same counter logic on their TaskCreate/TaskUpdate calls: reset `nativeSyncFailureCount` to 0 on success, increment on failure, disable sync at >= 3 consecutive failures. The Initial Setup section is most likely to trigger this (many TaskCreate calls), but the pattern applies uniformly.
+
+## Native Task Sync - Bidirectional Check
+
+Before each task delegation, reconcile tasks.md with native task state:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Scan tasks.md for any tasks marked `[x]` whose native counterpart is NOT completed
+3. For each such mismatch: `TaskUpdate(taskId, status: "completed")`
+4. This handles: manual task completion, external edits to tasks.md, recovery from sync gaps
+5. If any TaskUpdate fails: log warning, continue
+
+## Native Task Sync - Parallel
+
+When parallel [P] group starts:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. For each taskIndex in `parallelGroup.taskIndices`:
+   - Look up native task ID from `nativeTaskMap`
+   - Format activeForm per FR-12: "Executing [P] 2.1 Task title"
+   - `TaskUpdate(taskId: nativeTaskMap[taskIndex], status: "in_progress", activeForm: "<FR-12 format>")`
+3. ALL TaskUpdate calls in ONE message (parallel tool calls)
+4. If any TaskUpdate fails: log warning, continue
+5. As each executor completes: `TaskUpdate(taskId: nativeTaskMap[taskIndex], status: "completed")`
+
+## Native Task Sync - Pre-Delegation
+
+Before delegating the current task:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - Format activeForm per FR-12: "Executing 1.1 Task title", "Executing [P] 2.1 Task title", or "Verifying 1.4 Quality checkpoint"
+   - `TaskUpdate(taskId, status: "in_progress", activeForm: "<FR-12 format>")`
+4. If TaskUpdate fails: log warning, continue
+
 ## Native Task Sync - Before Delegation
 
 ### graceful degradation pattern
@@ -428,34 +532,11 @@ fi
 
 **3. Bidirectional check** (reconcile tasks.md with native state):
 
-```bash
-# Scan tasks.md for completed tasks and update native tasks
-completedTasks=$(grep -oE '\- \[x\] [0-9]+\.[0-9]+' "$SPEC_PATH/tasks.md" | awk '{print $3}')
-
-for task_id in $completedTasks; do
-    native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
-    if [ -n "$native_id" ]; then
-        native_status=$(GetNativeTaskStatus "$native_id")
-        if [ "$native_status" != "completed" ]; then
-            TaskUpdate taskId="$native_id" status="completed" 2>/dev/null || \
-            { echo "Warning: TaskUpdate failed for $native_id"; }
-        fi
-    fi
-done
-```
+> **Reference**: See `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/native-sync-pattern.md` for detailed bidirectional sync algorithm.
 
 **4. Parallel group handling** (when [P] tasks start):
 
-```bash
-for task_id in "${parallelGroup[taskIndices[@]}]"; do
-    native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
-    if [ -n "$native_id" ]; then
-        activeForm="Executing [P] $task_id $TASK_TITLE"
-        # ALL TaskUpdate calls in ONE message (parallel tool calls)
-        TaskUpdate taskId="$native_id" status="in_progress" activeForm="$activeForm"
-    fi
-done
-```
+> **Reference**: See `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/native-sync-pattern.md` for parallel group handling algorithm.
 
 ### After Completion
 
@@ -463,7 +544,7 @@ Run after task completes (success or failure):
 
 **1. Success path** (advance to completion):
 
-```bash
+```pseudocode
 # Sync all native tasks to completed before ALL_TASKS_COMPLETE
 if [ "$(jq -r '.nativeSyncEnabled // false' "$SPEC_PATH/.ralph-state.json")" = "false" ]; then
     exit 0
@@ -487,7 +568,7 @@ echo "Native task sync finalized: $synced_count tasks synced" >> "$SPEC_PATH/.pr
 
 **2. Failure path** (reset native task to todo):
 
-```bash
+```pseudocode
 if [ "$(jq -r '.nativeSyncEnabled // false' "$SPEC_PATH/.ralph-state.json")" = "false" ]; then
     exit 0
 fi
@@ -507,6 +588,52 @@ if [ -n "$native_id" ]; then
     }
 fi
 ```
+
+**Native Task Sync - Failure**
+
+When task fails and taskIteration increments:
+
+1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
+2. Look up native task ID: `nativeTaskMap[taskIndex]`
+3. If ID exists:
+   - Format subject per FR-11 retry: "1.3 Task title [retry 2/5]"
+   - Format activeForm per FR-12 retry: "Retrying 1.3 Task title (attempt 2)"
+   - `TaskUpdate(taskId, subject: "<FR-11 retry format>", activeForm: "<FR-12 retry format>")`
+4. If TaskUpdate fails: log warning, continue
+
+### VE Task Exception (Cleanup Guarantee)
+
+When a VE1 (startup) or VE2 (check) task hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
+
+1. Log VE failure in .progress.md: "VE-check failed after N retries — skipping to VE-cleanup"
+2. Scan forward in tasks.md to find VE-cleanup task index (see pseudocode below)
+3. Skip taskIndex forward to the VE-cleanup task
+4. Execute VE-cleanup via qa-engineer (standard `[VERIFY]` delegation)
+5. After VE-cleanup completes (pass or fail), THEN output the max retries error and stop
+
+**VE3 (cleanup) edge case**: If VE3 itself fails after max retries, stop immediately with error — there is nothing to skip forward to. Log: "VE-cleanup failed after N retries — aborting. Manual cleanup may be needed (check port {{port}})."
+
+**Skip-forward pseudocode**:
+```text
+# Only applies to VE1/VE2 failures. VE3 failures stop immediately.
+cleanupIndex = null
+for i in range(currentTaskIndex + 1, totalTasks):
+    task = tasks[i]
+    if task.description contains "E2E cleanup":
+        cleanupIndex = i
+        break
+
+if cleanupIndex is null:
+    # No VE-cleanup found — log error and stop immediately
+    log("ERROR: No VE-cleanup task found after VE failure")
+    stop()
+
+# Skip all intervening VE-check tasks
+taskIndex = cleanupIndex
+# Execute VE-cleanup, then stop with error
+```
+
+This guarantees orphaned processes (dev servers, browsers) are cleaned up even when verification fails. VE-cleanup uses PID-based kill (`kill -9` PIDs from `/tmp/ve-pids.txt`) with port-based kill as fallback (`lsof -ti :$PORT | xargs kill -9`). See `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "VE-Cleanup Guarantee" section for cleanup strategy details.
 
 **3. Modification path** (TASK_MODIFICATION_REQUEST):
 
@@ -548,4 +675,237 @@ jq --arg key "$followupTaskId" --arg val "$followup_native_id" \
    '.nativeTaskMap[$key] = $val' "$SPEC_PATH/.ralph-state.json" > /tmp/state.json && \
    mv /tmp/state.json "$SPEC_PATH/.ralph-state.json"
 ```
-</mandatory>
+
+## Verification Layers
+
+Layer definitions and full logic are defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md`.
+This document is the canonical source for all 5 verification layers (Layer 0 through Layer 4).
+Layer 0 in verification-layers.md is self-contained (no need to reference this document for escalation rules).
+
+Key rules (quick reference — see verification-layers.md for full details):
+- Layer 0 (EXECUTOR_START) is a hard gate. If absent, log and ESCALATE immediately.
+- Layers 1-2 check output text for contradictions and TASK_COMPLETE signal.
+- Layer 3 (Anti-fabrication) independently runs verify commands. NEVER trust executor output.
+- Layer 4 (Artifact Review) runs periodically per rules defined in verification-layers.md.
+
+### Layer 0: EXECUTOR_START Verification (MANDATORY — blocks all other layers)
+
+After every delegation to spec-executor (sequential or parallel), verify the response
+begins with the `EXECUTOR_START` signal BEFORE running any other verification layer.
+
+```text
+Expected first signal:
+  EXECUTOR_START
+    spec: <specName>
+    task: <taskIndex>
+    agent: spec-executor v...
+```
+
+**If `EXECUTOR_START` is absent from spec-executor output:**
+- The delegation silently failed — the coordinator must NOT implement the task itself
+- Do NOT run Layers 1–4
+- Do NOT advance taskIndex
+- Do NOT mark the task complete
+- Do NOT increment taskIteration (this is an invocation failure, not a task failure)
+- ESCALATE immediately:
+  ```text
+  ESCALATE
+    reason: executor-not-invoked
+    task: <taskIndex — task title>
+    diagnosis: spec-executor subagent did not emit EXECUTOR_START.
+               This means either (A) the subagent was never invoked (wrong
+               subagent_type, plugin not loaded), (B) it timed out before
+               emitting the signal, or (C) the coordinator fell back to direct
+               implementation which is forbidden.
+    resolution:
+      1. Verify ralph-specum plugin is loaded (check Claude Code plugin config)
+      2. Verify subagent_type is "spec-executor" (not "ralph-specum:spec-executor")
+      3. Retry: /ralph-specum:implement --recovery-mode
+  ```
+
+> ⚠️ **Anti-pattern: coordinator self-implementation**
+> The absence of `EXECUTOR_START` in a response that nonetheless contains
+> TASK_COMPLETE is a strong signal that the coordinator implemented the task
+> itself. This MUST be treated as an invocation failure, not a success.
+> Layer 1 contradiction check does NOT catch this — Layer 0 does.
+
+## Sequential Delegation Template
+
+When `parallelGroup.isParallel = false` and task has no `[VERIFY]` marker, delegate ONE task to spec-executor via Task tool.
+
+Before delegating, record the current commit SHA for Layer 4 artifact review:
+```bash
+TASK_START_SHA=$(git rev-parse HEAD)
+```
+
+**Delegation Contract**:
+
+```text
+Task: Execute task $taskIndex for spec $spec
+
+Spec: $spec
+Path: $SPEC_PATH/
+Task index: $taskIndex
+
+Context from .progress.md:
+[Include relevant context]
+
+Current task from tasks.md:
+[Include full task block]
+
+## Delegation Contract
+
+### Design Decisions (from design.md)
+[Extract relevant design decisions for THIS task — architectural constraints,
+ technology choices, patterns chosen and patterns rejected]
+
+### Anti-Patterns (DO NOT)
+[List specific anti-patterns from design.md or .progress.md that apply to this task.
+ Include project-specific anti-patterns from .progress.md Learnings and any
+ task-specific constraints that must not be violated.
+ Do NOT include VE / [VERIFY]-specific browser-navigation or skill-loading rules
+ in this template; those belong in `ve-verification-contract.md`.]
+
+### Success Criteria
+[Copy the Done when + Verify sections from the task, plus any additional
+ constraints from design.md Test Strategy]
+
+Instructions:
+1. Read Do section and execute exactly
+2. Only modify Files listed
+3. Verify completion with Verify command
+4. Commit with task's Commit message
+5. Update .progress.md with completion and learnings
+6. Mark task [x] in tasks.md
+7. Output TASK_COMPLETE when done
+```
+
+**Delegation Contract Rules:**
+- The Sequential Delegation Template applies ONLY when `parallelGroup.isParallel = false` AND task has NO `[VERIFY]` marker.
+- VE tasks and [VERIFY] tasks MUST use `${CLAUDE_PLUGIN_ROOT}/references/ve-verification-contract.md` — NOT this template.
+- Never delegate a VE task without listing the required skill paths — the subagent cannot discover skills it was not told about.
+- For Phase 1-2 implementation tasks, the contract is optional but recommended when design.md contains relevant constraints.
+- Extract anti-patterns from: design.md Test Strategy, .progress.md Learnings (especially failures from prior tasks), and the task's own context.
+
+Wait for spec-executor to complete. It will output TASK_COMPLETE on success.
+
+## Parallel Execution Algorithm (Steps 1-8)
+
+When `parallelGroup.isParallel = true` (adjacent [P] tasks), use team lifecycle protocol:
+
+**Step 1: Clean Up Stale Team (MANDATORY FIRST ACTION)**
+Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
+
+**Step 2: Create Team**
+`TeamCreate(team_name: "exec-$spec", description: "Parallel execution batch")`
+
+**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: spec-executor)` calls in one message (skip Steps 3, 6, 7).
+
+**Step 3: Create Tasks**
+For each taskIndex in parallelGroup.taskIndices:
+`TaskCreate(subject: "Execute task $taskIndex", description: "Task $taskIndex for $spec. progressFile: .progress-task-$taskIndex.md", activeForm: "Executing task $taskIndex")`
+
+**Step 4: Spawn Teammates**
+ALL Task calls in ONE message for true parallelism:
+`Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec\nprogressFile: .progress-task-$taskIndex.md\n[full task block and context]")`
+
+**Step 5: Wait for Completion**
+Wait for automatic teammate idle notifications. Use TaskList ONCE to verify all tasks complete. Do NOT poll TaskList in a loop. After spawning teammates, wait for their messages -- they will notify you when done.
+
+**Step 6: Shutdown Teammates**
+`SendMessage(type: "shutdown_request", recipient: "executor-$taskIndex", content: "Execution complete, shutting down")` for each teammate.
+
+**Step 7: Collect Results**
+Proceed to Progress Merge and State Update.
+
+**Step 8: Clean Up Team**
+`TeamDelete()`. If fails, cleaned up on next invocation via Step 1.
+
+---
+
+## After Delegation
+
+Decision tree when spec-executor returns. Applies to both sequential and parallel (per-task result):
+
+**Case 1 — Fix Task Bypass:**
+If the just-completed task description contains `[FIX` (e.g. `[FIX-layer2]`), skip all 5 verification layers and proceed directly to retrying the original task per `failure-recovery.md`. When delegating a fix task, pass `fix_type: <xxx>` explicitly in the prompt.
+
+**Case 2 — TASK_MODIFICATION_REQUEST:**
+Processing order:
+1. Parse the modification request (SPLIT_TASK / ADD_PREREQUISITE / ADD_FOLLOWUP).
+2. If TASK_COMPLETE is also present in the same output → process modification then proceed to verification (Case 3).
+3. If ADD_PREREQUISITE only (no TASK_COMPLETE) → delegate the prerequisite task, then retry the original.
+4. All modification ops: update tasks.md, run Native Task Sync - Modification per `task-modification.md`.
+
+**Case 3 — TASK_COMPLETE / VERIFICATION_PASS:**
+Run all 5 verification layers (see `references/verification-layers.md`) before advancing `taskIndex`. Only advance on VERIFICATION_PASS.
+
+**Case 4 — No completion signal:**
+Executor output has neither TASK_COMPLETE nor VERIFICATION_PASS:
+1. Parse failure output for error context.
+2. Increment `taskIteration` in state.
+3. If `taskIteration < maxTaskIterations`: retry delegation with failure context appended.
+4. If `taskIteration >= maxTaskIterations`: mark task as blocked in .progress.md, stop with error.
+
+---
+
+## State Update
+
+After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
+
+**CRITICAL: Always use jq merge pattern to preserve all existing fields (source, name, basePath, commitSpec, relatedSpecs, etc.). Never write a new object from scratch.**
+
+**Sequential Update**:
+1. Read current `.ralph-state.json`
+2. Increment `taskIndex` by 1
+3. Reset `taskIteration` to 1
+4. Increment `globalIteration` by 1
+5. Write updated state (merge, preserving all existing fields)
+6. Commit all spec file changes (skip if nothing staged):
+   ```bash
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git diff --cached --quiet || git commit -m "chore(spec): update progress for task $taskIndex"
+   ```
+
+**Parallel Batch Update**:
+1. Read current `.ralph-state.json`
+2. Set `taskIndex` to `parallelGroup.endIndex + 1` (jump past entire batch)
+3. Reset `taskIteration` to 1
+4. Increment `globalIteration` by 1
+5. Write updated state (merge, preserving all existing fields)
+6. Commit all spec file changes (skip if nothing staged):
+   ```bash
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git diff --cached --quiet || git commit -m "chore(spec): update progress for parallel batch"
+   ```
+
+Updated fields (all other fields preserved as-is):
+```json
+{
+  "taskIndex": "<next task after current/batch>",
+  "taskIteration": 1,
+  "globalIteration": "<previous + 1>"
+}
+```
+
+Check if all tasks complete:
+- If `taskIndex >= totalTasks`: proceed to Completion Signal
+- If `taskIndex < totalTasks`: continue to next iteration (loop re-invokes coordinator)
+
+---
+
+## Progress Merge (Parallel Only)
+
+After all parallel teammates complete (Step 7 above), merge their progress files:
+
+1. For each taskIndex N in parallelGroup.taskIndices: read `.progress-task-N.md`.
+2. Extract completed task entries and Learnings sections.
+3. Append to main `.progress.md` in task index order (smallest N first).
+4. Delete each `.progress-task-N.md` after merging.
+5. Commit merged progress separately from State Update: `git add .progress.md && git commit -m "chore: merge parallel progress for tasks $startIndex-$endIndex"`.
+
+**Partial Parallel Batch Failure:**
+- If some teammates completed and some failed: identify the failed `taskIndex` values from `.ralph-state.json` `taskResults`.
+- Retry ONLY the failed tasks (re-run Steps 1-8 for the failed subset with a new parallelGroup containing only the failed indices).
+- Do NOT re-run tasks that already succeeded.
+- Do NOT advance `taskIndex` past the batch end until ALL tasks in the batch are complete.

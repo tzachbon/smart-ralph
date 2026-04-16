@@ -67,7 +67,7 @@ announce_task_complete() {
 **Task**: T$task_index — $task_title
 **Signal**: CONTINUE
 
-Task complete. Advancing to T$((task_index + 1)).
+Task complete. Advancing to next task.
 MSGEOF
   ) 200>"$spec_path/chat.md.lock"
 }

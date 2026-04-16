@@ -439,3 +439,63 @@ Based on codebase analysis:
 | Content duplication | ~130 lines across 5 categories | 0 lines | Manual review + grep for duplicated phrases |
 | Broken references | 0 (baseline) | 0 (maintained) | `verify-coordinator-diet.sh` exit code |
 | Behavioral changes | N/A | 0 | Functional verification test completion |
+
+---
+
+## Post-Merge Corrections (2026-04-16)
+
+### Design Deviations Found
+
+The implementation deviated from the design in the following ways:
+
+1. **coordinator-core.md exceeded 150-line target** — Grew to ~530 lines during Phase 2 refactoring, well beyond the 150-line design target. The Native Task Sync sections were consolidated but the bidirectional check and parallel group algorithms were replaced with references instead of being kept inline.
+
+2. **git-strategy.md became a reference-only file** — Instead of containing commit/push strategy content, it was reduced to just references to other files. The PR lifecycle and native sync content that was in scope for COMMIT tasks was moved out entirely.
+
+3. **Native Task Sync Initial Setup was lost** — The design specified consolidating 8 sections into 2, but the Initial Setup section (stale ID detection, TaskCreate loop) was dropped entirely during implementation.
+
+4. **Bidirectional check and parallel group became reference-only** — Instead of keeping the algorithms inline (as pseudocode), they were replaced with references to `native-sync-pattern.md`. This saves tokens but the coordinator cannot execute referenced scripts — it can only read them as guidance.
+
+### Restoration Strategy
+
+For Phase 6 corrections, the approach is:
+
+1. **Restore Initial Setup** — Add back to coordinator-core.md as inline content (this is critical for session start)
+2. **Restore algorithms as pseudocode** — Use tool-level notation (`TaskGet`, `TaskUpdate`) instead of invalid bash (`GetNativeTaskStatus`). This keeps the coordinator guided without pretending the code is executable.
+3. **Keep reference pattern for detailed scripts** — `native-sync-pattern.md` retains the full bash examples; coordinator-core.md has the high-level pseudocode.
+4. **Restore modification native sync** — Add to `task-modification.md` since that's the module loaded for modification operations.
+5. **Restore completion native sync** — Add to `pr-lifecycle.md` since that's the module loaded for PR/completion tasks.
+
+### Phase 7: Reconciled Recovery Design (2026-04-16)
+
+A second rigorous comparison against commit `c20e962f` (reconciling two independent analyses) identified 3 features completely lost beyond the Native Task Sync issues addressed in Phase 6, plus 3 structural issues.
+
+#### Lost Features (absent from all modules)
+
+| Feature | Original Location (lines) | Target Module | Why Lost |
+|---------|--------------------------|---------------|----------|
+| Sequential Delegation Template | 380-480 | coordinator-core.md | Content was in Task Delegation section, split dropped the template entirely. Only [VERIFY] template survived (in ve-verification-contract.md) |
+| Parallel Execution Steps 1-8 | 460-560 | coordinator-core.md | Team API protocol (TeamCreate/Spawn/Wait/Shutdown/TeamDelete) was not extracted to any module. FSM states TEAM_SPAWN/WAIT_RESULTS are dead code without it |
+| After Delegation decision tree | 550-570 | coordinator-core.md | The flow connecting executor output to verification layers was lost. Fix Task Bypass, MODIFICATION handling, no-signal case |
+| Progress Merge (Parallel) | 700-730 | coordinator-core.md | Temp file merge + Partial Parallel Batch Failure handling not in any module |
+| PR Lifecycle Loop Steps 1-5 | 909-1023 | pr-lifecycle.md | The 5-step autonomous loop (Create PR→CI Monitor→Review→Validate→Complete) + timeout protection was not extracted. Only the Completion Checklist survived |
+| Git Push Strategy | 670-700 | git-strategy.md | When-to-push / when-NOT-to-push / implementation algorithm not in any file. git-strategy.md is a 17-line shell with only reference links |
+
+#### Structural Issues
+
+| Issue | Impact | Fix |
+|-------|--------|-----|
+| commit-discipline.md not loaded | Coordinator doesn't see commit format/branch rules | Add to implement.md "Always load" |
+| git-strategy.md `§ Git Push Strategy` empty | stop-watcher.sh line 637 broken reference | Add content to git-strategy.md |
+| Parallel Group Detection undocumented | FSM PARALLEL_CHECK state has no builder for parallelGroup JSON | Add builder between Parse Current Task and Signal Protocol |
+
+#### Design Decisions for Phase 7
+
+| Decision | Rationale |
+|----------|-----------|
+| Sequential template goes in coordinator-core.md (not a separate module) | It's needed for EVERY non-verify task — always-loaded content |
+| Parallel steps go in coordinator-core.md (not a separate module) | The FSM already defines TEAM_SPAWN/WAIT_RESULTS states in coordinator-core.md — implementation must be in same file |
+| PR Lifecycle Loop goes in pr-lifecycle.md | This is Phase 5 content loaded only for PR_COMMIT tasks — correct module |
+| commit-discipline.md added to "Always load" | Commit rules apply to ALL tasks, not just a specific type |
+| Git Push Strategy goes in git-strategy.md | stop-watcher.sh already references it there — fix the content, not the reference |
+| Token budget adjustment: <1,400 lines | Adding ~150 lines of delegation + parallel content to coordinator-core.md pushes worst-case load above 1,200. Accept 1,400 as the new budget — the attention improvement from on-demand loading still delivers net token savings |

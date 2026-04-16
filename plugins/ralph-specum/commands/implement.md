@@ -230,26 +230,30 @@ Then Read and follow these references in order. They contain the complete coordi
 1. **Core delegation pattern**: Read `${CLAUDE_PLUGIN_ROOT}/references/coordinator-core.md` and follow it.
    This covers: role definition, FSM states, signal protocol (CONTINUE/HOLD/PENDING/DEADLOCK), integrity rules, state reading/writing, completion checking, task parsing, parallel group detection, task delegation (sequential, parallel, [VERIFY]), modification request handling, verification layers, state updates, progress merge, completion signal, and PR lifecycle basics.
 
+2. **Commit discipline**: Read `${CLAUDE_PLUGIN_ROOT}/references/commit-discipline.md`.
+   This covers: commit message format, branch naming rules, push-to-main prohibition, staging rules.
+
 **Load on-demand based on task type:**
 
-2. **VE/E2E Verification tasks** (tasks with `[VERIFY]` tag containing "VE", "E2E", "browser", "playwright"):
-   Read `${CLAUDE_PLUGIN_ROOT}/references/ve-verification-contract.md`.
-   This covers: VE task delegation rules (VE0-VE3), Skills loading for verification layers, Native Task Sync pre-delegation logic.
+3. **[VERIFY] tasks** (tasks with `[VERIFY]` tag):
+    Read `${CLAUDE_PLUGIN_ROOT}/references/ve-verification-contract.md`.
+    This covers: VE task delegation rules (VE0-VE3), Skills loading for verification layers, Native Task Sync pre-delegation logic.
 
-3. **TASK_MODIFICATION_REQUEST** (when executor requests SPLIT/PREREQ/FOLLOWUP/ADJUST):
+4. **TASK_MODIFICATION_REQUEST** (when executor requests SPLIT/PREREQ/FOLLOWUP/ADJUST):
    Read `${CLAUDE_PLUGIN_ROOT}/references/task-modification.md`.
    This covers: modification operation handling, task tree restructuring, state map updates.
 
-4. **PR_COMMIT / Commit tasks** (tasks involving git commits, PRs, branches):
+5. **PR_COMMIT / Commit tasks** (tasks involving git commits, PRs, branches):
    Read `${CLAUDE_PLUGIN_ROOT}/references/pr-lifecycle.md` AND `${CLAUDE_PLUGIN_ROOT}/references/git-strategy.md`.
    - pr-lifecycle: PR management, CI monitoring, completion checklist, git operations.
    - git-strategy: commit format, branch naming, push strategy, final cleanup.
+   (Note: commit-discipline.md is always loaded — no need to load it again here.)
 
-5. **Failure recovery** (when task fails and recovery-mode is enabled):
+6. **Failure recovery** (when task fails and recovery-mode is enabled):
    Read `${CLAUDE_PLUGIN_ROOT}/references/failure-recovery.md`.
    This covers: parsing failure output, fix task generation, fix task limits and depth checks, iterative recovery orchestrator, fix task insertion into tasks.md, fixTaskMap state tracking, progress logging for fix chains.
 
-6. **Phase-aware execution** (all tasks need phase context):
+7. **Phase-aware execution** (all tasks need phase context):
    Read `${CLAUDE_PLUGIN_ROOT}/references/phase-rules.md`.
    This covers: POC-first workflow (Phase 1-4), phase distribution, quality checkpoints, phase-specific constraints.
 
@@ -259,6 +263,7 @@ Then Read and follow these references in order. They contain the complete coordi
 - [VERIFY] tasks: coordinator-core.md + ve-verification-contract.md + phase-rules.md
 - Modification requests: coordinator-core.md + task-modification.md
 - Commit/PR tasks: coordinator-core.md + pr-lifecycle.md + git-strategy.md
+  (Note: commit-discipline.md is always loaded — no need to list it here)
 - Failure recovery: coordinator-core.md + failure-recovery.md
 
 Note: coordinator-pattern.md is now DEPRECATED for execution. The modular references above replace it. Keep coordinator-pattern.md as a historical reference only.

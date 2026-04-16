@@ -24,6 +24,53 @@ Before outputting ALL_TASKS_COMPLETE:
 4. If any TaskUpdate fails: log warning, continue
 5. Log "Native task sync finalized: N tasks synced" to .progress.md
 
+**Original implementation from coordinator-pattern.md commit c20e962f:**
+
+This is the "iterate-all-and-complete" logic that was lost during the refactor. The coordinator MUST complete ALL native tasks in the map when finishing, not just the current task.
+
+**PSEUDOCODE WARNING**: The following is pseudo-code notation, NOT executable bash. `GetNativeTaskStatus` and `TaskUpdate` are Claude Code Tool calls, not shell commands. Do NOT copy-paste this into a shell.
+
+Before iterating (pseudocode):
+```text
+synced_count=0
+for task_id in nativeTaskMap.keys():
+    native_id = nativeTaskMap[task_id]
+    if native_id is not null:
+        native_status = GetNativeTaskStatus(native_id)
+        if native_status != "completed":
+            TaskUpdate(taskId=native_id, status="completed")
+            synced_count += 1
+print "Native task sync finalized: $synced_count tasks synced"
+```
+
+OR as a reference bash-style sketch (pseudo-code, not executable):
+```bash
+# PSEUDOCODE ONLY - Do NOT execute (GetNativeTaskStatus and TaskUpdate are not shell commands)
+# Sync all native tasks to completed before ALL_TASKS_COMPLETE
+if [ "$(jq -r '.nativeSyncEnabled // false' "$SPEC_PATH/.ralph-state.json")" = "false" ]; then
+    exit 0
+fi
+
+synced_count=0
+
+for task_id in $(jq -r '.nativeTaskMap | keys[]' "$SPEC_PATH/.ralph-state.json"); do
+    native_id=$(jq -r ".nativeTaskMap[\"$task_id\"] // \"\"" "$SPEC_PATH/.ralph-state.json")
+    if [ -n "$native_id" ]; then
+        # PSEUDOCODE: This would be TaskUpdate via Claude Code Tool
+        # native_status=$(GetNativeTaskStatus "$native_id")
+        # if [ "$native_status" != "completed" ]; then
+        #     TaskUpdate taskId="$native_id" status="completed"
+        #     synced_count=$((synced_count + 1))
+        # fi
+        # For now, just log the iteration
+        :
+    fi
+done
+echo "Native task sync finalized: $synced_count tasks synced" >> "$SPEC_PATH/.progress.md"
+```
+
+This ensures all native tasks are marked complete when the spec finishes, even tasks that were created via SPLIT/FOLLOWUP/ADJUST operations.
+
 Before outputting:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup execution state)
@@ -55,130 +102,103 @@ PR: https://github.com/owner/repo/pull/123
 Do NOT output ALL_TASKS_COMPLETE if tasks remain incomplete.
 Do NOT output TASK_COMPLETE (that's for spec-executor only).
 
----
+## PR Lifecycle Loop (Phase 5)
+
+CRITICAL: Phase 5 is continuous autonomous PR management. Do NOT stop until all criteria met.
+
+**Entry Conditions**:
+- All Phase 1-4 tasks complete
+- Phase 5 tasks detected in tasks.md
+
+**Loop Structure**:
+```text
+PR Creation -> CI Monitoring -> Review Check -> Fix Issues -> Push -> Repeat
+```
+
+**Step 1: Create PR (if not exists)**
+
+Delegate to spec-executor:
+```text
+Task: Create pull request
+
+Do:
+1. Verify not on default branch: git branch --show-current
+2. Push branch: git push -u origin <branch>
+3. Create PR: gh pr create --title "feat: <spec>" --body "<summary>"
+
+Verify: gh pr view shows PR created
+Done when: PR URL returned
+Commit: None
+```
+
+**Step 2: CI Monitoring Loop**
+
+```text
+While (CI checks not all green):
+  1. Wait 3 minutes (allow CI to start/complete)
+  2. Check status: gh pr checks
+  3. If failures:
+     - Read failure details: gh run view --log-failed
+     - Create new Phase 5.X task in tasks.md
+     - Delegate new task to spec-executor with task index and Files list
+     - Wait for TASK_COMPLETE
+     - Push fixes (if not already pushed by spec-executor)
+     - Restart wait cycle
+  4. If pending:
+     - Continue waiting
+  5. If all green:
+     - Proceed to Step 3
+```
+
+**Step 3: Review Comment Check**
+
+```text
+1. Fetch review states: gh pr view --json reviews
+   - Parse for reviews with state "CHANGES_REQUESTED" or "PENDING"
+   - For inline comments, use REST API: gh api repos/{owner}/{repo}/pulls/{number}/reviews
+   - Or use review comments endpoint: gh api repos/{owner}/{repo}/pulls/{number}/comments
+2. Parse for unresolved reviews/comments
+3. If unresolved reviews/comments found:
+   - Create tasks from reviews (add to tasks.md as Phase 5.X)
+   - Delegate each to spec-executor
+   - Wait for completion
+   - Push fixes
+   - Return to Step 2 (re-check CI)
+4. If no unresolved reviews/comments:
+   - Proceed to Step 4
+```
+
+**Step 4: Final Validation**
+
+All must be true:
+- All Phase 1-4 tasks complete (checked [x])
+- All Phase 5 tasks complete
+- CI checks all green
+- No unresolved review comments
+- Zero test regressions (all existing tests pass)
+- Code is modular/reusable (verified in .progress.md)
+
+**Step 5: Completion**
+
+When all Step 4 criteria met:
+1. Update .progress.md with final state
+2. Delete .ralph-state.json
+3. Get PR URL: `gh pr view --json url -q .url`
+4. Output: ALL_TASKS_COMPLETE
+5. Output: PR link
+
+**Timeout Protection**:
+- Max 48 hours in PR Lifecycle Loop
+- Max 20 CI monitoring cycles
+- If exceeded: Output error and STOP (do not output ALL_TASKS_COMPLETE)
+
+**Error Handling**:
+- If CI fails after 5 retry attempts: STOP with error
+- If review comments cannot be addressed: STOP with error
+- Document all failures in .progress.md Learnings
 
 ## Modification Request Handler
 
 When spec-executor outputs `TASK_MODIFICATION_REQUEST`, parse and process the modification before continuing.
 
-**Detection:**
-
-Check executor output for the literal string `TASK_MODIFICATION_REQUEST` followed by a JSON code block.
-
-**Parse Modification Request:**
-
-Extract the JSON payload:
-```json
-{
-  "type": "SPLIT_TASK" | "ADD_PREREQUISITE" | "ADD_FOLLOWUP",
-  "originalTaskId": "X.Y",
-  "reasoning": "...",
-  "proposedTasks": ["markdown task block", "..."]
-}
-```
-
-**Validate Request:**
-
-1. Read `modificationMap` from .ralph-state.json
-2. Count: `modificationMap[originalTaskId].count` (default 0)
-3. If count >= 3: REJECT, log "Max modifications (3) reached for task $taskId" in .progress.md, skip modification
-4. Depth check: count dots in proposed task IDs. If dots > 3 (depth > 2 levels): REJECT
-5. For SPLIT_TASK/ADD_PREREQUISITE/ADD_FOLLOWUP: verify proposed tasks have required fields: Do, Files, Done when, Verify, Commit
-6. For SPEC_ADJUSTMENT: verify `proposedChange` has `field`, `original`, `amended`, `affectedTasks`; and `investigation` is non-empty
-
-**Process by Type:**
-
-**SPLIT_TASK**:
-1. Mark original task [x] in tasks.md (executor completed what it could)
-2. Insert all proposedTasks after original task block using Edit tool
-3. Update totalTasks += proposedTasks.length in state
-4. Update modificationMap
-5. Set taskIndex to first inserted sub-task
-6. Log in .progress.md: "Split task $taskId into N sub-tasks: [ids]. Reason: $reasoning"
-
-**ADD_PREREQUISITE**:
-1. Do NOT mark original task complete
-2. Insert proposedTask BEFORE current task block using Edit tool
-3. Update totalTasks += 1 in state
-4. Update modificationMap
-5. Reset taskIteration to 1 in .ralph-state.json (prerequisite is a new task, original task gets a fresh attempt)
-6. Delegate prerequisite task to spec-executor
-7. After prereq completes: retry original task with taskIteration=1
-8. Log in .progress.md: "Added prerequisite $prereqId before $taskId. Reason: $reasoning"
-
-**ADD_FOLLOWUP**:
-1. Original task should already be marked [x] (executor outputs TASK_COMPLETE too)
-2. Insert proposedTask after current task block using Edit tool
-3. Update totalTasks += 1 in state
-4. Update modificationMap
-5. Normal advancement -- followup will be picked up as next task
-6. Log in .progress.md: "Added followup $followupId after $taskId. Reason: $reasoning"
-
-**SPEC_ADJUSTMENT**:
-1. Validate scope — auto-approve if ALL of the following:
-   - `proposedChange.field` is `"Verify"` or `"Done when"` (task criteria fields only, not acceptance criteria)
-   - `investigation` field is non-empty (agent gathered evidence)
-   - `proposedChange.affectedTasks.length` ≤ `totalTasks / 2` (not a wholesale spec rewrite)
-2. If **auto-approved**:
-   a. For each task ID in `affectedTasks`: edit that task's `Verify:` or `Done when:` field in tasks.md to `proposedChange.amended` using Edit tool.
-   b. Log in `.progress.md` under `## Spec Adjustments`:
-      ```
-      - [SPEC-ADJUSTMENT] task $originalTaskId → amended $field for tasks $affectedTasks
-        Reason: $reasoning
-        Evidence: $investigation
-        Original: $original
-        Amended: $amended
-      ```
-   c. Continue execution — the next delegation will use the amended criteria. Do NOT count against `modificationMap` limit.
-3. If **not auto-approved** (field is not Verify/Done-when, no investigation, or scope too large):
-   a. Write `SPEC-DEFICIENCY` to chat.md via atomic append with the full proposal and why it cannot be auto-applied.
-   b. Set `awaitingHumanInput: true` in `.ralph-state.json`.
-   c. Halt execution until human responds.
-
-**Parallel Batch Interaction**:
-- If current task is in a [P] batch and executor requests modification: break out of parallel batch
-- Re-evaluate remaining [P] tasks as sequential after modification
-- This prevents inserting tasks mid-batch which would corrupt parallel execution
-
-**Update State (modificationMap)**:
-
-```bash
-jq --arg taskId "$TASK_ID" \
-   --arg modId "$MOD_TASK_ID" \
-   --arg reason "$REASONING" \
-   --arg type "$MOD_TYPE" \
-   --argjson delta "$PROPOSED_COUNT" \
-   '
-   .modificationMap //= {} |
-   .modificationMap[$taskId] //= {count: 0, modifications: []} |
-   .modificationMap[$taskId].count += 1 |
-   .modificationMap[$taskId].modifications += [{id: $modId, type: $type, reason: $reason}] |
-   .totalTasks += $delta
-   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
-```
-
-> **Note**: Set `PROPOSED_COUNT` to the number of proposed tasks (e.g., `PROPOSED_COUNT=$(echo "$PROPOSED_TASKS" | jq 'length')`). For SPLIT_TASK this is N (the number of sub-tasks), for ADD_PREREQUISITE and ADD_FOLLOWUP this is 1.
-
-**Insertion Algorithm** (same pattern as fix task insertion):
-
-1. Read tasks.md
-2. Locate target task by ID pattern: `- [ ] $taskId` or `- [x] $taskId`
-3. Find task block end (next `- [ ]`, `- [x]`, `## Phase`, or EOF)
-4. For ADD_PREREQUISITE: insert before task block start
-5. For SPLIT_TASK/ADD_FOLLOWUP: insert after task block end
-6. Use Edit tool with old_string/new_string
-
----
-
-## Native Task Sync - Modification
-
-When TASK_MODIFICATION_REQUEST is processed and new tasks are inserted into tasks.md:
-
-1. If `nativeSyncEnabled` is `false` or `nativeTaskMap` is missing: skip
-2. For SPLIT_TASK:
-   - `TaskUpdate` original task status: `"completed"`
-   - For each new split task: `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")`, add returned ID to `nativeTaskMap`
-3. For ADD_PREREQUISITE:
-   - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for prerequisite, add returned ID to `nativeTaskMap`
-   - `TaskUpdate` original task with `addBlockedBy: [prerequisite task ID]`
+> **Reference**: See `${CLAUDE_PLUGIN_ROOT}/references/task-modification.md` for full modification operation handling (SPLIT/PREREQ/FOLLOWUP/ADJUST), task tree restructuring, state map updates, and Native Task Sync for modifications.

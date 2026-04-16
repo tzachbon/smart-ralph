@@ -108,7 +108,7 @@ Reduce coordinator token consumption from ~15,000 tokens (2,363 lines) to <5,000
 
 | ID | Requirement | Metric | Target |
 |----|-------------|--------|--------|
-| NFR-1 | Token consumption | Lines of references loaded per iteration | <1,200 lines |
+| NFR-1 | Token consumption | Lines of references loaded per iteration | <1,400 lines (adjusted from <1,200 after Phase 7 feature restoration) |
 | NFR-2 | Backward compatibility | Behavioral changes | 0 (100% compatible) |
 | NFR-3 | Refactoring risk | Code complexity | LOW (pure reorganization) |
 | NFR-4 | File organization | Modularity | 5 focused modules vs 1 monolithic file |
@@ -218,3 +218,67 @@ Reduce coordinator token consumption from ~15,000 tokens (2,363 lines) to <5,000
 - Token count doesn't reduce as expected (may need aggressive consolidation beyond conservative approach)
 - Merge conflicts with engine-state-hardening changes (coordinate manual resolution)
 - Native Task Sync operations broken after consolidation (may have lost critical logic)
+
+---
+
+## Post-Merge Corrections (2026-04-16)
+
+### PR Review Fixes Applied
+
+The following issues were identified during PR #13 review and have been fixed:
+
+| Fix | File | Description |
+|-----|------|-------------|
+| PR-1 | `pr-lifecycle.md` | Removed duplicated Modification Request Handler (lines 60-170), replaced with reference to `task-modification.md` |
+| PR-2 | `verify-coordinator-diet.sh` | Changed hardcoded path to `git rev-parse --show-toplevel` |
+| PR-3 | `verify-coordinator-diet.sh` | **DELETED** — script was one-time verification tool, no longer needed post-merge |
+| PR-4 | `git-strategy.md` | Removed out-of-scope Native Task Sync and PR Lifecycle sections, replaced with references |
+| PR-6 | `coordinator-core.md` | Replaced invalid bash snippets (GetNativeTaskStatus, broken array syntax) with references to `native-sync-pattern.md` |
+| PR-6b | `native-sync-pattern.md` | Added clarifying comment about GetNativeTaskStatus being pseudo-code |
+| PR-7 | `implement.md` | Aligned [VERIFY] module-loading condition to cover ALL [VERIFY] tasks, not just VE/E2E |
+| PR-8 | `chat-md-protocol.sh` | Fixed arithmetic crash with dotted task IDs (`$((task_index + 1))` → static text) |
+| PR-9 | `state-update-pattern.md` | Changed `--arg` to `--argjson` for numeric fields (taskIndex, taskIteration, globalIteration) |
+
+### Critical Functionality Loss Identified
+
+Comparison against commit `c20e962f` (pre-spec state) revealed the following lost capabilities:
+
+| ID | Lost Capability | Severity | Impact |
+|----|----------------|----------|--------|
+| LOSS-1 | Native Task Sync - Initial Setup (stale ID detection, TaskCreate for all tasks) | CRITICAL | Native tasks not created at session start, stale IDs not detected |
+| LOSS-2 | Bidirectional check algorithm (scan tasks.md → sync native state) | HIGH | Completed tasks may not sync to native system |
+| LOSS-3 | Parallel group native sync (TaskUpdate for [P] batch) | HIGH | Parallel tasks not reflected in native system |
+| LOSS-4 | Pre-delegation update (set native task to in_progress with activeForm) | HIGH | Native tasks stuck in "todo" during execution |
+| LOSS-5 | Post-verification native sync (TaskUpdate to completed after VERIFY layers) | HIGH | Verified tasks not marked complete in native system |
+| LOSS-6 | Failure path native sync (reset to todo on task failure) | MEDIUM | Failed tasks may show incorrect status in native system |
+| LOSS-7 | Modification path native sync (SPLIT/PREREQ/FOLLOWUP TaskCreate/TaskUpdate) | HIGH | Task modifications not reflected in native system |
+| LOSS-8 | Completion path native sync (sync all to completed before ALL_TASKS_COMPLETE) | HIGH | Final sync not executed, native tasks left incomplete |
+| LOSS-9 | 5-Layer Verification details (Layer 0: EXECUTOR_START, Layer 3: Anti-fabrication) | HIGH | Coordinator may skip critical verification layers |
+| LOSS-10 | Task delegation routing (qa-engineer for [VERIFY], spec-executor for others) | MEDIUM | Tasks may be delegated to wrong agent |
+| LOSS-11 | VE-cleanup skip-forward logic (skip VE-cleanup subtasks) | MEDIUM | VE tasks may execute unnecessary cleanup steps |
+| LOSS-12 | State update patterns (atomic jq merge with progress merge) | MEDIUM | State updates may not be atomic |
+
+### New Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-9 | Restore Native Task Sync Initial Setup | CRITICAL | coordinator-core.md contains Initial Setup section with stale ID detection and TaskCreate loop |
+| FR-10 | Restore Bidirectional Check algorithm | HIGH | coordinator-core.md or native-sync-pattern.md contains complete bidirectional check |
+| FR-11 | Restore Parallel Group native sync | HIGH | coordinator-core.md or native-sync-pattern.md contains parallel group TaskUpdate logic |
+| FR-12 | Restore Pre-delegation native update | HIGH | coordinator-core.md contains pre-delegation TaskUpdate with activeForm |
+| FR-13 | Restore Post-verification native sync | HIGH | coordinator-core.md contains post-verification TaskUpdate to completed |
+| FR-14 | Restore Failure path native sync | MEDIUM | coordinator-core.md contains failure path reset to todo |
+| FR-15 | Restore Modification path native sync | HIGH | task-modification.md contains SPLIT/PREREQ/FOLLOWUP native sync |
+| FR-16 | Restore Completion path native sync | HIGH | pr-lifecycle.md contains final sync-all-to-completed logic |
+| FR-17 | Restore 5-Layer Verification details | HIGH | coordinator-core.md contains all 5 verification layers with Layer 0 and Layer 3 |
+| FR-18 | Restore VE-cleanup skip-forward logic | MEDIUM | ve-verification-contract.md references ve-skip-forward.md correctly |
+| FR-19 | Fix --argjson for all numeric state fields | HIGH | state-update-pattern.md uses --argjson for taskIndex, taskIteration, globalIteration |
+| FR-20 | Fix chat-md-protocol.sh dotted task ID crash | HIGH | announce_task_complete handles dotted IDs without arithmetic expansion |
+| FR-21 | Restore Sequential Delegation Template | CRITICAL | coordinator-core.md contains delegation prompt template with Delegation Contract (Design Decisions, Anti-Patterns, Required Skills, Success Criteria) |
+| FR-22 | Restore Parallel Execution Steps 1-8 | HIGH | coordinator-core.md contains 8-step Team API protocol (TeamDelete→TeamCreate→TaskCreate→Spawn→Wait→Shutdown→Collect→Cleanup) |
+| FR-23 | Restore After Delegation decision tree | HIGH | coordinator-core.md contains Fix Task Bypass, MODIFICATION, COMPLETE, and no-signal paths |
+| FR-24 | Restore Progress Merge (Parallel) | HIGH | coordinator-core.md contains temp file merge + Partial Parallel Batch Failure handling |
+| FR-25 | Restore PR Lifecycle Loop (Phase 5) | HIGH | pr-lifecycle.md contains 5-step loop (Create PR→CI Monitor→Review Check→Validate→Complete) with timeout protection |
+| FR-26 | Add commit-discipline.md to implement.md | MEDIUM | implement.md "Always load" section includes commit-discipline.md |
+| FR-27 | Restore Git Push Strategy | MEDIUM | git-strategy.md contains `## Git Push Strategy` with when-to-push/when-NOT-to-push rules and implementation algorithm |
+| FR-28 | Add Parallel Group Detection builder | LOW | coordinator-core.md contains `## Parallel Group Detection` with JSON structure and detection rules |
