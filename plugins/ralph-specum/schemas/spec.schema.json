@@ -190,6 +190,125 @@
           "type": "string",
           "enum": ["fine", "coarse"],
           "description": "Task sizing level: fine (40-60+ tasks) or coarse (10-20 tasks)"
+        },
+        "nativeTaskMap": {
+          "type": "object",
+          "description": "Maps taskIndex to native task IDs for external sync",
+          "default": {},
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "nativeSyncEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether native task sync is active"
+        },
+        "nativeSyncFailureCount": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Consecutive native sync failures (disables at 3)"
+        },
+        "chat": {
+          "type": "object",
+          "description": "Chat protocol state for external reviewer coordination",
+          "properties": {
+            "executor": {
+              "type": "object",
+              "properties": {
+                "lastReadLine": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "default": 0,
+                  "description": "Last line read in chat.md by executor"
+                }
+              }
+            }
+          }
+        },
+        "checkpoint": {
+          "type": "object",
+          "description": "Pre-execution git checkpoint for rollback safety",
+          "properties": {
+            "sha": {
+              "type": ["string", "null"],
+              "description": "Full 40-char git commit SHA at checkpoint (SR-003: corrected from 'Short (7 chars)' to 'Full' to match implementation storing full SHA via git log -1 --format=%H)"
+            },
+            "timestamp": {
+              "type": ["string", "null"],
+              "description": "ISO 8601 UTC timestamp when checkpoint was created"
+            },
+            "branch": {
+              "type": ["string", "null"],
+              "description": "Git branch name at checkpoint"
+            },
+            "message": {
+              "type": ["string", "null"],
+              "description": "Checkpoint commit message"
+            }
+          }
+        },
+        "circuitBreaker": {
+          "type": "object",
+          "description": "Session circuit breaker for safety",
+          "properties": {
+            "state": {
+              "type": ["string", "null"],
+              "enum": ["closed", "open", null],
+              "description": "Circuit breaker state: closed (normal), open (blocked), or null"
+            },
+            "consecutiveFailures": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "description": "Count of consecutive session failures"
+            },
+            "sessionStartTime": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "ISO 8601 UTC timestamp when current session started (SR-001: aligned with implement.md date -u +%Y-%m-%dT%H:%M:%SZ)"
+            },
+            "openedAt": {
+              "type": ["string", "null"],
+              "format": "date-time",
+              "description": "ISO 8601 UTC timestamp when circuit breaker tripped open"
+            },
+            "trippedReason": {
+              "type": ["string", "null"],
+              "description": "Reason the circuit breaker was tripped open"
+            },
+            "maxConsecutiveFailures": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 5,
+              "description": "Max consecutive failures before tripping open"
+            },
+            "maxSessionSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 172800,
+              "description": "Max session duration in seconds before tripping open (SR-002: corrected from 3600/1h to 172800/48h)"
+            }
+          }
+        },
+        "filesystemHealthy": {
+          "type": "boolean",
+          "description": "Whether the filesystem is healthy and writable"
+        },
+        "filesystemHealthFailures": {
+          "type": "integer",
+          "description": "Number of consecutive filesystem health check failures",
+          "default": 0
+        },
+        "lastFilesystemCheck": {
+          "type": ["string", "null"],
+          "description": "Timestamp of last filesystem health check"
+        },
+        "ciCommands": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of CI commands discovered at execution start"
         }
       }
     },

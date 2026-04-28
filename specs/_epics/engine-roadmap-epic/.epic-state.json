@@ -1,0 +1,38 @@
+{
+  "name": "engine-roadmap-epic",
+  "goal": "Implement the remaining phases of the engine improvement plan: enforce role boundaries, add Bmalph-style safety infrastructure, bridge BMAD specs, encode agent collaboration patterns, and auto-trigger pair-debug mode.",
+  "specs": [
+    {
+      "name": "role-boundaries",
+      "status": "completed",
+      "dependencies": []
+    },
+    {
+      "name": "loop-safety-infra",
+      "status": "completed",
+      "dependencies": []
+    },
+    {
+      "name": "bmad-bridge-plugin",
+      "status": "completed",
+      "dependencies": []
+    },
+    {
+      "name": "collaboration-resolution",
+      "status": "pending",
+      "dependencies": [
+        "role-boundaries"
+      ]
+    },
+    {
+      "name": "pair-debug-auto-trigger",
+      "status": "pending",
+      "dependencies": [
+        "role-boundaries",
+        "collaboration-resolution"
+      ]
+    }
+  ],
+  "output": "spec-files",
+  "issueNumber": null
+}

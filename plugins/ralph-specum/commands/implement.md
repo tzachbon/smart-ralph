@@ -70,6 +70,9 @@ Update `.ralph-state.json` by merging these fields into the existing object:
   "taskIndex": "<first incomplete>",
   "totalTasks": "<count>",
   "taskIteration": 1,
+  "repairIteration": 0,
+  "failedStory": null,
+  "originTaskIndex": null,
   "maxTaskIterations": "<parsed from --max-task-iterations or default 5>",
   "recoveryMode": "<true if --recovery-mode flag present, false otherwise>",
   "maxFixTasksPerOriginal": 3,
@@ -100,6 +103,9 @@ jq --argjson taskIndex <first_incomplete> \
      taskIndex: $taskIndex,
      totalTasks: $totalTasks,
      taskIteration: 1,
+     repairIteration: 0,
+     failedStory: null,
+     originTaskIndex: null,
      maxTaskIterations: $maxTaskIter,
      recoveryMode: $recoveryMode,
      maxFixTasksPerOriginal: 3,
@@ -113,10 +119,67 @@ jq --argjson taskIndex <first_incomplete> \
      awaitingApproval: false,
      nativeTaskMap: {},
      nativeSyncEnabled: true,
-     nativeSyncFailureCount: 0
+     nativeSyncFailureCount: 0,
+     circuitBreaker: {
+       state: "closed",
+       consecutiveFailures: 0,
+       sessionStartTime: "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+       maxConsecutiveFailures: 5,
+       maxSessionSeconds: 172800
+     }
    }
    ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
    mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+```
+
+### Create metrics file
+
+Ensure the metrics log file exists at execution start for FR-004 compliance.
+
+```bash
+touch "$SPEC_PATH/.metrics.jsonl"
+```
+
+### Create Git Checkpoint (before task loop)
+
+Source the checkpoint infrastructure and create a pre-execution git snapshot.
+This provides a rollback point if execution fails partway through.
+
+```bash
+# Source checkpoint infrastructure
+source "$CLAUDE_PLUGIN_ROOT/hooks/scripts/checkpoint.sh"
+
+# Determine repo root from spec path
+STATE_FILE="$SPEC_PATH/.ralph-state.json"
+GIT_ROOT="$(cd "$(dirname "$STATE_FILE")" && pwd)"
+
+# Extract spec name from state file (set by earlier phases)
+SPEC_NAME="$(jq -r '.name // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")"
+
+# Create checkpoint — blocks execution if it fails
+if ! checkpoint-create "$SPEC_NAME" "$TOTAL" "$STATE_FILE"; then
+  echo "[ralph-specum] ERROR: checkpoint creation failed. Aborting execution."
+  exit 1
+fi
+```
+
+### Discover CI Commands (FR-008)
+
+Source the CI discovery function and capture baseline commands at execution start.
+This establishes the `ciCommands` baseline for later drift detection.
+
+```bash
+# Source CI discovery from checkpoint infrastructure (SR-015: use dedicated CI script)
+source "$CLAUDE_PLUGIN_ROOT/hooks/scripts/discover-ci.sh"
+
+# Extract spec name from state file (set by earlier phases)
+SPEC_NAME="$(jq -r '.name // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")"
+
+# Discover CI commands and store in state
+# SR-012: pass repo root (not spec path) for correct workflow discovery
+REPO_ROOT="$(git -C "$STATE_FILE" rev-parse --show-toplevel 2>/dev/null || dirname "$STATE_FILE")"
+ci_cmds=$(discover_ci_commands "$REPO_ROOT")
+jq --argjson cmds "$ci_cmds" '.ciCommands = $cmds' "$STATE_FILE" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "$STATE_FILE"
 ```
 
 **Preserved fields** (set by earlier phases, must NOT be removed):
@@ -126,7 +189,87 @@ jq --argjson taskIndex <first_incomplete> \
 
 ## Step 4: Execute Task Loop
 
-After writing the state file, output the coordinator prompt below. This starts the execution loop.
+### State Integrity Check (before loop starts)
+
+Before delegating any task, verify state consistency:
+
+```bash
+COMPLETED=$(grep -c -e '- \[x\]' "$SPEC_PATH/tasks.md" 2>/dev/null || echo 0)
+CURRENT_INDEX=$(jq '.taskIndex' "$SPEC_PATH/.ralph-state.json")
+TOTAL=$(jq '.totalTasks' "$SPEC_PATH/.ralph-state.json")
+```
+
+**Drift Detection Logic:**
+
+1. **If `CURRENT_INDEX < COMPLETED`**: state drift detected (state lags behind tasks.md)
+   - Log: `"STATE DRIFT: taskIndex was $CURRENT_INDEX, corrected to $COMPLETED"`
+   - Update: `jq --argjson idx "$COMPLETED" '.taskIndex = $idx' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"`
+
+2. **If `CURRENT_INDEX > COMPLETED` and `CURRENT_INDEX < TOTAL`**: state ahead of tasks.md (possible unmarking)
+   - Log: `"STATE WARNING: taskIndex $CURRENT_INDEX exceeds completed count $COMPLETED — tasks may have been unmarked intentionally"`
+   - No correction: allow execution to continue with current state
+
+3. **If `CURRENT_INDEX == COMPLETED`**: normal state, no action needed
+
+---
+
+### Parallel Reviewer Onboarding
+
+Before starting execution, check if the user wants to run an external parallel reviewer:
+
+**Ask the user:**
+```
+Will you run an external parallel reviewer during this implementation? [y/n]
+
+If yes:
+- A file specs/<specName>/task_review.md will be created from the FR-B1 template
+- You will receive instructions to launch the reviewer in a second Claude Code session
+- The spec-executor will automatically read task_review.md before each task
+```
+
+**If user answers YES:**
+1. Copy `plugins/ralph-specum/templates/task_review.md` → `specs/<specName>/task_review.md`
+2. Copy `plugins/ralph-specum/templates/chat.md` → `specs/<specName>/chat.md`
+3. Ask which quality principles to activate:
+   ```
+   Which quality principles should the reviewer enforce?
+
+   Principles detected in the codebase: <list detected conventions>
+   Recommended standard principles:
+   - SOLID (Single Responsibility, Open/Closed, Liskov, Interface Segregation, Dependency Inversion)
+   - DRY (Don't Repeat Yourself)
+   - FAIL FAST (validate early in functions)
+   - TDD (Red-Green-Refactor)
+
+   Which do you want to enable? ("all", a comma-separated list, or "none")
+   ```
+3. Write selected principles to `specs/<specName>/task_review.md` frontmatter:
+   ```yaml
+   <!-- reviewer-config
+   principles: [SOLID, DRY, FAIL_FAST, TDD]
+   codebase-conventions: <detected automatically>
+   -->
+   ```
+4. Print onboarding instructions:
+   ```
+   External reviewer configured.
+
+   To launch the reviewer in parallel:
+   1. Open a second Claude Code session in the same repository
+   2. Load the agent: @external-reviewer
+   3. Tell it: "Review spec <specName> while spec-executor implements"
+   4. The reviewer will read and write to specs/<specName>/task_review.md and chat.md (FLOC-based coordination in real time)
+
+   The spec-executor is already configured to read task_review.md before each task.
+   The reviewer will also read and write chat.md (FLOC coordination in real time).
+   When the reviewer marks an item as FAIL, the spec-executor will stop and apply the fix.
+   ```
+
+**If user answers NO:** continue normal flow without creating task_review.md.
+
+---
+
+After writing the state file (and optionally setting up external reviewer), output the coordinator prompt below. This starts the execution loop.
 The stop-hook will continue the loop by blocking stops and prompting the coordinator to check state.
 
 ### Coordinator Prompt
@@ -146,7 +289,7 @@ Then Read and follow these references in order. They contain the complete coordi
    This covers: parsing failure output, fix task generation, fix task limits and depth checks, iterative recovery orchestrator, fix task insertion into tasks.md, fixTaskMap state tracking, and progress logging for fix chains.
 
 3. **Verification after each task**: Read `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` and follow it.
-   This covers: 3 layers (contradiction detection, TASK_COMPLETE signal, periodic artifact review via spec-reviewer). All must pass before advancing.
+   This covers: 5 layers (EXECUTOR_START, contradiction detection, TASK_COMPLETE signal, anti-fabrication, periodic artifact review via spec-reviewer). All must pass before advancing.
 
 4. **Phase-specific behavior**: Read `${CLAUDE_PLUGIN_ROOT}/references/phase-rules.md` and follow it.
    This covers: POC-first workflow (Phase 1-4), phase distribution, quality checkpoints, and phase-specific constraints.
@@ -159,9 +302,80 @@ Then Read and follow these references in order. They contain the complete coordi
 - **You are a COORDINATOR, not an implementer.** Delegate via Task tool. Never implement yourself.
 - **Fully autonomous.** Never ask questions or wait for user input.
 - **State-driven loop.** Read .ralph-state.json each iteration to determine current task.
+- **MANDATORY: Read task_review.md BEFORE delegating.** Before every task delegation, read `<basePath>/task_review.md` if it exists. If the current task is marked FAIL, DO NOT delegate—add a fix task first. If marked PENDING, treat it as a blocking state: do not delegate or advance to another task until the review is resolved.
+- **MANDATORY: Mechanical HOLD check BEFORE delegation.** Before delegating, run:
+  ```bash
+  count=$(grep -c '^\[HOLD\]$\|^\[PENDING\]$\|^\[URGENT\]$' "$SPEC_PATH/chat.md" 2>/dev/null || echo 0)
+  ```
+  If count > 0 (active signals found): block delegation immediately. Log to `.progress.md`: `"COORDINATOR BLOCKED: active HOLD/PENDING/URGENT signal in chat.md for task $taskIndex"`.
+  
+  When signals are resolved (by external-reviewer or coordinator), the signal line is changed to `[RESOLVED]` (e.g., `[HOLD]` → `[RESOLVED]`). This marker is not matched by the grep check.
+
+- **MANDATORY: Read chat.md BEFORE delegating.** Before every task delegation, read `<basePath>/chat.md` for signals from external-reviewer. Obey HOLD, PENDING, DEADLOCK signals immediately—do not delegate if blocked.
+- **CRITICAL: Verify independently, never trust executor.** The executor may FABRICATE verification results (claimed tests passed when they failed, claimed coverage when coverage was 0%). 
+  - **Rule**: NEVER trust pasted verification output from spec-executor. ALWAYS run the verify command independently.
+  - Extract verify command from tasks.md → run it yourself → compare actual result with claimed result.
+  - If executor claimed "PASSED" but command exits non-zero → REJECT, increment taskIteration, log "FABRICATION detected".
+  - This is non-negotiable: executor has fabricated results multiple times in past.
+- **CI snapshot separation.** Task Verify commands (task-scoped) and global CI commands (project-wide linting, type-checking) must be reported separately. Both must pass. If task Verify passes but global CI fails: log `"TASK VERIFY PASS but GLOBAL CI FAIL"` to `.progress.md`, do NOT advance taskIndex. **Note**: Specific CI command discovery is deferred to Spec 4. The coordinator should check for available project CI commands if they exist.
 - **Completion check.** If taskIndex >= totalTasks, verify all [x] marks, delete state file, output ALL_TASKS_COMPLETE.
 - **Task delegation.** Extract full task block from tasks.md, delegate to spec-executor (or qa-engineer for [VERIFY] tasks).
-- **After TASK_COMPLETE.** Run all 3 verification layers, then update state (advance taskIndex, reset taskIteration).
+  - **MANDATORY: Validate VE task Skills: field before delegating to qa-engineer.** If the task has a `[VERIFY]` tag AND contains "VE", "E2E", "browser", or "playwright" in its description:
+    - Check that the task body contains a `**Skills**:` or `**Skills:**` field with at least `e2e` or `playwright-env`.
+    - If `Skills:` is missing or empty: DO NOT delegate. DO NOT advance to the next task. DO NOT mark complete.
+      Log: `"VE task T<taskIndex> missing Skills: field. Cannot delegate to qa-engineer without skill metadata."`
+      Generate a fix task to populate the Skills: field, then re-run this task. If unable to generate the fix task, halt with error.
+    - **Why**: qa-engineer loads skills from the `Skills:` field. Without it, the agent runs with no E2E context and will produce incorrect verifications.
+- **After TASK_COMPLETE.** Run all 5 verification layers, then update state (advance taskIndex, reset taskIteration).
+- **After TASK_COMPLETE — write metrics.** Record per-task metric before advancing state:
+  ```bash
+  # Source write-metric infrastructure
+  source "$CLAUDE_PLUGIN_ROOT/hooks/scripts/write-metric.sh"
+
+  # Determine actual verify exit code (coordinator runs verify independently)
+  VERIFY_EXIT=0  # default if verify not yet run this iteration
+
+  # Extract task title and id from the delegated task block
+  TASK_TITLE="$(sed -n "/^## Task $CURRENT_INDEX:/,/^-/p" "$SPEC_PATH/tasks.md" | head -1 | sed 's/^## Task [0-9]*: //')"
+  TASK_TYPE="$(grep '^\- \[.\] [0-9]' "$SPEC_PATH/tasks.md" | sed -n "${CURRENT_INDEX}p" | grep -oiP '\[(implementation|test|refactor|quality)\]' | tr -d '[]' || echo 'implementation')"
+  TASK_ID="$(jq -r '.taskIndex' "$STATE_FILE")"
+
+  # Get commit SHA from last git commit
+  COMMIT_SHA="$(git log -1 --format='%H' 2>/dev/null || echo '00000000')"
+
+  # Get current task iteration from state
+  TASK_ITERATION="$(jq '.taskIteration // 1' "$STATE_FILE")"
+  TASK_ITERATION=$((TASK_ITERATION - 1))
+
+  # Call write_metric — use status from verification outcome
+  if ! write_metric "$SPEC_PATH" "$WRITE_METRIC_STATUS" "$TASK_ID" "$TASK_ITERATION" "$VERIFY_EXIT" "$TASK_TITLE" "$TASK_TYPE" "$TASK_ID" "$COMMIT_SHA"; then
+    echo "[ralph-specum] WARN: write_metric failed (non-fatal)" >&2
+  fi
+  ```
+  Set `$WRITE_METRIC_STATUS` to `pass` if verify command exited 0, `fail` if non-0.
+- **After TASK_COMPLETE — circuit breaker state.** Update circuit breaker in state file based on task outcome:
+  - **Task pass** (verify command exits 0): reset `consecutiveFailures` to 0
+    ```bash
+    jq '.circuitBreaker.consecutiveFailures = 0' "$STATE_FILE" > "$STATE_FILE.tmp" && mv "$STATE_FILE.tmp" "$STATE_FILE"
+    ```
+  - **Task fail** (verify command exits non-0): increment `consecutiveFailures` by 1
+    ```bash
+    jq --argjson cb '{consecutiveFailures: (.circuitBreaker.consecutiveFailures // 0) + 1}' '.circuitBreaker |= . + $cb' "$STATE_FILE" > "$STATE_FILE.tmp" && mv "$STATE_FILE.tmp" "$STATE_FILE"
+    ```
+  - **Circuit breaker trip check** (after increment, if consecutiveFailures >= maxConsecutiveFailures): set state to "open"
+    ```bash
+    CB_STATE=$(jq -r '.circuitBreaker.state // "closed"' "$STATE_FILE")
+    if [ "$CB_STATE" = "closed" ]; then
+      CF=$(jq '.circuitBreaker.consecutiveFailures // 0' "$STATE_FILE")
+      MAX_CF=$(jq '.circuitBreaker.maxConsecutiveFailures // 5' "$STATE_FILE")
+      if [ "$CF" -ge "$MAX_CF" ]; then
+        jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+           --arg reason "Task failure threshold reached: $CF consecutive failures (max: $MAX_CF)" \
+           '.circuitBreaker.state = "open" | .circuitBreaker.openedAt = $ts | .circuitBreaker.trippedReason = $reason' \
+           "$STATE_FILE" > "$STATE_FILE.tmp" && mv "$STATE_FILE.tmp" "$STATE_FILE"
+      fi
+    fi
+    ```
 - **On failure.** Parse failure output, increment taskIteration. If recovery-mode: generate fix task. If max retries exceeded: error and stop.
 - **Modification requests.** If TASK_MODIFICATION_REQUEST in output, process SPLIT_TASK / ADD_PREREQUISITE / ADD_FOLLOWUP per coordinator-pattern.md.
 

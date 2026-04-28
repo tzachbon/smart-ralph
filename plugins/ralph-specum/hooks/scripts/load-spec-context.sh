@@ -107,4 +107,20 @@ if [ -f "$PROGRESS_FILE" ]; then
     fi
 fi
 
+# Capture field ownership baseline on first run
+BASELINE_DIR="${SPEC_PATH}/references"
+BASELINE_FILE="${BASELINE_DIR}/.ralph-field-baseline.json"
+if [ ! -f "$BASELINE_FILE" ] && [ -f "$STATE_FILE" ]; then
+    mkdir -p "$BASELINE_DIR" || { echo "[ralph-specum] Failed to create baseline dir: $BASELINE_DIR" >&2; }
+    cat << 'EOF' > "$BASELINE_FILE"
+{
+  "chat.executor.lastReadLine": "spec-executor",
+  "chat.reviewer.lastReadLine": "external-reviewer",
+  "external_unmarks": "external-reviewer",
+  "awaitingApproval": ["coordinator", "architect-reviewer", "product-manager", "research-analyst", "task-planner"]
+}
+EOF
+    echo "[ralph-specum] Baseline captured: $BASELINE_FILE" >&2
+fi
+
 exit 0
