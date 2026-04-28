@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "ralph-specum",
-      "description": "Spec-driven development with research, requirements, design, tasks, autonomous execution, and epic triage. Fresh context per task.",
-      "version": "4.9.1",
+      "description": "Spec-driven development with bidirectional chat protocol between executor and reviewer. Research, requirements, design, tasks, autonomous execution, and epic triage. Fresh context per task.",
+      "version": "4.12.0",
       "author": {
         "name": "tzachbon"
       },
@@ -43,6 +43,23 @@
         "specify",
         "plan",
         "tasks"
+      ]
+    },
+    {
+      "name": "ralph-bmad-bridge",
+      "description": "Bridge plugin connecting Smart Ralph spec-driven development with BMAD workflow tools and review agents.",
+      "version": "0.1.0",
+      "author": {
+        "name": "tzachbon"
+      },
+      "source": "./plugins/ralph-bmad-bridge",
+      "category": "development",
+      "tags": [
+        "ralph",
+        "bmad",
+        "bridge",
+        "spec-driven",
+        "workflow"
       ]
     }
   ]

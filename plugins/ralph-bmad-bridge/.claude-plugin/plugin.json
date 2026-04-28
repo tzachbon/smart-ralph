@@ -1,0 +1,8 @@
+{
+  "name": "ralph-bmad-bridge",
+  "version": "0.1.0",
+  "description": "BMAD structural mapper — converts BMAD PRD, epics, and architecture artifacts into smart-ralph spec files",
+  "license": "MIT",
+  "author": "tzachbon",
+  "keywords": ["bmad", "import", "structural-mapper"]
+}
