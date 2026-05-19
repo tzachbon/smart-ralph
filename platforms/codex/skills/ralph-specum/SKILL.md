@@ -78,10 +78,12 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 ## Current Workflow Expectations
 
 - Use brainstorming-style interviews for research, requirements, design, and tasks when quick mode is not active.
+- Use bundled grill-with-docs behavior before each phase artifact when quick mode is not active. If `$grill-with-docs` exists, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology when useful.
 - Route obviously large or cross-cutting efforts to triage before normal spec generation.
 - Support active epic state via `specs/.current-epic` and per-epic state in `specs/_epics/<epic-name>/`.
 - Treat task planning as POC-first with `[P]` markers for safe parallel work and `[VERIFY]` checkpoints for explicit quality validation.
 - Support VE tasks when the plan needs autonomous end-to-end verification.
+- After research, requirements, and design walkthroughs, allow an optional prototype gate before the next phase choice. If `$prototype` exists, use it. Otherwise run the bundled prototype behavior inline and record the result in `.progress.md`.
 - During implementation, recompute task counts from disk, resume from the first incomplete task, and prefer task file truth over stale state.
 - Native task sync is part of the current Ralph execution model. Keep Codex wording aligned with that behavior without promising Claude-only hook mechanics.
 

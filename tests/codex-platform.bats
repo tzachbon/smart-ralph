@@ -153,6 +153,61 @@ for skill in (ROOT / "platforms/codex/skills").glob("ralph-specum*"):
     [[ "$package_text" == *"python3 \"\$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py\""* ]]
 }
 
+@test "codex platform: docs expose grill-with-docs and prototype gates" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+files = {
+    "README.md": ["grill-with-docs", "prototype"],
+    "platforms/codex/README.md": ["grill-with-docs", "prototype"],
+    "platforms/codex/skills/ralph-specum/SKILL.md": ["grill-with-docs"],
+    "platforms/codex/skills/ralph-specum-start/SKILL.md": ["grill-with-docs"],
+    "platforms/codex/skills/ralph-specum-research/SKILL.md": ["grill-with-docs", "run review agent", "run prototype", "request changes", "continue to requirements"],
+    "platforms/codex/skills/ralph-specum-requirements/SKILL.md": ["grill-with-docs", "run review agent", "run prototype", "request changes", "continue to design"],
+    "platforms/codex/skills/ralph-specum-design/SKILL.md": ["grill-with-docs", "run review agent", "run prototype", "request changes", "continue to tasks"],
+    "platforms/codex/skills/ralph-specum-tasks/SKILL.md": ["grill-with-docs", "run review agent", "request changes", "continue to implementation"],
+    "platforms/codex/skills/ralph-specum/assets/bootstrap/AGENTS.md": ["grill-with-docs", "prototype"],
+}
+
+for relpath, tokens in files.items():
+    text = (ROOT / relpath).read_text()
+    for token in tokens:
+        assert token in text, {"path": relpath, "token": token}
+' "$root"
+}
+
+@test "ralph plugin: ships grill and prototype gate skills" {
+    local root
+    root="$(repo_root)"
+
+    [ -f "$root/plugins/ralph-specum/skills/grill-with-docs/SKILL.md" ]
+    [ -f "$root/plugins/ralph-specum/skills/prototype/SKILL.md" ]
+
+    assert_python '
+required = {
+    "plugins/ralph-specum/commands/research.md": ["ralph-specum:grill-with-docs", "ralph-specum:prototype"],
+    "plugins/ralph-specum/commands/requirements.md": ["ralph-specum:grill-with-docs", "ralph-specum:prototype"],
+    "plugins/ralph-specum/commands/design.md": ["ralph-specum:grill-with-docs", "ralph-specum:prototype"],
+    "plugins/ralph-specum/commands/tasks.md": ["ralph-specum:grill-with-docs"],
+    "plugins/ralph-specum/commands/start.md": ["ralph-specum:grill-with-docs", "ralph-specum:prototype"],
+}
+
+for relpath, tokens in required.items():
+    text = (ROOT / relpath).read_text()
+    for token in tokens:
+        assert token in text, {"path": relpath, "token": token}
+
+for relpath in [
+    "plugins/ralph-specum/skills/grill-with-docs/SKILL.md",
+    "plugins/ralph-specum/skills/prototype/SKILL.md",
+]:
+    text = (ROOT / relpath).read_text()
+    assert "name:" in text
+    assert "description:" in text
+' "$root"
+}
+
 @test "codex platform: copied install layout remains usable" {
     local root temp_codex_home skill
     root="$(repo_root)"
@@ -177,6 +232,10 @@ for skill in (ROOT / "platforms/codex/skills").glob("ralph-specum*"):
     validator="/mnt/c/Users/ADMIN/.codex/skills/.system/skill-creator/scripts/quick_validate.py"
 
     [ -f "$validator" ] || skip
+    run python3 - <<'PY'
+import yaml
+PY
+    [ "$status" -eq 0 ] || skip
 
     while IFS= read -r skill; do
         run python3 "$validator" "$root/platforms/codex/skills/$skill"
@@ -261,12 +320,12 @@ for command, token in required_tokens.items():
 
     assert_python '
 expected = {
-    "ralph-specum": ["approve current artifact", "request changes", "continue to <named next step>"],
+    "ralph-specum": ["grill-with-docs", "run review agent", "run prototype", "request changes"],
     "ralph-specum-start": ["wait for explicit direction", "research"],
-    "ralph-specum-research": ["approve current artifact", "continue to requirements"],
-    "ralph-specum-requirements": ["approve current artifact", "continue to design"],
-    "ralph-specum-design": ["approve current artifact", "continue to tasks"],
-    "ralph-specum-tasks": ["approve current artifact", "continue to implementation"],
+    "ralph-specum-research": ["grill-with-docs", "continue to requirements", "run review agent", "run prototype", "request changes"],
+    "ralph-specum-requirements": ["grill-with-docs", "continue to design", "run review agent", "run prototype", "request changes"],
+    "ralph-specum-design": ["grill-with-docs", "continue to tasks", "run review agent", "run prototype", "request changes"],
+    "ralph-specum-tasks": ["grill-with-docs", "continue to implementation", "run review agent", "request changes"],
     "ralph-specum-cancel": ["whether anything was removed", "exactly what if so"],
     "ralph-specum-triage": ["approve current artifact", "continue to the next spec"],
     "ralph-specum-refactor": ["approve current artifact", "continue to implementation"],
@@ -287,9 +346,9 @@ for skill, tokens in expected.items():
 pairs = {
     "start": ["quick mode", "granularity", ".current-epic", "awaitingApproval"],
     "triage": ["specs/_epics", ".current-epic", ".epic-state.json", "dependencies"],
-    "research": ["brainstorming", "research.md", "verification tooling"],
-    "requirements": ["brainstorming", "requirements.md", "awaitingApproval"],
-    "design": ["brainstorming", "design.md", "awaitingApproval"],
+    "research": ["grill-with-docs", "research.md", "verification tooling"],
+    "requirements": ["grill-with-docs", "requirements.md", "awaitingApproval"],
+    "design": ["grill-with-docs", "design.md", "awaitingApproval"],
     "tasks": ["granularity", "[P]", "[VERIFY]", "VE tasks", "taskIndex: first incomplete or totalTasks"],
     "implement": ["[P]", "[VERIFY]", "VE tasks", "tasks.md", "approval", "quick mode", "explicit user direction", "file sets do not overlap", "Marker syntax must be explicitly present"],
     "status": [".current-epic", "approval state", "granularity", "there is no active spec"],
@@ -314,10 +373,10 @@ for name, tokens in pairs.items():
 
     assert_python '
 expected = {
-    "research": ["approve current artifact", "request changes", "continue to requirements"],
-    "requirements": ["approve current artifact", "request changes", "continue to design"],
-    "design": ["approve current artifact", "request changes", "continue to tasks"],
-    "tasks": ["approve current artifact", "request changes", "continue to implementation"],
+    "research": ["run review agent", "run prototype", "request changes", "continue to requirements"],
+    "requirements": ["run review agent", "run prototype", "request changes", "continue to design"],
+    "design": ["run review agent", "run prototype", "request changes", "continue to tasks"],
+    "tasks": ["run review agent", "request changes", "continue to implementation"],
     "triage": ["approve current artifact", "request changes", "continue to the next spec"],
     "refactor": ["approve current artifact", "request changes", "continue to implementation"],
 }
@@ -347,7 +406,13 @@ assert "Use only when the user explicitly invokes `$ralph-specum`" in primary
 assert "## Response Handoff" in primary
 assert "epic.md" not in primary.split("## Current Workflow Expectations")[0]
 assert "epic.md" not in workflow.split("Treat `continue to <named next step>` as approval of the current artifact.")[0]
-assert "Wait for explicit direction to continue to research" in workflow
+assert "grill-with-docs" in bootstrap
+assert "run review agent" in bootstrap
+assert "run prototype" in bootstrap
+assert "grill-with-docs" in workflow
+assert "run review agent" in workflow
+assert "run prototype" in workflow
+assert "prototype gate" in primary
 assert "quick_mode_default" in path_resolution
 assert "Approval Prompt Shape" in state_contract
 ' "$root"

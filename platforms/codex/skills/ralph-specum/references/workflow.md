@@ -23,11 +23,11 @@
 
 1. Resolve current repo state, branch, and spec roots.
 2. Start or resume a spec.
-3. Wait for explicit direction to continue to research unless the user explicitly asked for quick or autonomous flow.
-4. Create `research.md` and request approval, changes, or continuation to requirements.
-5. Draft `requirements.md` and request approval, changes, or continuation to design.
-6. Prepare `design.md` and request approval, changes, or continuation to tasks.
-7. Compile `tasks.md` and request approval, changes, or continuation to implementation.
+3. When quick mode is off, use bundled grill-with-docs behavior before generating the next phase artifact. If `$grill-with-docs` is installed, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology in `CONTEXT.md` when useful.
+4. Create `research.md`, walk through the artifact, then ask for `continue to requirements`, `run review agent`, `run prototype`, or `request changes`.
+5. Draft `requirements.md`, walk through the artifact, then ask for `continue to design`, `run review agent`, `run prototype`, or `request changes`.
+6. Prepare `design.md`, walk through the artifact, then ask for `continue to tasks`, `run review agent`, `run prototype`, or `request changes`.
+7. Compile `tasks.md`, walk through the artifact, then ask for `continue to implementation`, `run review agent`, or `request changes`.
 8. Implement tasks until complete or blocked.
 9. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
 
@@ -101,8 +101,21 @@ When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, o
 - name the file or files that changed
 - give a short summary
 - end with exactly one explicit choice prompt:
-  - `approve current artifact`
-  - `request changes`
   - `continue to <named next step>`
+  - `run review agent`
+  - `run prototype` when the current artifact is `research.md`, `requirements.md`, or `design.md`
+  - `request changes`
 
 Treat `continue to <named next step>` as approval of the current artifact.
+
+## Bundled Prototype Behavior
+
+Codex users may not have `$prototype` installed. If it is available, use it. Otherwise run the behavior inline:
+
+1. Name the question the prototype must answer.
+2. Choose a terminal prototype for logic or state questions.
+3. Choose route-level UI variants for UI questions.
+4. Mark prototype files as throwaway.
+5. Provide one command to run.
+6. Append the result to `.progress.md`.
+7. Redisplay the walkthrough and ask the gate question again.

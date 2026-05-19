@@ -43,7 +43,7 @@ Read `.progress.md` and parse:
 
 ### Brainstorming Dialogue
 
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time, adapting to prior answers.
+Invoke `Skill({ skill: "ralph-specum:grill-with-docs" })` first. If it cannot be loaded, fall back to `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time, adapting to prior answers.
 
 **Research Exploration Territory** (hints, not a script):
 - **Technical approach preference** -- follow existing patterns or introduce new ones?
@@ -153,13 +153,15 @@ Output: $PWD/specs/$spec/research.md
 If `--quick`, skip to Step 7.
 
 Ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
-1. **Approve** (Recommended) -- Accept artifact as-is, advance to next phase
-2. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
-3. **Request changes** -- Provide specific feedback to revise the artifact
+1. Continue to requirements (Recommended)
+2. Run review agent
+3. Run prototype
+4. Request changes
 
-**If "Approve"**: proceed to Step 7.
-**If "Run review"**: Invoke spec-reviewer via Task tool with full research.md content (upstream: none). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
-**If "Request changes" or "Other"**: Ask what to change, invoke subagents with feedback, re-merge, re-display walkthrough, ask again with same 3 choices. Loop until approved.
+**If "Continue to requirements"**: proceed to Step 7.
+**If "Run review agent"**: invoke `spec-reviewer` with full `research.md` content and goal context. Display findings, then loop back to this same question.
+**If "Run prototype"**: invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `research.md` and goal context, write the result to `.progress.md`, re-display the walkthrough, then ask again.
+**If "Request changes" or "Other"**: ask what to change, invoke subagents with feedback, re-merge, re-display the walkthrough, ask again.
 
 ## Step 7: Finalize
 

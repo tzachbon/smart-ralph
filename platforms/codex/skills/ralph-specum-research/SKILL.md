@@ -22,7 +22,7 @@ Use this for the research phase.
 
 1. Resolve the active spec. If none exists, stop and tell the user to start a spec first.
 2. Read the goal, `.progress.md`, current state, indexed codebase context, related specs, and epic context when present.
-3. Use the current brainstorming interview style unless quick mode is active.
+3. If quick mode is not active, use bundled grill-with-docs behavior before writing `research.md`. If `$grill-with-docs` exists, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology when useful.
 4. Write or rewrite `research.md` in the spec directory.
 5. Merge state with `phase: "research"` and `awaitingApproval: true`.
 6. Update `.progress.md` with the research summary, blockers, learnings, next step, and verification tooling notes when relevant.
@@ -36,8 +36,11 @@ The result should identify existing code patterns, external references, constrai
 ## Response Handoff
 
 - After writing `research.md`, name `research.md` and summarize the research briefly.
+- After the walkthrough, offer `continue to requirements`, `run review agent`, `run prototype`, or `request changes`.
+- If the user chooses `run prototype`, use `$prototype` when available. If unavailable, run a throwaway prototype inline, append the result to `.progress.md`, redisplay the walkthrough, and ask again.
 - End with exactly one explicit choice prompt:
-  - `approve current artifact`
-  - `request changes`
   - `continue to requirements`
+  - `run review agent`
+  - `run prototype`
+  - `request changes`
 - Treat `continue to requirements` as approval of `research.md`.

@@ -182,7 +182,7 @@ Continuing...
       ```
       If no skills match: `- No skills matched`
 10. Update Spec Index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
-11. **Goal Interview** -- Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and follow brainstorming dialogue
+11. **Goal Interview** -- Invoke `Skill({ skill: "ralph-specum:grill-with-docs" })` first. If it cannot be loaded, use `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`
 12. **Team Research Phase** -- Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` and follow the dispatch pattern
 13. **Skill Discovery Pass 2 (Post-Research Retry)** -- Re-scan skills with enriched context after research completes:
 
@@ -246,8 +246,16 @@ Output: $basePath/research.md
 **Feasibility**: [High/Medium/Low] | **Risk**: [High/Medium/Low] | **Effort**: [S/M/L/XL]
 ```
 
-Then STOP. Output: `-> Next: Run /ralph-specum:requirements`
-End response immediately.
+Then ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
+1. Continue to requirements (Recommended)
+2. Run review agent
+3. Run prototype
+4. Request changes
+
+If Continue to requirements, display `-> Next: Run /ralph-specum:requirements` and stop.
+If Run review agent, invoke `spec-reviewer` with full `research.md` and goal context. Show findings, then ask again.
+If Run prototype, invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `research.md` and goal context, write the result to `.progress.md`, redisplay the walkthrough, and ask again.
+If Request changes, ask what to change, update `research.md`, redisplay the walkthrough, and ask again.
 </mandatory>
 
 ## Step 5: Quick Mode Flow

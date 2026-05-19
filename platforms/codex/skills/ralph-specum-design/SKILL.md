@@ -22,7 +22,7 @@ Use this for the design phase.
 1. Resolve the active spec. If none exists, stop.
 2. Require `requirements.md`. Read `research.md` when present, `.progress.md`, and current state.
 3. Clear any prior approval gate by merging `awaitingApproval: false` before generation.
-4. Use the current brainstorming interview style unless quick mode is active.
+4. If quick mode is not active, use bundled grill-with-docs behavior before writing `design.md`. If `$grill-with-docs` exists, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology when useful.
 5. Write or rewrite `design.md`.
 6. Merge state with `phase: "design"` and `awaitingApproval: true`.
 7. Update `.progress.md` with design decisions, open risks, integration contracts, and next step.
@@ -36,8 +36,11 @@ The result should cover architecture, interfaces, data flow, file changes, techn
 ## Response Handoff
 
 - After writing `design.md`, name `design.md` and summarize the design briefly.
+- After the walkthrough, offer `continue to tasks`, `run review agent`, `run prototype`, or `request changes`.
+- If the user chooses `run prototype`, use `$prototype` when available. If unavailable, run a throwaway prototype inline, append the result to `.progress.md`, redisplay the walkthrough, and ask again.
 - End with exactly one explicit choice prompt:
-  - `approve current artifact`
-  - `request changes`
   - `continue to tasks`
+  - `run review agent`
+  - `run prototype`
+  - `request changes`
 - Treat `continue to tasks` as approval of `design.md`.

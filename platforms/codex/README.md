@@ -110,12 +110,13 @@ Recommended destinations in the consumer repo:
 
 - Claude plugin manifests and hooks do not exist in Codex.
 - Quick mode is expressed as one Codex run that generates missing artifacts and then continues into implementation.
+- Normal mode uses bundled grill-with-docs behavior before phase generation. Research, requirements, and design can also offer an optional prototype gate after the artifact walkthrough. If Codex users do not have `$grill-with-docs` or `$prototype`, the Ralph skill runs the documented behavior inline.
 - Claude stop-hook continuation is replaced by `.ralph-state.json` persistence and resume behavior.
 - Task approval gates, `--tasks-size` granularity, VE verification tasks, and `[P]` or `[VERIFY]` task markers are part of the current Codex-facing guidance.
 - Large efforts should route through triage first. Epic state lives under `specs/_epics/` with `specs/.current-epic` tracking the active epic.
 - Branch and worktree decisions are still available, but they are handled conversationally instead of through Claude plugin prompts.
 - Helper skills are explicit entrypoints. The primary skill remains the best default.
-- Ralph does not self-advance by default. After each spec artifact, the user must approve it, request changes, or explicitly continue to the next step.
+- Ralph does not self-advance by default. After each spec artifact, the user must approve it, request changes, or explicitly continue to the next step. Research, requirements, and design can also offer an optional prototype gate after the artifact walkthrough.
 - Quick or autonomous flow happens only when the user explicitly asks for it.
 
 ## Maintainer Notes

@@ -43,3 +43,20 @@ Use these commands when user wants to:
 ## Phase Flow
 
 See `references/phase-transitions.md` for detailed phase flow documentation.
+
+## Gate Rules
+
+Invoke `ralph-specum:grill-with-docs` first for normal mode interviews. If it cannot be loaded, fall back to `interview-framework`.
+
+Research, requirements, and design use these walkthrough choices:
+- Continue to next phase
+- Run review agent
+- Run prototype
+- Request changes
+
+Tasks use these walkthrough choices:
+- Continue to implementation
+- Run review agent
+- Request changes
+
+Prototype mode uses `Skill({ skill: "ralph-specum:prototype" })`, runs a throwaway prototype against the current artifact plus upstream context, writes the result to `.progress.md`, then redisplays the walkthrough and asks again.

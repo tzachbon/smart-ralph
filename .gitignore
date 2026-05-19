@@ -34,3 +34,6 @@ test-ac-*/
 
 # Claude
 .claude/worktrees/**
+
+# Local tool artifacts
+.clawpatch/

@@ -23,15 +23,16 @@ Use Ralph Specum as the spec workflow for this repo.
 ## Flow
 
 1. Start or resume a spec
-2. Stop and ask whether to continue to research
-3. Research
-4. Approve the artifact, request changes, or continue to requirements
-5. Requirements
-6. Approve the artifact, request changes, or continue to design
-7. Design
-8. Approve the artifact, request changes, or continue to tasks
-9. Tasks
-10. Approve the artifact, request changes, or continue to implementation
-11. Implement
+2. When quick mode is off, use bundled grill-with-docs behavior before the next phase artifact
+3. Stop and ask whether to continue to research
+4. Research
+5. Walk through the artifact, then choose continue to requirements, run review agent, run prototype, or request changes. If `$prototype` is missing, run prototype behavior inline.
+6. Requirements
+7. Walk through the artifact, then choose continue to design, run review agent, run prototype, or request changes
+8. Design
+9. Walk through the artifact, then choose continue to tasks, run review agent, run prototype, or request changes
+10. Tasks
+11. Walk through the artifact, then choose continue to implementation, run review agent, or request changes
+12. Implement
 
 Quick mode may generate missing artifacts and continue straight into implementation in one run only when the user explicitly asks for quick or autonomous flow.

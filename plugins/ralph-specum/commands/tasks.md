@@ -47,7 +47,7 @@ Parse Intent Classification and all prior interview responses to skip already-an
 
 ### Brainstorming Dialogue
 
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
+Invoke `Skill({ skill: "ralph-specum:grill-with-docs" })` first. If it cannot be loaded, fall back to `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
 
 **Tasks Exploration Territory** (hints, not a script):
 - **Testing thoroughness** -- minimal POC-only tests, standard unit + integration, or comprehensive E2E?
@@ -174,16 +174,16 @@ Output: $PWD/specs/$spec/tasks.md
 If `--quick`, skip to Step 6.
 
 Ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
-1. **Approve** (Recommended) -- Accept artifact as-is, advance to next phase
-2. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
-3. **Request changes** -- Provide specific feedback to revise the artifact
+1. Continue to implementation (Recommended)
+2. Run review agent
+3. Request changes
 
-**If "Approve"**: proceed to Step 6.
-**If "Run review"**: Invoke spec-reviewer via Task tool with full tasks.md content (upstream: design.md + requirements.md). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
+**If "Continue to implementation"**: proceed to Step 6.
+**If "Run review agent"**: invoke `spec-reviewer` with full `tasks.md` content and upstream `design.md` plus `requirements.md`. Display findings, then loop back to this same question.
 **If "Request changes" or "Other"**:
 1. Ask what to change
-2. Re-invoke task-planner using **cleanup-and-recreate** team pattern (TeamDelete old -> TeamCreate new -> spawn with feedback + current tasks.md -> wait -> shutdown -> TeamDelete)
-3. Re-display walkthrough, ask again with same 3 choices. Loop until approved.
+2. Re-invoke task-planner using **cleanup-and-recreate** team pattern
+3. Re-display walkthrough, ask again with the same 3 choices. Loop until approved.
 
 ## Step 6: Finalize
 

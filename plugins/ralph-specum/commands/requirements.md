@@ -40,7 +40,7 @@ Parse Intent Classification and prior interview responses to skip already-answer
 
 ### Brainstorming Dialogue
 
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
+Invoke `Skill({ skill: "ralph-specum:grill-with-docs" })` first. If it cannot be loaded, fall back to `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
 
 **Requirements Exploration Territory** (hints, not a script):
 - **Primary users** -- who will use this feature? Developers, end users, specific roles?
@@ -136,16 +136,18 @@ Output: $PWD/specs/$spec/requirements.md
 If `--quick`, skip to Step 6.
 
 Ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
-1. **Approve** (Recommended) -- Accept artifact as-is, advance to next phase
-2. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
-3. **Request changes** -- Provide specific feedback to revise the artifact
+1. Continue to design (Recommended)
+2. Run review agent
+3. Run prototype
+4. Request changes
 
-**If "Approve"**: proceed to Step 6.
-**If "Run review"**: Invoke spec-reviewer via Task tool with full requirements.md content (upstream: research.md). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
+**If "Continue to design"**: proceed to Step 6.
+**If "Run review agent"**: invoke `spec-reviewer` with full `requirements.md` content and upstream `research.md`. Display findings, then loop back to this same question.
+**If "Run prototype"**: invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `requirements.md` and upstream context, write the result to `.progress.md`, re-display the walkthrough, then ask again.
 **If "Request changes" or "Other"**:
 1. Ask what to change
-2. Re-invoke product-manager using **cleanup-and-recreate** team pattern (TeamDelete old -> TeamCreate new -> spawn with feedback -> wait -> shutdown -> TeamDelete)
-3. Re-display walkthrough, ask again with same 3 choices. Loop until approved.
+2. Re-invoke product-manager using **cleanup-and-recreate** team pattern
+3. Re-display walkthrough, ask again with the same 4 choices. Loop until approved.
 
 ## Step 6: Finalize
 

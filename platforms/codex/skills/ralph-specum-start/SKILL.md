@@ -49,6 +49,7 @@ Use this for the `start` and `new` entrypoints.
 10. On resume, prefer `tasks.md` and present files over stale state when they disagree.
 11. In quick mode, generate missing artifacts in order, skip normal approval pauses, and continue into implementation in the same run.
 12. Without quick mode or explicit autonomy, stop after setup and ask whether to continue to research.
+13. Before the next phase artifact in normal mode, use bundled grill-with-docs behavior. If `$grill-with-docs` exists, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology when useful.
 
 ## Branch Isolation
 
@@ -58,6 +59,7 @@ Use this for the `start` and `new` entrypoints.
 ## Response Handoff
 
 - After creating or resuming the spec, name the resolved spec path and summarize the current state briefly.
+- If quick mode is not active, the next phase uses bundled grill-with-docs behavior before artifact generation.
 - End with exactly one explicit choice prompt:
   - `request changes`
   - `continue to research`
