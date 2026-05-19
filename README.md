@@ -53,95 +53,37 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 > **Prerequisite:** Install the [Codex CLI](https://github.com/openai/codex) first: `npm install -g @openai/codex`
 
-<details>
-<summary>Personal install (available in every project)</summary>
-
-Run these commands from any directory. They clone the repo to a temp folder, copy the plugin to your Codex plugins directory, and clean up.
-
 ```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your personal plugins directory
-mkdir -p ~/.codex/plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry so Codex can discover the plugin
-mkdir -p ~/.agents/plugins
-cat > ~/.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
+codex plugin marketplace add tzachbon/smart-ralph --sparse .agents/plugins
 ```
 
-</details>
-
-<details>
-<summary>Per-project install (one repo only)</summary>
-
-Run these commands from your project root directory (the repo where you want to use Ralph).
-
-```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your project
-mkdir -p ./plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry in your project
-mkdir -p ./.agents/plugins
-cat > ./.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
-```
-
-</details>
-
-After either method: restart Codex, open the plugin directory, and install `ralph-specum`.
+Restart Codex after install.
 
 **Optional**: Enable the Stop hook for automatic task execution:
 
 ```toml
 # ~/.codex/config.toml
 [features]
-codex_hooks = true
+plugin_hooks = true
 ```
 
 See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for full details.
 
-**Updating** (run from any directory):
+<details>
+<summary>Local development fallback</summary>
+
+Use this only when testing local plugin edits.
 
 ```bash
 rm -rf /tmp/smart-ralph
 git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
+mkdir -p ./plugins ./.agents/plugins
+cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
+cp /tmp/smart-ralph/.agents/plugins/marketplace.json ./.agents/plugins/marketplace.json
 rm -rf /tmp/smart-ralph
-# Restart Codex
 ```
 
-For per-project installs, replace `~/.codex/plugins/ralph-specum-codex` with `./plugins/ralph-specum-codex` (run from your project root).
+</details>
 
 <details>
 <summary>Migrating from old skills (platforms/codex/)?</summary>
@@ -155,11 +97,6 @@ See the [migration guide](plugins/ralph-specum-codex/README.md#migration-from-ol
 
 <details>
 <summary>Troubleshooting & alternative methods</summary>
-
-**Install from GitHub directly:**
-```bash
-/plugin install https://github.com/tzachbon/smart-ralph
-```
 
 **Local development:**
 ```bash
