@@ -21,75 +21,27 @@ This starts the spec-driven workflow: research, requirements, design, tasks, the
 
 ## Installation
 
-Pick one of the two methods below.
-
-<details>
-<summary>Personal install (available in every project)</summary>
-
-Run these commands from any directory. They clone the repo to a temp folder, copy the plugin to your Codex plugins directory, and clean up.
-
 ```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your personal plugins directory
-mkdir -p ~/.codex/plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry so Codex can discover the plugin
-mkdir -p ~/.agents/plugins
-cat > ~/.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
+codex plugin marketplace add tzachbon/smart-ralph --sparse .agents/plugins
 ```
 
-</details>
+Restart Codex after install.
 
 <details>
-<summary>Per-project install (one repo only)</summary>
+<summary>Local development fallback</summary>
 
-Run these commands from your project root directory (the repo where you want to use Ralph).
+Use this only when testing local plugin edits.
 
 ```bash
-# 1. Clone the Smart Ralph repo
+rm -rf /tmp/smart-ralph
 git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your project
-mkdir -p ./plugins
+mkdir -p ./plugins ./.agents/plugins
 cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry in your project
-mkdir -p ./.agents/plugins
-cat > ./.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
+cp /tmp/smart-ralph/.agents/plugins/marketplace.json ./.agents/plugins/marketplace.json
 rm -rf /tmp/smart-ralph
 ```
 
 </details>
-
-After either method: restart Codex, open the plugin directory, and install `ralph-specum`.
 
 ### Enable hooks (recommended)
 
@@ -97,7 +49,7 @@ The Stop hook auto-advances through tasks during execution. Add to `~/.codex/con
 
 ```toml
 [features]
-codex_hooks = true
+plugin_hooks = true
 ```
 
 Without hooks, you run `$ralph-specum-implement` once per task manually (see `references/workflow.md` for the fallback workflow).
@@ -107,15 +59,8 @@ Without hooks, you run `$ralph-specum-implement` once per task manually (see `re
 Pull the latest version by re-running the install steps. These commands work from any directory.
 
 ```bash
-# Pull latest and overwrite
-rm -rf /tmp/smart-ralph
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-rm -rf /tmp/smart-ralph
-# Restart Codex
+codex plugin marketplace upgrade smart-ralph
 ```
-
-For per-project installs, replace `~/.codex/plugins/ralph-specum-codex` with `./plugins/ralph-specum-codex` (run from your project root).
 
 Check your version in `.codex-plugin/plugin.json`. Compare against the [latest release](https://github.com/tzachbon/smart-ralph/releases).
 
@@ -147,7 +92,7 @@ Copy templates from `agent-configs/*.toml.template` into your `.codex/config.tom
 
 The Stop hook (`hooks/stop-watcher.sh`) enables automatic task-by-task execution. It reads `.ralph-state.json` and outputs `{"decision":"block","reason":"Continue to task N/M"}` to keep the execution loop running.
 
-Requires `[features] codex_hooks = true` in config.toml. See `references/workflow.md` for the manual fallback when hooks are disabled.
+Requires `[features] plugin_hooks = true` in config.toml. See `references/workflow.md` for the manual fallback when hooks are disabled.
 
 <details>
 <summary>Migration from old skills (platforms/codex/)</summary>
