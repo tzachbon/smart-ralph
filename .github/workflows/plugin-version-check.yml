@@ -95,11 +95,15 @@ jobs:
             echo ""
             echo "=== Checking $plugin_name ==="
 
+            # Check both Claude (.claude-plugin) and Codex (.codex-plugin) manifest paths
             PLUGIN_JSON="plugins/${plugin_name}/.claude-plugin/plugin.json"
+            if [ ! -f "$PLUGIN_JSON" ]; then
+              PLUGIN_JSON="plugins/${plugin_name}/.codex-plugin/plugin.json"
+            fi
 
             if [ ! -f "$PLUGIN_JSON" ]; then
               echo "❌ ERROR: No plugin.json found for $plugin_name!"
-              echo "Plugin changes detected but plugin.json is missing at: $PLUGIN_JSON"
+              echo "Checked: plugins/${plugin_name}/.claude-plugin/plugin.json and plugins/${plugin_name}/.codex-plugin/plugin.json"
               ALL_PASSED=false
               continue
             fi
@@ -115,10 +119,16 @@ jobs:
             echo "plugin.json:      ${BASE_PLUGIN_VERSION:-new} → $PR_PLUGIN_VERSION"
             echo "marketplace.json: ${BASE_MARKETPLACE_VERSION:-new} → $PR_MARKETPLACE_VERSION"
 
-            # Check if plugin exists in marketplace
+            # Check if plugin exists in Claude marketplace
+            # Codex plugins use .agents/plugins/marketplace.json (no version field) and are exempt
             if [ "$PR_MARKETPLACE_VERSION" == "null" ] || [ -z "$PR_MARKETPLACE_VERSION" ]; then
-              echo "❌ ERROR: Plugin $plugin_name not found in marketplace.json!"
-              echo "Please add an entry for $plugin_name in $MARKETPLACE_JSON"
+              echo "ℹ️  Plugin $plugin_name not in Claude marketplace ($MARKETPLACE_JSON)"
+              echo "   Checking if it has its own manifest..."
+              if [ -f "$PLUGIN_JSON" ]; then
+                echo "✅ $plugin_name has manifest at $PLUGIN_JSON (version: $PR_PLUGIN_VERSION)"
+                continue
+              fi
+              echo "❌ ERROR: Plugin $plugin_name not found in any marketplace!"
               ALL_PASSED=false
               continue
             fi

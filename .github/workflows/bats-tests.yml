@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'plugins/**/*.sh'
+      - 'plugins/ralph-specum-codex/**'
       - 'tests/**/*.bats'
       - 'tests/helpers/**'
       - 'tests/fixtures/**'
@@ -11,6 +12,7 @@ on:
   pull_request:
     paths:
       - 'plugins/**/*.sh'
+      - 'plugins/ralph-specum-codex/**'
       - 'tests/**/*.bats'
       - 'tests/helpers/**'
       - 'tests/fixtures/**'

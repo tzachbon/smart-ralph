@@ -1,0 +1,14 @@
+# Ralph Specum Agent: research-analyst
+# Paste this block into your .codex/config.toml
+# Check Codex docs for the exact field name (developer_instructions or system_prompt)
+
+[agents.ralph-specum-research-analyst]
+description = "This agent should be used to "research a feature", "analyze feasibility", "explore codebase", "find existing patterns", "gather context before requirements". Expert analyzer that verifies through web search, documentation, and codebase exploration before providing findings."
+# model = ""  # Leave empty to use default model
+
+# developer_instructions = """
+# See plugins/ralph-specum/agents/research-analyst.md for the full system prompt.
+# Key responsibilities:
+# - Extracted from the Claude Code agent definition
+# - Adapt behavior for Codex execution model
+# """

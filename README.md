@@ -51,65 +51,107 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ### Codex
 
-Codex support ships as installable skills under `platforms/codex/skills/`. Install the primary skill from this repo:
+> **Prerequisite:** Install the [Codex CLI](https://github.com/openai/codex) first: `npm install -g @openai/codex`
 
-Prompt to send to Codex:
+<details>
+<summary>Personal install (available in every project)</summary>
 
-```text
-Use $skill-installer to install the Smart Ralph Codex skill from repo `tzachbon/smart-ralph` at path `platforms/codex/skills/ralph-specum`.
-```
-
-```bash
-python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo tzachbon/smart-ralph \
-  --path platforms/codex/skills/ralph-specum
-```
-
-Install the helper bundle when you want explicit skill entrypoints:
-
-Prompt to send to Codex:
-
-```text
-Use $skill-installer to install the Smart Ralph Codex skills from repo `tzachbon/smart-ralph` at these paths:
-- `platforms/codex/skills/ralph-specum`
-- `platforms/codex/skills/ralph-specum-start`
-- `platforms/codex/skills/ralph-specum-triage`
-- `platforms/codex/skills/ralph-specum-research`
-- `platforms/codex/skills/ralph-specum-requirements`
-- `platforms/codex/skills/ralph-specum-design`
-- `platforms/codex/skills/ralph-specum-tasks`
-- `platforms/codex/skills/ralph-specum-implement`
-- `platforms/codex/skills/ralph-specum-status`
-- `platforms/codex/skills/ralph-specum-switch`
-- `platforms/codex/skills/ralph-specum-cancel`
-- `platforms/codex/skills/ralph-specum-index`
-- `platforms/codex/skills/ralph-specum-refactor`
-- `platforms/codex/skills/ralph-specum-feedback`
-- `platforms/codex/skills/ralph-specum-help`
-```
+Run these commands from any directory. They clone the repo to a temp folder, copy the plugin to your Codex plugins directory, and clean up.
 
 ```bash
-python3 "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo tzachbon/smart-ralph \
-  --path \
-    platforms/codex/skills/ralph-specum \
-    platforms/codex/skills/ralph-specum-start \
-    platforms/codex/skills/ralph-specum-triage \
-    platforms/codex/skills/ralph-specum-research \
-    platforms/codex/skills/ralph-specum-requirements \
-    platforms/codex/skills/ralph-specum-design \
-    platforms/codex/skills/ralph-specum-tasks \
-    platforms/codex/skills/ralph-specum-implement \
-    platforms/codex/skills/ralph-specum-status \
-    platforms/codex/skills/ralph-specum-switch \
-    platforms/codex/skills/ralph-specum-cancel \
-    platforms/codex/skills/ralph-specum-index \
-    platforms/codex/skills/ralph-specum-refactor \
-    platforms/codex/skills/ralph-specum-feedback \
-    platforms/codex/skills/ralph-specum-help
+# 1. Clone the Smart Ralph repo
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+
+# 2. Copy the Codex plugin into your personal plugins directory
+mkdir -p ~/.codex/plugins
+cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
+
+# 3. Create a marketplace entry so Codex can discover the plugin
+mkdir -p ~/.agents/plugins
+cat > ~/.agents/plugins/marketplace.json << 'EOF'
+{
+  "name": "smart-ralph",
+  "plugins": [{
+    "name": "ralph-specum",
+    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
+    "policy": {"installation": "AVAILABLE"},
+    "category": "Productivity"
+  }]
+}
+EOF
+
+# 4. Clean up
+rm -rf /tmp/smart-ralph
 ```
 
-More Codex packaging details and the same install prompts live in [`platforms/codex/README.md`](platforms/codex/README.md).
+</details>
+
+<details>
+<summary>Per-project install (one repo only)</summary>
+
+Run these commands from your project root directory (the repo where you want to use Ralph).
+
+```bash
+# 1. Clone the Smart Ralph repo
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+
+# 2. Copy the Codex plugin into your project
+mkdir -p ./plugins
+cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
+
+# 3. Create a marketplace entry in your project
+mkdir -p ./.agents/plugins
+cat > ./.agents/plugins/marketplace.json << 'EOF'
+{
+  "name": "smart-ralph",
+  "plugins": [{
+    "name": "ralph-specum",
+    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
+    "policy": {"installation": "AVAILABLE"},
+    "category": "Productivity"
+  }]
+}
+EOF
+
+# 4. Clean up
+rm -rf /tmp/smart-ralph
+```
+
+</details>
+
+After either method: restart Codex, open the plugin directory, and install `ralph-specum`.
+
+**Optional**: Enable the Stop hook for automatic task execution:
+
+```toml
+# ~/.codex/config.toml
+[features]
+codex_hooks = true
+```
+
+See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for full details.
+
+**Updating** (run from any directory):
+
+```bash
+rm -rf /tmp/smart-ralph
+git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
+cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
+rm -rf /tmp/smart-ralph
+# Restart Codex
+```
+
+For per-project installs, replace `~/.codex/plugins/ralph-specum-codex` with `./plugins/ralph-specum-codex` (run from your project root).
+
+<details>
+<summary>Migrating from old skills (platforms/codex/)?</summary>
+
+1. Remove old skills: `rm -rf ~/.codex/skills/ralph-specum*`
+2. Follow the install steps above
+
+See the [migration guide](plugins/ralph-specum-codex/README.md#migration-from-old-skills-platformscodex) for details.
+
+</details>
 
 <details>
 <summary>Troubleshooting & alternative methods</summary>
@@ -175,7 +217,7 @@ Normal mode uses bundled grill-with-docs behavior before phase generation. Resea
 
 ## Commands
 
-For Codex, the equivalent public surface is the primary `$ralph-specum` skill plus the installable helper skills under `platforms/codex/skills/`.
+For Codex, the equivalent surface is `$ralph-specum` plus 14 helper skills installed via the `ralph-specum` plugin.
 
 | Command | What it does |
 |---------|--------------|
@@ -354,7 +396,7 @@ smart-ralph/
 ├── .claude-plugin/
 │   └── marketplace.json
 ├── plugins/
-│   ├── ralph-specum/           # Spec workflow (self-contained)
+│   ├── ralph-specum/           # Claude Code plugin (self-contained)
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   ├── agents/             # Sub-agent definitions
@@ -362,6 +404,14 @@ smart-ralph/
 │   │   ├── hooks/              # Stop watcher (controls execution loop)
 │   │   ├── templates/          # Spec templates
 │   │   └── schemas/            # Validation schemas
+│   ├── ralph-specum-codex/     # Codex plugin (full parity)
+│   │   ├── .codex-plugin/
+│   │   │   └── plugin.json
+│   │   ├── skills/             # 15 skills ($ralph-specum-*)
+│   │   ├── hooks/              # Stop watcher (Codex format)
+│   │   ├── agent-configs/      # 9 TOML bootstrap templates
+│   │   ├── templates/          # Spec templates
+│   │   └── references/         # Workflow, state, parity docs
 │   └── ralph-speckit/          # Spec-kit methodology
 │       ├── .claude-plugin/
 │       │   └── plugin.json

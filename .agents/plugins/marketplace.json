@@ -1,0 +1,19 @@
+{
+  "name": "smart-ralph",
+  "interface": {
+    "displayName": "Smart Ralph Plugins"
+  },
+  "plugins": [
+    {
+      "name": "ralph-specum",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ralph-specum-codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

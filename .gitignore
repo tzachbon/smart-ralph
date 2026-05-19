@@ -37,3 +37,4 @@ test-ac-*/
 
 # Local tool artifacts
 .clawpatch/
+.omc/**

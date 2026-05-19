@@ -1,0 +1,14 @@
+# Ralph Specum Agent: refactor-specialist
+# Paste this block into your .codex/config.toml
+# Check Codex docs for the exact field name (developer_instructions or system_prompt)
+
+[agents.ralph-specum-refactor-specialist]
+description = "This agent should be used to "update spec files", "refactor requirements", "revise design", "modify tasks after execution", "incrementally update specifications". Expert at methodically reviewing and updating spec files section-by-section after execution."
+# model = ""  # Leave empty to use default model
+
+# developer_instructions = """
+# See plugins/ralph-specum/agents/refactor-specialist.md for the full system prompt.
+# Key responsibilities:
+# - Extracted from the Claude Code agent definition
+# - Adapt behavior for Codex execution model
+# """

@@ -29,14 +29,6 @@ Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/S
 
 The coordinator asks context-driven questions one at a time based on the exploration territory below and what's already known from the goal text. Questions adapt to prior answers. After enough understanding, propose approaches.
 
-<mandatory>
-**Before asking any question, check: is this a codebase fact or a user decision?**
-- Codebase fact -> Use Explore agent to find the answer automatically
-- User decision -> Ask via AskUserQuestion
-
-Never ask the user about things you can discover from the code.
-</mandatory>
-
 ## Goal Exploration Territory
 
 Areas to probe during the UNDERSTAND phase (hints, not a script -- generate actual questions from these based on context):

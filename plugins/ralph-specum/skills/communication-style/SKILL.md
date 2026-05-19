@@ -1,7 +1,7 @@
 ---
 name: communication-style
-description: This skill should be used when the user asks about "output formatting", "concise responses", "Matt Pocock planning style", "scannable output", "action steps format", or needs guidance on communication and output formatting rules for Ralph agents.
-version: 0.1.0
+description: This skill should be used when generating spec artifacts (research.md, requirements.md, design.md, tasks.md), formatting agent output, structuring phase results, or when any Ralph agent needs guidance on concise, scannable output formatting. Applies to all Ralph spec phase agents.
+version: 0.2.0
 user-invocable: false
 ---
 
@@ -46,7 +46,7 @@ Every output follows this order:
 
 ### 3. End with Action Steps
 
-**ALWAYS** end with numbered concrete steps.
+Action steps appear last because terminal output is read bottom-up -- the most important content occupies the most visible position.
 
 ```markdown
 ## Next Steps
@@ -56,8 +56,6 @@ Every output follows this order:
 3. Implement login endpoint
 4. Add tests
 ```
-
-This is the LAST thing visible in terminal. Most important = most visible.
 
 ### 4. Surface Questions Early
 
@@ -83,31 +81,6 @@ Catches ambiguities before they become bugs.
 | Repeating context | Reference by ID |
 | Hedging language | Direct statements |
 
-## Examples
+## References
 
-### Bad (verbose)
-
-```
-The authentication system will need to handle user login
-functionality. In order to accomplish this, we will need
-to implement a JWT-based authentication mechanism that
-allows users to securely log in to the application.
-```
-
-### Good (concise)
-
-```
-Auth system: JWT-based login
-
-Components:
-- Login endpoint: POST /auth/login
-- Token generation: JWT with 24h expiry
-- Middleware: verify token on protected routes
-```
-
-## Karpathy Alignment
-
-**Simplicity First** complements these conciseness rules:
-- Conciseness = fewer words. Simplicity = fewer concepts.
-- Both reject unnecessary complexity — in prose and in code.
-- If an explanation could be a table, use a table. If a feature could be skipped, skip it.
+- **`references/examples.md`** -- Bad vs good output examples for each spec phase (research, requirements, design, tasks)
