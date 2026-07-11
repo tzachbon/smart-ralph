@@ -77,7 +77,7 @@ When no config file is found:
 - Check for CI config (`.github/workflows/*.yml`, `.gitlab-ci.yml`, `Jenkinsfile`) and extract the commands used there
 - Look for a `scripts/` directory with test/lint/build scripts
 - Check for `.tool-versions` or `asdf` to identify the language, then use standard commands for that ecosystem
-- If truly nothing found, note in .progress.md Learnings that no quality commands were discovered
+- If truly nothing found, note in progress.md Learnings that no quality commands were discovered
 
 ## Phase-Specific Command Usage
 

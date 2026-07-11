@@ -1,181 +1,94 @@
 # Ralph Specum for Codex
 
-Spec-driven development plugin for OpenAI Codex. Full parity with the Claude Code ralph-specum plugin.
+Native spec-driven development for Codex using phase skills, tiered subagent orchestration, reviewed Markdown artifacts, verified implementation batches, and native `/goal` execution. Research and requirements target medium reasoning, design and broad triage target the strongest available reasoning, and task decomposition targets a light tier. Exact per-subagent model selection is used when the active native spawn surface supports it and otherwise remains an explicit packet-level tier without requiring custom configuration.
 
-Transforms feature requests into structured specs (research, requirements, design, tasks) then executes them task-by-task with fresh context per task.
+## Requirements
 
-## Prerequisites
-
-- [OpenAI Codex CLI](https://github.com/openai/codex) installed: `npm install -g @openai/codex`
-- A ChatGPT account (Plus, Pro, Team, Edu, or Enterprise) or an OpenAI API key
-
-## Quick Start
-
-After installing (see below), run:
-
-```
-$ralph-specum-start my-feature "Build a user authentication system"
-```
-
-This starts the spec-driven workflow: research, requirements, design, tasks, then implementation.
-
-Normal mode uses bundled grill-with-docs behavior before phase generation. Research, requirements, and design can offer a prototype gate after the artifact walkthrough. If `$grill-with-docs` or `$prototype` is not installed, Ralph runs the documented behavior inline.
-
-## Installation
-
-Pick one of the two methods below.
-
-<details>
-<summary>Personal install (available in every project)</summary>
-
-Run these commands from any directory. They clone the repo to a temp folder, copy the plugin to your Codex plugins directory, and clean up.
+- Codex CLI 0.144.0 or newer
+- A ChatGPT account supported by Codex or an OpenAI API key
+- Git for implementation workflows that create commits
 
 ```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your personal plugins directory
-mkdir -p ~/.codex/plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry so Codex can discover the plugin
-mkdir -p ~/.agents/plugins
-cat > ~/.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
+codex --version
 ```
 
-</details>
-
-<details>
-<summary>Per-project install (one repo only)</summary>
-
-Run these commands from your project root directory (the repo where you want to use Ralph).
+## Install
 
 ```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your project
-mkdir -p ./plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry in your project
-mkdir -p ./.agents/plugins
-cat > ./.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
+codex plugin marketplace add tzachbon/smart-ralph
+codex plugin add ralph-specum-codex@smart-ralph
 ```
 
-</details>
+Restart Codex after installation.
 
-After either method: restart Codex, open the plugin directory, and install `ralph-specum`.
+The plugin is self-contained. It does not require hooks, manually configured agents, or a separate Ralph loop.
 
-### Enable hooks (recommended)
-
-The Stop hook auto-advances through tasks during execution. Add to `~/.codex/config.toml`:
-
-```toml
-[features]
-codex_hooks = true
-```
-
-Without hooks, you run `$ralph-specum-implement` once per task manually (see `references/workflow.md` for the fallback workflow).
-
-## Updating
-
-Pull the latest version by re-running the install steps. These commands work from any directory.
+## Update
 
 ```bash
-# Pull latest and overwrite
-rm -rf /tmp/smart-ralph
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-rm -rf /tmp/smart-ralph
-# Restart Codex
+codex plugin marketplace upgrade smart-ralph
+codex plugin remove ralph-specum-codex@smart-ralph
+codex plugin add ralph-specum-codex@smart-ralph
 ```
 
-For per-project installs, replace `~/.codex/plugins/ralph-specum-codex` with `./plugins/ralph-specum-codex` (run from your project root).
+Restart Codex to load the updated package.
 
-Check your version in `.codex-plugin/plugin.json`. Compare against the [latest release](https://github.com/tzachbon/smart-ralph/releases).
+## Roll back
 
-## Agent configs (optional)
-
-Copy templates from `agent-configs/*.toml.template` into your `.codex/config.toml` for specialized subagents. See `agent-configs/README.md`.
-
-## Skills Reference
-
-| Skill | Description |
-|-------|-------------|
-| `$ralph-specum` | Primary entry point, routing, bootstrap |
-| `$ralph-specum-start` | Smart start (new or resume spec) |
-| `$ralph-specum-research` | Parallel research phase |
-| `$ralph-specum-requirements` | Requirements generation |
-| `$ralph-specum-design` | Technical design |
-| `$ralph-specum-tasks` | Task breakdown (fine/coarse) |
-| `$ralph-specum-implement` | Task execution loop |
-| `$ralph-specum-status` | Show all specs and progress |
-| `$ralph-specum-switch` | Switch active spec |
-| `$ralph-specum-cancel` | Cancel and cleanup |
-| `$ralph-specum-triage` | Epic decomposition |
-| `$ralph-specum-index` | Codebase indexing |
-| `$ralph-specum-refactor` | Spec file updates |
-| `$ralph-specum-feedback` | Submit feedback/bugs |
-| `$ralph-specum-help` | Show help and workflow guide |
-
-## Hooks
-
-The Stop hook (`hooks/stop-watcher.sh`) enables automatic task-by-task execution. It reads `.ralph-state.json` and outputs `{"decision":"block","reason":"Continue to task N/M"}` to keep the execution loop running.
-
-Requires `[features] codex_hooks = true` in config.toml. See `references/workflow.md` for the manual fallback when hooks are disabled.
-
-<details>
-<summary>Migration from old skills (platforms/codex/)</summary>
-
-If you previously installed Ralph Specum skills from `platforms/codex/skills/` via `$skill-installer`:
-
-**Step 1: Remove old skills**
+Replace `v5.0.0` with the release tag you want:
 
 ```bash
-rm -rf ~/.codex/skills/ralph-specum*
+codex plugin remove ralph-specum-codex@smart-ralph
+codex plugin marketplace remove smart-ralph
+codex plugin marketplace add tzachbon/smart-ralph --ref v5.0.0
+codex plugin add ralph-specum-codex@smart-ralph
 ```
 
-**Step 2: Install the new plugin**
+## Phase skills
 
-Follow the Installation steps above.
+- `$ralph-specum`
+- `$ralph-specum-start`
+- `$ralph-specum-triage`
+- `$ralph-specum-research`
+- `$ralph-specum-requirements`
+- `$ralph-specum-design`
+- `$ralph-specum-tasks`
+- `$ralph-specum-implement`
+- `$ralph-specum-status`
 
-**Step 3: Update references**
+Use `$ralph-specum` when you want natural intent routing. Use an explicit phase skill when you want to enter that phase directly.
 
-Update any scripts, docs, or automation that reference `platforms/codex/` paths to use `plugins/ralph-specum-codex/` instead.
+## Execution behavior
 
-**Step 4: Verify**
+Ralph is approval-gated unless you explicitly request autonomous, quick, finish, or long-running execution.
 
-Run `$ralph-specum-status` to confirm the plugin is active and can find your specs.
+- Normal implementation runs one verified logical batch and returns.
+- Explicit autonomous execution uses native `/goal` with the approved spec, remaining tasks, constraints, verification commands, and terminal success condition.
+- Ralph never assigns a goal token budget unless you explicitly provide one.
+- Native goal controls handle status, pause, resume, clear, completion, and long-running persistence.
+- `$ralph-specum-status` reports both artifact progress and active native goal status when available.
 
-</details>
+Subagents receive bounded work packets. They do not update shared progress, task state, runtime state, or Git. The root coordinator validates their evidence, updates artifacts, and commits one verified logical batch.
 
-## Version
+## Durable state
 
-Check `.codex-plugin/plugin.json` for the current version.
+- `research.md`, `requirements.md`, `design.md`, and `tasks.md` are canonical artifacts.
+- Task checkboxes in `tasks.md` are authoritative completion state.
+- Tracked `progress.md` records phase, approvals, durable learnings, blockers, and the next step.
+- `.current-spec` is a local convenience pointer.
+- Codex continuation does not depend on `.ralph-state.json`.
+
+When only legacy `.progress.md` exists, Ralph reads it as migration context and creates a concise reviewed `progress.md`. Raw legacy logs are never committed automatically.
+
+## Version 5 compatibility shims
+
+These legacy helper skills route to `$ralph-specum` and emit a version 6 removal warning:
+
+- `$ralph-specum-switch`
+- `$ralph-specum-cancel`
+- `$ralph-specum-index`
+- `$ralph-specum-refactor`
+- `$ralph-specum-feedback`
+- `$ralph-specum-help`
+
+See [Migration to v5](../../docs/migration-v5.md) for migration details.

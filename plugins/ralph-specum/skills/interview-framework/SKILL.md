@@ -70,7 +70,7 @@ for signal in completionSignals:
 
 ### Phase 1: UNDERSTAND (Decision-Tree)
 
-Read all available context (.progress.md, prior artifacts, goal text). Build a question tree from the exploration territory with dependency ordering. Traverse the tree: auto-resolve codebase facts via exploration, ask user only about decisions. Each question leads with `[Recommended]` answer. No fixed question caps. Exit when all nodes resolved or user signals completion.
+Read all available context (progress.md, prior artifacts, goal text). Build a question tree from the exploration territory with dependency ordering. Traverse the tree: auto-resolve codebase facts via exploration, ask user only about decisions. Each question leads with `[Recommended]` answer. No fixed question caps. Exit when all nodes resolved or user signals completion.
 
 See `references/algorithm.md` for full pseudocode.
 
@@ -82,7 +82,7 @@ See `references/algorithm.md` for full pseudocode.
 
 ### Phase 3: CONFIRM & STORE
 
-Brief recap to user of key decisions and chosen approach. If user corrects something, update before storing. Store in .progress.md under Context Accumulator pattern.
+Brief recap to user of key decisions and chosen approach. If user corrects something, update before storing. Store in progress.md under Context Accumulator pattern.
 
 See `references/algorithm.md` for full pseudocode.
 
@@ -94,7 +94,7 @@ See `references/examples.md` for example follow-up patterns.
 
 ## Context Accumulator Pattern
 
-After each interview, update `.progress.md`: read existing content, append new section under "## Interview Responses" with descriptive keys reflecting what was discussed. Include the chosen approach.
+After each interview, update `progress.md`: read existing content, append new section under "## Interview Responses" with descriptive keys reflecting what was discussed. Include the chosen approach.
 
 See `references/examples.md` for storage format.
 

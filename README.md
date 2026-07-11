@@ -10,9 +10,9 @@
 [![Claude Code](https://img.shields.io/badge/Built%20for-Claude%20Code-blueviolet)](https://claude.ai/code)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-**Spec-driven development for Claude Code and Codex. Task-by-task execution with fresh context per task.**
+**Native spec-driven development for Claude Code and Codex.**
 
-Self-contained execution loop. No external dependencies.
+Self-contained plugins with platform-native orchestration and no added runtime dependencies.
 
 [Quick Start](#-quick-start) | [Commands](#-commands) | [How It Works](#-how-it-works) | [Troubleshooting](#-troubleshooting)
 
@@ -22,7 +22,7 @@ Self-contained execution loop. No external dependencies.
 
 ## What is this?
 
-Smart Ralph is a Claude Code plugin that turns your vague feature ideas into structured specs, then executes them task-by-task. Like having a tiny product team in your terminal.
+Smart Ralph provides native Claude Code and Codex plugins that turn vague feature ideas into reviewed specs, then implement verified logical batches. Like having a tiny product team in your terminal.
 
 ```text
 You: "Add user authentication"
@@ -41,130 +41,42 @@ Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and ev
 
 ### Claude Code
 
-```bash
-# Install Smart Ralph
-/plugin marketplace add tzachbon/smart-ralph
-/plugin install ralph-specum@smart-ralph
+> **Prerequisite:** Claude Code 2.1.32 or newer. Check with `claude --version`.
 
-# Restart Claude Code
+```bash
+claude --version
+claude plugin marketplace add tzachbon/smart-ralph
+claude plugin install ralph-specum@smart-ralph
 ```
+
+Restart Claude Code after installation. See the [Claude plugin guide](plugins/ralph-specum/README.md) for update and rollback instructions.
 
 ### Codex
 
-> **Prerequisite:** Install the [Codex CLI](https://github.com/openai/codex) first: `npm install -g @openai/codex`
-
-<details>
-<summary>Personal install (available in every project)</summary>
-
-Run these commands from any directory. They clone the repo to a temp folder, copy the plugin to your Codex plugins directory, and clean up.
+> **Prerequisite:** Codex CLI 0.144.0 or newer.
 
 ```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your personal plugins directory
-mkdir -p ~/.codex/plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry so Codex can discover the plugin
-mkdir -p ~/.agents/plugins
-cat > ~/.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
+codex --version
+codex plugin marketplace add tzachbon/smart-ralph
+codex plugin add ralph-specum-codex@smart-ralph
 ```
 
-</details>
-
-<details>
-<summary>Per-project install (one repo only)</summary>
-
-Run these commands from your project root directory (the repo where you want to use Ralph).
-
-```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your project
-mkdir -p ./plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry in your project
-mkdir -p ./.agents/plugins
-cat > ./.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
-```
-
-</details>
-
-After either method: restart Codex, open the plugin directory, and install `ralph-specum`.
-
-**Optional**: Enable the Stop hook for automatic task execution:
-
-```toml
-# ~/.codex/config.toml
-[features]
-codex_hooks = true
-```
-
-See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for full details.
-
-**Updating** (run from any directory):
-
-```bash
-rm -rf /tmp/smart-ralph
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-rm -rf /tmp/smart-ralph
-# Restart Codex
-```
-
-For per-project installs, replace `~/.codex/plugins/ralph-specum-codex` with `./plugins/ralph-specum-codex` (run from your project root).
-
-<details>
-<summary>Migrating from old skills (platforms/codex/)?</summary>
-
-1. Remove old skills: `rm -rf ~/.codex/skills/ralph-specum*`
-2. Follow the install steps above
-
-See the [migration guide](plugins/ralph-specum-codex/README.md#migration-from-old-skills-platformscodex) for details.
-
-</details>
+Ralph uses Codex phase skills, native subagents, and native `/goal` execution. It does not require hooks or custom agent configuration. See the [Codex plugin guide](plugins/ralph-specum-codex/README.md) for update, rollback, and v4 migration instructions.
 
 <details>
 <summary>Troubleshooting & alternative methods</summary>
 
-**Install from GitHub directly:**
-```bash
-/plugin install https://github.com/tzachbon/smart-ralph
-```
-
-**Local development:**
+**Claude local development:**
 ```bash
 git clone https://github.com/tzachbon/smart-ralph.git
 claude --plugin-dir ./smart-ralph/plugins/ralph-specum
+```
+
+**Codex local development:**
+```bash
+git clone https://github.com/tzachbon/smart-ralph.git
+codex plugin marketplace add ./smart-ralph
+codex plugin add ralph-specum-codex@smart-ralph
 ```
 
 </details>
@@ -189,11 +101,11 @@ $ralph-specum-implement
 $ralph-specum-status
 ```
 
-The helper skill package also includes `$ralph-specum-switch`, `$ralph-specum-cancel`, `$ralph-specum-index`, `$ralph-specum-refactor`, `$ralph-specum-feedback`, and `$ralph-specum-help`.
+Version 5 keeps `$ralph-specum-switch`, `$ralph-specum-cancel`, `$ralph-specum-index`, `$ralph-specum-refactor`, `$ralph-specum-feedback`, and `$ralph-specum-help` as compatibility shims. They route to `$ralph-specum` and are removed in version 6.
 
 Use `$ralph-specum-triage` first when the goal is large, cross-cutting, or likely to become multiple specs. Use `$ralph-specum-start` for a single spec or to resume an existing one.
 
-Codex Ralph is approval-gated by default. After each spec artifact, Ralph stops and asks you to approve the current artifact, request changes, or continue to the next step. Quick or autonomous flow happens only when you explicitly ask for it.
+Codex Ralph is approval-gated by default. After each spec artifact, Ralph stops and asks you to approve the current artifact, request changes, or continue to the next step. Quick or autonomous flow happens only when you explicitly ask for it. Autonomous implementation uses native `/goal`; normal implementation completes one verified logical batch and returns.
 Normal mode uses bundled grill-with-docs behavior before phase generation. Research, requirements, and design can also offer an optional prototype gate after the artifact walkthrough. Ralph ships these behaviors for Claude Code and documents inline fallbacks for Codex users without `$grill-with-docs` or `$prototype`.
 
 ### Claude Code
@@ -393,6 +305,7 @@ When you run `/ralph-specum:start`:
 
 ```text
 smart-ralph/
+├── core/                       # Canonical shared artifacts, schemas, rules, fixtures
 ├── .claude-plugin/
 │   └── marketplace.json
 ├── plugins/
@@ -401,23 +314,22 @@ smart-ralph/
 │   │   │   └── plugin.json
 │   │   ├── agents/             # Sub-agent definitions
 │   │   ├── commands/           # Slash commands
-│   │   ├── hooks/              # Stop watcher (controls execution loop)
-│   │   ├── templates/          # Spec templates
+│   │   ├── hooks/              # Claude-native continuation and context hooks
+│   │   ├── templates/          # Generated canonical templates
 │   │   └── schemas/            # Validation schemas
-│   ├── ralph-specum-codex/     # Codex plugin (full parity)
+│   ├── ralph-specum-codex/     # Native Codex plugin
 │   │   ├── .codex-plugin/
 │   │   │   └── plugin.json
 │   │   ├── skills/             # 15 skills ($ralph-specum-*)
-│   │   ├── hooks/              # Stop watcher (Codex format)
-│   │   ├── agent-configs/      # 9 TOML bootstrap templates
-│   │   ├── templates/          # Spec templates
-│   │   └── references/         # Workflow, state, parity docs
+│   │   ├── templates/          # Generated canonical templates
+│   │   └── references/         # Codex-native workflow and state rules
 │   └── ralph-speckit/          # Spec-kit methodology
 │       ├── .claude-plugin/
 │       │   └── plugin.json
 │       ├── agents/             # spec-executor, qa-engineer
 │       ├── commands/           # /speckit:* commands
 │       └── templates/          # Constitution, spec, plan templates
+├── scripts/                    # Core sync and package validation
 └── README.md
 ```
 
@@ -429,8 +341,8 @@ Specs live in `./specs/` in your project:
 ./specs/
 ├── .current-spec           # Active spec name
 └── my-feature/
-    ├── .ralph-state.json   # Loop state (deleted on completion)
-    ├── .progress.md        # Progress tracking
+    ├── .ralph-state.json   # Optional Claude runtime state, never canonical
+    ├── progress.md         # Tracked durable phase and approval state
     ├── research.md
     ├── requirements.md
     ├── design.md
@@ -518,7 +430,7 @@ Specs live in `./specs/` in your project:
 ## Troubleshooting
 
 **Task keeps failing?**
-After max iterations, the loop stops. Check `.progress.md` for errors. Fix manually, then `/ralph-specum:implement` to resume.
+After three failed attempts, inspect `progress.md` and the verification evidence. Fix the blocker, then run `/ralph-specum:implement` in Claude or `$ralph-specum-implement` in Codex.
 
 **Want to start over?**
 `/ralph-specum:cancel` cleans up state files. Then start fresh.
@@ -531,6 +443,19 @@ Just `/ralph-specum:start` - it auto-detects and continues where you left off.
 ---
 
 ## Breaking Changes
+
+### v5.0.0
+
+**Native Claude and Codex adapters with a shared specification core**
+
+- Claude keeps its slash commands, agents, teams, and hook-driven execution.
+- Codex uses phase skills, native subagents, and `/goal` instead of a Stop hook.
+- Canonical artifacts remain Markdown. `tasks.md` checkboxes are task truth.
+- New specs use tracked `progress.md`. Legacy `.progress.md` is read only for migration and is never committed automatically.
+- Codex auxiliary skills remain as deprecation shims for version 5 and are removed in version 6.
+- Codex now requires version 0.144.0 or newer and installs as `ralph-specum-codex`.
+
+See [Migration to v5](docs/migration-v5.md) for the compatibility and rollback procedure.
 
 ### v3.0.0
 

@@ -30,7 +30,7 @@ State the prototype question at the top of the artifact.
 
 ## Result Capture
 
-After prototype work, append to `.progress.md`:
+After prototype work, append to `progress.md`:
 
 ```markdown
 ## Prototype Result

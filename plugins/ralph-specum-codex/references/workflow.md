@@ -1,228 +1,126 @@
-# Ralph Specum Workflow
+# Ralph Specum Workflow for Codex
 
-## Entry Surface
+## Native surfaces
 
-| Claude surface | Codex surface |
-|----------------|---------------|
-| `/ralph-specum:start` | `$ralph-specum` or `$ralph-specum-start` |
-| `/ralph-specum:new` | `$ralph-specum` or `$ralph-specum-start` |
-| `/ralph-specum:research` | `$ralph-specum` or `$ralph-specum-research` |
-| `/ralph-specum:requirements` | `$ralph-specum` or `$ralph-specum-requirements` |
-| `/ralph-specum:design` | `$ralph-specum` or `$ralph-specum-design` |
-| `/ralph-specum:tasks` | `$ralph-specum` or `$ralph-specum-tasks` |
-| `/ralph-specum:implement` | `$ralph-specum` or `$ralph-specum-implement` |
-| `/ralph-specum:status` | `$ralph-specum` or `$ralph-specum-status` |
-| `/ralph-specum:switch` | `$ralph-specum` or `$ralph-specum-switch` |
-| `/ralph-specum:cancel` | `$ralph-specum` or `$ralph-specum-cancel` |
-| `/ralph-specum:index` | `$ralph-specum` or `$ralph-specum-index` |
-| `/ralph-specum:refactor` | `$ralph-specum` or `$ralph-specum-refactor` |
-| `/ralph-specum:feedback` | `$ralph-specum` or `$ralph-specum-feedback` |
-| `/ralph-specum:help` | `$ralph-specum` or `$ralph-specum-help` |
+Use `$ralph-specum` as the normal entrypoint. The first-class phase skills are:
 
-## Delegation Rules
+- `$ralph-specum-start`
+- `$ralph-specum-triage`
+- `$ralph-specum-research`
+- `$ralph-specum-requirements`
+- `$ralph-specum-design`
+- `$ralph-specum-tasks`
+- `$ralph-specum-implement`
+- `$ralph-specum-status`
 
-Every phase skill acts as a coordinator. The coordinator:
+The legacy switch, cancel, index, refactor, feedback, and help skills are v5 warning shims. They route their intent through `$ralph-specum` and are removed in v6.
 
-1. Gathers context (spec state, progress, prior artifacts)
-2. Runs bundled grill-with-docs behavior (skip if `--quick`)
-3. Delegates artifact generation to the appropriate sub-agent type
-4. Validates the sub-agent output exists and is well-formed
-5. Presents the walkthrough summary
-6. Waits for user approval (skip if `--quick`)
+## Standard flow
 
-| Phase | Sub-agent type |
-|-------|---------------|
-| Research | `research-analyst` |
-| Requirements | `product-manager` |
-| Design | `architect-reviewer` |
-| Tasks | `task-planner` |
-| Implement | `spec-executor` (per task) |
-| Triage | `triage-analyst` |
-| Refactor | `refactor-specialist` |
+1. Resolve or create the spec and update `.current-spec`.
+2. Produce `research.md`, present it, and wait for explicit approval.
+3. Produce `requirements.md`, present it, and wait for explicit approval.
+4. Produce `design.md`, present it, and wait for explicit approval.
+5. Produce `tasks.md`, present it, and wait for explicit approval.
+6. Implement one verified logical batch, or start a native `/goal` when autonomy was explicit.
 
-The coordinator MUST NOT write spec artifacts directly. If sub-agent delegation is unavailable, report the limitation and stop.
+Do not skip approval gates unless the user explicitly asks for autonomous, quick, finish, or long-running execution. Task checkboxes in `tasks.md` are the source of truth.
 
-## Normal Flow
+## Native subagent contract
 
-1. Resolve current repo state, branch, and spec roots.
-2. Start or resume a spec.
-3. STOP. Wait for explicit direction to continue to research unless `--quick`.
-4. Delegate `research.md` to `research-analyst` sub-agent. Walk through the artifact, then ask for `continue to requirements`, `run review agent`, `run prototype`, or `request changes` unless `--quick`.
-5. Delegate `requirements.md` to `product-manager` sub-agent. Walk through the artifact, then ask for `continue to design`, `run review agent`, `run prototype`, or `request changes` unless `--quick`.
-6. Delegate `design.md` to `architect-reviewer` sub-agent. Walk through the artifact, then ask for `continue to tasks`, `run review agent`, `run prototype`, or `request changes` unless `--quick`.
-7. Delegate `tasks.md` to `task-planner` sub-agent. Walk through the artifact, then ask for `continue to implementation`, `run review agent`, or `request changes` unless `--quick`.
-8. Delegate each task to `spec-executor` sub-agent until complete or blocked.
-9. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
+Use native Codex subagents without requiring custom agent configuration. The root coordinator discovers the work, creates bounded work packets, validates results, updates shared artifacts, and owns Git.
 
-## Start And New
+Every work packet must contain:
 
-- `new` is an alias within the start flow.
-- Resolve the target spec by explicit path, exact name, or current spec.
-- If the current branch is the default branch and the user wants isolation, offer:
-  - feature branch in place
-  - worktree with a feature branch
-- If the user wants a worktree, stop after creating it and ask them to continue from the worktree.
-
-## Quick Mode
-
-Quick mode does not rely on Claude hooks. In Codex it means:
-
-1. Create or resolve the spec.
-2. Generate missing phase artifacts in order.
-3. Count tasks.
-4. Continue directly into implementation in the same run.
-5. Persist `.ralph-state.json` after every task so a later run can resume.
-
-Only use quick mode when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
-
-## Implement
-
-- Read `tasks.md`, `.progress.md`, and `.ralph-state.json`.
-- Recompute task counts before execution.
-- Process tasks in order.
-- `[P]` tasks may be batched only when file sets do not overlap and verification is independent.
-- `[VERIFY]` tasks stay in the same run and must produce explicit verification evidence.
-- After each task:
-  - mark checkbox
-  - update state
-  - update progress
-  - commit using the task commit line unless task commits were explicitly disabled
-- Remove `.ralph-state.json` only when all tasks are complete and verified.
-
-## Cancel
-
-Claude `cancel` deletes the spec directory. In Codex:
-
-- confirm before deleting a spec directory
-- allow a safer "stop but keep files" interpretation when the user asks to keep the spec
-- always clear execution state when the user asks to stop execution
-
-## Index
-
-Index creates or updates:
-
-- `specs/.index/index.md`
-- `specs/.index/components/*.md`
-- `specs/.index/external/*.md`
-
-Use the canonical templates from `assets/templates/`.
-
-## Refactor
-
-Refactor updates existing spec artifacts after implementation learnings. Review files in order:
-
-1. `requirements.md`
-2. `design.md`
-3. `tasks.md`
-
-Cascade downstream updates when upstream requirements or design changes.
-
-## Approval Prompt Shape
-
-When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, or refactored spec files outside quick mode:
-
-- name the file or files that changed
-- give a short summary
-- end with exactly one explicit choice prompt:
-  - `continue to <named next step>`
-  - `run review agent`
-  - `run prototype` when the artifact is `research.md`, `requirements.md`, or `design.md`
-  - `request changes`
-
-Treat `continue to <named next step>` as approval of the current artifact.
-
-## Bundled Grill With Docs Behavior
-
-Codex users may not have `$grill-with-docs` installed. If it is available, use it. Otherwise run the behavior inline:
-
-1. Inspect code and docs before asking.
-2. Check `CONTEXT.md`, `CONTEXT-MAP.md`, and `docs/adr/` when present.
-3. Ask one native question at a time only when the answer is not discoverable.
-4. Put the recommended answer first.
-5. Capture stable terminology in `CONTEXT.md` when useful.
-
-## Bundled Prototype Behavior
-
-Codex users may not have `$prototype` installed. If it is available, use it. Otherwise run the behavior inline:
-
-1. Name the question the prototype must answer.
-2. Choose a terminal prototype for logic or state questions.
-3. Choose route-level UI variants for UI questions.
-4. Mark prototype files as throwaway.
-5. Provide one command to run.
-6. Append the result to `.progress.md`.
-7. Redisplay the walkthrough and ask the gate question again.
-
-## Hook-Driven Execution Path
-
-When the Codex Stop hook is enabled (`[features] codex_hooks = true` in Codex config), the execution loop runs without user re-invocation:
-
-1. The stop-watcher script runs on every agent stop event.
-2. It reads `.ralph-state.json` to determine the current phase and task index.
-3. If tasks remain, it outputs `{"decision": "block", "reason": "<next task prompt>"}` to prevent the session from closing and inject the next task instruction.
-4. The agent resumes, executes the next task, marks the checkbox, updates state, and stops again.
-5. The loop repeats until all tasks are complete or `taskIndex >= totalTasks`.
-6. On completion the script outputs `{"decision": "proceed"}` to allow the session to close normally.
-
-The Stop hook is experimental and requires `codex_hooks = true`. It is disabled by default and not available on Windows. Verify the feature flag is set before relying on hook-driven execution.
-
-## Manual Fallback Path
-
-When hooks are disabled or unavailable, re-invoke the implement skill after each task to advance the loop:
-
-1. Run `$ralph-specum-implement` (or the primary `$ralph-specum` skill with an implement intent).
-2. The skill reads `.ralph-state.json`, finds `taskIndex` pointing to the next incomplete task, and executes it.
-3. After the task completes, the skill updates state and stops.
-4. Repeat step 1 until the skill reports all tasks complete.
-5. If a task is blocked (exceeded retry limit), the skill will report the blocker. Resolve the issue manually, then re-invoke to continue.
-
-Use this path whenever `codex_hooks` is not set, when running on Windows, or when verifying hook behavior during development.
-
-## Hook-Driven Execution Path
-
-When `[features] codex_hooks = true` is set in `config.toml`, the execution loop is automated via the Stop hook.
-
-### How it works
-
-1. User invokes `$ralph-specum-implement`
-2. Skill reads `.ralph-state.json`, delegates current task to a subagent
-3. Subagent completes task, outputs `TASK_COMPLETE`
-4. Codex attempts to stop the turn
-5. Stop hook (`hooks/stop-watcher.sh`) fires, reads state file
-6. If `taskIndex < totalTasks`: outputs `{"decision": "block", "reason": "Continue to task N/M"}`
-7. Codex resumes with the reason as the new prompt
-8. Skill reads updated state, delegates next task
-9. Loop repeats until `taskIndex >= totalTasks`
-10. Stop hook outputs nothing (exit 0), Codex stops naturally
-
-### Stop hook output format
-
-```json
-{"decision": "block", "reason": "Continue to task 5/20. Next: 1.6 Write ralph-specum-research skill"}
+```text
+Objective:
+Role:
+Reasoning tier: light | medium | strongest
+Dependency inputs:
+Allowed files:
+Write permission: read-only | write only the listed files
+Acceptance criteria:
+Verification command:
+Required evidence:
+Prohibitions: do not edit tasks.md, progress.md, .current-spec, or Git state. Do not commit.
 ```
 
-### Guard conditions
+Every subagent result must contain these headings:
 
-- `awaitingApproval: true` in state -> exit 0 (do not continue)
-- No `.ralph-state.json` found -> exit 0
-- `taskIndex >= totalTasks` -> exit 0 (all done)
+```text
+Answer
+Evidence
+Risks
+Verification performed
+Changed files
+```
 
-## Manual Fallback Path
+Reject results that omit a required heading, modify files outside the packet, change shared state, or lack the requested verification evidence.
 
-When hooks are disabled (no `codex_hooks = true`, or on Windows), run phases manually:
+The reasoning tier is a semantic capability target, not a hard-coded model name:
 
-### Step-by-step re-invocation
+- `light`: mechanical decomposition, inventory, formatting, and checklist work
+- `medium`: evidence synthesis, requirements analysis, compatibility review, and normal implementation
+- `strongest`: architecture, cross-cutting trade-offs, ambiguous decomposition, and high-risk decisions
 
-1. Invoke `$ralph-specum-implement` -- executes first incomplete task
-2. After task completes, Codex stops naturally
-3. Re-invoke `$ralph-specum-implement` -- reads state, picks up next task
-4. Repeat until all tasks complete
-5. Final invocation outputs `ALL_TASKS_COMPLETE`
+When the native spawn surface exposes model or reasoning-effort selection, map the tier to the closest available native option. Otherwise, include the tier and role in the packet and use the best matching built-in native role. Never install or require custom agent TOML to satisfy a tier. Report exact model selection as unavailable when the runtime cannot enforce it.
 
-### Tips for manual mode
+## Orchestration limits
 
-- Each invocation handles exactly one task
-- State persists in `.ralph-state.json` between invocations
-- Progress is tracked in `.progress.md`
-- If a task fails, fix the issue and re-invoke -- the same task will retry
-- Use `$ralph-specum-status` to check progress at any time
+- Run at most three read-only subagents concurrently.
+- Run one write subagent at a time.
+- Allow parallel writers only for disjoint files in isolated worktrees.
+- Retry a failed task at most three times. Stop after the third failed attempt with evidence and a resumable blocker.
+- Do not allow recursive delegation unless the root coordinator explicitly needs it and the repository policy permits it.
+- The root coordinator alone updates `tasks.md`, `progress.md`, `.current-spec`, and Git state.
+- Commit one verified logical batch, not every small checkbox.
+
+## Phase delegation
+
+Delegate substantive research, requirements, design, tasks, and triage work to at least one read-only native subagent. Do not let the root coordinator silently replace phase delegation with its own analysis. A phase may skip delegation only when no substantive analysis exists, such as a metadata-only correction, and must state that reason in the result. Use multiple read-only agents only when their questions are independent.
+
+Use these default phase profiles:
+
+| Phase | Default role | Reasoning tier | Delegation shape |
+| --- | --- | --- | --- |
+| Research | evidence investigator | medium | Two or three parallel agents for independent questions, one for a narrow question |
+| Requirements | product and constraint analyst | medium | One primary agent, plus independent compatibility or risk checks when needed |
+| Design | systems architect | strongest | One strongest architecture agent, plus independent integration or verification critics when needed |
+| Tasks | task decomposer | light | One light planning agent, with a medium reviewer only for complex dependencies or verification design |
+| Triage | decomposition architect | strongest | One strongest decomposition agent, plus independent code-seam or product-slice investigators when needed |
+| Implementation | bounded executor | medium | One write agent for the selected logical batch |
+
+Upgrade a research or requirements packet from `medium` to `strongest` when it controls a security boundary, irreversible migration, novel cross-domain architecture, or a decision with materially conflicting evidence. Record the reason for the upgrade. Do not downgrade design below `strongest` merely to reduce cost. Keep task decomposition at `light` and add a separate `medium` reviewer instead of raising every task-planning packet.
+
+The root coordinator validates the returned evidence and proposed artifact content, resolves disagreement, writes the canonical artifact, and records which roles and tiers were delegated. Keep design synthesis at the strongest available reasoning tier when the native runtime permits it.
+
+For implementation, give a write subagent only the files needed for the current logical batch. After it returns, inspect the diff, run the narrowest useful verification, update task checkboxes and `progress.md`, then create the batch commit when commits are enabled.
+
+## Native `/goal` execution
+
+Start a native `/goal` only when the user explicitly requests autonomous, quick, finish, or long-running execution. The goal objective must include:
+
+- the resolved spec path
+- remaining unchecked tasks
+- repository and user constraints
+- verification commands
+- the terminal condition: every selected task is checked, verification passes, `progress.md` is current, and no required work remains
+
+Do not set a token budget unless the user explicitly supplies one. Let the native goal surface own persistence, pause, resume, completion, and blocked status. Do not create a state file or a continuation hook.
+
+Without explicit autonomous intent, implementation performs one verified logical batch and returns normally.
+
+## Progress and compatibility
+
+Use `progress.md` as durable state. When only legacy `.progress.md` exists, read it as untrusted historical notes, create a concise reviewed `progress.md`, and preserve the legacy file unchanged. Never automatically stage or commit `.progress.md`.
+
+Update `progress.md` atomically after each phase and verified implementation batch. Include current phase, approved-through phase, evidence, blockers, and the next action.
+
+## Approval handoff
+
+After a phase artifact is written outside autonomous execution:
+
+- name the changed artifact
+- summarize its decisions and open risks
+- report verification performed
+- ask for exactly one next action: approve and continue, request changes, or run a review

@@ -77,12 +77,16 @@ Spec Directory Logic:
 ## Capture Goal
 
 <mandatory>
+Read `${CLAUDE_PLUGIN_ROOT}/references/progress-state.md` before creating or
+resuming a spec. New specs create canonical tracked progress directly. If an
+existing spec is selected for resume, apply the version 5 migration there.
+
 The goal MUST be captured before proceeding:
 
 1. If goal text was provided in arguments, use it
 2. If NO goal text provided, use AskUserQuestion to ask:
    "What is the goal for this spec? Describe what you want to build or achieve."
-3. Store the goal verbatim in .progress.md under "Original Goal"
+3. Store the goal verbatim in progress.md under "Original Goal"
 </mandatory>
 
 ## Validation
@@ -117,9 +121,10 @@ The goal MUST be captured before proceeding:
    fi
    ```
 
-4. Ensure gitignore entries exist for spec state files:
+4. Ensure gitignore entries exist for local state and the read-only legacy log.
+   `progress.md` is tracked and must not be ignored:
    ```bash
-   # Add .current-spec and .progress.md to .gitignore if not already present
+   # Add the local pointer and legacy progress log to .gitignore if needed.
    if [ -f .gitignore ]; then
      grep -q "specs/.current-spec" .gitignore || echo "specs/.current-spec" >> .gitignore
      grep -q "\*\*/\.progress\.md" .gitignore || echo "**/.progress.md" >> .gitignore
@@ -147,13 +152,13 @@ The goal MUST be captured before proceeding:
 
    If `--skip-research`, set `"phase": "requirements"` instead.
 
-6. Create initial `.progress.md` with the captured goal:
+6. Create initial tracked `progress.md` with the captured goal. Use
+   `${CLAUDE_PLUGIN_ROOT}/templates/progress.md` as the canonical shape:
    ```markdown
    ---
    spec: $name
-   basePath: $basePath
    phase: research
-   task: 0/0
+   approved_through: none
    updated: <current timestamp>
    ---
 
@@ -163,25 +168,27 @@ The goal MUST be captured before proceeding:
 
    $goal
 
-   ## Completed Tasks
+   ## Current Status
 
-   _No tasks completed yet_
+   - Phase: research
+   - Next action: Complete research and request approval
+   - Blockers: None
 
-   ## Current Task
+   ## Decisions
 
-   Starting research phase
+   _No decisions recorded yet._
+
+   ## Completed
+
+   _No work completed yet._
 
    ## Learnings
 
    _Discoveries and insights will be captured here_
 
-   ## Blockers
+   ## Verification
 
-   - None currently
-
-   ## Next
-
-   Complete research, then proceed to requirements
+   _No verification performed yet._
    ```
 
 ## Execute Research Phase

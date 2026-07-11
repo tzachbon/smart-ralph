@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve Ralph Specum roots, current spec, and named specs."""
+"""Resolve workspace-contained Ralph Specum roots and specs."""
 
 from __future__ import annotations
 
@@ -77,16 +77,6 @@ def parse_frontmatter(path: Path) -> dict[str, object]:
     return data
 
 
-def coerce_int(value: object, default: int) -> int:
-    if isinstance(value, bool):
-        return default
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str) and re.fullmatch(r"-?\d+", value.strip()):
-        return int(value.strip())
-    return default
-
-
 def coerce_bool(value: object, default: bool) -> bool:
     if isinstance(value, bool):
         return value
@@ -105,27 +95,28 @@ def coerce_bool(value: object, default: bool) -> bool:
     return default
 
 
-def default_specs_dir(cwd: Path, specs_dirs: list[str]) -> str:
-    for root in specs_dirs:
-        root_path = cwd / root
-        if root_path.exists() and root_path.is_dir():
-            return root
-    return DEFAULT_SPECS_DIR
+def workspace_relative(cwd: Path, value: str) -> str:
+    """Return a normalized repo-relative path or reject workspace escape."""
+    candidate = (cwd / value).resolve()
+    try:
+        relative = candidate.relative_to(cwd)
+    except ValueError as exc:
+        raise ValueError(f"Path escapes repository root: {value}") from exc
+    return normalize_relative(str(relative))
 
 
 def resolve_config(cwd: Path) -> dict[str, object]:
-    settings = parse_frontmatter(cwd / ".claude" / "ralph-specum.local.md")
+    settings = parse_frontmatter(cwd / ".codex" / "ralph-specum.local.md")
     raw_dirs = settings.get("specs_dirs")
     if isinstance(raw_dirs, list):
-        specs_dirs = [str(item) for item in raw_dirs if str(item).strip()]
+        specs_dirs = [workspace_relative(cwd, str(item)) for item in raw_dirs if str(item).strip()]
     else:
         specs_dirs = [DEFAULT_SPECS_DIR]
     if not specs_dirs:
         specs_dirs = [DEFAULT_SPECS_DIR]
     return {
         "specs_dirs": specs_dirs,
-        "default_dir": default_specs_dir(cwd, specs_dirs),
-        "default_max_iterations": coerce_int(settings.get("default_max_iterations", 5), 5),
+        "default_dir": specs_dirs[0],
         "auto_commit_spec": coerce_bool(settings.get("auto_commit_spec", True), True),
     }
 
@@ -145,8 +136,8 @@ def resolve_current(cwd: Path, default_dir: str) -> str | None:
     if not content:
         return None
     if content.startswith("./") or content.startswith("/"):
-        return content
-    return f"{default_dir.rstrip('/')}/{content}"
+        return workspace_relative(cwd, content)
+    return workspace_relative(cwd, f"{default_dir.rstrip('/')}/{content}")
 
 
 def list_specs(cwd: Path, specs_dirs: list[str]) -> list[dict[str, str]]:
@@ -177,7 +168,10 @@ def main() -> int:
     args = parser.parse_args()
 
     cwd = Path(args.cwd).resolve()
-    config = resolve_config(cwd)
+    try:
+        config = resolve_config(cwd)
+    except ValueError as exc:
+        parser.error(str(exc))
     specs = list_specs(cwd, config["specs_dirs"])
     current = resolve_current(cwd, config["default_dir"])
 

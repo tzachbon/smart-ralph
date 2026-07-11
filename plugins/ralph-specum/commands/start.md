@@ -1,6 +1,6 @@
 ---
 description: Smart entry point that detects if you need a new spec or should resume existing
-argument-hint: [name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>] [--tasks-size fine|coarse]
+argument-hint: "[name] [goal] [--fresh] [--quick] [--commit-spec] [--no-commit-spec] [--specs-dir <path>] [--tasks-size fine|coarse]"
 allowed-tools: "*"
 ---
 
@@ -92,9 +92,11 @@ Based on detection logic from Step 2:
 
 ### Resume Flow
 
-1. Read `$specPath/.ralph-state.json`
-2. If no state file -- check which files exist, determine last phase, ask "Continue or restart?"
-3. If state file exists -- read phase/taskIndex, show brief status, continue from current phase
+1. Read `${CLAUDE_PLUGIN_ROOT}/references/progress-state.md` and apply its
+   canonical progress contract and version 5 migration after resolving `$specPath`
+2. Read `$specPath/.ralph-state.json`
+3. If no state file -- check which files exist, determine last phase, ask "Continue or restart?"
+4. If state file exists -- read phase/taskIndex, show brief status, continue from current phase
 
 **Status Display:**
 ```text
@@ -127,7 +129,9 @@ Continuing...
    ```
 4. Create spec directory: `mkdir -p "$basePath"`
 5. Update .current-spec (bare name for default dir, full path for non-default)
-6. Ensure gitignore entries for specs/.current-spec, specs/.current-epic, and **/.progress.md
+6. Ensure gitignore entries for local pointers and the read-only legacy log:
+   `specs/.current-spec`, `specs/.current-epic`, and `**/.progress.md`. Never
+   ignore the tracked `progress.md` file.
 7. Initialize `.ralph-state.json`:
    ```json
    {
@@ -149,7 +153,8 @@ Continuing...
    - If value is `fine` or `coarse`: add `"granularity": "<value>"` to the JSON above
    - If value is invalid (not `fine` or `coarse`): warn the user (`⚠️ Invalid --tasks-size value "<value>", defaulting to fine`) and add `"granularity": "fine"`
    - If `--tasks-size` flag is absent: omit the `granularity` field entirely (do not add it)
-8. Create `.progress.md` with goal
+8. Create tracked `progress.md` from `${CLAUDE_PLUGIN_ROOT}/templates/progress.md`
+   with the goal, canonical frontmatter, and current timestamp
 9. **Skill Discovery Pass 1** -- Scan all skill files and match against the goal text:
    1. Scan SKILL.md files from all skill paths (collect all skills before matching):
       - **Plugin skills**: `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` → invoked as `Skill({ skill: "ralph-specum:<name>" })`
@@ -172,7 +177,7 @@ Continuing...
       - On failure: set `invoked: false` -- add `{ name, source: "<path>", matchedAt: "start", invoked: false }`, log warning, continue
    5. If no skills match across all scanned skills: log `- No skills matched`
    6. Update `.ralph-state.json` with updated `discoveredSkills` array
-   7. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+   7. Append a `## Skill Discovery` section to `progress.md` with match details per skill:
       ```markdown
       ## Skill Discovery
       - **<skill-name>** (<source>): matched (reason: <brief rationale>)
@@ -211,7 +216,7 @@ Continuing...
        - On failure: set `invoked: false` -- add `{ name, source: "<path>", matchedAt: "post-research", invoked: false }`, log warning, continue
     5. If no skills match across all scanned skills: log `- No new skills matched`
     6. Update `.ralph-state.json` with updated `discoveredSkills` array
-    7. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
+    7. Append a `### Post-Research Retry` subsection to `progress.md` under `## Skill Discovery`:
        ```markdown
        ### Post-Research Retry
        - **<skill-name>** (<source>): matched (reason: <brief rationale>)
@@ -254,7 +259,7 @@ Then ask ONE question: "How do you want to proceed?" with these options via AskU
 
 If Continue to requirements, display `-> Next: Run /ralph-specum:requirements` and stop.
 If Run review agent, invoke `spec-reviewer` with full `research.md` and goal context. Show findings, then ask again.
-If Run prototype, invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `research.md` and goal context, write the result to `.progress.md`, redisplay the walkthrough, and ask again.
+If Run prototype, invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `research.md` and goal context, write the result to `progress.md`, redisplay the walkthrough, and ask again.
 If Request changes, ask what to change, update `research.md`, redisplay the walkthrough, and ask again.
 </mandatory>
 

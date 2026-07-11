@@ -1,4 +1,4 @@
-# State files (created at runtime in user's spec directory)
+# Adapter-local runtime files and legacy progress
 .ralph-state.json
 **/.progress.md
 specs/.current-spec
@@ -6,9 +6,6 @@ specs/.current-spec
 # Lock files (parallel execution)
 **/.tasks.lock
 **/.git-commit.lock
-
-# Active spec pointer (user-specific)
-specs/.current-spec
 
 # Speckit state files
 .specify/.current-feature

@@ -1,6 +1,6 @@
 ---
-epic: {{EPIC_NAME}}
-created: {{TIMESTAMP}}
+epic: "{{EPIC_NAME}}"
+created: "{{TIMESTAMP}}"
 ---
 
 # Epic: {{EPIC_NAME}}

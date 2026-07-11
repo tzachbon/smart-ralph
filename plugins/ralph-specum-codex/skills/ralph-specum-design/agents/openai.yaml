@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Design"
   short_description: "Generate technical design for an active spec"
-  default_prompt: "Use $ralph-specum-design to run bundled grill-with-docs behavior, write design.md, then ask me to `continue to tasks`, `run review agent`, `run prototype`, or `request changes`."
+  default_prompt: "Use $ralph-specum-design with bounded read-only native subagents, validate interfaces and risks, write design.md, and stop for approval."
 policy:
   allow_implicit_invocation: false

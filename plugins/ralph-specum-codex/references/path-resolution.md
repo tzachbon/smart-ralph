@@ -1,55 +1,31 @@
-# Ralph Path Resolution
+# Ralph Specum Path Resolution for Codex
 
-## Settings Source
+## Project settings
 
-Read `.claude/ralph-specum.local.md` when it exists.
+Read `.codex/ralph-specum.local.md` when it exists. Supported frontmatter keys are `specs_dirs` and `auto_commit_spec`.
 
-Relevant frontmatter keys:
+The default specs root is `./specs`. The first configured root is the default root. Keep `.current-spec` in that root.
 
-- `specs_dirs`
-- `default_max_iterations`
-- `auto_commit_spec`
+## Resolution rules
 
-## Default Behavior
+- Resolve the repository root before reading settings or writing any file.
+- Reject configured roots and explicit spec paths that escape the repository root.
+- A bare `.current-spec` value means `<default-root>/<name>`.
+- A repo-relative path identifies a non-default-root spec.
+- When the same exact name exists in multiple roots, show the matches and require a path.
+- Ignore hidden directories when listing specs.
 
-- default specs root: `./specs`
-- current spec marker: `<default-specs-root>/.current-spec`
-- ignore unknown or deprecated settings keys, including `quick_mode_default`
+## Installed helper
 
-## `.current-spec` Rules
+From any Ralph phase skill, the resolver is at `../../scripts/resolve_spec_paths.py` relative to that skill directory. Resolve that path before invoking it. Do not assume the plugin source repository exists.
 
-- bare name means `<default-root>/<name>`
-- path starting with `./` or `/` means full path
-
-## Ambiguity Rules
-
-When a spec name exists in multiple roots:
-
-- do not guess
-- show the matching full paths
-- require the user to pick the full path
-
-## Script Usage
-
-Use `scripts/resolve_spec_paths.py`.
-
-Examples for this source repo, run them from the repo root:
+Typical invocations from a consumer repository are:
 
 ```bash
-python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD"
-python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --current
-python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --name api-auth
-python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --list
+python3 <resolved-plugin-script> --cwd "$PWD"
+python3 <resolved-plugin-script> --cwd "$PWD" --current
+python3 <resolved-plugin-script> --cwd "$PWD" --name api-auth
+python3 <resolved-plugin-script> --cwd "$PWD" --list
 ```
 
-Exit behavior:
-
-- `--name` returns `0` for a unique match
-- `--name` returns `1` when no spec matches
-- `--name` returns `2` when multiple specs match
-
-## Listing Rules
-
-- Only existing spec directories count in `--list`
-- Hidden directories are ignored
-- Missing configured roots do not stop resolution
+`--name` returns 0 for one match, 1 for no match, and 2 for ambiguous matches.

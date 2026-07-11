@@ -8,58 +8,30 @@ Common issues and solutions for Smart Ralph.
 
 ### Codex skill not found
 
-Codex installation targets the packaged skill folders in this repo, not the repo root.
+Ralph Specum v5 installs as one native Codex plugin. Codex 0.144.0 or newer is required.
 
 **Use:**
 ```bash
-python "$CODEX_HOME/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo tzachbon/smart-ralph \
-  --path platforms/codex/skills/ralph-specum
+codex --version
+codex plugin marketplace add tzachbon/smart-ralph
+codex plugin add ralph-specum-codex@smart-ralph
 ```
 
-Optional helper skills also install from `platforms/codex/skills/ralph-specum-*`.
-
-If you want the full Codex helper set, include `platforms/codex/skills/ralph-specum-triage` too.
-
-More detail: [`platforms/codex/README.md`](platforms/codex/README.md)
+Restart Codex after installation. See the [Codex quickstart](plugins/ralph-specum-codex/README.md).
 
 ---
 
 ### Codex bootstrap files missing
 
-Project-local bootstrap files are optional in Codex. They are shipped inside the installed primary skill, not at this repo root.
+Project-local bootstrap files are optional in Codex. The plugin requires no custom agent TOML or Stop hook.
 
 **Installed locations:**
 ```text
-$CODEX_HOME/skills/ralph-specum/assets/bootstrap/AGENTS.md
-$CODEX_HOME/skills/ralph-specum/assets/bootstrap/ralph-specum.local.md
+<installed-plugin>/assets/bootstrap/AGENTS.md
+<installed-plugin>/assets/bootstrap/ralph-specum.local.md
 ```
 
 Copy them into a consumer repo only if you want repo-local guidance.
-
----
-
-### "Ralph Loop plugin not found"
-
-Smart Ralph v2.0.0+ requires the Ralph Loop plugin as a dependency.
-
-**Solution:**
-```bash
-/plugin install ralph-loop@claude-plugins-official
-```
-
-**If marketplace not found:**
-```bash
-# Add the official marketplace first
-/plugin marketplace add anthropics/claude-code
-
-# Then install Ralph Loop
-/plugin install ralph-loop@claude-plugins-official
-```
-
-Then restart Claude Code.
-
-**Note:** The plugin is named `ralph-loop` (not `ralph-wiggum`). Both names refer to the same Ralph Wiggum technique, but the actual plugin name is `ralph-loop`.
 
 ---
 
@@ -114,7 +86,7 @@ This error occurs when you have an old plugin installation (v1.x) that reference
 (eval):cd:6: too many arguments
 ```
 
-This error occurs when the ralph-loop skill's setup script receives the coordinator prompt as unquoted shell arguments, causing the shell to interpret the prompt text as commands.
+This error comes from an obsolete pre-v5 installation that passed coordinator text through shell arguments.
 
 **Solution:**
 
@@ -129,11 +101,11 @@ Upgrade to Smart Ralph v2.0.1+ which writes the prompt to the state file directl
 
 ### Task keeps failing / Max iterations reached
 
-After max iterations (default: 5), the Ralph Loop stops to prevent infinite loops.
+After three failed attempts, Ralph stops the current task and records the blocker.
 
 **Solutions:**
 
-1. Check `.progress.md` in your spec folder for error details
+1. Check `progress.md` in your spec folder for error details
 2. Fix the issue manually
 3. Resume with `/ralph-specum:implement`
 
@@ -144,18 +116,9 @@ After max iterations (default: 5), the Ralph Loop stops to prevent infinite loop
 
 ---
 
-### "Loop state conflict"
+### Codex goal already active
 
-Another Ralph loop may already be running in this session.
-
-**Solution:**
-```bash
-# Cancel the existing loop
-/cancel-ralph
-
-# Then retry
-/ralph-specum:implement
-```
+Use native goal status to inspect it. Pause, resume, or clear it with native goal controls before starting another autonomous run. Normal `$ralph-specum-implement` does not create a goal.
 
 ---
 
@@ -166,7 +129,7 @@ The spec-executor may have output `TASK_COMPLETE` prematurely.
 **Solutions:**
 
 1. Check the task checkbox in `tasks.md` - uncheck it if needed
-2. Review `.progress.md` for what was actually completed
+2. Review `progress.md` for what was actually completed
 3. Run `/ralph-specum:implement` to retry
 
 ---
@@ -296,5 +259,5 @@ cat plugins/ralph-specum/hooks/hooks.json | jq .
 3. Include:
    - Error message
    - Contents of `.ralph-state.json`
-   - Contents of `.progress.md`
+   - Contents of `progress.md`, plus legacy `.progress.md` only when migration is involved
    - Claude Code version

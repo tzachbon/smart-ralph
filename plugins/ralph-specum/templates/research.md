@@ -1,7 +1,7 @@
 ---
-spec: {{SPEC_NAME}}
+spec: "{{SPEC_NAME}}"
 phase: research
-created: {{TIMESTAMP}}
+created: "{{TIMESTAMP}}"
 ---
 
 # Research: {{SPEC_NAME}}

@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Requirements"
   short_description: "Generate requirements for an active spec"
-  default_prompt: "Use $ralph-specum-requirements to run bundled grill-with-docs behavior, write requirements.md, then ask me to `continue to design`, `run review agent`, `run prototype`, or `request changes`."
+  default_prompt: "Use $ralph-specum-requirements with bounded read-only native subagents, validate evidence, write requirements.md, and stop for approval."
 policy:
   allow_implicit_invocation: false

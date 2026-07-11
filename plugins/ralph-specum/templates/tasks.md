@@ -4,7 +4,7 @@
 
 Total tasks: {{N}}
 
-<!-- Select workflow based on Intent Classification in .progress.md -->
+<!-- Select workflow based on Intent Classification in progress.md -->
 <!-- GREENFIELD → POC-first workflow | TRIVIAL/REFACTOR/MID_SIZED → TDD workflow -->
 
 **POC-first workflow** (GREENFIELD):
@@ -279,7 +279,7 @@ After POC validated, clean up code.
 
 ## Phase 4: Quality Gates
 
-> **IMPORTANT**: NEVER push directly to the default branch (main/master). Branch management is handled at startup via `/ralph-specum:start`. You should already be on a feature branch by this phase.
+> **IMPORTANT**: NEVER push directly to the default branch (main/master). The root coordinator handles branch setup when the spec starts. You should already be on a feature branch by this phase.
 
 > **Default Behavior**: When on a feature branch (not main/master), the final deliverable is a Pull Request with all CI checks passing. This is the default unless explicitly stated otherwise.
 
@@ -328,7 +328,7 @@ After POC validated, clean up code.
     5. Re-verify: `gh pr checks --watch`
 
 - [ ] VF [VERIFY] Verify original issue resolved (only for fix-type goals)
-  - **Do**: Re-run the command from "Reality Check (BEFORE)" section in .progress.md
+  - **Do**: Re-run the command from "Reality Check (BEFORE)" section in progress.md
   - **Verify**: Same command now exits 0 (or produces expected output)
   - **Done when**: Original failure no longer reproduces, BEFORE/AFTER comparison documented
   - **Note**: This task only applies when goal was classified as "fix" type. Skip if goal was "add" or "enhance".
@@ -425,7 +425,7 @@ EOF
     1. Run full test suite: `pnpm test` or equivalent
     2. Verify zero regressions (compare test count before/after)
     3. Check CI: `gh pr checks` all green
-    4. Verify modularity documented in .progress.md
+    4. Verify modularity documented in progress.md
     5. Confirm real-world validation documented
   - **Verify**: All commands pass, all criteria documented
   - **Done when**: All completion criteria ✅

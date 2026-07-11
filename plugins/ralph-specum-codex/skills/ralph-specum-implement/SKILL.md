@@ -1,50 +1,36 @@
 ---
 name: ralph-specum-implement
-description: This skill should be used only when the user explicitly asks to use `$ralph-specum-implement`, or explicitly asks Ralph Specum in Codex to run implementation for approved tasks, quick mode, or an explicit continue request.
-metadata:
-  surface: helper
-  action: implement
+description: Implement approved Ralph Specum tasks using native Codex subagents or `/goal`. Use when the user invokes `$ralph-specum-implement` or asks Ralph Specum to implement, resume, finish, run quickly, or work autonomously.
 ---
 
 # Ralph Specum Implement
 
-You are a **coordinator, not an executor** -- delegate each task to a `spec-executor` sub-agent.
+Read `../../references/workflow.md` and `../../references/state-contract.md` relative to this skill.
 
-## Contract
+## Preconditions
 
-- Resolve the active spec by explicit path, exact name, or `.current-spec`
-- Require `tasks.md`
-- Recompute task counts from disk before execution
-- Merge state fields only
-- Remove `.ralph-state.json` only when all tasks are complete and verified
+1. Resolve the active spec and require approved `tasks.md`.
+2. Count checkboxes with `../../scripts/count_tasks.py`. Task checkboxes are authoritative.
+3. Read `progress.md`. If only `.progress.md` exists, create a reviewed canonical summary before implementation and leave the legacy file unchanged and unstaged.
+4. Stop when tasks are unapproved or no actionable unchecked task exists.
 
-## Action
+## Explicit autonomous execution
 
-1. Resolve the active spec. If none exists, stop.
-2. Require `tasks.md`. Read `.progress.md`, current state, and current task markers.
-3. Recompute task counters from disk: `total`, `completed`, and `next_index`.
-4. Merge state for execution:
-   - `phase: "execution"`
-   - `awaitingApproval: false`
-   - `totalTasks: total`
-   - `taskIndex: next_index`
-   - preserve `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`
-5. **Delegate** each task to a `spec-executor` sub-agent. Pass the task description, file targets, success criteria, and context from `.progress.md`. The sub-agent implements the task and outputs `TASK_COMPLETE`. Do NOT implement tasks yourself. Execute tasks in order until complete or blocked.
-6. `[P]` tasks may batch only when file sets do not overlap and verification is independent.
-7. `[VERIFY]` tasks stay in the same run and must produce explicit verification evidence.
-8. Marker syntax must be explicitly present in `tasks.md`. If markers are absent, treat tasks as non-batchable by default.
-9. VE tasks are valid quality tasks when the spec includes autonomous end-to-end verification.
-10. Native task sync metadata should be preserved when present.
-11. After each task or safe batch:
-   - mark the checkbox
-   - update `.progress.md`
-   - merge the state update
-   - use the task `Commit` line unless commits were explicitly disabled
-12. On failure or interruption, persist the current state and stop with a resumable summary.
-13. On full completion, remove `.ralph-state.json` and report completion.
+Treat only explicit autonomous, quick, finish, or long-running wording as permission to start native `/goal`.
 
-## Resume Rules
+Build the goal objective with the resolved spec path, selected unchecked tasks, constraints, verification commands, and this terminal condition: selected tasks are checked, verification passes, `progress.md` is current, and no selected work remains. Do not include a token budget unless the user supplied one. Let native goal state own persistence and resume behavior.
 
-- Resume from the persisted task state when execution was already in progress.
-- If disk state and task checkboxes disagree, prefer `tasks.md` for completion and repair state to match.
-- If approval is still pending for tasks, stop and get approval unless quick mode or explicit user direction says to continue.
+## Normal execution
+
+Without explicit autonomous intent, execute one verified logical batch and return:
+
+1. Select the smallest coherent set of unchecked tasks with one verification boundary.
+2. Give one write subagent a bounded packet with the `bounded executor` role and `medium` reasoning tier. Raise the tier to `strongest` only for a genuinely high-risk batch. Permit only the implementation files for that batch. Prohibit edits to `tasks.md`, `progress.md`, `.current-spec`, and Git state.
+3. Require `Answer`, `Evidence`, `Risks`, `Verification performed`, and `Changed files`.
+4. Allow at most three attempts. Stop after the third failure with evidence.
+5. Validate the diff and run the narrowest useful verification as the root coordinator.
+6. Only after verification passes, mark the completed checkboxes and atomically update `progress.md`.
+7. Commit the verified logical batch when commits are enabled. Do not commit per small task.
+8. Report the batch, verification, remaining task count, and any risk.
+
+Use one write subagent at a time. Parallel writes require disjoint files and isolated worktrees. Do not create adapter-local continuation state or hooks.

@@ -332,11 +332,25 @@
 
     "progressFrontmatter": {
       "type": "object",
+      "required": ["spec", "phase", "approved_through", "updated"],
+      "additionalProperties": true,
       "properties": {
-        "spec": { "type": "string" },
-        "phase": { "type": "string" },
-        "task": { "type": "string", "pattern": "^[0-9]+/[0-9]+$" },
-        "updated": { "type": "string", "format": "date-time" }
+        "spec": {
+          "type": "string",
+          "minLength": 1
+        },
+        "phase": {
+          "type": "string",
+          "enum": ["research", "requirements", "design", "tasks", "implementation", "complete", "blocked"]
+        },
+        "approved_through": {
+          "type": "string",
+          "enum": ["none", "research", "requirements", "design", "tasks", "implementation"]
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
       }
     },
 

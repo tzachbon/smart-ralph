@@ -100,42 +100,34 @@ print('ok')
     done < <(helper_skills)
 }
 
-@test "codex plugin: 9 agent-config templates exist" {
-    local root count
-    root="$(plugin_root)"
-    count=$(ls "$root/agent-configs/"*.toml.template 2>/dev/null | wc -l)
-    [ "$count" -eq 9 ]
+@test "codex plugin: custom agent configuration is not shipped" {
+    [ -z "$(find "$(plugin_root)/agent-configs" -type f -print -quit 2>/dev/null)" ]
 }
 
-@test "codex plugin: spec-executor template contains TASK_COMPLETE" {
-    local template
-    template="$(plugin_root)/agent-configs/spec-executor.toml.template"
-    [ -f "$template" ]
-    grep -q "TASK_COMPLETE" "$template"
-}
-
-@test "codex plugin: README.md exists and has Installation and Migration sections" {
+@test "codex plugin: README.md has native install and compatibility guidance" {
     local readme
     readme="$(plugin_root)/README.md"
     [ -f "$readme" ]
-    grep -q "Installation" "$readme"
-    grep -q "Migration" "$readme"
+    grep -q "## Install" "$readme"
+    grep -q "## Version 5 compatibility shims" "$readme"
+    grep -q 'native `/goal`' "$readme"
 }
 
-@test "codex plugin: stop-watcher hook is executable" {
-    local hook
-    hook="$(plugin_root)/hooks/stop-watcher.sh"
-    [ -f "$hook" ]
-    [ -x "$hook" ]
+@test "codex plugin: no stop hook or manual continuation loop is shipped" {
+    local root
+    root="$(plugin_root)"
+    [ -z "$(find "$root/hooks" -type f -print -quit 2>/dev/null)" ]
+    [ ! -f "$root/scripts/merge_state.py" ]
+    ! grep -q '"hooks"' "$root/.codex-plugin/plugin.json"
 }
 
-@test "codex plugin: all 4 reference files exist" {
+@test "codex plugin: all native reference files exist" {
     local root
     root="$(plugin_root)"
     [ -f "$root/references/workflow.md" ]
     [ -f "$root/references/state-contract.md" ]
     [ -f "$root/references/path-resolution.md" ]
-    [ -f "$root/references/parity-matrix.md" ]
+    [ ! -f "$root/references/parity-matrix.md" ]
 }
 
 @test "codex plugin: all 10 template files exist" {
@@ -153,12 +145,12 @@ print('ok')
     [ -f "$root/templates/tasks.md" ]
 }
 
-@test "codex plugin: all 3 Python scripts exist" {
+@test "codex plugin: only platform-neutral helper scripts are shipped" {
     local root
     root="$(plugin_root)"
     [ -f "$root/scripts/count_tasks.py" ]
-    [ -f "$root/scripts/merge_state.py" ]
     [ -f "$root/scripts/resolve_spec_paths.py" ]
+    [ ! -f "$root/scripts/merge_state.py" ]
 }
 
 @test "codex plugin: schema file exists and is valid JSON" {
@@ -174,4 +166,9 @@ print('ok')
     root="$(plugin_root)"
     [ -d "$root/assets/bootstrap" ]
     [ "$(ls -A "$root/assets/bootstrap")" ]
+}
+
+@test "codex plugin: native contract test suite passes" {
+    run env PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s "$(plugin_root)/tests"
+    [ "$status" -eq 0 ]
 }

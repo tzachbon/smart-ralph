@@ -1,6 +1,6 @@
 ---
 description: Decompose a large feature into multiple dependency-aware specs (epic triage)
-argument-hint: [epic-name] [goal]
+argument-hint: "[epic-name] [goal]"
 allowed-tools: "*"
 ---
 
@@ -19,6 +19,11 @@ Create a task for each item and complete in order:
 5. **Display result** -- show epic summary and next steps
 
 ## Step 1: Check for Active Epic
+
+Read `${CLAUDE_PLUGIN_ROOT}/references/progress-state.md`. If resuming an epic,
+apply the same canonical progress and version 5 migration contract to its epic
+directory before reading progress. New epics create tracked `progress.md`
+directly.
 
 ```bash
 EPIC_FILE="./specs/.current-epic"
@@ -58,7 +63,7 @@ Create epic directory:
 mkdir -p "./specs/_epics/$EPIC_NAME"
 ```
 
-Initialize `.progress.md`:
+Initialize `progress.md`:
 ```markdown
 # Epic: $EPIC_NAME
 

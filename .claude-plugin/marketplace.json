@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "ralph-specum",
-      "description": "Spec-driven development with research, requirements, design, tasks, autonomous execution, and epic triage. Fresh context per task.",
-      "version": "4.10.2",
+      "description": "Native spec-driven development for Claude Code with reviewed phases, delegated execution, and verification.",
+      "version": "5.0.0",
       "author": {
         "name": "tzachbon"
       },
@@ -20,6 +20,7 @@
         "ralph",
         "spec-driven",
         "autonomous",
+        "claude",
         "research",
         "tasks",
         "epic",

@@ -77,7 +77,7 @@ If no completion signal from spec-executor:
 2. If taskIteration > maxTaskIterations:
    - Output error: "ERROR: Max retries reached for task $taskIndex after $maxTaskIterations attempts"
    - Include last error/failure reason from spec-executor output
-   - Suggest: "Review .progress.md Learnings section for failure details"
+   - Suggest: "Review progress.md Learnings section for failure details"
    - Suggest: "Fix the issue manually then run /ralph-specum:implement to resume"
    - Do NOT continue execution
    - Do NOT output ALL_TASKS_COMPLETE
@@ -247,11 +247,13 @@ TASK_ID="X.Y"           # Original task ID (e.g., "1.3")
 FIX_TASK_ID="X.Y.N"     # Generated fix task ID (e.g., "1.3.1")
 ERROR_MSG="$failure_error"  # Escaped error message from failure object
 
-# Read current state, update fixTaskMap, write back
-jq --arg taskId "$TASK_ID" \
+# Read current state, update fixTaskMap, and publish atomically
+bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-runtime-state.sh" \
+   "$SPEC_PATH/.ralph-state.json" \
+   --arg taskId "$TASK_ID" \
    --arg fixId "$FIX_TASK_ID" \
    --arg error "$ERROR_MSG" \
-   '
+   --filter '
    # Initialize fixTaskMap if it does not exist
    .fixTaskMap //= {} |
 
@@ -264,9 +266,7 @@ jq --arg taskId "$TASK_ID" \
    .fixTaskMap[$taskId].lastError = $error |
 
    # Also increment totalTasks to account for inserted fix task
-   .totalTasks += 1
-   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   .totalTasks += 1'
 ```
 
 **Example state after fix task generation**:
@@ -487,9 +487,9 @@ Success!
 
 ## Fix Task Progress Logging
 
-After original task completes (TASK_COMPLETE) following fix task recovery, log the fix task chain to .progress.md.
+After original task completes (TASK_COMPLETE) following fix task recovery, log the fix task chain to progress.md.
 
-Add/update section in .progress.md:
+Add/update section in progress.md:
 ```markdown
 ## Fix Task History
 - Task 1.3: 2 fixes attempted (1.3.1, 1.3.2) - Final: PASS
@@ -501,7 +501,7 @@ Add/update section in .progress.md:
 
 After successful original task retry (TASK_COMPLETE):
 1. Check if fixTaskMap[$taskId] exists and has attempts > 0
-2. If yes, append fix task history entry to .progress.md:
+2. If yes, append fix task history entry to progress.md:
    ```
    - Task $taskId: $attempts fixes attempted ($fixTaskIds) - Final: PASS
    ```
@@ -513,7 +513,7 @@ On max fix limit reached (limit error):
    ```
    - Task $taskId: $attempts fixes attempted ($fixTaskIds) - Final: FAIL (max limit)
    ```
-2. Include in .progress.md before stopping execution
+2. Include in progress.md before stopping execution
 
 **Example Progress Update**:
 

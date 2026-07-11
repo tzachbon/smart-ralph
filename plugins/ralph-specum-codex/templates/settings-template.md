@@ -1,79 +1,43 @@
 ---
-enabled: true
-default_max_iterations: 5
 auto_commit_spec: true
-quick_mode_default: false
-specs_dirs: ["./specs"]
+specs_dirs:
+  - "./specs"
 ---
 
-# Ralph Specum Configuration
+# Ralph Specum Configuration for Codex
 
-This file configures Ralph Specum plugin behavior for this project.
+Configuration is optional. The plugin works immediately after installation with
+`./specs` as its default root.
 
 ## Settings
 
-### enabled
-Enable/disable the plugin entirely. Set to `false` to disable all hooks and commands.
+### `auto_commit_spec`
 
-### default_max_iterations
-Default maximum retries per failed task before blocking (default: 5).
+Set to `false` when the root coordinator should leave verified spec artifact
+changes uncommitted.
 
-### auto_commit_spec
-Whether to automatically commit spec files after generation (default: true).
+### `specs_dirs`
 
-### quick_mode_default
-Whether to run in quick mode by default when no flag provided (default: false).
-
-### specs_dirs
-Array of directories where specs can be stored (default: `["./specs"]`).
-
-This enables organizing specs across multiple directories, useful for:
-- **Monorepos**: Keep specs close to their related packages
-- **Large projects**: Group specs by feature area or team
-- **Separation of concerns**: Distinguish infra specs from product specs
-
-When a spec name exists in multiple directories, commands will prompt for disambiguation.
+List one or more workspace-contained spec roots. The first entry is the default.
+Paths that escape the project root, including symlink escapes, are rejected.
 
 ## Usage
 
-Create this file at `.claude/ralph-specum.local.md` in your project root to customize plugin behavior.
-
-## Example
+Save overrides at `.codex/ralph-specum.local.md` in the project root.
 
 ```yaml
 ---
-enabled: true
-default_max_iterations: 3
 auto_commit_spec: false
-quick_mode_default: true
----
-
-# Ralph Specum Configuration
-
-Custom settings for this project.
-```
-
-## Monorepo Example
-
-For monorepos, configure multiple specs directories to keep specs organized by package:
-
-```yaml
----
-enabled: true
 specs_dirs:
   - "./specs"
   - "./packages/frontend/specs"
   - "./packages/backend/specs"
-  - "./packages/shared/specs"
 ---
 
 # Ralph Specum Configuration
-
-Specs are organized by package in this monorepo.
 ```
 
-With this setup:
-- `/ralph-specum:start my-feature` creates spec in `./specs/` (first configured dir)
-- `/ralph-specum:start my-feature --specs-dir ./packages/frontend/specs` creates in frontend
-- `/ralph-specum:status` lists all specs from all configured directories
-- `/ralph-specum:switch my-feature` prompts if name exists in multiple directories
+Use `$ralph-specum-start` to create or resume a spec. Use
+`$ralph-specum-status` to list progress across configured roots. When a spec
+name exists in more than one root, Ralph reports the matching paths and asks
+you to disambiguate.

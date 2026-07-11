@@ -1,7 +1,7 @@
 ---
 type: index-summary
 generated: true
-indexed: {{TIMESTAMP}}
+indexed: "{{TIMESTAMP}}"
 ---
 
 # Codebase Index

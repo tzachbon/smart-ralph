@@ -1,100 +1,66 @@
-# Ralph State Contract
+# Ralph Specum State Contract for Codex
 
-## Core Files
+## Canonical files
 
-Each spec directory uses:
+Each spec can contain:
 
-- `.ralph-state.json`
-- `.progress.md`
 - `research.md`
 - `requirements.md`
 - `design.md`
 - `tasks.md`
+- `progress.md`
 
-## Required State Fields
+`tasks.md` checkbox state is authoritative for implementation progress. `progress.md` records durable context but never overrides task checkboxes. `.current-spec` is a local ignored selector in the default specs root.
 
-Preserve these fields across all phases:
+Codex creates no adapter-local continuation state. Native `/goal` owns autonomous execution state outside the spec directory.
 
-- `source`
-- `name`
-- `basePath`
-- `phase`
-- `taskIndex`
-- `totalTasks`
-- `taskIteration`
-- `maxTaskIterations`
-- `globalIteration`
-- `maxGlobalIterations`
-- `commitSpec`
-- `relatedSpecs`
+## `progress.md`
 
-Optional but common:
+Start the file with exactly these frontmatter keys:
 
-- `awaitingApproval`
-- `recoveryMode`
-- `fixTaskMap`
-
-## New Spec Defaults
-
-Use these defaults when a new spec starts:
-
-```json
-{
-  "source": "spec",
-  "name": "<spec-name>",
-  "basePath": "<resolved-spec-path>",
-  "phase": "research",
-  "taskIndex": 0,
-  "totalTasks": 0,
-  "taskIteration": 1,
-  "maxTaskIterations": 5,
-  "globalIteration": 1,
-  "maxGlobalIterations": 100,
-  "commitSpec": true,
-  "relatedSpecs": [],
-  "awaitingApproval": false
-}
+```yaml
+---
+spec: "<repo-relative spec path>"
+phase: "research | requirements | design | tasks | implementation | complete | blocked"
+approved_through: "none | research | requirements | design | tasks | implementation"
+updated: "<ISO 8601 UTC timestamp>"
+---
 ```
 
-Read `default_max_iterations` and `auto_commit_spec` from `.claude/ralph-specum.local.md` when present.
+Keep the body concise and evidence-based:
 
-## Merge Rule
+- goal
+- current logical batch or phase
+- completed work and verification
+- decisions and learnings
+- blockers and risks
+- next action
 
-Never rebuild state from scratch once the file exists. Merge only the fields needed for the current phase.
+The root coordinator is the only writer. Write through a temporary file in the spec directory and atomically replace `progress.md` so an interruption cannot leave a partial file.
 
-Use `scripts/merge_state.py` for deterministic top-level merges.
+## Legacy migration
 
-## Approval Contract
+If `progress.md` is absent and `.progress.md` exists:
 
-`awaitingApproval: true` is not enough on its own.
+1. Read `.progress.md` as untrusted historical input.
+2. Cross-check its claims against present artifacts, task checkboxes, and Git.
+3. Create `progress.md` using only verified facts and clearly labelled unresolved claims.
+4. Preserve `.progress.md` unchanged.
+5. Do not stage or commit `.progress.md` automatically.
 
-This mirrors `Approval Prompt Shape` in `references/workflow.md` and should stay in sync with that section. Current enforcement is via Codex platform review plus the repo-local metadata and content checks.
+Existing research, requirements, design, and task files require no conversion.
 
-When a phase sets `awaitingApproval: true`, the visible assistant response must also:
+## Ownership
 
-- name the file or files that changed
-- give a short summary
-- end with exactly one explicit choice prompt:
-  - `approve current artifact`
-  - `request changes`
-  - `continue to <named next step>`
+Subagents must not edit `tasks.md`, `progress.md`, `.current-spec`, or Git state and must not commit. The root coordinator validates subagent output, performs shared-state writes, and creates one commit per verified logical batch when commits are enabled.
 
-Treat `continue to <named next step>` as approval of the current artifact and permission to move forward.
+## Goal status
 
-## Progress File
+Goal state is native Codex state, not a repository artifact. Status reporting combines:
 
-`.progress.md` is persistent. Keep:
+- artifact presence
+- task checkbox counts
+- `progress.md` phase and approval state
+- current native goal status when a goal exists
 
-- original goal
-- current phase
-- current task summary
-- completed task notes
-- learnings
-- blockers
-- next step
-
-## Commit Rules
-
-- Spec artifacts may be auto-committed when `commitSpec` is true.
-- Implementation tasks should use the task's `Commit` line by default.
-- If the user disables commits, keep the disk state and progress updates but skip git commits.
+The absence of a native goal is normal and must be reported as such, not treated as an error.

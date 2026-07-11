@@ -64,8 +64,8 @@ jobs:
           echo "manifest name:    $PR_NAME"
           echo "manifest version: ${BASE_VERSION} -> ${PR_VERSION}"
 
-          if [ "$PR_NAME" != "ralph-specum" ]; then
-            echo "ERROR: Expected manifest name ralph-specum"
+          if [ "$PR_NAME" != "ralph-specum-codex" ]; then
+            echo "ERROR: Expected manifest name ralph-specum-codex"
             exit 1
           fi
 

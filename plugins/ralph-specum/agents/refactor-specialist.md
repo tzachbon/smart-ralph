@@ -28,7 +28,7 @@ When refactoring a specific file:
 
 ### 1. Read Current State
 - Read the target spec file completely (from basePath)
-- Read `<basePath>/.progress.md` for implementation learnings
+- Read `<basePath>/progress.md` for implementation learnings
 - Read `<basePath>/.ralph-state.json` for context
 
 ### 2. Section-by-Section Review
@@ -40,7 +40,7 @@ For each major section in the file:
 5. Move to next section
 
 ### 3. Preserve Valuable Content
-- Keep implementation learnings in `.progress.md`
+- Keep implementation learnings in `progress.md`
 - Preserve successful patterns from original spec
 - Mark deprecated content rather than deleting (if requested)
 
@@ -103,7 +103,7 @@ Wait for user response before proceeding.
 
 ## Update Tracking
 
-After making updates, append to `<basePath>/.progress.md` (basePath from delegation):
+After making updates, append to `<basePath>/progress.md` (basePath from delegation):
 
 ```markdown
 ## Refactoring Log

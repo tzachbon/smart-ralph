@@ -151,7 +151,7 @@ GLOBAL_ITERATION=$(jq -r '.globalIteration // 1' "$STATE_FILE" 2>/dev/null || ec
 MAX_GLOBAL=$(jq -r '.maxGlobalIterations // 100' "$STATE_FILE" 2>/dev/null || echo "100")
 
 if [ "$GLOBAL_ITERATION" -ge "$MAX_GLOBAL" ]; then
-    echo "[ralph-specum] ERROR: Maximum global iterations ($MAX_GLOBAL) reached. Review .progress.md for failure patterns." >&2
+    echo "[ralph-specum] ERROR: Maximum global iterations ($MAX_GLOBAL) reached. Review progress.md for failure patterns." >&2
     echo "[ralph-specum] Recovery: fix issues manually, then run /ralph-specum:implement or /ralph-specum:cancel" >&2
     exit 0
 fi
@@ -356,7 +356,7 @@ fi
 # Only remove files older than 60 minutes to avoid race conditions with active executors
 find "$CWD/$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
 
-# Note: .progress.md and .ralph-state.json are preserved for loop continuation
+# Note: progress.md and .ralph-state.json are preserved for loop continuation
 # Use /ralph-specum:cancel to explicitly stop execution and cleanup state
 
 exit 0

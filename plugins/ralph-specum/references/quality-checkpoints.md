@@ -107,15 +107,15 @@ All checkpoints use the `[VERIFY]` tag and follow the standard Do/Verify/Done wh
 
 ## VF Task for Fix Goals
 
-When `.progress.md` contains `## Reality Check (BEFORE)`, the goal is a fix-type. Add a VF task as the final task in Phase 4 (after PR creation):
+When `progress.md` contains `## Reality Check (BEFORE)`, the goal is a fix-type. Add a VF task as the final task in Phase 4 (after PR creation):
 
 ```markdown
 - [ ] VF [VERIFY] Goal verification: original failure now passes
   - **Do**:
-    1. Read BEFORE state from .progress.md
+    1. Read BEFORE state from progress.md
     2. Re-run reproduction command from Reality Check (BEFORE)
     3. Compare output with BEFORE failure
-    4. Document AFTER state in .progress.md
+    4. Document AFTER state in progress.md
   - **Verify**: Exit code 0 for reproduction command
   - **Done when**: Command that failed before now passes
   - **Commit**: `chore(<spec>): verify fix resolves original issue`
@@ -198,4 +198,4 @@ The spec-executor does NOT execute [VERIFY] tasks directly. It delegates them to
 1. Detect `[VERIFY]` tag in task description
 2. Delegate to qa-engineer with spec name, path, and full task body
 3. On VERIFICATION_PASS: mark task complete, update progress, commit if fixes made
-4. On VERIFICATION_FAIL: do NOT mark complete, log failure in .progress.md Learnings, let retry loop handle it
+4. On VERIFICATION_FAIL: do NOT mark complete, log failure in progress.md Learnings, let retry loop handle it

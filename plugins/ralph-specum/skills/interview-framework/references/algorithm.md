@@ -7,7 +7,7 @@ Detailed pseudocode for the adaptive brainstorming dialogue algorithm.
 ```text
 UNDERSTAND:
   1. Read all available context:
-     - .progress.md (prior phase answers, intent, goal)
+     - progress.md (prior phase answers, intent, goal)
      - Prior artifacts (research.md, requirements.md, etc.)
      - Original goal text
   2. Read the exploration territory provided by the calling command
@@ -64,7 +64,7 @@ UNDERSTAND:
 **Key rules for question generation:**
 - Each question builds on prior answers in THIS dialogue AND prior phases
 - Reference specific things the user said ("You mentioned X, does that mean...")
-- Never ask something .progress.md already answers
+- Never ask something progress.md already answers
 - Never ask generic questions. Every question must be grounded in the user's context.
 - If you have enough context to propose meaningful approaches, stop and move on. Do not exhaust every open node mechanically.
 
@@ -123,6 +123,6 @@ CONFIRM & STORE:
       - [Chosen approach summary]
       Does this look right?"
   2. If user corrects something, update before storing
-  3. Store in .progress.md (see Context Accumulator in SKILL.md)
+  3. Store in progress.md (see Context Accumulator in SKILL.md)
   4. Proceed to subagent delegation
 ```

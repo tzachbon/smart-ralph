@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Implement"
-  short_description: "Execute or resume a Ralph backlog"
-  default_prompt: "Use $ralph-specum-implement to execute the remaining Ralph tasks only after I approved tasks or explicitly told Ralph to continue."
+  short_description: "Implement one batch or start a native goal"
+  default_prompt: "Use $ralph-specum-implement to implement one verified logical batch. Use native /goal only if I explicitly request autonomous execution."
 policy:
   allow_implicit_invocation: false

@@ -1,50 +1,17 @@
 ---
 name: ralph-specum-research
-description: This skill should be used only when the user explicitly asks to use `$ralph-specum-research`, or explicitly asks Ralph Specum in Codex to run the research phase.
-metadata:
-  surface: helper
-  action: research
+description: Research an active Ralph Specum spec with bounded native Codex subagents. Use when the user invokes `$ralph-specum-research` or asks Ralph Specum to research a spec.
 ---
 
 # Ralph Specum Research
 
-You are a **coordinator, not a researcher** -- delegate ALL work to a `research-analyst` sub-agent.
+1. Resolve the active spec with `../../scripts/resolve_spec_paths.py` relative to this skill.
+2. Read the goal, existing artifacts, repository guidance, related specs, and `progress.md`.
+3. Delegate substantive research to at least one read-only native subagent. Use the `medium` reasoning tier and `evidence investigator` role by default. Upgrade a packet to `strongest` for a security boundary, irreversible migration, novel cross-domain architecture, or materially conflicting evidence, and record why. Split independent questions across two or three agents when useful, with three as the maximum.
+4. Give each subagent the exact bounded packet from `../../references/workflow.md`, including objective, role, reasoning tier, inputs, allowed files, read-only permission, acceptance criteria, verification command, evidence, and prohibitions on shared state and Git.
+5. Require every result to contain `Answer`, `Evidence`, `Risks`, `Verification performed`, and `Changed files`. Reject unexpected changes or unsupported claims.
+6. Validate and synthesize results into `research.md` as the root coordinator.
+7. Atomically update `progress.md` with `phase: research`, evidence, risks, and next action. Do not alter `approved_through` until the user approves.
+8. Present the artifact, delegated roles and tiers, and stop for approval unless the current native goal explicitly owns autonomous execution.
 
-## Contract
-
-- Resolve the active spec by explicit path, exact name, or `.current-spec`
-- Respect `.claude/ralph-specum.local.md` when present
-- Default specs root is `./specs`
-- Keep the canonical Ralph file names
-- Merge state fields only
-
-## Action
-
-1. Resolve the active spec. If none exists, stop and tell the user to start a spec first.
-2. Read the goal, `.progress.md`, current state, indexed codebase context, related specs, and epic context when present.
-3. Use bundled grill-with-docs behavior unless quick mode is active. If `$grill-with-docs` exists, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology when useful.
-4. **Delegate** research generation to a `research-analyst` sub-agent. Pass the goal, existing context, grill-with-docs decisions, and interview results. The sub-agent writes `research.md` in the spec directory. Do NOT write research.md yourself.
-5. Read the sub-agent's output and validate it exists.
-6. Merge state with `phase: "research"` and `awaitingApproval: true` (or `false` when `--quick` is active).
-7. Update `.progress.md` with the research summary, blockers, learnings, next step, and verification tooling notes when relevant.
-8. If spec commits are enabled, commit only the spec artifacts.
-
-### Stop Behavior
-
-- **Without `--quick`**: STOP HERE. Display the walkthrough summary and approval prompt. Do NOT continue to requirements. Wait for the user to explicitly approve and request the next phase.
-- **With `--quick`**: Continue directly into requirements.
-
-## Output Shape
-
-The result should identify existing code patterns, external references, constraints, related specs, risks, verification tooling, and a clear recommendation for the next phase.
-
-## Response Handoff
-
-- After writing `research.md`, name `research.md` and summarize the research briefly.
-- If the user chooses `run prototype`, use `$prototype` when available. If unavailable, run a throwaway prototype inline, append the result to `.progress.md`, redisplay the walkthrough, and ask again.
-- End with exactly one explicit choice prompt:
-  - `continue to requirements`
-  - `run review agent`
-  - `run prototype`
-  - `request changes`
-- Treat `continue to requirements` as approval of `research.md`.
+Research must cover existing patterns, constraints, dependencies, material risks, verification options, and a recommendation.

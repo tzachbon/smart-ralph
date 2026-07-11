@@ -25,13 +25,13 @@ Create a task for each item and complete in order:
 2. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
 3. Check the resolved spec directory exists
 4. Read `.ralph-state.json`; clear approval flag: `awaitingApproval: false`
-5. Read context: `research.md` (if exists), `.progress.md`, original goal
+5. Read context: `research.md` (if exists), `progress.md`, original goal
 
 ## Step 2: Interview (skip if --quick)
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
-### Read Context from .progress.md
+### Read Context from progress.md
 
 Parse Intent Classification and prior interview responses to skip already-answered questions.
 
@@ -58,7 +58,7 @@ After dialogue, propose 2-3 scoping approaches. Examples (illustrative only):
 
 ### Store Interview & Approach
 
-Append to `.progress.md` under "Interview Responses":
+Append to `progress.md` under "Interview Responses":
 ```markdown
 ### Requirements Interview (from requirements.md)
 - [Topic 1]: [response]
@@ -94,7 +94,7 @@ Follow the full team lifecycle:
 If NOT `--quick`, skip to Step 5.
 
 Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
-- REVIEW_PASS: log to .progress.md, proceed
+- REVIEW_PASS: log to progress.md, proceed
 - REVIEW_FAIL (iteration < 3): log, re-invoke product-manager with feedback, loop
 - REVIEW_FAIL (iteration >= 3): graceful degradation, log warning, proceed
 - No signal: treat as REVIEW_PASS (permissive)
@@ -143,7 +143,7 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 
 **If "Continue to design"**: proceed to Step 6.
 **If "Run review agent"**: invoke `spec-reviewer` with full `requirements.md` content and upstream `research.md`. Display findings, then loop back to this same question.
-**If "Run prototype"**: invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `requirements.md` and upstream context, write the result to `.progress.md`, re-display the walkthrough, then ask again.
+**If "Run prototype"**: invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `requirements.md` and upstream context, write the result to `progress.md`, re-display the walkthrough, then ask again.
 **If "Request changes" or "Other"**:
 1. Ask what to change
 2. Re-invoke product-manager using **cleanup-and-recreate** team pattern
@@ -155,11 +155,13 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 
 1. **Merge** into `.ralph-state.json` (preserve all existing fields):
    ```bash
-   jq '. + {"phase": "requirements", "awaitingApproval": true}' \
-     "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-     mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-runtime-state.sh" \
+     "$SPEC_PATH/.ralph-state.json" \
+     --string phase requirements --json awaitingApproval true
    ```
-2. Update `.progress.md`: mark research as implicitly approved, set current phase
+2. Update `progress.md`: mark research as implicitly approved and refresh
+   canonical frontmatter with `phase: requirements`,
+   `approved_through: research`, and `updated`
 
 ### Commit Spec (if enabled)
 

@@ -8,6 +8,8 @@ The research command is a **coordinator, not a researcher**. It MUST delegate AL
 - `Explore` subagent for fast codebase analysis (read-only, uses Haiku model)
 - `research-analyst` subagent for web research (needs WebSearch/WebFetch)
 
+Use Sonnet as the default research-analyst model. Override a specific invocation to Opus when the question controls a security boundary, irreversible migration, novel cross-domain architecture, or a decision with materially conflicting evidence. State the escalation reason in the task prompt. Do not escalate routine codebase discovery from Explore.
+
 The coordinator never performs web searches, codebase analysis, or writes research.md content itself.
 
 ## Topic Identification
@@ -82,7 +84,7 @@ Task(subagent_type: research-analyst, team_name: "research-$spec", name: "resear
     Spec: $spec | Path: ./specs/$spec/
     Output: ./specs/$spec/.research-[topic].md
 
-    Goal context: [problem, constraints, success criteria from .progress.md]
+    Goal context: [problem, constraints, success criteria from progress.md]
 
     Instructions:
     1. WebSearch for best practices, industry standards, common pitfalls

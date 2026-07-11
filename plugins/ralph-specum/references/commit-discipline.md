@@ -46,14 +46,14 @@ The actual implementation files listed in the task.
 
 ```bash
 # Standard (sequential) execution:
-git add <basePath>/tasks.md <basePath>/.progress.md
+git add <basePath>/tasks.md <basePath>/progress.md
 
 # Parallel execution (when progressFile provided):
 git add <basePath>/tasks.md <basePath>/<progressFile>
 ```
 
 - `tasks.md` - task checkmarks updated
-- Progress file - either `.progress.md` (default) or progressFile (parallel)
+- Progress file - either `progress.md` (default) or progressFile (parallel)
 
 Failure to commit spec files breaks progress tracking across sessions.
 
@@ -61,7 +61,7 @@ Failure to commit spec files breaks progress tracking across sessions.
 
 The coordinator commits spec tracking files after each state update:
 ```bash
-git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/progress.md" ./specs/.index/
 git diff --cached --quiet || git commit -m "chore(spec): update progress for task $taskIndex"
 ```
 
@@ -69,7 +69,7 @@ git diff --cached --quiet || git commit -m "chore(spec): update progress for tas
 
 - `.ralph-state.json` - never committed, managed by coordinator
 - Lock files (`.tasks.lock`, `.git-commit.lock`) - temporary, cleaned up after batch
-- Temp progress files (`.progress-task-*.md`) - merged into main .progress.md by coordinator
+- Temp progress files (`.progress-task-*.md`) - merged into main progress.md by coordinator
 
 ## File Locking for Parallel Commits
 

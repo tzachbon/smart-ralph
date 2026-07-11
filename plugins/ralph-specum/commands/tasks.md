@@ -1,6 +1,6 @@
 ---
 description: Generate implementation tasks from design
-argument-hint: [spec-name] [--tasks-size fine|coarse]
+argument-hint: "[spec-name] [--tasks-size fine|coarse]"
 allowed-tools: "*"
 ---
 
@@ -32,13 +32,13 @@ Create a task for each item and complete in order:
    - If value is invalid (not `fine` or `coarse`): warn the user (`⚠️ Invalid --tasks-size value "<value>", defaulting to fine`) and set `"granularity": "fine"` in `.ralph-state.json`
    - If `--tasks-size` flag is absent: leave `granularity` unchanged in `.ralph-state.json` (preserve any value set by `/ralph-specum:start`)
 8. **Quick mode granularity default**: If `--quick` is present in `$ARGUMENTS` AND `granularity` is not set in `.ralph-state.json`, set `"granularity": "fine"` in `.ralph-state.json`
-9. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
+9. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `progress.md`
 
 ## Step 2: Interview (skip if --quick)
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
-### Read Context from .progress.md
+### Read Context from progress.md
 
 Parse Intent Classification and all prior interview responses to skip already-answered questions.
 
@@ -66,7 +66,7 @@ If either condition is false, skip the granularity question:
 - In `--quick` mode: handled in Step 1 (quick mode granularity default)
 - If `granularity` already set in `.ralph-state.json`: use the existing value without asking
 
-When the user answers the granularity question, store the response in `.progress.md` under Interview Responses and update `"granularity"` in `.ralph-state.json`.
+When the user answers the granularity question, store the response in `progress.md` under Interview Responses and update `"granularity"` in `.ralph-state.json`.
 
 ### Tasks Approach Proposals
 
@@ -77,7 +77,7 @@ After dialogue, propose 2-3 execution strategies. Examples (illustrative only):
 
 ### Store Interview & Approach
 
-Append to `.progress.md` under "Interview Responses":
+Append to `progress.md` under "Interview Responses":
 ```markdown
 ### Tasks Interview (from tasks.md)
 - [Topic 1]: [response]
@@ -132,7 +132,7 @@ Follow the full team lifecycle:
 If NOT `--quick`, skip to Step 5.
 
 Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
-- REVIEW_PASS: log to .progress.md, proceed
+- REVIEW_PASS: log to progress.md, proceed
 - REVIEW_FAIL (iteration < 3): log, re-invoke task-planner with feedback + requirements + design context, loop
 - REVIEW_FAIL (iteration >= 3): graceful degradation, log warning, proceed
 - No signal: treat as REVIEW_PASS (permissive)
@@ -191,7 +191,10 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 
 1. Count total tasks from generated file
 2. Update `.ralph-state.json`: `{ "phase": "tasks", "totalTasks": <count>, "awaitingApproval": true }`
-3. Update `.progress.md`: mark design as implicitly approved, set current phase, update task count
+3. Update `progress.md`: mark design as implicitly approved, record the task
+   count, and refresh canonical frontmatter with `phase: tasks`,
+   `approved_through: design`, and `updated`. Task checkboxes remain the sole
+   completion truth.
 
 ### Commit Spec (if enabled)
 

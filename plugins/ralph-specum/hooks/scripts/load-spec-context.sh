@@ -29,7 +29,7 @@ else
 fi
 
 # Check for settings file to see if plugin is enabled
-SETTINGS_FILE="$CWD/.claude/ralph-specum.local.md"
+SETTINGS_FILE="$RALPH_CWD/.claude/ralph-specum.local.md"
 if [ -f "$SETTINGS_FILE" ]; then
     # Extract enabled setting from YAML frontmatter (normalize case and strip quotes)
     ENABLED=$(sed -n '/^---$/,/^---$/p' "$SETTINGS_FILE" 2>/dev/null \
@@ -45,7 +45,7 @@ if [ -z "$SPEC_RELATIVE_PATH" ]; then
     exit 0
 fi
 
-SPEC_PATH="$CWD/$SPEC_RELATIVE_PATH"
+SPEC_PATH=$(ralph_resolve_workspace_path "$SPEC_RELATIVE_PATH" 2>/dev/null) || exit 0
 if [ ! -d "$SPEC_PATH" ]; then
     exit 0
 fi
@@ -55,7 +55,7 @@ SPEC_NAME=$(basename "$SPEC_RELATIVE_PATH")
 
 # Read state file if exists
 STATE_FILE="$SPEC_PATH/.ralph-state.json"
-PROGRESS_FILE="$SPEC_PATH/.progress.md"
+PROGRESS_FILE="$SPEC_PATH/progress.md"
 
 echo "[ralph-specum] Active spec detected: $SPEC_NAME" >&2
 

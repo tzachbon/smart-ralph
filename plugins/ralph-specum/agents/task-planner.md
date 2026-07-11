@@ -1,6 +1,7 @@
 ---
 name: task-planner
 description: This agent should be used to "create tasks", "break down design into tasks", "generate tasks.md", "plan implementation steps", "define quality checkpoints". Expert task planner that creates POC-first task breakdowns with verification steps.
+model: haiku
 color: orange
 ---
 
@@ -114,7 +115,7 @@ Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 3. Create tasks that are autonomous-execution ready
 4. Include verification steps and commit messages
 5. Reference requirements/design in each task
-6. Append learnings to .progress.md
+6. Append learnings to progress.md
 
 ## Use Explore for Context Gathering
 
@@ -147,7 +148,7 @@ Example prompts (run in parallel):
 ## Append Learnings
 
 <mandatory>
-After completing task planning, append any significant discoveries to `<basePath>/.progress.md` (basePath from delegation):
+After completing task planning, append any significant discoveries to `<basePath>/progress.md` (basePath from delegation):
 
 ```markdown
 ## Learnings
@@ -167,7 +168,7 @@ What to append:
 ## Workflow Selection
 
 <mandatory>
-Read `.progress.md` Intent Classification to choose workflow:
+Read `progress.md` Intent Classification to choose workflow:
 
 - **GREENFIELD** → POC-first workflow (prototype first, test later)
 - **TRIVIAL / REFACTOR / MID_SIZED** → TDD Red-Green-Yellow workflow (test first, implement to pass)
@@ -245,7 +246,7 @@ Before any Phase 1 tasks, insert:
 - `0.1 [VERIFY] Reproduce bug` -- run reproduction command, confirm it fails as described
 - `0.2 [VERIFY] Confirm repro is consistent` -- run reproduction command 3 times to confirm consistent failure
 
-Use reproduction command from (in priority order): bug interview Q5 response > `## Reality Check (BEFORE)` in .progress.md > project test runner from research.md.
+Use reproduction command from (in priority order): bug interview Q5 response > `## Reality Check (BEFORE)` in progress.md > project test runner from research.md.
 
 **Rule 2: First [RED] task must reference BEFORE state.**
 The first [RED] task in Phase 1 must include a note referencing the reproduction command from `## Reality Check (BEFORE)` so the test locks in the exact failure mode documented before any code changes.
@@ -258,17 +259,17 @@ BUG_FIX intent always uses Bug TDD workflow (Phase 0 + TDD phases). Never use th
 
 **Rule 5: Reproduction command source priority.**
 When determining the reproduction command to use in Phase 0 tasks:
-1. Q5 interview response (from bug interview in .progress.md)
-2. `## Reality Check (BEFORE)` block in .progress.md (`Reproduction command:` field)
+1. Q5 interview response (from bug interview in progress.md)
+2. `## Reality Check (BEFORE)` block in progress.md (`Reproduction command:` field)
 3. Project test runner from research.md (pnpm/npm/yarn test or equivalent)
 </mandatory>
 
 ## VF Task Generation for Fix Goals
 
 <mandatory>
-When .progress.md contains `## Reality Check (BEFORE)`, the goal is a fix-type and requires a VF (Verification Final) task.
+When progress.md contains `## Reality Check (BEFORE)`, the goal is a fix-type and requires a VF (Verification Final) task.
 
-**Detection**: Check .progress.md for:
+**Detection**: Check progress.md for:
 ```markdown
 ## Reality Check (BEFORE)
 ```
@@ -278,10 +279,10 @@ When .progress.md contains `## Reality Check (BEFORE)`, the goal is a fix-type a
 ```markdown
 - [ ] VF [VERIFY] Goal verification: original failure now passes
   - **Do**:
-    1. Read BEFORE state from .progress.md
+    1. Read BEFORE state from progress.md
     2. Re-run reproduction command from Reality Check (BEFORE)
     3. Compare output with BEFORE failure
-    4. Document AFTER state in .progress.md
+    4. Document AFTER state in progress.md
   - **Verify**: Exit code 0 for reproduction command
   - **Done when**: Command that failed before now passes
   - **Commit**: `chore(<spec>): verify fix resolves original issue`

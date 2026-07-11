@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ralph-specum.dev/schemas/progress-frontmatter.schema.json",
+  "title": "Ralph Specum progress.md frontmatter",
+  "type": "object",
+  "required": ["spec", "phase", "approved_through", "updated"],
+  "additionalProperties": true,
+  "properties": {
+    "spec": {
+      "type": "string",
+      "minLength": 1
+    },
+    "phase": {
+      "type": "string",
+      "enum": [
+        "research",
+        "requirements",
+        "design",
+        "tasks",
+        "implementation",
+        "complete",
+        "blocked"
+      ]
+    },
+    "approved_through": {
+      "type": "string",
+      "enum": [
+        "none",
+        "research",
+        "requirements",
+        "design",
+        "tasks",
+        "implementation"
+      ]
+    },
+    "updated": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 ---
 description: Start task execution loop
-argument-hint: [--max-task-iterations 5] [--max-global-iterations 100] [--recovery-mode]
+argument-hint: "[--max-task-iterations 5] [--max-global-iterations 100] [--recovery-mode]"
 allowed-tools: [Read, Write, Edit, Task, Bash, Skill]
 ---
 
@@ -38,6 +38,9 @@ specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
 1. Check the resolved spec directory exists
 2. Check the spec's tasks.md exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
 3. Set `$SPEC_PATH` to the resolved spec directory path. All references use this variable.
+4. Read `${CLAUDE_PLUGIN_ROOT}/references/progress-state.md` and apply its
+   canonical progress contract and version 5 migration before initialization.
+   `tasks.md` checkboxes remain authoritative for completion.
 
 ## Step 2: Parse Arguments
 
@@ -87,14 +90,16 @@ Update `.ralph-state.json` by merging these fields into the existing object:
 }
 ```
 
-Use a jq merge pattern to preserve existing fields:
+Use the lock-serialized runtime state helper to preserve existing fields:
 ```bash
-jq --argjson taskIndex <first_incomplete> \
+bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-runtime-state.sh" \
+   "$SPEC_PATH/.ralph-state.json" \
+   --argjson taskIndex <first_incomplete> \
    --argjson totalTasks <count> \
    --argjson maxTaskIter <parsed or 5> \
    --argjson recoveryMode <true|false> \
    --argjson maxGlobalIter <parsed or 100> \
-   '
+   --filter '
    . + {
      phase: "execution",
      taskIndex: $taskIndex,
@@ -114,10 +119,13 @@ jq --argjson taskIndex <first_incomplete> \
      nativeTaskMap: {},
      nativeSyncEnabled: true,
      nativeSyncFailureCount: 0
-   }
-   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   }'
 ```
+
+Refresh tracked `progress.md` frontmatter at the same transition with
+`phase: implementation`, `approved_through: tasks`, and `updated`. Do not use
+progress prose to calculate `FIRST_INCOMPLETE`; only `tasks.md` checkboxes are
+authoritative.
 
 **Preserved fields** (set by earlier phases, must NOT be removed):
 - `source`, `name`, `basePath`, `commitSpec`, `relatedSpecs`
@@ -178,12 +186,12 @@ Then Read and follow these references in order. They contain the complete coordi
 When all tasks complete (taskIndex >= totalTasks):
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json
-3. Keep .progress.md (preserve learnings and history)
+3. Keep tracked progress.md (preserve learnings and history)
 4. Cleanup orphaned temp progress files: `find "$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true`
 5. Update spec index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
 6. Commit remaining spec changes:
    ```bash
-   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/progress.md" ./specs/.index/
    git diff --cached --quiet || git commit -m "chore(spec): final progress update for $spec"
    ```
 7. Check for PR link: `gh pr view --json url -q .url 2>/dev/null`

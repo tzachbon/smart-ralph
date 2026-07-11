@@ -1,110 +1,43 @@
 ---
 name: ralph-specum
-description: Use only when the user explicitly invokes `$ralph-specum`, requests Ralph Specum in Codex, asks Ralph Specum to handle a named phase, or explicitly requests autonomous or quick mode or continuation without pauses.
-metadata:
-  surface: primary
+description: Coordinate the native Ralph Specum workflow in Codex. Use when the user invokes `$ralph-specum`, asks Ralph Specum to route or run a phase, or requests spec-driven planning or implementation.
 ---
 
 # Ralph Specum
 
-Use this as the primary Codex surface for Ralph Specum. It carries the full reusable workflow and can handle the entire command surface directly when helper skills are not installed.
+Act as the root coordinator for a native Codex specification workflow.
 
-## Read These References
+## Load installed resources
 
-- `references/workflow.md` for the phase flow, branch and worktree behavior, quick mode, and command routing
-- `references/state-contract.md` for `.ralph-state.json`, `.progress.md`, commit rules, and resume semantics
-- `references/path-resolution.md` for `specs_dirs`, `.current-spec`, ambiguity handling, and default directory behavior
-- `references/parity-matrix.md` for Claude-to-Codex feature translation and command mapping
+Resolve these paths relative to this `SKILL.md`, not the consumer repository:
 
-## Use These Helpers
+- `../../references/workflow.md`
+- `../../references/state-contract.md`
+- `../../references/path-resolution.md`
+- `../../scripts/resolve_spec_paths.py`
+- `../../scripts/count_tasks.py`
+- `../../templates/`
 
-- `scripts/resolve_spec_paths.py` for spec roots, current spec, and unique or ambiguous name resolution
-- `scripts/merge_state.py` for safe top-level state merges
-- `scripts/count_tasks.py` for task counts and next incomplete task
-- `assets/templates/` for the canonical Ralph markdown file shapes
-- `assets/bootstrap/` when the user wants optional project-local Codex guidance
+Read only the references needed for the requested action.
 
-## Primary Routing
+## Route intent
 
-Handle these intents directly:
+Route start, triage, research, requirements, design, tasks, implement, and status intents to the matching first-class skill. Handle legacy switch, cancel, index, refactor, feedback, and help intents through this primary surface after showing the v5 deprecation warning.
 
-| Intent | Action |
-|--------|--------|
-| Start, new, resume, quick mode | Follow the start flow in `references/workflow.md` |
-| Triage | Delegate to `triage-analyst` sub-agent to decompose into epic and specs |
-| Research | Delegate to `research-analyst` sub-agent to write `research.md` |
-| Requirements | Delegate to `product-manager` sub-agent to write `requirements.md` |
-| Design | Delegate to `architect-reviewer` sub-agent to write `design.md` |
-| Tasks | Delegate to `task-planner` sub-agent to write `tasks.md` |
-| Implement | Delegate each task to `spec-executor` sub-agent until complete or blocked |
-| Status | Show active spec, backlog state, and per-root listing |
-| Switch | Update `.current-spec` only |
-| Cancel | Stop execution and clean up state, confirm before destructive delete |
-| Index | Generate `specs/.index/` component and external specs |
-| Refactor | Delegate to `refactor-specialist` sub-agent to update spec files |
-| Feedback | Open or draft GitHub feedback |
-| Help | Summarize the surface and next commands |
+## Coordinate natively
 
-If the corresponding helper skill is installed and the user invoked it explicitly, keep behavior aligned with that helper. If not, perform the action here.
+- Use native Codex subagents. Do not require custom agent TOML files.
+- Give every subagent the bounded packet and require the five result headings defined in `../../references/workflow.md`.
+- Require substantive spec phases to delegate. Use semantic reasoning tiers from the workflow: medium for research and requirements, strongest for design and triage, light for task decomposition, and medium for normal implementation.
+- Run at most three read-only subagents, one write subagent, and three attempts per failed task.
+- Keep the root coordinator as the only writer of `tasks.md`, `progress.md`, `.current-spec`, and Git state.
+- Treat `tasks.md` checkboxes as completion truth.
+- Commit one verified logical batch when commits are enabled.
 
-## Core Rules
+## Autonomous intent
 
-0. **You are a coordinator, not a doer.** For every phase (research, requirements, design, tasks, implement, triage, refactor), delegate the actual generation work to the appropriate sub-agent. Never write spec artifacts (research.md, requirements.md, design.md, tasks.md) yourself. Your job is to gather context, run the interview, delegate, validate the output, and present results for approval.
-1. Keep the Ralph disk contract stable.
-2. Treat `.claude/ralph-specum.local.md` as the settings source when present.
-3. Default to `./specs` when no valid config exists.
-4. Keep `.current-spec` in the default specs root.
-5. Merge state fields. Do not replace the whole state object.
-6. Preserve `source`, `name`, `basePath`, `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`.
-7. Also preserve newer state fields when present, especially `awaitingApproval`, `quickMode`, `granularity`, `epicName`, `discoveredSkills`, and native task sync metadata.
-8. Write `.progress.md` after every phase and after every implementation attempt.
-9. Honor approval checkpoints between phases unless quick mode is active.
-10. Honor the `Commit` line in tasks during implementation unless the user explicitly disables task commits.
-11. Use branch creation or worktree creation when the user asks for branch isolation or the repo policy requires it.
-12. Enter quick mode only when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
-13. In quick mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
+Use native `/goal` only when the user explicitly requests autonomous, quick, finish, or long-running execution. Build the goal from the resolved spec, remaining tasks, constraints, verification commands, and terminal success condition. Do not set a token budget unless the user explicitly gives one.
 
-## Stop Enforcement
+Without explicit autonomous intent, run one phase or one verified logical implementation batch and return normally.
 
-After completing any phase artifact (research, requirements, design, tasks), you MUST:
-
-1. Display the walkthrough summary
-2. Present the gate prompt
-3. **STOP and wait for user response**
-
-The ONLY exception is `--quick` mode. Without `--quick`, you MUST NOT auto-continue to the next phase. This is non-negotiable.
-
-## Response Handoff
-
-- After writing `research.md`, `requirements.md`, `design.md`, `tasks.md`, or refactored spec files outside quick mode:
-  - name the file or files that changed
-  - give a short summary
-  - end with exactly one explicit choice prompt:
-    - `continue to <named next step>`
-    - `run review agent`
-    - `run prototype` when the artifact is `research.md`, `requirements.md`, or `design.md`
-    - `request changes`
-- Treat `continue to <named next step>` as approval of the current artifact and permission to proceed.
-- After `start` or `new`, summarize the resolved spec and stop unless the user explicitly asked for quick or autonomous flow. The next choice should point to `continue to research`.
-
-## Current Workflow Expectations
-
-- Use bundled grill-with-docs behavior for research, requirements, design, and tasks when quick mode is not active. If `$grill-with-docs` exists, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology when useful.
-- Route obviously large or cross-cutting efforts to triage before normal spec generation.
-- Support active epic state via `specs/.current-epic` and per-epic state in `specs/_epics/<epic-name>/`.
-- Treat task planning as POC-first with `[P]` markers for safe parallel work and `[VERIFY]` checkpoints for explicit quality validation.
-- Support VE tasks when the plan needs autonomous end-to-end verification.
-- After research, requirements, and design walkthroughs, allow an optional prototype gate before the next phase choice. If `$prototype` exists, use it. Otherwise run the bundled prototype behavior inline and record the result in `.progress.md`.
-- During implementation, recompute task counts from disk, resume from the first incomplete task, and prefer task file truth over stale state.
-- Native task sync is part of the current Ralph execution model. Keep Codex wording aligned with that behavior without promising Claude-only hook mechanics.
-
-## Bootstrap
-
-Bootstrap project-local files only when the user wants them.
-
-Suggested bootstrap files:
-
-- `assets/bootstrap/AGENTS.md` to give a consumer repo local Ralph guidance
-- `assets/bootstrap/ralph-specum.local.md` to seed local settings
-
-Do not bootstrap by default. Installation into `$CODEX_HOME/skills` is enough.
+Do not create adapter-local continuation state, install hooks, or implement a repeated-invocation loop.

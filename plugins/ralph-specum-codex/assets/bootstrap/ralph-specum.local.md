@@ -1,6 +1,5 @@
 ---
 enabled: true
-default_max_iterations: 5
 auto_commit_spec: true
 specs_dirs:
   - "./specs"
@@ -8,11 +7,10 @@ specs_dirs:
 
 # Ralph Specum Configuration
 
-Use this file to configure Codex or Claude Ralph Specum flows for this project.
+Install this file as `.codex/ralph-specum.local.md` to configure Ralph Specum for this Codex project.
 
 ## Notes
 
 - Add more entries to `specs_dirs` for monorepos
-- Set `auto_commit_spec` to `false` if spec artifact commits should stay manual
-- `quick_mode_default` is removed and ignored in this version
-- Quick or autonomous flow must come from explicit user wording
+- Set `auto_commit_spec` to `false` if spec artifact commits should stay manual.
+- Autonomous execution must come from explicit user wording and uses native `/goal`.

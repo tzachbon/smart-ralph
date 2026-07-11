@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Research"
   short_description: "Generate research for an active spec"
-  default_prompt: "Use $ralph-specum-research to run bundled grill-with-docs behavior, write research.md, then ask me to `continue to requirements`, `run review agent`, `run prototype`, or `request changes`."
+  default_prompt: "Use $ralph-specum-research with bounded read-only native subagents, validate evidence, write research.md, and stop for approval."
 policy:
   allow_implicit_invocation: false

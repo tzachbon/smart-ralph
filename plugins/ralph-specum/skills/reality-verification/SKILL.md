@@ -36,7 +36,7 @@ For E2E/deployment verification, use MCP tools (Playwright MCP browser tools for
 
 ### BEFORE State (Diagnosis)
 
-Document in `.progress.md` under `## Reality Check (BEFORE)`:
+Document in `progress.md` under `## Reality Check (BEFORE)`:
 
 ```markdown
 ## Reality Check (BEFORE)
@@ -55,7 +55,7 @@ FAIL src/auth.test.ts
 
 ### AFTER State (Verification)
 
-Document in `.progress.md` under `## Reality Check (AFTER)`:
+Document in `progress.md` under `## Reality Check (AFTER)`:
 
 ```markdown
 ## Reality Check (AFTER)
@@ -78,12 +78,12 @@ Add as task 4.3 (after PR creation) for fix-type specs:
 ```markdown
 - [ ] 4.3 VF: Verify original issue resolved
   - **Do**:
-    1. Read BEFORE state from .progress.md
+    1. Read BEFORE state from progress.md
     2. Re-run reproduction command: `<command>`
     3. Compare output with BEFORE state
-    4. Document AFTER state in .progress.md
-  - **Verify**: `grep -q "Verified: Issue resolved" ./specs/<name>/.progress.md`
-  - **Done when**: AFTER shows issue resolved, documented in .progress.md
+    4. Document AFTER state in progress.md
+  - **Verify**: `grep -q "Verified: Issue resolved" ./specs/<name>/progress.md`
+  - **Done when**: AFTER shows issue resolved, documented in progress.md
   - **Commit**: `chore(<name>): verify fix resolves original issue`
 ```
 

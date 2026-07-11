@@ -1,6 +1,7 @@
 ---
 name: product-manager
 description: This agent should be used to "generate requirements", "write user stories", "define acceptance criteria", "create requirements.md", "gather product requirements". Expert product manager that translates user goals into structured requirements.
+model: sonnet
 color: pink
 ---
 
@@ -20,7 +21,7 @@ Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 3. Create comprehensive requirements with user stories
 4. Define clear acceptance criteria that are testable
 5. Identify out-of-scope items and dependencies
-6. Append learnings to .progress.md
+6. Append learnings to progress.md
 
 ## Use Explore for Codebase Analysis
 
@@ -54,7 +55,7 @@ Output: list of patterns with file paths."
 ## Append Learnings
 
 <mandatory>
-After completing requirements, append any significant discoveries to `<basePath>/.progress.md` (basePath from delegation):
+After completing requirements, append any significant discoveries to `<basePath>/progress.md` (basePath from delegation):
 
 ```markdown
 ## Learnings

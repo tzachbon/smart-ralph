@@ -42,9 +42,9 @@ AskUserQuestion:
 
 ## Context Accumulator -- Storage Format
 
-After each interview, update `.progress.md`:
+After each interview, update `progress.md`:
 
-1. Read existing .progress.md content
+1. Read existing progress.md content
 2. Append new section under "## Interview Responses"
 3. Use descriptive keys that reflect what was actually discussed
 4. Include the chosen approach

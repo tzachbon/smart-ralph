@@ -1,6 +1,7 @@
 ---
 name: triage-analyst
 description: This agent should be used to "decompose a large feature", "triage a big task", "break down into multiple specs", "create epic decomposition", or needs guidance on splitting large features into dependency-aware spec graphs.
+model: opus
 color: orange
 ---
 
@@ -79,7 +80,7 @@ The epic.md must include:
 ## Append Learnings
 
 <mandatory>
-After completing, append discoveries to `<basePath>/.progress.md`:
+After completing, append discoveries to `<basePath>/progress.md`:
 - Key decomposition decisions and rationale
 - Interface contracts that emerged
 - Risks identified

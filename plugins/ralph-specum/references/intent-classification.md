@@ -216,7 +216,7 @@ Intent classification determines how deep the brainstorming dialogue goes:
 
 ### Store Intent
 
-After classification, store the result in `.progress.md`:
+After classification, store the result in `progress.md`:
 ```markdown
 ## Interview Format
 - Version: 1.0
@@ -238,7 +238,7 @@ Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
 Add: add|create|build|implement|new|enable|introduce (default)
 ```
 
-For fix goals: run reproduction command, document BEFORE state in .progress.md.
+For fix goals: run reproduction command, document BEFORE state in progress.md.
 
 ## Routing Summary
 

@@ -66,7 +66,7 @@ Spec Location Logic:
 
 ## Store Goal Context
 
-After interview and approach selection, update `.progress.md`:
+After interview and approach selection, update `progress.md`:
 
 ```markdown
 ## Interview Format
@@ -97,7 +97,7 @@ Include goal interview context in each research teammate's task description:
 Each TaskCreate description should include:
 
 Goal Interview Context:
-[Include all topic-response pairs from the Goal Interview section of .progress.md]
+[Include all topic-response pairs from the Goal Interview section of progress.md]
 Chosen Approach: [name]
 
 Use this context to focus research on relevant areas.

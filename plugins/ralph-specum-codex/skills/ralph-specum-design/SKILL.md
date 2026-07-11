@@ -1,50 +1,17 @@
 ---
 name: ralph-specum-design
-description: This skill should be used only when the user explicitly asks to use `$ralph-specum-design`, or explicitly asks Ralph Specum in Codex to run the design phase.
-metadata:
-  surface: helper
-  action: design
+description: Produce technical design for an active Ralph Specum spec with bounded native Codex subagents. Use when the user invokes `$ralph-specum-design` or asks Ralph Specum to design an approved feature.
 ---
 
 # Ralph Specum Design
 
-You are a **coordinator, not an architect** -- delegate ALL work to an `architect-reviewer` sub-agent.
+1. Resolve the active spec and require approved `requirements.md`.
+2. Read requirements, research, repository architecture, related specs, and `progress.md`.
+3. Delegate the primary architecture analysis to a read-only native subagent with the `systems architect` role and `strongest` reasoning tier. Add independent integration or verification critics only when useful, with three agents as the maximum.
+4. Give each subagent the bounded packet from `../../references/workflow.md`, including objective, role, reasoning tier, inputs, allowed files, read-only permission, acceptance criteria, verification command, evidence, and prohibitions on shared state and Git.
+5. Require `Answer`, `Evidence`, `Risks`, `Verification performed`, and `Changed files`. Reject unsupported interfaces or any file mutation.
+6. Validate and synthesize results into `design.md` as the root coordinator.
+7. Atomically update `progress.md` with `phase: design`, decisions, contracts, risks, and next action. Preserve approval truth until explicit approval.
+8. Present the artifact, delegated roles and tiers, and stop for approval unless the current native goal explicitly owns autonomous execution.
 
-## Contract
-
-- Resolve the active spec by explicit path, exact name, or `.current-spec`
-- Require `requirements.md`
-- Merge state fields only
-- Keep the Ralph disk contract unchanged
-
-## Action
-
-1. Resolve the active spec. If none exists, stop.
-2. Require `requirements.md`. Read `research.md` when present, `.progress.md`, and current state.
-3. Clear any prior approval gate by merging `awaitingApproval: false` before generation.
-4. Use bundled grill-with-docs behavior unless quick mode is active. If `$grill-with-docs` exists, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology when useful.
-5. **Delegate** design generation to an `architect-reviewer` sub-agent. Pass requirements, research, grill-with-docs decisions, and interview context. The sub-agent writes `design.md`. Do NOT write design.md yourself.
-6. Read the sub-agent's output and validate it exists.
-7. Merge state with `phase: "design"` and `awaitingApproval: true` (or `false` when `--quick` is active).
-8. Update `.progress.md` with design decisions, open risks, integration contracts, and next step.
-9. If spec commits are enabled, commit only the spec artifacts.
-
-### Stop Behavior
-
-- **Without `--quick`**: STOP HERE. Display the walkthrough summary and approval prompt. Do NOT continue to tasks. Wait for the user to explicitly approve and request the next phase.
-- **With `--quick`**: Continue directly into tasks.
-
-## Output Shape
-
-The result should cover architecture, interfaces, data flow, file changes, technical decisions, error handling, and test strategy.
-
-## Response Handoff
-
-- After writing `design.md`, name `design.md` and summarize the design briefly.
-- If the user chooses `run prototype`, use `$prototype` when available. If unavailable, run a throwaway prototype inline, append the result to `.progress.md`, redisplay the walkthrough, and ask again.
-- End with exactly one explicit choice prompt:
-  - `continue to tasks`
-  - `run review agent`
-  - `run prototype`
-  - `request changes`
-- Treat `continue to tasks` as approval of `design.md`.
+Design must cover architecture, interfaces, data flow, failure modes, migration, observability when relevant, and test strategy.

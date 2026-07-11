@@ -15,6 +15,8 @@ You are fully autonomous. NEVER ask questions or wait for user input.
 ### Integrity Rules
 
 - NEVER lie about completion -- verify actual state before claiming done
+- Treat `tasks.md` checkboxes as the sole source of truth for completion.
+  `progress.md` is tracked narrative context, not a completion ledger.
 - NEVER remove tasks -- if tasks fail, ADD fix tasks; total task count only increases
 - NEVER skip verification layers (all 3 in the Verification section must pass)
 - NEVER trust sub-agent claims without independent verification
@@ -63,7 +65,8 @@ If `nativeSyncEnabled` is not `false` in state AND (`nativeTaskMap` is missing o
      - Verify: "Verifying 1.4 Quality checkpoint"
    - Call TaskCreate(subject, description, activeForm)
    - On success: reset `nativeSyncFailureCount` to 0 in state
-   - On failure: increment `nativeSyncFailureCount` in state. If count >= 3: set `nativeSyncEnabled` to `false`, log "Native sync disabled after 3 consecutive failures" to .progress.md, stop creating remaining tasks and continue without sync
+   - On failure: incremen…2608 tokens truncated… from progress.md
+### Read Context from progress.md
    - Store mapping: nativeTaskMap[i] = returned task ID
    - If task already completed ([x]): immediately TaskUpdate(taskId: nativeTaskMap[i], status: "completed")
 3. Write updated nativeTaskMap to .ralph-state.json
@@ -204,7 +207,7 @@ Instructions:
 ```
 
 Handle qa-engineer response:
-- VERIFICATION_PASS: Treat as TASK_COMPLETE, mark task [x], update .progress.md
+- VERIFICATION_PASS: Treat as TASK_COMPLETE, mark task [x], update progress.md
 - VERIFICATION_FAIL: Do NOT mark complete, increment taskIteration, retry or error if max reached
 
 **VE Recovery Mode**: VE tasks (description contains "E2E") have recovery mode always enabled regardless of the state file `recoveryMode` flag. The coordinator should treat VE tasks as if `recoveryMode=true` for fix task generation purposes. VE failures are expected and recoverable — the verify-fix-reverify loop (see `${CLAUDE_PLUGIN_ROOT}/references/quality-checkpoints.md` "Verify-Fix-Reverify Loop") handles them automatically via `fixTaskMap` and `maxFixTasksPerOriginal`.
@@ -220,7 +223,7 @@ Spec: $spec
 Path: $SPEC_PATH/
 Task index: $taskIndex
 
-Context from .progress.md:
+Context from progress.md:
 [Include relevant context]
 
 Current task from tasks.md:
@@ -231,7 +234,7 @@ Instructions:
 2. Only modify Files listed
 3. Verify completion with Verify command
 4. Commit with task's Commit message
-5. Update .progress.md with completion and learnings
+5. Update progress.md with completion and learnings
 6. Mark task [x] in tasks.md
 7. Output TASK_COMPLETE when done
 ```
@@ -319,7 +322,7 @@ When task fails and taskIteration increments:
 
 When a VE1 (startup) or VE2 (check) task hits max retries, the coordinator MUST NOT stop execution immediately. Instead:
 
-1. Log VE failure in .progress.md: "VE-check failed after N retries — skipping to VE-cleanup"
+1. Log VE failure in progress.md: "VE-check failed after N retries — skipping to VE-cleanup"
 2. Scan forward in tasks.md to find VE-cleanup task index (see pseudocode below)
 3. Skip taskIndex forward to the VE-cleanup task
 4. Execute VE-cleanup via qa-engineer (standard `[VERIFY]` delegation)
@@ -387,7 +390,7 @@ Runs only when:
 
 When triggered: run the full artifact review loop defined in `${CLAUDE_PLUGIN_ROOT}/references/verification-layers.md` (section "Layer 3: Artifact Review").
 
-When skipped: append "Skipping artifact review (next at task N)" to .progress.md and proceed to State Update.
+When skipped: append "Skipping artifact review (next at task N)" to progress.md and proceed to State Update.
 
 **Verification Summary**
 
@@ -406,7 +409,7 @@ After all 3 verification layers pass:
 2. Look up native task ID: `nativeTaskMap[taskIndex]`
 3. If ID exists:
    - `TaskUpdate(taskId, status: "completed")`
-4. If ID missing: log warning to .progress.md, continue (map may be stale)
+4. If ID missing: log warning to progress.md, continue (map may be stale)
 5. If TaskUpdate fails: log warning, continue
 
 ## State Update
@@ -423,7 +426,7 @@ After successful completion (TASK_COMPLETE for sequential or all parallel tasks 
 5. Write updated state (merge, preserving all existing fields)
 6. Commit all spec file changes (skip if nothing staged):
    ```bash
-   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/progress.md" ./specs/.index/
    git diff --cached --quiet || git commit -m "chore(spec): update progress for task $taskIndex"
    ```
 
@@ -435,7 +438,7 @@ After successful completion (TASK_COMPLETE for sequential or all parallel tasks 
 5. Write updated state (merge, preserving all existing fields)
 6. Commit all spec file changes (skip if nothing staged):
    ```bash
-   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/progress.md" ./specs/.index/
    git diff --cached --quiet || git commit -m "chore(spec): update progress for parallel batch"
    ```
 
@@ -473,7 +476,7 @@ Commit after every task, but batch pushes to avoid excessive remote operations.
    - Commit count: 5+ commits since last push
    - Approval gate: awaitingApproval about to be set
 3. If any condition met: `git push`
-4. Log push in .progress.md: "Pushed N commits (reason: phase boundary / batch limit / approval gate)"
+4. Log push in progress.md: "Pushed N commits (reason: phase boundary / batch limit / approval gate)"
 
 ## Progress Merge (Parallel Only)
 
@@ -481,15 +484,15 @@ After parallel batch completes:
 
 1. Read each temp progress file (.progress-task-N.md)
 2. Extract completed task entries and learnings
-3. Append to main .progress.md in task index order
+3. Append to main progress.md in task index order
 4. Delete temp files after merge
 5. Commit merged progress:
    ```bash
-   git add "$SPEC_PATH/.progress.md" && git diff --cached --quiet || git commit -m "chore(spec): merge parallel progress"
+   git add "$SPEC_PATH/progress.md" && git diff --cached --quiet || git commit -m "chore(spec): merge parallel progress"
    ```
    Note: This runs after merge, separate from State Update step 6.
 
-Merge format in .progress.md:
+Merge format in progress.md:
 ```markdown
 ## Completed Tasks
 - [x] 3.1 Task A - abc123
@@ -501,7 +504,7 @@ Merge format in .progress.md:
 
 If any parallel task failed (no TASK_COMPLETE in its output):
 1. Identify which task(s) failed from the batch
-2. Note successful tasks in .progress.md
+2. Note successful tasks in progress.md
 3. For failed tasks, increment taskIteration
 4. If failed task exceeds maxTaskIterations: output "ERROR: Max retries reached for parallel task $failedTaskIndex"
 5. Otherwise: retry ONLY the failed task(s), do NOT re-run successful ones
@@ -525,7 +528,7 @@ Output exactly `ALL_TASKS_COMPLETE` when:
 - taskIndex >= totalTasks AND
 - All tasks marked [x] in tasks.md AND
 - Zero test regressions verified AND
-- Code is modular/reusable (documented in .progress.md)
+- Code is modular/reusable (documented in progress.md)
 
 ## Native Task Sync - Completion
 
@@ -535,12 +538,12 @@ Before outputting ALL_TASKS_COMPLETE:
 2. Iterate all entries in `nativeTaskMap`
 3. For any task not already `"completed"`: `TaskUpdate(taskId: nativeTaskMap[index], status: "completed")`
 4. If any TaskUpdate fails: log warning, continue
-5. Log "Native task sync finalized: N tasks synced" to .progress.md
+5. Log "Native task sync finalized: N tasks synced" to progress.md
 
 Before outputting:
 1. Verify all tasks marked [x] in tasks.md
 2. Delete .ralph-state.json (cleanup execution state)
-3. Keep .progress.md (preserve learnings and history)
+3. Keep progress.md (preserve learnings and history)
 4. **Cleanup orphaned temp progress files** (from interrupted parallel batches):
    ```bash
    find "$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true
@@ -551,7 +554,7 @@ Before outputting:
    ```
 6. **Commit all remaining spec changes** (progress, tasks, index):
    ```bash
-   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
+   git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/progress.md" ./specs/.index/
    git diff --cached --quiet || git commit -m "chore(spec): final progress update for $spec"
    ```
 7. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
@@ -592,7 +595,7 @@ Extract the JSON payload:
 
 1. Read `modificationMap` from .ralph-state.json
 2. Count: `modificationMap[originalTaskId].count` (default 0)
-3. If count >= 3: REJECT, log "Max modifications (3) reached for task $taskId" in .progress.md, skip modification
+3. If count >= 3: REJECT, log "Max modifications (3) reached for task $taskId" in progress.md, skip modification
 4. Depth check: count dots in proposed task IDs. If dots > 3 (depth > 2 levels): REJECT
 5. Verify proposed tasks have required fields: Do, Files, Done when, Verify, Commit
 
@@ -604,7 +607,7 @@ Extract the JSON payload:
 3. Update totalTasks += proposedTasks.length in state
 4. Update modificationMap
 5. Set taskIndex to first inserted sub-task
-6. Log in .progress.md: "Split task $taskId into N sub-tasks: [ids]. Reason: $reasoning"
+6. Log in progress.md: "Split task $taskId into N sub-tasks: [ids]. Reason: $reasoning"
 
 **ADD_PREREQUISITE**:
 1. Do NOT mark original task complete
@@ -613,7 +616,7 @@ Extract the JSON payload:
 4. Update modificationMap
 5. Delegate prerequisite task to spec-executor
 6. After prereq completes: retry original task
-7. Log in .progress.md: "Added prerequisite $prereqId before $taskId. Reason: $reasoning"
+7. Log in progress.md: "Added prerequisite $prereqId before $taskId. Reason: $reasoning"
 
 **ADD_FOLLOWUP**:
 1. Original task should already be marked [x] (executor outputs TASK_COMPLETE too)
@@ -621,7 +624,7 @@ Extract the JSON payload:
 3. Update totalTasks += 1 in state
 4. Update modificationMap
 5. Normal advancement -- followup will be picked up as next task
-6. Log in .progress.md: "Added followup $followupId after $taskId. Reason: $reasoning"
+6. Log in progress.md: "Added followup $followupId after $taskId. Reason: $reasoning"
 
 **Parallel Batch Interaction**:
 - If current task is in a [P] batch and executor requests modification: break out of parallel batch
@@ -631,19 +634,19 @@ Extract the JSON payload:
 **Update State (modificationMap)**:
 
 ```bash
-jq --arg taskId "$TASK_ID" \
+bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-runtime-state.sh" \
+   "$SPEC_PATH/.ralph-state.json" \
+   --arg taskId "$TASK_ID" \
    --arg modId "$MOD_TASK_ID" \
    --arg reason "$REASONING" \
    --arg type "$MOD_TYPE" \
    --argjson delta "$PROPOSED_COUNT" \
-   '
+   --filter '
    .modificationMap //= {} |
    .modificationMap[$taskId] //= {count: 0, modifications: []} |
    .modificationMap[$taskId].count += 1 |
    .modificationMap[$taskId].modifications += [{id: $modId, type: $type, reason: $reason}] |
-   .totalTasks += $delta
-   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   .totalTasks += $delta'
 ```
 
 > **Note**: Set `PROPOSED_COUNT` to the number of proposed tasks (e.g., `PROPOSED_COUNT=$(echo "$PROPOSED_TASKS" | jq 'length')`). For SPLIT_TASK this is N (the number of sub-tasks), for ADD_PREREQUISITE and ADD_FOLLOWUP this is 1.
@@ -752,12 +755,12 @@ All must be true:
 - CI checks all green
 - No unresolved review comments
 - Zero test regressions (all existing tests pass)
-- Code is modular/reusable (verified in .progress.md)
+- Code is modular/reusable (verified in progress.md)
 
 **Step 5: Completion**
 
 When all Step 4 criteria met:
-1. Update .progress.md with final state
+1. Update progress.md with final state
 2. Delete .ralph-state.json
 3. Get PR URL: `gh pr view --json url -q .url`
 4. Output: ALL_TASKS_COMPLETE
@@ -771,4 +774,4 @@ When all Step 4 criteria met:
 **Error Handling**:
 - If CI fails after 5 retry attempts: STOP with error
 - If review comments cannot be addressed: STOP with error
-- Document all failures in .progress.md Learnings
+- Document all failures in progress.md Learnings

@@ -108,7 +108,7 @@ Specs are stored in `./specs/` by default:
 ├── .current-spec           # Active spec name (or full path for multi-dir)
 ├── my-feature/
 │   ├── .ralph-state.json   # Loop state (deleted on completion)
-│   ├── .progress.md        # Progress tracking (persists)
+│   ├── progress.md        # Progress tracking (persists)
 │   ├── research.md         # Research findings
 │   ├── requirements.md     # Requirements
 │   ├── design.md           # Technical design

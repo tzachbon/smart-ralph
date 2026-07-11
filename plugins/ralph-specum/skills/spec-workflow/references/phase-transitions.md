@@ -81,7 +81,7 @@ Activities:
 - Task-by-task execution
 - Verification after each task
 - Commit after verified completion
-- Progress tracking in `.progress.md`
+- Progress tracking in `progress.md`
 
 Ends with: State file deleted on completion
 

@@ -3,6 +3,8 @@
 # Source this file in hooks and commands
 #
 # Functions provided:
+#   ralph_get_workspace_root() - Returns the canonical workspace root
+#   ralph_resolve_workspace_path(path) - Resolves a contained workspace path
 #   ralph_get_specs_dirs()   - Returns newline-separated list of configured dirs
 #   ralph_find_spec(name)    - Returns full path to spec, handles disambiguation
 #   ralph_list_specs()       - Returns all specs as "name|path" pairs
@@ -10,6 +12,9 @@
 #   ralph_get_default_dir()  - Returns first specs_dir (for new spec creation)
 
 RALPH_CWD="${RALPH_CWD:-$(pwd)}"
+if [ -d "$RALPH_CWD" ]; then
+    RALPH_CWD="$(cd -P -- "$RALPH_CWD" && pwd)"
+fi
 RALPH_SETTINGS_FILE="$RALPH_CWD/.claude/ralph-specum.local.md"
 RALPH_DEFAULT_SPECS_DIR="./specs"
 
@@ -25,6 +30,44 @@ _ralph_validate_cwd() {
         return 1
     fi
     return 0
+}
+
+# Return the canonical workspace root.
+ralph_get_workspace_root() {
+    if ! _ralph_validate_cwd; then
+        return 1
+    fi
+
+    printf '%s\n' "$RALPH_CWD"
+}
+
+# Resolve a relative or absolute path and require it to remain inside RALPH_CWD.
+# realpath -m also resolves symlinked existing parents and does not require the
+# final path to exist, which allows the default specs directory to be created.
+ralph_resolve_workspace_path() {
+    local path="$1"
+    local candidate
+    local resolved
+
+    if ! _ralph_validate_cwd || [ -z "$path" ]; then
+        return 1
+    fi
+
+    if [[ "$path" == /* ]]; then
+        candidate="$path"
+    else
+        candidate="$RALPH_CWD/$path"
+    fi
+
+    resolved=$(realpath -m -- "$candidate") || return 1
+    case "$resolved" in
+        "$RALPH_CWD"|"$RALPH_CWD"/*)
+            printf '%s\n' "$resolved"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
 # Internal: Normalize path (remove trailing slashes, handle spaces)
@@ -78,19 +121,15 @@ ralph_get_specs_dirs() {
         # Normalize path (handle trailing slashes, spaces)
         dir=$(_ralph_normalize_path "$dir")
 
-        # Validate path format
-        if [[ "$dir" == /* ]] && [[ "$dir" != "$RALPH_CWD"* ]]; then
-            # Absolute path outside RALPH_CWD - check if it exists
-            if [ ! -d "$dir" ]; then
-                _ralph_warn "Skipping invalid absolute path in specs_dirs: $dir (does not exist)"
-                continue
-            fi
-        elif [[ "$dir" == ./* ]] || [[ "$dir" != /* ]]; then
-            # Relative path - check if it exists
-            if [ ! -d "$RALPH_CWD/$dir" ]; then
-                _ralph_warn "Skipping invalid path in specs_dirs: $dir (directory not found at $RALPH_CWD/$dir)"
-                continue
-            fi
+        # Resolve against the workspace and reject traversal or symlink escapes.
+        local resolved_dir
+        if ! resolved_dir=$(ralph_resolve_workspace_path "$dir"); then
+            _ralph_warn "Skipping path outside RALPH_CWD in specs_dirs: $dir"
+            continue
+        fi
+        if [ ! -d "$resolved_dir" ]; then
+            _ralph_warn "Skipping invalid path in specs_dirs: $dir (directory not found at $resolved_dir)"
+            continue
         fi
 
         # Add validated dir
@@ -128,7 +167,9 @@ ralph_resolve_current() {
 
     local default_dir
     default_dir=$(ralph_get_default_dir)
-    local current_spec_file="$RALPH_CWD/$default_dir/.current-spec"
+    local default_dir_path
+    default_dir_path=$(ralph_resolve_workspace_path "$default_dir") || return 1
+    local current_spec_file="$default_dir_path/.current-spec"
 
     # Check default location for .current-spec
     if [ -f "$current_spec_file" ]; then
@@ -190,8 +231,13 @@ ralph_find_spec() {
         # Normalize dir path
         dir=$(_ralph_normalize_path "$dir")
 
+        local resolved_dir
+        if ! resolved_dir=$(ralph_resolve_workspace_path "$dir"); then
+            continue
+        fi
+
         # Handle paths with spaces by quoting properly
-        if [ -d "$RALPH_CWD/$dir/$name" ]; then
+        if [ -d "$resolved_dir/$name" ]; then
             if [ -n "$found" ]; then
                 found="$found"$'\n'"$dir/$name"
             else
@@ -234,7 +280,12 @@ ralph_list_specs() {
         # Normalize dir path
         dir=$(_ralph_normalize_path "$dir")
 
-        if [ -d "$RALPH_CWD/$dir" ]; then
+        local resolved_dir
+        if ! resolved_dir=$(ralph_resolve_workspace_path "$dir"); then
+            continue
+        fi
+
+        if [ -d "$resolved_dir" ]; then
             # Use find for better handling of paths with spaces
             # -maxdepth 1 -mindepth 1 gets only direct children
             while IFS= read -r spec_dir; do
@@ -246,7 +297,7 @@ ralph_list_specs() {
                         echo "$name|$dir/$name"
                     fi
                 fi
-            done < <(find "$RALPH_CWD/$dir" -maxdepth 1 -mindepth 1 -type d 2>/dev/null)
+            done < <(find "$resolved_dir" -maxdepth 1 -mindepth 1 -type d 2>/dev/null)
         fi
     done <<< "$dirs"
 }

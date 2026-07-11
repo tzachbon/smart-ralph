@@ -1,50 +1,17 @@
 ---
 name: ralph-specum-requirements
-description: This skill should be used only when the user explicitly asks to use `$ralph-specum-requirements`, or explicitly asks Ralph Specum in Codex to run the requirements phase.
-metadata:
-  surface: helper
-  action: requirements
+description: Produce requirements for an active Ralph Specum spec with bounded native Codex subagents. Use when the user invokes `$ralph-specum-requirements` or asks Ralph Specum to define requirements.
 ---
 
 # Ralph Specum Requirements
 
-You are a **coordinator, not a product manager** -- delegate ALL work to a `product-manager` sub-agent.
+1. Resolve the active spec and require approved research or explicit user permission to proceed without it.
+2. Read the goal, `research.md`, user decisions, related specs, and `progress.md`.
+3. Delegate substantive requirements analysis to at least one read-only native subagent with the `product and constraint analyst` role and `medium` reasoning tier. Upgrade a packet to `strongest` when it governs a security boundary, irreversible migration, novel cross-domain contract, or materially conflicting evidence. Add independent compatibility or risk agents only when needed, with three agents as the maximum.
+4. Give each subagent the bounded packet from `../../references/workflow.md`, including objective, role, reasoning tier, dependency inputs, allowed files, read-only permission, acceptance criteria, verification command, evidence, and prohibitions on shared state and Git.
+5. Require `Answer`, `Evidence`, `Risks`, `Verification performed`, and `Changed files`. Reject unsupported requirements and any file mutation.
+6. Validate and synthesize results into `requirements.md` as the root coordinator.
+7. Atomically update `progress.md` with `phase: requirements`, decisions, exclusions, blockers, and next action. Preserve approval truth until explicit approval.
+8. Present the artifact, delegated roles and tiers, and stop for approval unless the current native goal explicitly owns autonomous execution.
 
-## Contract
-
-- Resolve the active spec by explicit path, exact name, or `.current-spec`
-- Require the spec directory to exist
-- Merge state fields only
-- Keep the Ralph disk contract unchanged
-
-## Action
-
-1. Resolve the active spec. If none exists, stop.
-2. Read `research.md` when present, `.progress.md`, and the current state.
-3. Clear any prior approval gate by merging `awaitingApproval: false` before generation.
-4. Use bundled grill-with-docs behavior unless quick mode is active. If `$grill-with-docs` exists, use it. Otherwise inspect code and docs inline, ask native questions one at a time, and capture stable terminology when useful.
-5. **Delegate** requirements generation to a `product-manager` sub-agent. Pass research context, goal, grill-with-docs decisions, and interview results. The sub-agent writes `requirements.md`. Do NOT write requirements.md yourself.
-6. Read the sub-agent's output and validate it exists.
-7. Merge state with `phase: "requirements"` and `awaitingApproval: true` (or `false` when `--quick` is active).
-8. Update `.progress.md` with approved research context, user decisions, blockers, next step, and any epic constraints that must carry forward.
-9. If spec commits are enabled, commit only the spec artifacts.
-
-### Stop Behavior
-
-- **Without `--quick`**: STOP HERE. Display the walkthrough summary and approval prompt. Do NOT continue to design. Wait for the user to explicitly approve and request the next phase.
-- **With `--quick`**: Continue directly into design.
-
-## Output Shape
-
-The result should include user stories, acceptance criteria, functional requirements, non-functional requirements, dependencies, exclusions, and success criteria.
-
-## Response Handoff
-
-- After writing `requirements.md`, name `requirements.md` and summarize the requirements briefly.
-- If the user chooses `run prototype`, use `$prototype` when available. If unavailable, run a throwaway prototype inline, append the result to `.progress.md`, redisplay the walkthrough, and ask again.
-- End with exactly one explicit choice prompt:
-  - `continue to design`
-  - `run review agent`
-  - `run prototype`
-  - `request changes`
-- Treat `continue to design` as approval of `requirements.md`.
+Requirements must include user outcomes, acceptance criteria, functional and non-functional constraints, dependencies, exclusions, and measurable success.

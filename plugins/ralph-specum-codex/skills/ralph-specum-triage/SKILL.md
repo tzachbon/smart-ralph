@@ -1,59 +1,16 @@
 ---
 name: ralph-specum-triage
-description: This skill should be used only when the user explicitly asks to use `$ralph-specum-triage`, or explicitly asks Ralph Specum in Codex to triage a large effort into multiple specs.
-metadata:
-  surface: helper
-  action: triage
+description: Decompose a large Ralph Specum effort into dependency-aware specs using bounded native Codex subagents. Use when the user invokes `$ralph-specum-triage` or asks Ralph Specum to triage a broad or cross-cutting effort.
 ---
 
 # Ralph Specum Triage
 
-You are a **coordinator, not a triage analyst** -- delegate decomposition work to a `triage-analyst` sub-agent.
+1. Resolve the repository and existing spec roots. Inspect existing specs before proposing new boundaries.
+2. Delegate the primary decomposition to a read-only native subagent with the `decomposition architect` role and `strongest` reasoning tier. Add independent code-seam or product-slice investigators only when useful, with three agents as the maximum.
+3. Give each subagent the bounded packet from `../../references/workflow.md`, including objective, role, reasoning tier, inputs, allowed files, read-only permission, acceptance criteria, verification command, evidence, and prohibitions on shared state and Git.
+4. Require `Answer`, `Evidence`, `Risks`, `Verification performed`, and `Changed files`. Reject mutation or unsupported dependency claims.
+5. Validate and synthesize one epic plan with independently deliverable specs, stable contracts, dependency order, and explicit blockers.
+6. As the root coordinator, write the epic artifacts and `progress.md`. Do not implement any spec during triage.
+7. Present the epic, delegated roles and tiers, and next unblocked spec, then stop for approval unless the current native goal explicitly owns autonomous execution.
 
-## Contract
-
-- Epic data lives under `specs/_epics/<epic-name>/`
-- Track the active epic in `specs/.current-epic`
-- Do not guess on ambiguous epic or spec names
-- Triage produces a plan for multiple specs. It does not implement them
-
-## Action
-
-1. Check `specs/.current-epic`. If an active epic exists, summarize status and offer resume, details, or a new epic.
-2. Resolve or create the epic directory and initialize `research.md`, `epic.md`, `.progress.md`, and `.epic-state.json` as needed.
-3. **Delegate** triage work to a `triage-analyst` sub-agent. The sub-agent runs the four-stage triage flow:
-   - exploration research on seams, constraints, and existing boundaries
-   - brainstorming and decomposition into specs
-   - validation of dependencies, contracts, and scope
-   - finalization of epic outputs
-   Do NOT decompose or generate epic content yourself.
-4. Assemble `epic.md` by aggregating and formatting the sub-agent's output (without altering substantive content) into:
-   - vision and scope
-   - spec list with goals and size
-   - dependency graph
-   - interface contracts and sequencing notes
-5. Persist `.epic-state.json` with each spec, its status, and dependencies.
-6. Set `specs/.current-epic` to the active epic name.
-7. Show the next unblocked spec and route back to `$ralph-specum-start` for per-spec execution.
-
-## Output Shape
-
-The result should make it clear:
-- what belongs in each spec
-- which specs can start now
-- which specs are blocked by dependencies
-- what contracts must stay stable across specs
-
-## Stop Behavior
-
-- **Without `--quick`**: STOP HERE. Display the epic summary and approval prompt. Do NOT continue to the next spec until the user explicitly approves or requests changes.
-- **With `--quick`**: Continue directly to the first unblocked spec.
-
-## Response Handoff
-
-- After writing `epic.md`, name `epic.md` and summarize the epic plan briefly.
-- End with exactly one explicit choice prompt:
-  - `approve current artifact`
-  - `request changes`
-  - `continue to the next spec`
-- Treat `continue to the next spec` as approval of `epic.md`.
+Prefer vertical, independently verifiable slices. Avoid speculative infrastructure specs without a consumer.

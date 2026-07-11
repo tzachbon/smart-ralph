@@ -1,6 +1,6 @@
 ---
 description: Update spec files methodically after execution (requirements -> design -> tasks)
-argument-hint: [spec-name] [--file=requirements|design|tasks]
+argument-hint: "[spec-name] [--file=requirements|design|tasks]"
 allowed-tools: [Read, Write, Edit, Task, Bash, AskUserQuestion]
 ---
 
@@ -27,7 +27,7 @@ Create a task for each item and complete in order:
 4. Read `.ralph-state.json` if exists
 5. Identify which spec files exist: `requirements.md`, `design.md`, `tasks.md`
 6. If no spec files exist, error: "No spec files found. Run /ralph-specum:start first."
-7. Read `.progress.md` to understand implementation learnings
+7. Read `progress.md` to understand implementation learnings
 
 ## Step 2: Determine Scope & Present Overview
 
@@ -46,7 +46,7 @@ Files to review:
 - design.md: [exists/missing] - [brief summary: X components, Y decisions]
 - tasks.md: [exists/missing] - [brief summary: X tasks, Y completed]
 
-Implementation learnings from .progress.md:
+Implementation learnings from progress.md:
 - [Key learning 1]
 - [Key learning 2]
 ```
@@ -88,7 +88,7 @@ Use `Task(subagent_type: refactor-specialist)` for each file update.
 
 Include in prompt:
 - Full current file content
-- Relevant `.progress.md` learnings
+- Relevant `progress.md` learnings
 - Sections to update with user's specific instructions
 - Guidelines: minimal focused changes, preserve valuable content, update cross-references
 
@@ -110,7 +110,7 @@ If "Regenerate" selected, delegate to the original agent (architect-reviewer for
 ### Update State
 
 1. Update `.ralph-state.json`: keep existing phase, reset `taskIndex` to 0 if tasks modified, set `awaitingApproval: true`
-2. Append refactoring summary to `.progress.md`
+2. Append refactoring summary to `progress.md`
 
 ### Commit (if enabled)
 

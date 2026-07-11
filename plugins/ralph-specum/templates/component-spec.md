@@ -1,10 +1,10 @@
 ---
 type: component-spec
 generated: true
-source: {{SOURCE_PATH}}
-hash: {{CONTENT_HASH}}
-category: {{CATEGORY}}
-indexed: {{TIMESTAMP}}
+source: "{{SOURCE_PATH}}"
+hash: "{{CONTENT_HASH}}"
+category: "{{CATEGORY}}"
+indexed: "{{TIMESTAMP}}"
 ---
 
 # {{COMPONENT_NAME}}

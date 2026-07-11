@@ -1,42 +1,17 @@
 ---
 name: ralph-specum-status
-description: This skill should be used only when the user explicitly asks to use `$ralph-specum-status`, or explicitly asks Ralph Specum in Codex for status or active spec progress.
-metadata:
-  surface: helper
-  action: status
+description: Report Ralph Specum artifact, task, and native goal status in Codex. Use when the user invokes `$ralph-specum-status` or asks Ralph Specum for status or progress.
 ---
 
 # Ralph Specum Status
 
-Use this to report Ralph state across configured spec roots.
+1. Resolve configured roots and `.current-spec` with `../../scripts/resolve_spec_paths.py` relative to this skill.
+2. Read `progress.md` and the canonical phase artifacts for the active spec.
+3. If `progress.md` is absent and `.progress.md` exists, label it legacy history. Do not migrate during a read-only status request.
+4. Count task checkboxes with `../../scripts/count_tasks.py`. Treat those counts as authoritative.
+5. Query native goal status through the available Codex goal surface.
+6. Report the active spec, present artifacts, phase, approved-through phase, completed and remaining tasks, blockers, and next action.
+7. When a native goal exists, include its status and objective. When none exists, say `Native goal: none` without treating it as an error.
+8. Group non-active specs by configured root and include paths when names collide.
 
-## Contract
-
-- Read `.claude/ralph-specum.local.md` when present
-- Default specs root is `./specs`
-- `.current-spec` lives in the default specs root
-- Hidden directories do not count as specs
-
-## Action
-
-1. Resolve configured roots.
-2. Read `.current-spec` to identify the active spec.
-   - If `.current-spec` is missing or empty, report that there is no active spec and continue listing specs across roots.
-3. Read `specs/.current-epic` when present and summarize epic status.
-4. For each spec directory, inspect:
-   - `.ralph-state.json`
-   - `research.md`
-   - `requirements.md`
-   - `design.md`
-   - `tasks.md`
-5. If `tasks.md` exists, count completed and incomplete tasks.
-6. Group results by spec root.
-7. Show the active spec, current phase, backlog state, approval state, granularity when present, and which artifacts exist.
-
-## Output
-
-- Specs in the default root can be shown by name.
-- Specs in other roots should include the root suffix for disambiguation.
-- Include the next likely command when it is obvious.
-- If an epic is active, include the next unblocked spec.
-- If approval is pending, explicitly tell the user to approve the current artifact, request changes, or continue to the named next step.
+Do not write files, repair state, start a goal, or change Git during status.

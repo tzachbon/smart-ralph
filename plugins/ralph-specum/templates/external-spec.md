@@ -1,9 +1,9 @@
 ---
 type: external-spec
 generated: true
-source-type: {{SOURCE_TYPE}}
-source-id: {{SOURCE_ID}}
-fetched: {{FETCH_TIMESTAMP}}
+source-type: "{{SOURCE_TYPE}}"
+source-id: "{{SOURCE_ID}}"
+fetched: "{{FETCH_TIMESTAMP}}"
 ---
 
 # {{RESOURCE_NAME}}

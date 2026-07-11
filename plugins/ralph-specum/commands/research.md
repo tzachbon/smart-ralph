@@ -26,15 +26,15 @@ Create a task for each item and complete in order:
 2. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
 3. Check the resolved spec directory exists
 4. Read `.ralph-state.json` if it exists
-5. Read `.progress.md` to understand the goal
+5. Read `progress.md` to understand the goal
 
 ## Step 2: Interview (skip if --quick)
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
-### Read Context from .progress.md
+### Read Context from progress.md
 
-Read `.progress.md` and parse:
+Read `progress.md` and parse:
 1. **Intent Classification** (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED) for question counts
 2. **Prior interview responses** to skip already-answered questions
 
@@ -61,7 +61,7 @@ After dialogue, propose 2-3 research strategies. Examples (illustrative only):
 
 ### Store Interview & Approach
 
-Append to `.progress.md` under "Interview Responses":
+Append to `progress.md` under "Interview Responses":
 ```markdown
 ### Research Interview (from research.md)
 - [Topic 1]: [response]
@@ -112,9 +112,9 @@ After merge, delete partial files: `rm ./specs/$spec/.research-*.md`
 If NOT `--quick`, skip to Step 6.
 
 Invoke `spec-reviewer` via Task tool to validate research.md. Follow the standard review loop:
-- REVIEW_PASS: log to .progress.md, proceed to walkthrough
+- REVIEW_PASS: log to progress.md, proceed to walkthrough
 - REVIEW_FAIL (iteration < 3): log, extract feedback, re-invoke research-analyst with revision prompt, re-read, loop
-- REVIEW_FAIL (iteration >= 3): log warning to .progress.md (graceful degradation), proceed
+- REVIEW_FAIL (iteration >= 3): log warning to progress.md (graceful degradation), proceed
 - No signal: treat as REVIEW_PASS (permissive)
 
 **Review delegation**: Include full research.md content, iteration count, and prior findings. Upstream: none (research is first artifact).
@@ -160,7 +160,7 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 
 **If "Continue to requirements"**: proceed to Step 7.
 **If "Run review agent"**: invoke `spec-reviewer` with full `research.md` content and goal context. Display findings, then loop back to this same question.
-**If "Run prototype"**: invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `research.md` and goal context, write the result to `.progress.md`, re-display the walkthrough, then ask again.
+**If "Run prototype"**: invoke `Skill({ skill: "ralph-specum:prototype" })`, run a throwaway prototype using `research.md` and goal context, write the result to `progress.md`, re-display the walkthrough, then ask again.
 **If "Request changes" or "Other"**: ask what to change, invoke subagents with feedback, re-merge, re-display the walkthrough, ask again.
 
 ## Step 7: Finalize
@@ -170,12 +170,14 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 1. Parse "Related Specs" table from research.md
 2. **Merge** into `.ralph-state.json` (preserve all existing fields):
    ```bash
-   jq --argjson specs "$RELATED_SPECS_JSON" \
-     '. + {"phase": "research", "awaitingApproval": true, "relatedSpecs": $specs}' \
-     "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-     mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   bash "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/update-runtime-state.sh" \
+     "$SPEC_PATH/.ralph-state.json" \
+     --string phase research \
+     --json awaitingApproval true \
+     --json relatedSpecs "$RELATED_SPECS_JSON"
    ```
-3. Update `.progress.md` with research completion
+3. Update `progress.md` with research completion and refresh canonical
+   frontmatter: `phase: research`, current `approved_through`, and `updated`
 
 ### Commit Spec (if enabled)
 

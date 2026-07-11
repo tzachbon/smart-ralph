@@ -1,29 +1,34 @@
-# Ralph Progress
+---
+spec: "{{SPEC_NAME}}"
+phase: research
+approved_through: none
+updated: "{{TIMESTAMP}}"
+---
 
-## Current Goal
-
-**Phase**: requirements
-**Task**: 0/0 - Initializing
-**Objective**: Generate requirements from goal description
+# Progress: {{SPEC_NAME}}
 
 ## Original Goal
 
 {{USER_GOAL_DESCRIPTION}}
 
+## Current Status
+
+- Phase: research
+- Next action: Complete research and request approval
+- Blockers: None
+
+## Decisions
+
+_No decisions recorded yet._
+
 ## Completed
 
-_No tasks completed yet_
+_No work completed yet._
 
 ## Learnings
 
-_Discoveries and insights will be captured here_
+_No learnings recorded yet._
 
-## Blockers
+## Verification
 
-- None currently
-
-## Next Steps
-
-1. Read the goal description
-2. Generate requirements.md
-3. Update this progress file
+_No verification performed yet._

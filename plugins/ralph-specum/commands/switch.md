@@ -141,9 +141,12 @@ List all configured specs_dirs that were searched, helping user understand where
    echo "./packages/api/specs/api-auth" > ./specs/.current-spec
    ```
 
-3. Read the spec's state:
+3. Read `${CLAUDE_PLUGIN_ROOT}/references/progress-state.md` and apply its
+   version 5 migration for the resolved spec.
+
+4. Read the spec's state:
    - `.ralph-state.json` for phase and progress
-   - `.progress.md` for context
+   - `progress.md` for context
 
 ## Output
 

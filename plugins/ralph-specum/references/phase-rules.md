@@ -9,7 +9,7 @@ All specs follow one of three workflows based on intent classification:
 
 ## Workflow Selection
 
-Read Intent Classification from `.progress.md`:
+Read Intent Classification from `progress.md`:
 
 ```text
 ## Intent Classification
@@ -110,7 +110,7 @@ PR Creation -> CI Monitoring -> Review Check -> Fix Issues -> Push -> Repeat
 - CI checks all green
 - No unresolved review comments
 - Zero test regressions (all existing tests pass)
-- Code is modular/reusable (verified in .progress.md)
+- Code is modular/reusable (verified in progress.md)
 
 **Timeout protection**:
 - Max 48 hours in PR Lifecycle Loop
@@ -236,12 +236,12 @@ When Intent Classification is `BUG_FIX`, prepend a Phase 0 (Reproduce) before th
 
 - [ ] 0.2 [VERIFY] Confirm repro consistency: bug fails reliably
   - **Do**: Run reproduction command 3 times to confirm consistent failure
-  - **Done when**: Failure is consistent across runs; document BEFORE state in .progress.md
+  - **Done when**: Failure is consistent across runs; document BEFORE state in progress.md
   - **Verify**: `<reproduction command> 2>&1 | grep -q "<expected error>" && echo CONSISTENT_PASS`
   - **Commit**: `chore(<spec>): document reality check before`
 ```
 
-**Canonical `## Reality Check (BEFORE)` format** (write to `.progress.md` at end of Phase 0):
+**Canonical `## Reality Check (BEFORE)` format** (write to `progress.md` at end of Phase 0):
 ```markdown
 ## Reality Check (BEFORE)
 - Reproduction command: `<exact command>`
@@ -259,15 +259,15 @@ When Intent Classification is `BUG_FIX`, prepend a Phase 0 (Reproduce) before th
 
 ## VF Task for Fix Goals
 
-When `.progress.md` contains `## Reality Check (BEFORE)` OR Intent Classification is `BUG_FIX`, the goal is a fix-type and requires a VF (Verification Final) task as the final task in Phase 4:
+When `progress.md` contains `## Reality Check (BEFORE)` OR Intent Classification is `BUG_FIX`, the goal is a fix-type and requires a VF (Verification Final) task as the final task in Phase 4:
 
 ```markdown
 - [ ] VF [VERIFY] Goal verification: original failure now passes
   - **Do**:
-    1. Read BEFORE state from .progress.md
+    1. Read BEFORE state from progress.md
     2. Re-run reproduction command from Reality Check (BEFORE)
     3. Compare output with BEFORE failure
-    4. Document AFTER state in .progress.md
+    4. Document AFTER state in progress.md
   - **Verify**: Exit code 0 for reproduction command
   - **Done when**: Command that failed before now passes
   - **Commit**: `chore(<spec>): verify fix resolves original issue`
@@ -366,7 +366,7 @@ Final verification sequence (last 3 tasks of spec):
 [VERIFY] tasks are special verification checkpoints:
 - Delegated to qa-engineer (not spec-executor)
 - Always sequential (break parallel groups)
-- VERIFICATION_PASS = treat as TASK_COMPLETE, mark [x], update .progress.md
+- VERIFICATION_PASS = treat as TASK_COMPLETE, mark [x], update progress.md
 - VERIFICATION_FAIL = do NOT mark complete, increment taskIteration, retry or error if max reached
 
 ### Discovery

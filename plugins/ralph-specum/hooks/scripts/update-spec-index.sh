@@ -8,13 +8,13 @@
 #   ./specs/.index/index-state.json - Machine-readable state
 #   ./specs/.index/index.md - Human-readable summary
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/path-resolver.sh"
 
 QUIET=false
-if [ "$1" = "--quiet" ]; then
+if [ "${1:-}" = "--quiet" ]; then
     QUIET=true
 fi
 
@@ -24,12 +24,59 @@ log() {
     fi
 }
 
-# Get default specs dir for index location
-DEFAULT_DIR=$(ralph_get_default_dir)
+# Resolve the index location from the canonical workspace root. Keep the
+# configured path for display, but never use it directly for filesystem I/O.
+WORKSPACE_ROOT=$(ralph_get_workspace_root)
+DEFAULT_DIR_CONFIGURED=$(ralph_get_default_dir)
+if ! DEFAULT_DIR=$(ralph_resolve_workspace_path "$DEFAULT_DIR_CONFIGURED"); then
+    echo "ERROR: Default specs directory escapes RALPH_CWD: $DEFAULT_DIR_CONFIGURED" >&2
+    exit 1
+fi
 INDEX_DIR="$DEFAULT_DIR/.index"
 
 # Create index directory
 mkdir -p "$INDEX_DIR"
+
+# Serialize the complete two-file update per workspace. A directory lock keeps
+# the implementation dependency-free and can be removed without leaving a
+# lock file in the generated index.
+LOCK_DIR="$INDEX_DIR/.update.lock"
+LOCK_HELD=false
+STATE_TMP=""
+INDEX_TMP=""
+
+cleanup() {
+    [ -z "$STATE_TMP" ] || rm -f -- "$STATE_TMP"
+    [ -z "$INDEX_TMP" ] || rm -f -- "$INDEX_TMP"
+    if [ "$LOCK_HELD" = true ]; then
+        rm -f -- "$LOCK_DIR/pid"
+        rmdir -- "$LOCK_DIR" 2>/dev/null || true
+    fi
+}
+
+trap cleanup EXIT
+trap 'exit 130' INT TERM
+
+LOCK_ATTEMPTS=0
+until mkdir -- "$LOCK_DIR" 2>/dev/null; do
+    if [ -f "$LOCK_DIR/pid" ]; then
+        LOCK_PID=$(cat "$LOCK_DIR/pid" 2>/dev/null || true)
+        if [ -n "$LOCK_PID" ] && ! kill -0 "$LOCK_PID" 2>/dev/null; then
+            rm -f -- "$LOCK_DIR/pid"
+            rmdir -- "$LOCK_DIR" 2>/dev/null || true
+            continue
+        fi
+    fi
+
+    LOCK_ATTEMPTS=$((LOCK_ATTEMPTS + 1))
+    if [ "$LOCK_ATTEMPTS" -ge 400 ]; then
+        echo "ERROR: Timed out waiting for spec index lock in $WORKSPACE_ROOT" >&2
+        exit 1
+    fi
+    sleep 0.05
+done
+LOCK_HELD=true
+printf '%s\n' "$$" > "$LOCK_DIR/pid"
 
 # Get all configured directories
 SPECS_DIRS=$(ralph_get_specs_dirs)
@@ -42,16 +89,20 @@ TOTAL_SPECS=0
 while IFS= read -r dir; do
     [ -z "$dir" ] && continue
 
+    if ! RESOLVED_DIR=$(ralph_resolve_workspace_path "$dir"); then
+        continue
+    fi
+
     # Count specs in this directory
     SPEC_COUNT=0
-    if [ -d "$dir" ]; then
-        SPEC_COUNT=$(find "$dir" -maxdepth 1 -mindepth 1 -type d ! -name ".*" 2>/dev/null | wc -l | tr -d ' ')
+    if [ -d "$RESOLVED_DIR" ]; then
+        SPEC_COUNT=$(find "$RESOLVED_DIR" -maxdepth 1 -mindepth 1 -type d ! -name ".*" 2>/dev/null | wc -l | tr -d ' ')
     fi
     TOTAL_SPECS=$((TOTAL_SPECS + SPEC_COUNT))
 
     # Determine if this is the default directory
     IS_DEFAULT=false
-    if [ "$dir" = "$DEFAULT_DIR" ]; then
+    if [ "$RESOLVED_DIR" = "$DEFAULT_DIR" ]; then
         IS_DEFAULT=true
     fi
 
@@ -83,8 +134,12 @@ ALL_SPECS=$(ralph_list_specs)
 while IFS='|' read -r name path; do
     [ -z "$name" ] && continue
 
+    if ! RESOLVED_PATH=$(ralph_resolve_workspace_path "$path"); then
+        continue
+    fi
+
     # Read state from .ralph-state.json if exists
-    STATE_FILE="$path/.ralph-state.json"
+    STATE_FILE="$RESOLVED_PATH/.ralph-state.json"
     PHASE="unknown"
     TASK_INDEX=0
     TOTAL_TASKS=0
@@ -97,21 +152,23 @@ while IFS='|' read -r name path; do
         AWAITING_APPROVAL=$(jq -r '.awaitingApproval // false' "$STATE_FILE" 2>/dev/null || echo false)
     else
         # No state file - check what files exist to determine phase
-        if [ -f "$path/tasks.md" ]; then
+        if [ -f "$RESOLVED_PATH/tasks.md" ]; then
             # Count completed tasks
-            COMPLETED=$(grep -c '\- \[x\]' "$path/tasks.md" 2>/dev/null || echo 0)
-            TOTAL_TASKS=$(grep -c '\- \[.\]' "$path/tasks.md" 2>/dev/null || echo 0)
+            COMPLETED=$(grep -c '\- \[x\]' "$RESOLVED_PATH/tasks.md" 2>/dev/null || true)
+            TOTAL_TASKS=$(grep -c '\- \[.\]' "$RESOLVED_PATH/tasks.md" 2>/dev/null || true)
+            COMPLETED=${COMPLETED:-0}
+            TOTAL_TASKS=${TOTAL_TASKS:-0}
             if [ "$COMPLETED" -eq "$TOTAL_TASKS" ] && [ "$TOTAL_TASKS" -gt 0 ]; then
                 PHASE="completed"
             else
                 PHASE="tasks"
             fi
             TASK_INDEX=$COMPLETED
-        elif [ -f "$path/design.md" ]; then
+        elif [ -f "$RESOLVED_PATH/design.md" ]; then
             PHASE="design"
-        elif [ -f "$path/requirements.md" ]; then
+        elif [ -f "$RESOLVED_PATH/requirements.md" ]; then
             PHASE="requirements"
-        elif [ -f "$path/research.md" ]; then
+        elif [ -f "$RESOLVED_PATH/research.md" ]; then
             PHASE="research"
         else
             PHASE="new"
@@ -155,8 +212,12 @@ SPECS_JSON="$SPECS_JSON
 # Get current timestamp
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Write index-state.json
-cat > "$INDEX_DIR/index-state.json" << EOF
+# Build both outputs in unique temporary files. Publishing with mv keeps each
+# visible file complete even when updates run concurrently.
+STATE_TMP=$(mktemp "$INDEX_DIR/.index-state.json.tmp.XXXXXX")
+INDEX_TMP=$(mktemp "$INDEX_DIR/.index.md.tmp.XXXXXX")
+
+cat > "$STATE_TMP" << EOF
 {
   "version": "1.0",
   "updated": "$TIMESTAMP",
@@ -165,13 +226,11 @@ cat > "$INDEX_DIR/index-state.json" << EOF
 }
 EOF
 
-log "Updated $INDEX_DIR/index-state.json"
-
 # Generate human-readable index.md
 # Count directories
 DIR_COUNT=$(echo "$SPECS_DIRS" | grep -c . || echo 0)
 
-cat > "$INDEX_DIR/index.md" << EOF
+cat > "$INDEX_TMP" << EOF
 # Spec Index
 
 Auto-generated summary of all specs across configured directories.
@@ -189,21 +248,25 @@ EOF
 while IFS= read -r dir; do
     [ -z "$dir" ] && continue
 
+    if ! RESOLVED_DIR=$(ralph_resolve_workspace_path "$dir"); then
+        continue
+    fi
+
     SPEC_COUNT=0
-    if [ -d "$dir" ]; then
-        SPEC_COUNT=$(find "$dir" -maxdepth 1 -mindepth 1 -type d ! -name ".*" 2>/dev/null | wc -l | tr -d ' ')
+    if [ -d "$RESOLVED_DIR" ]; then
+        SPEC_COUNT=$(find "$RESOLVED_DIR" -maxdepth 1 -mindepth 1 -type d ! -name ".*" 2>/dev/null | wc -l | tr -d ' ')
     fi
 
     DEFAULT_MARKER=""
-    if [ "$dir" = "$DEFAULT_DIR" ]; then
+    if [ "$RESOLVED_DIR" = "$DEFAULT_DIR" ]; then
         DEFAULT_MARKER="Yes"
     fi
 
-    echo "| $dir | $SPEC_COUNT | $DEFAULT_MARKER |" >> "$INDEX_DIR/index.md"
+    echo "| $dir | $SPEC_COUNT | $DEFAULT_MARKER |" >> "$INDEX_TMP"
 done <<< "$SPECS_DIRS"
 
 # Add specs table
-cat >> "$INDEX_DIR/index.md" << EOF
+cat >> "$INDEX_TMP" << EOF
 
 ## All Specs ($TOTAL_SPECS)
 
@@ -215,11 +278,15 @@ EOF
 while IFS='|' read -r name path; do
     [ -z "$name" ] && continue
 
+    if ! RESOLVED_PATH=$(ralph_resolve_workspace_path "$path"); then
+        continue
+    fi
+
     # Get directory from path
     DIR=$(dirname "$path")
 
     # Read state
-    STATE_FILE="$path/.ralph-state.json"
+    STATE_FILE="$RESOLVED_PATH/.ralph-state.json"
     PHASE="unknown"
     STATUS=""
 
@@ -236,9 +303,11 @@ while IFS='|' read -r name path; do
         fi
     else
         # Determine from files
-        if [ -f "$path/tasks.md" ]; then
-            COMPLETED=$(grep -c '\- \[x\]' "$path/tasks.md" 2>/dev/null || echo 0)
-            TOTAL=$(grep -c '\- \[.\]' "$path/tasks.md" 2>/dev/null || echo 0)
+        if [ -f "$RESOLVED_PATH/tasks.md" ]; then
+            COMPLETED=$(grep -c '\- \[x\]' "$RESOLVED_PATH/tasks.md" 2>/dev/null || true)
+            TOTAL=$(grep -c '\- \[.\]' "$RESOLVED_PATH/tasks.md" 2>/dev/null || true)
+            COMPLETED=${COMPLETED:-0}
+            TOTAL=${TOTAL:-0}
             if [ "$COMPLETED" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
                 PHASE="completed"
                 STATUS="done"
@@ -246,22 +315,22 @@ while IFS='|' read -r name path; do
                 PHASE="tasks"
                 STATUS="$COMPLETED/$TOTAL tasks"
             fi
-        elif [ -f "$path/design.md" ]; then
+        elif [ -f "$RESOLVED_PATH/design.md" ]; then
             PHASE="design"
-        elif [ -f "$path/requirements.md" ]; then
+        elif [ -f "$RESOLVED_PATH/requirements.md" ]; then
             PHASE="requirements"
-        elif [ -f "$path/research.md" ]; then
+        elif [ -f "$RESOLVED_PATH/research.md" ]; then
             PHASE="research"
         else
             PHASE="new"
         fi
     fi
 
-    echo "| $name | $DIR | $PHASE | $STATUS |" >> "$INDEX_DIR/index.md"
+    echo "| $name | $DIR | $PHASE | $STATUS |" >> "$INDEX_TMP"
 done <<< "$ALL_SPECS"
 
 # Add footer
-cat >> "$INDEX_DIR/index.md" << EOF
+cat >> "$INDEX_TMP" << EOF
 
 ---
 
@@ -271,5 +340,11 @@ cat >> "$INDEX_DIR/index.md" << EOF
 - \`/ralph-specum:start <name>\` - Create or resume spec
 EOF
 
+mv -f -- "$STATE_TMP" "$INDEX_DIR/index-state.json"
+STATE_TMP=""
+mv -f -- "$INDEX_TMP" "$INDEX_DIR/index.md"
+INDEX_TMP=""
+
+log "Updated $INDEX_DIR/index-state.json"
 log "Updated $INDEX_DIR/index.md"
 log "Spec index updated: $TOTAL_SPECS specs in $DIR_COUNT directories"

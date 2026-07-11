@@ -41,16 +41,19 @@ Four rules for all agents and code generation. Non-negotiable.
 
 ## Overview
 
-Smart Ralph is a Claude Code plugin for spec-driven development. It transforms feature requests into structured specs (research, requirements, design, tasks) then executes them task-by-task with fresh context per task.
+Smart Ralph provides native Claude Code and Codex plugins backed by a shared specification core. Both transform feature requests into reviewed research, requirements, design, tasks, and verified implementation while using their own platform-native orchestration.
 
 ## Development
 
 ```bash
-# Test plugin locally
+# Test the Claude plugin locally
 claude --plugin-dir ./plugins/ralph-specum
 
 # Test the workflow
 /ralph-specum:start test-feature Some test goal
+
+# Verify generated shared assets
+python3 scripts/sync-core-assets.py --check
 ```
 
 ### Task Granularity
@@ -75,7 +78,7 @@ Fine is the default. Coarse reduces token consumption ~3-5x for sequential execu
 > 3. Bump once per set of related changes (not per commit)
 > 4. Only update the version for plugins you actually modified
 
-No build step required. Changes take effect on Claude Code restart.
+Shared core changes require `python3 scripts/sync-core-assets.py` and a version bump for both generated plugin packages. Native adapter changes require a version bump only for the modified plugin.
 
 ### Plugin Development Skills (ALWAYS USE)
 
@@ -94,29 +97,28 @@ When creating or modifying plugin components, **ALWAYS** use the `plugin-dev` sk
 
 ## Architecture
 
-### Plugin Structure
+### Product Structure
 
 ```
-plugins/ralph-specum/
-├── .claude-plugin/plugin.json   # Plugin manifest
-├── agents/                      # Sub-agent definitions (markdown)
-├── commands/                    # Slash command definitions (markdown)
-├── hooks/                       # Stop watcher (controls execution loop continuation)
-├── templates/                   # Spec file templates
-└── schemas/                     # JSON schema for spec validation
+core/                            # Canonical artifacts, schemas, rules, validators, fixtures
+plugins/ralph-specum/            # Self-contained native Claude Code plugin
+plugins/ralph-specum-codex/      # Self-contained native Codex plugin
+scripts/sync-core-assets.py      # Generates shared assets into both packages
 ```
 
 ### Execution Flow
 
-1. **Spec Phases**: Each command (`/ralph-specum:research`, `:requirements`, `:design`, `:tasks`) invokes a specialized agent to generate corresponding markdown in `./specs/<spec-name>/`
-2. **Execution Loop**: During execution (`/ralph-specum:implement`), the stop-hook reads `.ralph-state.json`, delegates tasks to spec-executor via Task tool, and outputs `ALL_TASKS_COMPLETE` when done. The loop is self-contained (no external plugin required).
-3. **Fresh Context**: Each task runs in isolation via Task tool. Progress persists in `.progress.md` and task checkmarks in `tasks.md`
+1. **Shared phases**: Research, requirements, design, and tasks produce the canonical Markdown artifacts in `./specs/<spec-name>/`.
+2. **Claude execution**: Claude commands delegate to Claude agents and may use the Claude Stop hook for explicit autonomous execution.
+3. **Codex execution**: Codex phase skills delegate to native subagents. Explicit autonomous execution uses native `/goal`; normal implementation completes one verified logical batch.
+4. **Root ownership**: Subagents return evidence and changed files. The root coordinator alone updates shared state and Git.
 
 ### State Files
 
-- `./specs/.current-spec` - Active spec name
-- `./specs/<name>/.ralph-state.json` - Loop state (phase, taskIndex, iterations). Deleted on completion
-- `./specs/<name>/.progress.md` - Progress tracking, learnings, context for agents
+- `./specs/.current-spec` - Local active spec pointer
+- `./specs/<name>/progress.md` - Tracked phase, approval, learnings, blockers, and next step
+- `./specs/<name>/tasks.md` - Authoritative task completion checkboxes
+- `./specs/<name>/.ralph-state.json` - Disposable Claude runtime state when hook continuation is active
 - `./specs/.current-epic` - Active epic name
 - `./specs/_epics/<name>/.epic-state.json` - Epic progress (which specs are done/pending/blocked)
 
@@ -133,7 +135,7 @@ specs/
       epic.md            # Triage output (vision, specs, dependency graph)
       research.md        # Exploration + validation research
       .epic-state.json   # Progress tracking across specs
-      .progress.md       # Learnings and decisions
+      progress.md        # Tracked learnings and decisions
 ```
 
 **Entry points:**
@@ -165,17 +167,15 @@ Quality checkpoints inserted every 2-3 tasks throughout all phases.
 
 ### Task Completion Protocol
 
-Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinator outputs `ALL_TASKS_COMPLETE` to end the Ralph Loop. If task fails, retries up to 5 times then blocks with error.
+Subagents return `Answer`, `Evidence`, `Risks`, `Verification performed`, and `Changed files`. The coordinator validates the result, updates `tasks.md` and `progress.md`, and commits one verified logical batch. A task receives at most three attempts before the workflow stops with a blocker.
 
 ### Dependencies
 
-Ralph Specum v3.0.0+ is self-contained with no external plugin dependencies. The execution loop is handled by the stop-hook.
+Each v5 plugin is self-contained after installation. The shared core is build-time source material, not a runtime dependency. Claude hooks use `${CLAUDE_PLUGIN_ROOT}`. Codex uses native goals and does not register a Stop hook.
 
 ## Key Files
 
-- `commands/implement.md` - Thin wrapper + coordinator prompt for Ralph Loop
-- `commands/cancel.md` - Dual cleanup (cancel-ralph + state file deletion)
-- `hooks/scripts/stop-watcher.sh` - Execution loop controller (outputs continuation prompts)
-- `agents/spec-executor.md` - Task execution rules, commit discipline
-- `agents/task-planner.md` - Task format, quality checkpoint rules, POC workflow
-- `templates/*.md` - Spec file templates with structure requirements
+- `core/` - Canonical cross-platform artifact contract
+- `plugins/ralph-specum/` - Claude-native commands, agents, and hooks
+- `plugins/ralph-specum-codex/` - Codex-native phase skills and subagent coordination
+- `scripts/sync-core-assets.py` - Shared asset generation and drift checking

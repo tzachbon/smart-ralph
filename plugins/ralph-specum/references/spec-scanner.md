@@ -34,9 +34,9 @@ ralph_resolve_current()   # Resolve .current-spec to full path
      - Mark as "indexed" type for display differentiation
    |
 2. For each spec found (name|path pair):
-   - Read $path/.progress.md (using the full path from ralph_list_specs)
+   - Read $path/progress.md (using the full path from ralph_list_specs)
    - Extract "Original Goal" section (line after "## Original Goal")
-   - If .progress.md doesn't exist, skip this spec
+   - If progress.md doesn't exist, skip this spec
    |
 3. Keyword matching:
    - Extract keywords from current goal (split by spaces, lowercase)

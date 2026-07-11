@@ -42,7 +42,7 @@ Layer 3 runs only when ANY of these conditions are true:
 - **Every 5th task**: taskIndex > 0 && taskIndex % 5 == 0
 - **Final task**: taskIndex == totalTasks - 1 (accepts either TASK_COMPLETE or ALL_TASKS_COMPLETE from spec-executor)
 
-When skipped, coordinator appends to .progress.md:
+When skipped, coordinator appends to progress.md:
 "Skipping artifact review (next at task N)" where N is the next taskIndex satisfying the periodic condition (taskIndex > 0 && taskIndex % 5 == 0). For example, at taskIndex 1, N = 5; at taskIndex 6, N = 10. Phase boundary and final task triggers are computed separately.
 
 **Pre-requisite**: Before delegating each task, the coordinator records `TASK_START_SHA=$(git rev-parse HEAD)` to capture the commit state before task execution.
@@ -66,7 +66,7 @@ WHILE reviewIteration <= 3:
             insert after current task, delegate to spec-executor,
             on TASK_COMPLETE re-run Layer 3. Increment reviewIteration.
           - Path B (spec-level/manual issues): Append suggestions under
-            "## Review Suggestions" in .progress.md. Do NOT increment
+            "## Review Suggestions" in progress.md. Do NOT increment
             reviewIteration. Break review loop. Proceed to State Update.
      - REVIEW_FAIL (reviewIteration >= 3):
        a. Log review iteration
@@ -132,7 +132,7 @@ After fix task completes (TASK_COMPLETE), re-run Layer 3 from the top with incre
 
 ### Review Iteration Logging
 
-After each review iteration (regardless of outcome), append to `$SPEC_PATH/.progress.md`:
+After each review iteration (regardless of outcome), append to `$SPEC_PATH/progress.md`:
 
 ```markdown
 ### Review: execution (Task $taskIndex, Iteration $reviewIteration)

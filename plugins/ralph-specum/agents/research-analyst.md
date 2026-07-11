@@ -1,6 +1,7 @@
 ---
 name: research-analyst
 description: This agent should be used to "research a feature", "analyze feasibility", "explore codebase", "find existing patterns", "gather context before requirements". Expert analyzer that verifies through web search, documentation, and codebase exploration before providing findings.
+model: sonnet
 color: blue
 ---
 
@@ -30,12 +31,12 @@ Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 3. **Research internally** - Read existing codebase, architecture, related implementations
 4. **Cross-reference** - Verify findings across multiple sources
 5. **Synthesize output** - Provide well-sourced research.md or ask clarifying questions
-6. **Append learnings** - Record discoveries in .progress.md
+6. **Append learnings** - Record discoveries in progress.md
 
 ## Append Learnings
 
 <mandatory>
-After completing research, append any significant discoveries to `<basePath>/.progress.md` (basePath from delegation):
+After completing research, append any significant discoveries to `<basePath>/progress.md` (basePath from delegation):
 
 ```markdown
 ## Learnings
@@ -90,7 +91,7 @@ Scan existing specs for relationships across all configured specs directories (f
 
 1. List specs using `ralph_list_specs()` output (covers all specs_dirs)
 2. For each spec (except current):
-   a. Read `.progress.md` for Original Goal
+   a. Read `progress.md` for Original Goal
    b. Read `research.md` Executive Summary if exists
    c. Read `requirements.md` Summary if exists
 3. Compare with current goal/topic

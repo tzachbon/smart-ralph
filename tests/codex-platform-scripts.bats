@@ -4,10 +4,6 @@ repo_root() {
     echo "$BATS_TEST_DIRNAME/.."
 }
 
-merge_state_script() {
-    echo "$(repo_root)/plugins/ralph-specum-codex/scripts/merge_state.py"
-}
-
 resolve_spec_paths_script() {
     echo "$(repo_root)/plugins/ralph-specum-codex/scripts/resolve_spec_paths.py"
 }
@@ -44,7 +40,7 @@ write_crlf_file() {
 setup() {
     TEST_REPO="$(mktemp -d)"
     export TEST_REPO
-    mkdir -p "$TEST_REPO/.claude"
+    mkdir -p "$TEST_REPO/.codex"
 }
 
 teardown() {
@@ -53,54 +49,22 @@ teardown() {
     fi
 }
 
-@test "codex scripts: merge_state rejects malformed json assignments" {
-    local script state_file
-    script="$(merge_state_script)"
-    state_file="$TEST_REPO/state.json"
-
-    run python3 "$script" "$state_file" --json "relatedSpecs={bad"
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"Invalid JSON for 'relatedSpecs':"* ]]
-}
-
-@test "codex scripts: merge_state rejects malformed existing state files" {
-    local script state_file
-    script="$(merge_state_script)"
-    state_file="$TEST_REPO/state.json"
-    printf '{ bad\n' > "$state_file"
-
-    run python3 "$script" "$state_file" --set "phase=execution"
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"State file is not valid JSON:"* ]]
-}
-
-@test "codex scripts: merge_state writes atomically without tmp leftovers" {
-    local script state_file phase total_tasks
-    script="$(merge_state_script)"
-    state_file="$TEST_REPO/state.json"
-
-    run python3 "$script" "$state_file" --set "phase=execution" --set "totalTasks=3"
-    [ "$status" -eq 0 ]
-
-    phase="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["phase"])' "$state_file")"
-    total_tasks="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["totalTasks"])' "$state_file")"
-
-    [ "$phase" = "execution" ]
-    [ "$total_tasks" = "3" ]
-    [ ! -e "$state_file.tmp" ]
+@test "codex scripts: no adapter continuation state writer is shipped" {
+    local root
+    root="$(repo_root)/plugins/ralph-specum-codex"
+    [ ! -f "$root/scripts/merge_state.py" ]
+    [ ! -f "$root/hooks/stop-watcher.sh" ]
 }
 
 @test "codex scripts: resolve_spec_paths handles crlf frontmatter and bool variants" {
-    local script default_dir max_iterations auto_commit
+    local script default_dir auto_commit
     script="$(resolve_spec_paths_script)"
 
     mkdir -p "$TEST_REPO/packages/specs"
-    write_crlf_file "$TEST_REPO/.claude/ralph-specum.local.md" <<'EOF'
+    write_crlf_file "$TEST_REPO/.codex/ralph-specum.local.md" <<'EOF'
 ---
 specs_dirs:
-  - "./missing-specs"
   - "./packages/specs"
-default_max_iterations: 7
 auto_commit_spec: no
 quick_mode_default: yes
 ---
@@ -110,25 +74,22 @@ EOF
     [ "$status" -eq 0 ]
 
     default_dir="$(json_query default_dir <<< "$output")"
-    max_iterations="$(json_query default_max_iterations <<< "$output")"
     auto_commit="$(json_query auto_commit_spec <<< "$output")"
 
     [ "$default_dir" = "./packages/specs" ]
-    [ "$max_iterations" = "7" ]
     [ "$auto_commit" = "false" ]
     [[ "$output" != *"quick_mode_default"* ]]
 }
 
 @test "codex scripts: resolve_spec_paths falls back on malformed scalar settings" {
-    local script max_iterations auto_commit
+    local script auto_commit
     script="$(resolve_spec_paths_script)"
 
     mkdir -p "$TEST_REPO/specs"
-    cat > "$TEST_REPO/.claude/ralph-specum.local.md" <<'EOF'
+    cat > "$TEST_REPO/.codex/ralph-specum.local.md" <<'EOF'
 ---
 specs_dirs:
   - "./specs"
-default_max_iterations: maybe
 auto_commit_spec: perhaps
 quick_mode_default: later
 ---
@@ -137,10 +98,8 @@ EOF
     run python3 "$script" --cwd "$TEST_REPO"
     [ "$status" -eq 0 ]
 
-    max_iterations="$(json_query default_max_iterations <<< "$output")"
     auto_commit="$(json_query auto_commit_spec <<< "$output")"
 
-    [ "$max_iterations" = "5" ]
     [ "$auto_commit" = "true" ]
     [[ "$output" != *"quick_mode_default"* ]]
 }
@@ -150,7 +109,7 @@ EOF
     script="$(resolve_spec_paths_script)"
 
     mkdir -p "$TEST_REPO/specs"
-    cat > "$TEST_REPO/.claude/ralph-specum.local.md" <<'EOF'
+    cat > "$TEST_REPO/.codex/ralph-specum.local.md" <<'EOF'
 ---
 specs_dirs:
   - "./specs"
@@ -174,7 +133,7 @@ EOF
 
     mkdir -p "$TEST_REPO/good-specs/demo"
     : > "$TEST_REPO/not-a-dir"
-    cat > "$TEST_REPO/.claude/ralph-specum.local.md" <<'EOF'
+    cat > "$TEST_REPO/.codex/ralph-specum.local.md" <<'EOF'
 ---
 specs_dirs:
   - "./missing-specs"
@@ -198,10 +157,9 @@ EOF
     script="$(resolve_spec_paths_script)"
 
     mkdir -p "$TEST_REPO/packages/specs/demo"
-    cat > "$TEST_REPO/.claude/ralph-specum.local.md" <<'EOF'
+    cat > "$TEST_REPO/.codex/ralph-specum.local.md" <<'EOF'
 ---
 specs_dirs:
-  - "./missing-specs"
   - "./packages/specs"
 ---
 EOF
@@ -217,18 +175,9 @@ EOF
     [ "$output" = "./packages/specs/demo" ]
 }
 
-@test "codex scripts: resolve_spec_paths falls back to ./specs when no configured root is valid" {
+@test "codex scripts: resolve_spec_paths defaults to ./specs without configuration" {
     local script default_dir
     script="$(resolve_spec_paths_script)"
-
-    : > "$TEST_REPO/not-a-dir"
-    cat > "$TEST_REPO/.claude/ralph-specum.local.md" <<'EOF'
----
-specs_dirs:
-  - "./missing-specs"
-  - "./not-a-dir"
----
-EOF
 
     run python3 "$script" --cwd "$TEST_REPO"
     [ "$status" -eq 0 ]

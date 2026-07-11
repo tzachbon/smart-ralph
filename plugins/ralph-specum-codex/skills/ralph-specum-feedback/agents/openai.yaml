@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Feedback"
-  short_description: "Draft or submit Ralph feedback"
-  default_prompt: "Use $ralph-specum-feedback to draft or submit feedback for Ralph Specum."
+  short_description: "Deprecated v5 feedback compatibility shim"
+  default_prompt: "Use $ralph-specum-feedback to warn about deprecation and route this feedback request through $ralph-specum."
 policy:
   allow_implicit_invocation: false

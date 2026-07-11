@@ -111,7 +111,9 @@ In `--quick` mode, still perform branch check but skip the user prompt for non-d
 
 - `$DEFAULT_SPECS_DIR/.current-spec` - Active spec name/path pointer
 - `$SPEC_PATH/.ralph-state.json` - Loop state (phase, taskIndex, iterations)
-- `$SPEC_PATH/.progress.md` - Progress tracking and learnings
+
+Tracked `progress.md` arrives through the worktree checkout. Never copy the
+legacy `.progress.md` file into a worktree.
 
 **Note**: The spec may be in any configured specs_dir, not just `./specs/`. Use `ralph_resolve_current()` to get the full spec path.
 
@@ -168,9 +170,6 @@ if [ -n "$SPEC_PATH" ] && [ -d "$SPEC_PATH" ]; then
         cp "$SPEC_PATH/.ralph-state.json" "$WORKTREE_PATH/$SPEC_PATH/" || echo "Warning: Failed to copy .ralph-state.json to worktree"
     fi
 
-    if [ -f "$SPEC_PATH/.progress.md" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.progress.md" ]; then
-        cp "$SPEC_PATH/.progress.md" "$WORKTREE_PATH/$SPEC_PATH/" || echo "Warning: Failed to copy .progress.md to worktree"
-    fi
 fi
 ```
 

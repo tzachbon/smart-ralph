@@ -8,6 +8,11 @@ version: 0.2.0
 
 Spec-driven development transforms feature requests into structured specs through sequential phases, then executes them task-by-task.
 
+Durable state uses tracked `progress.md` with canonical frontmatter. Task
+checkboxes in `tasks.md` are the sole completion truth. Entry commands follow
+`${CLAUDE_PLUGIN_ROOT}/references/progress-state.md` for version 5 migration;
+phase commands never write the legacy file.
+
 ## Decision Tree: Where to Start
 
 | Situation | Command |
@@ -41,7 +46,7 @@ Tasks use these walkthrough choices:
 - Run review agent
 - Request changes
 
-Prototype mode uses `Skill({ skill: "ralph-specum:prototype" })`, runs a throwaway prototype against the current artifact plus upstream context, writes the result to `.progress.md`, then redisplays the walkthrough and asks again.
+Prototype mode uses `Skill({ skill: "ralph-specum:prototype" })`, runs a throwaway prototype against the current artifact plus upstream context, writes the result to `progress.md`, then redisplays the walkthrough and asks again.
 
 ### Phase Commands
 
@@ -72,7 +77,7 @@ specs/
     epic.md            # Triage output (vision, specs, dependency graph)
     research.md        # Exploration + validation research
     .epic-state.json   # Progress tracking across specs
-    .progress.md       # Learnings and decisions
+    progress.md        # Tracked learnings and decisions
 ```
 
 ## Management Commands

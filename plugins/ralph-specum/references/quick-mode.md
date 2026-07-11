@@ -66,14 +66,15 @@ Validation Sequence:
    specsDir = (--specs-dir value if valid) OR ralph_get_default_dir()
    basePath = "$specsDir/$name"
 4. Create spec directory: mkdir -p "$basePath"
-4a. Ensure gitignore entries exist (.current-spec, .progress.md)
+4a. Ensure gitignore entries exist for `.current-spec` and legacy
+    `**/.progress.md`; do not ignore tracked `progress.md`
 5. Write .ralph-state.json:
    { source: "plan", name, basePath, phase: "research",
      taskIndex: 0, totalTasks: 0, taskIteration: 1,
      maxTaskIterations: 5, globalIteration: 1,
      maxGlobalIterations: 100, commitSpec: $commitSpec,
      quickMode: true, discoveredSkills: [] }
-6. Write .progress.md with original goal
+6. Write tracked progress.md from the canonical template with original goal
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
 9. Skill Discovery Pass 1: scan skills, match against goal text, invoke matches
@@ -85,9 +86,9 @@ Validation Sequence:
       a. INFER reproduction command from goal text:
          - Scan goal text for backtick-quoted content (e.g., `pnpm test foo`) -- use first match
          - Scan goal text for "run X" or "by running X" patterns -- use captured X
-         - Fallback priority: (1) command from goal text, (2) pnpm test / npm test / yarn test (whichever lock file exists), (3) skip with warning logged to .progress.md
+         - Fallback priority: (1) command from goal text, (2) pnpm test / npm test / yarn test (whichever lock file exists), (3) skip with warning logged to progress.md
       b. RUN the inferred command: capture full stdout, stderr, and exit code
-      c. WRITE canonical `## Reality Check (BEFORE)` block to .progress.md:
+      c. WRITE canonical `## Reality Check (BEFORE)` block to progress.md:
          ```markdown
          ## Reality Check (BEFORE)
          - Reproduction command: `<exact command>`
@@ -97,7 +98,7 @@ Validation Sequence:
          - Timestamp: <ISO 8601>
          ```
       d. If exit code != 0 (confirmed failing): continue to step 11
-      e. If exit code == 0 (NOT confirmed failing): append WARNING to .progress.md and continue
+      e. If exit code == 0 (NOT confirmed failing): append WARNING to progress.md and continue
          (non-interactive -- do not block or prompt user)
          ```markdown
          ## Reality Check (BEFORE)
@@ -141,7 +142,7 @@ Scan all skill files and match against the goal text:
    - On failure: set `invoked: false` -- add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
 6. If no skills match across all scanned skills: log `- No skills matched`
 7. Update `.ralph-state.json` with updated `discoveredSkills` array
-8. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
+8. Append a `## Skill Discovery` section to `progress.md` with match details per skill:
    ```markdown
    ## Skill Discovery
    - **<skill-name>**: matched (keywords: <overlapping words>)
@@ -172,7 +173,7 @@ Re-scan skills with enriched context after research completes:
    - On failure: set `invoked: false` -- add `{ name, matchedAt: "post-research", invoked: false }`, log warning, continue
 6. If no skills match across all scanned skills: log `- No new skills matched`
 7. Update `.ralph-state.json` with updated `discoveredSkills` array
-8. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
+8. Append a `### Post-Research Retry` subsection to `progress.md` under `## Skill Discovery`:
    ```markdown
    ### Post-Research Retry
    - **<skill-name>**: matched (keywords: <overlapping words>)
@@ -214,7 +215,7 @@ WHILE iteration <= 3:
   3. Parse signal:
      - REVIEW_PASS: Proceed to next phase
      - REVIEW_FAIL (iteration < 3): Revise artifact, increment iteration
-     - REVIEW_FAIL (iteration >= 3): Append warning to .progress.md, proceed
+     - REVIEW_FAIL (iteration >= 3): Append warning to progress.md, proceed
      - No signal: Treat as REVIEW_PASS (permissive)
 ```
 
