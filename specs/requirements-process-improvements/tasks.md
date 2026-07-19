@@ -164,7 +164,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-6, AC-5.1, AC-5.3_
   - _Design: Output Contract_
 
-- [ ] 1.14 [VERIFY] Quality checkpoint: full script vs real artifact
+- [x] 1.14 [VERIFY] Quality checkpoint: full script vs real artifact
   - **Do**: Run script against `specs/requirements-process-improvements/requirements.md`; record findings (expected: possible C4/C8 WARNs, no crash); `bash -n` clean
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/lint-requirements.sh && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh specs/requirements-process-improvements/requirements.md | grep -qE 'RESULT: (PASS|FAIL)' && echo PASS`
   - **Done when**: All 8 checks report; RESULT line well-formed
