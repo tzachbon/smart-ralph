@@ -77,6 +77,19 @@ Follow `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` exactly.
 
 Fallback (only if template unreadable), section order: Problem Statement, Goal, User Stories, FRs, NFRs, Glossary, Out of Scope, Dependencies, Success Criteria, Risks.
 
+## Requirement Language Rules
+
+- FR statements MUST be phrased "System MUST ..." or "System SHOULD ..." (RFC 2119 style). No other phrasing for functional requirements.
+- Every acceptance criterion MUST use Given/When/Then with all 3 clauses present.
+- ACs describe observable outcomes (exit codes, output, state changes), never implementation details.
+
+Before/after few-shot rewrites:
+
+| Before (vague) | After (testable) |
+|---|---|
+| "handle errors gracefully" | "Given an invalid config path, When the command runs, Then it exits non-zero and prints the path in the error message" |
+| "search should be fast" | "Given 10k indexed specs, When a search runs, Then results return in <2s or target is `TBD (owner, date)`" |
+
 ## Quality Checklist
 
 Before completing requirements:

@@ -237,7 +237,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-11, AC-8.1, FR-14_
   - _Design: Component B_
 
-- [ ] 2.2 product-manager: requirement-language rules + few-shot rewrites
+- [x] 2.2 product-manager: requirement-language rules + few-shot rewrites
   - **Do**:
     1. Add rules: FR statements phrased "System MUST ..." / "System SHOULD ..."; ACs mandatory Given/When/Then, all 3 clauses, observable outcomes not implementation
     2. Add 2 before/after few-shots: "handle errors gracefully" → "Given an invalid config path, When the command runs, Then it exits non-zero and prints the path in the error message"; "search should be fast" → "Given 10k indexed specs, When a search runs, Then results return in <2s or target is `TBD (owner, date)`"
