@@ -170,7 +170,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - **Done when**: All 8 checks report; RESULT line well-formed
   - **Commit**: `chore(lint): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.15 Template: add Problem Statement section
+- [x] 1.15 Template: add Problem Statement section
   - **Do**:
     1. In `plugins/ralph-specum/templates/requirements.md`, insert `## Problem Statement` BEFORE `## Goal`: one paragraph slot with `{{problem}}`, `{{affected user}}`, `{{evidence pointer to research.md}}` placeholders
     2. Add one instruction comment: quick mode with no research evidence → derive from goal + stated assumptions or `TBD (user, next review)`, never fabricate
