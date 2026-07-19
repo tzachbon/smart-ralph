@@ -505,7 +505,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
 
 > Feature branch is already set at startup. NEVER push to main. PR is the deliverable.
 
-- [ ] 4.1 Version bump 4.9.1 → 4.10.0 in both manifests
+- [x] 4.1 Version bump 4.9.1 → 4.10.0 in both manifests
   - **Do**:
     1. `plugins/ralph-specum/.claude-plugin/plugin.json`: version `4.9.1` → `4.10.0`
     2. `.claude-plugin/marketplace.json`: ralph-specum entry `4.9.1` → `4.10.0` (only the ralph-specum entry; touch nothing else)
@@ -516,7 +516,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-13, AC-8.4_
   - _Design: Component G_
 
-- [ ] 4.2 [VERIFY] V4 Full local CI: scripts + tests + lint + grep gates
+- [x] 4.2 [VERIFY] V4 Full local CI: scripts + tests + lint + grep gates
   - **Do**:
     1. `bash -n` both new scripts; run `test-lint-requirements.sh`, `test-path-resolver.sh`, `test-multi-dir-integration.sh`
     2. Lint real requirements.md (exit 0); re-run Phase 2.13 cross-file grep gates
