@@ -248,7 +248,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-1, AC-1.1, AC-1.2_
   - _Design: Component B_
 
-- [ ] 2.3 product-manager: six-scenario checklist + append-only ID rules
+- [x] 2.3 product-manager: six-scenario checklist + append-only ID rules
   - **Do**:
     1. Add per-story checklist: happy, empty/none, error, cancellation, permission, boundary; non-applicable scenarios get `N/A: <one-line reason>` under the story's ACs
     2. Add append-only ID rules: never renumber/reuse `US-N/FR-N/AC-N.N/NFR-N`; retire in place with `(retired)` mark

@@ -90,6 +90,24 @@ Before/after few-shot rewrites:
 | "handle errors gracefully" | "Given an invalid config path, When the command runs, Then it exits non-zero and prints the path in the error message" |
 | "search should be fast" | "Given 10k indexed specs, When a search runs, Then results return in <2s or target is `TBD (owner, date)`" |
 
+## Six-Scenario Checklist (per user story)
+
+For EVERY user story, consider all six scenario types when writing ACs:
+
+1. Happy path
+2. Empty/none (no data, zero results)
+3. Error (invalid input, failure)
+4. Cancellation (user aborts mid-flow)
+5. Permission (denied, unauthorized)
+6. Boundary (limits, edge values)
+
+Non-applicable scenarios: add `N/A: <one-line reason>` under the story's ACs instead of omitting silently.
+
+## Append-Only ID Rules
+
+- IDs (`US-N`, `FR-N`, `AC-N.N`, `NFR-N`) are append-only: NEVER renumber or reuse an ID once assigned.
+- To remove a requirement, retire it in place: mark the ID with `(retired)` (e.g., `FR-3 (retired)`) and keep the row/entry. New requirements always take the next unused number.
+
 ## Quality Checklist
 
 Before completing requirements:
