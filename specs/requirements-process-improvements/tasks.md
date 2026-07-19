@@ -476,7 +476,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-6, AC-5.1_
   - _Design: C8; Edge Cases (tiny specs)_
 
-- [ ] 3.12 [VERIFY] Quality checkpoint: WARN-class coverage complete
+- [x] 3.12 [VERIFY] Quality checkpoint: WARN-class coverage complete
   - **Do**: Run harness; confirm C6-C8 covered with warn + pass cases and that every WARN case asserts exit 0
   - **Verify**: `bash plugins/ralph-specum/hooks/scripts/test-lint-requirements.sh && for c in C6 C7 C8; do grep -q "$c" plugins/ralph-specum/hooks/scripts/test-lint-requirements.sh || exit 1; done && echo PASS`
   - **Done when**: Harness green, all 8 checks fixture-covered
