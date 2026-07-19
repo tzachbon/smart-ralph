@@ -277,7 +277,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-5, AC-4.1, AC-4.2, FR-10, AC-8.2, FR-14, NFR-2_
   - _Design: Component B_
 
-- [ ] 2.6 spec-reviewer: lint script invocation + 8-check mapping
+- [x] 2.6 spec-reviewer: lint script invocation + 8-check mapping
   - **Do**:
     1. In requirements rubric of `plugins/ralph-specum/agents/spec-reviewer.md`: when `artifactType: requirements` and `artifactPath` provided, run `bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/lint-requirements.sh <artifactPath>`
     2. Map each of the 8 checks (C1-C8, terse one-line definitions) into the findings table with PASS/WARN/FAIL status verbatim from script output

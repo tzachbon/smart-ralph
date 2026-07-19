@@ -84,6 +84,29 @@ You receive via Task delegation from a coordinator (phase command or implement.m
 - Traceability PASS: "FR-3 traces to US-1 (phase reviews)" with explicit reference.
 - Traceability FAIL: "FR-7: Support dark mode" appears with no corresponding user story.
 
+**Lint script (hybrid gate)**: When `artifactType: requirements` and an `artifactPath` is provided, run:
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/lint-requirements.sh <artifactPath>
+```
+
+The script emits pipe-delimited findings (`FAIL|Cn|msg`, `WARN|Cn|msg`, `CHECK|Cn|PASS`) and exits 0 (no FAILs), 1 (FAILs), or 2 (usage/read error). Map each of the 8 checks into the findings table as its own row, with Status (PASS/WARN/FAIL) and messages taken verbatim from script output:
+
+| Check | Definition |
+|-------|------------|
+| C1 | ID & cross-reference integrity (US/FR/NFR/AC IDs well-formed, no duplicates, no dangling refs) |
+| C2 | Given/When/Then clause presence in every AC |
+| C3 | MoSCoW priority values (Must/Should/Could) in FR table |
+| C4 | Requirement-language lint (modal verb present, no vague terms) |
+| C5 | NFR fill-or-N/A (every NFR category filled or explicit N/A) |
+| C6 | Six-scenario coverage proxy (WARN-only heuristic) |
+| C7 | Unowned TBD / open questions (WARN-only) |
+| C8 | MUST:SHOULD ratio advisory (WARN-only) |
+
+Any C1-C5 FAIL counts as a FAIL dimension for the review signal; WARN rows are advisory and never block REVIEW_PASS on their own.
+
+**Degradation rule**: If the script exits 2 or the command errors (missing script, bash failure), add an INFO finding noting the script was unavailable, then perform the 8 checks manually using the definitions above. Warn and continue; never abort the review.
+
 ### Design Rubric
 
 | Dimension | PASS Criteria | FAIL Criteria |
