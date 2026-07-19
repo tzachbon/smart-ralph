@@ -361,7 +361,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
 
 Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for every one of the 8 checks, plus exit-code contract.
 
-- [ ] 3.1 Scaffold test harness + clean fixture
+- [x] 3.1 Scaffold test harness + clean fixture
   - **Do**:
     1. Create `plugins/ralph-specum/hooks/scripts/test-lint-requirements.sh` following `test-path-resolver.sh` conventions: `set -e` at top level, `mktemp -d` setup/cleanup trap, `assert_eq`/`assert_contains` helpers, PASS/FAIL counters, colored output, non-zero exit on any failure
     2. Add heredoc clean fixture (template-conformant mini doc: Problem Statement, 1 story with GWT ACs incl. one error-path AC, MoSCoW FR table with AC refs, NFR with `N/A: reason`, owned TBD)
