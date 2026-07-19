@@ -124,7 +124,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-2, AC-2.2_
   - _Design: Component C, C6_
 
-- [ ] 1.10 Implement C7 unowned TBD / open questions (WARN-class)
+- [x] 1.10 Implement C7 unowned TBD / open questions (WARN-class)
   - **Do**:
     1. Every `TBD` occurrence must carry an `(owner, date)`-style parenthetical (`TBD (` followed by comma-separated content); else `WARN|C7`
     2. Every bullet under `## Unresolved Questions` must contain `Owner:`; else `WARN|C7` naming the item

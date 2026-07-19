@@ -310,6 +310,42 @@ for usid in $C6_HITS; do
     warn_finding "C6" "$usid: happy-path-only ACs, no N/A markings"
 done
 
+# --- C7: unowned TBD / open questions (WARN-class, never FAIL) ---
+
+# Every TBD must carry an (owner, date)-style parenthetical: `TBD (` followed
+# by comma-separated content. Strip well-formed occurrences; any TBD left on
+# the line is bare.
+C7_TBD_LINES=$(grep -nw 'TBD' "$FILE")
+if [ -n "$C7_TBD_LINES" ]; then
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        stripped=$(echo "${line#*:}" | sed -E 's/TBD[[:space:]]*\([^)]*,[^)]*\)//g')
+        if echo "$stripped" | grep -qw 'TBD'; then
+            warn_finding "C7" "bare TBD without (owner, date) at line ${line%%:*}"
+        fi
+    done <<EOF
+$C7_TBD_LINES
+EOF
+fi
+
+# Every bullet under `## Unresolved Questions` (until next heading) must
+# contain `Owner:`.
+C7_UQ_HITS=$(awk '
+    /^## Unresolved Questions/ { insec = 1; next }
+    /^##/ { insec = 0 }
+    insec && /^[[:space:]]*- / && $0 !~ /Owner:/ {
+        item = $0; sub(/^[[:space:]]*- /, "", item)
+        print NR "\t" item
+    }
+' "$FILE")
+
+while IFS="$(printf '\t')" read -r lineno item; do
+    [ -z "$lineno" ] && continue
+    warn_finding "C7" "unowned question at line $lineno: $item"
+done <<EOF
+$C7_UQ_HITS
+EOF
+
 # --- Summary ---
 PASS_COUNT=0
 for n in 1 2 3 4 5 6 7 8; do
