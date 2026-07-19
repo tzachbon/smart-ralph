@@ -135,7 +135,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-5, AC-4.3_
   - _Design: Component C, C7_
 
-- [ ] 1.11 [VERIFY] Quality checkpoint: C5-C7 wired, WARNs don't flip exit code
+- [x] 1.11 [VERIFY] Quality checkpoint: C5-C7 wired, WARNs don't flip exit code
   - **Do**: `bash -n`; run script on /tmp/c6-warn.md and /tmp/c7-warn.md confirming exit 0 with WARN lines present
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/lint-requirements.sh && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh /tmp/c7-warn.md >/dev/null; test $? -eq 0 && echo PASS`
   - **Done when**: WARN-only docs exit 0
