@@ -18,8 +18,8 @@
 **So that** {{benefit/value}}
 
 **Acceptance Criteria:**
-- AC-1.1: {{Specific, testable criterion}}
-- AC-1.2: {{Specific, testable criterion}}
+- AC-1.1: Given {{context}}, When {{action}}, Then {{observable outcome}}
+- AC-1.2: Given {{context}}, When {{action}}, Then {{observable outcome}}
 
 ### US-2: {{Story Title}}
 
@@ -28,16 +28,16 @@
 **So that** {{benefit/value}}
 
 **Acceptance Criteria:**
-- AC-2.1: {{Specific, testable criterion}}
-- AC-2.2: {{Specific, testable criterion}}
+- AC-2.1: Given {{context}}, When {{action}}, Then {{observable outcome}}
+- AC-2.2: Given {{context}}, When {{action}}, Then {{observable outcome}}
 
 ## Functional Requirements
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|-------------|----------|---------------------|
-| FR-1 | {{description}} | High | {{how to verify}} |
-| FR-2 | {{description}} | Medium | {{how to verify}} |
-| FR-3 | {{description}} | Low | {{how to verify}} |
+| FR-1 | {{description}} | Must | AC-1.1, AC-1.2 |
+| FR-2 | {{description}} | Should | AC-2.1 |
+| FR-3 | {{description}} | Could | AC-2.2 |
 
 ## Non-Functional Requirements
 

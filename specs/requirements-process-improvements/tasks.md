@@ -181,7 +181,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-9, AC-7.1, AC-7.2_
   - _Design: Component A_
 
-- [ ] 1.16 Template: GWT AC skeleton + MoSCoW/AC-ref FR table
+- [x] 1.16 Template: GWT AC skeleton + MoSCoW/AC-ref FR table
   - **Do**:
     1. Replace AC placeholder lines with mandatory 3-clause form: `AC-1.1: Given {{context}}, When {{action}}, Then {{observable outcome}}` (all AC slots)
     2. FR table: Priority column example values → Must/Should/Could; Acceptance Criteria column → AC ID references (e.g., `AC-1.1, AC-2.3`), not free-text verification
