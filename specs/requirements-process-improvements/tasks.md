@@ -152,7 +152,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-6, AC-5.1_
   - _Design: Component C, C8; Edge Cases (zero SHOULD tiny specs)_
 
-- [ ] 1.13 Finalize output/exit-code contract end-to-end
+- [x] 1.13 Finalize output/exit-code contract end-to-end
   - **Do**:
     1. Confirm RESULT verdict logic: `FAIL` if any FAIL finding else `PASS`; counts = checks by worst status (X FAIL, Y WARN, Z PASS summing to 8)
     2. Confirm exit map: 0 = no FAIL (WARNs allowed), 1 = >=1 FAIL, 2 = usage/unreadable file; script is executable

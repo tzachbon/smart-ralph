@@ -366,19 +366,26 @@ if [ "$C8_TOTAL" -ge 8 ] && [ $((C8_MUST * 100)) -gt $((C8_TOTAL * 85)) ]; then
 fi
 
 # --- Summary ---
-PASS_COUNT=0
+# Counts are checks by worst status (FAIL > WARN > PASS), always summing to 8.
+CHECK_FAIL=0
+CHECK_WARN=0
+CHECK_PASS=0
 for n in 1 2 3 4 5 6 7 8; do
     eval "status=\$C${n}_STATUS"
-    if [ "$status" = "PASS" ]; then
-        echo "CHECK|C${n}|PASS"
-        PASS_COUNT=$((PASS_COUNT + 1))
-    fi
+    case "$status" in
+        FAIL) CHECK_FAIL=$((CHECK_FAIL + 1)) ;;
+        WARN) CHECK_WARN=$((CHECK_WARN + 1)) ;;
+        *)
+            echo "CHECK|C${n}|PASS"
+            CHECK_PASS=$((CHECK_PASS + 1))
+            ;;
+    esac
 done
 
-if [ "$FAIL_COUNT" -gt 0 ]; then
-    echo "RESULT: FAIL ($FAIL_COUNT FAIL, $WARN_COUNT WARN, $PASS_COUNT PASS)"
+if [ "$CHECK_FAIL" -gt 0 ]; then
+    echo "RESULT: FAIL ($CHECK_FAIL FAIL, $CHECK_WARN WARN, $CHECK_PASS PASS)"
     exit 1
 else
-    echo "RESULT: PASS ($FAIL_COUNT FAIL, $WARN_COUNT WARN, $PASS_COUNT PASS)"
+    echo "RESULT: PASS ($CHECK_FAIL FAIL, $CHECK_WARN WARN, $CHECK_PASS PASS)"
     exit 0
 fi
