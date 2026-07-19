@@ -37,6 +37,8 @@ Upgrade the requirements phase (product-manager agent, /ralph-specum:requirement
 - AC-2.1: Given the updated product-manager prompt, When generating stories, Then each story's ACs are derived from the six-scenario checklist, with non-applicable scenarios marked N/A with a one-line reason.
 - AC-2.2: Given the updated spec-reviewer rubric, When reviewing a story with only happy-path ACs and no N/A markings, Then the review reports a finding (WARN at minimum).
 
+Scenarios N/A: error/cancellation/permission/boundary: prompt+rubric text edits with no runtime paths; missed coverage surfaces via the AC-2.2 reviewer finding.
+
 ### US-3: Canonical FR table discipline
 
 **As a** downstream consumer (task-planner, architect-reviewer)
@@ -48,6 +50,8 @@ Upgrade the requirements phase (product-manager agent, /ralph-specum:requirement
 - AC-3.2: Given the updated prompt/template rules, When requirements are edited later, Then rules state IDs are append-only: never renumbered or reused; retired requirements are marked retired in place.
 - AC-3.3: Given the change, When downstream consumers parse IDs, Then US-N, FR-N, AC-N.N, NFR-N token formats are unchanged.
 
+Scenarios N/A: error/cancellation/permission: static template/prompt structure rules; breakage shows up as C1 cross-reference FAILs in the gate.
+
 ### US-4: TBD-with-owner anti-confabulation
 
 **As a** spec consumer
@@ -55,9 +59,11 @@ Upgrade the requirements phase (product-manager agent, /ralph-specum:requirement
 **So that** fabricated numbers/facts don't flow into design and tasks
 
 **Acceptance Criteria:**
-- AC-4.1: Given the updated product-manager prompt, When the agent lacks information for a required field, Then it writes a TBD marker with owner and expected resolution, never an invented specific.
-- AC-4.2: Given quick mode (no interview), When a decision would normally need user input, Then the agent states the assumption explicitly (Assumptions list or TBD) so the artifact is generatable autonomously.
+- AC-4.1: Given the updated product-manager prompt, When the agent lacks information for a required field, Then it writes a `TBD (owner, expected date)` marker, never an invented specific.
+- AC-4.2: Given quick mode (no interview), When a decision would normally need user input, Then the agent states the assumption explicitly (Assumptions list or `TBD (owner, expected date)` marker) so the artifact is generatable autonomously.
 - AC-4.3: Given the validation gate, When an Unresolved Question or TBD lacks an owner, Then the gate reports it (WARN).
+
+Scenarios N/A: cancellation/permission/boundary: the error path (missing information) is this story's happy path (AC-4.1); the empty case (no interview) is AC-4.2.
 
 ### US-5: Mechanical validation gate
 
@@ -71,6 +77,8 @@ Upgrade the requirements phase (product-manager agent, /ralph-specum:requirement
 - AC-5.3: Given quick mode, When the review loop runs, Then only FAIL-class checks block (max 3 iterations preserved); WARN-class checks are advisory and never block.
 - AC-5.4: Given the rubric update, When priorities are checked, Then the expected scale is MoSCoW (Must/Should/Could) matching template and agent.
 
+Scenarios N/A: cancellation/permission: the gate is a non-interactive lint; its failure paths are the FAIL/WARN semantics in AC-5.3.
+
 ### US-6: Explicit Non-Goals with default-scope rule
 
 **As a** downstream planner
@@ -81,6 +89,8 @@ Upgrade the requirements phase (product-manager agent, /ralph-specum:requirement
 - AC-6.1: Given the updated template, When the scope section is generated, Then it carries the explicit default-scope rule and lists concrete non-goals.
 - AC-6.2: Given refactor-specialist's named-section coupling, When the section is added or its semantics changed, Then refactor-specialist's section list is updated in the same change (no removed/renamed section left dangling).
 
+Scenarios N/A: error/cancellation/permission/boundary: static template semantics; the drift risk is handled by the AC-6.2 lockstep rule.
+
 ### US-7: Lite problem statement
 
 **As a** reader of requirements.md
@@ -90,6 +100,8 @@ Upgrade the requirements phase (product-manager agent, /ralph-specum:requirement
 **Acceptance Criteria:**
 - AC-7.1: Given the updated template, When requirements.md is generated, Then a Problem Statement section precedes Goal containing problem, affected user, and an evidence pointer to research.md findings.
 - AC-7.2: Given quick mode, When no interview evidence exists, Then the problem statement is derived from research.md or marked with stated assumptions (never fabricated user pain).
+
+Scenarios N/A: error/cancellation/permission/boundary: single templated paragraph; the empty-evidence case is AC-7.2.
 
 ### US-8: Consolidated source of truth and consistent scales
 
@@ -102,6 +114,8 @@ Upgrade the requirements phase (product-manager agent, /ralph-specum:requirement
 - AC-8.2: Given the change, When priority values appear in template, agent prompt, or rubric, Then all use Must/Should/Could; no High/Medium/Low remains for FR priority.
 - AC-8.3: Given the updated template, When the NFR table is generated, Then every category row is either filled with metric+target or explicitly marked N/A with reason; pre-seeded boilerplate rows without values fail the gate.
 - AC-8.4: Given any plugin file change, When the change set lands, Then version is bumped in plugins/ralph-specum/.claude-plugin/plugin.json and .claude-plugin/marketplace.json.
+
+Scenarios N/A: cancellation/permission: consistency rules across static files; violations surface as gate FAILs (AC-8.2, AC-8.3).
 
 ## Functional Requirements
 

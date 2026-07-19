@@ -210,7 +210,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - **Done when**: All 10 sections present in design order, additive-only confirmed
   - **Commit**: `chore(template): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.19 POC Checkpoint: lint pipeline proven on real artifact
+- [x] 1.19 POC Checkpoint: lint pipeline proven on real artifact
   - **Do**:
     1. Run `bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh specs/requirements-process-improvements/requirements.md`
     2. Triage findings: fix legitimate doc defects by touching up requirements.md (e.g., stray non-AC token in an FR row's AC column); fix script bugs where a finding violates the design contract (e.g., Risks table flagged by C3)
