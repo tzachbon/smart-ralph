@@ -73,7 +73,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - **Done when**: Syntax clean, RESULT line emitted, no C2 FAIL on the real doc
   - **Commit**: `chore(lint): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.5 Implement C3 MoSCoW priority values (FAIL-class)
+- [x] 1.5 Implement C3 MoSCoW priority values (FAIL-class)
   - **Do**:
     1. Scope to FR-table rows only (`^| FR-N |` pattern; awk -F'|' third column) — Risks-table Impact column (High/Medium/Low) must NOT be scanned
     2. FAIL any FR Priority cell not exactly one of Must/Should/Could

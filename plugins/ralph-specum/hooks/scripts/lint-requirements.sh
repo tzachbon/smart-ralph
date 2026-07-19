@@ -203,6 +203,27 @@ done <<EOF
 $AC_BLOCKS
 EOF
 
+# --- C3: MoSCoW priority values (FR table only) ---
+
+# Scope: FR-table rows only (`| FR-N |`); Risks-table Impact column
+# (High/Medium/Low) and NFR rows are never scanned. Third table column
+# (awk -F'|' field $4) is the Priority cell.
+C3_HITS=$(awk -F'|' '
+    /^\|[[:space:]]*FR-[0-9]+[[:space:]]*\|/ {
+        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id)
+        prio = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", prio)
+        if (prio != "Must" && prio != "Should" && prio != "Could")
+            print id "\t" prio
+    }
+' "$FILE")
+
+while IFS="$(printf '\t')" read -r frid prio; do
+    [ -z "$frid" ] && continue
+    fail_finding "C3" "$frid: Priority \"$prio\" is not a MoSCoW value (Must/Should/Could)"
+done <<EOF
+$C3_HITS
+EOF
+
 # --- Summary ---
 PASS_COUNT=0
 for n in 1 2 3 4 5 6 7 8; do
