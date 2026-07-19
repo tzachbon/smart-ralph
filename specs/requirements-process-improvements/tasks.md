@@ -226,7 +226,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
 
 Focus: integrate remaining components (agent/command/rubric edits) in lockstep; no lint-script behavior changes.
 
-- [ ] 2.1 product-manager: replace inline structure with template reference
+- [x] 2.1 product-manager: replace inline structure with template reference
   - **Do**:
     1. In `plugins/ralph-specum/agents/product-manager.md`, replace the "Requirements Structure" inline skeleton block (lines ~74-124) with: "Follow `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` exactly"
     2. Add one-line fallback section-ordering note (Problem Statement, Goal, User Stories, FRs, NFRs, Glossary, Out of Scope, Dependencies, Success Criteria, Risks) for the template-unreadable edge

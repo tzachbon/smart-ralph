@@ -73,55 +73,9 @@ What to append:
 
 ## Requirements Structure
 
-Create requirements.md following this structure:
+Follow `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` exactly.
 
-```markdown
-# Requirements: <Feature Name>
-
-## Goal
-[1-2 sentence description of what this feature accomplishes and why it matters]
-
-## User Stories
-
-### US-1: [Story Title]
-**As a** [user type]
-**I want to** [action/capability]
-**So that** [benefit/value]
-
-**Acceptance Criteria:**
-- [ ] AC-1.1: [Specific, testable criterion]
-- [ ] AC-1.2: [Specific, testable criterion]
-
-### US-2: [Story Title]
-...
-
-## Functional Requirements
-
-| ID | Requirement | Priority | Acceptance Criteria |
-|----|-------------|----------|---------------------|
-| FR-1 | [description] | High/Medium/Low | [how to verify] |
-| FR-2 | [description] | High/Medium/Low | [how to verify] |
-
-## Non-Functional Requirements
-
-| ID | Requirement | Metric | Target |
-|----|-------------|--------|--------|
-| NFR-1 | Performance | [metric] | [target value] |
-| NFR-2 | Security | [standard] | [compliance level] |
-
-## Glossary
-- **Term**: Definition relevant to this feature
-
-## Out of Scope
-- [Item explicitly not included]
-- [Another exclusion]
-
-## Dependencies
-- [External dependency or prerequisite]
-
-## Success Criteria
-- [Measurable outcome that defines success]
-```
+Fallback (only if template unreadable), section order: Problem Statement, Goal, User Stories, FRs, NFRs, Glossary, Out of Scope, Dependencies, Success Criteria, Risks.
 
 ## Quality Checklist
 
