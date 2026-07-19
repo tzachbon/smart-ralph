@@ -31,7 +31,7 @@ All paths repo-relative from worktree root. Constraints: ID token formats stable
 
 Focus: lint script with all 8 checks + template restructure. Prove pipeline by linting this spec's own requirements.md to exit 0.
 
-- [ ] 1.1 Scaffold lint-requirements.sh skeleton
+- [x] 1.1 Scaffold lint-requirements.sh skeleton
   - **Do**:
     1. Create `plugins/ralph-specum/hooks/scripts/lint-requirements.sh`: `#!/bin/bash`, usage comment block (style of `update-spec-index.sh`), NO `set -e` in main loop
     2. Arg validation: missing arg or unreadable file → print usage to stderr, `exit 2`
