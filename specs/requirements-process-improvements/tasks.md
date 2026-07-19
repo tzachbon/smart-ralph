@@ -289,7 +289,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-6, AC-5.1_
   - _Design: Component D; Error Handling (script missing)_
 
-- [ ] 2.7 [VERIFY] Quality checkpoint: reviewer rubric integration
+- [x] 2.7 [VERIFY] Quality checkpoint: reviewer rubric integration
   - **Do**: `bash -n` unaffected scripts still clean; grep-verify 2.6 assertions; confirm reviewer signal contract lines (REVIEW_PASS/REVIEW_FAIL last-line rule) untouched
   - **Verify**: `grep -q 'REVIEW_PASS' plugins/ralph-specum/agents/spec-reviewer.md && grep -q 'lint-requirements.sh' plugins/ralph-specum/agents/spec-reviewer.md && echo PASS`
   - **Done when**: Rubric edit coherent, output contract intact
