@@ -67,7 +67,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-1, AC-1.3_
   - _Design: Component C, C2; Edge Cases (multi-line AC)_
 
-- [ ] 1.4 [VERIFY] Quality checkpoint: script syntax + C1/C2 smoke
+- [x] 1.4 [VERIFY] Quality checkpoint: script syntax + C1/C2 smoke
   - **Do**: Run `bash -n` on the script; run it against `specs/requirements-process-improvements/requirements.md`; confirm no crash, C1/C2 findings plausible (real doc is GWT-form, expect no C2 FAIL)
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/lint-requirements.sh && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh specs/requirements-process-improvements/requirements.md | grep -q 'RESULT:' && echo PASS`
   - **Done when**: Syntax clean, RESULT line emitted, no C2 FAIL on the real doc
