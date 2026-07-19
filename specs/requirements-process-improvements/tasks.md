@@ -541,7 +541,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Done when**: CI pipeline fully passing
   - **Commit**: None
 
-- [ ] V6 [VERIFY] AC checklist sweep
+- [x] V6 [VERIFY] AC checklist sweep
   - **Do**: For each AC in requirements.md (AC-1.1 … AC-8.4), verify programmatically: grep the edited file for the mandated text (AC-1.1/1.2, 2.1, 3.1/3.2, 4.1/4.2, 5.2, 6.1/6.2, 7.1/7.2, 8.1/8.2/8.4); run harness cases for lint-backed ACs (1.3, 2.2, 3.3, 4.3, 5.1, 5.3, 5.4, 8.3); record per-AC status in .progress.md
   - **Verify**: `bash plugins/ralph-specum/hooks/scripts/test-lint-requirements.sh && grep -q 'Default-scope rule' plugins/ralph-specum/templates/requirements.md && grep -q 'artifactPath' plugins/ralph-specum/commands/requirements.md && grep -q 'Problem Statement' plugins/ralph-specum/agents/refactor-specialist.md && echo PASS`
   - **Done when**: All 22 ACs confirmed via automated checks; failures fixed before proceeding
