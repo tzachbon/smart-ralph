@@ -84,7 +84,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-10, AC-5.4, AC-8.2_
   - _Design: Component C, C3_
 
-- [ ] 1.6 Implement C4 requirement-language lint (FAIL-class)
+- [x] 1.6 Implement C4 requirement-language lint (FAIL-class)
   - **Do**:
     1. FAIL any FR-table row whose Requirement cell lacks `MUST` and `SHOULD`
     2. WARN (within C4) on banned vague terms in FR rows and AC lines only: gracefully, seamless, robust, user-friendly, appropriately, properly, "works correctly" (case-insensitive; heuristic, never FAIL)

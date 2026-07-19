@@ -224,6 +224,36 @@ done <<EOF
 $C3_HITS
 EOF
 
+# --- C4: Requirement-language lint ---
+
+# Modal presence (FAIL): each active FR row's Requirement cell (2nd table
+# column) must contain an uppercase MUST or SHOULD. Retired rows exempt.
+C4_MODAL_HITS=$(awk -F'|' '
+    /^\|[[:space:]]*FR-[0-9]+[[:space:]]*\|/ {
+        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id)
+        if ($3 !~ /MUST/ && $3 !~ /SHOULD/) print id
+    }
+' "$FILE")
+for frid in $C4_MODAL_HITS; do
+    fail_finding "C4" "$frid: Requirement text lacks MUST/SHOULD modal"
+done
+
+# Banned vague terms (WARN, heuristic -- never FAIL): scoped to FR-table rows
+# and AC bullet lines only; case-insensitive whole-word match.
+C4_SCOPED=$(grep -nE '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\||^[[:space:]]*- AC-[0-9]+\.[0-9]+:' "$FILE")
+if [ -n "$C4_SCOPED" ]; then
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        for term in gracefully seamless robust user-friendly appropriately properly "works correctly"; do
+            if echo "${line#*:}" | grep -qiw -- "$term"; then
+                warn_finding "C4" "vague term \"$term\" at line ${line%%:*} (heuristic)"
+            fi
+        done
+    done <<EOF
+$C4_SCOPED
+EOF
+fi
+
 # --- Summary ---
 PASS_COUNT=0
 for n in 1 2 3 4 5 6 7 8; do
