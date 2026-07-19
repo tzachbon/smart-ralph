@@ -112,7 +112,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-12, AC-8.3_
   - _Design: Component C, C5; Edge Cases (N/A NFR rows)_
 
-- [ ] 1.9 Implement C6 six-scenario coverage proxy (WARN-class)
+- [x] 1.9 Implement C6 six-scenario coverage proxy (WARN-class)
   - **Do**:
     1. Split doc into story blocks (`### US-N:` to next `###` or section end); gather each block's AC lines
     2. Story passes if any AC matches keywords (case-insensitive: error, invalid, missing, empty, cancel, denied, unauthorized, limit, boundary) OR block contains an `N/A:` scenario line

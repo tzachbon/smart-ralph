@@ -283,6 +283,33 @@ done <<EOF
 $C5_HITS
 EOF
 
+# --- C6: Six-scenario coverage proxy (WARN-class, heuristic -- never FAIL) ---
+
+# Split doc into story blocks (`### US-N:` to next heading). A story passes if
+# any AC line (bullet or continuation) matches a non-happy-path keyword
+# (case-insensitive) OR the block contains an `N/A:` scenario line.
+C6_HITS=$(awk '
+    function flush() { if (usid != "" && !ok) print usid }
+    /^### US-[0-9]+:/ {
+        flush()
+        usid = $0; sub(/^### /, "", usid); sub(/:.*/, "", usid)
+        ok = 0; inac = 0
+        next
+    }
+    /^##/ { flush(); usid = ""; next }
+    usid != "" {
+        if ($0 ~ /N\/A:/) { ok = 1; next }
+        if ($0 ~ /^[[:space:]]*- AC-[0-9]+\.[0-9]+:/) inac = 1
+        else if ($0 ~ /^[[:space:]]*$/ || $0 ~ /^[[:space:]]*- /) inac = 0
+        if (inac && tolower($0) ~ /error|invalid|missing|empty|cancel|denied|unauthorized|limit|boundary/) ok = 1
+    }
+    END { flush() }
+' "$FILE")
+
+for usid in $C6_HITS; do
+    warn_finding "C6" "$usid: happy-path-only ACs, no N/A markings"
+done
+
 # --- Summary ---
 PASS_COUNT=0
 for n in 1 2 3 4 5 6 7 8; do
