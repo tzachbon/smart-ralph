@@ -295,7 +295,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - **Done when**: Rubric edit coherent, output contract intact
   - **Commit**: `chore(reviewer): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.8 spec-reviewer: judgment dimensions + signal semantics
+- [x] 2.8 spec-reviewer: judgment dimensions + signal semantics
   - **Do**:
     1. Update judgment dimensions (not counted in the 8): Testability (observable-behavior language), Coverage adequacy (six-scenario N/A legitimacy; WARN for happy-path-only), Scope, Problem Statement quality (problem + user + evidence, not solution restatement), Traceability (FR↔US)
     2. Signal semantics: `REVIEW_FAIL` only when >=1 FAIL-class finding (mechanical or judgment); WARN-only → `REVIEW_PASS` with warnings listed; WARN never blocks
