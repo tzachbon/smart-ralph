@@ -346,6 +346,25 @@ done <<EOF
 $C7_UQ_HITS
 EOF
 
+# --- C8: MUST:SHOULD ratio advisory (WARN-class, never FAIL) ---
+
+# Count active FR rows and Must-priority rows (retired rows not matched).
+# Suppressed entirely when total FRs < 8 (advisory meaningless at small N).
+C8_COUNTS=$(awk -F'|' '
+    /^\|[[:space:]]*FR-[0-9]+[[:space:]]*\|/ {
+        total++
+        prio = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", prio)
+        if (prio == "Must") must++
+    }
+    END { print total+0 "\t" must+0 }
+' "$FILE")
+C8_TOTAL=${C8_COUNTS%%$(printf '\t')*}
+C8_MUST=${C8_COUNTS##*$(printf '\t')}
+
+if [ "$C8_TOTAL" -ge 8 ] && [ $((C8_MUST * 100)) -gt $((C8_TOTAL * 85)) ]; then
+    warn_finding "C8" "no cut-line signal: $C8_MUST of $C8_TOTAL FRs are Must"
+fi
+
 # --- Summary ---
 PASS_COUNT=0
 for n in 1 2 3 4 5 6 7 8; do

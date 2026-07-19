@@ -141,7 +141,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - **Done when**: WARN-only docs exit 0
   - **Commit**: `chore(lint): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.12 Implement C8 MUST:SHOULD ratio advisory (WARN-class)
+- [x] 1.12 Implement C8 MUST:SHOULD ratio advisory (WARN-class)
   - **Do**:
     1. Count FR rows and Must-priority rows; if total FRs >= 8 AND Must share > 85% → `WARN|C8|no cut-line signal: N of M FRs are Must`
     2. Suppress entirely when total FRs < 8 (advisory meaningless at small N)
