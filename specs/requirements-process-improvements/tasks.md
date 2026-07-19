@@ -319,7 +319,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-7, AC-5.2, AC-5.3, FR-5, AC-4.2, NFR-3_
   - _Design: Component E_
 
-- [ ] 2.10 [VERIFY] Quality checkpoint: command flow coherent
+- [x] 2.10 [VERIFY] Quality checkpoint: command flow coherent
   - **Do**: Grep-verify 2.9 assertions; confirm Step numbering/checklist at top of commands/requirements.md updated consistently (no dangling "only if --quick" references to Step 4)
   - **Verify**: `! grep -q 'Artifact review.*only if.*quick' plugins/ralph-specum/commands/requirements.md && grep -q 'artifactPath' plugins/ralph-specum/commands/requirements.md && echo PASS`
   - **Done when**: No stale quick-only review references remain
