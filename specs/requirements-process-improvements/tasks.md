@@ -193,7 +193,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-1, AC-1.1, FR-3, AC-3.1, FR-10, AC-8.2, FR-4, AC-3.3_
   - _Design: Component A_
 
-- [ ] 1.17 Template: NFR fill-or-N/A rule + Out of Scope default-scope rule
+- [x] 1.17 Template: NFR fill-or-N/A rule + Out of Scope default-scope rule
   - **Do**:
     1. Above NFR table add instruction line: every row must have metric+target filled or Target `N/A: <reason>`; delete unused boilerplate rows
     2. Under `## Out of Scope` (heading KEPT verbatim) open body with: `Default-scope rule: anything not listed here that falls under the Goal is in scope.` followed by non-goal bullet slots

@@ -41,6 +41,8 @@
 
 ## Non-Functional Requirements
 
+<!-- Every row must have Metric and Target filled, or Target set to `N/A: <reason>`. Delete unused boilerplate rows. -->
+
 | ID | Requirement | Metric | Target |
 |----|-------------|--------|--------|
 | NFR-1 | Performance | {{metric}} | {{target value}} |
@@ -54,8 +56,10 @@
 
 ## Out of Scope
 
-- {{Item explicitly not included in this implementation}}
-- {{Another exclusion to prevent scope creep}}
+Default-scope rule: anything not listed here that falls under the Goal is in scope.
+
+- {{Non-goal explicitly not included in this implementation}}
+- {{Another non-goal to prevent scope creep}}
 
 ## Dependencies
 
