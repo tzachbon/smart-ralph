@@ -229,6 +229,22 @@ write_risks_table_fixture() {
 EOF
 }
 
+# Clean fixture but FR-2 requirement text lacks MUST/SHOULD modal
+write_missing_modal_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| FR-2 \| The linter SHOULD exit 2 on unreadable input \|/| FR-2 | The linter exits 2 on unreadable input |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Clean fixture but AC-1.1 contains banned vague term "gracefully"
+write_banned_term_fixture() {
+    write_clean_fixture
+    sed -E 's/^(  - AC-1.1: Given a well-formed requirements file,) When the lint runs,/\1 When the lint runs gracefully,/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
 # =============================================================================
 # Tests
 # =============================================================================
@@ -359,6 +375,36 @@ test_c3_risks_table_exempt() {
     cleanup
 }
 
+test_c4_missing_modal_fails() {
+    echo ""
+    echo "=== test_c4_missing_modal_fails ==="
+    setup
+    write_missing_modal_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Missing-modal fixture exits 1"
+    assert_contains "$output" "FAIL|C4|FR-2: Requirement text lacks MUST/SHOULD modal" "Output contains C4 FAIL for FR-2 missing modal"
+
+    cleanup
+}
+
+test_c4_banned_term_warns() {
+    echo ""
+    echo "=== test_c4_banned_term_warns ==="
+    setup
+    write_banned_term_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Banned-term fixture exits 0 (WARN only)"
+    assert_contains "$output" 'WARN|C4|vague term "gracefully"' "Output contains C4 WARN for gracefully"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -375,6 +421,8 @@ test_c2_missing_then_fails
 test_c2_multiline_ac_passes
 test_c3_high_priority_fails
 test_c3_risks_table_exempt
+test_c4_missing_modal_fails
+test_c4_banned_term_warns
 
 # Summary
 echo ""

@@ -414,7 +414,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-10, AC-5.4, AC-8.2_
   - _Design: C3_
 
-- [ ] 3.6 C4 fixtures: missing modal fails, banned term warns
+- [x] 3.6 C4 fixtures: missing modal fails, banned term warns
   - **Do**:
     1. Fixture: FR statement without MUST/SHOULD → assert `FAIL|C4`, exit 1
     2. Fixture: AC containing "gracefully" (otherwise clean) → assert `WARN|C4` AND exit 0 (banned-term is WARN-within-check)
