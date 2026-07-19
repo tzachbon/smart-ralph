@@ -524,7 +524,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Done when**: Everything green locally
   - **Commit**: `chore(requirements-phase): pass local CI` (only if fixes needed)
 
-- [ ] 4.3 Create PR and verify CI
+- [x] 4.3 Create PR and verify CI
   - **Do**:
     1. Confirm feature branch: `git branch --show-current` (if on main/master, STOP and alert user)
     2. Push: `git push -u origin $(git branch --show-current)`
