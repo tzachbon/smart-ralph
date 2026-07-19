@@ -286,6 +286,23 @@ write_happy_path_na_fixture() {
     mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
 }
 
+# Clean fixture but bare TBD and an ownerless Unresolved Questions bullet
+write_unowned_tbd_fixture() {
+    write_clean_fixture
+    sed -E -e 's/TBD \(Zach, 2026-07-25\)/TBD/' \
+        -e 's/^- Should WARN findings block merge\? Owner: Zach$/- Should WARN findings block merge?/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Clean fixture but TBD carries (owner, date) and question bullet keeps Owner:
+write_owned_tbd_fixture() {
+    write_clean_fixture
+    sed -E 's/TBD \(Zach, 2026-07-25\)/TBD (alice, 2026-08-01)/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
 # =============================================================================
 # Tests
 # =============================================================================
@@ -522,6 +539,42 @@ test_c6_na_marking_passes() {
     cleanup
 }
 
+test_c7_unowned_tbd_warns() {
+    echo ""
+    echo "=== test_c7_unowned_tbd_warns ==="
+    setup
+    write_unowned_tbd_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Unowned-TBD fixture exits 0 (WARN only)"
+    assert_contains "$output" "WARN|C7|bare TBD without (owner, date)" "Output contains C7 WARN for bare TBD"
+    assert_contains "$output" "WARN|C7|unowned question at line" "Output contains C7 WARN for ownerless question"
+
+    local c7_warn_count
+    c7_warn_count=$(echo "$output" | grep -cE '^WARN\|C7\|' || true)
+    assert_eq 2 "$c7_warn_count" "Output contains exactly 2 WARN|C7 findings"
+
+    cleanup
+}
+
+test_c7_owned_tbd_passes() {
+    echo ""
+    echo "=== test_c7_owned_tbd_passes ==="
+    setup
+    write_owned_tbd_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Owned-TBD fixture exits 0"
+    assert_not_contains "$output" "WARN|C7" "Output contains no C7 WARN for owned TBD + owned question"
+    assert_contains "$output" "CHECK|C7|PASS" "Output contains C7 PASS for owned TBD + owned question"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -545,6 +598,8 @@ test_c5_bare_na_fails
 test_c5_reasoned_na_passes
 test_c6_happy_path_only_warns
 test_c6_na_marking_passes
+test_c7_unowned_tbd_warns
+test_c7_owned_tbd_passes
 
 # Summary
 echo ""

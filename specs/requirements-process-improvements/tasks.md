@@ -454,7 +454,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-2, AC-2.2_
   - _Design: C6_
 
-- [ ] 3.10 C7 fixtures: unowned TBD warns, owned TBD passes
+- [x] 3.10 C7 fixtures: unowned TBD warns, owned TBD passes
   - **Do**:
     1. Fixture: bare `TBD` + ownerless Unresolved Questions bullet → assert two `WARN|C7` findings, exit 0
     2. Fixture: `TBD (alice, 2026-08-01)` + question bullet with `Owner:` → assert C7 PASS
