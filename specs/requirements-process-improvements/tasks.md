@@ -495,7 +495,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-6, AC-5.3, NFR-3_
   - _Design: Output Contract_
 
-- [ ] 3.14 [VERIFY] Quality checkpoint: full test suite + real-artifact integration
+- [x] 3.14 [VERIFY] Quality checkpoint: full test suite + real-artifact integration
   - **Do**: Run full harness; run `test-path-resolver.sh` and `test-multi-dir-integration.sh` (regression); run lint against real `specs/requirements-process-improvements/requirements.md` expecting exit 0
   - **Verify**: `bash plugins/ralph-specum/hooks/scripts/test-lint-requirements.sh && bash plugins/ralph-specum/hooks/scripts/test-path-resolver.sh && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh specs/requirements-process-improvements/requirements.md && echo PASS`
   - **Done when**: All suites green, real artifact still exit 0
