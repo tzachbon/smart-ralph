@@ -174,6 +174,35 @@ if [ -n "$AC_IDS" ]; then
     done
 fi
 
+# --- C2: Given/When/Then clause presence ---
+
+# Join each `- AC-N.N:` bullet with its continuation lines (until next list
+# item or blank line) into "AC-ID<TAB>full text" lines.
+AC_BLOCKS=$(awk '
+    function flush() { if (id != "") print id "\t" text }
+    /^[[:space:]]*- AC-[0-9]+\.[0-9]+:/ {
+        flush()
+        id = $0; sub(/^[[:space:]]*- /, "", id); sub(/:.*/, "", id)
+        text = $0
+        next
+    }
+    /^[[:space:]]*$/ { flush(); id = ""; next }
+    /^[[:space:]]*- / { flush(); id = ""; next }
+    { if (id != "") text = text " " $0 }
+    END { flush() }
+' "$FILE")
+
+while IFS="$(printf '\t')" read -r acid actext; do
+    [ -z "$acid" ] && continue
+    for clause in Given When Then; do
+        if ! echo "$actext" | grep -qw "$clause"; then
+            fail_finding "C2" "$acid: missing \"$clause\" clause"
+        fi
+    done
+done <<EOF
+$AC_BLOCKS
+EOF
+
 # --- Summary ---
 PASS_COUNT=0
 for n in 1 2 3 4 5 6 7 8; do

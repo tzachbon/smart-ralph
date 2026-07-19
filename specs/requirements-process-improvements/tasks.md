@@ -56,7 +56,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-6, AC-5.1, FR-4, AC-3.3_
   - _Design: Component C, C1; Edge Cases (retired rows)_
 
-- [ ] 1.3 Implement C2 GWT clause presence (FAIL-class)
+- [x] 1.3 Implement C2 GWT clause presence (FAIL-class)
   - **Do**:
     1. For each `- AC-N.N:` bullet, join continuation lines (until next list item or blank line) into one string
     2. FAIL any AC missing one of `Given`, `When`, `Then`; message names the AC ID and missing clause
