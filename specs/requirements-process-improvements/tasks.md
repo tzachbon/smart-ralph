@@ -259,7 +259,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-2, AC-2.1, FR-3, AC-3.2_
   - _Design: Component B_
 
-- [ ] 2.4 [VERIFY] Quality checkpoint: product-manager edits coherent
+- [x] 2.4 [VERIFY] Quality checkpoint: product-manager edits coherent
   - **Do**: Grep-verify tasks 2.1-2.3 assertions together; confirm unchanged blocks intact (Explore usage, Append Learnings, awaitingApproval final step)
   - **Verify**: `grep -q 'awaitingApproval' plugins/ralph-specum/agents/product-manager.md && grep -q 'templates/requirements.md' plugins/ralph-specum/agents/product-manager.md && grep -qi 'six-scenario\|cancellation' plugins/ralph-specum/agents/product-manager.md && echo PASS`
   - **Done when**: All assertions pass; no unrelated section removed
