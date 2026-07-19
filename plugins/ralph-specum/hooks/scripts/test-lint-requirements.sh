@@ -67,6 +67,25 @@ assert_contains() {
     fi
 }
 
+# Test helper: assert does not contain
+assert_not_contains() {
+    local haystack="$1"
+    local needle="$2"
+    local msg="$3"
+
+    if echo "$haystack" | grep -q "$needle"; then
+        echo -e "${RED}FAIL${NC}: $msg"
+        echo "  Expected NOT to contain: '$needle'"
+        echo "  Actual: '$haystack'"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+        return 1
+    else
+        echo -e "${GREEN}PASS${NC}: $msg"
+        PASS_COUNT=$((PASS_COUNT + 1))
+        return 0
+    fi
+}
+
 # =============================================================================
 # Fixtures
 # =============================================================================
@@ -113,6 +132,31 @@ caught before review.
 EOF
 }
 
+# Clean fixture but with FR-1 defined twice in the FR table
+write_duplicate_fr_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| FR-2 \|.*/| FR-1 | The linter MUST exit 2 on unreadable input | Must | AC-1.2 |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Clean fixture but FR-2 references undefined AC-9.9
+write_dangling_ac_ref_fixture() {
+    write_clean_fixture
+    sed -E 's/^(\| FR-2 \|.*\| Should \|) AC-1.2 \|$/\1 AC-9.9 |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Clean fixture but FR-2 is retired (empty AC column) and referenced elsewhere
+write_retired_fr_fixture() {
+    write_clean_fixture
+    sed -E -e 's/^\| FR-2 \|.*/| FR-2 (retired) | Superseded by FR-1 | Should | |/' \
+        -e 's/^- Should WARN findings block merge\?/- Should FR-2 behavior return? See FR-2./' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
 # =============================================================================
 # Tests
 # =============================================================================
@@ -137,6 +181,51 @@ test_clean_fixture_all_checks_pass() {
     cleanup
 }
 
+test_c1_duplicate_fr_id_fails() {
+    echo ""
+    echo "=== test_c1_duplicate_fr_id_fails ==="
+    setup
+    write_duplicate_fr_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Duplicate FR-1 fixture exits 1"
+    assert_contains "$output" "FAIL|C1|duplicate ID defined: FR-1" "Output contains C1 duplicate-ID FAIL for FR-1"
+
+    cleanup
+}
+
+test_c1_dangling_ac_ref_fails() {
+    echo ""
+    echo "=== test_c1_dangling_ac_ref_fails ==="
+    setup
+    write_dangling_ac_ref_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Dangling AC-9.9 ref fixture exits 1"
+    assert_contains "$output" "FAIL|C1|FR-2 references undefined AC-9.9" "Output contains C1 dangling-ref FAIL for AC-9.9"
+
+    cleanup
+}
+
+test_c1_retired_fr_is_valid_target() {
+    echo ""
+    echo "=== test_c1_retired_fr_is_valid_target ==="
+    setup
+    write_retired_fr_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Retired FR-2 fixture exits 0"
+    assert_not_contains "$output" "FAIL|C1" "Output contains no C1 FAIL for retired FR-2"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -146,6 +235,9 @@ echo "Unit Tests for lint-requirements.sh"
 echo "====================================="
 
 test_clean_fixture_all_checks_pass
+test_c1_duplicate_fr_id_fails
+test_c1_dangling_ac_ref_fails
+test_c1_retired_fr_is_valid_target
 
 # Summary
 echo ""

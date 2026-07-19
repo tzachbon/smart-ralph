@@ -374,7 +374,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-6, AC-5.1_
   - _Design: Test Strategy (Unit); Existing Patterns_
 
-- [ ] 3.2 C1 fixtures: duplicate ID + dangling AC ref
+- [x] 3.2 C1 fixtures: duplicate ID + dangling AC ref
   - **Do**:
     1. Fixture: duplicate `FR-1` rows → assert `FAIL|C1` finding, exit 1
     2. Fixture: FR row referencing undefined `AC-9.9` → assert `FAIL|C1`, exit 1
