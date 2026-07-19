@@ -254,6 +254,35 @@ $C4_SCOPED
 EOF
 fi
 
+# --- C5: NFR fill-or-N/A ---
+
+# Each active NFR row's Metric ($4) and Target ($5) cells must be non-empty and
+# free of {{...}} placeholders. Rows whose Target is "N/A: <reason>" are exempt.
+# Bare "N/A" (no ": reason") in either cell = FAIL. Retired rows not matched.
+C5_HITS=$(awk -F'|' '
+    /^\|[[:space:]]*NFR-[0-9]+[[:space:]]*\|/ {
+        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id)
+        metric = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", metric)
+        target = $5; gsub(/^[[:space:]]+|[[:space:]]+$/, "", target)
+        if (target ~ /^N\/A:[[:space:]]*[^[:space:]]/) next
+        msg = ""
+        if (metric == "") msg = "Metric cell is empty"
+        else if (metric ~ /\{\{/) msg = "Metric contains unfilled placeholder"
+        else if (metric == "N/A") msg = "Metric is bare N/A without \": reason\""
+        else if (target == "") msg = "Target cell is empty"
+        else if (target ~ /\{\{/) msg = "Target contains unfilled placeholder"
+        else if (target == "N/A") msg = "Target is bare N/A without \": reason\""
+        if (msg != "") print id "\t" msg
+    }
+' "$FILE")
+
+while IFS="$(printf '\t')" read -r nfrid msg; do
+    [ -z "$nfrid" ] && continue
+    fail_finding "C5" "$nfrid: $msg"
+done <<EOF
+$C5_HITS
+EOF
+
 # --- Summary ---
 PASS_COUNT=0
 for n in 1 2 3 4 5 6 7 8; do

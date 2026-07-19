@@ -101,7 +101,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - **Done when**: No C3/C4 FAIL on the real doc
   - **Commit**: `chore(lint): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 1.8 Implement C5 NFR fill-or-N/A (FAIL-class)
+- [x] 1.8 Implement C5 NFR fill-or-N/A (FAIL-class)
   - **Do**:
     1. For each `| NFR-N |` row: Metric and Target cells must be non-empty and free of `{{...}}` placeholders, OR Target must match `N/A: <reason text>`
     2. FAIL on empty cell, placeholder, or bare `N/A` without `: reason`
