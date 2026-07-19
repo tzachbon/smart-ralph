@@ -303,6 +303,99 @@ write_owned_tbd_fixture() {
     mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
 }
 
+# 10-FR fixture, all Must -> C8 ratio advisory WARN fires (>= 8 FRs)
+write_ten_must_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Spec authors cannot lint requirements documents automatically.
+
+## User Stories
+
+### US-1: Lint a requirements document
+
+As a spec author, I want automated lint checks, so that structural defects are
+caught before review.
+
+**Acceptance Criteria**:
+  - AC-1.1: Given a well-formed requirements file, When the lint runs, Then it
+    prints a summary line and exits 0
+  - AC-1.2: Given an invalid file path, When the lint runs, Then it exits with
+    code 2 and prints an error to stderr
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 | The linter MUST print a summary line on every run | Must | AC-1.1 |
+| FR-2 | The linter MUST exit 2 on unreadable input | Must | AC-1.2 |
+| FR-3 | The linter MUST run all eight checks | Must | AC-1.1 |
+| FR-4 | The linter MUST report one line per finding | Must | AC-1.2 |
+| FR-5 | The linter MUST exit 1 on any FAIL finding | Must | AC-1.1 |
+| FR-6 | The linter MUST exit 0 when only WARNs fire | Must | AC-1.2 |
+| FR-7 | The linter MUST print a RESULT summary line | Must | AC-1.1 |
+| FR-8 | The linter MUST scope C3 to FR rows only | Must | AC-1.2 |
+| FR-9 | The linter MUST treat retired rows as valid targets | Must | AC-1.1 |
+| FR-10 | The linter MUST never abort mid-run | Must | AC-1.2 |
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Lint runtime | Wall-clock seconds | N/A: single-file CLI, runtime negligible |
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
+# 5-FR fixture, all Must -> C8 suppressed below 8 FRs -> CHECK|C8|PASS
+write_five_must_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Spec authors cannot lint requirements documents automatically.
+
+## User Stories
+
+### US-1: Lint a requirements document
+
+As a spec author, I want automated lint checks, so that structural defects are
+caught before review.
+
+**Acceptance Criteria**:
+  - AC-1.1: Given a well-formed requirements file, When the lint runs, Then it
+    prints a summary line and exits 0
+  - AC-1.2: Given an invalid file path, When the lint runs, Then it exits with
+    code 2 and prints an error to stderr
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 | The linter MUST print a summary line on every run | Must | AC-1.1 |
+| FR-2 | The linter MUST exit 2 on unreadable input | Must | AC-1.2 |
+| FR-3 | The linter MUST run all eight checks | Must | AC-1.1 |
+| FR-4 | The linter MUST report one line per finding | Must | AC-1.2 |
+| FR-5 | The linter MUST exit 1 on any FAIL finding | Must | AC-1.1 |
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Lint runtime | Wall-clock seconds | N/A: single-file CLI, runtime negligible |
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
 # =============================================================================
 # Tests
 # =============================================================================
@@ -575,6 +668,37 @@ test_c7_owned_tbd_passes() {
     cleanup
 }
 
+test_c8_ratio_warn() {
+    echo ""
+    echo "=== test_c8_ratio_warn ==="
+    setup
+    write_ten_must_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "10-FR all-Must fixture exits 0 (WARN only)"
+    assert_contains "$output" "WARN|C8|no cut-line signal: 10 of 10 FRs are Must" "Output contains C8 ratio-advisory WARN"
+
+    cleanup
+}
+
+test_c8_small_spec_suppressed() {
+    echo ""
+    echo "=== test_c8_small_spec_suppressed ==="
+    setup
+    write_five_must_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "5-FR all-Must fixture exits 0"
+    assert_not_contains "$output" "WARN|C8" "Output contains no C8 WARN below 8 FRs"
+    assert_contains "$output" "CHECK|C8|PASS" "Output contains C8 PASS (suppressed below 8 FRs)"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -600,6 +724,8 @@ test_c6_happy_path_only_warns
 test_c6_na_marking_passes
 test_c7_unowned_tbd_warns
 test_c7_owned_tbd_passes
+test_c8_ratio_warn
+test_c8_small_spec_suppressed
 
 # Summary
 echo ""

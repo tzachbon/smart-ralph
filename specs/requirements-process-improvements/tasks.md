@@ -465,7 +465,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-5, AC-4.3_
   - _Design: C7_
 
-- [ ] 3.11 C8 fixtures: ratio warn + small-N suppression
+- [x] 3.11 C8 fixtures: ratio warn + small-N suppression
   - **Do**:
     1. Fixture: 10 FRs all Must → assert `WARN|C8`, exit 0
     2. Fixture: 5 FRs all Must → assert `CHECK|C8|PASS` (suppressed below 8 FRs)
