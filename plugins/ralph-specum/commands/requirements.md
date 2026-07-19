@@ -15,7 +15,7 @@ Create a task for each item and complete in order:
 1. **Gather context** -- resolve spec, read research and goal
 2. **Interview** -- brainstorming dialogue (skip if `--quick`)
 3. **Execute requirements** -- dispatch product-manager via team
-4. **Artifact review** -- spec-reviewer validation loop (only if `--quick`)
+4. **Artifact review** -- spec-reviewer validation loop (both modes)
 5. **Walkthrough & approval** -- display summary, get user approval
 6. **Finalize** -- update state, commit, stop
 
@@ -77,7 +77,7 @@ Follow the full team lifecycle:
 1. **Clean up stale team (MANDATORY FIRST ACTION)**: Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
 2. **Create team**: `TeamCreate(team_name: "requirements-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate requirements for $spec", activeForm: "Generating requirements")`
-4. **Spawn teammate**: `Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1")` — delegate with research context, goal, and interview context. Instruct to create user stories with acceptance criteria, functional requirements (FR-*), non-functional requirements (NFR-*), glossary, out-of-scope, dependencies. Output to `./specs/$spec/requirements.md`.
+4. **Spawn teammate**: `Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1")` — delegate with research context, goal, and interview context. Instruct to follow the structure in `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` (canonical section order and formats): user stories with acceptance criteria, functional requirements (FR-*), non-functional requirements (NFR-*), glossary, out-of-scope, dependencies. In `--quick` mode (no interview context), instruct to state assumptions explicitly in the artifact rather than leaving gaps. Output to `./specs/$spec/requirements.md`.
 5. **Wait for completion**: Monitor via TaskList.
 6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "pm-1")`
 7. **Collect results**: Read `./specs/$spec/requirements.md`.
@@ -86,12 +86,10 @@ Follow the full team lifecycle:
 **Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: product-manager)` call.
 </mandatory>
 
-## Step 4: Artifact Review (only in --quick mode)
+## Step 4: Artifact Review (both modes)
 
 <mandatory>
-**Review loop must complete before walkthrough. Max 3 iterations.**
-
-If NOT `--quick`, skip to Step 5.
+**Review loop must complete before walkthrough. Max 3 iterations. Runs after generation in normal AND quick mode.**
 
 Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
 - REVIEW_PASS: log to .progress.md, proceed
@@ -99,7 +97,7 @@ Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
 - REVIEW_FAIL (iteration >= 3): graceful degradation, log warning, proceed
 - No signal: treat as REVIEW_PASS (permissive)
 
-**Review delegation**: Include full requirements.md content, iteration count, prior findings. Upstream: research.md.
+**Review delegation**: Include full requirements.md content, `artifactPath: ./specs/$spec/requirements.md`, iteration count, prior findings. Upstream: research.md.
 
 **Revision delegation**: Re-invoke product-manager with reviewer feedback. Focus on specific issues.
 

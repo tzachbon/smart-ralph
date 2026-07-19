@@ -307,7 +307,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-6, AC-5.3, AC-5.4, FR-2, AC-2.2, FR-5, FR-14_
   - _Design: Component D_
 
-- [ ] 2.9 commands/requirements: review in both modes + artifactPath
+- [x] 2.9 commands/requirements: review in both modes + artifactPath
   - **Do**:
     1. In `plugins/ralph-specum/commands/requirements.md`, retitle Step 4 to `Artifact Review (both modes)`; remove the "If NOT --quick, skip to Step 5" bypass so review runs after generation in normal AND quick mode
     2. Review delegation gains `artifactPath: ./specs/$spec/requirements.md` alongside content; quick-mode loop semantics preserved verbatim (max 3 iterations, only REVIEW_FAIL re-generates, graceful degradation at 3, no-signal = PASS)
