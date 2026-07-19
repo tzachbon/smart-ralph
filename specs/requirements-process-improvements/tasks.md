@@ -325,7 +325,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - **Done when**: No stale quick-only review references remain
   - **Commit**: `chore(cmd): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.11 commands/requirements: walkthrough validation block + regeneration re-run
+- [x] 2.11 commands/requirements: walkthrough validation block + regeneration re-run
   - **Do**:
     1. Step 5 walkthrough gains a "Validation" block: 8-check statuses + judgment findings from the review pass; user approval flow unchanged; "Run review" option kept
     2. On "Request changes" regeneration: re-run review after the product-manager revision, then re-display walkthrough (review re-runs after EVERY regeneration)

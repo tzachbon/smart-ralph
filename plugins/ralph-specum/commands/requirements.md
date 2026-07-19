@@ -126,7 +126,18 @@ Output: $PWD/specs/$spec/requirements.md
 [list all, keep titles brief]
 
 **Requirements**: [X] functional, [Y] non-functional
+
+## Validation
+
+**Checks** (from Step 4 review pass):
+| # | Check | Status |
+|---|-------|--------|
+| 1-8 | [each of the 8 rubric checks] | PASS / FAIL |
+
+**Judgment findings**: [reviewer's judgment-based findings, or "None"]
 ```
+
+The Validation block reports the statuses of the 8 rubric checks plus any judgment findings from the most recent Step 4 review pass. User approval flow is unchanged.
 </mandatory>
 
 ### User Approval (skip if --quick)
@@ -143,7 +154,8 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 **If "Request changes" or "Other"**:
 1. Ask what to change
 2. Re-invoke product-manager using **cleanup-and-recreate** team pattern (TeamDelete old -> TeamCreate new -> spawn with feedback -> wait -> shutdown -> TeamDelete)
-3. Re-display walkthrough, ask again with same 3 choices. Loop until approved.
+3. Re-run the Step 4 review loop on the revised artifact (review re-runs after EVERY regeneration, no exceptions)
+4. Re-display walkthrough (with updated Validation block), ask again with same 3 choices. Loop until approved.
 
 ## Step 6: Finalize
 
