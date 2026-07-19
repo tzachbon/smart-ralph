@@ -482,7 +482,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Done when**: Harness green, all 8 checks fixture-covered
   - **Commit**: `chore(lint): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.13 Exit-code contract cases
+- [x] 3.13 Exit-code contract cases
   - **Do**:
     1. Case: missing file path → assert exit 2
     2. Case: no argument → assert exit 2

@@ -699,6 +699,59 @@ test_c8_small_spec_suppressed() {
     cleanup
 }
 
+test_exit2_missing_file() {
+    echo ""
+    echo "=== test_exit2_missing_file ==="
+    setup
+
+    local exit_code=0
+    bash "$LINT" "$TEST_TMPDIR/does-not-exist.md" >/dev/null 2>&1 || exit_code=$?
+
+    assert_eq 2 "$exit_code" "Missing file path exits 2"
+
+    cleanup
+}
+
+test_exit2_no_argument() {
+    echo ""
+    echo "=== test_exit2_no_argument ==="
+
+    local exit_code=0
+    bash "$LINT" >/dev/null 2>&1 || exit_code=$?
+
+    assert_eq 2 "$exit_code" "No argument exits 2"
+}
+
+test_exit0_warn_only_reports_count() {
+    echo ""
+    echo "=== test_exit0_warn_only_reports_count ==="
+    setup
+    write_banned_term_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "WARN-only fixture exits 0"
+    assert_contains "$output" "RESULT: PASS (0 FAIL, 1 WARN, 7 PASS)" "RESULT line reports the WARN count"
+
+    cleanup
+}
+
+test_exit1_any_fail_reports_fail() {
+    echo ""
+    echo "=== test_exit1_any_fail_reports_fail ==="
+    setup
+    write_duplicate_fr_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Any-FAIL fixture exits 1"
+    assert_contains "$output" "RESULT: FAIL" "RESULT line reports FAIL"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -726,6 +779,10 @@ test_c7_unowned_tbd_warns
 test_c7_owned_tbd_passes
 test_c8_ratio_warn
 test_c8_small_spec_suppressed
+test_exit2_missing_file
+test_exit2_no_argument
+test_exit0_warn_only_reports_count
+test_exit1_any_fail_reports_fail
 
 # Summary
 echo ""
