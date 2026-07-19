@@ -208,6 +208,27 @@ caught before review.
 EOF
 }
 
+# Clean fixture but FR-2 has non-MoSCoW priority "High"
+write_high_priority_fixture() {
+    write_clean_fixture
+    sed -E 's/^(\| FR-2 \|.*\|) Should (\| AC-1.2 \|)$/\1 High \2/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Clean fixture plus a Risks table whose Impact column contains "High"
+write_risks_table_fixture() {
+    write_clean_fixture
+    cat >> "$TEST_TMPDIR/requirements.md" << 'EOF'
+
+## Risks
+
+| ID | Risk | Impact | Mitigation |
+|----|------|--------|------------|
+| R-1 | Lint false positives block authors | High | Heuristic checks are WARN-only |
+EOF
+}
+
 # =============================================================================
 # Tests
 # =============================================================================
@@ -307,6 +328,37 @@ test_c2_multiline_ac_passes() {
     cleanup
 }
 
+test_c3_high_priority_fails() {
+    echo ""
+    echo "=== test_c3_high_priority_fails ==="
+    setup
+    write_high_priority_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "High-priority fixture exits 1"
+    assert_contains "$output" 'FAIL|C3|FR-2: Priority "High" is not a MoSCoW value' "Output contains C3 FAIL for FR-2 High priority"
+
+    cleanup
+}
+
+test_c3_risks_table_exempt() {
+    echo ""
+    echo "=== test_c3_risks_table_exempt ==="
+    setup
+    write_risks_table_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Risks-table fixture exits 0"
+    assert_not_contains "$output" "FAIL|C3" "Output contains no C3 finding for Risks-table High"
+    assert_contains "$output" "CHECK|C3|PASS" "Output contains C3 PASS with Risks table present"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -321,6 +373,8 @@ test_c1_dangling_ac_ref_fails
 test_c1_retired_fr_is_valid_target
 test_c2_missing_then_fails
 test_c2_multiline_ac_passes
+test_c3_high_priority_fails
+test_c3_risks_table_exempt
 
 # Summary
 echo ""

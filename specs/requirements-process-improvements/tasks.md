@@ -403,7 +403,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Done when**: Both suites green
   - **Commit**: `chore(lint): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.5 C3 fixtures: High priority fails, Risks table exempt
+- [x] 3.5 C3 fixtures: High priority fails, Risks table exempt
   - **Do**:
     1. Fixture: FR row with `High` priority → assert `FAIL|C3`, exit 1
     2. Fixture: MoSCoW FR table + Risks table containing `High` Impact → assert NO C3 finding (scope check)
