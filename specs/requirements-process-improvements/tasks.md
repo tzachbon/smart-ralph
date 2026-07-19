@@ -347,7 +347,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-8, AC-6.2, NFR-1_
   - _Design: Component F_
 
-- [ ] 2.13 [VERIFY] Quality checkpoint: cross-file grep gates + leanness advisory
+- [x] 2.13 [VERIFY] Quality checkpoint: cross-file grep gates + leanness advisory
   - **Do**:
     1. Gate: zero High/Medium/Low in FR-priority contexts across template/agent/rubric; "Problem Statement" in template + refactor-specialist; product-manager has no inline FR-table skeleton
     2. NFR-2 advisory: report net line delta for product-manager.md + templates/requirements.md via `git diff main --stat -- plugins/ralph-specum/agents/product-manager.md plugins/ralph-specum/templates/requirements.md`; log to .progress.md Learnings
