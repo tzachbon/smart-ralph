@@ -1,5 +1,10 @@
 # Requirements: {{FEATURE_NAME}}
 
+## Problem Statement
+
+<!-- Quick mode with no research evidence: derive from the goal + stated assumptions or use `TBD (user, next review)` -- never fabricate evidence. -->
+{{problem}} affecting {{affected user}}. Evidence: {{evidence pointer to research.md}}
+
 ## Goal
 
 {{1-2 sentence description of what this feature accomplishes and why it matters}}
