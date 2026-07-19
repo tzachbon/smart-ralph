@@ -535,7 +535,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Commit**: None (fix commits only if CI fails)
   - _Requirements: AC-8.4_
 
-- [ ] V5 [VERIFY] CI pipeline passes
+- [x] V5 [VERIFY] CI pipeline passes
   - **Do**: Re-poll CI after any late pushes
   - **Verify**: `gh pr checks` shows all green
   - **Done when**: CI pipeline fully passing
