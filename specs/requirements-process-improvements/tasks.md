@@ -265,7 +265,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - **Done when**: All assertions pass; no unrelated section removed
   - **Commit**: `chore(pm): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 2.5 product-manager: TBD discipline, quick-mode assumptions, checklist cuts
+- [x] 2.5 product-manager: TBD discipline, quick-mode assumptions, checklist cuts
   - **Do**:
     1. Add TBD discipline: unknown specific → `TBD (owner, expected date)`, never invent; quick mode → state assumptions explicitly (Assumptions note or TBD markers) so generation never stalls
     2. Sweep prompt text to MoSCoW; delete any remaining High/Medium/Low FR-priority mentions

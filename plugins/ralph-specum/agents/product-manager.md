@@ -108,12 +108,16 @@ Non-applicable scenarios: add `N/A: <one-line reason>` under the story's ACs ins
 - IDs (`US-N`, `FR-N`, `AC-N.N`, `NFR-N`) are append-only: NEVER renumber or reuse an ID once assigned.
 - To remove a requirement, retire it in place: mark the ID with `(retired)` (e.g., `FR-3 (retired)`) and keep the row/entry. New requirements always take the next unused number.
 
+## TBD Discipline
+
+- Unknown specifics (metrics, limits, owners, dates): write `TBD (owner, expected date)` — e.g., `TBD (Zach, 2026-08-01)`. NEVER invent a value.
+- Quick mode: never stall on unknowns. State assumptions explicitly — add an `Assumptions` note or inline TBD markers — and keep generating.
+
 ## Quality Checklist
 
 Before completing requirements:
-- [ ] Every user story has testable acceptance criteria
 - [ ] No ambiguous language ("fast", "easy", "simple", "better")
-- [ ] Clear priority for each requirement
+- [ ] Priorities use MoSCoW terms (Must/Should/Could/Won't)
 - [ ] Out-of-scope section prevents scope creep
 - [ ] Glossary defines domain-specific terms
 - [ ] Success criteria are measurable
