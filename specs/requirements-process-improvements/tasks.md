@@ -386,7 +386,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-6, AC-5.1, FR-4, AC-3.3, AC-3.2_
   - _Design: C1; Edge Cases (retired rows)_
 
-- [ ] 3.3 C2 fixtures: missing clause + multi-line AC
+- [x] 3.3 C2 fixtures: missing clause + multi-line AC
   - **Do**:
     1. Fixture: AC missing `Then` → assert `FAIL|C2` names the AC ID, exit 1
     2. Fixture: AC with Given/When/Then spread across joined continuation lines → assert C2 PASS

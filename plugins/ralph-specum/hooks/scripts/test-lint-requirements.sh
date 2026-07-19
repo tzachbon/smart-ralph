@@ -157,6 +157,57 @@ write_retired_fr_fixture() {
     mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
 }
 
+# Clean fixture but AC-1.2 has no Then clause
+write_missing_then_fixture() {
+    write_clean_fixture
+    sed -E 's/, Then it exits with$/, it exits with/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Clean fixture but AC-1.2 has Given/When/Then spread across continuation lines
+write_multiline_ac_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Spec authors cannot lint requirements documents automatically. Exact report
+format is TBD (Zach, 2026-07-25).
+
+## User Stories
+
+### US-1: Lint a requirements document
+
+As a spec author, I want automated lint checks, so that structural defects are
+caught before review.
+
+**Acceptance Criteria**:
+  - AC-1.1: Given a well-formed requirements file, When the lint runs, Then it
+    prints a summary line and exits 0
+  - AC-1.2: Given an invalid file path,
+    When the lint runs,
+    Then it exits with code 2 and prints an error to stderr
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 | The linter MUST print a summary line on every run | Must | AC-1.1 |
+| FR-2 | The linter SHOULD exit 2 on unreadable input | Should | AC-1.2 |
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Lint runtime | Wall-clock seconds | N/A: single-file CLI, runtime negligible |
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
 # =============================================================================
 # Tests
 # =============================================================================
@@ -226,6 +277,36 @@ test_c1_retired_fr_is_valid_target() {
     cleanup
 }
 
+test_c2_missing_then_fails() {
+    echo ""
+    echo "=== test_c2_missing_then_fails ==="
+    setup
+    write_missing_then_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Missing-Then fixture exits 1"
+    assert_contains "$output" 'FAIL|C2|AC-1.2: missing "Then" clause' "Output contains C2 missing-Then FAIL naming AC-1.2"
+
+    cleanup
+}
+
+test_c2_multiline_ac_passes() {
+    echo ""
+    echo "=== test_c2_multiline_ac_passes ==="
+    setup
+    write_multiline_ac_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Multi-line AC fixture exits 0"
+    assert_contains "$output" "CHECK|C2|PASS" "Output contains C2 PASS for multi-line AC"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -238,6 +319,8 @@ test_clean_fixture_all_checks_pass
 test_c1_duplicate_fr_id_fails
 test_c1_dangling_ac_ref_fails
 test_c1_retired_fr_is_valid_target
+test_c2_missing_then_fails
+test_c2_multiline_ac_passes
 
 # Summary
 echo ""
