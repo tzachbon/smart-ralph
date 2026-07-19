@@ -245,6 +245,30 @@ write_banned_term_fixture() {
     mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
 }
 
+# Clean fixture but NFR-1 Metric cell holds an unfilled {{metric}} placeholder
+write_nfr_placeholder_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| NFR-1 \| Lint runtime \| Wall-clock seconds \|.*/| NFR-1 | Lint runtime | {{metric}} | Under 1 second |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Clean fixture but NFR-1 Target is bare N/A (no ": reason")
+write_nfr_bare_na_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| NFR-1 \| Lint runtime \| Wall-clock seconds \|.*/| NFR-1 | Lint runtime | Wall-clock seconds | N\/A |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Clean fixture but NFR-1 Target is a reasoned N/A
+write_nfr_reasoned_na_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| NFR-1 \| Lint runtime \| Wall-clock seconds \|.*/| NFR-1 | Lint runtime | Wall-clock seconds | N\/A: markdown-only change |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
 # =============================================================================
 # Tests
 # =============================================================================
@@ -405,6 +429,51 @@ test_c4_banned_term_warns() {
     cleanup
 }
 
+test_c5_placeholder_fails() {
+    echo ""
+    echo "=== test_c5_placeholder_fails ==="
+    setup
+    write_nfr_placeholder_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Placeholder-metric fixture exits 1"
+    assert_contains "$output" "FAIL|C5|NFR-1: Metric contains unfilled placeholder" "Output contains C5 FAIL for {{metric}} placeholder"
+
+    cleanup
+}
+
+test_c5_bare_na_fails() {
+    echo ""
+    echo "=== test_c5_bare_na_fails ==="
+    setup
+    write_nfr_bare_na_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Bare-N/A target fixture exits 1"
+    assert_contains "$output" 'FAIL|C5|NFR-1: Target is bare N/A without ": reason"' "Output contains C5 FAIL for bare N/A target"
+
+    cleanup
+}
+
+test_c5_reasoned_na_passes() {
+    echo ""
+    echo "=== test_c5_reasoned_na_passes ==="
+    setup
+    write_nfr_reasoned_na_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Reasoned-N/A fixture exits 0"
+    assert_contains "$output" "CHECK|C5|PASS" "Output contains C5 PASS for reasoned N/A"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -423,6 +492,9 @@ test_c3_high_priority_fails
 test_c3_risks_table_exempt
 test_c4_missing_modal_fails
 test_c4_banned_term_warns
+test_c5_placeholder_fails
+test_c5_bare_na_fails
+test_c5_reasoned_na_passes
 
 # Summary
 echo ""

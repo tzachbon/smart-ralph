@@ -425,7 +425,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-1, AC-1.1, AC-5.1_
   - _Design: C4_
 
-- [ ] 3.7 C5 fixtures: placeholder/bare-N/A fail, reasoned N/A passes
+- [x] 3.7 C5 fixtures: placeholder/bare-N/A fail, reasoned N/A passes
   - **Do**:
     1. Fixture: NFR row with `{{metric}}` placeholder → assert `FAIL|C5`, exit 1
     2. Fixture: NFR Target bare `N/A` → assert `FAIL|C5`, exit 1
