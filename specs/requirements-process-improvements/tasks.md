@@ -397,7 +397,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - _Requirements: FR-1, AC-1.3_
   - _Design: C2; Edge Cases (multi-line AC)_
 
-- [ ] 3.4 [VERIFY] Quality checkpoint: harness + existing script tests
+- [x] 3.4 [VERIFY] Quality checkpoint: harness + existing script tests
   - **Do**: Run `test-lint-requirements.sh` AND `test-path-resolver.sh` (regression guard); `bash -n` both new scripts
   - **Verify**: `bash plugins/ralph-specum/hooks/scripts/test-lint-requirements.sh && bash plugins/ralph-specum/hooks/scripts/test-path-resolver.sh && echo PASS`
   - **Done when**: Both suites green
