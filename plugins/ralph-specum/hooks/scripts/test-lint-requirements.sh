@@ -269,6 +269,23 @@ write_nfr_reasoned_na_fixture() {
     mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
 }
 
+# Clean fixture but AC-1.2 rewritten happy-path (no failure keywords, no N/A)
+write_happy_path_only_fixture() {
+    write_clean_fixture
+    sed -E -e 's/^(  - AC-1.2:) Given an invalid file path, When the lint runs, Then it exits with$/\1 Given a second well-formed file, When the lint runs, Then it prints/' \
+        -e 's/^    code 2 and prints an error to stderr$/    a RESULT line and exits 0/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+# Happy-path-only fixture plus an explicit N/A scenario line in the story block
+write_happy_path_na_fixture() {
+    write_happy_path_only_fixture
+    awk '{print} /^    a RESULT line and exits 0$/ {print "  - N/A: no error path -- read-only lookup"}' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
 # =============================================================================
 # Tests
 # =============================================================================
@@ -474,6 +491,37 @@ test_c5_reasoned_na_passes() {
     cleanup
 }
 
+test_c6_happy_path_only_warns() {
+    echo ""
+    echo "=== test_c6_happy_path_only_warns ==="
+    setup
+    write_happy_path_only_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Happy-path-only fixture exits 0 (WARN only)"
+    assert_contains "$output" "WARN|C6|US-1: happy-path-only ACs, no N/A markings" "Output contains C6 WARN for US-1"
+
+    cleanup
+}
+
+test_c6_na_marking_passes() {
+    echo ""
+    echo "=== test_c6_na_marking_passes ==="
+    setup
+    write_happy_path_na_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "N/A-marked fixture exits 0"
+    assert_not_contains "$output" "WARN|C6" "Output contains no C6 WARN with N/A scenario line"
+    assert_contains "$output" "CHECK|C6|PASS" "Output contains C6 PASS with N/A scenario line"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -495,6 +543,8 @@ test_c4_banned_term_warns
 test_c5_placeholder_fails
 test_c5_bare_na_fails
 test_c5_reasoned_na_passes
+test_c6_happy_path_only_warns
+test_c6_na_marking_passes
 
 # Summary
 echo ""

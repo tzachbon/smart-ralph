@@ -443,7 +443,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Done when**: Harness green, all 5 FAIL-class checks covered
   - **Commit**: `chore(lint): pass quality checkpoint` (only if fixes needed)
 
-- [ ] 3.9 C6 fixtures: happy-path-only warns, N/A marking passes
+- [x] 3.9 C6 fixtures: happy-path-only warns, N/A marking passes
   - **Do**:
     1. Fixture: story with only happy-path ACs, no N/A lines → assert `WARN|C6` AND exit 0
     2. Fixture: happy-path story with explicit `N/A: no error path — read-only lookup` scenario line → assert C6 PASS
