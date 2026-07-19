@@ -95,7 +95,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-1, AC-1.1, AC-5.1_
   - _Design: Component C, C4; Error Handling (false positives)_
 
-- [ ] 1.7 [VERIFY] Quality checkpoint: C3/C4 on real artifact
+- [x] 1.7 [VERIFY] Quality checkpoint: C3/C4 on real artifact
   - **Do**: `bash -n` script; run against real requirements.md; confirm C3 passes (FR table already MoSCoW, Risks table not flagged) and C4 emits at most WARN (quoted "handle gracefully" in AC-1.2 is WARN-class)
   - **Verify**: `bash -n plugins/ralph-specum/hooks/scripts/lint-requirements.sh && ! bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh specs/requirements-process-improvements/requirements.md | grep -qE 'FAIL\|C3|FAIL\|C4' && echo PASS`
   - **Done when**: No C3/C4 FAIL on the real doc
