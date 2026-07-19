@@ -204,7 +204,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-12, AC-8.3, FR-8, AC-6.1_
   - _Design: Component A_
 
-- [ ] 1.18 [VERIFY] Quality checkpoint: template section-order and additive-only gates
+- [x] 1.18 [VERIFY] Quality checkpoint: template section-order and additive-only gates
   - **Do**: Grep-verify full section order (Problem Statement, Goal, User Stories, Functional Requirements, Non-Functional Requirements, Glossary, Out of Scope, Dependencies, Success Criteria, Risks) and that no pre-existing heading was renamed or dropped
   - **Verify**: `test "$(grep -c '^## ' plugins/ralph-specum/templates/requirements.md)" -ge 10 && grep -q '^## Problem Statement' plugins/ralph-specum/templates/requirements.md && grep -q '^## Out of Scope' plugins/ralph-specum/templates/requirements.md && grep -q '^## Success Criteria' plugins/ralph-specum/templates/requirements.md && echo PASS`
   - **Done when**: All 10 sections present in design order, additive-only confirmed
