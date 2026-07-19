@@ -336,7 +336,7 @@ Focus: integrate remaining components (agent/command/rubric edits) in lockstep; 
   - _Requirements: FR-7, AC-5.2_
   - _Design: Component E; Technical Decisions (review cadence)_
 
-- [ ] 2.12 refactor-specialist: lockstep section list
+- [x] 2.12 refactor-specialist: lockstep section list
   - **Do**:
     1. In `plugins/ralph-specum/agents/refactor-specialist.md` requirements review order: add "Problem Statement" as item 1 (before Goal), renumbering the ordered list
     2. Annotate the "Out of Scope" entry with non-goal/default-scope semantics; no removals or renames

@@ -49,13 +49,14 @@ For each major section in the file:
 ### Requirements (requirements.md)
 
 Review in this order:
-1. **Goal** - Is the goal still accurate?
-2. **User Stories** - Add/modify/remove stories?
-3. **Functional Requirements** - Update FR table?
-4. **Non-Functional Requirements** - Update NFR table?
-5. **Out of Scope** - Items that should now be in scope?
-6. **Dependencies** - New dependencies discovered?
-7. **Success Criteria** - Criteria that need adjustment?
+1. **Problem Statement** - Does the problem framing still hold?
+2. **Goal** - Is the goal still accurate?
+3. **User Stories** - Add/modify/remove stories?
+4. **Functional Requirements** - Update FR table?
+5. **Non-Functional Requirements** - Update NFR table?
+6. **Out of Scope** - Non-goals and default-scope boundaries: items that should now be in scope? (Absent entries default to out of scope; this section names explicit non-goals)
+7. **Dependencies** - New dependencies discovered?
+8. **Success Criteria** - Criteria that need adjustment?
 
 ### Design (design.md)
 
