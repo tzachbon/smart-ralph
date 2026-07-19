@@ -44,7 +44,7 @@ Focus: lint script with all 8 checks + template restructure. Prove pipeline by l
   - _Requirements: FR-6, AC-5.1_
   - _Design: Component C, Output Contract_
 
-- [ ] 1.2 Implement C1 ID & cross-reference integrity (FAIL-class)
+- [x] 1.2 Implement C1 ID & cross-reference integrity (FAIL-class)
   - **Do**:
     1. Collect defined IDs: `### US-N:` headings, `- AC-N.N:` bullets, `| FR-N |` rows, `| NFR-N |` rows; `FR-N (retired)` counts as defined
     2. FAIL on: duplicate defined ID; malformed ID token; AC ID referenced in FR-table Acceptance Criteria column that is not defined; FR row referencing zero `AC-N.N` IDs

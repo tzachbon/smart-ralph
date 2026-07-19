@@ -74,6 +74,106 @@ warn_finding() {
 
 # --- Checks C1-C8 (implemented in subsequent tasks) ---
 
+# --- C1: ID & cross-reference integrity ---
+
+# report_malformed <label> <loose-pattern> <strict-pattern>
+# Lines matching loose (definition-shaped) but not strict (well-formed) = malformed ID token.
+# Strict pattern must account for the "N:" prefix added by grep -n.
+report_malformed() {
+    local label="$1"
+    local loose="$2"
+    local strict="$3"
+    local hits line
+    hits=$(grep -nE "$loose" "$FILE" | grep -vE "$strict")
+    [ -z "$hits" ] && return 0
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        fail_finding "C1" "malformed $label ID at line ${line%%:*}: ${line#*:}"
+    done <<EOF
+$hits
+EOF
+}
+
+report_malformed "US" '^### US-' '^[0-9]+:### US-[0-9]+:'
+report_malformed "AC" '^[[:space:]]*- AC-' '^[0-9]+:[[:space:]]*- AC-[0-9]+\.[0-9]+:'
+report_malformed "FR" '^\|[[:space:]]*FR-' '^[0-9]+:\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|'
+report_malformed "NFR" '^\|[[:space:]]*NFR-' '^[0-9]+:\|[[:space:]]*NFR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|'
+
+# Collect defined IDs (well-formed only; FR-N (retired) counts as defined)
+US_IDS=$(grep -E '^### US-[0-9]+:' "$FILE" | sed -E 's/^### (US-[0-9]+):.*/\1/')
+AC_IDS=$(grep -E '^[[:space:]]*- AC-[0-9]+\.[0-9]+:' "$FILE" | sed -E 's/^[[:space:]]*- (AC-[0-9]+\.[0-9]+):.*/\1/')
+FR_IDS=$(grep -E '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE" | sed -E 's/^\|[[:space:]]*(FR-[0-9]+).*/\1/')
+NFR_IDS=$(grep -E '^\|[[:space:]]*NFR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE" | sed -E 's/^\|[[:space:]]*(NFR-[0-9]+).*/\1/')
+
+# Duplicate defined IDs = FAIL
+report_duplicates() {
+    local ids="$1"
+    [ -z "$ids" ] && return 0
+    local dup
+    for dup in $(echo "$ids" | sort | uniq -d); do
+        fail_finding "C1" "duplicate ID defined: $dup"
+    done
+}
+report_duplicates "$US_IDS"
+report_duplicates "$AC_IDS"
+report_duplicates "$FR_IDS"
+report_duplicates "$NFR_IDS"
+
+# FR-table cross-references: dangling AC ref = FAIL; FR row with zero AC refs = FAIL
+# (retired rows exempt from the zero-ref rule)
+FR_ROWS=$(grep -E '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE")
+REFERENCED_ACS=""
+while IFS= read -r row; do
+    [ -z "$row" ] && continue
+    frid=$(echo "$row" | sed -E 's/^\|[[:space:]]*(FR-[0-9]+).*/\1/')
+    refs=$(echo "$row" | grep -oE 'AC-[0-9]+\.[0-9]+' | sort -u)
+    if [ -z "$refs" ]; then
+        if ! echo "$row" | grep -qE '^\|[[:space:]]*FR-[0-9]+[[:space:]]*\(retired\)'; then
+            fail_finding "C1" "$frid references no AC-N.N IDs in Acceptance Criteria column"
+        fi
+        continue
+    fi
+    for r in $refs; do
+        REFERENCED_ACS="$REFERENCED_ACS
+$r"
+        if ! echo "$AC_IDS" | grep -qx "$r"; then
+            fail_finding "C1" "$frid references undefined $r"
+        fi
+    done
+done <<EOF
+$FR_ROWS
+EOF
+
+# Defined AC referenced by no FR row = WARN
+for ac in $AC_IDS; do
+    if ! echo "$REFERENCED_ACS" | grep -qx "$ac"; then
+        warn_finding "C1" "$ac defined but referenced by no FR row"
+    fi
+done
+
+# Suspicious ID sequence (gaps without retirement) = WARN
+# check_sequence <id-prefix> <newline-list-of-numbers>
+check_sequence() {
+    local label="$1"
+    local nums="$2"
+    [ -z "$nums" ] && return 0
+    local expected=1 n
+    for n in $(echo "$nums" | sort -n | uniq); do
+        if [ "$n" -gt "$expected" ]; then
+            warn_finding "C1" "suspicious ID sequence: ${label}${expected} missing (gap before ${label}${n})"
+        fi
+        expected=$((n + 1))
+    done
+}
+check_sequence "US-" "$(echo "$US_IDS" | sed 's/^US-//')"
+check_sequence "FR-" "$(echo "$FR_IDS" | sed 's/^FR-//')"
+check_sequence "NFR-" "$(echo "$NFR_IDS" | sed 's/^NFR-//')"
+if [ -n "$AC_IDS" ]; then
+    for s in $(echo "$AC_IDS" | sed -E 's/^AC-([0-9]+)\..*/\1/' | sort -n | uniq); do
+        check_sequence "AC-${s}." "$(echo "$AC_IDS" | grep "^AC-${s}\." | sed -E 's/^AC-[0-9]+\.([0-9]+)$/\1/')"
+    done
+fi
+
 # --- Summary ---
 PASS_COUNT=0
 for n in 1 2 3 4 5 6 7 8; do
