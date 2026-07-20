@@ -159,6 +159,69 @@ write_retired_fr_fixture() {
     mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
 }
 
+# Retired US heading + retired AC bullet: valid defined-but-retired IDs
+write_retired_us_ac_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Spec authors cannot lint requirements documents automatically.
+
+## User Stories
+
+### US-1 (retired): removed story
+
+Superseded by US-2.
+
+**Acceptance Criteria:**
+  - AC-1.1 (retired): removed criterion
+
+### US-2: Lint a requirements document
+
+As a spec author, I want automated lint checks, so that structural defects are
+caught before review.
+
+**Acceptance Criteria:**
+  - AC-2.1: Given a well-formed requirements file, When the lint runs, Then it
+    prints a summary line and exits 0
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 | The linter MUST print a summary line on every run | Must | AC-2.1 |
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Lint runtime | Wall-clock seconds | N/A: single-file CLI, runtime negligible |
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
+test_c1_retired_us_and_ac_are_valid() {
+    echo ""
+    echo "=== test_c1_retired_us_and_ac_are_valid ==="
+    setup
+    write_retired_us_ac_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Retired US/AC fixture exits 0"
+    assert_not_contains "$output" "FAIL|C1" "Retired US/AC produce no C1 FAIL"
+    assert_not_contains "$output" "malformed" "Retired US/AC are not flagged as malformed IDs"
+    assert_not_contains "$output" "suspicious ID sequence: US-1" "Retired US-1 is not counted as a sequence gap"
+    assert_contains "$output" "CHECK|C1|PASS" "Output contains C1 PASS with retired US/AC present"
+
+    cleanup
+}
+
 # Clean fixture but AC-1.2 has no Then clause
 write_missing_then_fixture() {
     write_clean_fixture
@@ -864,6 +927,7 @@ test_clean_fixture_all_checks_pass
 test_c1_duplicate_fr_id_fails
 test_c1_dangling_ac_ref_fails
 test_c1_retired_fr_is_valid_target
+test_c1_retired_us_and_ac_are_valid
 test_c2_missing_then_fails
 test_c2_multiline_ac_passes
 test_c3_high_priority_fails

@@ -102,14 +102,15 @@ $hits
 EOF
 }
 
-report_malformed "US" '^### US-' '^[0-9]+:### US-[0-9]+:'
-report_malformed "AC" '^[[:space:]]*- AC-' '^[0-9]+:[[:space:]]*- AC-[0-9]+\.[0-9]+:'
+report_malformed "US" '^### US-' '^[0-9]+:### US-[0-9]+([[:space:]]*\(retired\))?:'
+report_malformed "AC" '^[[:space:]]*- AC-' '^[0-9]+:[[:space:]]*- AC-[0-9]+\.[0-9]+([[:space:]]*\(retired\))?:'
 report_malformed "FR" '^\|[[:space:]]*FR-' '^[0-9]+:\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|'
 report_malformed "NFR" '^\|[[:space:]]*NFR-' '^[0-9]+:\|[[:space:]]*NFR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|'
 
-# Collect defined IDs (well-formed only; FR-N (retired) counts as defined)
-US_IDS=$(grep -E '^### US-[0-9]+:' "$FILE" | sed -E 's/^### (US-[0-9]+):.*/\1/')
-AC_IDS=$(grep -E '^[[:space:]]*- AC-[0-9]+\.[0-9]+:' "$FILE" | sed -E 's/^[[:space:]]*- (AC-[0-9]+\.[0-9]+):.*/\1/')
+# Collect defined IDs; a `(retired)` mark still counts as defined (US/AC/FR/NFR).
+US_IDS=$(grep -E '^### US-[0-9]+([[:space:]]*\(retired\))?:' "$FILE" | sed -E 's/^### (US-[0-9]+).*/\1/')
+AC_IDS=$(grep -E '^[[:space:]]*- AC-[0-9]+\.[0-9]+([[:space:]]*\(retired\))?:' "$FILE" | sed -E 's/^[[:space:]]*- (AC-[0-9]+\.[0-9]+).*/\1/')
+AC_RETIRED_IDS=$(grep -E '^[[:space:]]*- AC-[0-9]+\.[0-9]+[[:space:]]*\(retired\):' "$FILE" | sed -E 's/^[[:space:]]*- (AC-[0-9]+\.[0-9]+).*/\1/')
 FR_IDS=$(grep -E '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE" | sed -E 's/^\|[[:space:]]*(FR-[0-9]+).*/\1/')
 NFR_IDS=$(grep -E '^\|[[:space:]]*NFR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE" | sed -E 's/^\|[[:space:]]*(NFR-[0-9]+).*/\1/')
 
@@ -152,8 +153,9 @@ done <<EOF
 $FR_ROWS
 EOF
 
-# Defined AC referenced by no FR row = WARN
+# Defined AC referenced by no FR row = WARN (retired ACs exempt)
 for ac in $AC_IDS; do
+    if echo "$AC_RETIRED_IDS" | grep -qx "$ac"; then continue; fi
     if ! echo "$REFERENCED_ACS" | grep -qx "$ac"; then
         warn_finding "C1" "$ac defined but referenced by no FR row"
     fi
