@@ -577,7 +577,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
 
 > Autonomous loop until ALL completion criteria met. PR was created in 4.3.
 
-- [ ] 5.1 Monitor CI and fix failures
+- [x] 5.1 Monitor CI and fix failures
   - **Do**:
     1. `gh pr checks`; on failure `gh run view --log-failed`, fix locally, commit `fix(requirements-phase): address CI failures`, push
     2. Repeat until all green
