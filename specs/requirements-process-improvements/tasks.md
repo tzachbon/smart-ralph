@@ -548,7 +548,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Commit**: None
   - _Requirements: all FR/AC_
 
-- [ ] VE1 [VERIFY] E2E scripted: toy template-conformant doc passes gate
+- [x] VE1 [VERIFY] E2E scripted: toy template-conformant doc passes gate
   - **Do**:
     1. `mkdir -p /tmp/ve-lint-fixtures`; heredoc a toy requirements doc at `/tmp/ve-lint-fixtures/clean.md` following the UPDATED template rules (Problem Statement before Goal, GWT ACs with an error-path AC, MoSCoW FR table with AC-ID refs, NFR `N/A: reason` row, Out of Scope with default-scope rule, owned TBD)
     2. Run `bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh /tmp/ve-lint-fixtures/clean.md`
@@ -557,7 +557,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Commit**: None
   - _Requirements: FR-6, AC-5.1; Success Criteria (first-pass 0 FAIL)_
 
-- [ ] VE2 [VERIFY] E2E scripted: verdict logic (FAIL→1, WARN-only→0, usage→2)
+- [x] VE2 [VERIFY] E2E scripted: verdict logic (FAIL→1, WARN-only→0, usage→2)
   - **Do**:
     1. Copy clean.md → `fail.md`, strip a `Then` clause; run lint → assert exit 1 + `FAIL|C2` + `RESULT: FAIL`
     2. Copy clean.md → `warn.md`, add a bare `TBD`; run lint → assert exit 0 + `WARN|C7` present in output
@@ -567,7 +567,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Commit**: None
   - _Requirements: FR-6, AC-5.3, NFR-3_
 
-- [ ] VE3 [VERIFY] E2E cleanup: remove toy fixtures
+- [x] VE3 [VERIFY] E2E cleanup: remove toy fixtures
   - **Do**: `rm -rf /tmp/ve-lint-fixtures`
   - **Verify**: `! test -d /tmp/ve-lint-fixtures && echo VE3_PASS`
   - **Done when**: No E2E artifacts remain (no dev server involved — CLI/markdown plugin)
