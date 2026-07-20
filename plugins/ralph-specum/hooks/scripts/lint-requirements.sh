@@ -7,7 +7,7 @@
 # Output (stdout, one line per finding, then summary):
 #   FAIL|Cn|<message>   - FAIL-class finding for check Cn
 #   WARN|Cn|<message>   - WARN-class finding for check Cn
-#   CHECK|Cn|PASS       - emitted for each clean check
+#   CHECK|Cn|<STATUS>   - one canonical status line per check (PASS/WARN/FAIL)
 #   RESULT: <PASS|FAIL> (X FAIL, Y WARN, Z PASS)
 #
 # Exit codes:
@@ -372,13 +372,12 @@ CHECK_WARN=0
 CHECK_PASS=0
 for n in 1 2 3 4 5 6 7 8; do
     eval "status=\$C${n}_STATUS"
+    # Emit exactly one canonical status line per check (all 8 always present).
+    echo "CHECK|C${n}|${status}"
     case "$status" in
         FAIL) CHECK_FAIL=$((CHECK_FAIL + 1)) ;;
         WARN) CHECK_WARN=$((CHECK_WARN + 1)) ;;
-        *)
-            echo "CHECK|C${n}|PASS"
-            CHECK_PASS=$((CHECK_PASS + 1))
-            ;;
+        *) CHECK_PASS=$((CHECK_PASS + 1)) ;;
     esac
 done
 

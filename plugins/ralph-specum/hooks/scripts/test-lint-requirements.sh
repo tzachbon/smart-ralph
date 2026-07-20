@@ -543,6 +543,21 @@ test_c4_missing_modal_fails() {
     cleanup
 }
 
+test_c4_fail_emits_check_status_line() {
+    echo ""
+    echo "=== test_c4_fail_emits_check_status_line ==="
+    setup
+    write_missing_modal_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Missing-modal fixture exits 1"
+    assert_contains "$output" "CHECK|C4|FAIL" "Failed check emits a canonical CHECK|C4|FAIL status line"
+
+    cleanup
+}
+
 test_c4_banned_term_warns() {
     echo ""
     echo "=== test_c4_banned_term_warns ==="
@@ -771,6 +786,7 @@ test_c2_multiline_ac_passes
 test_c3_high_priority_fails
 test_c3_risks_table_exempt
 test_c4_missing_modal_fails
+test_c4_fail_emits_check_status_line
 test_c4_banned_term_warns
 test_c5_placeholder_fails
 test_c5_bare_na_fails
