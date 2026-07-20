@@ -148,7 +148,7 @@ Rationale for the split: C1-C5 are structural contract violations with zero fals
 
 One finding per line to stdout, pipe-delimited, then a summary line:
 
-```
+```text
 FAIL|C2|AC-3.1: missing "Then" clause
 WARN|C7|Unresolved Questions item 2: no Owner
 CHECK|C1|PASS

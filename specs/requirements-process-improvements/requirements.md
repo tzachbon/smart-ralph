@@ -191,9 +191,3 @@ Default-scope rule: anything not listed here that falls under the Goal is in sco
 | Prompt bloat vs "keep phase lean" | Medium | FR-14: cut superseded checklist text; NFR-2 line-delta check |
 | Section additions break refactor-specialist walkthrough | Low | Additive-only sections; update its section list in same change (AC-6.2) |
 | Template-only consolidation breaks agent output when template unreadable | Low | Agent keeps a minimal fallback ordering note; consolidation is Should (FR-11) |
-
-## Unresolved Questions
-
-- Exact composition of the 8 checks: AC-5.1 lists candidate checks; final selection and per-check FAIL vs WARN classification to be fixed in design. Owner: architect-reviewer (design phase).
-- Whether the scope section keeps the heading "Out of Scope" (safe for refactor-specialist) or is retitled "Non-Goals" (requires consumer update). Recommendation: keep heading, add default-scope rule + non-goal semantics inside. Owner: architect-reviewer (design phase).
-- Whether normal-mode auto-review re-runs after "Request changes" edits or only once post-generation. Recommendation: re-run after each regeneration. Owner: user, at design approval.

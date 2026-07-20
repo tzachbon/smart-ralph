@@ -544,7 +544,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
 - [x] V6 [VERIFY] AC checklist sweep
   - **Do**: For each AC in requirements.md (AC-1.1 … AC-8.4), verify programmatically: grep the edited file for the mandated text (AC-1.1/1.2, 2.1, 3.1/3.2, 4.1/4.2, 5.2, 6.1/6.2, 7.1/7.2, 8.1/8.2/8.4); run harness cases for lint-backed ACs (1.3, 2.2, 3.3, 4.3, 5.1, 5.3, 5.4, 8.3); record per-AC status in .progress.md
   - **Verify**: `bash plugins/ralph-specum/hooks/scripts/test-lint-requirements.sh && grep -q 'Default-scope rule' plugins/ralph-specum/templates/requirements.md && grep -q 'artifactPath' plugins/ralph-specum/commands/requirements.md && grep -q 'Problem Statement' plugins/ralph-specum/agents/refactor-specialist.md && echo PASS`
-  - **Done when**: All 22 ACs confirmed via automated checks; failures fixed before proceeding
+  - **Done when**: All 23 ACs confirmed via automated checks; failures fixed before proceeding
   - **Commit**: None
   - _Requirements: all FR/AC_
 
@@ -562,7 +562,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
     1. Copy clean.md → `fail.md`, strip a `Then` clause; run lint → assert exit 1 + `FAIL|C2` + `RESULT: FAIL`
     2. Copy clean.md → `warn.md`, add a bare `TBD`; run lint → assert exit 0 + `WARN|C7` present in output
     3. Run lint with no args and with `/tmp/ve-lint-fixtures/nope.md` → assert exit 2 both times
-  - **Verify**: `bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh /tmp/ve-lint-fixtures/fail.md; test $? -eq 1 && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh /tmp/ve-lint-fixtures/warn.md; test $? -eq 0 && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh /tmp/ve-lint-fixtures/nope.md 2>/dev/null; test $? -eq 2 && echo VE2_PASS`
+  - **Verify**: `bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh /tmp/ve-lint-fixtures/fail.md; test $? -eq 1 && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh /tmp/ve-lint-fixtures/warn.md; test $? -eq 0 && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh 2>/dev/null; test $? -eq 2 && bash plugins/ralph-specum/hooks/scripts/lint-requirements.sh /tmp/ve-lint-fixtures/nope.md 2>/dev/null; test $? -eq 2 && echo VE2_PASS`
   - **Done when**: All three verdict classes reproduce the AC-5.3 blocking semantics
   - **Commit**: None
   - _Requirements: FR-6, AC-5.3, NFR-3_
@@ -585,7 +585,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Done when**: All CI checks passing
   - **Commit**: `fix(requirements-phase): address CI failures` (as needed)
 
-- [ ] 5.2 Address code review comments
+- [x] 5.2 Address code review comments
   - **Do**:
     1. `gh pr view --json reviews` + `gh api repos/{owner}/{repo}/pulls/{number}/comments` for inline threads
     2. Implement each requested change, commit `fix(requirements-phase): address review - <summary>`, push; re-check until none unresolved
@@ -610,6 +610,6 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
 
 ## Dependencies
 
-```
+```text
 Phase 1 (POC: lint script + template) → Phase 2 (agent/command/rubric integration) → Phase 3 (fixture tests) → Phase 4 (version bump, gates, PR, scripted E2E) → Phase 5 (PR lifecycle)
 ```
