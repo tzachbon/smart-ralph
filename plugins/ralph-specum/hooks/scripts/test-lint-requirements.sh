@@ -239,6 +239,47 @@ write_missing_modal_fixture() {
     mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
 }
 
+# Clean fixture but FR-1 Requirement cell contains an escaped pipe (`\|`)
+write_escaped_pipe_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Spec authors cannot lint requirements documents automatically.
+
+## User Stories
+
+### US-1: Lint a requirements document
+
+As a spec author, I want automated lint checks, so that structural defects are
+caught before review.
+
+**Acceptance Criteria**:
+  - AC-1.1: Given a well-formed requirements file, When the lint runs, Then it
+    prints a summary line and exits 0
+  - AC-1.2: Given an invalid file path, When the lint runs, Then it exits with
+    code 2 and prints an error to stderr
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 | System MUST support a \| b syntax | Must | AC-1.1 |
+| FR-2 | The linter SHOULD exit 2 on unreadable input | Should | AC-1.2 |
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Lint runtime | Wall-clock seconds | N/A: single-file CLI, runtime negligible |
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
 # Clean fixture but AC-1.1 contains banned vague term "gracefully"
 write_banned_term_fixture() {
     write_clean_fixture
@@ -573,6 +614,24 @@ test_c4_banned_term_warns() {
     cleanup
 }
 
+test_escaped_pipe_in_cell_passes_c3_c4_c5() {
+    echo ""
+    echo "=== test_escaped_pipe_in_cell_passes_c3_c4_c5 ==="
+    setup
+    write_escaped_pipe_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Escaped-pipe FR cell fixture exits 0"
+    assert_not_contains "$output" "FAIL|C3" "Escaped pipe does not shift C3 Priority column"
+    assert_not_contains "$output" "FAIL|C4" "Escaped pipe does not drop the C4 modal column"
+    assert_not_contains "$output" "FAIL|C5" "Escaped pipe does not shift C5 NFR columns"
+    assert_contains "$output" "CHECK|C3|PASS" "Output contains C3 PASS with escaped pipe in cell"
+
+    cleanup
+}
+
 test_c5_placeholder_fails() {
     echo ""
     echo "=== test_c5_placeholder_fails ==="
@@ -788,6 +847,7 @@ test_c3_risks_table_exempt
 test_c4_missing_modal_fails
 test_c4_fail_emits_check_status_line
 test_c4_banned_term_warns
+test_escaped_pipe_in_cell_passes_c3_c4_c5
 test_c5_placeholder_fails
 test_c5_bare_na_fails
 test_c5_reasoned_na_passes

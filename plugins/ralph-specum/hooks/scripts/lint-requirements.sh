@@ -72,6 +72,14 @@ warn_finding() {
     fi
 }
 
+# --- Escaped-pipe protection for column parsing ---
+# An escaped `\|` inside a table cell shifts awk -F'|' columns and false-FAILs
+# C3/C4/C5. Replace each `\|` with a sentinel before any column split; extracted
+# cells restore the sentinel to a literal `|`. The sentinel is an improbable
+# token carrying no regex metacharacters. Line-based checks keep reading $FILE.
+PIPE_SENTINEL='@@ESCPIPE@@'
+FILE_COLS=$(sed 's/\\|/'"$PIPE_SENTINEL"'/g' "$FILE")
+
 # --- Checks C1-C8 (implemented in subsequent tasks) ---
 
 # --- C1: ID & cross-reference integrity ---
@@ -208,14 +216,14 @@ EOF
 # Scope: FR-table rows only (`| FR-N |`); Risks-table Impact column
 # (High/Medium/Low) and NFR rows are never scanned. Third table column
 # (awk -F'|' field $4) is the Priority cell.
-C3_HITS=$(awk -F'|' '
+C3_HITS=$(awk -F'|' -v S="$PIPE_SENTINEL" '
     /^\|[[:space:]]*FR-[0-9]+[[:space:]]*\|/ {
-        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id)
-        prio = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", prio)
+        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id); gsub(S, "|", id)
+        prio = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", prio); gsub(S, "|", prio)
         if (prio != "Must" && prio != "Should" && prio != "Could")
             print id "\t" prio
     }
-' "$FILE")
+' <<<"$FILE_COLS")
 
 while IFS="$(printf '\t')" read -r frid prio; do
     [ -z "$frid" ] && continue
@@ -228,12 +236,12 @@ EOF
 
 # Modal presence (FAIL): each active FR row's Requirement cell (2nd table
 # column) must contain an uppercase MUST or SHOULD. Retired rows exempt.
-C4_MODAL_HITS=$(awk -F'|' '
+C4_MODAL_HITS=$(awk -F'|' -v S="$PIPE_SENTINEL" '
     /^\|[[:space:]]*FR-[0-9]+[[:space:]]*\|/ {
-        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id)
+        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id); gsub(S, "|", id)
         if ($3 !~ /MUST/ && $3 !~ /SHOULD/) print id
     }
-' "$FILE")
+' <<<"$FILE_COLS")
 for frid in $C4_MODAL_HITS; do
     fail_finding "C4" "$frid: Requirement text lacks MUST/SHOULD modal"
 done
@@ -259,11 +267,11 @@ fi
 # Each active NFR row's Metric ($4) and Target ($5) cells must be non-empty and
 # free of {{...}} placeholders. Rows whose Target is "N/A: <reason>" are exempt.
 # Bare "N/A" (no ": reason") in either cell = FAIL. Retired rows not matched.
-C5_HITS=$(awk -F'|' '
+C5_HITS=$(awk -F'|' -v S="$PIPE_SENTINEL" '
     /^\|[[:space:]]*NFR-[0-9]+[[:space:]]*\|/ {
-        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id)
-        metric = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", metric)
-        target = $5; gsub(/^[[:space:]]+|[[:space:]]+$/, "", target)
+        id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id); gsub(S, "|", id)
+        metric = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", metric); gsub(S, "|", metric)
+        target = $5; gsub(/^[[:space:]]+|[[:space:]]+$/, "", target); gsub(S, "|", target)
         if (target ~ /^N\/A:[[:space:]]*[^[:space:]]/) next
         msg = ""
         if (metric == "") msg = "Metric cell is empty"
@@ -274,7 +282,7 @@ C5_HITS=$(awk -F'|' '
         else if (target == "N/A") msg = "Target is bare N/A without \": reason\""
         if (msg != "") print id "\t" msg
     }
-' "$FILE")
+' <<<"$FILE_COLS")
 
 while IFS="$(printf '\t')" read -r nfrid msg; do
     [ -z "$nfrid" ] && continue
@@ -350,14 +358,14 @@ EOF
 
 # Count active FR rows and Must-priority rows (retired rows not matched).
 # Suppressed entirely when total FRs < 8 (advisory meaningless at small N).
-C8_COUNTS=$(awk -F'|' '
+C8_COUNTS=$(awk -F'|' -v S="$PIPE_SENTINEL" '
     /^\|[[:space:]]*FR-[0-9]+[[:space:]]*\|/ {
         total++
-        prio = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", prio)
+        prio = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", prio); gsub(S, "|", prio)
         if (prio == "Must") must++
     }
     END { print total+0 "\t" must+0 }
-' "$FILE")
+' <<<"$FILE_COLS")
 C8_TOTAL=${C8_COUNTS%%$(printf '\t')*}
 C8_MUST=${C8_COUNTS##*$(printf '\t')}
 
