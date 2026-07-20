@@ -97,7 +97,7 @@ Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
 - REVIEW_FAIL (iteration >= 3): graceful degradation, log warning, proceed
 - No signal: treat as REVIEW_PASS (permissive)
 
-**Review delegation**: Include full requirements.md content, `artifactPath: ./specs/$spec/requirements.md`, iteration count, prior findings. Upstream: research.md.
+**Review delegation**: Include full requirements.md content, `artifactType: requirements`, `artifactPath: ./specs/$spec/requirements.md`, iteration count, prior findings. Upstream: research.md.
 
 **Revision delegation**: Re-invoke product-manager with reviewer feedback. Focus on specific issues.
 
@@ -129,10 +129,17 @@ Output: $PWD/specs/$spec/requirements.md
 
 ## Validation
 
-**Checks** (from Step 4 review pass):
+**Checks** (from Step 4 review pass, one row per check):
 | # | Check | Status |
 |---|-------|--------|
-| 1-8 | [each of the 8 rubric checks] | PASS / FAIL |
+| C1 | ID & cross-reference integrity | PASS / WARN / FAIL |
+| C2 | GWT clause presence | PASS / WARN / FAIL |
+| C3 | MoSCoW priority values | PASS / WARN / FAIL |
+| C4 | Requirement-language modals | PASS / WARN / FAIL |
+| C5 | NFR fill-or-N/A | PASS / WARN / FAIL |
+| C6 | Six-scenario coverage | PASS / WARN / FAIL |
+| C7 | Unowned TBD / open questions | PASS / WARN / FAIL |
+| C8 | MUST:SHOULD ratio advisory | PASS / WARN / FAIL |
 
 **Judgment findings**: [reviewer's judgment-based findings, or "None"]
 ```

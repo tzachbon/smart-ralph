@@ -54,7 +54,7 @@ Review in this order:
 3. **User Stories** - Add/modify/remove stories?
 4. **Functional Requirements** - Update FR table?
 5. **Non-Functional Requirements** - Update NFR table?
-6. **Out of Scope** - Non-goals and default-scope boundaries: items that should now be in scope? (Absent entries default to out of scope; this section names explicit non-goals)
+6. **Out of Scope** - Non-goals and default-scope boundaries: items that should now be in scope? (Default-scope rule: anything not listed here that falls under the Goal is in scope; this section names explicit non-goals)
 7. **Dependencies** - New dependencies discovered?
 8. **Success Criteria** - Criteria that need adjustment?
 

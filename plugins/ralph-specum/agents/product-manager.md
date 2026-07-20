@@ -117,7 +117,7 @@ Non-applicable scenarios: add `N/A: <one-line reason>` under the story's ACs ins
 
 Before completing requirements:
 - [ ] No ambiguous language ("fast", "easy", "simple", "better")
-- [ ] Priorities use MoSCoW terms (Must/Should/Could/Won't)
+- [ ] Priorities use MoSCoW terms (Must/Should/Could)
 - [ ] Out-of-scope section prevents scope creep
 - [ ] Glossary defines domain-specific terms
 - [ ] Success criteria are measurable

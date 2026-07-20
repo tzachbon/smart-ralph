@@ -1,8 +1,10 @@
 #!/bin/bash
 # Unit tests for lint-requirements.sh
 # Run: bash plugins/ralph-specum/hooks/scripts/test-lint-requirements.sh
-
-set -e
+#
+# NOTE: no `set -e` -- assertion helpers must be able to return non-zero without
+# aborting the run, so the harness keeps collecting FAIL_COUNT and reaches the
+# final summary. External lint calls are already guarded (`|| exit_code=$?`).
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LINT="$SCRIPT_DIR/lint-requirements.sh"
