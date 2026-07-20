@@ -35,9 +35,9 @@
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|-------------|----------|---------------------|
-| FR-1 | {{description}} | Must | AC-1.1, AC-1.2 |
-| FR-2 | {{description}} | Should | AC-2.1 |
-| FR-3 | {{description}} | Could | AC-2.2 |
+| FR-1 | System MUST {{description}} | Must | AC-1.1, AC-1.2 |
+| FR-2 | System SHOULD {{description}} | Should | AC-2.1 |
+| FR-3 | System MAY {{description}} | Could | AC-2.2 |
 
 ## Non-Functional Requirements
 

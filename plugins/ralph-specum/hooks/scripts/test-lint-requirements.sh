@@ -579,7 +579,31 @@ test_c4_missing_modal_fails() {
     output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
 
     assert_eq 1 "$exit_code" "Missing-modal fixture exits 1"
-    assert_contains "$output" "FAIL|C4|FR-2: Requirement text lacks MUST/SHOULD modal" "Output contains C4 FAIL for FR-2 missing modal"
+    assert_contains "$output" "FAIL|C4|FR-2: Requirement text lacks MUST/SHOULD/MAY modal" "Output contains C4 FAIL for FR-2 missing modal"
+
+    cleanup
+}
+
+# Clean fixture but FR-1 is a Could-priority requirement phrased with "System MAY"
+write_may_modal_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| FR-1 \|.*/| FR-1 | System MAY optionally cache results | Could | AC-1.1 |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+test_c4_may_modal_passes() {
+    echo ""
+    echo "=== test_c4_may_modal_passes ==="
+    setup
+    write_may_modal_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "System MAY (Could) fixture exits 0"
+    assert_not_contains "$output" "FAIL|C4" "System MAY satisfies the C4 modal check"
+    assert_contains "$output" "CHECK|C4|PASS" "Output contains C4 PASS for System MAY modal"
 
     cleanup
 }
@@ -845,6 +869,7 @@ test_c2_multiline_ac_passes
 test_c3_high_priority_fails
 test_c3_risks_table_exempt
 test_c4_missing_modal_fails
+test_c4_may_modal_passes
 test_c4_fail_emits_check_status_line
 test_c4_banned_term_warns
 test_escaped_pipe_in_cell_passes_c3_c4_c5

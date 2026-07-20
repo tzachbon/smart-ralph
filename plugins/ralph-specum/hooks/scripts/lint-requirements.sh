@@ -235,15 +235,17 @@ EOF
 # --- C4: Requirement-language lint ---
 
 # Modal presence (FAIL): each active FR row's Requirement cell (2nd table
-# column) must contain an uppercase MUST or SHOULD. Retired rows exempt.
+# column) must contain an uppercase modal MUST, SHOULD, or MAY (covers the
+# MoSCoW Could tier phrased as "System MAY ..."; MUST NOT / SHOULD NOT match
+# via their MUST / SHOULD stems). Retired rows exempt.
 C4_MODAL_HITS=$(awk -F'|' -v S="$PIPE_SENTINEL" '
     /^\|[[:space:]]*FR-[0-9]+[[:space:]]*\|/ {
         id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id); gsub(S, "|", id)
-        if ($3 !~ /MUST/ && $3 !~ /SHOULD/) print id
+        if ($3 !~ /MUST/ && $3 !~ /SHOULD/ && $3 !~ /MAY/) print id
     }
 ' <<<"$FILE_COLS")
 for frid in $C4_MODAL_HITS; do
-    fail_finding "C4" "$frid: Requirement text lacks MUST/SHOULD modal"
+    fail_finding "C4" "$frid: Requirement text lacks MUST/SHOULD/MAY modal"
 done
 
 # Banned vague terms (WARN, heuristic -- never FAIL): scoped to FR-table rows
