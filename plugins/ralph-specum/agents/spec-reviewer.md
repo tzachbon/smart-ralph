@@ -89,10 +89,12 @@ Completeness expectations: user stories have AC-* items; FRs have Must/Should/Co
 - Traceability PASS: "FR-3 traces to US-1 (phase reviews)" with explicit reference.
 - Traceability FAIL: "FR-7: Support dark mode" appears with no corresponding user story.
 
-**Lint script (hybrid gate)**: When `artifactType: requirements` and an `artifactPath` is provided, run:
+**Lint script (hybrid gate)**: When `artifactType: requirements` and an `artifactPath` is provided, resolve the script path with a fallback and run it. Prefer `${CLAUDE_PLUGIN_ROOT}`; if that variable is unset/empty or the file is missing, fall back to the repo-relative path; only if neither resolves, apply the Degradation rule (manual review):
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/lint-requirements.sh <artifactPath>
+LINT="${CLAUDE_PLUGIN_ROOT:+$CLAUDE_PLUGIN_ROOT/hooks/scripts/lint-requirements.sh}"
+[ -f "$LINT" ] || LINT="plugins/ralph-specum/hooks/scripts/lint-requirements.sh"
+[ -f "$LINT" ] && bash "$LINT" <artifactPath>   # neither path exists -> Degradation rule
 ```
 
 The script emits pipe-delimited findings (`FAIL|Cn|msg`, `WARN|Cn|msg`, `CHECK|Cn|PASS`) and exits 0 (no FAILs), 1 (FAILs), or 2 (usage/read error). Map each of the 8 checks into the findings table as its own row, with Status (PASS/WARN/FAIL) and messages taken verbatim from script output:
