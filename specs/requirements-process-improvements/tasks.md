@@ -593,7 +593,7 @@ Focus: `test-lint-requirements.sh` fixture coverage — pass + fail case for eve
   - **Done when**: All review comments resolved
   - **Commit**: `fix(requirements-phase): address review - <summary>` (per comment)
 
-- [ ] 5.3 Final validation
+- [x] 5.3 Final validation
   - **Do**:
     1. Re-run full local suite (4.2 Verify command)
     2. Confirm CI green (`gh pr checks`), zero regressions in existing script tests, completion criteria documented in .progress.md
