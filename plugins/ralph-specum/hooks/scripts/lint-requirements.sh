@@ -161,6 +161,26 @@ for ac in $AC_IDS; do
     fi
 done
 
+# Active US story with zero AC-N.N bullets before the next heading = FAIL.
+# (retired US headings are exempt; a retired AC bullet still satisfies presence)
+C1_ZERO_AC=$(awk '
+    function flush() { if (usid != "" && !hasac) print usid }
+    /^### US-[0-9]+:/ {
+        flush()
+        usid = $0; sub(/^### /, "", usid); sub(/:.*/, "", usid)
+        hasac = 0
+        next
+    }
+    /^### US-[0-9]+[[:space:]]*\(retired\)/ { flush(); usid = ""; next }
+    /^###/ { flush(); usid = ""; next }
+    /^##/  { flush(); usid = ""; next }
+    usid != "" && /^[[:space:]]*- AC-[0-9]+\.[0-9]+([[:space:]]*\(retired\))?:/ { hasac = 1 }
+    END { flush() }
+' "$FILE")
+for usid in $C1_ZERO_AC; do
+    fail_finding "C1" "$usid has no AC-N.N acceptance criteria"
+done
+
 # Suspicious ID sequence (gaps without retirement) = WARN
 # check_sequence <id-prefix> <newline-list-of-numbers>
 check_sequence() {

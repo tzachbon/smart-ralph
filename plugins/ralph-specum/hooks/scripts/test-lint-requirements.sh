@@ -159,6 +159,86 @@ write_retired_fr_fixture() {
     mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
 }
 
+# Two stories where US-1 has zero AC bullets (US-2 carries the referenced ACs)
+write_zero_ac_story_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Spec authors cannot lint requirements documents automatically.
+
+## User Stories
+
+### US-1: Story with no acceptance criteria
+
+As a spec author, I want a thing, so that benefit.
+
+### US-2: Lint a requirements document
+
+As a spec author, I want automated lint checks, so that structural defects are
+caught before review.
+
+**Acceptance Criteria:**
+  - AC-2.1: Given a well-formed requirements file, When the lint runs, Then it
+    prints a summary line and exits 0
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 | The linter MUST print a summary line on every run | Must | AC-2.1 |
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Lint runtime | Wall-clock seconds | N/A: single-file CLI, runtime negligible |
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
+# US-1 retired with zero AC bullets: exempt from the zero-AC rule
+write_retired_us_zero_ac_fixture() {
+    write_zero_ac_story_fixture
+    sed -E 's/^### US-1: Story with no acceptance criteria/### US-1 (retired): removed story/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+test_c1_zero_ac_story_fails() {
+    echo ""
+    echo "=== test_c1_zero_ac_story_fails ==="
+    setup
+    write_zero_ac_story_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Zero-AC story fixture exits 1"
+    assert_contains "$output" "FAIL|C1|US-1 has no AC-N.N acceptance criteria" "Output contains C1 FAIL naming US-1 for zero ACs"
+
+    cleanup
+}
+
+test_c1_retired_us_zero_ac_exempt() {
+    echo ""
+    echo "=== test_c1_retired_us_zero_ac_exempt ==="
+    setup
+    write_retired_us_zero_ac_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Retired US with zero ACs exits 0"
+    assert_not_contains "$output" "FAIL|C1" "Retired US is exempt from the zero-AC rule"
+
+    cleanup
+}
+
 # Retired US heading + retired AC bullet: valid defined-but-retired IDs
 write_retired_us_ac_fixture() {
     cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
@@ -928,6 +1008,8 @@ test_c1_duplicate_fr_id_fails
 test_c1_dangling_ac_ref_fails
 test_c1_retired_fr_is_valid_target
 test_c1_retired_us_and_ac_are_valid
+test_c1_zero_ac_story_fails
+test_c1_retired_us_zero_ac_exempt
 test_c2_missing_then_fails
 test_c2_multiline_ac_passes
 test_c3_high_priority_fails
