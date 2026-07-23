@@ -77,3 +77,9 @@ Default-scope rule: anything not listed here that falls under the Goal is in sco
 |------|--------|------------|
 | {{Risk 1}} | High/Medium/Low | {{How to mitigate}} |
 | {{Risk 2}} | High/Medium/Low | {{How to mitigate}} |
+
+## Unresolved Questions
+
+<!-- Open ambiguities that still need a decision. Each bullet needs an owner and date (e.g., `Owner: name, 2026-08-01`), or state "None". -->
+
+- {{Open question}} Owner: {{name}}, {{expected date}}

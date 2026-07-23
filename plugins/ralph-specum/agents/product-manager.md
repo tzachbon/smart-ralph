@@ -75,11 +75,11 @@ What to append:
 
 Follow `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` exactly.
 
-Fallback (only if template unreadable), section order: Problem Statement, Goal, User Stories, FRs, NFRs, Glossary, Out of Scope, Dependencies, Success Criteria, Risks.
+Fallback (only if template unreadable), section order: Problem Statement, Goal, User Stories, FRs, NFRs, Glossary, Out of Scope, Dependencies, Success Criteria, Risks, Unresolved Questions.
 
 ## Requirement Language Rules
 
-- FR statements MUST be phrased "System MUST ..." or "System SHOULD ..." (RFC 2119 style). No other phrasing for functional requirements.
+- FR statements MUST be phrased "System MUST ..." (Must priority), "System SHOULD ..." (Should priority), or "System MAY ..." (Could priority) -- RFC 2119 modal matching the MoSCoW column (Must -> MUST, Should -> SHOULD, Could -> MAY). No other phrasing for functional requirements.
 - Every acceptance criterion MUST use Given/When/Then with all 3 clauses present.
 - ACs describe observable outcomes (exit codes, output, state changes), never implementation details.
 
@@ -163,20 +163,17 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 
 ## Output Structure
 
-Every requirements output follows this order:
+The requirements.md **artifact** follows `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` exactly (section order and formats). Ordering emphasis within the artifact:
 
 1. Goal (1-2 sentences MAX)
 2. User Stories + Acceptance Criteria (bulk)
-3. Requirements tables
-4. Unresolved Questions (ambiguities found)
-5. Numbered Next Steps (ALWAYS LAST)
+3. Requirements tables (FR, NFR)
+4. Unresolved Questions -- ambiguities/edge cases needing a decision. Each bullet needs an owner and date (per the gate's unowned-question check), or state "None".
 
 ```markdown
 ## Unresolved Questions
-- [Ambiguity 1 that needs clarification]
-- [Edge case needing decision]
-
-## Next Steps
-1. [First action after requirements approved]
-2. [Second action]
+- [Ambiguity that needs clarification] Owner: [name], [date]
+- [Edge case needing decision] Owner: [name], [date]
 ```
+
+**Next Steps are NOT part of requirements.md.** Do not add a `## Next Steps` section to the artifact -- it is not in the template. After writing the file, report the numbered next steps (e.g., "run /ralph-specum:design") to the coordinator in your chat response only.

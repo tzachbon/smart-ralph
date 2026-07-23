@@ -57,6 +57,7 @@ Review in this order:
 6. **Out of Scope** - Non-goals and default-scope boundaries: items that should now be in scope? (Default-scope rule: anything not listed here that falls under the Goal is in scope; this section names explicit non-goals)
 7. **Dependencies** - New dependencies discovered?
 8. **Success Criteria** - Criteria that need adjustment?
+9. **Unresolved Questions** - Open questions resolved or newly surfaced (each needs an owner and date)?
 
 ### Design (design.md)
 

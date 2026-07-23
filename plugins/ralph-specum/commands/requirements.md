@@ -89,19 +89,28 @@ Follow the full team lifecycle:
 ## Step 4: Artifact Review (both modes)
 
 <mandatory>
-**Review loop must complete before walkthrough. Max 3 iterations. Runs after generation in normal AND quick mode.**
+**Review runs after generation in normal AND quick mode. Behavior branches on mode** (check `--quick` in `$ARGUMENTS`). Must complete before the walkthrough.
 
-Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
+**Review delegation (both modes)**: Invoke `spec-reviewer` via Task tool. Include full requirements.md content, `artifactType: requirements`, `artifactPath: ./specs/$spec/requirements.md`, iteration count, prior findings. Upstream: research.md.
+
+### Normal mode: single pass
+
+Run `spec-reviewer` exactly ONCE. Do NOT loop or auto-regenerate on FAIL.
+- Log the result (REVIEW_PASS or REVIEW_FAIL) and all findings to .progress.md.
+- Carry the findings forward -- **including any FAIL-class findings** -- into the Step 5 walkthrough Validation block. The user decides what to do with them (approve as-is, request changes, or re-run review).
+- No signal: treat as REVIEW_PASS (permissive); note the missing signal in the Validation block.
+
+### Quick mode: max-3 loop
+
+Follow the standard review loop (unchanged):
 - REVIEW_PASS: log to .progress.md, proceed
 - REVIEW_FAIL (iteration < 3): log, re-invoke product-manager with feedback, loop
 - REVIEW_FAIL (iteration >= 3): graceful degradation, log warning, proceed
 - No signal: treat as REVIEW_PASS (permissive)
 
-**Review delegation**: Include full requirements.md content, `artifactType: requirements`, `artifactPath: ./specs/$spec/requirements.md`, iteration count, prior findings. Upstream: research.md.
+**Revision delegation (quick mode)**: Re-invoke product-manager with reviewer feedback. Focus on specific issues.
 
-**Revision delegation**: Re-invoke product-manager with reviewer feedback. Focus on specific issues.
-
-**Error handling**: Reviewer no signal = REVIEW_PASS. Agent failure = retry once, then use original.
+**Error handling (both modes)**: Reviewer no signal = REVIEW_PASS. Agent failure = retry once, then use original.
 </mandatory>
 
 ## Step 5: Walkthrough & Approval
@@ -129,7 +138,7 @@ Output: $PWD/specs/$spec/requirements.md
 
 ## Validation
 
-**Checks** (from Step 4 review pass, one row per check):
+**Checks** (from the Step 4 review, one row per check; show real statuses including any FAIL):
 | # | Check | Status |
 |---|-------|--------|
 | C1 | ID & cross-reference integrity | PASS / WARN / FAIL |
@@ -144,7 +153,7 @@ Output: $PWD/specs/$spec/requirements.md
 **Judgment findings**: [reviewer's judgment-based findings, or "None"]
 ```
 
-The Validation block reports the statuses of the 8 rubric checks plus any judgment findings from the most recent Step 4 review pass. User approval flow is unchanged.
+The Validation block reports the statuses of the 8 rubric checks plus any judgment findings from the most recent Step 4 review (normal mode: the single pass; FAILs are shown here for the user to decide on). User approval flow is unchanged.
 </mandatory>
 
 ### User Approval (skip if --quick)
