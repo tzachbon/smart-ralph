@@ -996,6 +996,297 @@ test_exit1_any_fail_reports_fail() {
 }
 
 # =============================================================================
+# Regression fixtures + tests (empty content, AC-column scoping, N/A
+# placeholder, wrapped vague terms, active->retired AC refs)
+# =============================================================================
+
+# All headings present but zero US bodies and an empty FR table
+write_empty_content_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Some problem affecting some user.
+
+## User Stories
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
+test_c1_empty_content_fails() {
+    echo ""
+    echo "=== test_c1_empty_content_fails ==="
+    setup
+    write_empty_content_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Empty-content fixture exits 1"
+    assert_contains "$output" "FAIL|C1|no user stories found" "Output contains C1 FAIL for missing user stories"
+    assert_contains "$output" "FAIL|C1|no functional requirements found" "Output contains C1 FAIL for missing functional requirements"
+
+    cleanup
+}
+
+# Only retired US/FR entries: no active content -> minimum-content gate fails
+write_retired_only_content_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Spec authors cannot lint requirements documents automatically.
+
+## User Stories
+
+### US-1 (retired): removed story
+
+Superseded by a future spec.
+
+**Acceptance Criteria:**
+  - AC-1.1 (retired): removed criterion
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 (retired) | Superseded requirement | Must | AC-1.1 |
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Lint runtime | Wall-clock seconds | N/A: single-file CLI, runtime negligible |
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
+test_c1_retired_only_content_fails() {
+    echo ""
+    echo "=== test_c1_retired_only_content_fails ==="
+    setup
+    write_retired_only_content_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Retired-only-content fixture exits 1"
+    assert_contains "$output" "FAIL|C1|no user stories found" "Retired-only US does not count as active content"
+    assert_contains "$output" "FAIL|C1|no functional requirements found" "Retired-only FR does not count as active content"
+    assert_not_contains "$output" "references retired" "Retired FR referencing retired AC is not a retired-ref FAIL"
+
+    cleanup
+}
+
+# FR-1 mentions AC-1.1 in its Requirement prose but the AC column is empty
+write_prose_ac_empty_column_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| FR-1 \|.*/| FR-1 | The linter MUST preserve AC-1.1 wording | Must |  |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+test_c1_prose_ac_empty_column_fails_zero_ref() {
+    echo ""
+    echo "=== test_c1_prose_ac_empty_column_fails_zero_ref ==="
+    setup
+    write_prose_ac_empty_column_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Prose-AC-empty-column fixture exits 1"
+    assert_contains "$output" "FAIL|C1|FR-1 references no AC-N.N IDs in Acceptance Criteria column" "Prose AC in Requirement cell does not satisfy the zero-ref rule"
+
+    cleanup
+}
+
+# FR-1 mentions undefined AC-9.9 in prose but its AC column is a valid AC-1.1
+write_prose_undefined_ac_valid_column_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| FR-1 \|.*/| FR-1 | System MUST behave unlike AC-9.9 legacy | Must | AC-1.1 |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+test_c1_prose_undefined_ac_valid_column_passes() {
+    echo ""
+    echo "=== test_c1_prose_undefined_ac_valid_column_passes ==="
+    setup
+    write_prose_undefined_ac_valid_column_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Prose-undefined-AC-with-valid-column fixture exits 0"
+    assert_not_contains "$output" "FAIL|C1" "Undefined AC mentioned only in prose does not false-FAIL a valid AC column"
+
+    cleanup
+}
+
+# NFR-1 Target is a placeholder N/A reason (`N/A: {{reason}}`)
+write_nfr_placeholder_na_fixture() {
+    write_clean_fixture
+    sed -E 's/^\| NFR-1 \| Lint runtime \| Wall-clock seconds \|.*/| NFR-1 | Lint runtime | Wall-clock seconds | N\/A: {{reason}} |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+test_c5_placeholder_na_fails() {
+    echo ""
+    echo "=== test_c5_placeholder_na_fails ==="
+    setup
+    write_nfr_placeholder_na_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Placeholder-N/A target fixture exits 1"
+    assert_contains "$output" "FAIL|C5|NFR-1: Target contains unfilled placeholder" "Placeholder N/A reason does not earn the N/A exemption"
+
+    cleanup
+}
+
+# AC-1.2 carries a banned vague term on a continuation (wrapped) line
+write_banned_continuation_fixture() {
+    cat > "$TEST_TMPDIR/requirements.md" << 'EOF'
+# Requirements: Demo Feature
+
+## Problem Statement
+
+Spec authors cannot lint requirements documents automatically.
+
+## User Stories
+
+### US-1: Lint a requirements document
+
+As a spec author, I want automated lint checks, so that structural defects are
+caught before review.
+
+**Acceptance Criteria**:
+  - AC-1.1: Given a well-formed requirements file, When the lint runs, Then it
+    prints a summary line and exits 0
+  - AC-1.2: Given an invalid file path,
+    When the lint runs seamless,
+    Then it exits with code 2 and prints an error to stderr
+
+## Functional Requirements
+
+| ID | Requirement | Priority | Acceptance Criteria |
+|----|-------------|----------|---------------------|
+| FR-1 | The linter MUST print a summary line on every run | Must | AC-1.1 |
+| FR-2 | The linter SHOULD exit 2 on unreadable input | Should | AC-1.2 |
+
+## Non-Functional Requirements
+
+| ID | Requirement | Metric | Target |
+|----|-------------|--------|--------|
+| NFR-1 | Lint runtime | Wall-clock seconds | N/A: single-file CLI, runtime negligible |
+
+## Unresolved Questions
+
+- Should WARN findings block merge? Owner: Zach
+EOF
+}
+
+test_c4_banned_continuation_warns() {
+    echo ""
+    echo "=== test_c4_banned_continuation_warns ==="
+    setup
+    write_banned_continuation_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Banned-continuation fixture exits 0 (WARN only)"
+    assert_contains "$output" 'WARN|C4|vague term "seamless"' "Vague term on a wrapped AC line is scanned as part of the AC unit"
+
+    cleanup
+}
+
+test_c4_clean_multiline_no_warn() {
+    echo ""
+    echo "=== test_c4_clean_multiline_no_warn ==="
+    setup
+    write_multiline_ac_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Clean multi-line AC fixture exits 0"
+    assert_not_contains "$output" "WARN|C4" "Clean multi-line AC produces no C4 vague-term WARN"
+
+    cleanup
+}
+
+# AC-1.2 retired; active FR-2 still references it
+write_active_fr_retired_ac_fixture() {
+    write_clean_fixture
+    sed -E 's/^  - AC-1.2: Given an invalid file path, When the lint runs, Then it exits with$/  - AC-1.2 (retired): removed criterion/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+    sed -E '/^    code 2 and prints an error to stderr$/d' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+test_c1_active_fr_retired_ac_fails() {
+    echo ""
+    echo "=== test_c1_active_fr_retired_ac_fails ==="
+    setup
+    write_active_fr_retired_ac_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 1 "$exit_code" "Active FR referencing retired AC fixture exits 1"
+    assert_contains "$output" "FAIL|C1|FR-2 references retired AC-1.2" "Active FR referencing a retired AC is a C1 FAIL"
+
+    cleanup
+}
+
+# AC-1.2 retired AND FR-2 retired: retirement consistency is allowed
+write_retired_fr_retired_ac_fixture() {
+    write_active_fr_retired_ac_fixture
+    sed -E 's/^\| FR-2 \| The linter SHOULD exit 2 on unreadable input \| Should \| AC-1.2 \|$/| FR-2 (retired) | The linter SHOULD exit 2 on unreadable input | Should | AC-1.2 |/' \
+        "$TEST_TMPDIR/requirements.md" > "$TEST_TMPDIR/requirements.md.tmp"
+    mv "$TEST_TMPDIR/requirements.md.tmp" "$TEST_TMPDIR/requirements.md"
+}
+
+test_c1_retired_fr_retired_ac_allowed() {
+    echo ""
+    echo "=== test_c1_retired_fr_retired_ac_allowed ==="
+    setup
+    write_retired_fr_retired_ac_fixture
+
+    local output exit_code=0
+    output=$(bash "$LINT" "$TEST_TMPDIR/requirements.md") || exit_code=$?
+
+    assert_eq 0 "$exit_code" "Retired FR referencing retired AC fixture exits 0"
+    assert_not_contains "$output" "FAIL|C1" "Retired FR may reference a retired AC without a C1 FAIL"
+
+    cleanup
+}
+
+# =============================================================================
 # Run all tests
 # =============================================================================
 
@@ -1032,6 +1323,15 @@ test_exit2_missing_file
 test_exit2_no_argument
 test_exit0_warn_only_reports_count
 test_exit1_any_fail_reports_fail
+test_c1_empty_content_fails
+test_c1_retired_only_content_fails
+test_c1_prose_ac_empty_column_fails_zero_ref
+test_c1_prose_undefined_ac_valid_column_passes
+test_c5_placeholder_na_fails
+test_c4_banned_continuation_warns
+test_c4_clean_multiline_no_warn
+test_c1_active_fr_retired_ac_fails
+test_c1_retired_fr_retired_ac_allowed
 
 # Summary
 echo ""

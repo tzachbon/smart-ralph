@@ -114,6 +114,18 @@ AC_RETIRED_IDS=$(grep -E '^[[:space:]]*- AC-[0-9]+\.[0-9]+[[:space:]]*\(retired\
 FR_IDS=$(grep -E '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE" | sed -E 's/^\|[[:space:]]*(FR-[0-9]+).*/\1/')
 NFR_IDS=$(grep -E '^\|[[:space:]]*NFR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE" | sed -E 's/^\|[[:space:]]*(NFR-[0-9]+).*/\1/')
 
+# Minimum-content gate: an artifact with no active (non-retired) user stories or
+# no active functional requirements is not reviewable content, even if every
+# heading is present. Retired-only entries do not count as active content.
+US_ACTIVE_IDS=$(grep -E '^### US-[0-9]+:' "$FILE" | sed -E 's/^### (US-[0-9]+).*/\1/')
+FR_ACTIVE_IDS=$(grep -E '^\|[[:space:]]*FR-[0-9]+[[:space:]]*\|' "$FILE" | sed -E 's/^\|[[:space:]]*(FR-[0-9]+).*/\1/')
+if [ -z "$US_ACTIVE_IDS" ]; then
+    fail_finding "C1" "no user stories found"
+fi
+if [ -z "$FR_ACTIVE_IDS" ]; then
+    fail_finding "C1" "no functional requirements found"
+fi
+
 # Duplicate defined IDs = FAIL
 report_duplicates() {
     local ids="$1"
@@ -129,15 +141,23 @@ report_duplicates "$FR_IDS"
 report_duplicates "$NFR_IDS"
 
 # FR-table cross-references: dangling AC ref = FAIL; FR row with zero AC refs = FAIL
-# (retired rows exempt from the zero-ref rule)
-FR_ROWS=$(grep -E '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE")
+# (retired rows exempt from the zero-ref rule). AC refs are read from the
+# Acceptance Criteria cell only (awk -F'|' field $5, escaped-pipe sentinel
+# applied via FILE_COLS), never the whole row, so a prose AC mention can neither
+# satisfy the zero-ref rule nor false-FAIL a row whose AC column is valid.
+# Active FR rows must resolve against active (non-retired) AC IDs; a retired FR
+# row may reference a retired AC.
+FR_ROWS=$(grep -E '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' <<<"$FILE_COLS")
 REFERENCED_ACS=""
 while IFS= read -r row; do
     [ -z "$row" ] && continue
     frid=$(echo "$row" | sed -E 's/^\|[[:space:]]*(FR-[0-9]+).*/\1/')
-    refs=$(echo "$row" | grep -oE 'AC-[0-9]+\.[0-9]+' | sort -u)
+    row_retired=0
+    echo "$row" | grep -qE '^\|[[:space:]]*FR-[0-9]+[[:space:]]*\(retired\)' && row_retired=1
+    accell=$(echo "$row" | awk -F'|' '{ print $5 }')
+    refs=$(echo "$accell" | grep -oE 'AC-[0-9]+\.[0-9]+' | sort -u)
     if [ -z "$refs" ]; then
-        if ! echo "$row" | grep -qE '^\|[[:space:]]*FR-[0-9]+[[:space:]]*\(retired\)'; then
+        if [ "$row_retired" -eq 0 ]; then
             fail_finding "C1" "$frid references no AC-N.N IDs in Acceptance Criteria column"
         fi
         continue
@@ -147,6 +167,8 @@ while IFS= read -r row; do
 $r"
         if ! echo "$AC_IDS" | grep -qx "$r"; then
             fail_finding "C1" "$frid references undefined $r"
+        elif [ "$row_retired" -eq 0 ] && echo "$AC_RETIRED_IDS" | grep -qx "$r"; then
+            fail_finding "C1" "$frid references retired $r"
         fi
     done
 done <<EOF
@@ -271,8 +293,24 @@ for frid in $C4_MODAL_HITS; do
 done
 
 # Banned vague terms (WARN, heuristic -- never FAIL): scoped to FR-table rows
-# and AC bullet lines only; case-insensitive whole-word match.
-C4_SCOPED=$(grep -nE '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\||^[[:space:]]*- AC-[0-9]+\.[0-9]+:' "$FILE")
+# and AC bullets; case-insensitive whole-word match. AC bullets are joined with
+# their continuation lines (mirrors the C2 AC_BLOCKS join) so a banned term on a
+# wrapped AC line is scanned as part of its logical AC unit. Each record is
+# "<lineno>:<text>" (AC blocks report the bullet's starting line).
+C4_FR_LINES=$(grep -nE '^\|[[:space:]]*FR-[0-9]+([[:space:]]*\(retired\))?[[:space:]]*\|' "$FILE")
+C4_AC_BLOCKS=$(awk '
+    function flush() { if (inac) print startnr ":" text }
+    /^[[:space:]]*- AC-[0-9]+\.[0-9]+:/ {
+        flush()
+        inac = 1; startnr = NR; text = $0
+        next
+    }
+    /^[[:space:]]*$/ { flush(); inac = 0; next }
+    /^[[:space:]]*- / { flush(); inac = 0; next }
+    { if (inac) text = text " " $0 }
+    END { flush() }
+' "$FILE")
+C4_SCOPED=$(printf '%s\n%s\n' "$C4_FR_LINES" "$C4_AC_BLOCKS")
 if [ -n "$C4_SCOPED" ]; then
     while IFS= read -r line; do
         [ -z "$line" ] && continue
@@ -289,14 +327,16 @@ fi
 # --- C5: NFR fill-or-N/A ---
 
 # Each active NFR row's Metric ($4) and Target ($5) cells must be non-empty and
-# free of {{...}} placeholders. Rows whose Target is "N/A: <reason>" are exempt.
-# Bare "N/A" (no ": reason") in either cell = FAIL. Retired rows not matched.
+# free of {{...}} placeholders. Rows whose Target is "N/A: <reason>" are exempt,
+# but a placeholder reason ("N/A: {{reason}}") does NOT earn the exemption and
+# falls through to the unfilled-placeholder FAIL. Bare "N/A" (no ": reason") in
+# either cell = FAIL. Retired rows not matched.
 C5_HITS=$(awk -F'|' -v S="$PIPE_SENTINEL" '
     /^\|[[:space:]]*NFR-[0-9]+[[:space:]]*\|/ {
         id = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", id); gsub(S, "|", id)
         metric = $4; gsub(/^[[:space:]]+|[[:space:]]+$/, "", metric); gsub(S, "|", metric)
         target = $5; gsub(/^[[:space:]]+|[[:space:]]+$/, "", target); gsub(S, "|", target)
-        if (target ~ /^N\/A:[[:space:]]*[^[:space:]]/) next
+        if (target ~ /^N\/A:[[:space:]]*[^[:space:]]/ && target !~ /\{\{/) next
         msg = ""
         if (metric == "") msg = "Metric cell is empty"
         else if (metric ~ /\{\{/) msg = "Metric contains unfilled placeholder"
