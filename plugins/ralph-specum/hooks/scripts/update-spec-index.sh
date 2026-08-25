@@ -11,6 +11,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
 source "$SCRIPT_DIR/path-resolver.sh"
 
 QUIET=false
@@ -108,6 +109,65 @@ done <<< "$SPECS_DIRS"
 DIRS_JSON="$DIRS_JSON
   ]"
 
+# Resolve STATE_FILE/PHASE/TASK_INDEX/TOTAL_TASKS/AWAITING_APPROVAL for one
+# spec. STATE_FILE is set here, once, because prototype_metrics reads it too.
+# A .ralph-state.json is trusted only when it does not contradict tasks.md:
+# if tasks.md shows every task checked off, that always wins over a stale
+# or absent state file (the only prior refresh path -- stop-watcher.sh's
+# ALL_TASKS_COMPLETE transcript scan -- can silently never fire).
+resolve_spec_state() {
+    local spec_path="$1"
+    local tm_completed=0 tm_total=0
+
+    STATE_FILE="$spec_path/.ralph-state.json"
+
+    PHASE="unknown"; TASK_INDEX=0; TOTAL_TASKS=0; AWAITING_APPROVAL=false
+
+    # Count tasks.md once; the no-state-file branch and the
+    # reconciliation below both read these.
+    if [ -f "$spec_path/tasks.md" ]; then
+        tm_completed=$(grep -c '\- \[x\]' "$spec_path/tasks.md" 2>/dev/null) || tm_completed=0
+        tm_total=$(grep -c '\- \[.\]' "$spec_path/tasks.md" 2>/dev/null) || tm_total=0
+    fi
+
+    if [ -f "$STATE_FILE" ]; then
+        PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
+        TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo 0)
+        TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo 0)
+        AWAITING_APPROVAL=$(jq -r '.awaitingApproval // false' "$STATE_FILE" 2>/dev/null || echo false)
+    elif [ -f "$spec_path/tasks.md" ]; then
+        TASK_INDEX=$tm_completed
+        TOTAL_TASKS=$tm_total
+        if [ "$TASK_INDEX" -eq "$TOTAL_TASKS" ] && [ "$TOTAL_TASKS" -gt 0 ]; then
+            PHASE="completed"
+        else
+            PHASE="tasks"
+        fi
+    elif [ -f "$spec_path/design.md" ]; then
+        PHASE="design"
+    elif [ -f "$spec_path/requirements.md" ]; then
+        PHASE="requirements"
+    elif [ -f "$spec_path/research.md" ]; then
+        PHASE="research"
+    else
+        PHASE="new"
+    fi
+
+    # Reconciliation: a stale/absent state file must never outrank a
+    # tasks.md that shows the spec fully checked off. (tm_total stays 0
+    # when tasks.md is absent, so this is a no-op then.) awaitingApproval
+    # is deliberately left alone: it is a live gate (written by tasks.md
+    # Step 6, honoured by stop-watcher.sh) and cannot be derived from
+    # tasks.md. Assignments are idempotent when PHASE is already
+    # "completed", which also repairs a completed state file frozen at
+    # totalTasks:0.
+    if [ "$tm_completed" -eq "$tm_total" ] && [ "$tm_total" -gt 0 ]; then
+        PHASE="completed"
+        TASK_INDEX=$tm_completed
+        TOTAL_TASKS=$tm_total
+    fi
+}
+
 # Build specs array for JSON
 SPECS_JSON="["
 FIRST_SPEC=true
@@ -118,40 +178,7 @@ ALL_SPECS=$(ralph_list_specs)
 while IFS='|' read -r name path; do
     [ -z "$name" ] && continue
 
-    # Read state from .ralph-state.json if exists
-    STATE_FILE="$path/.ralph-state.json"
-    PHASE="unknown"
-    TASK_INDEX=0
-    TOTAL_TASKS=0
-    AWAITING_APPROVAL=false
-
-    if [ -f "$STATE_FILE" ]; then
-        PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
-        TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo 0)
-        TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo 0)
-        AWAITING_APPROVAL=$(jq -r '.awaitingApproval // false' "$STATE_FILE" 2>/dev/null || echo false)
-    else
-        # No state file - check what files exist to determine phase
-        if [ -f "$path/tasks.md" ]; then
-            # Count completed tasks
-            COMPLETED=$(grep -c '\- \[x\]' "$path/tasks.md" 2>/dev/null || echo 0)
-            TOTAL_TASKS=$(grep -c '\- \[.\]' "$path/tasks.md" 2>/dev/null || echo 0)
-            if [ "$COMPLETED" -eq "$TOTAL_TASKS" ] && [ "$TOTAL_TASKS" -gt 0 ]; then
-                PHASE="completed"
-            else
-                PHASE="tasks"
-            fi
-            TASK_INDEX=$COMPLETED
-        elif [ -f "$path/design.md" ]; then
-            PHASE="design"
-        elif [ -f "$path/requirements.md" ]; then
-            PHASE="requirements"
-        elif [ -f "$path/research.md" ]; then
-            PHASE="research"
-        else
-            PHASE="new"
-        fi
-    fi
+    resolve_spec_state "$path"
 
     IFS=$'\t' read -r PROTOTYPE_ACTIVE PROTOTYPE_CANDIDATES PROTOTYPE_FINALS PROTOTYPE_QUARANTINED \
         PROTOTYPE_BLOCKER_COUNT PROTOTYPE_BLOCKERS PROTOTYPE_STALE_ARTIFACTS PROTOTYPE_STALE_TASKS \
@@ -272,43 +299,17 @@ while IFS='|' read -r name path; do
     # Get directory from path
     DIR=$(dirname "$path")
 
-    # Read state
-    STATE_FILE="$path/.ralph-state.json"
-    PHASE="unknown"
+    resolve_spec_state "$path"
+
     STATUS=""
-
-    if [ -f "$STATE_FILE" ]; then
-        PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
-        TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo 0)
-        TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo 0)
-        AWAITING=$(jq -r '.awaitingApproval // false' "$STATE_FILE" 2>/dev/null || echo false)
-
-        if [ "$PHASE" = "execution" ]; then
-            STATUS="$TASK_INDEX/$TOTAL_TASKS tasks"
-        elif [ "$AWAITING" = "true" ]; then
-            STATUS="awaiting approval"
-        fi
-    else
-        # Determine from files
-        if [ -f "$path/tasks.md" ]; then
-            COMPLETED=$(grep -c '\- \[x\]' "$path/tasks.md" 2>/dev/null || echo 0)
-            TOTAL=$(grep -c '\- \[.\]' "$path/tasks.md" 2>/dev/null || echo 0)
-            if [ "$COMPLETED" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
-                PHASE="completed"
-                STATUS="done"
-            else
-                PHASE="tasks"
-                STATUS="$COMPLETED/$TOTAL tasks"
-            fi
-        elif [ -f "$path/design.md" ]; then
-            PHASE="design"
-        elif [ -f "$path/requirements.md" ]; then
-            PHASE="requirements"
-        elif [ -f "$path/research.md" ]; then
-            PHASE="research"
-        else
-            PHASE="new"
-        fi
+    if [ "$PHASE" = "execution" ]; then
+        STATUS="$TASK_INDEX/$TOTAL_TASKS tasks"
+    elif [ "$AWAITING_APPROVAL" = "true" ]; then
+        STATUS="awaiting approval"
+    elif [ "$PHASE" = "completed" ]; then
+        STATUS="done"
+    elif [ "$PHASE" = "tasks" ] && [ "$TOTAL_TASKS" -gt 0 ]; then
+        STATUS="$TASK_INDEX/$TOTAL_TASKS tasks"
     fi
 
     IFS=$'\t' read -r PROTOTYPE_ACTIVE PROTOTYPE_CANDIDATES PROTOTYPE_FINALS PROTOTYPE_QUARANTINED \
