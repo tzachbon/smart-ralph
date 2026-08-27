@@ -42,7 +42,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): add bounded builder adapters`
   - _Requirements: FR-2, FR-5, FR-7, NFR-1, NFR-2, NFR-4_
 
-- [ ] 1.5 Add the Claude coordinator and direct command
+- [x] 1.5 Add the Claude coordinator and direct command
   - **Do**: Add the shared Claude coordinator contract and `/ralph-specum:prototype`. Cover suggestion, explicit invocation from every main phase, safe interruption, isolation, capture choice, duplicate handling, user-owned normal verdict, handoff checkpoints, cancellation, quick ownership, cleanup receipt review, publication, and local-only remote behavior.
   - **Files**: `plugins/ralph-specum/references/prototype-coordinator.md`, `plugins/ralph-specum/commands/prototype.md`
   - **Done when**: Direct invocation preserves the main phase, never switches the current checkout, resumes active entries deterministically, and names every destructive or remote authorization gate.
