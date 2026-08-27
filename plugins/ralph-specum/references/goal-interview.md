@@ -42,6 +42,22 @@ Resolve repository facts through tests, code, configuration, logs, and git histo
 
 `start.md` resolves spec location before creating the spec directory. Read that location as settled context and do not ask for it again during the goal grill.
 
+## Bind the Scope Envelope
+
+After the user confirms shared understanding, append this block to `.progress.md` before research:
+
+```markdown
+## Scope Envelope
+- Target: [artifact or system]
+- Action: [operation and authorized external-action level, when relevant]
+- Bounds: [allowed areas and explicit exclusions]
+- Deliverable: [result returned to the user]
+- Complete when: [observable finish condition]
+- Escalate when: [change that requires another user decision]
+```
+
+Resolve all six fields from confirmed answers and repository facts. If two plausible readings would change a field, ask one exact question and do not start research until the user answers.
+
 ## Store Goal Context
 
 The interview framework appends each round to `.progress.md`. Keep intent metadata compact:

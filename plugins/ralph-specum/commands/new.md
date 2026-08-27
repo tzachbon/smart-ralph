@@ -184,6 +184,10 @@ The goal MUST be captured before proceeding:
    Complete research, then proceed to requirements
    ```
 
+## Resolve Goal Interview
+
+Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and resolve its design-tree frontier before research. Append the confirmed scope envelope to `.progress.md` as required by that reference.
+
 ## Execute Research Phase
 
 If NOT `--skip-research`:

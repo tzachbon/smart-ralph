@@ -23,7 +23,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
   - **Commit**: `test(scope): red - require scope binding before research`
   - _Requirements: FR-1, FR-2, FR-3, FR-4; AC-1.1, AC-1.2, AC-1.3, AC-1.4, AC-1.5_
 
-- [ ] 1.2 [GREEN] Pass scope-intake tests
+- [x] 1.2 [GREEN] Pass scope-intake tests
   - **Do**:
     1. Persist the six-field block in normal goal intake.
     2. Bind quick input before work or disable quick mode and set the approval gate.

@@ -74,6 +74,20 @@ Validation Sequence:
      maxGlobalIterations: 100, commitSpec: $commitSpec,
      quickMode: true, discoveredSkills: [] }
 6. Write .progress.md with original goal
+6a. Derive and append this block to .progress.md from the explicit goal or plan:
+    ```markdown
+    ## Scope Envelope
+    - Target: <artifact or system>
+    - Action: <operation and authorized external-action level, when relevant>
+    - Bounds: <allowed areas and explicit exclusions>
+    - Deliverable: <result returned to the user>
+    - Complete when: <observable finish condition>
+    - Escalate when: <change that requires another user decision>
+    ```
+    If two plausible readings would change any field:
+    - Update state with `quickMode: false` and `awaitingApproval: true`.
+    - Ask exactly one question: "What should <field> be: <reading A> or <reading B>?"
+    - Stop. Do not run reproduction, skill discovery, or research.
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
 9. Skill Discovery Pass 1: scan skills, match against goal text, invoke matches
