@@ -9,6 +9,7 @@ ARCHITECT_REVIEWER="plugins/ralph-specum/agents/architect-reviewer.md"
 TASK_PLANNER="plugins/ralph-specum/agents/task-planner.md"
 SPEC_EXECUTOR="plugins/ralph-specum/agents/spec-executor.md"
 COORDINATOR="plugins/ralph-specum/references/coordinator-pattern.md"
+SPEC_TASKS="specs/scoped-minimal-workflow/tasks.md"
 MODIFIED_PROMPTS=(
     "$GOAL_INTERVIEW"
     "$QUICK_MODE"
@@ -76,6 +77,20 @@ assert_minimal_implementation_order() {
     [ "$scope_line" -lt "$research_line" ]
 }
 
+@test "quick intake resolves ambiguity before persisting the scope envelope" {
+    local ambiguity_line append_line
+    ambiguity_line="$(line_number "$QUICK_MODE" 'If two plausible readings would change any field:')"
+    append_line="$(line_number "$QUICK_MODE" 'Otherwise, append this block to .progress.md:')"
+
+    [ -n "$ambiguity_line" ]
+    [ -n "$append_line" ]
+    [ "$ambiguity_line" -lt "$append_line" ]
+    grep -Fq 'quickMode: false' "$QUICK_MODE"
+    grep -Fq 'awaitingApproval: true' "$QUICK_MODE"
+    [ "$(grep -Fc 'What should <field> be: <reading A> or <reading B>?' "$QUICK_MODE")" -eq 1 ]
+    grep -Fq 'Do not append the Scope Envelope or run reproduction, skill discovery, or research.' "$QUICK_MODE"
+}
+
 @test "new command routes through the normal goal interview before research" {
     grep -Fq 'Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and resolve its design-tree frontier before research' "$NEW_COMMAND"
 }
@@ -128,6 +143,14 @@ assert_minimal_implementation_order() {
     grep -Fq 'If the Scope Envelope is missing or the task must change a field, do not delegate' "$COORDINATOR"
 }
 
+@test "coordinator preflights every task in a parallel batch" {
+    grep -Fq 'Before any parallel batch delegation or native task update, compare every task in `parallelGroup.taskIndices`' "$COORDINATOR"
+}
+
+@test "parallel executors receive the resolved spec path" {
+    grep -Fq 'basePath: $SPEC_PATH' "$COORDINATOR"
+}
+
 @test "qa fixes use the same no-mutation scope escalation" {
     grep -Fq 'Before any fix, compare its Files and external effects with the Scope Envelope and current task.' "$COORDINATOR"
     grep -Fq 'If either boundary would change, make no mutation and output `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and `Question:`.' "$COORDINATOR"
@@ -162,6 +185,10 @@ assert_minimal_implementation_order() {
 
 @test "removing rejected optional work reconciles execution state" {
     grep -Fq 'If optional work is removed, decrement `totalTasks`, keep `taskIndex` unchanged, reset `taskIteration` to 1, and rebuild `nativeTaskMap`' "$COORDINATOR"
+}
+
+@test "native task rebuilding preserves verification task identities" {
+    grep -Fq 'such as `V1`, `VF`, or `VE1`' "$COORDINATOR"
 }
 
 @test "planner records adjacent issues as learnings instead of tasks" {
@@ -202,4 +229,22 @@ assert_minimal_implementation_order() {
 @test "modified prompts do not import or identify the source skills" {
     ! grep -Eiq '(ponytail|stay-in-scope)/SKILL\.md|Skill\(\{[^}]*skill:[[:space:]]*"(ralph-specum:)?(ponytail|stay-in-scope)"' "${MODIFIED_PROMPTS[@]}"
     ! grep -Eq '^# (Ponytail|Stay in scope)$' "${MODIFIED_PROMPTS[@]}"
+}
+
+@test "spec verification commands fail closed" {
+    ! grep -Fq '**Verify**: `! bats' "$SPEC_TASKS"
+    grep -Fq 'git diff --exit-code origin/main -- specs/.index' "$SPEC_TASKS"
+    grep -Fq 'markdown_diff="$(mktemp)"' "$SPEC_TASKS"
+    grep -Fq "all(.statusCheckRollup[]; if .__typename == \"CheckRun\" then .conclusion == \"SUCCESS\" else .state == \"SUCCESS\" end)" "$SPEC_TASKS"
+}
+
+@test "acceptance evidence covers AC-1.1 through AC-4.3" {
+    local ac
+    grep -Fq '### Acceptance Evidence' "$SPEC_TASKS"
+    for ac in AC-1.1 AC-1.2 AC-1.3 AC-1.4 AC-1.5 \
+              AC-2.1 AC-2.2 AC-2.3 AC-2.4 AC-2.5 \
+              AC-3.1 AC-3.2 AC-3.3 AC-3.4 AC-3.5 AC-3.6 AC-3.7 \
+              AC-4.1 AC-4.2 AC-4.3; do
+        grep -Fq "| $ac |" "$SPEC_TASKS"
+    done
 }
