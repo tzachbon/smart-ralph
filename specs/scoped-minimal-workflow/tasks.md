@@ -95,7 +95,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
   - **Commit**: `feat(planning): green - prefer current mechanisms`
   - _Requirements: FR-5, FR-6; AC-2.1, AC-2.2, AC-2.3, AC-2.4, AC-2.5_
 
-- [ ] V3 [VERIFY] Prompt-contract checkpoint
+- [x] V3 [VERIFY] Prompt-contract checkpoint
   - **Do**: Run the new contract and all focused workflow suites.
   - **Files**: None
   - **Done when**: Every focused suite exits 0.
@@ -107,7 +107,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
 
 ## Phase 2: Additional Testing
 
-- [ ] 2.1 [VERIFY] Run focused workflow regression
+- [x] 2.1 [VERIFY] Run focused workflow regression
   - **Do**: Run the start, interview, integration, and stop-hook suites with the new contract test.
   - **Files**: None
   - **Done when**: Every focused suite exits 0 with no test modification needed.
@@ -117,7 +117,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
 
 ## Phase 3: Quality Gates
 
-- [ ] 3.1 Bump Ralph Specum to 4.11.0
+- [x] 3.1 Bump Ralph Specum to 4.11.0
   - **Do**:
     1. Set the Claude plugin manifest version to `4.11.0`.
     2. Set the Ralph Specum marketplace entry to `4.11.0`.
