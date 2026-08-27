@@ -8,7 +8,7 @@ created: 2026-08-27T18:45:00Z
 
 ## Overview
 
-Ralph keeps its normal `phase` value and runs prototypes as overlay work on the active spec. Claude and Codex add matching prototype entrypoints, builder agents, immutable terminal records under `specs/<name>/prototypes/`, and gate checks before phase generation, task dispatch, and stop-hook continuation.
+Ralph keeps its normal `phase` value and runs prototypes as overlay work on the active spec. Claude and Codex add matching prototype entrypoints, builder agents, immutable terminal records under `<basePath>/prototypes/`, and gate checks before phase generation, task dispatch, and stop-hook continuation.
 
 The implementation stays in Ralph's Markdown-command and skill architecture. One small locked state helper handles all `.ralph-state.json` writes, and one prototype publication helper handles candidate review, immutable publish, crash recovery, and downstream record selection.
 
@@ -20,6 +20,34 @@ This design depends on current Claude Code background-agent controls. The cited 
 - [Claude tools reference](https://code.claude.com/docs/en/tools-reference) documents `TaskStop` as a tool that stops a running background task by ID or named background agent.
 
 If a Claude session cannot run a named background builder or stop it, normal mode asks the user to wait or cancel before launch. Quick mode writes `verdict: failed` with `sourceDisposition: not_created` and continues to design.
+
+## Path And Configuration
+
+Ralph resolves the active spec before any prototype operation. Claude uses `plugins/ralph-specum/hooks/scripts/path-resolver.sh`. Codex uses `plugins/ralph-specum-codex/scripts/resolve_spec_paths.py`. Both read `.claude/ralph-specum.local.md` for `specs_dirs` and default to `./specs` when the file or key is absent.
+
+The coordinator stores resolved `specRoot` and `basePath` in active state. Record paths, candidate paths, lock paths, context loading, index updates, stop-hook checks, and Codex hook checks use that `basePath`. Design text and implementation prompts must not construct default specs-directory paths after resolution.
+
+Prototype configuration keys live in `.claude/ralph-specum.local.md`:
+
+| Key | Default | Validation |
+|---|---:|---|
+| `prototype_lock_timeout_seconds` | 10 | Integer 1 to 60 |
+| `prototype_quick_lock_timeout_seconds` | 3 | Integer 1 to 30 |
+| `prototype_logic_timeout_minutes` | 20 | Integer 1 to 180 |
+| `prototype_ui_timeout_minutes` | 45 | Integer 1 to 240 |
+| `prototype_quick_logic_timeout_minutes` | 10 | Integer 1 to 60 |
+| `prototype_quick_ui_timeout_minutes` | 20 | Integer 1 to 90 |
+| `prototype_activity_extension_minutes` | 10 | Integer 1 to 30 |
+| `prototype_transfer_path_extra_minutes` | 2 | Integer 0 to 10 |
+| `prototype_transfer_path_extra_cap_minutes` | 10 | Integer 0 to 60 |
+| `prototype_hard_deadline_multiplier` | 2 | Integer 1 to 4 |
+| `prototype_conflict_timeout_min_minutes` | 10 | Integer 1 to 120 |
+| `prototype_conflict_timeout_max_minutes` | 30 | Integer 1 to 240 |
+| `prototype_conflict_resolution_retries` | 0 | Integer 0 to 3 |
+| `prototype_normal_builder_executions` | 2 | Integer 1 to 5 |
+| `prototype_quick_builder_executions` | 2 | Integer 1 to 2 |
+
+Precedence is command argument, active-state snapshot, `.claude/ralph-specum.local.md`, then default. The coordinator validates each value before writing state. Invalid values fall back to the default and the active entry records `configWarnings`. Each active entry stores `configEvidence` with the source path, resolved values, and warnings so resume uses the same limits.
 
 ## Architecture
 
@@ -43,8 +71,9 @@ graph TB
 | Module | Interface | Implementation |
 |---|---|---|
 | Prototype coordinator contract | Markdown procedure read by `/ralph-specum:prototype`, `$ralph-specum-prototype`, normal phase walkthroughs, quick mode, resume, and cancel | Resolves trigger, return phase, blocker scope, duplicates, capture mode, isolation, builder control, review, publish, handoff, and active-entry cleanup |
-| State transaction helper | `locked-state.py merge/upsert-prototype/remove-prototype/list/delete-state` | Uses `.ralph-state.lock`, `fcntl.flock`, read-update-fsync-replace-fsync-dir while holding the lock |
+| State transaction helper | `locked-state.py merge/upsert-prototype/remove-prototype/list/delete-state/claim-builder/heartbeat/renew-lease/release-lease/transition` | Uses `.ralph-state.lock`, compare-and-set transitions, read-update-fsync-replace while holding the lock |
 | Prototype publisher | `prototype-records.py render-candidate/publish/reconcile/select-downstream` | Writes ignored candidate bytes, reviews candidate plus source, publishes with no overwrite, recovers crash states, and selects downstream records |
+| Harness control adapter | `prototype-harness launch/wait/heartbeat/interrupt/status` | Gives tests one contract for Claude background agents and Codex child agents |
 | Builder adapter | Claude background subagent or Codex child agent | Runs throwaway source work in one isolated mutable path and returns source pointers plus evidence |
 | Surface adapters | Claude commands and Codex skills | Translate tool syntax only; they do not fork behavior |
 
@@ -59,14 +88,24 @@ The contracts must match after normalizing surface names and tool names. Tests c
 Atomic replace alone prevents torn reads but does not prevent two writers from losing each other's updates. Every Ralph writer of `.ralph-state.json` moves to one lock protocol.
 
 Lock protocol:
-1. Open `<spec-path>/.ralph-state.lock` with create-if-missing.
-2. Acquire `fcntl.flock(LOCK_EX)` with a bounded wait. Default: 10 seconds normal, 3 seconds quick.
-3. While holding the lock, read `.ralph-state.json`.
-4. Validate JSON object shape and required preserved fields when present.
-5. Apply one update function.
-6. Write `.ralph-state.json.tmp`, flush, `fsync` the temp file, then `os.replace`.
-7. `fsync` the containing spec directory.
-8. Release the lock.
+1. Resolve `basePath`.
+2. On POSIX, open `<basePath>/.ralph-state.lock` and acquire `fcntl.flock(LOCK_EX)` with the configured bounded wait.
+3. On Windows or a Python build without `fcntl`, create `<basePath>/.ralph-state.lock` as a lock directory with `os.mkdir`. Atomic directory creation is the lock.
+4. Write lock owner metadata containing host, pid, command, timestamp, and heartbeat timestamp.
+5. While holding the lock, read `<basePath>/.ralph-state.json`.
+6. Validate JSON object shape and required preserved fields when present.
+7. Apply one update function.
+8. Write `<basePath>/.ralph-state.json.tmp`, flush, `fsync` the temp file, then `os.replace`.
+9. On POSIX and platforms that support opening a directory handle, make a best-effort `fsync` of the containing spec directory.
+10. Release the lock. POSIX unlocks with `flock(LOCK_UN)`. The Windows path removes the lock directory only after deleting the owner metadata.
+
+Unsupported directory `fsync` does not turn a successful replace into a failure. Crash durability claims are strongest on platforms with directory `fsync`; on Windows the helper guarantees flushed temp-file bytes and atomic `os.replace`, then reports directory durability as best effort.
+
+Stale lock behavior:
+- If acquisition times out, the helper reads owner metadata.
+- It may break a stale Windows lock only when the heartbeat age exceeds 10 minutes and the recorded pid is absent on the same host.
+- It never breaks a POSIX `flock`; the OS releases that lock when the owner process exits.
+- Normal commands stop before mutation on timeout. Quick mode follows the publisher-only `lock_timeout` path.
 
 Reads remain lock-free because replacement is atomic. A read that sees no `activePrototypes` treats it as an empty map.
 
@@ -76,7 +115,7 @@ Helper paths:
 
 Codex keeps `plugins/ralph-specum-codex/scripts/merge_state.py` as the public CLI. It becomes a compatibility wrapper around `locked_state.py merge` so existing skill text and tests keep working. Claude gets the same helper and migrates shell `jq > tmp && mv` snippets to the helper.
 
-The state helper owns only `merge`, `upsert-prototype`, `remove-prototype`, `list`, and `delete-state`. `prototype-records.py select-downstream` is the only downstream selector. It reads an atomic state snapshot and terminal records, then returns selected evidence, stale artifacts, stale task indexes, and active blockers without writing state.
+The state helper owns only `merge`, `upsert-prototype`, `remove-prototype`, `list`, `delete-state`, `claim-builder`, `heartbeat`, `renew-lease`, `release-lease`, and `transition`. `claim-builder` is an atomic compare-and-set operation. `heartbeat` updates `heartbeatAt`; `renew-lease` extends `leaseExpires` within the hard deadline; `release-lease` clears owner fields after completion, timeout, or cancellation; `transition` moves an entry between non-builder statuses with an expected `stateRevision`. `prototype-records.py select-downstream` is the only downstream selector. It reads an atomic state snapshot and terminal records, then returns selected evidence, stale artifacts, stale task indexes, and active blockers without writing state.
 
 State writers migrated:
 - `plugins/ralph-specum/commands/start.md`
@@ -89,16 +128,28 @@ State writers migrated:
 - `plugins/ralph-specum/commands/refactor.md`
 - `plugins/ralph-specum/commands/cancel.md`
 - `plugins/ralph-specum/commands/prototype.md`
-- `plugins/ralph-specum/hooks/scripts/stop-watcher.sh` only if a future edit writes state; its gate reads stay lock-free.
+- `plugins/ralph-specum/agents/research-analyst.md`
+- `plugins/ralph-specum/agents/product-manager.md`
+- `plugins/ralph-specum/agents/architect-reviewer.md`
+- `plugins/ralph-specum/agents/task-planner.md`
+- `plugins/ralph-specum/references/coordinator-pattern.md`
+- `plugins/ralph-specum/references/failure-recovery.md`
+- `plugins/ralph-specum/references/spec-scanner.md`
+- `plugins/ralph-specum/references/quick-mode.md`
+- `plugins/ralph-specum/references/branch-management.md`
+- `plugins/ralph-specum/hooks/scripts/stop-watcher.sh` for any prompted or direct state update; its gate reads stay lock-free.
 - `plugins/ralph-specum-codex/skills/ralph-specum-start/SKILL.md`
-- `plugins/ralph-specum-codex/skills/ralph-specum-research/SKILL.md`
-- `plugins/ralph-specum-codex/skills/ralph-specum-requirements/SKILL.md`
-- `plugins/ralph-specum-codex/skills/ralph-specum-design/SKILL.md`
-- `plugins/ralph-specum-codex/skills/ralph-specum-tasks/SKILL.md`
+- `plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md`
 - `plugins/ralph-specum-codex/skills/ralph-specum-implement/SKILL.md`
 - `plugins/ralph-specum-codex/skills/ralph-specum-refactor/SKILL.md`
 - `plugins/ralph-specum-codex/skills/ralph-specum-cancel/SKILL.md`
 - `plugins/ralph-specum-codex/skills/ralph-specum-prototype/SKILL.md`
+- `plugins/ralph-specum-codex/references/workflow.md`
+- `plugins/ralph-specum-codex/references/state-contract.md`
+- `plugins/ralph-specum-codex/scripts/merge_state.py`
+- `plugins/ralph-specum-codex/scripts/locked_state.py`
+
+The repo inspection found these direct write or delete forms: `jq ... > .ralph-state.json.tmp && mv`, task-agent approval writes, command initialization writes, command completion deletes, cancel deletes, quick-mode discovered-skill updates, coordinator native task map writes, failure-recovery updates, spec-scanner related-spec updates, branch-management worktree state copies, Codex `merge_state.py`, Codex implement deletion, and Codex cancel deletion. Each operation uses `merge`, `upsert-prototype`, `remove-prototype`, or `delete-state` through the shared helper after this feature.
 
 All state deletion also uses the lock through `delete-state`. Completion must not delete `.ralph-state.json` while `activePrototypes` is nonempty. It keeps completed task counters, phase state, and recovery pointers until terminal reconciliation empties the map. Only then may `delete-state` remove the file. `removed` is a transition result from `remove-prototype`; it is never stored as a status.
 
@@ -113,6 +164,7 @@ Active entry schema:
   "activePrototypes": {
     "<prototype-id>": {
       "id": "<prototype-id>",
+      "stateRevision": 1,
       "question": "<one falsifiable question>",
       "questionHash": "<sha256-12>",
       "kind": "logic|ui",
@@ -122,6 +174,9 @@ Active entry schema:
       "returnPhase": "research|requirements|design|tasks|execution",
       "returnTaskIndex": null,
       "status": "pending|isolating|building|reviewing|awaiting_verdict|handoff|blocked|timed_out",
+      "owner": null,
+      "leaseToken": null,
+      "leaseExpires": null,
       "decisionOwner": "user|agent",
       "resolutionMode": "normal|quick|quick_takeover|duplicate_reuse|supersession|timeout_resolution|lock_timeout",
       "created": "2026-08-27T18:45:00Z",
@@ -130,16 +185,27 @@ Active entry schema:
       "builderHardDeadline": null,
       "decisionDeadline": null,
       "heartbeatAt": null,
-      "attempt": 1,
-      "maxAttempts": 2,
+      "requestAttempt": 1,
+      "builderExecutionAttempt": 0,
+      "maxBuilderExecutions": 2,
+      "conflictResolutionAttempt": 0,
+      "maxConflictResolutionRetries": 0,
       "harnessRun": {
         "kind": "claude_background|codex_agent",
         "id": null,
         "name": null
       },
-      "recordPath": "specs/<name>/prototypes/<prototype-id>.md",
-      "candidatePath": "specs/<name>/prototypes/.<prototype-id>.candidate.md",
+      "specRoot": "<resolved-spec-root>",
+      "basePath": "<resolved-spec-basePath>",
+      "recordPath": "<basePath>/prototypes/<prototype-id>.md",
+      "candidatePath": "<basePath>/prototypes/.<prototype-id>.candidate.md",
       "candidateHash": null,
+      "cleanupReceiptPath": null,
+      "configEvidence": {
+        "source": ".claude/ralph-specum.local.md|default|command",
+        "resolved": {},
+        "warnings": []
+      },
       "blocking": {
         "blocks": ["transition:requirements->design"],
         "reason": "<why the prototype matters>",
@@ -150,6 +216,7 @@ Active entry schema:
         "path": null,
         "branch": null,
         "baseCommit": "<committed HEAD>",
+        "provenance": "head-worktree|approved-transfer|scratch",
         "approvedTransfers": []
       },
       "sourcePointers": null,
@@ -157,13 +224,38 @@ Active entry schema:
       "conflictsWith": [],
       "resolves": [],
       "resolvedAt": null,
+      "decisionCheckpoint": {
+        "selectedVerdict": null,
+        "selectedVerdictAt": null,
+        "handoffInclude": null,
+        "handoffOutcome": null,
+        "selectedReturnPhase": null,
+        "staleArtifacts": [],
+        "staleTaskIndexes": []
+      },
       "sourceDisposition": "pending|retained|deleted|not_created"
     }
   }
 }
 ```
 
-Nullable fields are allowed before source exists, for skip records, and for failure before source creation: `returnTaskIndex`, `builderDeadline`, `builderHardDeadline`, `decisionDeadline`, `heartbeatAt`, `harnessRun.id`, `harnessRun.name`, `candidateHash`, `isolation.path`, `isolation.branch`, `sourcePointers`, and `resolvedAt`.
+Nullable fields are allowed before source exists, for skip records, and for failure before source creation: `returnTaskIndex`, `owner`, `leaseToken`, `leaseExpires`, `builderDeadline`, `builderHardDeadline`, `decisionDeadline`, `heartbeatAt`, `harnessRun.id`, `harnessRun.name`, `candidateHash`, `cleanupReceiptPath`, `isolation.path`, `isolation.branch`, `sourcePointers`, `resolvedAt`, and `decisionCheckpoint` values.
+
+Claim-safe lifecycle:
+1. The coordinator reserves or updates an entry under the state lock and increments `stateRevision`.
+2. Before isolation or builder launch, the coordinator calls `claim-builder` with expected `id`, `stateRevision`, and status.
+3. `claim-builder` succeeds only when the entry still has that revision, the status allows launch, and no live lease exists for another owner.
+4. On success it increments `stateRevision`, sets `owner`, `leaseToken`, `leaseExpires`, `status: building`, and increments `builderExecutionAttempt`.
+5. The coordinator launches the harness only after `claim-builder` succeeds.
+6. On compare-and-set failure, the caller reloads state and joins, resumes, or reports the existing owner. It does not launch another builder.
+7. Heartbeat updates use `heartbeat` or `renew-lease` and extend `leaseExpires` within `builderHardDeadline`.
+8. Terminal, timeout, cancel, and failed-launch paths use `release-lease` or `transition` before publication or handoff.
+
+Crash-safe decision checkpoint:
+- Before changing from `awaiting_verdict` to `handoff`, the coordinator writes `selectedVerdict` and `selectedVerdictAt` under lock.
+- Before publishing, it writes `handoffInclude`, `handoffOutcome`, `selectedReturnPhase`, `staleArtifacts`, and `staleTaskIndexes` under lock.
+- Resume reads the checkpoint and continues from the missing next step instead of asking again.
+- Publication never starts from user-visible conversation memory alone.
 
 Live statuses:
 - `pending`: ID reserved, no mutable source yet.
@@ -179,7 +271,7 @@ Live statuses:
 
 ### ID and Candidate Reservation
 
-Records live at `specs/<name>/prototypes/<prototype-id>.md`.
+Records live at `<basePath>/prototypes/<prototype-id>.md`.
 
 ID normalization:
 1. Lowercase ASCII.
@@ -191,10 +283,10 @@ ID normalization:
 
 Normal mode displays the proposed ID and lets the user edit it. Quick mode uses `quick-<YYYYMMDDHHMMSS>-<slug>`.
 
-The coordinator reserves IDs under the state lock by writing the active entry. It then renders exact terminal-record candidate bytes to an ignored candidate file in the same `prototypes/` directory:
+The coordinator reserves IDs under the state lock by writing the active entry with resolved `basePath`. It then renders exact terminal-record candidate bytes to an ignored candidate file in the same `prototypes/` directory:
 
 ```text
-specs/<name>/prototypes/.<prototype-id>.candidate.md
+<basePath>/prototypes/.<prototype-id>.candidate.md
 ```
 
 Add these ignore patterns:
@@ -202,7 +294,7 @@ Add these ignore patterns:
 ```text
 **/.ralph-state.lock
 **/.ralph-state.json.tmp
-specs/**/prototypes/.*.candidate.md
+**/prototypes/.*.candidate.md
 ```
 
 Reviewer input is the candidate file plus the referenced source. The reviewer never reviews a mutable final record.
@@ -258,13 +350,16 @@ Publication must never overwrite a final record:
 1. Write candidate bytes in the same `prototypes/` directory.
 2. Flush and `fsync` the candidate file.
 3. Publish with `os.link(candidate, final)` when supported. If hard links are unavailable, use `open(final, O_CREAT|O_EXCL)` and copy exact bytes.
-4. `fsync` the final file and directory.
-5. Re-read final bytes and parse frontmatter.
-6. Treat an existing final path as an ID collision. Never overwrite.
-7. Delete the candidate only after final bytes and candidate bytes match by hash.
-8. Remove the active entry in a second locked state transaction after final verification.
+4. Flush and `fsync` the final file before closing it.
+5. On platforms that support opening and syncing directories, make a best-effort `fsync` of the containing directory. Unsupported directory `fsync` does not turn a successful no-overwrite publication into failure.
+6. Re-read final bytes and parse frontmatter.
+7. Treat an existing final path as an ID collision. Never overwrite.
+8. Delete the candidate only after final bytes and candidate bytes match by hash.
+9. Remove the active entry in a second locked state transaction after final verification.
 
 Terminal records are immutable. Corrections, conflict resolutions, cancellations, changed conclusions, and timeout decisions write a new record with `supersedes: [old-id]`. Ralph never deletes immutable final evidence automatically.
+
+Candidate creation uses `open(candidate, O_CREAT|O_EXCL)`. If the candidate already exists, the coordinator compares its hash with the active entry. A matching hash resumes review. A mismatched hash is a collision, so the coordinator quarantines the candidate and allocates a new ID. Quick `lock_timeout` publication skips active-state reservation but still uses exclusive candidate and final creation.
 
 ### Resume Reconciliation
 
@@ -350,11 +445,31 @@ Normal cancellation:
 
 Quick mode runs exactly one unattended prototype attempt after requirements and before design.
 
+Quick stores `requestAttempt: 1` for the whole prototype request. Builder execution retries are separate. `builderExecutionAttempt: 1` is the first builder launch and `builderExecutionAttempt: 2` is the one allowed mechanical retry. A duplicate reuse, supersession, conflict resolution, no-suitable-question skip, or lock-timeout record consumes the request without launching a builder.
+
 Before any quick run, Ralph classifies capture mode:
 - `retained` when partial source could matter after `failed` or `inconclusive`, including app-integrated UI, multi-file source, authenticated data, real route context, or expensive reconstruction.
 - `ephemeral` only when partial source has no reuse value, such as a standalone logic scratch demo with simple generated state.
 
 Ralph never reclassifies failed ephemeral work to retained after the run. If an ephemeral quick run fails before source creation, the terminal record uses `sourceDisposition: not_created` and null source pointers.
+
+Quick ephemeral cleanup:
+1. The quick request pre-authorizes deletion of ephemeral isolation only. This covers both ephemeral sibling worktrees and ephemeral scratch paths.
+2. The reviewer verifies that the candidate evidence is self-contained and no later resume needs the source tree. The reviewer writes a durable cleanup receipt at `<basePath>/prototypes/.<prototype-id>.cleanup.json` with candidate hash, evidence hash, exact isolation path, branch name when present, base commit, provenance, and reviewed timestamp.
+3. The coordinator re-reads the receipt, verifies the exact source path still matches active-state `isolation.path`, verifies the path contains the expected provenance marker, and refuses cleanup on mismatch.
+4. For scratch, the coordinator removes only the exact scratch directory. For worktree, it runs bounded removal for the exact worktree path, then removes only the exact local ephemeral branch recorded in the receipt. It never touches a remote branch.
+5. After deletion, the coordinator verifies the source path is absent, renders final candidate bytes with `sourceDisposition: deleted` and the cleanup receipt hash, and keeps the reviewed evidence hash unchanged.
+6. The reviewer receives those exact candidate bytes plus the verified cleanup receipt. `REVIEW_PASS` requires the receipt hash, exact path and provenance, unchanged evidence hash, and source absence to verify. The publisher accepts only the candidate hash that passed review.
+7. The publisher publishes collision-safely from the reviewed candidate and removes the active entry only after final verification.
+8. If deletion fails or provenance does not match, Ralph publishes `sourceDisposition: retained`, records the cleanup failure, and leaves deletion for separate approval.
+9. This is the only automatic deletion exception. Retained worktrees, retained branches, terminal records, quarantines, and normal-mode scratch paths still require separate exact approval.
+
+Quick cleanup resume:
+- Receipt exists, source exists, final missing: verify receipt and resume exact deletion.
+- Receipt exists, source missing, final missing: verify the receipt, render the deleted-disposition candidate, review those exact bytes with the verified receipt, and publish only the reviewed bytes after `REVIEW_PASS`.
+- Receipt exists, deletion interrupted: verify the exact path and complete only the remaining bounded removal step.
+- Final exists with active entry: verify final bytes and remove the active entry under lock.
+- Cleanup receipt missing after review: rerun review while source exists; if source is already missing, publish `failed` with no downstream evidence.
 
 Quick takeover of the oldest active blocker:
 
@@ -392,7 +507,15 @@ Quick lock failure:
 
 Conflict-decision deadlines start only when two or more live or terminal records affect the same downstream target with incompatible evidence or handoff rules. Ordinary normal verdict and handoff waits have no deadline.
 
-Normal default: half the builder timeout, clamped between 10 and 30 minutes. User messages, verdict selection, handoff selection, or reviewer feedback reset the timer once. Quick timeout is 0 minutes.
+Normal default: half the resolved builder timeout, clamped by `prototype_conflict_timeout_min_minutes` and `prototype_conflict_timeout_max_minutes`. User messages, verdict selection, handoff selection, or reviewer feedback reset the timer once. Quick timeout is 0 minutes.
+
+Conflict retry behavior:
+- `prototype_conflict_resolution_retries` defaults to 0. That means Ralph makes one automatic conflict-resolution attempt and no retry.
+- The default is requirements-compatible because dependent normal work stays blocked when the first attempt cannot choose supported evidence, while quick excludes unsupported evidence and continues.
+- State stores `conflictResolutionAttempt`, starting at 0 before the first automatic attempt.
+- On each attempt, Ralph increments `conflictResolutionAttempt` under lock, re-runs record selection, applies the evidence-backed algorithm below, and writes a resolution record when it has a supported winner or supported exclusion.
+- If the attempt fails because records changed during selection, candidate parsing failed transiently, or reviewer evidence is unavailable, Ralph retries only while `conflictResolutionAttempt <= prototype_conflict_resolution_retries`.
+- When attempts are exhausted, normal mode writes a failed conflict-resolution record and keeps dependent work blocked. Quick mode writes an exclusion record and continues with no downstream evidence.
 
 No scheduler is guaranteed. Ralph evaluates expiry at the first later boundary: prototype command, start, status, phase command, implement loop, or stop-hook continuation. If the user's reply arrives after expiry, Ralph first writes the automatic resolution record, then lets the user supersede it with a new record.
 
@@ -410,19 +533,27 @@ Conflict-resolution records set `resolvedAt` and either `conflictsWith` or `reso
 
 ## Builder Timers and Control
 
-Builder timeout defaults:
-- Normal logic: 20 minutes.
-- Normal UI: 45 minutes.
-- Quick logic: 10 minutes.
-- Quick UI: 20 minutes.
+Builder timeout defaults come from the resolved configuration snapshot:
+- Normal logic: `prototype_logic_timeout_minutes`.
+- Normal UI: `prototype_ui_timeout_minutes`.
+- Quick logic: `prototype_quick_logic_timeout_minutes`.
+- Quick UI: `prototype_quick_ui_timeout_minutes`.
 
-Add 2 minutes per approved transferred path, capped at 10 added minutes. Activity extends the rolling deadline to `now + 10 minutes`, capped by `builderHardDeadline = started + 2 * initialTimeout`.
+Add `prototype_transfer_path_extra_minutes` per approved transferred path, capped by `prototype_transfer_path_extra_cap_minutes`. Activity extends the rolling deadline to `now + prototype_activity_extension_minutes`, capped by `builderHardDeadline = started + prototype_hard_deadline_multiplier * initialTimeout`.
 
 Activity signals:
 - Builder output chunk.
 - File modification under isolation path.
 - Active state heartbeat update.
 - Reviewer start or reviewer result.
+
+Harness control contract:
+- `launch(entry, isolation, prompt)` returns `{kind, id, name, startedAt}` or `unavailable-control`.
+- `wait(id, until)` returns `output`, `heartbeat`, `completed`, `timeout`, or `unavailable-control`.
+- `heartbeat(id)` updates `heartbeatAt` under lock.
+- `interrupt(id)` returns `stopped`, `already-complete`, `not-found`, or `unavailable-control`.
+- `status(id)` returns the current harness state for resume.
+- Tests stub this contract without invoking Claude or Codex.
 
 Claude execution:
 - Start `prototype-builder` as a named background subagent.
@@ -432,14 +563,14 @@ Claude execution:
 - If `TaskStop` is unavailable, normal asks wait or cancel before launch; quick writes failed record and continues.
 
 Codex execution:
-- Start a child agent with a fixed name derived from prototype ID.
+- Start a generic child agent with a fixed name derived from prototype ID. Use `plugins/ralph-specum-codex/agent-configs/prototype-builder.toml.template` only when the user installed that optional agent config.
 - Store only the child-agent `agentId` in `harnessRun`.
 - Use `wait_agent` with the remaining timeout.
 - Call `interrupt_agent` at hard deadline.
 - Do not use `create_thread`, task `threadId`, or user-visible Codex tasks for internal prototype builders.
 - If these controls are unavailable, normal asks wait or cancel before launch; quick writes failed record and continues.
 
-Normal mode allows two builder attempts before asking the user whether to retry, record failure, or cancel. Quick allows exactly two attempts total: initial attempt plus one retry.
+Normal mode uses `prototype_normal_builder_executions` before asking the user whether to retry, record failure, or cancel. Quick uses one request with `prototype_quick_builder_executions`: the initial builder execution plus one mechanical retry by default.
 
 ## Isolation Mechanics
 
@@ -450,7 +581,7 @@ Default isolation uses a sibling worktree from committed `HEAD`:
 prototype/<spec-name>/<prototype-id>
 ```
 
-The current conversation checkout never switches branch. All builder commands run with `git -C <worktree>`.
+The current conversation checkout never switches branch. The coordinator stores the resolved source path in `isolation.path`; it does not derive it from a hardcoded specs root. All builder commands run with `git -C <worktree>`.
 
 Normal dirty transfer:
 1. Read `git status --porcelain=v1`.
@@ -494,6 +625,7 @@ UI:
 - Candidate has required frontmatter and body sections.
 - Record ID, candidate path, final path, and active state agree.
 - Source exists only in the isolated path or has `sourceDisposition: not_created`.
+- For `sourceDisposition: deleted`, an absent source is accepted only when the receipt hash, exact path and provenance, evidence hash, and source absence all verify, and the reviewer is evaluating the exact candidate bytes to publish.
 - Logic or UI source meets its contract.
 - Source disposition, blocker, handoff, stale artifacts, and downstream evidence are explicit.
 - Terminal verdict is valid and gate approval matches mode rules.
@@ -502,9 +634,9 @@ UI:
 
 ## Commit and Remote Behavior
 
-`commitSpec` continues to control spec artifacts. Prototype terminal records are spec artifacts, so the coordinator may create a local commit for `specs/<name>/prototypes/<id>.md` when `commitSpec` is true.
+`commitSpec` continues to control local spec artifact commits. Prototype terminal records are spec artifacts under `<basePath>/prototypes/<id>.md`, so the coordinator may create a local commit for them when `commitSpec` is true.
 
-Prototype commands do not push any branch. Retained prototype source commits remain local in isolated branches. Existing `commitSpec` authorizes local spec commits only. Neither retained source nor prototype terminal records may be included in any later push without separate explicit authorization. Issue pointers are recorded as `pending authorization` unless the user separately authorizes an issue write.
+Prototype commands do not push any branch. Retained prototype source commits remain local in isolated branches. Existing `commitSpec`, task execution, and PR/share commands authorize local commits only unless the user grants separate remote authority for this prototype evidence. Neither retained source nor prototype terminal records may be included in a push, branch publication, PR body, PR diff, remote issue, or ticket comment without separate explicit authorization. Issue pointers are recorded as `pending authorization` unless the user separately authorizes an issue write.
 
 ## Error Handling
 
@@ -513,14 +645,16 @@ Prototype commands do not push any branch. Retained prototype source commits rem
 | State lacks `activePrototypes` | Treat as empty map | Existing specs continue |
 | Lock acquisition timeout | Normal stops before mutation; quick retries once, then publishes a `lock_timeout` failed record through the publisher-only path without touching state | No lost update |
 | Crash before replace | Temp file ignored and next run retries locked update | State remains valid |
-| Crash after replace | Directory fsync makes replacement durable; next run reconciles | Active entry resumes |
+| Crash after replace | File data was flushed before replace; supported directory `fsync` strengthens directory-entry durability. Unsupported directory `fsync` is not a failure, and the next run reconciles. | Active entry resumes |
 | Candidate exists, final missing | Resume candidate review and publish | No duplicate record |
 | Candidate and valid final exist with same hash | Delete candidate and remove active entry | Publish cleanup completes |
 | Candidate and valid final exist with different hash | Quarantine candidate | Conflicting bytes do not replace final evidence |
+| Quick cleanup receipt exists | Resume exact deletion or publish from the receipt based on source-path state | Resume does not need deleted source |
 | Final exists before publish | Treat as collision and allocate next ID | No overwrite |
 | Malformed final | Quarantine from downstream and require superseding ID | Bad evidence stays out of design |
 | Completion with active prototypes | Keep `.ralph-state.json` under lock until active map is empty | Recovery evidence remains |
 | Worktree creation fails | Normal retained mode asks wait or cancel, or lets the user explicitly switch to eligible ephemeral scratch; normal UI or app-integrated work does not downgrade; quick retries once | Current checkout stays unchanged |
+| Quick ephemeral deletion interrupted | Verify cleanup receipt and exact path, then resume bounded scratch or worktree removal, or publish retained if verification fails | No broad deletion |
 | Dirty transfer fails | Drop failed path and ask again in normal; quick never transfers | No silent copy |
 | Builder timeout | Stop or interrupt builder, then retry or publish terminal record | No indefinite wait |
 | Reviewer fails record | Ask for fix in normal; quick records `inconclusive` or `failed` and continues | Invalid evidence stays out of design |
@@ -537,6 +671,7 @@ Claude package changes:
 - `plugins/ralph-specum/references/prototype-coordinator.md`: create shared coordinator contract.
 - `plugins/ralph-specum/hooks/scripts/locked-state.py`: create lock-backed state helper.
 - `plugins/ralph-specum/hooks/scripts/prototype-records.py`: create candidate, publish, reconcile, select helper.
+- `plugins/ralph-specum/hooks/scripts/prototype-harness.py`: create testable launch, wait, heartbeat, interrupt, and status contract for builder control.
 - `plugins/ralph-specum/commands/research.md`: add normal prototype choice and pre-generation gate.
 - `plugins/ralph-specum/commands/requirements.md`: add normal choice, quick call site, and pre-generation gate.
 - `plugins/ralph-specum/commands/design.md`: select prototype evidence and enforce stale gates.
@@ -548,10 +683,20 @@ Claude package changes:
 - `plugins/ralph-specum/commands/switch.md`: show blockers for selected spec.
 - `plugins/ralph-specum/commands/cancel.md`: cancel active prototypes and gate deletion.
 - `plugins/ralph-specum/commands/help.md`: document direct helper, normal choice, quick takeover, and no remote actions.
+- `plugins/ralph-specum/agents/research-analyst.md`: replace approval-state write with locked helper.
+- `plugins/ralph-specum/agents/product-manager.md`: replace approval-state write with locked helper.
+- `plugins/ralph-specum/agents/architect-reviewer.md`: replace approval-state write with locked helper.
+- `plugins/ralph-specum/agents/task-planner.md`: replace approval-state write with locked helper.
 - `plugins/ralph-specum/hooks/scripts/load-spec-context.sh`: show active prototypes and prototype resume guidance.
 - `plugins/ralph-specum/hooks/scripts/update-spec-index.sh`: include derived prototype counts and blocker status.
 - `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`: check active blockers and stale task gates before continuation.
+- `plugins/ralph-specum/hooks/scripts/path-resolver.sh`: expose resolved `basePath` and configured roots to prototype helpers.
+- `plugins/ralph-specum/hooks/scripts/quick-mode-guard.sh`: use resolved `basePath` for state reads.
+- `plugins/ralph-specum/references/coordinator-pattern.md`: replace native task map writes, modification map writes, and state deletion with locked helper.
+- `plugins/ralph-specum/references/failure-recovery.md`: replace recovery state updates with locked helper.
 - `plugins/ralph-specum/references/spec-scanner.md`: add prototype record and candidate scan rules.
+- `plugins/ralph-specum/references/quick-mode.md`: use quick prototype request counting, quick cleanup, and locked helper state writes.
+- `plugins/ralph-specum/references/branch-management.md`: use resolved `basePath` and lock helper for any worktree state copy.
 - `plugins/ralph-specum/agents/spec-executor.md`: honor stale task and active blocker gates.
 - `plugins/ralph-specum/agents/spec-reviewer.md`: add prototype candidate rubric.
 - `plugins/ralph-specum/schemas/spec.schema.json`: add prototype frontmatter schema without adding `prototype` to top-level phase enum.
@@ -560,9 +705,13 @@ Claude package changes:
 - `plugins/ralph-specum/skills/spec-workflow/references/phase-transitions.md`: document optional overlay, not a new phase.
 - `plugins/ralph-specum/skills/smart-ralph/SKILL.md`: add state, commit, and no-remote behavior.
 - `plugins/ralph-specum/skills/smart-ralph/references/state-file-schema.md`: add optional `activePrototypes`.
-- `plugins/ralph-specum/references/branch-management.md`: add prototype worktree and scratch rules.
-- `.gitignore`: ignore `**/.ralph-state.lock`, `**/.ralph-state.json.tmp`, and `specs/**/prototypes/.*.candidate.md`.
+- `.gitignore`: ignore `**/.ralph-state.lock`, `**/.ralph-state.json.tmp`, and `**/prototypes/.*.candidate.md`.
 - `README.md`: document user behavior.
+- `tests/prototype-state.bats`: cover lock, compare-and-set, decision checkpoints, configured roots, Windows lock path, attempt counts, and races.
+- `tests/prototype-records.bats`: cover exclusive candidate creation, collision, immutable publish, quick cleanup, and remote gate records.
+- `tests/prototype-phase.bats`: cover normal decline, highest-risk quick question, exact skip, resume decisions, and phase gates.
+- `tests/test_prototype_windows.py`: add stdlib `unittest` coverage for the Windows lock directory, stale handling, flush-and-replace behavior, unsupported directory `fsync`, exclusive publication, and cleanup-receipt final review.
+- `.github/workflows/bats-tests.yml`: add a `prototype-windows` job on `windows-latest` that runs `python -m unittest tests/test_prototype_windows.py`.
 - `plugins/ralph-specum/.claude-plugin/plugin.json`: bump to same new minor version.
 - `.claude-plugin/marketplace.json`: bump same entry version.
 
@@ -574,7 +723,9 @@ Codex package changes:
 - `plugins/ralph-specum-codex/references/prototype-coordinator.md`: create Codex contract.
 - `plugins/ralph-specum-codex/scripts/locked_state.py`: create locked state library and CLI.
 - `plugins/ralph-specum-codex/scripts/prototype_records.py`: create candidate, publish, reconcile, select helper.
+- `plugins/ralph-specum-codex/scripts/prototype_harness.py`: create testable launch, wait, heartbeat, interrupt, and status contract for Codex child agents.
 - `plugins/ralph-specum-codex/scripts/merge_state.py`: keep CLI, wrap locked merge.
+- `plugins/ralph-specum-codex/scripts/resolve_spec_paths.py`: expose resolved `basePath` and configured roots to prototype helpers.
 - `plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md`: add routing and coordinator rules.
 - `plugins/ralph-specum-codex/skills/ralph-specum/agents/openai.yaml`: add prototype routing metadata.
 - `plugins/ralph-specum-codex/skills/ralph-specum-start/SKILL.md`: resume active prototypes and reconcile candidates.
@@ -600,9 +751,13 @@ Codex package changes:
 - `plugins/ralph-specum-codex/schemas/spec.schema.json`: mirror frontmatter schema.
 - `plugins/ralph-specum-codex/references/workflow.md`: add overlay, quick takeover, and gates.
 - `plugins/ralph-specum-codex/references/state-contract.md`: add locked state and optional overlay.
+- `plugins/ralph-specum-codex/references/path-resolution.md`: require `basePath` for records, locks, hooks, context, and index paths.
 - `plugins/ralph-specum-codex/references/parity-matrix.md`: add command and behavior mapping.
 - `plugins/ralph-specum-codex/assets/bootstrap/AGENTS.md`: add consumer guidance.
 - `plugins/ralph-specum-codex/README.md`: document user behavior.
+- `tests/codex-plugin.bats`: update plugin inventory and fixed count assertions for the new skill, template, agent config, reference, and Python helpers.
+- `tests/codex-platform.bats`: update platform inventory and behavior assertions for prototype helpers and configured roots.
+- `tests/codex-platform-scripts.bats`: add locked state, prototype records, prototype harness, and merge wrapper script assertions.
 - `plugins/ralph-specum-codex/.codex-plugin/plugin.json`: bump to same new minor version.
 
 Codex metadata files do not write state directly. They must route only to skills and helpers that use the locked transaction helper.
@@ -623,7 +778,7 @@ Codex metadata files do not write state directly. They must route only to skills
 ## Security and Performance
 
 Security:
-- No remote push, issue mutation, path deletion, branch deletion, or final-record deletion without separate authority.
+- No remote push, issue mutation, or final-record deletion without separate authority. Quick-mode selection authorizes deletion only for quick ephemeral cleanup, including its recorded local ephemeral branch. This is the sole automatic deletion exception; every other path or branch deletion requires separate authority.
 - Dirty transfer copies only approved paths and rejects symlinks by default.
 - Builder prompts require token and credential redaction.
 - Quarantined malformed records never feed downstream.
@@ -638,25 +793,30 @@ Performance:
 ## Test Strategy
 
 State and publish tests:
-- Concurrent upsert, concurrent upsert/remove, overlay plus phase merge, state deletion under lock, completion blocked by nonempty `activePrototypes`, lock timeout, quick lock retry plus publisher-only failed record, crash before replace, crash after replace, empty-map removal, and Codex `merge_state.py` wrapper compatibility.
-- Candidate review failure, publish collision, crash before publish, crash after publish before active removal, valid final plus active entry, candidate plus valid final with matching hash cleanup, candidate plus valid final with mismatched hash quarantine, malformed final quarantine, candidate/no final resume, final/no active completion, and candidate ignore patterns.
+- Concurrent upsert, concurrent upsert/remove, phase-agent approval write racing prototype upsert, ownership compare-and-set racing builder launch, overlay plus phase merge, state deletion under lock, completion blocked by nonempty `activePrototypes`, lock timeout, Windows lock-directory path, quick lock retry plus publisher-only failed record, crash before replace, crash after replace, empty-map removal, configured-root `basePath`, attempt-vs-execution counting, and Codex `merge_state.py` wrapper compatibility.
+- Candidate review failure, exclusive candidate creation, publish collision, crash before publish, crash after publish before active removal, valid final plus active entry, candidate plus valid final with matching hash cleanup, candidate plus valid final with mismatched hash quarantine, malformed final quarantine, candidate/no final resume, every resumed decision checkpoint, final/no active completion, and candidate ignore patterns.
 - No-source skip and failure records with `sourceDisposition: not_created` and null pointers.
 
 Workflow tests:
-- Suggested trigger after research and requirements, normal capture recommendation and persisted choice, retained mode with no-worktree wait/cancel/switch choices, direct invocation from every main phase, implicit artifact approval, current-phase preservation, safe execution interruption, blocker-only pausing, duplicate handling, conflict resolution, conflict record required fields and body, normal handoff choices, immutable cancellation record verification before active-entry removal, cancellation preservation of worktree, partial implementation, task progress, origin phase, and downstream artifacts, user-approved verdict before ephemeral cleanup, settled handoff before deletion confirmation, deletion gate, revision cascade, replace flow, and partial implementation preservation.
+- Suggested trigger after research and requirements, normal decline, normal capture recommendation and persisted choice, exact dirty and untracked path approval, retained mode with no-worktree wait/cancel/switch choices, direct invocation from every main phase, implicit artifact approval, current-phase preservation, safe execution interruption, blocker-only pausing, duplicate handling, conflict resolution, conflict record required fields and body, normal handoff choices, immutable cancellation record verification before active-entry removal, cancellation preservation of worktree, partial implementation, task progress, origin phase, and downstream artifacts, user-approved verdict before ephemeral cleanup, settled handoff before deletion confirmation, deletion gate, revision cascade, replace flow, and partial implementation preservation.
 - Gate selection before every phase generation, task dispatch, and Stop-hook continuation.
 - Stale task recovery and unrelated parallel task dependency or path checks.
 - Context and index visibility through `load-spec-context.sh`, `update-spec-index.sh`, status, switch, and start.
 - Remote safety tests prove retained source and terminal records are not pushed without separate explicit authorization.
 
 Quick tests:
-- Exactly one attempt after requirements, committed `HEAD` only, capture-mode classification before run, oldest blocker takeover for each live status, no user questions, duplicate reuse consumes the attempt, supersession consumes the attempt, conflict resolution consumes the attempt, one retry, no-source records, preserved extra active records, and unconditional continuation to design.
+- Exactly one request after requirements, committed `HEAD` only, highest-risk quick question selection, exact no-suitable-question skip, capture-mode classification before run, quick ephemeral cleanup with `sourceDisposition: deleted`, oldest blocker takeover for each live status, no user questions, duplicate reuse consumes the request, supersession consumes the request, conflict resolution consumes the request, one mechanical builder retry, no-source records, preserved extra active records, and unconditional continuation to design.
+- Quick cleanup reviews the final deleted-disposition candidate bytes with the verified receipt before publication, including resume with a missing source.
 
 Builder and reviewer tests:
 - Logic HTML visible question, pure module, labeled state, free play, normal, edge, and illegal cases.
 - UI existing-route preference, three variants, `?variant=`, one shared fixed switcher, reload reconstruction, arrow keys, input guard, production gate.
 - Codex builder uses child-agent `agentId` only and rejects `create_thread` or task `threadId` for internal prototype builders.
-- `REVIEW_PASS` and `REVIEW_FAIL` for valid, malformed, unsafe, missing evidence, bad gate approval, and production-source leakage cases.
+- Harness-control adapter tests cover launch, wait, heartbeat, interrupt, status, timeout, and unavailable-control outcomes for Claude and Codex stubs.
+- `REVIEW_PASS` and `REVIEW_FAIL` for valid, malformed, unsafe, missing evidence, bad gate approval, production-source leakage, and cleanup-receipt review of the final deleted-source candidate.
+
+Native Windows tests:
+- The `prototype-windows` job runs on `windows-latest` and covers the Windows lock directory, stale handling, flush-and-replace behavior, unsupported directory `fsync`, exclusive publication, and cleanup-receipt final review.
 
 Regression commands:
 
@@ -665,6 +825,7 @@ bats tests/prototype-state.bats tests/prototype-records.bats tests/prototype-pha
 bats tests/codex-plugin.bats tests/codex-platform.bats tests/codex-platform-scripts.bats
 bats tests/state-management.bats tests/stop-hook.bats tests/integration.bats
 bats tests/*.bats
+python -m unittest tests/test_prototype_windows.py
 bash tests/helpers/version-sync.sh
 bash -n plugins/ralph-specum/hooks/scripts/*.sh plugins/ralph-specum-codex/hooks/*.sh
 jq empty plugins/ralph-specum/schemas/spec.schema.json plugins/ralph-specum-codex/schemas/spec.schema.json
@@ -675,19 +836,19 @@ git diff --check
 
 | Requirement | Design Coverage |
 |---|---|
-| FR-1 | Data Flow, Normal Flow, gate checks, surface adapters |
-| FR-2 | Isolation Mechanics, Commit and Remote Behavior, immutable cancellation record, cancel preservation, and deletion gates |
-| FR-3 | Overlay State, Immutable Terminal Records, Locked State Transactions |
-| FR-4 | Gate Approval and Downstream Selection, Normal Flow, staleness cascade |
-| FR-5 | Overlay schema, duplicate handling, Conflict Decisions, Builder Timers |
-| FR-6 | Quick Flow, quick takeover, capture-mode classification, one retry |
-| FR-7 | Logic and UI Contracts, Builder Timers, Reviewer Rubric |
-| FR-8 | Exact File Map, Test Strategy, version parity |
-| NFR-1 | Worktree isolation, dirty transfer, no checkout switching |
-| NFR-2 | Isolation Mechanics, overlay schema, Error Handling |
-| NFR-3 | Immutable Terminal Records, Resume Reconciliation, source disposition |
-| NFR-4 | Builder Timers, Conflict Decisions, quick continuation |
-| NFR-5 | Exact File Map, Test Strategy, same new minor version |
+| FR-1 | `Normal Flow`, `Gate Approval and Downstream Selection`; tests: `tests/prototype-phase.bats`, `tests/stop-hook.bats` |
+| FR-2 | `Isolation Mechanics`, `Commit and Remote Behavior`, `Normal Flow`; tests: `tests/prototype-phase.bats`, `tests/prototype-records.bats` |
+| FR-3 | `Overlay State`, `Immutable Terminal Records`, `Locked State Transactions`; tests: `tests/prototype-state.bats`, `tests/prototype-records.bats` |
+| FR-4 | `Gate Approval and Downstream Selection`, `Normal Flow`; tests: `tests/prototype-phase.bats`, `tests/integration.bats` |
+| FR-5 | `Overlay State`, `Conflict Decisions`, `Builder Timers and Control`; tests: `tests/prototype-state.bats`, `tests/prototype-phase.bats` |
+| FR-6 | `Quick Flow`, `Path And Configuration`, `Builder Timers and Control`; tests: `tests/prototype-phase.bats`, `tests/prototype-state.bats` |
+| FR-7 | `Logic and UI Contracts`, `Builder Timers and Control`, `Reviewer Rubric`; tests: `tests/prototype-records.bats`, `tests/codex-platform-scripts.bats` |
+| FR-8 | `Exact File Map`, `Test Strategy`; tests: `tests/codex-plugin.bats`, `tests/codex-platform.bats`, `tests/codex-platform-scripts.bats`, `tests/helpers/version-sync.sh` |
+| NFR-1 | `Isolation Mechanics`; tests: `tests/prototype-phase.bats` |
+| NFR-2 | `Overlay State`, `Error Handling`; tests: `tests/prototype-state.bats`, `tests/test_prototype_windows.py` |
+| NFR-3 | `Immutable Terminal Records`, `Resume Reconciliation`; tests: `tests/prototype-records.bats` |
+| NFR-4 | `Builder Timers and Control`, `Conflict Decisions`, `Quick Flow`; tests: `tests/prototype-state.bats`, `tests/prototype-phase.bats` |
+| NFR-5 | `Exact File Map`, `Test Strategy`; tests: `tests/codex-plugin.bats`, `tests/codex-platform.bats`, `tests/codex-platform-scripts.bats` |
 
 ## Blocking Ambiguity
 
