@@ -10,7 +10,7 @@ workflow: poc-first
 
 Build one end-to-end local prototype path first. Tests are added in Phase 3 after the coordinator, helpers, and both harness surfaces exist.
 
-- [ ] 1.1 Add the shared locked state primitive
+- [x] 1.1 Add the shared locked state primitive
   - **Do**: Add matching Python helpers for POSIX `flock` and the Windows lock-directory fallback. Implement `merge`, `upsert-prototype`, `remove-prototype`, `list`, `delete-state`, `claim-builder`, `heartbeat`, `renew-lease`, `release-lease`, and compare-and-set `transition`. Preserve unknown state fields, use configured bounded waits, flush temp files before `os.replace`, and treat unsupported directory `fsync` as best effort. Make the existing Codex merge CLI a compatibility wrapper.
   - **Files**: `plugins/ralph-specum/hooks/scripts/locked-state.py`, `plugins/ralph-specum-codex/scripts/locked_state.py`, `plugins/ralph-specum-codex/scripts/merge_state.py`
   - **Done when**: Both helpers expose the same operations, concurrent writers cannot silently overwrite each other, builder ownership is compare-and-set, and state deletion refuses a nonempty `activePrototypes` map.
