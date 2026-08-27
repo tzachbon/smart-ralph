@@ -140,7 +140,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
   - **Commit**: `fix(workflow): address local release failures` (only if an in-scope fix is needed)
   - _Requirements: FR-10, FR-11; AC-4.1, AC-4.2, AC-4.3_
 
-- [ ] V5 [VERIFY] Create pull request and pass every triggered workflow
+- [x] V5 [VERIFY] Create pull request and pass every triggered workflow
   - **Do**:
     1. Push `codex/scoped-minimal-workflow` and open a PR against `main` using the repository template.
     2. Wait for every triggered GitHub workflow, not only required checks.
@@ -151,7 +151,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
   - **Commit**: `fix(workflow): address CI findings` (only if an in-scope fix is needed)
   - _Requirements: FR-12; AC-4.4_
 
-- [ ] V6 [VERIFY] Acceptance-criteria checklist
+- [x] V6 [VERIFY] Acceptance-criteria checklist
   - **Do**: Map AC-1.1 through AC-4.3 to a passing command, diff line, or GitHub check. AC-4.4 remains the Phase 4 completion gate.
   - **Files**: `specs/scoped-minimal-workflow/requirements.md`, `specs/scoped-minimal-workflow/tasks.md`
   - **Done when**: AC-1.1 through AC-4.3 have current evidence and no criterion relies on an unsupported compliance claim.
@@ -186,7 +186,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
 
 ## Phase 4: PR Lifecycle
 
-- [ ] 4.1 Resolve all in-scope review threads
+- [x] 4.1 Resolve all in-scope review threads
   - **Do**:
     1. Query every review thread with pagination state.
     2. Apply and verify only fixes that fit the Scope Envelope; escalate any broader request.
