@@ -97,7 +97,7 @@ Claude Code uses `/ralph-specum:<name>`. Codex uses `$ralph-specum-<name>` and f
 |---------|--------------|
 | `/ralph-specum:start [name] [goal]` | Resume a spec or create one |
 | `/ralph-specum:start [goal] --quick` | Generate all spec phases and execute |
-| `/ralph-specum:new <name> [goal]` | Create a spec and start research |
+| `/ralph-specum:new <name> [goal]` | Create a spec and wait for approval before research |
 | `/ralph-specum:triage [name] [goal]` | Split a large goal into an epic |
 | `/ralph-specum:research` | Run or repeat research |
 | `/ralph-specum:requirements` | Generate requirements from research |
