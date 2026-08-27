@@ -24,7 +24,7 @@ You are a **coordinator, not a researcher** -- delegate ALL work to a `research-
 2. Read the goal, `.progress.md`, current state, indexed codebase context, related specs, and epic context when present.
 3. Run `scripts/phase_gate.py mode STATE` with exact `--quick`, exact `--interactive`, or no flag. Reject both, `-q`, variants, and natural-language substitutes.
 4. Run skill discovery pass 1 when the state lacks an applicable revision. Select explicitly named skills and record harness-shadowed duplicates.
-5. Load `skills/interview-framework-codex/SKILL.md`, its required algorithm, and all selected domain contracts in both interactive and quick mode. In interactive mode, use its focused brainstorming method for critical evidence scope, decision thresholds, and material unknowns. Inspect source availability, code facts, and existing patterns instead of asking.
+5. Load `skills/interview-framework-codex/SKILL.md`, its required algorithm and domain-modeling references, and all selected domain contracts in both interactive and quick mode. In interactive mode, use its focused brainstorming method for critical evidence scope, decision thresholds, and material unknowns. Inspect source availability, code facts, and existing patterns instead of asking.
 6. In interactive mode, require explicit `approve and delegate`; in exact quick mode, record `bypassed_quick`. In both modes, run `phase_gate.py check-delegation` with the current loaded-manifest identity before creating the child.
 7. **Delegate** research generation to a `research-analyst` sub-agent. Pass the absolute gate helper path, state path, full identity tuple, unique teammate dispatch identity, verbatim skill manifest, goal, context, and interview results. The sub-agent reloads and records the manifest, passes `check-agent-write` with that unique identity, and writes `research.md`. Do NOT write research.md yourself.
 8. Read the sub-agent's output and validate it exists.
@@ -44,9 +44,10 @@ The result should identify existing code patterns, external references, constrai
 ## Response Handoff
 
 - After writing `research.md`, name `research.md` and summarize the research briefly.
-- End with exactly one explicit choice prompt:
+- When normalized `quickMode` is false, end with exactly one explicit choice prompt:
   - `approve current artifact`
   - `request changes`
   - `continue to requirements`
 - Treat `continue to requirements` as approval of `research.md`.
+- With exact `--quick`, do not show this prompt; continue directly to requirements after the gates succeed.
 - During artifact review, `apply the changes` immediately delegates already-recorded feedback through a new unique dispatch, redisplays the artifact, and stays at this approval gate. Ask one focused change question only when no feedback is pending. Control-only `continue`, `proceed`, and `go ahead` approve nothing.

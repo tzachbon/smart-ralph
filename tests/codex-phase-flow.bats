@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+set -e
+
 repo_root() { echo "$BATS_TEST_DIRNAME/.."; }
 plugin_root() { echo "$(repo_root)/plugins/ralph-specum-codex"; }
 
@@ -76,6 +78,8 @@ EOF
     [[ "$algorithm" == *"confirm STATE --decision-id ID --source approve-and-delegate"* ]]
     [[ "$algorithm" == *"skip STATE"* ]]
     [[ "$algorithm" == *"revise STATE --decision-id ID"* ]]
+    [[ "$algorithm" == *'- `Cancel`'* ]]
+    [[ "$algorithm" == *"leave the interview nonterminal and stop without delegation"* ]]
     [[ "$algorithm" == *'Re-call `open-frontier` with the same round and remaining pending IDs'* ]]
 }
 
@@ -100,8 +104,21 @@ EOF
     [[ "$algorithm" == *'`core_failed`'* ]]
     [[ "$algorithm" == *'"failures": []'* ]]
     [[ "$algorithm" == *'A failed receipt has `sha256: null`'* ]]
+    [[ "$algorithm" == *'`requiredResourceSources`'* ]]
+    [[ "$algorithm" == *"Receipt sources must match the inventory exactly"* ]]
     [[ "$algorithm" == *"Before each new or resumed grill"* ]]
     [[ "$(<"$root/skills/interview-framework-codex/SKILL.md")" == *"Start no task action"* ]]
+}
+
+@test "codex downstream phases select pass2 only when research exists" {
+    local root skill text
+    root="$(plugin_root)"
+
+    for skill in ralph-specum-requirements ralph-specum-design ralph-specum-tasks; do
+        text="$(<"$root/skills/$skill/SKILL.md")"
+        [[ "$text" == *'When `research.md` exists, require skill discovery pass 2'* ]]
+        [[ "$text" == *'When it is absent, require pass 1 against the goal alone'* ]]
+    done
 }
 
 @test "codex phase flow: context identity is immutable and resume preserves answers" {

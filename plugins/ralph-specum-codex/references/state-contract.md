@@ -77,7 +77,7 @@ Use `scripts/merge_state.py` for deterministic top-level merges.
 - `quickAuthorization` records only exact `--quick` authorization.
 - `phaseSkillLoad` records the exact goal snapshot, prior-artifact source/hash receipts, selected manifest, full-body and required-resource hashes, warnings, failures, conflicts, discovery identity, and artifact-agent load receipts.
 - `phaseInterview` records frontier rounds, partial answers, assumptions, final confirmation, or exact quick bypass.
-- `discoveredSkills` is cumulative append-only discovery history. New entries contain `pass`, `revision`, `name`, `activeSource`, `reason`, and `shadowedSources`. Legacy `invoked` fields never prove current load.
+- `discoveredSkills` is cumulative append-only discovery history. New entries contain `pass`, `revision`, `name`, `activeSource`, `reason`, `shadowedSources`, and `outcome`, and each pass revision repeats the complete selected set. Legacy `invoked` fields never prove current load.
 
 The identity tuple is `phase`, `interviewId`, `discoveryRevision`, and `contextDigest`. `phaseSkillLoad.context` stores the exact goal snapshot and absolute source/hash receipts for applicable prior artifacts. The helper computes the digest with the length-framed byte formula in the internal interview algorithm and rechecks current artifact bytes at every gate. When top-level `goal` exists, it is the canonical goal and must match the snapshot. Legacy spec states without `goal` use the persisted snapshot as the source of truth. Keep the tuple unchanged only while those inputs remain unchanged.
 
@@ -103,9 +103,9 @@ phase_gate.py check-agent-write STATE --phase PHASE --interview-id ID --context-
 
 Manifest `failures` exactly lists every failed body and resource error. `warnings` lists only domain failures that allow continuation. Complete state has neither; `partial_warned` has equal domain-only arrays; `core_failed` has all errors in `failures` and domain-only errors in `warnings`.
 
-Loaded body and resource receipts require their current SHA-256 digest, `loadStatus: "loaded"`, and no errors. Failed receipts require `sha256: null`, `loadStatus: "failed"`, and nonempty errors. A fresh `phaseSkillLoad` must have an empty `artifactAgentLoads`; only `record-agent-load` may append child receipts.
+Loaded body and resource receipts require their current SHA-256 digest, `loadStatus: "loaded"`, and no errors. Failed receipts require `sha256: null`, `loadStatus: "failed"`, and nonempty errors. Every selected skill also records `requiredResourceSources`; its receipt sources must match that complete inspected inventory exactly. A fresh `phaseSkillLoad` must have an empty `artifactAgentLoads`; only `record-agent-load` may append child receipts.
 
-The one core selection must resolve to this plugin's packaged `skills/interview-framework-codex/SKILL.md` and must include its packaged `references/algorithm.md`. Changing mode clears an incompatible `phaseInterview` in the same atomic state write. `skip` requires at least one nonblank assumption and preserves recorded answers.
+The one core selection must resolve to this plugin's packaged `skills/interview-framework-codex/SKILL.md` and must include its packaged `references/algorithm.md` and `references/domain-modeling.md`. Changing mode clears an incompatible `phaseInterview` in the same atomic state write. `skip` requires at least one nonblank assumption and preserves recorded answers.
 
 ## Approval Contract
 

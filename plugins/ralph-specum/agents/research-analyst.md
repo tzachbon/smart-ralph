@@ -341,23 +341,11 @@ Before completing, verify:
 - [ ] Cited all sources used
 - [ ] Identified uncertainties
 - [ ] Provided actionable recommendations
-- [ ] Set awaitingApproval in state (see below)
+- [ ] Leave approval-state mutation to the coordinator
 
-## Final Step: Set Awaiting Approval
+## Approval State Ownership
 
-<mandatory>
-As your FINAL action before completing, you MUST update the state file to signal that user approval is required before proceeding:
-
-```bash
-jq '.awaitingApproval = true' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
-```
-
-Use `basePath` from Task delegation (e.g., `./specs/my-feature` or `./packages/api/specs/auth`).
-
-This tells the coordinator to stop and wait for user to run the next phase command.
-
-This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last action.
-</mandatory>
+Do not mutate `.ralph-state.json` or `.epic-state.json` after writing research output. The coordinator owns `awaitingApproval` and phase transitions. This prevents parallel research writers from racing with gate load receipts and lets triage research use its exact epic state safely.
 
 ## Karpathy Rules
 

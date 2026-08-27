@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+set -e
+
 repo_root() {
     echo "$BATS_TEST_DIRNAME/.."
 }
@@ -24,22 +26,27 @@ prepare_approved_state() {
     local interview_id=$3
     local digest=$4
     local goal=$5
-    local helper skill algorithm skill_hash algorithm_hash manifest
+    local helper skill algorithm domain skill_hash algorithm_hash domain_hash manifest
     helper="$(plugin_root)/scripts/phase_gate.py"
     skill="$(plugin_root)/skills/interview-framework/SKILL.md"
     algorithm="$(plugin_root)/skills/interview-framework/references/algorithm.md"
+    domain="$(plugin_root)/skills/interview-framework/references/domain-modeling.md"
     skill_hash="$(shasum -a 256 "$skill" | awk '{print $1}')"
     algorithm_hash="$(shasum -a 256 "$algorithm" | awk '{print $1}')"
+    domain_hash="$(shasum -a 256 "$domain" | awk '{print $1}')"
     manifest="$state.manifest.json"
 
     mkdir -p "$(dirname "$state")"
-    printf '%s\n' '{}' > "$state"
+    jq -n --arg goal "$goal" --arg name "interview-framework" --arg skill "$skill" \
+        '{goal:$goal,discoveredSkills:[{pass:"pass1",revision:"rev-1",name:$name,activeSource:$skill,reason:"core",shadowedSources:[],outcome:"selected"}]}' \
+        > "$state"
     jq -n \
         --arg phase "$phase" --arg interview_id "$interview_id" \
         --arg skill "$skill" --arg skill_hash "$skill_hash" \
         --arg algorithm "$algorithm" --arg algorithm_hash "$algorithm_hash" \
+        --arg domain "$domain" --arg domain_hash "$domain_hash" \
         --arg digest "$digest" --arg goal "$goal" \
-        '{phase:$phase,interviewId:$interview_id,discoveryRevision:"rev-1",contextDigest:$digest,context:{goal:$goal,artifacts:[]},status:"complete",selected:[{name:"interview-framework",reason:"core",source:$skill,core:true,body:{sha256:$skill_hash,loadStatus:"loaded",errors:[]},requiredResources:[{source:$algorithm,sha256:$algorithm_hash,loadStatus:"loaded",errors:[]}]}],warnings:[],conflicts:[],failures:[],noDomainMatches:true,artifactAgentLoads:[]}' > "$manifest"
+        '{phase:$phase,interviewId:$interview_id,discoveryRevision:"rev-1",contextDigest:$digest,context:{goal:$goal,artifacts:[]},status:"complete",selected:[{name:"interview-framework",reason:"core",source:$skill,core:true,body:{sha256:$skill_hash,loadStatus:"loaded",errors:[]},requiredResourceSources:[$algorithm,$domain],requiredResources:[{source:$algorithm,sha256:$algorithm_hash,loadStatus:"loaded",errors:[]},{source:$domain,sha256:$domain_hash,loadStatus:"loaded",errors:[]}]}],warnings:[],conflicts:[],failures:[],noDomainMatches:true,artifactAgentLoads:[]}' > "$manifest"
     python3 "$helper" mode "$state" --interactive >/dev/null
     python3 "$helper" record-skill-load "$state" --input "$manifest" >/dev/null
     python3 "$helper" begin-interview "$state" --phase "$phase" --interview-id "$interview_id" --round 1 --discovery-revision rev-1 --context-digest "$digest" >/dev/null
@@ -88,6 +95,8 @@ PY
         grep -q 'classify-reply' "$(plugin_root)/commands/$command.md"
         grep -q 'revise --decision-id' "$(plugin_root)/commands/$command.md"
         grep -q 'confirm --source approve-and-delegate' "$(plugin_root)/commands/$command.md"
+        grep -q 'both interactive and exact quick mode' "$(plugin_root)/commands/$command.md"
+        grep -q 'record.*current.*manifest' "$(plugin_root)/commands/$command.md"
     done
 }
 
@@ -225,7 +234,35 @@ PY
     input="$(jq -n --arg cwd "$cwd" --arg prompt "$prompt" '{cwd:$cwd,tool_input:{subagent_type:"product-manager",prompt:$prompt}}')"
     run bash -c 'printf "%s" "$1" | "$2"' _ "$input" "$hook"
     [ "$status" -eq 0 ]
-    [[ "$output" == *'does not match the active spec or epic state for hook cwd'* ]]
+    [[ "$output" == *'does not match the active state for phase requirements in hook cwd'* ]]
+}
+
+@test "Task guard never crosses spec and epic state types when both are active" {
+    local cwd spec_state epic_state spec_digest epic_digest goal hook prompt input
+    cwd="$TEST_DIR/project"
+    spec_state="$cwd/specs/demo/.ralph-state.json"
+    epic_state="$cwd/specs/_epics/platform/.epic-state.json"
+    goal='State type isolation fixture'
+    spec_digest="$(context_digest requirements "$goal")"
+    epic_digest="$(context_digest triage "$goal")"
+    hook="$(plugin_root)/hooks/scripts/phase-task-guard.sh"
+    mkdir -p "$(dirname "$spec_state")" "$(dirname "$epic_state")"
+    printf '%s\n' 'demo' > "$cwd/specs/.current-spec"
+    printf '%s\n' 'platform' > "$cwd/specs/.current-epic"
+    prepare_approved_state "$spec_state" requirements requirements-1 "$spec_digest" "$goal"
+    prepare_approved_state "$epic_state" triage triage-1 "$epic_digest" "$goal"
+
+    prompt="$(gate_prompt "$epic_state" requirements requirements-1 "$spec_digest")"
+    input="$(jq -n --arg cwd "$cwd" --arg prompt "$prompt" '{cwd:$cwd,tool_input:{subagent_type:"product-manager",prompt:$prompt}}')"
+    run bash -c 'printf "%s" "$1" | "$2"' _ "$input" "$hook"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'does not match the active state for phase requirements'* ]]
+
+    prompt="$(gate_prompt "$spec_state" triage triage-1 "$epic_digest")"
+    input="$(jq -n --arg cwd "$cwd" --arg prompt "$prompt" '{cwd:$cwd,tool_input:{subagent_type:"triage-analyst",prompt:$prompt}}')"
+    run bash -c 'printf "%s" "$1" | "$2"' _ "$input" "$hook"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'does not match the active state for phase triage'* ]]
 }
 
 @test "Task guard allows the active epic state" {
@@ -320,6 +357,21 @@ PY
     ! sed -n '/Use these as critical decision candidates/,/Inspect test tooling/p' "$tasks" | grep -q 'Task granularity'
 }
 
+@test "tasks walkthrough reports all five delivery phases" {
+    local tasks
+    tasks="$(plugin_root)/commands/tasks.md"
+    grep -q 'tasks across 5 phases' "$tasks"
+    grep -q 'Phase 5 (PR Lifecycle)' "$tasks"
+}
+
+@test "research writers leave approval state to the coordinator" {
+    local agent
+    agent="$(plugin_root)/agents/research-analyst.md"
+    grep -q 'Leave approval-state mutation to the coordinator' "$agent"
+    ! grep -q '/tmp/state.json' "$agent"
+    ! grep -q "jq '.awaitingApproval = true'" "$agent"
+}
+
 @test "triage uses epic gate state and delegates plan artifacts" {
     local triage flow
     triage="$(plugin_root)/commands/triage.md"
@@ -335,9 +387,29 @@ PY
     triage="$(plugin_root)/commands/triage.md"
     flow="$(plugin_root)/references/triage-flow.md"
     grep -q 'write `$EPIC_NAME` to `./specs/.current-epic`' "$triage"
+    grep -q 'either a new or resumed epic state' "$triage"
+    grep -q 'replacing any stale pointer' "$triage"
+    ! grep -q 'A resumed epic keeps its existing pointer' "$triage"
     grep -q 'Do not call `AskUserQuestion` in any exact-quick branch' "$triage"
     grep -q 'setup answers.*do not satisfy or replace this interview' "$triage"
     grep -q 'select \*\*Spec files\*\* as the deterministic default' "$flow"
     grep -q 'Do not ask an output question' "$flow"
     grep -q 'In interactive mode after explicit artifact approval, ask' "$flow"
+    grep -q 'In both interactive and exact quick mode, reload every selected skill' "$triage"
+    grep -q 'Call `begin-interview` only after the manifest is accepted' "$triage"
+}
+
+@test "configured-root research never falls back to the default specs directory" {
+    local parallel
+    parallel="$(plugin_root)/references/parallel-research.md"
+    grep -q '\$SPEC_PATH/research.md' "$parallel"
+    grep -q '\$SPEC_PATH/.research-' "$parallel"
+    ! grep -q '\./specs/\$spec' "$parallel"
+}
+
+@test "requirements review uses normalized persistent mode" {
+    local requirements
+    requirements="$(plugin_root)/commands/requirements.md"
+    grep -q 'Behavior branches on normalized persistent `quickMode` from state' "$requirements"
+    ! sed -n '/## Step 4: Artifact Review/,/## Step 5: Walkthrough/p' "$requirements" | grep -q 'check `--quick` in `\$ARGUMENTS`'
 }

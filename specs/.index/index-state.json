@@ -1,10 +1,10 @@
 {
   "version": "1.0",
-  "updated": "2026-04-07T11:17:53Z",
+  "updated": "2026-07-20T07:57:33Z",
   "directories": [
     {
       "path": "./specs",
-      "specsCount": 33,
+      "specsCount": 35,
       "isDefault": true
     }
   ],
@@ -87,11 +87,25 @@
       "totalTasks": 21
     },
     {
+      "name": "remove-codex-prefix",
+      "path": "./specs/remove-codex-prefix",
+      "phase": "tasks",
+      "taskIndex": 2,
+      "totalTasks": 16
+    },
+    {
       "name": "reality-verification-principle",
       "path": "./specs/reality-verification-principle",
       "phase": "tasks",
       "taskIndex": 9,
       "totalTasks": 11
+    },
+    {
+      "name": "requirements-process-improvements",
+      "path": "./specs/requirements-process-improvements",
+      "phase": "completed",
+      "taskIndex": 57,
+      "totalTasks": 57
     },
     {
       "name": "update-index-on-complete",
@@ -194,8 +208,8 @@
     {
       "name": "codex-plugin-sync",
       "path": "./specs/codex-plugin-sync",
-      "phase": "execution",
-      "taskIndex": 33,
+      "phase": "completed",
+      "taskIndex": 61,
       "totalTasks": 61
     },
     {

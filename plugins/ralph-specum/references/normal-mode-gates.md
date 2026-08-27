@@ -57,13 +57,15 @@ Keep `discoveredSkills` as append-only discovery history. Preserve legacy entrie
 
 Use outcomes `selected`, `not-selected`, `unreadable`, or `missing-description`. Do not add or consult `invoked` as load proof. Only the current `phaseSkillLoad` proves loaded contracts. Mirror each pass/revision in `.progress.md`.
 
+Each new pass revision records the complete selected set for that pass, including selections retained from pass 1. The helper requires the manifest's selected names and active sources to match that exact revision. Requirements, design, and tasks use pass 2 whenever `research.md` exists; otherwise they use pass 1. The other gated phases use pass 1.
+
 ## 3. Load contracts
 
 Before every new or resumed grill, read in full:
 
 - Every selected `SKILL.md` from the resolved active source.
 - Every reference or resource that the selected skill requires for the current work.
-- The interview-framework `SKILL.md` and `references/algorithm.md`.
+- The interview-framework `SKILL.md`, `references/algorithm.md`, and `references/domain-modeling.md`.
 
 Load optional examples and assets only when the current work needs them. Do not mark an unused optional file as required.
 
@@ -90,6 +92,7 @@ Create a manifest with this shape and record it:
       "reason": "Required phase interview framework",
       "source": "/absolute/path/SKILL.md",
       "body": {"sha256": "<sha256>", "loadStatus": "loaded", "errors": []},
+      "requiredResourceSources": ["/absolute/path/reference.md"],
       "requiredResources": [
         {"source": "/absolute/path/reference.md", "sha256": "<sha256>", "loadStatus": "loaded", "errors": []}
       ]
@@ -105,7 +108,9 @@ Create a manifest with this shape and record it:
 
 Set `core: false` on every domain skill. `failures` must exactly equal every failed body/resource error. Use `complete` only when every selected body/resource loads and both `warnings` and `failures` are empty. Use `partial_warned` when all core sources load but domain sources fail; keep failed domain receipts in `selected` and make `warnings == failures == domain errors`. Use `core_failed` when any core source fails; make `failures` equal core plus domain errors, keep `warnings` equal domain errors only, and stop.
 
-The manifest has exactly one `core: true` selection: `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Its `requiredResources` contains `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/references/algorithm.md`. A readable file elsewhere with `core: true` is not the core contract. A failed receipt uses `sha256: null`, `loadStatus: failed`, and nonempty `errors`; a loaded receipt uses the current source hash and empty errors. Submit `artifactAgentLoads` as an empty array. Only `record-agent-load` may append artifact-agent receipts after the manifest is accepted.
+Every selected contract records `requiredResourceSources` after its complete `SKILL.md` is inspected. List every resource the skill marks required for the current work, and use an empty array only when that inspection finds none. `requiredResources` must contain one receipt for each inventory source in the same order; the helper rejects any omitted or added receipt.
+
+The manifest has exactly one `core: true` selection: `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Its resource inventory and receipts contain both `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/references/algorithm.md` and `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/references/domain-modeling.md`. A readable file elsewhere with `core: true` is not the core contract. A failed receipt uses `sha256: null`, `loadStatus: failed`, and nonempty `errors`; a loaded receipt uses the current source hash and empty errors. Submit `artifactAgentLoads` as an empty array. Only `record-agent-load` may append artifact-agent receipts after the manifest is accepted.
 
 Write the JSON to a temporary file and run:
 
@@ -137,6 +142,8 @@ frame(ARTIFACT_SOURCE_1) frame(ARTIFACT_BYTES_1)
 ```
 
 `frame(BYTES)` is the ASCII decimal byte length, one colon byte, then the unmodified bytes. Encode the fixed marker, phase, exact goal snapshot, and absolute artifact source labels as UTF-8. Sort artifacts lexically by absolute source. Store the exact nonblank goal in `phaseSkillLoad.context.goal` and each artifact as an absolute `source` plus its lowercase SHA-256 in `phaseSkillLoad.context.artifacts`. The helper reads and hashes current artifact bytes, checks every artifact receipt, recomputes the digest at record, begin, delegation check, and agent-write check, and rejects any mismatch. When top-level `state.goal` exists, it is the canonical goal and must equal the snapshot. A legacy state without `goal` uses the persisted snapshot as its source of truth. Exclude interview answers, load receipts, discovery history, progress bookkeeping, and skill bytes.
+
+Context artifacts are exact phase inputs: requirements includes `research.md` when present; design requires `requirements.md` and includes `research.md` when present; tasks requires `requirements.md` plus `design.md` and includes `research.md` when present. Start, triage, and research have no prior-artifact input. The helper rejects omitted, extra, missing, or newly applicable artifacts, so an approval cannot survive an upstream change.
 
 On resume, reuse the same phase, interview ID, immutable digest, discovery revision, and current round. For a matching active interview, `begin-interview` returns `resumed: true` and preserves answers and pending IDs. It rejects terminal interviews and different active tuples. Call `open-frontier --round N` to re-ask pending decisions. Advance to exactly `N+1` only when no decision is pending. Never restart `begin-interview` with a new tuple merely because the user answered partially.
 

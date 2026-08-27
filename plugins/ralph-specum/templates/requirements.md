@@ -1,5 +1,10 @@
 # Requirements: {{FEATURE_NAME}}
 
+## Problem Statement
+
+<!-- Quick mode with no research evidence: derive from the goal + stated assumptions or use `TBD (user, next review)` -- never fabricate evidence. -->
+{{problem}} affecting {{affected user}}. Evidence: {{evidence pointer to research.md}}
+
 ## Goal
 
 {{1-2 sentence description of what this feature accomplishes and why it matters}}
@@ -13,8 +18,8 @@
 **So that** {{benefit/value}}
 
 **Acceptance Criteria:**
-- AC-1.1: {{Specific, testable criterion}}
-- AC-1.2: {{Specific, testable criterion}}
+- AC-1.1: Given {{context}}, When {{action}}, Then {{observable outcome}}
+- AC-1.2: Given {{context}}, When {{action}}, Then {{observable outcome}}
 
 ### US-2: {{Story Title}}
 
@@ -23,18 +28,20 @@
 **So that** {{benefit/value}}
 
 **Acceptance Criteria:**
-- AC-2.1: {{Specific, testable criterion}}
-- AC-2.2: {{Specific, testable criterion}}
+- AC-2.1: Given {{context}}, When {{action}}, Then {{observable outcome}}
+- AC-2.2: Given {{context}}, When {{action}}, Then {{observable outcome}}
 
 ## Functional Requirements
 
 | ID | Requirement | Priority | Acceptance Criteria |
 |----|-------------|----------|---------------------|
-| FR-1 | {{description}} | High | {{how to verify}} |
-| FR-2 | {{description}} | Medium | {{how to verify}} |
-| FR-3 | {{description}} | Low | {{how to verify}} |
+| FR-1 | System MUST {{description}} | Must | AC-1.1, AC-1.2 |
+| FR-2 | System SHOULD {{description}} | Should | AC-2.1 |
+| FR-3 | System MAY {{description}} | Could | AC-2.2 |
 
 ## Non-Functional Requirements
+
+<!-- Every row must have Metric and Target filled, or Target set to `N/A: <reason>`. Delete unused boilerplate rows. -->
 
 | ID | Requirement | Metric | Target |
 |----|-------------|--------|--------|
@@ -49,8 +56,10 @@
 
 ## Out of Scope
 
-- {{Item explicitly not included in this implementation}}
-- {{Another exclusion to prevent scope creep}}
+Default-scope rule: anything not listed here that falls under the Goal is in scope.
+
+- {{Non-goal explicitly not included in this implementation}}
+- {{Another non-goal to prevent scope creep}}
 
 ## Dependencies
 
@@ -68,3 +77,9 @@
 |------|--------|------------|
 | {{Risk 1}} | High/Medium/Low | {{How to mitigate}} |
 | {{Risk 2}} | High/Medium/Low | {{How to mitigate}} |
+
+## Unresolved Questions
+
+<!-- Open ambiguities that still need a decision. Each bullet needs an owner and date (e.g., `Owner: name, 2026-08-01`), or state "None". -->
+
+- {{Open question}} Owner: {{name}}, {{expected date}}

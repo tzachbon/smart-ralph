@@ -26,7 +26,7 @@ Every phase skill acts as a coordinator. The coordinator:
 1. Normalizes mode through `scripts/phase_gate.py mode`. Only exact `--quick` and exact `--interactive` change mode.
 2. Runs the applicable skill discovery pass.
 3. Reloads the internal `interview-framework-codex` skill, every selected domain skill, and every required current-work reference.
-4. Runs the critical-decision frontier interview from `skills/interview-framework-codex/references/algorithm.md`.
+4. Runs the critical-decision frontier interview from `skills/interview-framework-codex/references/algorithm.md` with the required domain-language contract in `references/domain-modeling.md`.
 5. Obtains explicit `approve and delegate` confirmation.
 6. Persists that choice with confirmation source `approve-and-delegate`, runs `phase_gate.py check-delegation`, and delegates artifact generation to the phase sub-agent.
 7. Validates the sub-agent output and presents it for artifact approval.
@@ -162,7 +162,7 @@ During artifact review, `apply the changes` immediately delegates already-record
 
 ## Hook-Driven Execution Path
 
-When the Codex Stop hook is enabled (`[features] codex_hooks = true` in Codex config), the execution loop runs without user re-invocation:
+When the bundled Codex Stop hook is trusted and enabled, the execution loop runs without user re-invocation:
 
 1. The stop-watcher script runs on every agent stop event.
 2. It reads `.ralph-state.json` to determine the current phase and task index.
@@ -171,7 +171,7 @@ When the Codex Stop hook is enabled (`[features] codex_hooks = true` in Codex co
 5. The loop repeats until all tasks are complete or `taskIndex >= totalTasks`.
 6. On completion the script outputs `{"decision": "proceed"}` to allow the session to close normally.
 
-The Stop hook is experimental and requires `codex_hooks = true`. It is disabled by default and not available on Windows. Verify the feature flag is set before relying on hook-driven execution.
+Codex enables hooks by default, but plugin hooks do not run until you review and trust them with `/hooks`. This hook also requires `bash` and `jq`.
 
 ## Manual Fallback Path
 
@@ -183,11 +183,11 @@ When hooks are disabled or unavailable, re-invoke the implement skill after each
 4. Repeat step 1 until the skill reports all tasks complete.
 5. If a task is blocked (exceeded retry limit), the skill will report the blocker. Resolve the issue manually, then re-invoke to continue.
 
-Use this path whenever `codex_hooks` is not set, when running on Windows, or when verifying hook behavior during development.
+Use this path whenever the Stop hook is not trusted or enabled, when `bash` or `jq` is unavailable, or when verifying hook behavior during development.
 
-## Hook-Driven Execution Path
+## Hook-Driven Execution Details
 
-When `[features] codex_hooks = true` is set in `config.toml`, the execution loop is automated via the Stop hook.
+When the bundled Stop hook is trusted and enabled, it automates the execution loop.
 
 ### How it works
 
@@ -214,9 +214,9 @@ When `[features] codex_hooks = true` is set in `config.toml`, the execution loop
 - No `.ralph-state.json` found -> exit 0
 - `taskIndex >= totalTasks` -> exit 0 (all done)
 
-## Manual Fallback Path
+## Manual Fallback Details
 
-When hooks are disabled (no `codex_hooks = true`, or on Windows), run phases manually:
+When the Stop hook is not trusted or enabled, or when `bash` or `jq` is unavailable, run phases manually:
 
 ### Step-by-step re-invocation
 

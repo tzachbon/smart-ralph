@@ -20,6 +20,8 @@ Compute the digest from the length-framed phase, exact goal snapshot, and curren
 
 ## 2. Build the design tree
 
+First resolve facts from the goal, state, `.progress.md`, prior artifacts, configured specs index, applicable `CONTEXT.md`, code, configuration, and tests. Classify each unknown as a discoverable fact or a consequential user decision. Use read-only exploration for facts. Ask no repository fact as a user question.
+
 For each candidate topic from the phase territory:
 
 1. Assign a stable decision ID.
@@ -43,6 +45,8 @@ Represent each open node as:
   consequences
 }
 ```
+
+Track each node as `OPEN`, `INVESTIGATING`, `RESOLVED`, or `OUT_OF_SCOPE`. Apply the domain-language checks in `domain-modeling.md` throughout the tree. Update the applicable glossary when a domain term is resolved; do not create an ADR.
 
 Apply clear instruction precedence automatically. If loaded skill contracts still conflict materially after system, developer, user, project, plugin, and skill precedence is applied, create an unblocked conflict decision in the first layer. Describe both unresolved contracts and the consequence of choosing each.
 
@@ -80,10 +84,13 @@ while critical open nodes remain:
     mark that node resolved
 
   keep omitted or ambiguous nodes open
+  turn an Other response into a specific dependent node
+  add branches exposed by the answers
   infer dependent answers only when the inference is deterministic
 ```
 
 Ask all independent decisions together. Never reduce the batch below four merely to simulate a one-question-at-a-time conversation.
+If `AskUserQuestion` is available, use it for the numbered frontier round; otherwise render the same numbered round in the response. Ask every currently unblocked user decision in the same round, splitting only at the tool limit. Advance no phase with an open frontier.
 
 ## 4. Handle partial and free-text answers
 
@@ -92,6 +99,7 @@ Ask all independent decisions together. Never reduce the batch below four merely
 - Keep unanswered questions active.
 - Turn ambiguous free text into a focused follow-up only when the ambiguity changes a material outcome.
 - Inspect any factual claim that can be verified locally before asking the user to confirm it.
+- Treat `Other` as input to a concrete next-layer decision, never as a generic invitation to elaborate.
 - Bound follow-ups by decision resolution, not an arbitrary question count.
 
 ## 5. Prepare the decision brief

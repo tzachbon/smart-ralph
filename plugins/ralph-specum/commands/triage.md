@@ -71,9 +71,17 @@ Extract from $ARGUMENTS:
 - **epic-name**: First argument (kebab-case). In interactive mode, ask if missing. In exact quick mode, stop with an input error if a new epic needs a name.
 - **goal**: Remaining arguments. In interactive mode, ask if missing. In exact quick mode, stop with an input error if a new epic needs a goal.
 
-Create epic directory:
+Validate the resolved epic name before constructing any path. Reject it unless it matches `^[a-z0-9]+(-[a-z0-9]+)*$`.
+
+Set `EPIC_DIR="./specs/_epics/$EPIC_NAME"`. Before creating or initializing anything:
+
+- If `$EPIC_DIR/.epic-state.json` exists, reuse that epic state and resume it. Never overwrite its `.progress.md` or state.
+- If `$EPIC_DIR` exists without a valid `.epic-state.json`, stop with an input error and require a different epic name or an explicit user-authorized reset.
+- Only when `$EPIC_DIR` does not exist, create and initialize it.
+
+Create a new epic directory:
 ```bash
-mkdir -p "./specs/_epics/$EPIC_NAME"
+mkdir -p "$EPIC_DIR"
 ```
 
 Initialize `.progress.md`:
@@ -90,38 +98,41 @@ $GOAL
 (none yet)
 ```
 
-Initialize `./specs/_epics/$EPIC_NAME/.epic-state.json` before skill discovery:
+Initialize `$EPIC_DIR/.epic-state.json` before skill discovery. Serialize the user-provided name and goal through `jq --arg`:
 
-```json
-{
-  "name": "$EPIC_NAME",
-  "goal": "$GOAL",
-  "specs": [],
-  "output": null,
-  "issueNumber": null,
-  "quickMode": false,
-  "discoveredSkills": []
-}
+```bash
+jq -n \
+  --arg name "$EPIC_NAME" \
+  --arg goal "$GOAL" \
+  '{
+    name: $name,
+    goal: $goal,
+    specs: [],
+    output: null,
+    issueNumber: null,
+    quickMode: false,
+    discoveredSkills: []
+  }' > "$EPIC_DIR/.epic-state.json"
 ```
 
 Normalize persistent mode with `phase_gate.py mode`. Exact `--quick` enables the bypass, exact `--interactive` clears it, and no flag resets legacy invalid quick state.
 
-Immediately after the initial state exists, write `$EPIC_NAME` to `./specs/.current-epic` and ensure its gitignore entry. Do this before skill discovery, the interview, or any artifact Task so both guards resolve this exact active epic state. A resumed epic keeps its existing pointer.
+After resolving either a new or resumed epic state, write `$EPIC_NAME` to `./specs/.current-epic`, replacing any stale pointer, and ensure its gitignore entry. Do this before skill discovery, the interview, or any artifact Task so both guards resolve this exact active epic state.
 
 ## Step 3.5: Skill Discovery, Grill, and Approval
 
 1. Run skill discovery pass 1 from `normal-mode-gates.md` against the epic goal.
-2. In normal mode, reload every selected skill and required current-work resource.
-3. Run the interview-framework with phase `triage` and only critical decomposition decisions. Inspect codebase boundaries and existing architecture instead of asking the user. Interactive setup answers for epic name, goal, or branch strategy do not satisfy or replace this interview.
-4. Present the decision brief and obtain explicit `Approve and delegate` approval. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for that explicit approval selection.
-5. In quick mode, record `bypassed_quick` through `begin-interview` instead.
+2. In both interactive and exact quick mode, reload every selected skill and required current-work resource, hash them, and record the current `phaseSkillLoad` manifest. A core load failure blocks both modes.
+3. Call `begin-interview` only after the manifest is accepted.
+4. In interactive mode, run the interview-framework with phase `triage` and only critical decomposition decisions. Inspect codebase boundaries and existing architecture instead of asking the user. Interactive setup answers for epic name, goal, or branch strategy do not satisfy or replace this interview.
+5. Present the decision brief and obtain explicit `Approve and delegate` approval. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for that explicit approval selection. In exact quick mode, `begin-interview` records `bypassed_quick` and asks no questions.
 6. Run `check-delegation` immediately before the first artifact-producing Task.
 
 ## Step 4: Run Triage Flow
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/triage-flow.md` and follow the full explore-brainstorm-validate-finalize sequence.
 
-Pass the phase gate marker and full skill manifest to every `research-analyst` and `triage-analyst` Task. Require their per-source load receipts and write checks. Read-only `Explore` Tasks remain allowed.
+Pass every writer the absolute epic-state and helper paths, complete `[RALPH_PHASE_GATE]` tuple (`state`, `phase`, `interviewId`, `discoveryRevision`, `contextDigest`), verbatim manifest, complete approved brief, fresh `artifactAgentId`, and matching per-source load/write-check instructions. Use a fresh identity for every revision. Read-only `Explore` Tasks remain allowed.
 
 <mandatory>
 **YOU ARE A COORDINATOR, NOT AN IMPLEMENTER.**

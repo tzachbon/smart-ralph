@@ -69,20 +69,50 @@ You receive via Task delegation from a coordinator (phase command or implement.m
 
 ### Requirements Rubric
 
-| Dimension | PASS Criteria | FAIL Criteria |
+Judgment dimensions (evaluated by you; separate from the 8 mechanical checks below):
+
+| Dimension | PASS Criteria | FAIL/WARN Criteria |
 |-----------|--------------|---------------|
-| Completeness | User stories have acceptance criteria (AC-*); FRs have priorities (Must/Should/Could) | User stories missing ACs; FRs missing priority levels |
-| Testability | Acceptance criteria are specific, measurable, and automatable (e.g., "grep -q X file.md") | ACs are vague (e.g., "works correctly", "is good") or not verifiable |
-| Traceability | Every FR traces back to at least one user story | FRs exist without connection to any user story |
-| Scope | Requirements match the stated goal; no out-of-scope features included | Requirements include features not related to the original goal |
+| Testability | ACs describe observable behavior in Given/When/Then form; each Then is verifiable | FAIL: ACs are vague (e.g., "works correctly", "is good") or Then clause not observable |
+| Coverage adequacy | Non-happy-path scenarios covered per story, or marked N/A with a legitimate reason | WARN: happy-path-only ACs with no N/A markings, or N/A reasons that don't hold up |
+| Scope | Requirements match the stated goal; no out-of-scope features | FAIL: features unrelated to the original goal |
+| Problem Statement quality | States problem, affected user, and evidence | FAIL: missing, or restates the solution instead of the problem |
+| Traceability | Every FR traces to at least one user story (FR↔US) | FAIL: FRs with no connecting user story |
+
+Completeness expectations: user stories have AC-* items; FRs have Must/Should/Could priorities (mechanically enforced by C1-C3).
 
 **Examples**:
-- Completeness PASS: "US-1 ... AC-1.1: grep -q 'REVIEW_PASS' agents/spec-reviewer.md exits 0" and "FR-1 (Must): Create reviewer agent".
-- Completeness FAIL: "US-1: As a developer I want reviews" with no AC-* items listed, or "FR-1: Add reviewer" with no priority.
-- Testability PASS: "AC-2.1: Running `grep -q 'Layer 5' commands/implement.md` exits 0."
+- Testability PASS: "AC-2.1: Given a requirements doc with a missing priority, When the lint runs, Then it reports a C3 FAIL."
 - Testability FAIL: "AC-2.1: The implementation should work correctly and be high quality."
+- Coverage adequacy WARN: US-3 lists only happy-path ACs, no `N/A:` scenario markings.
+- Problem Statement FAIL: "Problem: we need a reviewer agent" (solution restatement, no user or evidence).
 - Traceability PASS: "FR-3 traces to US-1 (phase reviews)" with explicit reference.
 - Traceability FAIL: "FR-7: Support dark mode" appears with no corresponding user story.
+
+**Lint script (hybrid gate)**: When `artifactType: requirements` and an `artifactPath` is provided, resolve the script path with a fallback and run it. Prefer `${CLAUDE_PLUGIN_ROOT}`; if that variable is unset/empty or the file is missing, fall back to the repo-relative path; only if neither resolves, apply the Degradation rule (manual review):
+
+```bash
+LINT="${CLAUDE_PLUGIN_ROOT:+$CLAUDE_PLUGIN_ROOT/hooks/scripts/lint-requirements.sh}"
+[ -f "$LINT" ] || LINT="plugins/ralph-specum/hooks/scripts/lint-requirements.sh"
+[ -f "$LINT" ] && bash "$LINT" <artifactPath>   # neither path exists -> Degradation rule
+```
+
+The script emits pipe-delimited findings (`FAIL|Cn|msg`, `WARN|Cn|msg`, `CHECK|Cn|PASS`) and exits 0 (no FAILs), 1 (FAILs), or 2 (usage/read error). Map each of the 8 checks into the findings table as its own row, with Status (PASS/WARN/FAIL) and messages taken verbatim from script output:
+
+| Check | Definition |
+|-------|------------|
+| C1 | ID & cross-reference integrity (US/FR/NFR/AC IDs well-formed, no duplicates, no dangling refs) |
+| C2 | Given/When/Then clause presence in every AC |
+| C3 | MoSCoW priority values (Must/Should/Could) in FR table |
+| C4 | Requirement-language lint (modal verb present, no vague terms) |
+| C5 | NFR fill-or-N/A (every NFR category filled or explicit N/A) |
+| C6 | Six-scenario coverage proxy (WARN-only heuristic) |
+| C7 | Unowned TBD / open questions (WARN-only) |
+| C8 | MUST:SHOULD ratio advisory (WARN-only) |
+
+**Signal semantics (requirements)**: `REVIEW_FAIL` only when >=1 FAIL-class finding exists (mechanical C1-C5 or judgment FAIL). WARN-only results -> `REVIEW_PASS` with warnings listed in the findings table; WARN never blocks.
+
+**Degradation rule**: If the script exits 2 or the command errors (missing script, bash failure), add an INFO finding noting the script was unavailable, then perform the 8 checks manually using the definitions above. Warn and continue; never abort the review.
 
 ### Design Rubric
 
@@ -228,7 +258,7 @@ REVIEW_FAIL
 ```
 
 Rules:
-- If ALL dimensions are PASS: output `REVIEW_PASS`
+- If no dimension is FAIL (all PASS or WARN): output `REVIEW_PASS`, listing any WARN rows as warnings
 - If ANY dimension is FAIL: output `REVIEW_FAIL`
 - The signal MUST be the very last line of output (no trailing whitespace or text after it)
 - The "Feedback for Revision" section is REQUIRED when outputting REVIEW_FAIL

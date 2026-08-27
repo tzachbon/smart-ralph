@@ -23,20 +23,33 @@ Create a task for each item and complete in order:
 
 ## Step 1: Gather Context
 
-1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it; otherwise use `ralph_resolve_current()`
+1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it; otherwise use `ralph_resolve_current()`. Store the resolved spec directory as `SPEC_PATH`.
 2. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
 3. Check the resolved spec directory exists
 4. Check `requirements.md` exists. If not, error: "Requirements not found. Run /ralph-specum:requirements first."
-5. Read `.ralph-state.json`; verify explicit requirements artifact approval before clearing its artifact approval flag
-6. Read context: `requirements.md` (required), `research.md` (if exists), `.progress.md`
-7. Reject simultaneous exact `--quick` and `--interactive`. Normalize persistent mode with `phase_gate.py mode` before deciding whether to grill.
+5. Read `.ralph-state.json`, reject simultaneous exact `--quick` and `--interactive`, and normalize persistent mode with `phase_gate.py mode`.
+6. When normalized `quickMode` is false, require explicit requirements artifact approval before clearing its approval flag. Exact quick mode continues with the validated file.
+7. Read context: `requirements.md` (required), `research.md` (if exists), `.progress.md`.
 8. Run any missing applicable skill discovery pass. When research exists, pass 2 must be present.
 
 ## Step 2: Skill Load, Critical Grill, and Approval
 
-If normalized `quickMode` is true, call `begin-interview` for phase `design` and continue to Step 3.
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` in full to resolve the design-tree frontier under the persisted gate state.
 
-In interactive mode, reload all selected contracts and apply the interview-framework with phase `design`. Candidate critical decisions include architecture boundaries with materially different coupling, failure-policy choices, compatibility or migration commitments, and rollout risk. Inspect existing architecture, libraries, integration seams, deployment tooling, and conventions instead of asking about them.
+In both interactive and exact quick mode, reload all selected contracts and required current-work resources, hash them, record the current manifest, then call `begin-interview` for phase `design`. A core load failure blocks either mode.
+
+If normalized `quickMode` is true, the helper records `bypassed_quick`; continue to Step 3 without questions.
+
+In interactive mode, apply the interview-framework with phase `design`. Candidate critical decisions include architecture boundaries with materially different coupling, failure-policy choices, compatibility or migration commitments, and rollout risk. Inspect existing architecture, libraries, integration seams, deployment tooling, and conventions instead of asking about them.
+
+Treat this exploration territory as hints for the design tree, not a script:
+
+- **Architecture fit** -- extend an existing boundary, isolate a new component, or accept a prerequisite refactor?
+- **Technology constraints** -- which libraries, frameworks, and patterns are required or forbidden?
+- **Integration tightness** -- where should ownership and data boundaries sit?
+- **Failure and rollout** -- which degradation, retry, migration, compatibility, or rollout choices change risk?
+
+When multiple grounded architecture approaches remain viable, add them as explicit design-tree branches with their coupling and delivery tradeoffs. Apply domain-language modeling from the interview framework and append each completed frontier round to `.progress.md`.
 
 Ask the whole currently unblocked critical frontier, in calls of at most four questions. Persist partial answers. Apply control-only and bare-skip semantics. Present the design decision brief and require explicit `Approve and delegate`. On approval, run `check-delegation` and launch Step 3 immediately in the same response.
 
@@ -52,13 +65,13 @@ Follow the full team lifecycle:
 1. **Clean up stale team (MANDATORY FIRST ACTION)**: Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
 2. **Create team**: `TeamCreate(team_name: "design-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate technical design for $spec", activeForm: "Generating design")`
-4. **Spawn teammate**: Immediately run `check-delegation`, then call `Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1")`. Include artifact agent ID `architect-1`, the gate marker, full selected-skill manifest, approved decision brief, requirements, and research. Instruct the agent to design architecture with mermaid diagrams, component responsibilities, technical decisions with rationale, file structure, error handling, and test strategy. Output to `./specs/$spec/design.md`.
+4. **Spawn teammate**: Immediately run `check-delegation`, then call `Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1")`. Include the absolute state and helper paths, complete `[RALPH_PHASE_GATE]` tuple (`state`, `phase`, `interviewId`, `discoveryRevision`, `contextDigest`), verbatim manifest, fresh artifact agent ID `architect-1`, matching load/write-check instructions, approved decision brief, requirements, and research. Instruct the agent to design architecture with mermaid diagrams, component responsibilities, technical decisions with rationale, file structure, error handling, and test strategy. Output to `$SPEC_PATH/design.md`.
 5. **Wait for completion**: Monitor via TaskList.
 6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "architect-1")`
-7. **Collect results**: Read `./specs/$spec/design.md`.
+7. **Collect results**: Read `$SPEC_PATH/design.md`.
 8. **Clean up**: `TeamDelete()`.
 
-**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: architect-reviewer)` call.
+**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still failing, run `check-delegation` and use a direct `Task(subagent_type: architect-reviewer)` with the same complete gate packet and a fresh unique artifact agent ID.
 </mandatory>
 
 ## Step 4: Automatic Artifact Review (authorized quick mode)
@@ -76,7 +89,7 @@ Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
 
 **Review delegation**: Include full design.md content, iteration count, prior findings. Upstream: research.md + requirements.md.
 
-**Revision delegation**: Run `check-delegation`, create a fresh unique artifact agent ID, and re-invoke architect-reviewer with reviewer feedback, gate marker, manifest, current artifact, and requirements.md. The agent reloads successful sources, records receipts, and checks its write gate. Focus on specific issues.
+**Revision delegation**: Run `check-delegation`, create a fresh unique artifact agent ID, and re-invoke architect-reviewer with the absolute state/helper paths, complete marker identity tuple, verbatim manifest, matching load/write-check instructions, reviewer feedback, current artifact, and requirements.md. Focus on specific issues.
 
 **Error handling**: Reviewer no signal = REVIEW_PASS. Agent failure = retry once, then use original.
 </mandatory>
@@ -86,11 +99,11 @@ Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
 <mandatory>
 **WALKTHROUGH IS REQUIRED - DO NOT SKIP.**
 
-Read `./specs/$spec/design.md` and display:
+Read `$SPEC_PATH/design.md` and display:
 
 ```
 Design complete for '$spec'.
-Output: $PWD/specs/$spec/design.md
+Output: $SPEC_PATH/design.md
 
 ## What I Designed
 
@@ -121,7 +134,7 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 **If "Run review"**: Invoke spec-reviewer via Task tool with full design.md content (upstream: research.md + requirements.md). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
 **If "Request changes", "Other", or `apply the changes`**:
 1. Apply already-recorded review or revision feedback immediately. Ask one focused change question only when no pending feedback exists.
-2. Run `check-delegation`, then re-invoke architect-reviewer using the **cleanup-and-recreate** team pattern with a new unique artifact agent ID, the gate marker, manifest, current artifact, and feedback
+2. Run `check-delegation`, then re-invoke architect-reviewer using the **cleanup-and-recreate** team pattern with the same complete packet and a new unique artifact agent ID, current artifact, and feedback
 3. Re-display walkthrough, ask again with same 3 choices. Loop until approved.
 
 ## Step 6: Finalize
@@ -140,7 +153,7 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 
 Read `commitSpec` from `.ralph-state.json`. If true:
 ```bash
-git add ./specs/$spec/design.md
+git add "$SPEC_PATH/design.md"
 git commit -m "spec($spec): add technical design"
 git push -u origin $(git branch --show-current)
 ```

@@ -46,7 +46,7 @@
         "discoveryRevision": { "type": ["string", "integer"] },
         "revision": { "type": ["string", "integer"] },
         "activeSource": { "type": "string", "minLength": 1 },
-        "outcome": { "type": "string" },
+        "outcome": { "type": "string", "enum": ["selected", "not-selected", "unreadable", "missing-description"] },
         "reason": { "type": "string" },
         "shadowedSources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
         "invoked": { "type": "boolean" }
@@ -89,7 +89,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["name", "reason", "source", "core", "body", "requiredResources"],
+            "required": ["name", "reason", "source", "core", "body", "requiredResourceSources", "requiredResources"],
             "properties": {
               "name": { "type": "string", "minLength": 1 },
               "reason": { "type": "string", "minLength": 1 },
@@ -123,6 +123,11 @@
                     }
                   }
                 ]
+              },
+              "requiredResourceSources": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": { "type": "string", "minLength": 1, "pattern": "^/" }
               },
               "requiredResources": {
                 "type": "array",

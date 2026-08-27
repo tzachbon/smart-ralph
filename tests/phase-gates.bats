@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+set -e
+
 repo_root() {
     echo "$BATS_TEST_DIRNAME/.."
 }
@@ -36,16 +38,24 @@ setup() {
     SKILL_FILE="$TEST_DIR/SKILL.md"
     RESOURCE_FILE="$TEST_DIR/reference.md"
     DOMAIN_FILE="$TEST_DIR/domain-skill.md"
+    RESEARCH_FILE="$TEST_DIR/research.md"
+    REQUIREMENTS_FILE="$TEST_DIR/requirements.md"
+    DESIGN_FILE="$TEST_DIR/design.md"
     GOAL="Demo goal"
     printf '%s\n' '# skill' > "$SKILL_FILE"
     printf '%s\n' '# reference' > "$RESOURCE_FILE"
     printf '%s\n' '# domain skill' > "$DOMAIN_FILE"
+    printf '%s\n' '# Research' 'current research' > "$RESEARCH_FILE"
+    printf '%s\n' '# Requirements' 'current requirements' > "$REQUIREMENTS_FILE"
+    printf '%s\n' '# Design' 'current design' > "$DESIGN_FILE"
     SKILL_HASH="$(shasum -a 256 "$SKILL_FILE" | awk '{print $1}')"
     RESOURCE_HASH="$(shasum -a 256 "$RESOURCE_FILE" | awk '{print $1}')"
     DOMAIN_HASH="$(shasum -a 256 "$DOMAIN_FILE" | awk '{print $1}')"
-    DIGEST="$(context_digest requirements "$GOAL")"
-    export TEST_DIR STATE_FILE SKILL_FILE RESOURCE_FILE DOMAIN_FILE DIGEST GOAL SKILL_HASH RESOURCE_HASH DOMAIN_HASH
-    printf '%s\n' '{"source":"spec","name":"demo","goal":"Demo goal","basePath":"./specs/demo","phase":"requirements","unknown":{"keep":true}}' > "$STATE_FILE"
+    DIGEST="$(context_digest requirements "$GOAL" "$RESEARCH_FILE")"
+    export TEST_DIR STATE_FILE SKILL_FILE RESOURCE_FILE DOMAIN_FILE RESEARCH_FILE REQUIREMENTS_FILE DESIGN_FILE DIGEST GOAL SKILL_HASH RESOURCE_HASH DOMAIN_HASH
+    jq -n --arg base_path "$TEST_DIR" \
+        '{source:"spec",name:"demo",goal:"Demo goal",basePath:$base_path,phase:"requirements",unknown:{keep:true}}' \
+        > "$STATE_FILE"
 }
 
 teardown() {
@@ -56,8 +66,9 @@ teardown() {
 
 write_skill_load() {
     local status resource_status warnings resource_errors failures plugin_root plugin_name
-    local core_name core_source core_algorithm core_hash core_algorithm_hash resource_sha
-    local manifest_phase manifest_interview_id
+    local core_name core_source core_algorithm core_domain core_hash core_algorithm_hash core_domain_hash resource_sha
+    local manifest_phase manifest_interview_id discovery_pass context_json source source_hash
+    local context_sources=()
     status="${1:-complete}"
     resource_status="${2:-loaded}"
     warnings="${3:-[]}"
@@ -72,8 +83,10 @@ write_skill_load() {
     fi
     core_source="$plugin_root/skills/$core_name/SKILL.md"
     core_algorithm="$plugin_root/skills/$core_name/references/algorithm.md"
+    core_domain="$plugin_root/skills/$core_name/references/domain-modeling.md"
     core_hash="$(shasum -a 256 "$core_source" | awk '{print $1}')"
     core_algorithm_hash="$(shasum -a 256 "$core_algorithm" | awk '{print $1}')"
+    core_domain_hash="$(shasum -a 256 "$core_domain" | awk '{print $1}')"
     if [ "$resource_status" = "failed" ]; then
         resource_sha=null
     else
@@ -81,14 +94,41 @@ write_skill_load() {
     fi
     manifest_phase="${phase:-requirements}"
     manifest_interview_id="${interview_id:-requirements-1}"
-    DIGEST="$(context_digest "$manifest_phase" "$GOAL")"
+    case "$manifest_phase" in
+        requirements) [ -f "$RESEARCH_FILE" ] && context_sources+=("$RESEARCH_FILE") ;;
+        design)
+            [ -f "$RESEARCH_FILE" ] && context_sources+=("$RESEARCH_FILE")
+            [ -f "$REQUIREMENTS_FILE" ] && context_sources+=("$REQUIREMENTS_FILE")
+            ;;
+        tasks)
+            [ -f "$RESEARCH_FILE" ] && context_sources+=("$RESEARCH_FILE")
+            [ -f "$REQUIREMENTS_FILE" ] && context_sources+=("$REQUIREMENTS_FILE")
+            [ -f "$DESIGN_FILE" ] && context_sources+=("$DESIGN_FILE")
+            ;;
+    esac
+    if [[ "$manifest_phase" =~ ^(requirements|design|tasks)$ ]] && [ -f "$RESEARCH_FILE" ]; then
+        discovery_pass="pass2"
+    else
+        discovery_pass="pass1"
+    fi
+    DIGEST="$(context_digest "$manifest_phase" "$GOAL" "${context_sources[@]}")"
     export DIGEST
+    context_json='[]'
+    for source in "${context_sources[@]}"; do
+        source_hash="$(shasum -a 256 "$source" | awk '{print $1}')"
+        context_json="$(jq --arg source "$source" --arg sha256 "$source_hash" \
+            '. + [{source:$source,sha256:$sha256}]' <<< "$context_json")"
+    done
+    jq --arg pass "$discovery_pass" --arg name "$core_name" --arg source "$core_source" \
+        '.discoveredSkills = [{pass:$pass,revision:"rev-7",name:$name,activeSource:$source,reason:"Required phase interview framework",shadowedSources:[],outcome:"selected"}]' \
+        "$STATE_FILE" > "$TEST_DIR/state-with-discovery.json"
+    mv "$TEST_DIR/state-with-discovery.json" "$STATE_FILE"
     printf '%s\n' "{
   \"phase\": \"$manifest_phase\",
   \"interviewId\": \"$manifest_interview_id\",
   \"discoveryRevision\": \"rev-7\",
   \"contextDigest\": \"$DIGEST\",
-  \"context\": {\"goal\": \"$GOAL\", \"artifacts\": []},
+  \"context\": {\"goal\": \"$GOAL\", \"artifacts\": $context_json},
   \"status\": \"$status\",
   \"selected\": [{
     \"name\": \"$core_name\",
@@ -96,7 +136,11 @@ write_skill_load() {
     \"source\": \"$core_source\",
     \"core\": true,
     \"body\": {\"sha256\": \"$core_hash\", \"loadStatus\": \"loaded\", \"errors\": []},
-    \"requiredResources\": [{\"source\": \"$core_algorithm\", \"sha256\": $resource_sha, \"loadStatus\": \"$resource_status\", \"errors\": $resource_errors}]
+    \"requiredResourceSources\": [\"$core_algorithm\", \"$core_domain\"],
+    \"requiredResources\": [
+      {\"source\": \"$core_algorithm\", \"sha256\": $resource_sha, \"loadStatus\": \"$resource_status\", \"errors\": $resource_errors},
+      {\"source\": \"$core_domain\", \"sha256\": \"$core_domain_hash\", \"loadStatus\": \"loaded\", \"errors\": []}
+    ]
   }],
   \"warnings\": $warnings,
   \"conflicts\": [],
@@ -104,6 +148,15 @@ write_skill_load() {
   \"noDomainMatches\": true,
   \"artifactAgentLoads\": []
 }" > "$TEST_DIR/skill-load.json"
+}
+
+add_discovery_selection() {
+    local name=$1
+    local source=$2
+    jq --arg name "$name" --arg source "$source" \
+        '.discoveredSkills[0] as $base | .discoveredSkills += [{pass:$base.pass,revision:$base.revision,name:$name,activeSource:$source,reason:"Relevant domain guidance",shadowedSources:[],outcome:"selected"}]' \
+        "$STATE_FILE" > "$TEST_DIR/state-with-domain-discovery.json"
+    mv "$TEST_DIR/state-with-domain-discovery.json" "$STATE_FILE"
 }
 
 write_interview() {
@@ -192,6 +245,9 @@ assert definitions["phaseSkillLoad"]["required"] == [
     "phase", "interviewId", "discoveryRevision", "contextDigest", "context", "status",
     "selected", "warnings", "conflicts", "failures", "noDomainMatches", "artifactAgentLoads",
 ]
+selected = definitions["phaseSkillLoad"]["properties"]["selected"]["items"]
+assert "requiredResourceSources" in selected["required"]
+assert selected["properties"]["requiredResourceSources"]["uniqueItems"] is True
 load_receipt = definitions["loadReceipt"]
 assert load_receipt["properties"]["source"]["pattern"] == "^/"
 loaded, failed = load_receipt["allOf"]
@@ -208,6 +264,101 @@ assert definitions["phaseInterview"]["required"] == [
     "confirmationSource", "bypassReason", "assumptionsRecorded",
 ]
 PY
+    [ "$status" -eq 0 ]
+}
+
+@test "skill load requires the applicable discovery pass and exact selected set" {
+    local helper
+    helper="$(claude_helper)"
+    write_skill_load
+
+    jq 'del(.discoveredSkills)' "$STATE_FILE" > "$TEST_DIR/no-discovery.json"
+    mv "$TEST_DIR/no-discovery.json" "$STATE_FILE"
+    run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"DISCOVERY_HISTORY_MISSING"* ]]
+
+    write_skill_load
+    jq '.discoveredSkills[0].pass = "pass1"' "$STATE_FILE" > "$TEST_DIR/wrong-pass.json"
+    mv "$TEST_DIR/wrong-pass.json" "$STATE_FILE"
+    run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"DISCOVERY_PASS_MISSING"* ]]
+
+    write_skill_load
+    add_discovery_selection "domain-skill" "$DOMAIN_FILE"
+    run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"DISCOVERY_SELECTION_MISMATCH"* ]]
+}
+
+@test "phase context requires every applicable upstream artifact" {
+    local helper empty_digest
+    helper="$(codex_helper)"
+    write_skill_load
+    empty_digest="$(context_digest requirements "$GOAL")"
+    env EMPTY_DIGEST="$empty_digest" python3 - "$TEST_DIR/skill-load.json" <<'PY'
+import json
+import os
+import sys
+
+path = sys.argv[1]
+value = json.load(open(path, encoding="utf-8"))
+value["contextDigest"] = os.environ["EMPTY_DIGEST"]
+value["context"]["artifacts"] = []
+json.dump(value, open(path, "w", encoding="utf-8"))
+PY
+    run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"CONTEXT_ARTIFACT_MISSING"* ]]
+
+    rm "$REQUIREMENTS_FILE"
+    phase=design
+    interview_id=design-1
+    write_skill_load
+    run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"CONTEXT_ARTIFACT_REQUIRED"* ]]
+}
+
+@test "direct requirements without research use pass1 and stale when research appears" {
+    local helper no_research_digest
+    helper="$(claude_helper)"
+    rm "$RESEARCH_FILE"
+    write_skill_load
+    no_research_digest="$DIGEST"
+    python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
+    python3 "$helper" mode "$STATE_FILE" --quick
+    python3 "$helper" begin-interview "$STATE_FILE" \
+        --phase requirements --interview-id requirements-1 --round 1 \
+        --discovery-revision rev-7 --context-digest "$no_research_digest"
+
+    printf '%s\n' '# Research' 'added later' > "$RESEARCH_FILE"
+    run python3 "$helper" check-delegation "$STATE_FILE" \
+        --phase requirements --interview-id requirements-1 \
+        --discovery-revision rev-7 --context-digest "$no_research_digest"
+    [ "$status" -eq 3 ]
+    [[ "$output" == *"SKILL_LOAD_STALE"* ]]
+}
+
+@test "legacy state preserves the persisted skill-load goal across reloads" {
+    local helper changed_goal changed_digest
+    helper="$(claude_helper)"
+    write_skill_load
+    python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
+    jq 'del(.goal)' "$STATE_FILE" > "$TEST_DIR/legacy-state.json"
+    mv "$TEST_DIR/legacy-state.json" "$STATE_FILE"
+
+    changed_goal="Changed goal"
+    changed_digest="$(context_digest requirements "$changed_goal" "$RESEARCH_FILE")"
+    jq --arg goal "$changed_goal" --arg digest "$changed_digest" \
+        '.context.goal = $goal | .contextDigest = $digest' \
+        "$TEST_DIR/skill-load.json" > "$TEST_DIR/changed-goal-load.json"
+
+    run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/changed-goal-load.json"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"CONTEXT_GOAL_MISMATCH"* ]]
+    run jq -e '.phaseSkillLoad.context.goal == "Demo goal"' "$STATE_FILE"
     [ "$status" -eq 0 ]
 }
 
@@ -304,6 +455,7 @@ value["selected"].append({
     "source": os.environ["DOMAIN_FILE"],
     "core": False,
     "body": {"sha256": os.environ["DOMAIN_HASH"], "loadStatus": "loaded", "errors": []},
+    "requiredResourceSources": [os.environ["RESOURCE_FILE"]],
     "requiredResources": [{
         "source": os.environ["RESOURCE_FILE"],
         "sha256": None,
@@ -315,6 +467,7 @@ value["noDomainMatches"] = False
 with open(path, "w", encoding="utf-8") as handle:
     json.dump(value, handle)
 PY
+    add_discovery_selection "domain-skill" "$DOMAIN_FILE"
     python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
     python3 "$helper" begin-interview "$STATE_FILE" \
         --phase requirements --interview-id requirements-1 --round 1 \
@@ -413,6 +566,23 @@ PY
     for flag in --qui --interactiv --quick=true -q; do
         run python3 "$(claude_helper)" mode "$STATE_FILE" "$flag"
         [ "$status" -eq 2 ]
+    done
+}
+
+@test "mode never creates a partial state file" {
+    local helper missing
+    for helper in "$(claude_helper)" "$(codex_helper)"; do
+        missing="$TEST_DIR/missing-$(basename "$(dirname "$(dirname "$helper")")").json"
+
+        run python3 "$helper" mode "$missing"
+        [ "$status" -eq 0 ]
+        [[ "$output" == *'"stateExists": false'* ]]
+        [ ! -e "$missing" ]
+
+        run python3 "$helper" mode "$missing" --quick
+        [ "$status" -eq 2 ]
+        [[ "$output" == *"STATE_NOT_FOUND"* ]]
+        [ ! -e "$missing" ]
     done
 }
 
@@ -523,12 +693,14 @@ value["selected"].append({
         "loadStatus": "failed",
         "errors": ["Domain skill body could not load"],
     },
+    "requiredResourceSources": [],
     "requiredResources": [],
 })
 value["noDomainMatches"] = False
 with open(path, "w", encoding="utf-8") as handle:
     json.dump(value, handle)
 PY
+    add_discovery_selection "domain-skill" "$DOMAIN_FILE"
     python3 - "$TEST_DIR/skill-load.json" "$TEST_DIR/missing-failures.json" <<'PY'
 import json
 import sys
@@ -688,18 +860,19 @@ PY
     [ "$status" -eq 3 ]
     [[ "$output" == *"AGENT_LOAD_MISSING"* ]]
 
-    python3 - "$STATE_FILE" "$TEST_DIR/agent-skill.json" "$TEST_DIR/agent-resource.json" <<'PY'
+    python3 - "$STATE_FILE" "$TEST_DIR/agent-skill.json" "$TEST_DIR/agent-algorithm.json" "$TEST_DIR/agent-domain.json" <<'PY'
 import json
 import sys
 
-state_path, body_path, resource_path = sys.argv[1:]
+state_path, body_path, algorithm_path, domain_path = sys.argv[1:]
 selected = json.load(open(state_path, encoding="utf-8"))["phaseSkillLoad"]["selected"][0]
 json.dump({"agent": "requirements-dispatch-001", "source": selected["source"], **selected["body"]}, open(body_path, "w", encoding="utf-8"))
-resource = selected["requiredResources"][0]
-json.dump({"agent": "requirements-dispatch-001", **resource}, open(resource_path, "w", encoding="utf-8"))
+algorithm, domain = selected["requiredResources"]
+json.dump({"agent": "requirements-dispatch-001", **algorithm}, open(algorithm_path, "w", encoding="utf-8"))
+json.dump({"agent": "requirements-dispatch-001", **domain}, open(domain_path, "w", encoding="utf-8"))
 PY
-    run bash -c 'python3 "$1" record-agent-load "$2" --input "$3" & first=$!; python3 "$1" record-agent-load "$2" --input "$4" & second=$!; wait "$first" && wait "$second"' \
-        _ "$helper" "$STATE_FILE" "$TEST_DIR/agent-skill.json" "$TEST_DIR/agent-resource.json"
+    run bash -c 'python3 "$1" record-agent-load "$2" --input "$3" & first=$!; python3 "$1" record-agent-load "$2" --input "$4" & second=$!; python3 "$1" record-agent-load "$2" --input "$5" & third=$!; wait "$first" && wait "$second" && wait "$third"' \
+        _ "$helper" "$STATE_FILE" "$TEST_DIR/agent-skill.json" "$TEST_DIR/agent-algorithm.json" "$TEST_DIR/agent-domain.json"
     [ "$status" -eq 0 ]
 
     run python3 "$helper" check-agent-write "$STATE_FILE" \
@@ -770,11 +943,13 @@ value["selected"].append({
     "source": os.environ["MISSING"],
     "core": False,
     "body": {"sha256": None, "loadStatus": "failed", "errors": ["Domain source missing"]},
+    "requiredResourceSources": [],
     "requiredResources": [],
 })
 value["noDomainMatches"] = False
 json.dump(value, open(path, "w", encoding="utf-8"))
 PY
+    add_discovery_selection "missing-domain" "$missing"
     run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
     [ "$status" -eq 0 ]
 
@@ -809,10 +984,35 @@ PY
     [[ "$output" == *"CORE_SKILL_SOURCE"* ]]
 
     write_skill_load
-    python3 -c 'import json,sys; p=sys.argv[1]; v=json.load(open(p)); v["selected"][0]["requiredResources"]=[]; json.dump(v,open(p,"w"))' "$TEST_DIR/skill-load.json"
+    python3 -c 'import json,sys; p=sys.argv[1]; v=json.load(open(p)); v["selected"][0]["requiredResourceSources"]=[]; v["selected"][0]["requiredResources"]=[]; json.dump(v,open(p,"w"))' "$TEST_DIR/skill-load.json"
     run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
     [ "$status" -eq 2 ]
     [[ "$output" == *"CORE_RESOURCE_MISSING"* ]]
+
+    write_skill_load
+    env DOMAIN_FILE="$DOMAIN_FILE" DOMAIN_HASH="$DOMAIN_HASH" RESOURCE_FILE="$RESOURCE_FILE" python3 - "$TEST_DIR/skill-load.json" <<'PY'
+import json
+import os
+import sys
+
+path = sys.argv[1]
+value = json.load(open(path, encoding="utf-8"))
+value["selected"].append({
+    "name": "domain-skill",
+    "reason": "Relevant domain guidance",
+    "source": os.environ["DOMAIN_FILE"],
+    "core": False,
+    "body": {"sha256": os.environ["DOMAIN_HASH"], "loadStatus": "loaded", "errors": []},
+    "requiredResourceSources": [os.environ["RESOURCE_FILE"]],
+    "requiredResources": [],
+})
+value["noDomainMatches"] = False
+json.dump(value, open(path, "w", encoding="utf-8"))
+PY
+    add_discovery_selection "domain-skill" "$DOMAIN_FILE"
+    run python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"RESOURCE_INVENTORY_MISMATCH"* ]]
 
     write_skill_load
     python3 - "$TEST_DIR/skill-load.json" <<'PY'
@@ -961,24 +1161,33 @@ value["selected"].append({
     "source": os.environ["DOMAIN_FILE"],
     "core": False,
     "body": {"sha256": os.environ["DOMAIN_HASH"], "loadStatus": "loaded", "errors": []},
+    "requiredResourceSources": [],
     "requiredResources": [],
 })
 value["noDomainMatches"] = False
 json.dump(value, open(path, "w", encoding="utf-8"))
 PY
+    add_discovery_selection "domain-skill" "$DOMAIN_FILE"
     python3 "$helper" record-skill-load "$STATE_FILE" --input "$TEST_DIR/skill-load.json"
     run python3 -c 'import json,sys; assert "phaseInterview" not in json.load(open(sys.argv[1]))' "$STATE_FILE"
     [ "$status" -eq 0 ]
 }
 
-@test "inconsistent interview status fields cannot pass the gate" {
-    local helper base scenario
+@test "inconsistent interview status fields report the exact rejected invariant" {
+    local helper base scenario expected_code
     helper="$(claude_helper)"
     record_complete_gate "$helper"
     base="$TEST_DIR/valid-complete-state.json"
     cp "$STATE_FILE" "$base"
 
     for scenario in complete_bypass skipped_without_reason awaiting_without_approach collecting_with_confirmation quick_with_confirmation; do
+        case "$scenario" in
+            complete_bypass) expected_code="INTERVIEW_NOT_COMPLETE" ;;
+            skipped_without_reason) expected_code="INTERVIEW_NOT_SKIPPED" ;;
+            awaiting_without_approach) expected_code="CONFIRMATION_NOT_PENDING" ;;
+            collecting_with_confirmation) expected_code="INTERVIEW_NOT_COLLECTING" ;;
+            quick_with_confirmation) expected_code="INTERVIEW_NOT_BYPASSED" ;;
+        esac
         env SCENARIO="$scenario" python3 - "$base" "$STATE_FILE" <<'PY'
 import json
 import os
@@ -1018,6 +1227,7 @@ PY
             --phase requirements --interview-id requirements-1 \
             --discovery-revision rev-7 --context-digest "$DIGEST"
         [ "$status" -ne 0 ]
+        [[ "$output" == *"$expected_code"* ]]
     done
 }
 

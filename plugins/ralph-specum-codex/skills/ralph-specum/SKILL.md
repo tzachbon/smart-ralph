@@ -15,7 +15,7 @@ Use this as the primary Codex surface for Ralph Specum. It carries the full reus
 - `references/state-contract.md` for `.ralph-state.json`, `.progress.md`, commit rules, and resume semantics
 - `references/path-resolution.md` for `specs_dirs`, `.current-spec`, ambiguity handling, and default directory behavior
 - `references/parity-matrix.md` for Claude-to-Codex feature translation and command mapping
-- `skills/interview-framework-codex/SKILL.md` and its required algorithm reference for every normal-mode phase interview
+- `skills/interview-framework-codex/SKILL.md` and its required algorithm and domain-modeling references for every normal-mode phase interview
 
 ## Use These Helpers
 

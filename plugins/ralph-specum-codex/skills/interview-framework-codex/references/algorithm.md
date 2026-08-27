@@ -29,7 +29,7 @@ Collect metadata before selecting from:
 
 Always select an explicitly named skill. For duplicate names, use the active source resolved by the harness catalog and record every other candidate as shadowed in the active selection's `reason` and in `.progress.md`. Reserve manifest `warnings` for domain load errors that allow continuation. Record every failed body or resource error in `failures`. Select other domain skills by semantic relevance to the goal for pass 1. In pass 2, use the goal plus only the final `research.md` `## Executive Summary` section through the next level-2 heading. Use no other research section for relevance. Record `noDomainMatches: true` when only the core interview skill applies.
 
-Append one `discoveredSkills` entry for every selected candidate in every pass. Each entry contains `pass`, `revision`, `name`, `activeSource`, `reason`, and `shadowedSources`. Keep the array cumulative and append-only. Discovery reads metadata and selects contracts; it executes no skill action. Treat legacy `invoked` as history only. It never proves a current load; only `phaseSkillLoad` does.
+Append one `discoveredSkills` entry for every catalog decision in every pass. Each entry contains `pass`, `revision`, `name`, `activeSource`, `reason`, `shadowedSources`, and `outcome`. Keep the array cumulative and append-only. Each new pass revision repeats the complete current selected set, including selections retained from pass 1. Discovery reads metadata and selects contracts; it executes no skill action. Treat legacy `invoked` as history only. It never proves a current load; only `phaseSkillLoad` does. The helper requires selected manifest names and sources to match the applicable discovery revision exactly.
 
 Increment `discoveryRevision` for a new applicable catalog pass. Create or retain an `interviewId` for the current phase attempt.
 
@@ -44,6 +44,8 @@ frame(ARTIFACT_SOURCE_1) frame(ARTIFACT_BYTES_1)
 ```
 
 `frame(BYTES)` is the ASCII decimal byte length, one colon byte, then the unmodified bytes. Encode the fixed marker, phase, exact goal snapshot, and absolute artifact source labels as UTF-8. Sort artifacts lexically by absolute source. Store the exact nonblank goal in `phaseSkillLoad.context.goal` and each artifact as an absolute `source` plus its lowercase SHA-256 in `phaseSkillLoad.context.artifacts`. The helper reads and hashes current artifact bytes, checks every artifact receipt, recomputes the digest at record, begin, delegation check, and agent-write check, and rejects any mismatch. When top-level `state.goal` exists, it is the canonical goal and must equal the snapshot. A legacy state without `goal` uses the persisted snapshot as its source of truth. Exclude interview answers, load receipts, discovery history, progress bookkeeping, and skill bytes.
+
+Use exact phase inputs: requirements includes `research.md` when present; design requires `requirements.md` and includes `research.md` when present; tasks requires `requirements.md` plus `design.md` and includes `research.md` when present. Start, triage, and research have no prior artifact. Requirements, design, and tasks use pass 2 whenever research exists and pass 1 otherwise; all other gated phases use pass 1.
 
 Keep the tuple immutable while resuming an interview against the same inputs. Reload contracts, call `begin-interview` with the stored round, and preserve prior answers. Advance rounds through `open-frontier`. A changed goal or any included artifact byte starts a new tuple, new `interviewId`, and new round 1. Contract hashes live in `phaseSkillLoad`, not `contextDigest`; every gate re-verifies them, so changed contract bytes make the manifest stale and block reuse of terminal approval.
 
@@ -68,7 +70,7 @@ Before each new or resumed grill, reload the complete body of every selected `SK
 }
 ```
 
-Each `selected` item contains `name`, `reason`, `source`, required `core: true|false`, a `body` receipt with `sha256`, `loadStatus`, and `errors`, plus `requiredResources` receipts with the same load fields. Put this plugin's packaged `skills/interview-framework-codex/SKILL.md` first with `core: true`, and include its packaged `references/algorithm.md` receipt. A readable file elsewhere with `core: true` is not the core contract. Mark every domain skill `core: false`.
+Each `selected` item contains `name`, `reason`, `source`, required `core: true|false`, a `body` receipt with `sha256`, `loadStatus`, and `errors`, `requiredResourceSources`, and matching `requiredResources` receipts with the same load fields. Build the source inventory only after reading the complete skill; list every resource it marks required for the current work, and use an empty array only when none exists. Receipt sources must match the inventory exactly and in order. Put this plugin's packaged `skills/interview-framework-codex/SKILL.md` first with `core: true`, and include its packaged `references/algorithm.md` and `references/domain-modeling.md` in both the inventory and receipts. A readable file elsewhere with `core: true` is not the core contract. Mark every domain skill `core: false`.
 
 A loaded receipt has the current lowercase SHA-256 digest, `loadStatus: "loaded"`, and no errors. A failed receipt has `sha256: null`, `loadStatus: "failed"`, and at least one exact error. Never reuse a stale or guessed digest for a failed load.
 
@@ -76,7 +78,7 @@ Set status to:
 
 - `complete` when every selected body and required resource loads, with empty `warnings` and `failures`.
 - `partial_warned` when the core loads and one or more domain loads fail, with `warnings` and `failures` both equal to the domain errors.
-- `core_failed` when this skill or its algorithm reference fails, with `failures` equal to all core and domain errors and `warnings` equal only to domain errors.
+- `core_failed` when this skill or either required core reference fails, with `failures` equal to all core and domain errors and `warnings` equal only to domain errors.
 
 Record the payload with:
 
@@ -88,7 +90,7 @@ Stop on `core_failed`. Warn and continue on domain failures. Apply clear conflic
 
 ## 4. Traverse frontier rounds
 
-Read the goal, prior artifacts, progress, loaded contracts, and persisted interview receipt. Build a decision graph of critical user decisions only.
+Read the goal, prior artifacts, progress, loaded contracts, configured spec index, applicable `CONTEXT.md`, and persisted interview receipt. Build a decision graph of critical user decisions only. Apply `references/domain-modeling.md` throughout; update resolved project terms inline and create no ADR.
 
 For each round:
 
@@ -105,6 +107,8 @@ python3 <phase-gate-script> open-frontier STATE --round N --decision-id ID [--de
 6. Put the recommended option first. Give two or three viable choices with one-sentence tradeoffs.
 7. Persist every returned answer before asking the next batch. Unanswered IDs remain pending.
 8. Recompute the frontier until no critical decision remains.
+
+Track nodes as open, investigating, resolved, or explicitly out of scope. Turn an `Other` response into a specific dependent decision, add branches exposed by answers, and never use a generic follow-up.
 
 Begin or resume the interview with:
 
@@ -138,6 +142,7 @@ Ask one final native user-input question with these choices:
 
 - `Approve and delegate (Recommended)`
 - `Revise decisions`
+- `Cancel`
 
 Only the explicit first choice completes approval. Control-only replies do not. On approval, record status `complete` and the explicit source:
 
@@ -152,6 +157,8 @@ python3 <phase-gate-script> revise STATE --decision-id ID [--decision-id ID ...]
 ```
 
 `revise` requires `awaiting_confirmation`, retires the pending confirmation ID, clears the selected approach and bypass reason, and advances the round by one. Persist the revised answers, call `await-confirmation` again with the same final confirmation decision ID, and require the canonical confirmation above.
+
+If the user chooses `Cancel`, leave the interview nonterminal and stop without delegation.
 
 When the interview used bare skip, first record all resolved defaults through `record-answer`, then record the skip before asking for final approval:
 

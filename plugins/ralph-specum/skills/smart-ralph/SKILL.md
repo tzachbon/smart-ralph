@@ -88,7 +88,7 @@ All Ralph plugins follow consistent branch strategy:
 1. Check current branch before starting
 2. If on default branch (main/master): prompt for branch strategy
 3. If on feature branch: offer to continue or create new
-4. Quick mode: auto-create branch, no prompts
+4. Exact `--quick`: create a feature branch without prompting only when currently on the default branch; otherwise keep the current non-default branch. Legacy `quickMode: true` does not select this path.
 
 ## Coordinator Behavior
 

@@ -24,7 +24,7 @@ Create a task for each item and complete in order:
 
 ## Step 1: Gather Context
 
-1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it; otherwise use `ralph_resolve_current()`
+1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it; otherwise use `ralph_resolve_current()`. Store the resolved spec directory as `SPEC_PATH`.
 2. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
 3. Check the resolved spec directory exists
 4. Read `.ralph-state.json` if it exists
@@ -34,17 +34,29 @@ Create a task for each item and complete in order:
 
 ## Step 2: Skill Load, Critical Grill, and Approval
 
-If normalized `quickMode` is true, call `begin-interview` for phase `research` to record the authorized quick bypass, then continue to Step 3.
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` in full to resolve the design-tree frontier under the persisted gate state.
+
+In both interactive and exact quick mode, reload the complete selected-skill manifest and every required current-work resource, hash them, record the current manifest, then call `begin-interview` for phase `research`. A core load failure blocks either mode.
+
+If normalized `quickMode` is true, the helper records the authorized quick bypass; continue to Step 3 without questions.
 
 In interactive mode:
 
-1. Reload the complete selected-skill manifest and every required current-work resource.
-2. Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` with phase `research`.
-3. Build critical decision candidates from research direction, material constraints, systems in scope, and alternatives whose comparison would change later artifacts.
-4. Inspect repository facts, prior specs, existing technology, and available commands. Do not ask setup, administrative, discoverable, or low-impact questions.
-5. Ask the whole unblocked critical frontier, at most four questions per `AskUserQuestion` call.
-6. Persist partial answers, handle control-only and bare-skip replies through the helper, and require explicit final approval. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for the explicit approval selection.
-7. On approval, run `check-delegation` and continue immediately to Step 3 in the same response.
+1. Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` with phase `research`.
+2. Build critical decision candidates from research direction, material constraints, systems in scope, and alternatives whose comparison would change later artifacts.
+3. Inspect repository facts, prior specs, existing technology, and available commands. Do not ask setup, administrative, discoverable, or low-impact questions.
+4. Ask the whole unblocked critical frontier, at most four questions per `AskUserQuestion` call.
+5. Persist partial answers, handle control-only and bare-skip replies through the helper, and require explicit final approval. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for the explicit approval selection.
+6. On approval, run `check-delegation` and continue immediately to Step 3 in the same response.
+
+Treat this exploration territory as hints for the design tree, not a script:
+
+- **Research direction** -- which unknowns or alternatives would materially change later artifacts?
+- **Systems in scope** -- which boundaries, integrations, or user journeys need evidence?
+- **Constraints and risk** -- which security, privacy, performance, or compatibility claims need validation?
+- **Success evidence** -- what observations would distinguish viable approaches?
+
+Apply domain-language modeling from the interview framework throughout the grill. Append each completed frontier round to `.progress.md`, then pass the confirmed decision brief as `Interview Context`.
 
 Pass the approved brief and full skill manifest to artifact agents.
 
@@ -78,11 +90,11 @@ Immediately before each `research-analyst` Task call, run `phase_gate.py check-d
 
 ## Step 4: Delegate Result Merge
 
-After all parallel tasks complete, run `check-delegation` and delegate the unified `./specs/$spec/research.md` write to a fresh `research-analyst` with a unique artifact agent ID, gate marker, full selected-skill manifest, approved brief, partial artifact paths, and returned Explore findings.
+After all parallel tasks complete, run `check-delegation` and delegate the unified `$SPEC_PATH/research.md` write to a fresh `research-analyst`. Pass the absolute state and helper paths, complete `[RALPH_PHASE_GATE]` tuple (`state`, `phase`, `interviewId`, `discoveryRevision`, `contextDigest`), verbatim manifest, fresh artifact agent ID, matching load/write-check instructions, complete approved brief, partial artifact paths, and returned Explore findings.
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` "Merging Results" section for the exact merge structure and process.
 
-After merge, delete partial files: `rm ./specs/$spec/.research-*.md`
+After merge, delete only the phase's partial files: `rm "$SPEC_PATH"/.research-*.md`
 
 ## Step 5: Automatic Artifact Review (authorized quick mode)
 
@@ -99,7 +111,7 @@ Invoke `spec-reviewer` via Task tool to validate research.md. Follow the standar
 
 **Review delegation**: Include full research.md content, iteration count, and prior findings. Upstream: none (research is first artifact).
 
-**Revision delegation**: Run `check-delegation`, create a fresh unique artifact agent ID, and re-invoke research-analyst with reviewer feedback, gate marker, manifest, and current artifact. The agent reloads successful sources, records receipts, and checks its write gate. Focus on the flagged issues.
+**Revision delegation**: Run `check-delegation`, create a fresh unique artifact agent ID, and re-invoke research-analyst with the absolute state/helper paths, complete marker identity tuple, verbatim manifest, matching load/write-check instructions, reviewer feedback, and current artifact. Focus on the flagged issues.
 
 **Error handling**: Reviewer no signal = REVIEW_PASS. Agent failure during revision = retry once, then use original.
 </mandatory>
@@ -109,11 +121,11 @@ Invoke `spec-reviewer` via Task tool to validate research.md. Follow the standar
 <mandatory>
 **WALKTHROUGH IS REQUIRED - DO NOT SKIP.**
 
-Read `./specs/$spec/research.md` and display:
+Read `$SPEC_PATH/research.md` and display:
 
 ```
 Research complete for '$spec'.
-Output: $PWD/specs/$spec/research.md
+Output: $SPEC_PATH/research.md
 
 ## What I Found
 
@@ -159,7 +171,7 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 
 Read `commitSpec` from `.ralph-state.json`. If true:
 ```bash
-git add ./specs/$spec/research.md
+git add "$SPEC_PATH/research.md"
 git commit -m "spec($spec): add research findings"
 git push -u origin $(git branch --show-current)
 ```

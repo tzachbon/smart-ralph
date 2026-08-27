@@ -7,7 +7,7 @@ metadata:
 
 # Codex interview framework
 
-Run every normal-mode `start`, `triage`, `research`, `requirements`, `design`, and `tasks` phase through the algorithm in `references/algorithm.md`.
+Run every normal-mode `start`, `triage`, `research`, `requirements`, `design`, and `tasks` phase through `references/algorithm.md` and `references/domain-modeling.md`.
 
 ## Completion criterion
 
@@ -31,9 +31,10 @@ Quick mode uses the same identity tuple. It requires a current `complete` or `pa
 - Treat bare `skip` during an active question as an instruction to finish the remaining interview with stated defaults and assumptions. Present the final approval gate before delegation.
 - Delegate in the same turn after the user explicitly chooses `approve and delegate`.
 - During artifact review, treat `apply the changes` as a revision request. Delegate the revision and remain at the artifact approval gate.
+- Apply domain-language modeling during the grill. Challenge conflicting or vague terms, use concrete boundary scenarios, and record resolved domain terms without creating an ADR.
 
 ## Preload boundary
 
 Load selected skill bodies and required current-work references as contracts. During preload, collect constraints, vocabulary, checks, and conflicts. Start no task action prescribed by a loaded domain skill until the phase interview is approved and the delegation gate passes.
 
-If this core skill or its algorithm reference cannot be read and hashed, record `phaseSkillLoad.status: "core_failed"`, report the failure, and stop. Record domain-skill load failures in `warnings` and `failures`, use `partial_warned`, and continue. Turn unresolved material conflicts between loaded contracts into first-layer interview decisions.
+If this core skill, its algorithm reference, or its domain-modeling reference cannot be read and hashed, record `phaseSkillLoad.status: "core_failed"`, report the failure, and stop. Record domain-skill load failures in `warnings` and `failures`, use `partial_warned`, and continue. Turn unresolved material conflicts between loaded contracts into first-layer interview decisions.

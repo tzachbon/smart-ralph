@@ -14,10 +14,11 @@ Create a task for each item and complete in order:
 
 1. **Parse mode** -- recognize exact `--quick` or `--interactive`
 2. **Handle branch** -- check git branch, create/switch if needed
-3. **Parse input** -- extract name, goal, and remaining flags
-4. **Set up spec** -- create or resolve state before discovery
-5. **Run gates** -- discover skills, load contracts, grill, and get approval
-6. **Delegate** -- gate the research team, then require artifact approval
+3. **First-run support** -- offer the one-time GitHub star choice
+4. **Parse input** -- extract name, goal, and remaining flags
+5. **Set up spec** -- create or resolve state before discovery
+6. **Run gates** -- discover skills, load contracts, grill, and get approval
+7. **Delegate** -- gate the research team, then require artifact approval
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/normal-mode-gates.md` before starting. It is authoritative for mode, discovery, preload, interview, and delegation enforcement.
 
@@ -35,6 +36,45 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/branch-management.md` and follow the full
 
 **Summary**: Checks current branch, determines if on default branch (main/master), and prompts user for branch strategy (new branch, worktree, or continue). Only an exact `--quick` token enables the non-interactive branch choice. If worktree is chosen, STOP here so the user can enter it.
 
+## Step 1.5: First-Run Star Suggestion
+
+After branch management completes in the current working tree, check for this user-level marker:
+
+```bash
+FIRST_RUN_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/ralph-specum"
+FIRST_RUN_MARKER="$FIRST_RUN_DIR/star-prompt-v1"
+```
+
+Do not ask again when the marker exists.
+
+When the marker does not exist, use `AskUserQuestion` once. This one-time support question is allowed even when `--quick` is present.
+
+Question: "Would you like to star Smart Ralph on GitHub?"
+
+Options:
+- **Star the repo (Recommended)** -- Star `tzachbon/smart-ralph` with the authenticated GitHub CLI.
+- **No thanks** -- Continue without starring and do not ask again.
+
+Never star the repository until the user selects **Star the repo (Recommended)**. If selected:
+
+```bash
+if command -v gh >/dev/null 2>&1 && gh auth status --hostname github.com >/dev/null 2>&1; then
+  gh api --hostname github.com --method PUT /user/starred/tzachbon/smart-ralph
+else
+  echo "GitHub CLI is unavailable or not authenticated. You can star the repo at https://github.com/tzachbon/smart-ralph"
+fi
+```
+
+If the API call fails, show the same repository URL and continue the start flow.
+
+Record the decision after either option so Ralph does not repeat the question:
+
+```bash
+mkdir -p "$FIRST_RUN_DIR" && touch "$FIRST_RUN_MARKER"
+```
+
+If the marker cannot be written, warn the user and continue. Do not block the start flow.
+
 ## Step 2: Parse Input and Classify Intent
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/intent-classification.md` and follow the detection logic.
@@ -51,9 +91,11 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/spec-scanner.md` and follow the scanning 
 
 <mandatory>
 **Skip spec scanner and index hint only when the exact `--quick` token is present.**
+
+If no goal is available yet, set `scannerDeferred: true` in command context and defer this step. Do not run keyword matching against an empty goal. New Flow runs the scanner immediately after collecting the goal.
 </mandatory>
 
-**Summary**: Scans ./specs/ directory (and all configured specs_dirs) for related specs using keyword matching. Displays related specs with relevance scores. Shows index hint if codebase indexing not yet done. Stores relatedSpecs in .ralph-state.json for use during interview.
+**Summary**: Scans all configured spec directories for related specs using keyword matching. Displays related specs with relevance scores and shows an index hint when needed. Carries the results into New Flow, which persists them after `.ralph-state.json` exists.
 
 ## Step 3.5: Epic Detection
 
@@ -128,43 +170,56 @@ For resumed artifact phases, do not delegate from this table directly. Follow th
 
 1. If no name provided, ask: "What should we call this spec?" (validates kebab-case)
 2. If no goal provided, ask: "What is the goal? Describe what you want to build."
-3. Determine spec directory:
+2a. If `scannerDeferred` is true, run **Scan Existing Specs** now with the collected goal and retain its `RELATED_SPECS` result.
+3. Resolve the spec directory before creating files:
    ```text
-   specsDir = (--specs-dir if valid) OR (interview response) OR ralph_get_default_dir()
+   if --specs-dir is present:
+     validate it against ralph_get_specs_dirs()
+     specsDir = validated value
+   else if ralph_get_specs_dirs() returns more than one directory:
+     ask "Where should this spec be stored?"
+     recommend ralph_get_default_dir() first and list each configured directory
+     specsDir = user choice
+   else:
+     specsDir = ralph_get_default_dir()
+
    basePath = "$specsDir/$name"
    ```
 4. Create spec directory: `mkdir -p "$basePath"`
 5. Update .current-spec (bare name for default dir, full path for non-default)
 6. Ensure gitignore entries for specs/.current-spec, specs/.current-epic, and **/.progress.md
-7. Initialize `.ralph-state.json`:
-   ```json
-   {
-     "source": "spec", "name": "$name", "goal": "$goal", "basePath": "$basePath",
-     "phase": "research", "taskIndex": 0, "totalTasks": 0,
-     "taskIteration": 1, "maxTaskIterations": 5,
-     "globalIteration": 1, "maxGlobalIterations": 100,
-     "commitSpec": true, "quickMode": false,
-     "discoveredSkills": []
-   }
+7. Initialize `.ralph-state.json` with JSON-safe values. Serialize every user- or repository-derived string through `jq --arg`; never interpolate `$name`, `$goal`, `$basePath`, or `$EPIC_NAME` into JSON text. Supply the scanner result as a validated JSON array, defaulting to `[]`:
+   ```bash
+   RELATED_SPECS_JSON="${RELATED_SPECS_JSON:-[]}"
+   jq -n \
+     --arg name "$name" \
+     --arg goal "$goal" \
+     --arg basePath "$basePath" \
+     --argjson relatedSpecs "$RELATED_SPECS_JSON" \
+     '{
+       source: "spec", name: $name, goal: $goal, basePath: $basePath,
+       phase: "research", taskIndex: 0, totalTasks: 0,
+       taskIteration: 1, maxTaskIterations: 5,
+       globalIteration: 1, maxGlobalIterations: 100,
+       commitSpec: true, quickMode: false, relatedSpecs: $relatedSpecs,
+       discoveredSkills: []
+     }' > "$basePath/.ralph-state.json"
    ```
-   If this spec was suggested by an active epic, also include:
-   ```json
-   "epicName": "$EPIC_NAME"
-   ```
-   in the initial state, and pre-populate the goal and acceptance criteria from `epic.md`.
+   If this spec was suggested by an active epic, merge `epicName` with `jq --arg epicName "$EPIC_NAME"` and pre-populate the goal and acceptance criteria from `epic.md`.
 
    **`--tasks-size` handling**: If `--tasks-size` flag is present in `$ARGUMENTS`:
-   - If value is `fine` or `coarse`: add `"granularity": "<value>"` to the JSON above
-   - If value is invalid (not `fine` or `coarse`): warn the user (`⚠️ Invalid --tasks-size value "<value>", defaulting to fine`) and add `"granularity": "fine"`
+   - If value is `fine` or `coarse`: merge it with `jq --arg granularity "$value"`.
+   - If value is invalid (not `fine` or `coarse`): warn the user (`Invalid --tasks-size value "<value>", defaulting to fine`) and merge `granularity: "fine"`.
    - If `--tasks-size` flag is absent: omit the `granularity` field entirely (do not add it)
 8. Create `.progress.md` with goal.
 9. Normalize persistent mode with `phase_gate.py mode`. Exact `--quick` enables it, exact `--interactive` clears it, and no flag resets legacy invalid state.
 10. Update Spec Index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`.
 11. Run skill discovery pass 1 from `normal-mode-gates.md` after setup.
-12. In normal mode, reload the selected contracts and run the goal grill from `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` with phase `start`. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for the explicit approval selection.
-13. Immediately after approval, run `check-delegation` and execute the gated Team Research Phase from `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md`. Pass the gate marker and full skill manifest to every `research-analyst` Task. Read-only `Explore` Tasks remain allowed.
-14. After research completes, run skill discovery pass 2 from `normal-mode-gates.md`. Do not delegate requirements yet.
-15. Display the research walkthrough and enter artifact approval.
+12. **Contract load** -- In both interactive and exact quick mode, reload every selected contract and required current-work resource, hash them, record the current manifest, then call `begin-interview` for phase `start`. A core load failure blocks either mode.
+13. **Goal Grill** -- In normal mode, run the goal grill from `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md`. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for the explicit approval selection. In exact quick mode, the preceding `begin-interview` records `bypassed_quick` and asks no questions.
+14. Immediately after approval or authorized quick bypass, run `check-delegation` and execute the gated Team Research Phase from `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md`. Every writer Task receives the absolute state and helper paths, complete marker identity tuple (`state`, `phase`, `interviewId`, `discoveryRevision`, `contextDigest`), verbatim skill manifest, complete approved brief, fresh `artifactAgentId`, and matching load/write-check instructions. Read-only `Explore` Tasks remain allowed.
+15. After research completes, run skill discovery pass 2 from `normal-mode-gates.md`. Do not delegate requirements yet.
+16. Display the research walkthrough and enter artifact approval.
 
 ### Research Walkthrough (Normal Mode Only)
 
@@ -189,7 +244,7 @@ Output: $basePath/research.md
 **Feasibility**: [High/Medium/Low] | **Risk**: [High/Medium/Low] | **Effort**: [S/M/L/XL]
 ```
 
-Ask for explicit artifact approval with `Approve`, `Run review`, and `Request changes` choices. `apply the changes` applies pending feedback through a freshly identified gated research agent, redisplays the walkthrough, and stays in this approval gate. Ask one focused question only when no feedback is pending. After explicit approval, set `awaitingApproval: true`, display `-> Next: Run /ralph-specum:requirements`, and stop.
+Ask for explicit artifact approval with `Approve`, `Run review`, and `Request changes` choices. `apply the changes` applies pending feedback through a freshly identified gated research agent using the same complete packet with a new `artifactAgentId`, redisplays the walkthrough, and stays in this approval gate. Ask one focused question only when no feedback is pending. After explicit approval, set `awaitingApproval: true`, display `-> Next: Run /ralph-specum:requirements`, and stop.
 </mandatory>
 
 ## Step 5: Quick Mode Flow

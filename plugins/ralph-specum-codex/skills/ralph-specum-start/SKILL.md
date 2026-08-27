@@ -49,7 +49,7 @@ Use this for the `start` and `new` entrypoints.
 10. On resume, prefer `tasks.md` and present files over stale state when they disagree.
 11. Run `scripts/phase_gate.py mode STATE` with the exact supplied mode flag. No flag normalizes invalid legacy quick state to interactive.
 12. Run skill discovery pass 1 against the goal. Collect plugin skills, project `.agents/skills`, project `.claude/skills`, and the current Codex harness catalog. Always select explicitly named skills and record shadowed duplicates.
-13. Load `skills/interview-framework-codex/SKILL.md`, its required algorithm reference, and every selected domain contract in both interactive and quick mode. In interactive mode, follow that algorithm for the start goal territory: outcome and observable success, material scope boundaries, critical constraints, and viable high-level approach. Ask no spec-path, branch, task-size, or discoverable question.
+13. Load `skills/interview-framework-codex/SKILL.md`, its required algorithm and domain-modeling references, and every selected domain contract in both interactive and quick mode. In interactive mode, follow that algorithm for the start goal territory: outcome and observable success, material scope boundaries, critical constraints, and viable high-level approach. Ask no spec-path, branch, task-size, or discoverable question.
 14. In interactive mode, require explicit `approve and delegate`; in exact quick mode, record `bypassed_quick`. In both modes, run `phase_gate.py check-delegation` with the current loaded-manifest identity before creating a `research-analyst` child.
 15. Pass the absolute helper path, state path, identity tuple, a unique teammate dispatch identity, and the verbatim `phaseSkillLoad` manifest. The child must record its loads and pass `check-agent-write` with that unique identity before writing `research.md`.
 16. Validate `research.md`, merge `phase: "research"` and `awaitingApproval: true` in interactive mode or `false` in exact quick mode, update progress, and present artifact approval when interactive.
@@ -64,8 +64,9 @@ Use this for the `start` and `new` entrypoints.
 
 - After setup in normal mode, begin the goal grill in the same run.
 - After final `approve and delegate`, dispatch research in the same turn.
-- After `research.md`, name the file, summarize it, and end with exactly one artifact approval prompt:
+- After `research.md` in interactive mode, name the file, summarize it, and end with exactly one artifact approval prompt:
   - `approve current artifact`
   - `request changes`
   - `continue to requirements`
+- With exact `--quick`, do not show this prompt; continue directly through the remaining phases after the gates succeed.
 - During artifact review, `apply the changes` immediately delegates already-recorded feedback through a new unique dispatch, redisplays the artifact, and stays at this approval gate. Ask one focused change question only when no feedback is pending. Control-only `continue`, `proceed`, and `go ahead` approve nothing.

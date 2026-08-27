@@ -53,6 +53,19 @@ PACKAGED_CORES = {
     "ralph-specum": "interview-framework",
     "ralph-specum-codex": "interview-framework-codex",
 }
+PACKAGED_CORE_RESOURCES = {
+    "ralph-specum": ("algorithm.md", "domain-modeling.md"),
+    "ralph-specum-codex": ("algorithm.md", "domain-modeling.md"),
+}
+REQUIRED_PHASE_ARTIFACTS = {
+    "design": ("requirements.md",),
+    "tasks": ("requirements.md", "design.md"),
+}
+OPTIONAL_PHASE_ARTIFACTS = {
+    "requirements": ("research.md",),
+    "design": ("research.md",),
+    "tasks": ("research.md",),
+}
 
 
 class PhaseGateError(Exception):
@@ -166,22 +179,132 @@ def validate_context(value: dict[str, Any], verify_files: bool) -> None:
         fail("CONTEXT_DIGEST_MISMATCH", "phaseSkillLoad.contextDigest does not match current context inputs")
 
 
-def validate_state_context(state: dict[str, Any], skill_load: dict[str, Any]) -> None:
-    if "goal" not in state:
-        return
-    state_goal = require_string(state["goal"], "state.goal")
-    if state_goal != skill_load["context"]["goal"]:
-        fail("CONTEXT_GOAL_MISMATCH", "phaseSkillLoad.context.goal does not match state.goal")
+def validate_state_context(
+    state: dict[str, Any], skill_load: dict[str, Any], state_path: Path
+) -> None:
+    if "goal" in state:
+        state_goal = require_string(state["goal"], "state.goal")
+        if state_goal != skill_load["context"]["goal"]:
+            fail("CONTEXT_GOAL_MISMATCH", "phaseSkillLoad.context.goal does not match state.goal")
+
+    phase = skill_load["phase"]
+    state_directory = state_path.resolve().parent
+    required_names = REQUIRED_PHASE_ARTIFACTS.get(phase, ())
+    missing_files = [name for name in required_names if not (state_directory / name).is_file()]
+    if missing_files:
+        fail(
+            "CONTEXT_ARTIFACT_REQUIRED",
+            f"phase {phase} requires current context artifact(s): {', '.join(missing_files)}",
+        )
+
+    applicable_names = list(required_names)
+    applicable_names.extend(
+        name
+        for name in OPTIONAL_PHASE_ARTIFACTS.get(phase, ())
+        if (state_directory / name).is_file()
+    )
+    expected_sources = {(state_directory / name).resolve() for name in applicable_names}
+    actual_sources = {
+        Path(item["source"]).resolve() for item in skill_load["context"]["artifacts"]
+    }
+    missing_sources = sorted(str(source) for source in expected_sources - actual_sources)
+    unexpected_sources = sorted(str(source) for source in actual_sources - expected_sources)
+    if missing_sources:
+        fail(
+            "CONTEXT_ARTIFACT_MISSING",
+            f"phaseSkillLoad.context omits applicable artifact(s): {', '.join(missing_sources)}",
+        )
+    if unexpected_sources:
+        fail(
+            "CONTEXT_ARTIFACT_UNEXPECTED",
+            f"phaseSkillLoad.context includes non-applicable artifact(s): {', '.join(unexpected_sources)}",
+        )
 
 
-def packaged_core_contract() -> tuple[str, Path, Path]:
+def normalize_discovery_pass(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value in {1, 2} else None
+    if not isinstance(value, str):
+        return None
+    match = re.fullmatch(r"(?:pass[-_ ]*)?([12])", value.strip().lower())
+    return int(match.group(1)) if match else None
+
+
+def validate_discovery_linkage(
+    state: dict[str, Any], skill_load: dict[str, Any], state_path: Path
+) -> None:
+    history = state.get("discoveredSkills")
+    if not isinstance(history, list) or not history:
+        fail("DISCOVERY_HISTORY_MISSING", "state.discoveredSkills has no catalog discovery record")
+
+    revision = str(skill_load["discoveryRevision"])
+    revision_entries = []
+    for entry in history:
+        if not isinstance(entry, dict):
+            continue
+        entry_revision = entry.get("revision", entry.get("discoveryRevision"))
+        if entry_revision is not None and str(entry_revision) == revision:
+            revision_entries.append(entry)
+    if not revision_entries:
+        fail("DISCOVERY_REVISION_MISSING", f"no discovery record matches revision {revision}")
+
+    research_exists = (state_path.resolve().parent / "research.md").is_file()
+    expected_pass = 2 if skill_load["phase"] in {"requirements", "design", "tasks"} and research_exists else 1
+    pass_entries = [
+        entry for entry in revision_entries if normalize_discovery_pass(entry.get("pass")) == expected_pass
+    ]
+    if not pass_entries:
+        fail(
+            "DISCOVERY_PASS_MISSING",
+            f"revision {revision} does not contain applicable pass{expected_pass} discovery",
+        )
+
+    discovered_pairs: list[tuple[str, str]] = []
+    for index, entry in enumerate(pass_entries):
+        label = f"state.discoveredSkills[{index}]"
+        require_fields(
+            entry,
+            ["pass", "revision", "name", "activeSource", "reason", "shadowedSources", "outcome"],
+            label,
+        )
+        require_string(entry["name"], f"{label}.name")
+        require_string(entry["reason"], f"{label}.reason")
+        active_source = require_absolute_source(entry["activeSource"], f"{label}.activeSource")
+        shadowed = require_string_array(entry["shadowedSources"], f"{label}.shadowedSources")
+        for shadow_index, source in enumerate(shadowed):
+            require_absolute_source(source, f"{label}.shadowedSources[{shadow_index}]")
+        outcome = require_string(entry["outcome"], f"{label}.outcome")
+        if outcome not in {"selected", "not-selected", "unreadable", "missing-description"}:
+            fail("DISCOVERY_OUTCOME_INVALID", f"{label}.outcome is not a supported catalog decision")
+        if outcome == "selected":
+            discovered_pairs.append((entry["name"], str(Path(active_source).resolve())))
+
+    if len(discovered_pairs) != len(set(discovered_pairs)):
+        fail("DUPLICATE_DISCOVERY_SELECTION", "applicable discovery contains duplicate selected skills")
+    manifest_pairs = {
+        (item["name"], str(Path(item["source"]).resolve())) for item in skill_load["selected"]
+    }
+    if set(discovered_pairs) != manifest_pairs:
+        fail(
+            "DISCOVERY_SELECTION_MISMATCH",
+            "phaseSkillLoad.selected must exactly match selected skills in the applicable discovery revision",
+        )
+
+
+def packaged_core_contract() -> tuple[str, Path, tuple[Path, ...]]:
     plugin_root = Path(__file__).resolve().parent.parent
     skill_name = PACKAGED_CORES.get(plugin_root.name)
     if skill_name is None:
         fail("UNRECOGNIZED_PLUGIN_ROOT", "phase gate helper is outside a recognized packaged plugin root")
     skill_source = plugin_root / "skills" / skill_name / "SKILL.md"
-    algorithm_source = plugin_root / "skills" / skill_name / "references" / "algorithm.md"
-    return skill_name, skill_source.resolve(), algorithm_source.resolve()
+    resource_names = PACKAGED_CORE_RESOURCES[plugin_root.name]
+    resource_sources = tuple(
+        (plugin_root / "skills" / skill_name / "references" / resource_name).resolve()
+        for resource_name in resource_names
+    )
+    return skill_name, skill_source.resolve(), resource_sources
 
 
 def validate_load_receipt(receipt: Any, label: str, has_source: bool) -> dict[str, Any]:
@@ -262,7 +385,19 @@ def validate_skill_load(
     for index, selected in enumerate(value["selected"]):
         label = f"phaseSkillLoad.selected[{index}]"
         item = require_object(selected, label)
-        require_fields(item, ["name", "reason", "source", "core", "body", "requiredResources"], label)
+        require_fields(
+            item,
+            [
+                "name",
+                "reason",
+                "source",
+                "core",
+                "body",
+                "requiredResourceSources",
+                "requiredResources",
+            ],
+            label,
+        )
         require_string(item["name"], f"{label}.name")
         selected_names.append(item["name"])
         require_string(item["reason"], f"{label}.reason")
@@ -275,6 +410,11 @@ def validate_skill_load(
         body = validate_load_receipt(item["body"], f"{label}.body", False)
         if verify_files and body["loadStatus"] == "loaded":
             verify_file_hash(item["source"], body["sha256"], f"{label}.body")
+        inventory = require_string_array(
+            item["requiredResourceSources"], f"{label}.requiredResourceSources"
+        )
+        for source_index, source in enumerate(inventory):
+            require_absolute_source(source, f"{label}.requiredResourceSources[{source_index}]")
         if not isinstance(item["requiredResources"], list):
             fail("INVALID_ARRAY", f"{label}.requiredResources must be an array")
         if body["loadStatus"] == "failed":
@@ -286,6 +426,12 @@ def validate_skill_load(
                 verify_file_hash(receipt["source"], receipt["sha256"], resource_label)
             if receipt["loadStatus"] == "failed":
                 (core_errors if item["core"] else domain_errors).extend(receipt["errors"])
+        receipt_sources = [resource["source"] for resource in item["requiredResources"]]
+        if inventory != receipt_sources:
+            fail(
+                "RESOURCE_INVENTORY_MISMATCH",
+                f"{label}.requiredResources must exactly match requiredResourceSources",
+            )
 
     for index, receipt in enumerate(value["artifactAgentLoads"]):
         label = f"phaseSkillLoad.artifactAgentLoads[{index}]"
@@ -307,17 +453,15 @@ def validate_skill_load(
 
     if core_count != 1:
         fail("CORE_SKILL_COUNT", "phaseSkillLoad.selected must include exactly one core interview contract")
-    expected_name, expected_source, expected_algorithm = packaged_core_contract()
+    expected_name, expected_source, expected_resources = packaged_core_contract()
     core_item = next(item for item in value["selected"] if item["core"])
     if core_item["name"] != expected_name or Path(core_item["source"]).resolve() != expected_source:
         fail("CORE_SKILL_SOURCE", "core selection must be the packaged interview framework")
-    core_algorithms = [
-        resource
-        for resource in core_item["requiredResources"]
-        if Path(resource["source"]).resolve() == expected_algorithm
-    ]
-    if len(core_algorithms) != 1:
-        fail("CORE_RESOURCE_MISSING", "core selection must include its packaged references/algorithm.md")
+    loaded_core_resources = [Path(resource["source"]).resolve() for resource in core_item["requiredResources"]]
+    missing_core_resources = [source for source in expected_resources if loaded_core_resources.count(source) != 1]
+    if missing_core_resources:
+        names = ", ".join(f"references/{source.name}" for source in missing_core_resources)
+        fail("CORE_RESOURCE_MISSING", f"core selection must include its packaged {names}")
     if len(selected_names) != len(set(selected_names)) or len(selected_sources) != len(set(selected_sources)):
         fail("DUPLICATE_SELECTION", "selected skill names and sources must be unique")
     has_domain_matches = any(not item["core"] for item in value["selected"])
@@ -494,6 +638,10 @@ def state_lock(path: Path):
 
 def command_mode(args: argparse.Namespace) -> dict[str, Any]:
     path = Path(args.state)
+    if not path.exists():
+        if args.quick or args.interactive:
+            fail("STATE_NOT_FOUND", f"state file does not exist: {path}")
+        return {"ok": True, "quickMode": False, "interviewReset": False, "stateExists": False}
     state = read_state(path)
     if args.quick:
         state["quickMode"] = True
@@ -521,6 +669,7 @@ def command_mode(args: argparse.Namespace) -> dict[str, Any]:
         "ok": True,
         "quickMode": state.get("quickMode") is True,
         "interviewReset": interview_reset,
+        "stateExists": True,
     }
 
 
@@ -530,8 +679,22 @@ def command_record_skill_load(args: argparse.Namespace) -> dict[str, Any]:
     new_skill_load = validate_skill_load(
         read_json(args.input, "skill load input"), verify_files=True, allow_agent_loads=False
     )
-    validate_state_context(state, new_skill_load)
     old_skill_load = state.get("phaseSkillLoad")
+    if "goal" not in state and isinstance(old_skill_load, dict):
+        old_context = require_object(
+            old_skill_load.get("context"), "existing phaseSkillLoad.context"
+        )
+        require_fields(old_context, ["goal"], "existing phaseSkillLoad.context")
+        old_goal = require_string(
+            old_context["goal"], "existing phaseSkillLoad.context.goal"
+        )
+        if old_goal != new_skill_load["context"]["goal"]:
+            fail(
+                "CONTEXT_GOAL_MISMATCH",
+                "phaseSkillLoad.context.goal does not match the persisted legacy context goal",
+            )
+    validate_state_context(state, new_skill_load, path)
+    validate_discovery_linkage(state, new_skill_load, path)
     if isinstance(old_skill_load, dict) and manifest_fingerprint(old_skill_load) != manifest_fingerprint(new_skill_load):
         state.pop("phaseInterview", None)
     state["phaseSkillLoad"] = new_skill_load
@@ -548,6 +711,7 @@ def current_interview(state: dict[str, Any]) -> dict[str, Any]:
 
 def current_skill_load(
     state: dict[str, Any],
+    state_path: Path,
     phase: str,
     interview_id: str,
     context_digest: str,
@@ -558,7 +722,8 @@ def current_skill_load(
         reject("SKILL_LOAD_MISSING", "phaseSkillLoad is missing")
     try:
         validate_skill_load(skill_load, verify_files=True)
-        validate_state_context(state, skill_load)
+        validate_state_context(state, skill_load, state_path)
+        validate_discovery_linkage(state, skill_load, state_path)
     except PhaseGateError as error:
         reject("SKILL_LOAD_STALE", f"phaseSkillLoad is invalid: {error.code}")
     current = (
@@ -598,6 +763,7 @@ def command_begin_interview(args: argparse.Namespace) -> dict[str, Any]:
     state = read_state(path)
     current_skill_load(
         state,
+        path,
         args.phase,
         args.interview_id,
         args.context_digest,
@@ -784,7 +950,8 @@ def command_record_agent_load(args: argparse.Namespace) -> dict[str, Any]:
     ]
     receipts.append(receipt)
     validate_skill_load(skill_load, verify_files=True)
-    validate_state_context(state, skill_load)
+    validate_state_context(state, skill_load, path)
+    validate_discovery_linkage(state, skill_load, path)
     write_state(path, state)
     return {"ok": True, "recorded": "artifactAgentLoads"}
 
@@ -803,6 +970,7 @@ def command_check_delegation(args: argparse.Namespace) -> dict[str, Any]:
         reject("INTERVIEW_INCOMPLETE", f"phaseInterview status {status!r} cannot delegate")
     current_skill_load(
         state,
+        Path(args.state),
         args.phase,
         args.interview_id,
         args.context_digest,
@@ -825,6 +993,7 @@ def command_check_agent_write(args: argparse.Namespace) -> dict[str, Any]:
         reject("INTERVIEW_INCOMPLETE", "artifact write requires a terminal interview")
     skill_load = current_skill_load(
         state,
+        Path(args.state),
         args.phase,
         args.interview_id,
         args.context_digest,

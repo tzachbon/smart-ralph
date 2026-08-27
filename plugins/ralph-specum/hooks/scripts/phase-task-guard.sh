@@ -97,37 +97,41 @@ export RALPH_CWD
 source "$SCRIPT_DIR/path-resolver.sh"
 
 EXPECTED_STATES=()
-SPEC_PATH=$(ralph_resolve_current 2>/dev/null) || true
-if [ -n "$SPEC_PATH" ]; then
-    case "$SPEC_PATH" in
-        /*) SPEC_STATE="$SPEC_PATH/.ralph-state.json" ;;
-        *) SPEC_STATE="$CWD/$SPEC_PATH/.ralph-state.json" ;;
-    esac
-    if [ -f "$SPEC_STATE" ]; then
-        EXPECTED_STATES+=("$(canonical_file "$SPEC_STATE")")
+if [ "$PHASE" = "triage" ]; then
+    CURRENT_EPIC_FILE="$CWD/specs/.current-epic"
+    if [ -f "$CURRENT_EPIC_FILE" ]; then
+        EPIC_NAME=$(tr -d '[:space:]' < "$CURRENT_EPIC_FILE")
+        if [[ "$EPIC_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+            EPIC_STATE="$CWD/specs/_epics/$EPIC_NAME/.epic-state.json"
+            if [ -f "$EPIC_STATE" ]; then
+                EXPECTED_STATES+=("$(canonical_file "$EPIC_STATE")")
+            fi
+        fi
     fi
-fi
-
-CURRENT_EPIC_FILE="$CWD/specs/.current-epic"
-if [ -f "$CURRENT_EPIC_FILE" ]; then
-    EPIC_NAME=$(tr -d '[:space:]' < "$CURRENT_EPIC_FILE")
-    if [[ "$EPIC_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
-        EPIC_STATE="$CWD/specs/_epics/$EPIC_NAME/.epic-state.json"
-        if [ -f "$EPIC_STATE" ]; then
-            EXPECTED_STATES+=("$(canonical_file "$EPIC_STATE")")
+else
+    SPEC_PATH=$(ralph_resolve_current 2>/dev/null) || true
+    if [ -n "$SPEC_PATH" ]; then
+        case "$SPEC_PATH" in
+            /*) SPEC_STATE="$SPEC_PATH/.ralph-state.json" ;;
+            *) SPEC_STATE="$CWD/$SPEC_PATH/.ralph-state.json" ;;
+        esac
+        if [ -f "$SPEC_STATE" ]; then
+            EXPECTED_STATES+=("$(canonical_file "$SPEC_STATE")")
         fi
     fi
 fi
 
 CANONICAL_STATE=$(canonical_file "$STATE") || deny "gate state path cannot be resolved."
 STATE_IS_ACTIVE=false
-for EXPECTED_STATE in "${EXPECTED_STATES[@]}"; do
-    if [ "$CANONICAL_STATE" = "$EXPECTED_STATE" ]; then
-        STATE_IS_ACTIVE=true
-        break
-    fi
-done
-[ "$STATE_IS_ACTIVE" = true ] || deny "gate state does not match the active spec or epic state for hook cwd."
+if [ "${#EXPECTED_STATES[@]}" -gt 0 ]; then
+    for EXPECTED_STATE in "${EXPECTED_STATES[@]}"; do
+        if [ "$CANONICAL_STATE" = "$EXPECTED_STATE" ]; then
+            STATE_IS_ACTIVE=true
+            break
+        fi
+    done
+fi
+[ "$STATE_IS_ACTIVE" = true ] || deny "gate state does not match the active state for phase $PHASE in hook cwd."
 
 PHASE_GATE="$SCRIPT_DIR/../../scripts/phase_gate.py"
 [ -f "$PHASE_GATE" ] || deny "phase_gate.py is unavailable."

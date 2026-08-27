@@ -146,7 +146,71 @@ Examples:
 
 ## Normal-Mode Interview Routing
 
-Do not derive interview depth or question counts from goal keywords. After setup, load `skills/interview-framework/SKILL.md` and ask only the whole currently unblocked critical frontier. The frontier ends when the consequential decisions are resolved, not when an intent-specific count is reached.
+Before grilling, classify the user's goal to seed the design tree with the right territory. Intent changes which branches receive attention; it never sets a question count or completion threshold.
+
+### Classification Logic
+
+Analyze the goal text for keywords:
+
+```text
+Intent Classification:
+
+1. BUG_FIX: Goal contains keywords like:
+   - "fix", "resolve", "debug", "broken", "failing"
+   - "not working", "error", "bug", "patch", "crash"
+   - "regression", "reproduce", "repro", "issue"
+   -> Seed reproduction, expected versus observed behavior, regression history,
+      affected scope, and verification branches.
+   Note: TRIVIAL-specific keywords override BUG_FIX when both match.
+
+2. TRIVIAL: Goal contains keywords like:
+   - "fix typo", "typo", "spelling"
+   - "small change", "minor", "quick", "simple", "tiny"
+   - "rename", "update text"
+   -> Seed target, exact desired result, and scope-boundary branches.
+
+3. REFACTOR: Goal contains keywords like:
+   - "refactor", "restructure", "reorganize"
+   - "clean up", "cleanup", "simplify"
+   - "extract", "consolidate", "modularize"
+   - "improve code", "tech debt"
+   -> Seed behavior preservation, boundaries, migration risk, and verification branches.
+
+4. GREENFIELD: Goal contains keywords like:
+   - "new feature", "new system", "new module"
+   - "add", "build", "implement", "create"
+   - "integrate", "introduce", "from scratch"
+   -> Seed users, problem, domain language, scope, constraints, integration,
+      approach, failure behavior, and verification branches.
+
+5. MID_SIZED: Default if no clear match
+   -> Seed goal, scope, constraints, integration, approach, and verification branches.
+```
+
+The interview framework expands or removes branches from repository facts and user answers. It ends only when the frontier is empty and the user confirms shared understanding.
+After classification, ask the whole currently unblocked critical frontier; intent only seeds candidate branches.
+
+### Confidence Threshold
+
+| Match Count | Confidence | Action |
+|-------------|------------|--------|
+| 3+ keywords | High | Use matched category |
+| 1-2 keywords | Medium | Use matched category |
+| 0 keywords | Low | Default to MID_SIZED |
+
+### Store Intent
+
+After classification, store the result in `.progress.md`:
+
+```markdown
+## Interview Format
+- Version: 2.0
+
+## Intent Classification
+- Type: [BUG_FIX|TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
+- Confidence: [high|medium|low] ([N] keywords matched)
+- Keywords matched: [list of matched keywords]
+```
 
 ## Goal Type Detection (Quick Mode)
 

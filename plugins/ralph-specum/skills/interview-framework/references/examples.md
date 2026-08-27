@@ -1,10 +1,12 @@
-# Interview Examples
+# Grilling Examples
 
 ## Whole critical frontier
 
-Suppose requirements has three independent critical decisions: primary user, compatibility promise, and data retention. Ask all three in one `AskUserQuestion` call. Put the recommended option first for each and name its tradeoff. Do not ask repository framework, output path, or ticket number when those facts are discoverable.
+Suppose requirements has three independent critical decisions: primary user, compatibility promise, and data retention. Ask all three in one `AskUserQuestion` call. Put `[Recommended]` on the grounded first option for each and name its tradeoff. Do not ask repository framework, output path, or ticket number when those facts are discoverable.
 
 If five independent critical decisions are open, ask four in the first call and one in the second. The tool maximum is the only batching reason.
+
+Resolve repository facts and domain language before asking. For example, inspect the active authentication boundary and its `CONTEXT.md` definition instead of asking which module owns it. Ask only when the remaining boundary choice materially changes the artifact.
 
 ## Partial answer
 
@@ -16,6 +18,8 @@ The user answers the primary-user and retention questions but omits compatibilit
 4. Ask compatibility plus any decisions it unblocked.
 
 Do not discard the two saved answers or restart the round.
+
+If the user selects `Other`, create a specific dependent decision from the supplied alternative. Do not ask a generic "what did you have in mind?" question.
 
 ## Control-only reply
 
