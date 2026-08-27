@@ -59,12 +59,12 @@ Bind a positive scope envelope before research, preserve it through planning and
 **So that** execution does not turn an adjacent discovery into unauthorized work
 
 **Acceptance Criteria:**
-- AC-3.1: Given spec-executor receives a task, When it is about to mutate, Then it compares `Do`, `Files`, `Done when`, `Verify`, and external effects with the full scope envelope.
+- AC-3.1: Given Ralph is about to delegate or execute any task, including `[VERIFY]`, When mutation is possible, Then coordinator and the delegated agent compare `Do`, `Files`, `Done when`, `Verify`, and external effects with the full scope envelope.
 - AC-3.2: Given the envelope is missing or the task must change a field, When spec-executor cannot finish inside the boundary, Then it emits `SCOPE_ESCALATION_REQUIRED` with the field, reason, and one exact question before mutation.
 - AC-3.3: Given coordinator receives `SCOPE_ESCALATION_REQUIRED`, When it handles the result, Then it records the blocker, sets `awaitingApproval: true`, and leaves task and failure counters unchanged.
-- AC-3.4: Given executor requests `ADD_PREREQUISITE` or `ADD_FOLLOWUP`, When coordinator evaluates the request, Then it adds the task only if `Do`, `Files`, `Verify`, and external effects fit the envelope.
+- AC-3.4: Given executor requests `SPLIT_TASK`, `ADD_PREREQUISITE`, or `ADD_FOLLOWUP`, When coordinator evaluates the request, Then it adds each proposed task only if `Do`, `Files`, `Verify`, and external effects fit the envelope.
 - AC-3.5: Given a user approves the expansion, When coordinator resumes, Then it updates the envelope, clears `awaitingApproval`, and replans or retries only after the task fits the new boundary.
-- AC-3.6: Given a user declines the expansion, When coordinator resumes, Then it keeps the original envelope, revises or removes the blocked task when the deliverable remains possible, or records the spec as blocked and stops when it does not.
+- AC-3.6: Given a user declines the expansion, When coordinator resumes, Then it keeps the original envelope, revises the task or removes it with state reconciliation when the deliverable remains possible, or records the spec as blocked and stops when it does not.
 - AC-3.7: Given an agent finds an adjacent non-blocking issue, When it reports the issue, Then Ralph records it as a learning and creates no task without authorization.
 
 ### US-4: Prove and release the behavior

@@ -51,6 +51,7 @@ new command -----------+              |
 
 **Responsibilities**:
 - `task-planner.md` checks every task and records adjacent findings as learnings.
+- `coordinator-pattern.md` checks every delegation route, including qa-engineer, before mutation.
 - `spec-executor.md` checks the delegated contract before mutation.
 - `coordinator-pattern.md` handles escalation, resume decisions, and automatic task modifications.
 
@@ -79,8 +80,9 @@ new command -----------+              |
 
 2. Each phase already reads `.progress.md`; no new handoff store is needed.
 3. Task-planner keeps `Do`, `Files`, `Done when`, `Verify`, and external effects inside the envelope.
-4. Spec-executor runs the same check before mutation.
-5. If scope is missing or must change, spec-executor returns:
+4. Coordinator runs the same check before every delegation; qa-engineer repeats it before any fix.
+5. Spec-executor repeats the check before mutation.
+6. If scope is missing or must change, the delegated agent returns:
 
 ```text
 SCOPE_ESCALATION_REQUIRED
@@ -89,9 +91,9 @@ Reason: <why the task cannot finish inside it>
 Question: <one exact user decision>
 ```
 
-6. Coordinator appends the blocker to `.progress.md`, sets `awaitingApproval: true`, and stops without changing task or failure counters.
-7. On approval, coordinator updates the envelope first, clears the blocker and `awaitingApproval`, then replans or retries only after the task fits.
-8. On rejection, coordinator keeps the original envelope. If the deliverable remains possible, it revises or removes the blocked task and clears `awaitingApproval`. If the deliverable is impossible, it records the blocker, leaves `awaitingApproval: true`, and stops without retrying.
+7. Coordinator appends the blocker to `.progress.md`, sets `awaitingApproval: true`, and stops without changing task or failure counters.
+8. On approval, coordinator updates the envelope first, clears the blocker and `awaitingApproval`, then replans or retries only after the task fits.
+9. On rejection, coordinator keeps the original envelope. If the deliverable remains possible, it revises the task or removes it while reconciling task counts, indices, retries, and native-task mapping. If the deliverable is impossible, it records the blocker, leaves `awaitingApproval: true`, and stops without retrying.
 
 ## Minimal-Implementation Decision
 
