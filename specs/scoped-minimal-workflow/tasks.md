@@ -34,7 +34,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
   - **Commit**: `feat(scope): green - bind authorization before research`
   - _Requirements: FR-1, FR-2, FR-3, FR-4; AC-1.1, AC-1.2, AC-1.3, AC-1.4, AC-1.5_
 
-- [ ] V1 [VERIFY] Scope-intake checkpoint
+- [x] V1 [VERIFY] Scope-intake checkpoint
   - **Do**: Run the new contract test and the existing interview suite.
   - **Files**: None
   - **Done when**: Both suites exit 0.
@@ -42,7 +42,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
   - **Commit**: `chore(scope): pass intake checkpoint` (only if fixes are needed)
   - _Requirements: FR-1, FR-2, FR-3, FR-4, FR-10_
 
-- [ ] 1.3 [RED] Failing contract tests: stop execution on scope expansion
+- [x] 1.3 [RED] Failing contract tests: stop execution on scope expansion
   - **Do**:
     1. Add assertions for the executor pre-mutation comparison and escalation signal.
     2. Add assertions for coordinator approval, rejection, unchanged counters, and task-modification bounds.
