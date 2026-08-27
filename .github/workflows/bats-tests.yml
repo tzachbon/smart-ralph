@@ -5,6 +5,8 @@ on:
     paths:
       - 'plugins/**/*.sh'
       - 'plugins/ralph-specum-codex/**'
+      - '.agents/plugins/marketplace.json'
+      - 'README.md'
       - 'tests/**/*.bats'
       - 'tests/helpers/**'
       - 'tests/fixtures/**'
@@ -13,6 +15,8 @@ on:
     paths:
       - 'plugins/**/*.sh'
       - 'plugins/ralph-specum-codex/**'
+      - '.agents/plugins/marketplace.json'
+      - 'README.md'
       - 'tests/**/*.bats'
       - 'tests/helpers/**'
       - 'tests/fixtures/**'
