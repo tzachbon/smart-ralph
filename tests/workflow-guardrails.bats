@@ -143,6 +143,16 @@ assert_minimal_implementation_order() {
     grep -Fq 'If the Scope Envelope is missing or the task must change a field, do not delegate' "$COORDINATOR"
 }
 
+@test "coordinator preflights before bidirectional native task updates" {
+    local preflight_line bidirectional_sync_line
+    preflight_line="$(line_number "$COORDINATOR" '## Scope Preflight')"
+    bidirectional_sync_line="$(line_number "$COORDINATOR" '## Native Task Sync - Bidirectional Check')"
+
+    [ -n "$preflight_line" ]
+    [ -n "$bidirectional_sync_line" ]
+    [ "$preflight_line" -lt "$bidirectional_sync_line" ]
+}
+
 @test "coordinator preflights every task in a parallel batch" {
     grep -Fq 'Before any parallel batch delegation or native task update, compare every task in `parallelGroup.taskIndices`' "$COORDINATOR"
 }
@@ -236,6 +246,14 @@ assert_minimal_implementation_order() {
     grep -Fq 'git diff --exit-code origin/main -- specs/.index' "$SPEC_TASKS"
     grep -Fq 'markdown_diff="$(mktemp)"' "$SPEC_TASKS"
     grep -Fq "all(.statusCheckRollup[]; if .__typename == \"CheckRun\" then .conclusion == \"SUCCESS\" else .state == \"SUCCESS\" end)" "$SPEC_TASKS"
+}
+
+@test "review-thread verification preserves query failure status" {
+    grep -Fq 'review_threads="$(gh api graphql' "$SPEC_TASKS"
+    grep -Fq ')" && test -z "$review_threads"' "$SPEC_TASKS"
+
+    run bash -c 'gh() { return 42; }; review_threads="$(gh api graphql)" && test -z "$review_threads"'
+    [ "$status" -eq 42 ]
 }
 
 @test "acceptance evidence covers AC-1.1 through AC-4.3" {

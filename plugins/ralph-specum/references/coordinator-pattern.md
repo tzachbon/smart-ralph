@@ -149,6 +149,12 @@ If no [P] marker on current task, set:
 }
 ```
 
+## Scope Preflight
+
+Before any task delegation, including `[VERIFY]` tasks sent to qa-engineer, read `## Scope Envelope` from `.progress.md`. Compare the current task's Do, Files, Done when, Verify, and external effects with all six fields. Before any parallel batch delegation or native task update, compare every task in `parallelGroup.taskIndices` against the same fields. If any task falls outside the envelope, gate the whole batch before processing its first task.
+
+If the Scope Envelope is missing or the task must change a field, do not delegate or mark the native task in progress. Record `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and one exact `Question:`; set `awaitingApproval: true`; keep taskIndex, taskIteration, and globalIteration unchanged; ask the question; and stop. Resume through the approval or rejection flow under After Delegation.
+
 ## Native Task Sync - Bidirectional Check
 
 Before each task delegation, reconcile tasks.md with native task state:
@@ -158,12 +164,6 @@ Before each task delegation, reconcile tasks.md with native task state:
 3. For each such mismatch: `TaskUpdate(taskId, status: "completed")`
 4. This handles: manual task completion, external edits to tasks.md, recovery from sync gaps
 5. If any TaskUpdate fails: log warning, continue
-
-## Scope Preflight
-
-Before any task delegation, including `[VERIFY]` tasks sent to qa-engineer, read `## Scope Envelope` from `.progress.md`. Compare the current task's Do, Files, Done when, Verify, and external effects with all six fields. Before any parallel batch delegation or native task update, compare every task in `parallelGroup.taskIndices` against the same fields. If any task falls outside the envelope, gate the whole batch before processing its first task.
-
-If the Scope Envelope is missing or the task must change a field, do not delegate or mark the native task in progress. Record `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and one exact `Question:`; set `awaitingApproval: true`; keep taskIndex, taskIteration, and globalIteration unchanged; ask the question; and stop. Resume through the approval or rejection flow under After Delegation.
 
 ## Native Task Sync - Pre-Delegation
 
