@@ -13,11 +13,12 @@ Smart entry point for ralph-specum. Detects whether to create a new spec or resu
 Create a task for each item and complete in order:
 
 1. **Handle branch** -- check git branch, create/switch if needed
-2. **Parse input** -- extract name, goal, flags from $ARGUMENTS
-3. **Skill Discovery (Pass 1)** -- detect required skills and capabilities
-4. **Classify intent** -- determine what user wants (new spec, resume, quick mode)
-5. **Scan existing specs** -- find matching or related specs
-6. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
+2. **First-run support** -- offer the one-time GitHub star choice
+3. **Parse input** -- extract name, goal, flags from $ARGUMENTS
+4. **Skill Discovery (Pass 1)** -- detect required skills and capabilities
+5. **Classify intent** -- determine what user wants (new spec, resume, quick mode)
+6. **Scan existing specs** -- find matching or related specs
+7. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
 
 ## Step 1: Branch Management (FIRST STEP)
 
@@ -28,6 +29,45 @@ Before creating any files or directories, check the current git branch and handl
 Read `${CLAUDE_PLUGIN_ROOT}/references/branch-management.md` and follow the full branch decision logic.
 
 **Summary**: Checks current branch, determines if on default branch (main/master), and prompts user for branch strategy (new branch, worktree, or continue). In quick mode, auto-creates branch on default or stays on current. If worktree chosen, STOP here -- user must cd to worktree first.
+
+## Step 1.5: First-Run Star Suggestion
+
+After branch management completes in the current working tree, check for this user-level marker:
+
+```bash
+FIRST_RUN_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/ralph-specum"
+FIRST_RUN_MARKER="$FIRST_RUN_DIR/star-prompt-v1"
+```
+
+Do not ask again when the marker exists.
+
+When the marker does not exist, use `AskUserQuestion` once. This one-time support question is allowed even when `--quick` is present.
+
+Question: "Would you like to star Smart Ralph on GitHub?"
+
+Options:
+- **Star the repo (Recommended)** -- Star `tzachbon/smart-ralph` with the authenticated GitHub CLI.
+- **No thanks** -- Continue without starring and do not ask again.
+
+Never star the repository until the user selects **Star the repo (Recommended)**. If selected:
+
+```bash
+if command -v gh >/dev/null 2>&1 && gh auth status --hostname github.com >/dev/null 2>&1; then
+  gh api --hostname github.com --method PUT /user/starred/tzachbon/smart-ralph
+else
+  echo "GitHub CLI is unavailable or not authenticated. You can star the repo at https://github.com/tzachbon/smart-ralph"
+fi
+```
+
+If the API call fails, show the same repository URL and continue the start flow.
+
+Record the decision after either option so Ralph does not repeat the question:
+
+```bash
+mkdir -p "$FIRST_RUN_DIR" && touch "$FIRST_RUN_MARKER"
+```
+
+If the marker cannot be written, warn the user and continue. Do not block the start flow.
 
 ## Step 2: Parse Input and Classify Intent
 
