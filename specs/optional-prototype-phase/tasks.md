@@ -34,7 +34,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): publish immutable reviewed records`
   - _Requirements: FR-3, FR-4, FR-6, NFR-3_
 
-- [ ] 1.4 Add harness control and builder contracts
+- [x] 1.4 Add harness control and builder contracts
   - **Do**: Add matching launch, wait, heartbeat, interrupt, and status adapters plus Claude and Codex builder definitions. Adapt the local prototype skill's logic and UI contracts: a single logic HTML artifact or exactly three route variants with one shared switcher. Enforce soft deadlines, activity extensions, hard deadlines, one allowed mechanical retry, source redaction, and child-agent IDs rather than user-owned task threads.
   - **Files**: `plugins/ralph-specum/hooks/scripts/prototype-harness.py`, `plugins/ralph-specum-codex/scripts/prototype_harness.py`, `plugins/ralph-specum/agents/prototype-builder.md`, `plugins/ralph-specum-codex/agent-configs/prototype-builder.toml.template`
   - **Done when**: Both adapters expose the same control outcomes, unavailable controls fail safely, logic and UI outputs follow the approved contracts, and quick mode cannot wait indefinitely.
