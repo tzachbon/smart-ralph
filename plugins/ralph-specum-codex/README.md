@@ -39,6 +39,7 @@ Use this only when testing local plugin edits.
 rm -rf /tmp/smart-ralph
 git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
 mkdir -p ./plugins ./.agents/plugins
+rm -rf -- ./plugins/ralph-specum-codex
 cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
 cp /tmp/smart-ralph/.agents/plugins/marketplace.json ./.agents/plugins/marketplace.json
 codex plugin marketplace add .
@@ -54,11 +55,13 @@ Codex enables hooks by default. In a new task, run `/hooks`, review the bundled 
 
 ## Updating
 
-Pull the latest version by re-running the install steps. These commands work from any directory.
+For a Git-backed marketplace, pull the latest version with:
 
 ```bash
 codex plugin marketplace upgrade smart-ralph
 ```
+
+If you used the local development fallback, rerun those fallback commands from the project directory to replace the copied plugin. `codex plugin marketplace upgrade` does not refresh local marketplaces.
 
 Check your version in `.codex-plugin/plugin.json`. Compare against the [latest release](https://github.com/tzachbon/smart-ralph/releases).
 

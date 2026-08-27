@@ -130,7 +130,7 @@ When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, o
 
 Treat `continue to <named next step>` as approval of the current artifact.
 
-## Hook-Driven Execution Path
+## Hook-Driven Execution Overview
 
 When the bundled Codex Stop hook is trusted and enabled, the execution loop runs without user re-invocation:
 
@@ -155,7 +155,7 @@ When hooks are disabled or unavailable, re-invoke the implement skill after each
 
 Use this path whenever the Stop hook is not trusted or enabled, when `bash` or `jq` is unavailable, or when verifying hook behavior during development.
 
-## Hook-Driven Execution Path
+## Hook-Driven Execution Details
 
 When the bundled Stop hook is trusted and enabled, it automates the execution loop.
 
@@ -184,7 +184,7 @@ When the bundled Stop hook is trusted and enabled, it automates the execution lo
 - No `.ralph-state.json` found -> exit 0
 - `taskIndex >= totalTasks` -> exit 0 (all done)
 
-## Manual Fallback Path
+## Manual Fallback Details
 
 When the Stop hook is not trusted or enabled, or when `bash` or `jq` is unavailable, run phases manually:
 

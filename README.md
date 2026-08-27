@@ -73,6 +73,7 @@ Use this only when testing local plugin edits.
 rm -rf /tmp/smart-ralph
 git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
 mkdir -p ./plugins ./.agents/plugins
+rm -rf -- ./plugins/ralph-specum-codex
 cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
 cp /tmp/smart-ralph/.agents/plugins/marketplace.json ./.agents/plugins/marketplace.json
 codex plugin marketplace add .
