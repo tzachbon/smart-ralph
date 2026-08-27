@@ -128,7 +128,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
   - **Commit**: `chore(ralph-specum): bump version to 4.11.0`
   - _Requirements: FR-11; AC-4.3_
 
-- [ ] V4 [VERIFY] Full local release checks
+- [x] V4 [VERIFY] Full local release checks
   - **Do**:
     1. Run the full Bats suite and inspect status for generated spec-index changes.
     2. Validate both modified JSON files.
@@ -136,7 +136,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
     4. Run the documented local plugin smoke test.
   - **Files**: None
   - **Done when**: All local commands pass, the plugin loads, changed prose passes ASCII and banned-phrase scans, and no generated spec-index file changed.
-  - **Verify**: `bats tests/*.bats && python3 -m json.tool plugins/ralph-specum/.claude-plugin/plugin.json >/dev/null && python3 -m json.tool .claude-plugin/marketplace.json >/dev/null && git diff --check && test -z "$(git status --short | rg 'specs/\.index' || true)" && ! git diff --unified=0 origin/main -- '*.md' | rg '^\+.*(robust|seamless|dive in|delve|it.s worth noting|comprehensive|leverage)' && ! git diff --unified=0 origin/main -- '*.md' | LC_ALL=C rg '[^ -~]' && claude --plugin-dir ./plugins/ralph-specum -p '/ralph-specum:help'`
+  - **Verify**: `bats tests/*.bats && python3 -m json.tool plugins/ralph-specum/.claude-plugin/plugin.json >/dev/null && python3 -m json.tool .claude-plugin/marketplace.json >/dev/null && git diff --check && test -z "$(git status --short | rg 'specs/\.index' || true)" && ! git diff --unified=0 origin/main -- '*.md' | rg '^\+.*(robus[t]|seamles[s]|dive i[n]|delv[e]|it.s worth notin[g]|comprehensiv[e]|leverag[e])' && ! git diff --unified=0 origin/main -- '*.md' | LC_ALL=C rg '[^ -~]' && repo_root="$(pwd)" && (cd /tmp && claude --plugin-dir "$repo_root/plugins/ralph-specum" -p '/ralph-specum:help')`
   - **Commit**: `fix(workflow): address local release failures` (only if an in-scope fix is needed)
   - _Requirements: FR-10, FR-11; AC-4.1, AC-4.2, AC-4.3_
 
