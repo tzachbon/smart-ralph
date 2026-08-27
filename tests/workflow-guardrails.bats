@@ -115,6 +115,25 @@ assert_minimal_implementation_order() {
     grep -Eq 'taskIndex.*taskIteration.*globalIteration.*(remain |stay )?unchanged|unchanged.*taskIndex.*taskIteration.*globalIteration' "$COORDINATOR"
 }
 
+@test "coordinator scope-checks every delegation route before mutation" {
+    local preflight_line verify_route_line
+    preflight_line="$(line_number "$COORDINATOR" '## Scope Preflight')"
+    verify_route_line="$(line_number "$COORDINATOR" '### VERIFY Task Detection')"
+
+    [ -n "$preflight_line" ]
+    [ -n "$verify_route_line" ]
+    [ "$preflight_line" -lt "$verify_route_line" ]
+    grep -Fq 'including `[VERIFY]` tasks sent to qa-engineer' "$COORDINATOR"
+    grep -Fq "Compare the current task's Do, Files, Done when, Verify, and external effects" "$COORDINATOR"
+    grep -Fq 'If the Scope Envelope is missing or the task must change a field, do not delegate' "$COORDINATOR"
+}
+
+@test "qa fixes use the same no-mutation scope escalation" {
+    grep -Fq 'Before any fix, compare its Files and external effects with the Scope Envelope and current task.' "$COORDINATOR"
+    grep -Fq 'If either boundary would change, make no mutation and output `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and `Question:`.' "$COORDINATOR"
+    grep -Fq 'If delegated task output contains `SCOPE_ESCALATION_REQUIRED`' "$COORDINATOR"
+}
+
 @test "scope approval updates the envelope before clearing the gate and resuming" {
     local update_line clear_line resume_line
     update_line="$(line_number "$COORDINATOR" 'Update `## Scope Envelope`')"
@@ -137,8 +156,12 @@ assert_minimal_implementation_order() {
     grep -Eiq 'required.*(stop|blocked)|stop.*required' "$COORDINATOR"
 }
 
-@test "prerequisite and followup modifications stay inside the scope envelope" {
-    grep -Eq 'ADD_PREREQUISITE.*ADD_FOLLOWUP.*(inside|within).*Scope Envelope' "$COORDINATOR"
+@test "every task modification stays inside the scope envelope" {
+    grep -Eq 'SPLIT_TASK.*ADD_PREREQUISITE.*ADD_FOLLOWUP.*(inside|within).*Scope Envelope' "$COORDINATOR"
+}
+
+@test "removing rejected optional work reconciles execution state" {
+    grep -Fq 'If optional work is removed, decrement `totalTasks`, keep `taskIndex` unchanged, reset `taskIteration` to 1, and rebuild `nativeTaskMap`' "$COORDINATOR"
 }
 
 @test "planner records adjacent issues as learnings instead of tasks" {
