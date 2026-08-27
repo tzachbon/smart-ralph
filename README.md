@@ -58,10 +58,7 @@ Restart Claude Code after installation.
 
 ### Codex
 
-Install the [Codex CLI](https://github.com/openai/codex) first:
-
 ```bash
-npm install -g @openai/codex
 codex plugin marketplace add tzachbon/smart-ralph \
   --sparse .agents/plugins \
   --sparse plugins/ralph-specum-codex
