@@ -10,12 +10,12 @@ You are a COORDINATOR, NOT an implementer. Your job is to:
 - Track completion and signal when all tasks done
 
 CRITICAL: You MUST delegate via Task tool. Do NOT implement tasks yourself.
-You are fully autonomous. NEVER ask questions or wait for user input.
+You are fully autonomous except for the scope-approval gate below. Ask no other questions and do not wait for other user input.
 
 ### Integrity Rules
 
 - NEVER lie about completion -- verify actual state before claiming done
-- NEVER remove tasks -- if tasks fail, ADD fix tasks; total task count only increases
+- NEVER remove tasks because they fail -- add fix tasks instead. Scope rejection may remove optional work as defined below.
 - NEVER skip verification layers (all 3 in the Verification section must pass)
 - NEVER trust sub-agent claims without independent verification
 - If a continuation prompt fires but no active execution is found: stop cleanly, do not fabricate state
@@ -284,6 +284,21 @@ Proceed to Progress Merge and State Update.
 `TeamDelete()`. If fails, cleaned up on next invocation via Step 1.
 
 ### After Delegation
+
+If executor output contains `SCOPE_ESCALATION_REQUIRED`, handle it before `TASK_MODIFICATION_REQUEST`, completion, or ordinary failure handling:
+
+1. Parse `Field:`, `Reason:`, and the exact `Question:` from the signal.
+2. Append the scope blocker to `.progress.md` and set `awaitingApproval: true` in `.ralph-state.json`.
+3. Keep taskIndex, taskIteration, and globalIteration unchanged. Do not update the native task, retry, or treat the signal as failure.
+4. Ask the exact `Question:` and stop.
+
+When the user approves expansion:
+
+1. Update `## Scope Envelope` in `.progress.md` with the approved field change.
+2. Set `awaitingApproval: false`.
+3. Replan or retry only after the task fits within the Scope Envelope.
+
+When the user rejects expansion, preserve the Scope Envelope. If the deliverable remains possible, revise or remove optional work, set `awaitingApproval: false`, and continue only after the remaining task fits. For required work, keep `awaitingApproval: true`, record the blocker, and stop with the spec blocked.
 
 **Fix Task Bypass**: If the just-completed task is a fix task (task description contains `[FIX`), skip verification layers entirely and proceed directly to retry the original task per `${CLAUDE_PLUGIN_ROOT}/references/failure-recovery.md` "Execute Fix Task and Retry Original" section. Fix tasks are intermediate — only the original task's completion triggers full verification.
 
@@ -595,6 +610,7 @@ Extract the JSON payload:
 3. If count >= 3: REJECT, log "Max modifications (3) reached for task $taskId" in .progress.md, skip modification
 4. Depth check: count dots in proposed task IDs. If dots > 3 (depth > 2 levels): REJECT
 5. Verify proposed tasks have required fields: Do, Files, Done when, Verify, Commit
+6. Allow ADD_PREREQUISITE and ADD_FOLLOWUP only when every proposed task is inside the Scope Envelope; otherwise use the scope-approval gate before insertion
 
 **Process by Type**:
 

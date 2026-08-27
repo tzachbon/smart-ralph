@@ -53,7 +53,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
   - **Commit**: `test(scope): red - require execution boundary checks`
   - _Requirements: FR-7, FR-8, FR-9; AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5, AC-3.6, AC-3.7_
 
-- [ ] 1.4 [GREEN] Pass execution-boundary tests
+- [x] 1.4 [GREEN] Pass execution-boundary tests
   - **Do**:
     1. Make task-planner keep task contracts and discoveries inside the envelope.
     2. Make spec-executor check scope before mutation and emit the escalation signal.

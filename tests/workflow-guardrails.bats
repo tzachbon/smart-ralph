@@ -105,6 +105,7 @@ line_number() {
 @test "scope rejection preserves the envelope and stops or removes optional work" {
     grep -Eiq 'reject.*preserve.*scope envelope|preserve.*scope envelope.*reject' "$COORDINATOR"
     grep -Eiq 'revise or remove|remove or revise' "$COORDINATOR"
+    grep -Fq 'optional work, set `awaitingApproval: false`' "$COORDINATOR"
     grep -Fq 'awaitingApproval: true' "$COORDINATOR"
     grep -Eiq 'required.*(stop|blocked)|stop.*required' "$COORDINATOR"
 }
