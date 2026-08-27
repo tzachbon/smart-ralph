@@ -1,5 +1,9 @@
 # State files (created at runtime in user's spec directory)
 .ralph-state.json
+**/.ralph-state.lock
+**/.ralph-state.json.tmp
+**/prototypes/.*.candidate.md
+**/prototypes/.*.cleanup.json
 **/.progress.md
 specs/.current-spec
 

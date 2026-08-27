@@ -26,7 +26,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): resolve paths and bounded settings`
   - _Requirements: FR-2, FR-3, FR-5, NFR-1, NFR-4_
 
-- [ ] 1.3 Add immutable prototype record publication
+- [x] 1.3 Add immutable prototype record publication
   - **Do**: Add matching record helpers and templates. Support exclusive candidate creation, candidate hashing, exact-byte no-overwrite publication, terminal record parsing, reconciliation, quarantine, supersession, downstream selection, cleanup receipts, and reviewed post-deletion bytes. Add ignore rules for locks, temp state, and candidates without ignoring final records.
   - **Files**: `plugins/ralph-specum/hooks/scripts/prototype-records.py`, `plugins/ralph-specum-codex/scripts/prototype_records.py`, `plugins/ralph-specum/templates/prototype.md`, `plugins/ralph-specum-codex/templates/prototype.md`, `.gitignore`
   - **Done when**: Final records are never overwritten, successful publication re-reads and verifies exact bytes, quick cleanup publishes only bytes reviewed after deletion, and superseded or malformed records are excluded downstream.
