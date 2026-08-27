@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ralph Specum Prototype"
+  short_description: "Run or resume an optional prototype"
+  default_prompt: "Use $ralph-specum-prototype to run or resume one optional prototype while preserving the current Ralph phase and checkout."
+policy:
+  allow_implicit_invocation: false

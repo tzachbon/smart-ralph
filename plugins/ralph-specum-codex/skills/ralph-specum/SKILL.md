@@ -1,6 +1,6 @@
 ---
 name: ralph-specum
-description: Use only when the user explicitly invokes `$ralph-specum`, requests Ralph Specum in Codex, asks Ralph Specum to handle a named phase, or explicitly requests autonomous or quick mode or continuation without pauses.
+description: Use only when the user explicitly invokes `$ralph-specum`, requests Ralph Specum in Codex, asks Ralph Specum to handle a named phase or optional prototype, or explicitly requests autonomous or quick mode or continuation without pauses.
 metadata:
   surface: primary
 ---
@@ -15,12 +15,16 @@ Use this as the primary Codex surface for Ralph Specum. It carries the full reus
 - `references/state-contract.md` for `.ralph-state.json`, `.progress.md`, commit rules, and resume semantics
 - `references/path-resolution.md` for `specs_dirs`, `.current-spec`, ambiguity handling, and default directory behavior
 - `references/parity-matrix.md` for Claude-to-Codex feature translation and command mapping
+- `references/prototype-coordinator.md` for direct, suggested, resume, quick, cancel, and prototype handoff behavior
 
 ## Use These Helpers
 
 - `scripts/resolve_spec_paths.py` for spec roots, current spec, and unique or ambiguous name resolution
 - `scripts/merge_state.py` for safe top-level state merges
 - `scripts/count_tasks.py` for task counts and next incomplete task
+- `scripts/locked_state.py` for locked state and `activePrototypes` mutations
+- `scripts/prototype_records.py` for reviewed immutable prototype records and downstream selection
+- `scripts/prototype_harness.py` for bounded builder control outcomes and retry metadata
 - `assets/templates/` for the canonical Ralph markdown file shapes
 - `assets/bootstrap/` when the user wants optional project-local Codex guidance
 
@@ -34,6 +38,7 @@ Handle these intents directly:
 | Triage | Delegate to `triage-analyst` sub-agent to decompose into epic and specs |
 | Research | Delegate to `research-analyst` sub-agent to write `research.md` |
 | Requirements | Delegate to `product-manager` sub-agent to write `requirements.md` |
+| Prototype | Follow `references/prototype-coordinator.md`, or route an explicit helper request to `$ralph-specum-prototype` |
 | Design | Delegate to `architect-reviewer` sub-agent to write `design.md` |
 | Tasks | Delegate to `task-planner` sub-agent to write `tasks.md` |
 | Implement | Delegate each task to `spec-executor` sub-agent until complete or blocked |
@@ -63,6 +68,8 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 11. Use branch creation or worktree creation when the user asks for branch isolation or the repo policy requires it.
 12. Enter quick mode only when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
 13. In quick mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
+14. Keep optional prototype work in `activePrototypes`; preserve the main phase and current checkout until the recorded handoff.
+15. Use child-agent controls and store only `agentId` for internal builders. Never use `create_thread` or `threadId` for them.
 
 ## Stop Enforcement
 

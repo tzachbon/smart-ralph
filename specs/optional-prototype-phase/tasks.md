@@ -50,7 +50,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): add Claude prototype coordinator`
   - _Requirements: FR-1, FR-2, FR-4, FR-5, FR-6, NFR-1_
 
-- [ ] 1.6 Add the Codex prototype skill and routing
+- [x] 1.6 Add the Codex prototype skill and routing
   - **Do**: Add `$ralph-specum-prototype`, its routing metadata, Codex coordinator reference, and root routing entries. Keep semantics aligned with the Claude coordinator while using Codex child-agent controls and the Codex helper paths.
   - **Files**: `plugins/ralph-specum-codex/skills/ralph-specum-prototype/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-prototype/agents/openai.yaml`, `plugins/ralph-specum-codex/references/prototype-coordinator.md`, `plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum/agents/openai.yaml`
   - **Done when**: The Codex entrypoint can route direct, suggested, resume, quick, and cancel behavior without `create_thread`, and it uses child `agentId` values for builders.
