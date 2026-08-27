@@ -53,7 +53,7 @@ Call `TeamDelete()` before anything else. This releases whatever team the sessio
 
 ### Step 2: Create Team
 
-```
+```text
 TeamCreate(team_name: "research-$spec", description: "Parallel research for $spec")
 ```
 
@@ -63,7 +63,7 @@ TeamCreate(team_name: "research-$spec", description: "Parallel research for $spe
 
 Create one `TaskCreate` per topic. Artifact-producing `research-analyst` topics use `$SPEC_PATH/.research-[topic-slug].md`. Read-only `Explore` topics return findings in their Task result and never write files.
 
-```
+```text
 TaskCreate(
   subject: "[Topic name] research",
   description: "Research [topic] for $spec. Output: $SPEC_PATH/.research-[topic-slug].md",
@@ -81,7 +81,7 @@ TaskCreate(
 
 ALL Task calls MUST be in ONE message to ensure true parallel execution. Before that batch, run `check-delegation` once per artifact-producing research teammate. Give every writer a unique artifact agent ID. Include the absolute state path, absolute `phase_gate.py` path, complete `[RALPH_PHASE_GATE]` identity tuple (`state`, `phase`, `interviewId`, `discoveryRevision`, `contextDigest`), verbatim selected-skill manifest, and complete approved decision brief. Require matching per-source load receipts and `check-agent-write` with the same identity before writing. Read-only `Explore` calls need no marker and may not write.
 
-```
+```text
 Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-1",
   prompt: "You are a research teammate.
     Artifact agent ID: researcher-1
@@ -142,17 +142,17 @@ After all parallel tasks complete, delegate the unified artifact to a fresh `res
 ### Pitfalls to Avoid
 
 ## Codebase Analysis
-[From .research-codebase.md]
+[From returned Explore findings for codebase patterns and constraints]
 ### Existing Patterns
 ### Dependencies
 ### Constraints
 
 ## Related Specs
-[From .research-related-specs.md]
+[From returned Explore findings for related specs]
 | Spec | Relevance | Relationship | May Need Update |
 
 ## Quality Commands
-[From .research-quality.md]
+[From returned Explore findings for quality commands and verification tooling]
 | Type | Command | Source |
 
 ## Feasibility Assessment

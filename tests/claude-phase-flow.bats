@@ -407,6 +407,24 @@ PY
     ! grep -q '\./specs/\$spec' "$parallel"
 }
 
+@test "parallel research merges returned Explore findings instead of nonexistent files" {
+    local parallel
+    parallel="$(plugin_root)/references/parallel-research.md"
+    grep -q 'From returned Explore findings for codebase patterns and constraints' "$parallel"
+    grep -q 'From returned Explore findings for related specs' "$parallel"
+    grep -q 'From returned Explore findings for quality commands and verification tooling' "$parallel"
+    ! grep -q '\.research-codebase\.md' "$parallel"
+    ! grep -q '\.research-related-specs\.md' "$parallel"
+    ! grep -q '\.research-quality\.md' "$parallel"
+}
+
+@test "index quick documentation promises only the implemented interview bypass" {
+    local readme
+    readme="$(repo_root)/README.md"
+    grep -q '| `--quick` | Skip the pre-scan and post-scan interviews |' "$readme"
+    ! grep -q 'phase approvals while retaining skill-load and delegation gates' "$readme"
+}
+
 @test "requirements review uses normalized persistent mode" {
     local requirements
     requirements="$(plugin_root)/commands/requirements.md"
