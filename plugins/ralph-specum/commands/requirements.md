@@ -13,7 +13,7 @@ Generate requirements for the active spec. Running this command implicitly appro
 Create a task for each item and complete in order:
 
 1. **Gather context** -- resolve spec, read research and goal
-2. **Interview** -- brainstorming dialogue (skip if `--quick`)
+2. **Grill** -- resolve the design-tree frontier (skip if `--quick`)
 3. **Execute requirements** -- dispatch product-manager via team
 4. **Artifact review** -- spec-reviewer validation loop (both modes)
 5. **Walkthrough & approval** -- display summary, get user approval
@@ -27,20 +27,15 @@ Create a task for each item and complete in order:
 4. Read `.ralph-state.json`; clear approval flag: `awaitingApproval: false`
 5. Read context: `research.md` (if exists), `.progress.md`, original goal
 
-## Step 2: Interview (skip if --quick)
+## Step 2: Grill (skip if --quick)
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
-### Read Context from .progress.md
+### Grilling
 
-Parse Intent Classification and prior interview responses to skip already-answered questions.
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` in full. It owns context and spec-index reading, fact lookup, the design tree, frontier rounds, domain-language work, progress capture, and the shared-understanding confirmation gate.
 
-**Intent-Based Question Counts:**
-- TRIVIAL: 1-2 | REFACTOR: 3-5 | GREENFIELD: 5-10 | MID_SIZED: 3-7
-
-### Brainstorming Dialogue
-
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
+Read intent classification and prior interview responses only as context for building the tree. Do not derive question counts from intent.
 
 **Requirements Exploration Territory** (hints, not a script):
 - **Primary users** -- who will use this feature? Developers, end users, specific roles?
@@ -49,20 +44,21 @@ Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/S
 - **Scope boundaries** -- what is explicitly out of scope for this iteration?
 - **Compliance or regulatory needs** -- security, privacy, or regulatory considerations?
 
-### Requirements Approach Proposals
+### Scope Approach Branch
 
-After dialogue, propose 2-3 scoping approaches. Examples (illustrative only):
+When scope requires a user decision, add 2-3 grounded approaches to the design tree. Examples (illustrative only):
 - **(A)** Full feature set -- comprehensive user stories covering all use cases
 - **(B)** MVP scope -- core user stories only, defer edge cases to v2
 - **(C)** Phased delivery -- essential stories now, planned expansion later
 
-### Store Interview & Approach
+### Store Grill Results
 
 Append to `.progress.md` under "Interview Responses":
 ```markdown
-### Requirements Interview (from requirements.md)
-- [Topic 1]: [response]
+### Requirements Grill (from requirements.md)
+- [Round decisions and resolved facts]
 - Chosen approach: [name] -- [brief description]
+- Shared understanding: confirmed
 ```
 
 Pass combined context to delegation prompt as "Interview Context".

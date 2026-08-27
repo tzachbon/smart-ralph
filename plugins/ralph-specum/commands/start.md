@@ -85,9 +85,11 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/spec-scanner.md` and follow the scanning 
 
 <mandatory>
 **Skip spec scanner and index hint if --quick flag detected in $ARGUMENTS.**
+
+If no goal is available yet, set `scannerDeferred: true` in command context and defer this step. Do not run keyword matching against an empty goal. New Flow runs the scanner immediately after collecting the goal.
 </mandatory>
 
-**Summary**: Scans ./specs/ directory (and all configured specs_dirs) for related specs using keyword matching. Displays related specs with relevance scores. Shows index hint if codebase indexing not yet done. Stores relatedSpecs in .ralph-state.json for use during interview.
+**Summary**: Scans all configured spec directories for related specs using keyword matching. Displays related specs with relevance scores and shows an index hint when needed. Carries the results into New Flow, which persists them after `.ralph-state.json` exists.
 
 ## Step 3.5: Epic Detection
 
@@ -160,9 +162,19 @@ Continuing...
 
 1. If no name provided, ask: "What should we call this spec?" (validates kebab-case)
 2. If no goal provided, ask: "What is the goal? Describe what you want to build."
-3. Determine spec directory:
+2a. If `scannerDeferred` is true, run **Scan Existing Specs** now with the collected goal and retain its `RELATED_SPECS` result.
+3. Resolve the spec directory before creating files:
    ```text
-   specsDir = (--specs-dir if valid) OR (interview response) OR ralph_get_default_dir()
+   if --specs-dir is present:
+     validate it against ralph_get_specs_dirs()
+     specsDir = validated value
+   else if ralph_get_specs_dirs() returns more than one directory:
+     ask "Where should this spec be stored?"
+     recommend ralph_get_default_dir() first and list each configured directory
+     specsDir = user choice
+   else:
+     specsDir = ralph_get_default_dir()
+
    basePath = "$specsDir/$name"
    ```
 4. Create spec directory: `mkdir -p "$basePath"`
@@ -175,10 +187,11 @@ Continuing...
      "phase": "research", "taskIndex": 0, "totalTasks": 0,
      "taskIteration": 1, "maxTaskIterations": 5,
      "globalIteration": 1, "maxGlobalIterations": 100,
-     "commitSpec": true, "quickMode": false,
+     "commitSpec": true, "quickMode": false, "relatedSpecs": [],
      "discoveredSkills": []
    }
    ```
+   Replace the empty `relatedSpecs` array with the results carried from **Scan Existing Specs**. If the scanner found no matches, keep the empty array.
    If this spec was suggested by an active epic, also include:
    ```json
    "epicName": "$EPIC_NAME"
@@ -222,7 +235,7 @@ Continuing...
       ```
       If no skills match: `- No skills matched`
 10. Update Spec Index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
-11. **Goal Interview** -- Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and follow brainstorming dialogue
+11. **Goal Grill** -- Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and resolve its design-tree frontier before research
 12. **Team Research Phase** -- Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` and follow the dispatch pattern
 13. **Skill Discovery Pass 2 (Post-Research Retry)** -- Re-scan skills with enriched context after research completes:
 

@@ -1,104 +1,121 @@
 ---
 name: interview-framework
-description: This skill should be used when running an interactive interview before a spec phase, gathering requirements through dialogue, asking the user clarifying questions before delegating to a subagent, or when any Ralph phase command (research, requirements, design, tasks) needs adaptive brainstorming dialogue. Covers the 3-phase algorithm (Understand, Propose Approaches, Confirm and Store).
-version: 0.2.0
+description: This skill should be used when running any normal-mode interview before a spec phase, grilling the user to reach shared understanding, gathering requirements through dialogue, or resolving design decisions before delegating to a Ralph subagent. Covers fact-first discovery, design-tree frontier rounds, recommendations, domain language, and confirmation.
+version: 0.3.0
 user-invocable: false
 ---
 
 # Interview Framework
 
-Adaptive brainstorming dialogue algorithm for all spec phases. Each phase command provides its own exploration territory (phase-specific areas to probe).
+Treat every normal-mode interview governed by this framework as a grill. Reach shared understanding before delegating research, requirements, design, or task planning.
 
-## Option Limit Rule
+Quick mode skips the interview. Do not weaken normal-mode grilling to imitate quick mode.
 
-Each question must have 2-4 options (max 4). Keep the most relevant options, combine similar ones.
+## Completion Contract
 
-## Recommendation Format
+Do not proceed because the conversation feels sufficient or a question count has been reached. Proceed only when:
 
-Every question asked via `AskUserQuestion` in Phase 1 leads with the recommended option (except when options are symmetric, in which case `[Recommended]` may be omitted):
+1. All discoverable facts required by the design tree have been resolved.
+2. The design-tree frontier is empty.
+3. Every branch is resolved or the user has explicitly placed it out of scope.
+4. The user confirms the resulting shared understanding.
 
-```yaml
-AskUserQuestion:
-  question: "[Context-aware question referencing prior answers]. [One sentence rationale for the recommendation.]"
-  options:
-    - "[Recommended] [Option text -- the AI's suggested answer]"
-    - "[Alternative 1]"
-    - "[Alternative 2 if needed]"
-    - "Other"
-```
+## Preflight: Find Facts Before Questions
 
-Rules:
-- `[Recommended]` is a label prefix on the first option only.
-- The rationale sits in the question text, not the option label.
-- Option count still 2-4 max (Option Limit Rule preserved).
-- If there is no meaningful recommendation (truly symmetric choice), omit the `[Recommended]` label rather than placing it arbitrarily.
+Read the available project context before building the design tree:
 
-Example:
+1. Read the original goal, `.progress.md`, `.ralph-state.json`, and prior phase artifacts.
+2. Resolve the default specs directory with `ralph_get_default_dir()` when available, otherwise use `./specs`. Read `<default-specs-dir>/.index/index.md` when it exists, then open only relevant indexed entries and related specs.
+3. Read `CONTEXT-MAP.md` when it exists and follow it to the applicable `CONTEXT.md`. Otherwise read the root `CONTEXT.md` when present.
+4. Inspect code, configuration, tests, and existing specs for any fact needed by the interview.
 
-```yaml
-AskUserQuestion:
-  question: "Where should the spec live? You only have one specs directory configured, so the default is fine unless you want to reorganize."
-  options:
-    - "[Recommended] ./specs/ (default)"
-    - "Let me configure a different path"
-    - "Other"
-```
+Classify every unknown:
 
-## Codebase-First Exploration
+- **Fact**: discoverable from the repository, tools, documentation, or existing artifacts. Resolve it with Explore or another read-only subagent. Never ask the user.
+- **Decision**: a preference, priority, trade-off, boundary, or constraint that only the user can settle. Put it on the design tree.
 
-Before asking any question, determine whether the answer is a **codebase fact** or a **user decision**:
+Run independent fact lookups in parallel. A pending lookup blocks only the decisions that depend on it; ask the rest of the current frontier.
 
-- **Codebase fact**: something discoverable by reading code, config, or existing specs (e.g., which framework is used, whether an interface already exists, what a file currently does). Use the Explore agent to find it. Never ask the user.
-- **User decision**: a preference, priority, trade-off, or constraint that only the user can answer (e.g., which approach to take, what the success criteria are, what's in scope). Ask via AskUserQuestion.
+## Build the Design Tree
 
-Only ask what you cannot discover yourself.
+Map every decision as a node. Add dependency edges from foundational decisions to the decisions that require them.
 
-## Completion Signal Detection
+Track each node as one of:
 
-After each response, check for early completion signals using token-based matching:
+- `OPEN`: ready once its prerequisites resolve
+- `INVESTIGATING`: waiting on a fact lookup
+- `RESOLVED`: answered by evidence, the user, or a justified inference
+- `OUT_OF_SCOPE`: explicitly excluded by the user
+
+Define the **frontier** as every open decision whose prerequisites are resolved. Do not ask a decision that depends on another decision still open in the same round.
+
+Use the calling command's exploration territory as a starting point, then add branches exposed by project context, prior answers, concrete scenarios, and code contradictions. Do not use fixed question counts or a canned questionnaire.
+
+## Grill in Frontier Rounds
+
+Ask the whole current frontier in one round:
+
+1. Number each question (`Q1`, `Q2`, and so on).
+2. Ground it in known facts and prior answers.
+3. Give a recommended answer with a short rationale.
+4. Provide 2-4 meaningful options, with the recommendation first and `Other` last.
+5. Omit the recommendation label only when the options are symmetric.
+
+Use `AskUserQuestion` for the round when the tool is available. Put the whole frontier in one call when it fits. If the frontier exceeds the tool limit, use multiple calls for that same round and wait for every frontier answer. If `AskUserQuestion` is unavailable, render the same numbered round in the response and wait for the user's answers. Advance the tree only after the user answers the round.
+
+Format each question as:
 
 ```text
-completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
+Q1 - <short title>: <context-aware decision question>
 
-tokens = tokenize(userResponse.lower())  # split on whitespace/punctuation
-for signal in completionSignals:
-  if signal in tokens:  # exact token match, not substring
-    -> SKIP remaining questions, move to PROPOSE APPROACHES
+Recommendation: <recommended answer and rationale>
 ```
 
-## 3-Phase Overview
+After the user answers the round:
 
-### Phase 1: UNDERSTAND (Decision-Tree)
+1. Mark answered nodes resolved.
+2. Record any justified inferences.
+3. Add branches exposed by the answers.
+4. Turn an `Other` response into a specific dependent question for the next frontier. Never ask a generic follow-up.
+5. Recompute the frontier and start the next round.
 
-Read all available context (.progress.md, prior artifacts, goal text). Build a question tree from the exploration territory with dependency ordering. Traverse the tree: auto-resolve codebase facts via exploration, ask user only about decisions. Each question leads with `[Recommended]` answer. No fixed question caps. Exit when all nodes resolved or user signals completion.
+Treat `done`, `skip`, or similar language as a request to narrow scope, not as an automatic exit. Show the remaining branches and require explicit confirmation before marking them out of scope.
 
-See `references/algorithm.md` for full pseudocode.
+## Model Domain Language During the Grill
 
-### Phase 2: PROPOSE APPROACHES
+Apply `references/domain-modeling.md` throughout the rounds.
 
-Synthesize dialogue into 2-3 distinct approaches. Each includes: name, description, trade-offs. Lead with recommendation. Present via AskUserQuestion. Maximum 3 approaches (more causes decision fatigue). Trade-offs must be honest. No straw-man alternatives.
+- Challenge terms that conflict with `CONTEXT.md`.
+- Replace fuzzy or overloaded words with a proposed canonical term.
+- Use concrete boundary and edge-case scenarios to test the model.
+- Check claims about current behavior against code.
+- Update the applicable `CONTEXT.md` as soon as a domain term is resolved. Do not batch glossary work until the end.
 
-See `references/algorithm.md` for full pseudocode.
+Keep implementation details and technical decisions out of `CONTEXT.md`. This interview framework does not create ADRs; `design.md` remains the specification's technical-decision record.
 
-### Phase 3: CONFIRM & STORE
+## Store Progress After Every Round
 
-Brief recap to user of key decisions and chosen approach. If user corrects something, update before storing. Store in .progress.md under Context Accumulator pattern.
+Append each completed round to `.progress.md` under `## Interview Responses`. Record facts, decisions, explicit scope exclusions, and any glossary updates. Preserve earlier rounds.
 
-See `references/algorithm.md` for full pseudocode.
+```markdown
+### <Phase> Grill - Round <N>
+- Facts resolved: <fact and evidence>
+- Decisions: <topic> -> <answer>
+- Out of scope: <explicitly excluded branch, if any>
+- Domain language: <canonical term and definition, if any>
+- Frontier after round: <remaining unblocked decisions or empty>
+```
 
-## Adaptive Depth (Other Responses)
+Do not store a parallel interview mode or question counter in `.ralph-state.json`.
 
-When user selects "Other": ask a context-specific follow-up (never generic "elaborate"). Reference what the user typed. Continue until clarity or 5 rounds. Do not increment askedCount for follow-ups.
+## Confirm Shared Understanding
 
-See `references/examples.md` for example follow-up patterns.
+When the frontier becomes empty, present a compact summary of settled decisions, scope boundaries, and the chosen approach. Ask the user to confirm it.
 
-## Context Accumulator Pattern
-
-After each interview, update `.progress.md`: read existing content, append new section under "## Interview Responses" with descriptive keys reflecting what was discussed. Include the chosen approach.
-
-See `references/examples.md` for storage format.
+If the user corrects or extends the summary, reopen the affected branch and continue grilling. Delegate to the phase agent only after confirmation.
 
 ## References
 
-- **`references/algorithm.md`** -- Full 3-phase pseudocode (UNDERSTAND decision-tree, PROPOSE APPROACHES, CONFIRM & STORE)
-- **`references/examples.md`** -- Example interview questions, "Other" response handling, context storage format
+- **`references/algorithm.md`** - Full fact-first design-tree and frontier-round algorithm
+- **`references/domain-modeling.md`** - `CONTEXT.md` discovery, language challenges, scenarios, and inline glossary updates
+- **`references/examples.md`** - Frontier-round and progress-storage examples

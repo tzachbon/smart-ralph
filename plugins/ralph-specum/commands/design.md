@@ -13,7 +13,7 @@ Generate technical design for the active spec. Running this command implicitly a
 Create a task for each item and complete in order:
 
 1. **Gather context** -- resolve spec, read requirements and research
-2. **Interview** -- brainstorming dialogue (skip if `--quick`)
+2. **Grill** -- resolve the design-tree frontier (skip if `--quick`)
 3. **Execute design** -- dispatch architect-reviewer via team
 4. **Artifact review** -- spec-reviewer validation loop (only if `--quick`)
 5. **Walkthrough & approval** -- display summary, get user approval
@@ -28,20 +28,15 @@ Create a task for each item and complete in order:
 5. Read `.ralph-state.json`; clear approval flag: `awaitingApproval: false`
 6. Read context: `requirements.md` (required), `research.md` (if exists), `.progress.md`
 
-## Step 2: Interview (skip if --quick)
+## Step 2: Grill (skip if --quick)
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
-### Read Context from .progress.md
+### Grilling
 
-Parse Intent Classification and all prior interview responses to skip already-answered questions.
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` in full. It owns context and spec-index reading, fact lookup, the design tree, frontier rounds, domain-language work, progress capture, and the shared-understanding confirmation gate.
 
-**Intent-Based Question Counts:**
-- TRIVIAL: 1-2 | REFACTOR: 3-5 | GREENFIELD: 5-10 | MID_SIZED: 3-7
-
-### Brainstorming Dialogue
-
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
+Read intent classification and prior interview responses only as context for building the tree. Do not derive question counts from intent.
 
 **Design Exploration Territory** (hints, not a script):
 - **Architecture fit** -- extend existing architecture, create isolated module, or require refactor?
@@ -50,20 +45,21 @@ Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/S
 - **Failure modes** -- what failure scenarios matter? Graceful degradation, retry logic, alerting?
 - **Deployment model** -- feature flags, gradual rollout, migrations, or big-bang?
 
-### Design Approach Proposals
+### Architecture Approach Branch
 
-After dialogue, propose 2-3 architectural approaches. Examples (illustrative only):
+When architecture requires a user decision, add 2-3 grounded approaches to the design tree. Examples (illustrative only):
 - **(A)** Extend existing service/module layer -- minimal new abstractions
 - **(B)** New isolated component -- clean boundaries, own data layer
 - **(C)** Hybrid -- new module with shared infrastructure and data layer
 
-### Store Interview & Approach
+### Store Grill Results
 
 Append to `.progress.md` under "Interview Responses":
 ```markdown
-### Design Interview (from design.md)
-- [Topic 1]: [response]
+### Design Grill (from design.md)
+- [Round decisions and resolved facts]
 - Chosen approach: [name] -- [brief description]
+- Shared understanding: confirmed
 ```
 
 Pass combined context to delegation prompt as "Interview Context".

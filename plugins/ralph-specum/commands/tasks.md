@@ -13,7 +13,7 @@ Generate implementation tasks for the active spec. Running this command implicit
 Create a task for each item and complete in order:
 
 1. **Gather context** -- resolve spec, read design, requirements, research
-2. **Interview** -- brainstorming dialogue (skip if `--quick`)
+2. **Grill** -- resolve the design-tree frontier (skip if `--quick`)
 3. **Execute task generation** -- dispatch task-planner via team
 4. **Artifact review** -- spec-reviewer validation loop (only if `--quick`)
 5. **Walkthrough & approval** -- display summary, get user approval
@@ -34,20 +34,15 @@ Create a task for each item and complete in order:
 8. **Quick mode granularity default**: If `--quick` is present in `$ARGUMENTS` AND `granularity` is not set in `.ralph-state.json`, set `"granularity": "fine"` in `.ralph-state.json`
 9. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
 
-## Step 2: Interview (skip if --quick)
+## Step 2: Grill (skip if --quick)
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
-### Read Context from .progress.md
+### Grilling
 
-Parse Intent Classification and all prior interview responses to skip already-answered questions.
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` in full. It owns context and spec-index reading, fact lookup, the design tree, frontier rounds, domain-language work, progress capture, and the shared-understanding confirmation gate.
 
-**Intent-Based Question Counts:**
-- TRIVIAL: 1-2 | REFACTOR: 3-5 | GREENFIELD: 5-10 | MID_SIZED: 3-7
-
-### Brainstorming Dialogue
-
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
+Read intent classification and prior interview responses only as context for building the tree. Do not derive question counts from intent.
 
 **Tasks Exploration Territory** (hints, not a script):
 - **Testing thoroughness** -- minimal POC-only tests, standard unit + integration, or comprehensive E2E?
@@ -68,21 +63,22 @@ If either condition is false, skip the granularity question:
 
 When the user answers the granularity question, store the response in `.progress.md` under Interview Responses and update `"granularity"` in `.ralph-state.json`.
 
-### Tasks Approach Proposals
+### Execution Strategy Branch
 
-After dialogue, propose 2-3 execution strategies. Examples (illustrative only):
+When execution strategy requires a user decision, add 2-3 grounded strategies to the design tree. Examples (illustrative only):
 - **(A)** Aggressive POC -- fewer tasks, ship in small increments, add polish later
 - **(B)** Thorough -- more tasks with full test coverage and quality gates throughout
 - **(C)** Phased delivery -- split into multiple PRs with clear milestones
 
-### Store Interview & Approach
+### Store Grill Results
 
 Append to `.progress.md` under "Interview Responses":
 ```markdown
-### Tasks Interview (from tasks.md)
-- [Topic 1]: [response]
+### Tasks Grill (from tasks.md)
+- [Round decisions and resolved facts]
 - E2E verification: YES/NO -- [strategy or "auto"]
 - Chosen approach: [name] -- [brief description]
+- Shared understanding: confirmed
 ```
 
 Pass combined context to delegation prompt as "Interview Context".

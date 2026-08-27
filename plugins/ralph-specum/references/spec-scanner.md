@@ -16,6 +16,13 @@ ralph_list_specs()        # List all specs as "name|path" pairs
 ralph_resolve_current()   # Resolve .current-spec to full path
 ```
 
+Resolve index paths once:
+
+```text
+defaultDir = ralph_get_default_dir()
+indexDir = "$defaultDir/.index"
+```
+
 ## Scanning Steps
 
 ```text
@@ -25,9 +32,9 @@ ralph_resolve_current()   # Resolve .current-spec to full path
    - Exclude the current spec being created (if known)
    - Exclude .index directory (handled separately in step 1b)
    |
-1b. Scan indexed specs (if ./specs/.index/ exists):
-   - List component specs: ls ./specs/.index/components/*.md 2>/dev/null
-   - List external specs: ls ./specs/.index/external/*.md 2>/dev/null
+1b. Scan indexed specs (if $indexDir exists):
+   - List component specs: ls "$indexDir"/components/*.md 2>/dev/null
+   - List external specs: ls "$indexDir"/external/*.md 2>/dev/null
    - For each indexed spec:
      - Read the file and extract "## Purpose" section (component) or "## Summary" section (external)
      - Use the purpose/summary as the match text
@@ -59,24 +66,27 @@ ralph_resolve_current()   # Resolve .current-spec to full path
    - spec-name-1 [High]: [first 50 chars of Original Goal]... [dir-path if non-default]
    - spec-name-2 [Medium]: [first 50 chars of Original Goal]... [dir-path if non-default]
 
-   Indexed components (from specs/.index/components):
+   Indexed components (from $indexDir/components):
    - auth-controller [High]: Handles authentication and session management...
    - user-service [Medium]: User CRUD operations and validation...
 
-   Indexed external (from specs/.index/external):
+   Indexed external (from $indexDir/external):
    - api-docs [Low]: External API documentation for...
    |
-   This context may inform the interview questions.
+   This context becomes evidence for the grill's design tree.
    |
-6. Store in state file:
-   - Update .ralph-state.json with relatedSpecs array:
+6. Return and persist results:
+   - Keep the ranked array in command context as RELATED_SPECS.
+   - If the target .ralph-state.json already exists, merge the relatedSpecs array into it.
+   - If state does not exist yet, do not create it here. The New Flow writes RELATED_SPECS into the initial state after creating the spec directory.
+   - Use this array shape:
      {
        ...existing state,
        "relatedSpecs": [
          {"name": "spec-name-1", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "High"},
          {"name": "spec-name-2", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "Medium"},
-         {"name": "auth-controller", "path": "specs/.index/components", "goal": "Purpose text", "score": N, "type": "indexed-component", "relevance": "High"},
-         {"name": "api-docs", "path": "specs/.index/external", "goal": "Summary text", "score": N, "type": "indexed-external", "relevance": "Low"}
+         {"name": "auth-controller", "path": "$indexDir/components", "goal": "Purpose text", "score": N, "type": "indexed-component", "relevance": "High"},
+         {"name": "api-docs", "path": "$indexDir/external", "goal": "Summary text", "score": N, "type": "indexed-external", "relevance": "Low"}
        ]
      }
 ```
@@ -122,18 +132,16 @@ Related specs found:
 - api-refactor: Restructure API endpoints for better...
 - error-handling: Implement consistent error handling...
 
-This context may inform the interview questions.
+This context becomes evidence for the grill's design tree.
 ```
 
-## Usage in Interview
+## Usage in the Grill
 
-After scanning, if related specs were found, reference them when asking clarifying questions:
-- "I noticed you have a spec 'user-auth' for authentication. Does this new feature relate to or depend on that work?"
-- "There's an existing 'api-refactor' spec. Should this work integrate with those changes?"
+After scanning, read relevant matches as facts before building the design tree. Use them to expose decisions without asking the user to repeat discoverable information:
+- "The indexed `auth-controller` owns authentication. Should this feature extend that boundary or establish a separate one?"
+- "The `api-refactor` spec changes these endpoints. Should this work depend on that spec or remain independently deliverable?"
 
-For indexed specs, reference them to understand existing codebase patterns:
-- "The indexed auth-controller component handles authentication. Should this feature extend that controller or create a new one?"
-- "I found an indexed external spec for your API documentation. Does this feature need to follow the patterns described there?"
+Put independent decisions on the same frontier round. Keep a decision blocked when it depends on an unresolved spec or code fact.
 
 ## Spec Directory Validation
 
@@ -250,35 +258,6 @@ Validation Sequence:
    - Display: "Created '$name-2' at $specsDir ($name already exists)"
 ```
 
-## Spec Location Interview
-
-After the standard goal interview questions, determine where the spec should be stored:
-
-```text
-Spec Location Logic:
-
-1. Check if --specs-dir already provided in $ARGUMENTS
-   -> SKIP spec location question entirely, use provided value
-
-2. Get configured directories: dirs = ralph_get_specs_dirs()
-
-3. If dirs.length > 1 (multiple directories configured):
-   -> ASK using AskUserQuestion:
-     Question: "Where should this spec be stored?"
-     Options: [each configured directory as an option]
-   -> Store response as specsDir
-
-4. If dirs.length == 1 (only default directory):
-   -> OUTPUT awareness message (non-blocking, just inform):
-     "Spec will be created in ./specs/
-      Tip: You can organize specs in multiple directories.
-      See /ralph-specum:help for multi-directory setup."
-   -> Use default directory as specsDir
-   -> Continue immediately without waiting for response
-
-5. Store specsDir for use in spec creation
-```
-
 ## Index Hint
 
 Before starting a new spec, check if codebase indexing exists (skip if --quick):
@@ -286,8 +265,10 @@ Before starting a new spec, check if codebase indexing exists (skip if --quick):
 ```bash
 # Session guard (skip if already shown in this session)
 if [ -z "${RALPH_SPECUM_INDEX_HINT_SHOWN:-}" ]; then
-  # Check if specs/.index/ exists and has content
-  if [ ! -d "./specs/.index" ] || [ -z "$(ls -A ./specs/.index 2>/dev/null)" ]; then
+  defaultDir="$(ralph_get_default_dir)"
+  indexDir="$defaultDir/.index"
+  # Check if the configured default index exists and has content
+  if [ ! -d "$indexDir" ] || [ -z "$(ls -A "$indexDir" 2>/dev/null)" ]; then
     SHOW_INDEX_HINT=true
   else
     SHOW_INDEX_HINT=false
