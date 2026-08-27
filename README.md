@@ -70,7 +70,7 @@ codex plugin add ralph-specum@smart-ralph
 
 Start a new Codex task after installation. Run `/hooks`, review the bundled Stop hook, and trust it if you want automatic task execution. Until then, run `$ralph-specum-implement` once per task.
 
-The [Codex installation guide](plugins/ralph-specum-codex/README.md#installation) covers updates, local development, and migration from the old `platforms/codex/` skills.
+The [Codex installation guide](plugins/ralph-specum-codex/README.md#installation) covers updates, local development with `codex plugin marketplace add .`, and migration from the old `platforms/codex/` skills.
 
 For local Claude Code development, clone this repository and run `claude --plugin-dir ./plugins/ralph-specum`.
 
