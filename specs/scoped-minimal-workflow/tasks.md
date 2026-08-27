@@ -19,7 +19,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
     3. Assert `/new` routes through the normal goal interview.
   - **Files**: `tests/workflow-guardrails.bats`
   - **Done when**: The tests fail against the base prompts for the expected missing contract.
-  - **Verify**: `! bats tests/workflow-guardrails.bats`
+  - **Verify**: `red_output="$(mktemp)" && if bats tests/workflow-guardrails.bats >"$red_output" 2>&1; then exit 1; else red_status=$?; test "$red_status" -eq 1 && rg -q 'not ok [0-9]+ normal intake persists all six scope-envelope fields' "$red_output"; fi`
   - **Commit**: `test(scope): red - require scope binding before research`
   - _Requirements: FR-1, FR-2, FR-3, FR-4; AC-1.1, AC-1.2, AC-1.3, AC-1.4, AC-1.5_
 
@@ -49,7 +49,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
     3. Add an assertion that adjacent issues remain learnings.
   - **Files**: `tests/workflow-guardrails.bats`
   - **Done when**: The added assertions fail against the base prompts for the expected missing contract.
-  - **Verify**: `! bats tests/workflow-guardrails.bats`
+  - **Verify**: `red_output="$(mktemp)" && if bats tests/workflow-guardrails.bats >"$red_output" 2>&1; then exit 1; else red_status=$?; test "$red_status" -eq 1 && rg -q 'not ok [0-9]+ executor emits the exact scope escalation signal and fields' "$red_output"; fi`
   - **Commit**: `test(scope): red - require execution boundary checks`
   - _Requirements: FR-7, FR-8, FR-9; AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5, AC-3.6, AC-3.7_
 
@@ -80,7 +80,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
     4. Assert no source-skill path, import, or named source-skill heading appears in Ralph Specum.
   - **Files**: `tests/workflow-guardrails.bats`
   - **Done when**: The added assertions fail against the base prompts for the expected missing contract.
-  - **Verify**: `! bats tests/workflow-guardrails.bats`
+  - **Verify**: `red_output="$(mktemp)" && if bats tests/workflow-guardrails.bats >"$red_output" 2>&1; then exit 1; else red_status=$?; test "$red_status" -eq 1 && rg -q 'not ok [0-9]+ architect uses the ordered minimal-implementation decision' "$red_output"; fi`
   - **Commit**: `test(planning): red - require reuse before new code`
   - _Requirements: FR-5, FR-6, FR-10; AC-2.1, AC-2.2, AC-2.3, AC-2.4, AC-2.5, AC-4.2_
 
@@ -136,7 +136,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
     4. Run the documented local plugin smoke test.
   - **Files**: None
   - **Done when**: All local commands pass, the plugin loads, changed prose passes ASCII and banned-phrase scans, and no generated spec-index file changed.
-  - **Verify**: `bats tests/*.bats && python3 -m json.tool plugins/ralph-specum/.claude-plugin/plugin.json >/dev/null && python3 -m json.tool .claude-plugin/marketplace.json >/dev/null && git diff --check && test -z "$(git status --short | rg 'specs/\.index' || true)" && ! git diff --unified=0 origin/main -- '*.md' | rg '^\+.*(robus[t]|seamles[s]|dive i[n]|delv[e]|it.s worth notin[g]|comprehensiv[e]|leverag[e])' && ! git diff --unified=0 origin/main -- '*.md' | LC_ALL=C rg '[^ -~]' && repo_root="$(pwd)" && (cd /tmp && claude --plugin-dir "$repo_root/plugins/ralph-specum" -p '/ralph-specum:help')`
+  - **Verify**: `bats tests/*.bats && python3 -m json.tool plugins/ralph-specum/.claude-plugin/plugin.json >/dev/null && python3 -m json.tool .claude-plugin/marketplace.json >/dev/null && git diff --check && git diff --exit-code origin/main -- specs/.index && test -z "$(git status --short | rg 'specs/\.index' || true)" && markdown_diff="$(mktemp)" && git diff --unified=0 origin/main -- '*.md' >"$markdown_diff" && ! rg '^\+.*(robus[t]|seamles[s]|dive i[n]|delv[e]|it.s worth notin[g]|comprehensiv[e]|leverag[e])' "$markdown_diff" && ! LC_ALL=C rg '[^ -~]' "$markdown_diff" && repo_root="$(pwd)" && (cd /tmp && claude --plugin-dir "$repo_root/plugins/ralph-specum" -p '/ralph-specum:help')`
   - **Commit**: `fix(workflow): address local release failures` (only if an in-scope fix is needed)
   - _Requirements: FR-10, FR-11; AC-4.1, AC-4.2, AC-4.3_
 
@@ -147,7 +147,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
     3. Fix only failures caused by this branch, then push and recheck.
   - **Files**: None unless a triggered check identifies an in-scope defect in a file already listed in tasks 1.2, 1.4, 1.6, or 3.1
   - **Done when**: The PR is open and every entry in `statusCheckRollup` has a successful conclusion.
-  - **Verify**: `PR=$(gh pr view --json number --jq .number) && gh pr checks "$PR" --watch && gh pr view "$PR" --json statusCheckRollup --jq 'all(.statusCheckRollup[]; .conclusion == "SUCCESS")'`
+  - **Verify**: `PR=$(gh pr view --json number --jq .number) && gh pr checks "$PR" --watch && gh pr view "$PR" --json statusCheckRollup --jq 'all(.statusCheckRollup[]; if .__typename == "CheckRun" then .conclusion == "SUCCESS" else .state == "SUCCESS" end)' | rg -qx true`
   - **Commit**: `fix(workflow): address CI findings` (only if an in-scope fix is needed)
   - _Requirements: FR-12; AC-4.4_
 
@@ -155,9 +155,34 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
   - **Do**: Map AC-1.1 through AC-4.3 to a passing command, diff line, or GitHub check. AC-4.4 remains the Phase 4 completion gate.
   - **Files**: `specs/scoped-minimal-workflow/requirements.md`, `specs/scoped-minimal-workflow/tasks.md`
   - **Done when**: AC-1.1 through AC-4.3 have current evidence and no criterion relies on an unsupported compliance claim.
-  - **Verify**: `bats tests/workflow-guardrails.bats && git diff --check && gh pr view --json statusCheckRollup`
+  - **Verify**: `evidence="$(sed -n '/^### Acceptance Evidence$/,/^## Phase 4/p' specs/scoped-minimal-workflow/tasks.md)" && for ac in AC-1.1 AC-1.2 AC-1.3 AC-1.4 AC-1.5 AC-2.1 AC-2.2 AC-2.3 AC-2.4 AC-2.5 AC-3.1 AC-3.2 AC-3.3 AC-3.4 AC-3.5 AC-3.6 AC-3.7 AC-4.1 AC-4.2 AC-4.3; do printf '%s\n' "$evidence" | rg -Fq "| $ac |" || exit 1; done && bats tests/workflow-guardrails.bats && git diff --check && gh pr view --json statusCheckRollup --jq 'all(.statusCheckRollup[]; if .__typename == "CheckRun" then .conclusion == "SUCCESS" else .state == "SUCCESS" end)' | rg -qx true`
   - **Commit**: `chore(workflow): record acceptance evidence` (only if spec evidence changes)
   - _Requirements: FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12_
+
+### Acceptance Evidence
+
+| Criterion | Current evidence |
+|-----------|------------------|
+| AC-1.1 | `normal intake persists all six scope-envelope fields` |
+| AC-1.2 | `quick intake persists all six scope-envelope fields` and `quick intake binds scope before reproduction and research` |
+| AC-1.3 | `quick intake resolves ambiguity before persisting the scope envelope` |
+| AC-1.4 | `new command routes through the normal goal interview before research` |
+| AC-1.5 | Normal and quick six-field tests plus the intake-order tests |
+| AC-2.1 | Ordered minimal-implementation tests for architect, planner, and executor |
+| AC-2.2 | `dependencies require evidence that existing choices cannot satisfy the requirement` |
+| AC-2.3 | `abstractions require two current uses or an explicit design requirement` |
+| AC-2.4 | The three ordered-decision tests require `Add code.` last |
+| AC-2.5 | `minimal implementation preserves required safeguards and verification` |
+| AC-3.1 | Executor, coordinator-route, parallel-batch, and qa-fix boundary tests |
+| AC-3.2 | `executor emits the exact scope escalation signal and fields` |
+| AC-3.3 | `coordinator gates scope escalation before ordinary failure without advancing counters` |
+| AC-3.4 | `every task modification stays inside the scope envelope` |
+| AC-3.5 | `scope approval updates the envelope before clearing the gate and resuming` |
+| AC-3.6 | Rejection and optional-removal state-reconciliation tests |
+| AC-3.7 | `planner records adjacent issues as learnings instead of tasks` |
+| AC-4.1 | `bats tests/workflow-guardrails.bats` and `bats tests/*.bats` |
+| AC-4.2 | `modified prompts do not import or identify the source skills` |
+| AC-4.3 | Manifest/marketplace JSON checks and GitHub `Verify plugin version bump` |
 
 ## Phase 4: PR Lifecycle
 
@@ -167,7 +192,7 @@ No YELLOW task is planned. The GREEN changes extend existing prose owners and ne
     2. Apply and verify only fixes that fit the Scope Envelope; escalate any broader request.
     3. Reply when needed and resolve the thread after its fix is present.
     4. Recheck CI and review threads after each push until both gates pass.
-  - **Files**: None for monitoring; an in-scope review fix may touch only a file already listed in tasks 1.2, 1.4, 1.6, 3.1, or `tests/workflow-guardrails.bats`
+  - **Files**: None for monitoring; an in-scope review fix may touch a file already listed in tasks 1.2, 1.4, 1.6, 3.1, `tests/workflow-guardrails.bats`, or this spec's research, requirements, design, and tasks artifacts
   - **Done when**: Every triggered check is successful, `hasNextPage` is false, and the unresolved review-thread list is empty.
   - **Verify**: `PR=$(gh pr view --json number --jq .number) && gh pr checks "$PR" && test -z "$(gh api graphql --paginate -F owner=tzachbon -F name=smart-ralph -F number="$PR" -f query='query($owner:String!,$name:String!,$number:Int!,$endCursor:String){repository(owner:$owner,name:$name){pullRequest(number:$number){reviewThreads(first:100,after:$endCursor){nodes{isResolved} pageInfo{hasNextPage endCursor}}}}}' --jq '.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)')"`
   - **Commit**: `fix(workflow): resolve review findings` (only if an in-scope fix is needed)

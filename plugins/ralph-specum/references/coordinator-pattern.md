@@ -161,7 +161,7 @@ Before each task delegation, reconcile tasks.md with native task state:
 
 ## Scope Preflight
 
-Before any task delegation, including `[VERIFY]` tasks sent to qa-engineer, read `## Scope Envelope` from `.progress.md`. Compare the current task's Do, Files, Done when, Verify, and external effects with all six fields.
+Before any task delegation, including `[VERIFY]` tasks sent to qa-engineer, read `## Scope Envelope` from `.progress.md`. Compare the current task's Do, Files, Done when, Verify, and external effects with all six fields. Before any parallel batch delegation or native task update, compare every task in `parallelGroup.taskIndices` against the same fields. If any task falls outside the envelope, gate the whole batch before processing its first task.
 
 If the Scope Envelope is missing or the task must change a field, do not delegate or mark the native task in progress. Record `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and one exact `Question:`; set `awaitingApproval: true`; keep taskIndex, taskIteration, and globalIteration unchanged; ask the question; and stop. Resume through the approval or rejection flow under After Delegation.
 
@@ -280,7 +280,7 @@ When parallel [P] group starts:
 
 **Step 4: Spawn Teammates**
 ALL Task calls in ONE message for true parallelism:
-`Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec\nprogressFile: .progress-task-$taskIndex.md\n[full task block and context]")`
+`Task(subagent_type: spec-executor, team_name: "exec-$spec", name: "executor-$taskIndex", prompt: "Execute task $taskIndex for spec $spec\nbasePath: $SPEC_PATH\nprogressFile: .progress-task-$taskIndex.md\n[full task block and context]")`
 
 **Step 5: Wait for Completion**
 Wait for automatic teammate idle notifications. Use TaskList ONCE to verify all tasks complete. Do NOT poll TaskList in a loop. After spawning teammates, wait for their messages -- they will notify you when done.
@@ -700,7 +700,7 @@ When TASK_MODIFICATION_REQUEST is processed and new tasks are inserted into task
 5. Update `nativeTaskMap` in .ralph-state.json with new entries
 6. Re-indexing: rebuild `nativeTaskMap` to match the updated tasks.md order.
    - Parse tasks.md in order after insertion.
-   - Keep existing native task IDs for unchanged task identities (match by task ID pattern `X.Y` in subject, not title alone).
+   - Keep existing native task IDs for unchanged task identities. Match the leading stable subject ID: `X.Y`, or `V` followed by letters or digits, such as `V1`, `VF`, or `VE1`; never match title alone.
    - Assign newly created IDs to inserted tasks at their actual indices.
    - Persist the fully re-keyed map to .ralph-state.json.
 7. If any TaskCreate/TaskUpdate fails: log warning, continue
