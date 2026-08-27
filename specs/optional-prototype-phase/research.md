@@ -98,7 +98,7 @@ The prior unmerged `origin/codex/prototype-gates` branch is useful negative evid
 2. The command rejects the run if `requirements.md` is absent, `design.md` exists, or state has moved beyond the pre-design slot.
 3. Omission means skip. Running `/ralph-specum:design` after requirements keeps the current path unchanged.
 4. The prototype coordinator clears the prior approval gate, delegates to `prototype-builder`, checks `prototype.md` and the runnable prototype, then presents the run path or URL.
-5. Approval accepts the recorded verdict and makes design the next phase. A change request reuses the same builder with the user's observations. A review checks the artifact and runnable contract, not production test coverage.
+5. Approval accepts the recorded verdict and makes design the next phase. A change request reuses the same builder with the user's observations. A review checks the artifact and runnable contract, not production test coverage; the existing `spec-reviewer` must accept `artifactType: prototype` with a prototype rubric.
 
 This follows the existing approval shape rather than adding a second kind of gate. Phase commands already offer approve, review, or request changes and loop after changes. `plugins/ralph-specum/commands/requirements.md:134-148`.
 
@@ -108,7 +108,7 @@ Quick mode skips prototype in v1. It keeps the existing research, requirements, 
 
 ### The same command resumes an interrupted prototype
 
-The prototype command owns its own recovery. With `phase: prototype` and `awaitingApproval: false`, rerunning it resumes the builder from `prototype.md` and the recorded branch. With `awaitingApproval: true`, rerunning it shows the verdict and approval choices. Standard start and session guidance should tell the user to run `/ralph-specum:prototype` in both cases. They must not invoke the phase, add a start flag, change quick-mode routing, or infer prototype from files when state is absent.
+The prototype command owns its own recovery. With `phase: prototype` and `awaitingApproval: false`, rerunning it resumes the builder from `prototype.md` and the recorded branch. With `awaitingApproval: true`, rerunning it shows the verdict and approval choices. Standard start and session guidance should tell the user to invoke `/ralph-specum:prototype` in both cases. Start guidance must never auto-run it, add a start flag, change quick-mode routing, or infer prototype from files when state is absent.
 
 ## The canonical artifact should be a decision record
 
@@ -150,7 +150,8 @@ Cancel must never delete the retained prototype branch. Claude cancel currently 
 | `plugins/ralph-specum/commands/prototype.md` | Add the coordinator flow, interview, logic/UI delegation, walkthrough, review, state merge, commit, and hard stop |
 | `plugins/ralph-specum/agents/prototype-builder.md` | Add the self-contained builder rules adapted from the supplied skill |
 | `plugins/ralph-specum/templates/prototype.md` | Add the canonical decision-record shape |
-| `plugins/ralph-specum/commands/start.md` and `plugins/ralph-specum/hooks/scripts/load-spec-context.sh` | Add `phase: prototype` guidance to the current resume and approval cases. For interrupted or approval-pending prototype work, tell the user to run `/ralph-specum:prototype`. Do not auto-run it, add a start flag, or change quick-mode routing. Current cases: `plugins/ralph-specum/commands/start.md:109-117`, `plugins/ralph-specum/hooks/scripts/load-spec-context.sh:71-99`. |
+| `plugins/ralph-specum/commands/start.md`, `plugins/ralph-specum/hooks/scripts/load-spec-context.sh`, and `plugins/ralph-specum/references/spec-scanner.md` | Add `phase: prototype` guidance to the current resume and approval cases. For interrupted or approval-pending prototype work, tell the user to invoke `/ralph-specum:prototype`; start guidance must never auto-run it, add a start flag, or change quick-mode routing. Current cases: `plugins/ralph-specum/commands/start.md:109-117`, `plugins/ralph-specum/hooks/scripts/load-spec-context.sh:71-99`. |
+| `plugins/ralph-specum/agents/spec-reviewer.md` | Accept `artifactType: prototype` and apply a prototype-specific review rubric |
 | `plugins/ralph-specum/commands/design.md` | Read an approved `prototype.md` when present; direct design after requirements remains the skip path |
 | `plugins/ralph-specum/commands/status.md`, `plugins/ralph-specum/commands/switch.md`, `plugins/ralph-specum/commands/help.md` | Show the phase and artifact and document direct invocation |
 | `plugins/ralph-specum/skills/spec-workflow/SKILL.md`, `plugins/ralph-specum/skills/spec-workflow/references/phase-transitions.md`, `plugins/ralph-specum/skills/smart-ralph/SKILL.md`, `plugins/ralph-specum/skills/smart-ralph/references/state-file-schema.md` | Document optional placement, phase value, and skip semantics |
@@ -166,7 +167,9 @@ No behavioral change is needed in `plugins/ralph-specum/hooks/scripts/stop-watch
 | File or component | Change |
 |---|---|
 | `plugins/ralph-specum-codex/skills/ralph-specum-prototype/SKILL.md` and `agents/openai.yaml` | Add the explicit helper skill and approval handoff |
-| `plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md` and `agents/openai.yaml` | Add primary routing and the new optional phase to coordinator rules |
+| `plugins/ralph-specum-codex/skills/ralph-specum/SKILL.md` and `plugins/ralph-specum-codex/skills/ralph-specum/agents/openai.yaml` | Add primary routing and the new optional phase to coordinator rules |
+| `plugins/ralph-specum-codex/skills/ralph-specum-start/SKILL.md` and `plugins/ralph-specum-codex/skills/ralph-specum-start/agents/openai.yaml` | Add resume guidance that tells users to invoke prototype; never auto-run it |
+| `plugins/ralph-specum-codex/agent-configs/spec-reviewer.toml.template` | Accept `artifactType: prototype` and apply a prototype-specific review rubric |
 | `plugins/ralph-specum-codex/agent-configs/prototype-builder.toml.template` | Add the specialized sub-agent bootstrap template |
 | `plugins/ralph-specum-codex/templates/prototype.md` | Mirror the Claude artifact headings |
 | `plugins/ralph-specum-codex/skills/ralph-specum-design/SKILL.md` | Consume an approved prototype verdict when present |
@@ -223,10 +226,10 @@ Add tests for:
 1. Direct invocation succeeds only after requirements and before design; default and quick flows still skip it.
 2. State merge preserves existing fields, stores `phase: prototype`, resumes through the same command, and rejects post-design invocation.
 3. Logic/UI selection, fallback questioning, required artifact headings, and the normal approval loop.
-4. Status, switch, cancel reporting, help, README, schemas, and all three version entries.
+4. Status, switch, cancel reporting, help, README, schemas, reviewer acceptance and prototype rubric, and all three version entries.
 5. Claude/Codex helper parity, updated skill/agent/template lists, script-count coverage, and final prototype capture outside main.
 
-Baseline run on 2026-08-27: `bats tests/codex-plugin.bats tests/codex-platform.bats tests/codex-platform-scripts.bats` -> 40 pass, 1 skip. A separate 30-second bounded run of `bats tests/state-management.bats tests/stop-hook.bats tests/integration.bats` timed out before the suite summary; its partial output showed passing tests but does not establish a full result.
+Baseline run on 2026-08-27: `bats tests/codex-plugin.bats tests/codex-platform.bats tests/codex-platform-scripts.bats` -> 40 total: 39 pass, 1 skip. A separate 30-second bounded run of `bats tests/state-management.bats tests/stop-hook.bats tests/integration.bats` timed out before the suite summary; its partial output showed passing tests but does not establish a full result.
 
 The pinned tree has a known version issue. `bash tests/helpers/version-sync.sh` reports `Claude=4.10.0 Codex=4.10.1`; the helper fails on any Claude/Codex mismatch. `tests/helpers/version-sync.sh:3-10`. `tests/interview-framework.bats` also hard-codes obsolete version `4.9.1` at `tests/interview-framework.bats:64-70`; later work should replace those assertions with manifest/marketplace equality plus a semantic-version check.
 
@@ -238,7 +241,7 @@ The pinned tree has a known version issue. `bash tests/helpers/version-sync.sh` 
 4. Add only `prototype` as a documented phase value. Keep branch, kind, and verdict in `prototype.md`.
 5. Delegate to a dedicated builder that follows the supplied logic and UI paths, including the single-file logic demo and three route variants.
 6. Require final prototype capture on a throwaway branch outside main. Offer a sibling worktree only when the user selects it.
-7. Update Claude and Codex in one change, including the command or helper, agents, templates, schemas, state and transition references, status/help/switch/cancel paths, docs, tests, and matching minor versions.
+7. Update Claude and Codex in one change, including the command or helper, agents, templates, schemas, state and transition references, status/help/switch/cancel paths, resume owners, spec-reviewer prototype acceptance and rubric, docs, tests, and matching minor versions.
 
 ## Open questions
 
