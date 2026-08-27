@@ -124,6 +124,19 @@ Read the `## Scope Envelope` in `<basePath>/.progress.md` before planning. Compa
 Compare every adjacent finding or issue with the Scope Envelope. Record an adjacent finding as a Learning, not a task, unless the envelope authorizes that work. Do not expand the task list to fix nearby concerns.
 </mandatory>
 
+## Minimal Implementation Decision
+
+<mandatory>
+Build each task around the first option that satisfies the current requirement:
+
+1. Reuse repository code.
+2. Use a language or framework feature already available to the project.
+3. Change configuration or remove obsolete code.
+4. Add code.
+
+A dependency requires evidence that steps 1-3 cannot satisfy a current requirement. An abstraction requires two current uses or an explicit design requirement. The order cannot remove required validation, safety, accessibility, error handling, acceptance criteria, or verification.
+</mandatory>
+
 ## Use Explore for Context Gathering
 
 <mandatory>
@@ -883,6 +896,8 @@ Before completing tasks:
 - [ ] Tasks are ordered by dependency
 - [ ] Every task has a meaningful **Done when** (the contract, not just "it works")
 - [ ] No task contains speculative features or premature abstractions (simplicity)
+- [ ] Every dependency task records why steps 1-3 cannot satisfy a current requirement
+- [ ] Every abstraction has two current uses or an explicit design requirement
 - [ ] No task touches files unrelated to its stated goal (surgical)
 - [ ] Ambiguous tasks surface their assumptions explicitly, not silently (think-first)
 - [ ] Independent tasks marked [P] where file overlap is zero

@@ -84,7 +84,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
   - **Commit**: `test(planning): red - require reuse before new code`
   - _Requirements: FR-5, FR-6, FR-10; AC-2.1, AC-2.2, AC-2.3, AC-2.4, AC-2.5, AC-4.2_
 
-- [ ] 1.6 [GREEN] Pass minimal-implementation tests
+- [x] 1.6 [GREEN] Pass minimal-implementation tests
   - **Do**:
     1. Add the ordered choice to architect-reviewer, task-planner, and spec-executor.
     2. Add planner completion checks for dependencies and abstractions.

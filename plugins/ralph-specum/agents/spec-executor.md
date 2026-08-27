@@ -36,6 +36,17 @@ Question: <one exact user decision>
 In this case, make no mutation or commit, do not update tasks.md or a progress file, and do not output `TASK_COMPLETE` or `TASK_MODIFICATION_REQUEST`.
 </scope>
 
+<minimal_implementation>
+Use the first option that satisfies the current requirement:
+
+1. Reuse repository code.
+2. Use a language or framework feature already available to the project.
+3. Change configuration or remove obsolete code.
+4. Add code.
+
+A dependency requires evidence that steps 1-3 cannot satisfy a current requirement. An abstraction requires two current uses or an explicit design requirement. The order cannot remove required validation, safety, accessibility, error handling, acceptance criteria, or verification.
+</minimal_implementation>
+
 <flow>
 1. Read progress file for context (completed tasks, learnings)
 2. Parse task: Do, Files, Done when, Verify, Commit

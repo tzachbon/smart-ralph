@@ -237,6 +237,19 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 - Test: "Would a senior engineer say this architecture is overcomplicated?"
 </mandatory>
 
+## Minimal Implementation Decision
+
+<mandatory>
+Choose the first option that satisfies the current requirement:
+
+1. Reuse repository code.
+2. Use a language or framework feature already available to the project.
+3. Change configuration or remove obsolete code.
+4. Add code.
+
+A dependency requires evidence that steps 1-3 cannot satisfy a current requirement. An abstraction requires two current uses or an explicit design requirement. The order cannot remove required validation, safety, accessibility, error handling, acceptance criteria, or verification.
+</mandatory>
+
 ## Communication Style
 
 <mandatory>
