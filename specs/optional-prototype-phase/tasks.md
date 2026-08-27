@@ -18,7 +18,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): add locked overlay state helpers`
   - _Requirements: FR-3, FR-5, NFR-2, NFR-3, NFR-4_
 
-- [ ] 1.2 Resolve prototype paths and configuration
+- [x] 1.2 Resolve prototype paths and configuration
   - **Do**: Extend both path resolvers to return `specRoot`, `basePath`, and validated prototype limits from `.claude/ralph-specum.local.md`. Preserve existing resolver output and defaults. Store warnings for invalid values and make every prototype helper accept a resolved base path instead of constructing `specs/<name>`.
   - **Files**: `plugins/ralph-specum/hooks/scripts/path-resolver.sh`, `plugins/ralph-specum-codex/scripts/resolve_spec_paths.py`
   - **Done when**: Default and configured roots resolve to matching Claude and Codex values, invalid limits fall back to approved defaults, and existing resolver callers remain compatible.

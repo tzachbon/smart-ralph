@@ -8,10 +8,29 @@
 #   ralph_list_specs()       - Returns all specs as "name|path" pairs
 #   ralph_resolve_current()  - Returns full path from .current-spec
 #   ralph_get_default_dir()  - Returns first specs_dir (for new spec creation)
+#   ralph_resolve_context()  - Returns resolved paths and prototype settings as JSON
 
 RALPH_CWD="${RALPH_CWD:-$(pwd)}"
 RALPH_SETTINGS_FILE="$RALPH_CWD/.claude/ralph-specum.local.md"
 RALPH_DEFAULT_SPECS_DIR="./specs"
+
+RALPH_PROTOTYPE_SETTINGS=(
+    "prototype_lock_timeout_seconds|10|1|60"
+    "prototype_quick_lock_timeout_seconds|3|1|30"
+    "prototype_logic_timeout_minutes|20|1|180"
+    "prototype_ui_timeout_minutes|45|1|240"
+    "prototype_quick_logic_timeout_minutes|10|1|60"
+    "prototype_quick_ui_timeout_minutes|20|1|90"
+    "prototype_activity_extension_minutes|10|1|30"
+    "prototype_transfer_path_extra_minutes|2|0|10"
+    "prototype_transfer_path_extra_cap_minutes|10|0|60"
+    "prototype_hard_deadline_multiplier|2|1|4"
+    "prototype_conflict_timeout_min_minutes|10|1|120"
+    "prototype_conflict_timeout_max_minutes|30|1|240"
+    "prototype_conflict_resolution_retries|0|0|3"
+    "prototype_normal_builder_executions|2|1|5"
+    "prototype_quick_builder_executions|2|1|2"
+)
 
 # Internal: Log warning messages to stderr
 _ralph_warn() {
@@ -37,6 +56,81 @@ _ralph_normalize_path() {
         path="."
     fi
     echo "$path"
+}
+
+_ralph_frontmatter_scalar() {
+    local key="$1"
+    [ -f "$RALPH_SETTINGS_FILE" ] || return 1
+    sed -n '/^---$/,/^---$/p' "$RALPH_SETTINGS_FILE" 2>/dev/null \
+        | sed -n "s/^${key}:[[:space:]]*//p" \
+        | head -1 \
+        | sed -e 's/^["'"'"']//; s/["'"'"']$//'
+}
+
+_ralph_spec_root() {
+    local base_path="$1"
+    local default_dir="$2"
+    local root normalized_base normalized_root
+
+    if [ -z "$base_path" ]; then
+        _ralph_normalize_path "$default_dir"
+        return 0
+    fi
+    normalized_base=$(_ralph_normalize_path "$base_path")
+    while IFS= read -r root; do
+        [ -z "$root" ] && continue
+        normalized_root=$(_ralph_normalize_path "$root")
+        if [ "$normalized_base" = "$normalized_root" ] || [[ "$normalized_base" == "$normalized_root/"* ]]; then
+            echo "$normalized_root"
+            return 0
+        fi
+    done < <(ralph_get_specs_dirs)
+    _ralph_normalize_path "$(dirname "$normalized_base")"
+}
+
+# Resolve the active spec and validated prototype settings as JSON.
+# Existing path functions retain their original text output.
+ralph_resolve_context() {
+    local default_dir base_path spec_root dirs_json settings_json warnings_json
+    local item key default minimum maximum raw value warning
+
+    default_dir=$(ralph_get_default_dir)
+    base_path=$(ralph_resolve_current 2>/dev/null || true)
+    spec_root=$(_ralph_spec_root "$base_path" "$default_dir")
+    dirs_json=$(ralph_get_specs_dirs | jq -Rsc 'split("\n") | map(select(length > 0))')
+    settings_json='{}'
+    warnings_json='[]'
+
+    for item in "${RALPH_PROTOTYPE_SETTINGS[@]}"; do
+        IFS='|' read -r key default minimum maximum <<< "$item"
+        raw=$(_ralph_frontmatter_scalar "$key" || true)
+        value="$raw"
+        if [ -z "$value" ]; then
+            value="$default"
+        elif ! [[ "$value" =~ ^-?[0-9]+$ ]] || (( value < minimum || value > maximum )); then
+            value="$default"
+            warning="$key must be an integer from $minimum to $maximum; using $default"
+            warnings_json=$(jq -c --arg warning "$warning" '. + [$warning]' <<< "$warnings_json")
+        fi
+        settings_json=$(jq -c --arg key "$key" --argjson value "$value" '. + {($key): $value}' <<< "$settings_json")
+    done
+
+    jq -n \
+        --argjson specs_dirs "$dirs_json" \
+        --arg default_dir "$default_dir" \
+        --arg current_spec "$base_path" \
+        --arg spec_root "$spec_root" \
+        --argjson prototype_settings "$settings_json" \
+        --argjson config_warnings "$warnings_json" \
+        '{
+            specs_dirs: $specs_dirs,
+            default_dir: $default_dir,
+            current_spec: (if $current_spec == "" then null else $current_spec end),
+            specRoot: $spec_root,
+            basePath: (if $current_spec == "" then null else $current_spec end),
+            prototype_settings: $prototype_settings,
+            configWarnings: $config_warnings
+        }'
 }
 
 # Get configured specs directories (newline-separated)

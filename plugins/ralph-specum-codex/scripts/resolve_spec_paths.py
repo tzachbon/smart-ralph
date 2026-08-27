@@ -11,6 +11,23 @@ from pathlib import Path
 DEFAULT_SPECS_DIR = "./specs"
 TRUE_VALUES = {"true", "yes", "1"}
 FALSE_VALUES = {"false", "no", "0"}
+PROTOTYPE_SETTINGS = {
+    "prototype_lock_timeout_seconds": (10, 1, 60),
+    "prototype_quick_lock_timeout_seconds": (3, 1, 30),
+    "prototype_logic_timeout_minutes": (20, 1, 180),
+    "prototype_ui_timeout_minutes": (45, 1, 240),
+    "prototype_quick_logic_timeout_minutes": (10, 1, 60),
+    "prototype_quick_ui_timeout_minutes": (20, 1, 90),
+    "prototype_activity_extension_minutes": (10, 1, 30),
+    "prototype_transfer_path_extra_minutes": (2, 0, 10),
+    "prototype_transfer_path_extra_cap_minutes": (10, 0, 60),
+    "prototype_hard_deadline_multiplier": (2, 1, 4),
+    "prototype_conflict_timeout_min_minutes": (10, 1, 120),
+    "prototype_conflict_timeout_max_minutes": (30, 1, 240),
+    "prototype_conflict_resolution_retries": (0, 0, 3),
+    "prototype_normal_builder_executions": (2, 1, 5),
+    "prototype_quick_builder_executions": (2, 1, 2),
+}
 
 
 def parse_scalar(value: str):
@@ -113,6 +130,26 @@ def default_specs_dir(cwd: Path, specs_dirs: list[str]) -> str:
     return DEFAULT_SPECS_DIR
 
 
+def resolve_prototype_settings(
+    settings: dict[str, object],
+) -> tuple[dict[str, int], list[str]]:
+    resolved: dict[str, int] = {}
+    warnings: list[str] = []
+    for key, (default, minimum, maximum) in PROTOTYPE_SETTINGS.items():
+        raw = settings.get(key, default)
+        valid_integer = isinstance(raw, int) and not isinstance(raw, bool)
+        if isinstance(raw, str) and re.fullmatch(r"-?\d+", raw.strip()):
+            valid_integer = True
+        value = coerce_int(raw, default)
+        if not valid_integer or value < minimum or value > maximum:
+            value = default
+            warnings.append(
+                f"{key} must be an integer from {minimum} to {maximum}; using {default}"
+            )
+        resolved[key] = value
+    return resolved, warnings
+
+
 def resolve_config(cwd: Path) -> dict[str, object]:
     settings = parse_frontmatter(cwd / ".claude" / "ralph-specum.local.md")
     raw_dirs = settings.get("specs_dirs")
@@ -122,11 +159,14 @@ def resolve_config(cwd: Path) -> dict[str, object]:
         specs_dirs = [DEFAULT_SPECS_DIR]
     if not specs_dirs:
         specs_dirs = [DEFAULT_SPECS_DIR]
+    prototype_settings, config_warnings = resolve_prototype_settings(settings)
     return {
         "specs_dirs": specs_dirs,
         "default_dir": default_specs_dir(cwd, specs_dirs),
         "default_max_iterations": coerce_int(settings.get("default_max_iterations", 5), 5),
         "auto_commit_spec": coerce_bool(settings.get("auto_commit_spec", True), True),
+        "prototype_settings": prototype_settings,
+        "configWarnings": config_warnings,
     }
 
 
@@ -147,6 +187,19 @@ def resolve_current(cwd: Path, default_dir: str) -> str | None:
     if content.startswith("./") or content.startswith("/"):
         return content
     return f"{default_dir.rstrip('/')}/{content}"
+
+
+def resolve_spec_root(current: str | None, specs_dirs: list[str], default_dir: str) -> str:
+    if not current:
+        return normalize_relative(default_dir)
+    normalized_current = normalize_relative(current)
+    roots = sorted((normalize_relative(root) for root in specs_dirs), key=len, reverse=True)
+    for root in roots:
+        if normalized_current == root or normalized_current.startswith(f"{root.rstrip('/')}/"):
+            return root
+    if current.startswith("/"):
+        return str(Path(current).parent)
+    return normalize_relative(str(Path(current).parent))
 
 
 def list_specs(cwd: Path, specs_dirs: list[str]) -> list[dict[str, str]]:
@@ -203,6 +256,10 @@ def main() -> int:
 
     payload = dict(config)
     payload["current_spec"] = current
+    payload["specRoot"] = resolve_spec_root(
+        current, config["specs_dirs"], config["default_dir"]
+    )
+    payload["basePath"] = current
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
 
