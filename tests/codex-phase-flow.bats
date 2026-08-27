@@ -127,7 +127,9 @@ EOF
 
     [[ "$algorithm" == *'frame("ralph-phase-context-v1")'* ]]
     [[ "$algorithm" == *'`frame(BYTES)` is the ASCII decimal byte length'* ]]
-    [[ "$algorithm" == *'`research.md`, `requirements.md`, `design.md`'* ]]
+    [[ "$algorithm" == *'requirements includes `research.md` when present'* ]]
+    [[ "$algorithm" == *'design requires `requirements.md` and includes `research.md` when present'* ]]
+    [[ "$algorithm" == *'tasks requires `requirements.md` plus `design.md` and includes `research.md` when present'* ]]
     [[ "$algorithm" == *"Exclude mutable interview answers"* ]]
     [[ "$algorithm" == *'stored round in `begin-interview`'* ]]
     [[ "$algorithm" == *"preserves asked, pending, and answered IDs"* ]]
@@ -141,7 +143,7 @@ EOF
     state="$(<"$(plugin_root)/references/state-contract.md")"
 
     [[ "$algorithm" == *'Append one `discoveredSkills` entry'* ]]
-    [[ "$algorithm" == *'`pass`, `revision`, `name`, `activeSource`, `reason`, and `shadowedSources`'* ]]
+    [[ "$algorithm" == *'`pass`, `revision`, `name`, `activeSource`, `reason`, `shadowedSources`, and `outcome`'* ]]
     [[ "$algorithm" == *"cumulative and append-only"* ]]
     [[ "$algorithm" == *"executes no skill action"* ]]
     [[ "$algorithm" == *'legacy `invoked` as history only'* ]]
