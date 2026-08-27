@@ -64,7 +64,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
   - **Commit**: `feat(scope): green - stop at the authorization boundary`
   - _Requirements: FR-7, FR-8, FR-9; AC-3.1, AC-3.2, AC-3.3, AC-3.4, AC-3.5, AC-3.6, AC-3.7_
 
-- [ ] V2 [VERIFY] Execution-boundary checkpoint
+- [x] V2 [VERIFY] Execution-boundary checkpoint
   - **Do**: Run the new contract test plus integration and existing approval-stop coverage.
   - **Files**: None
   - **Done when**: Every suite exits 0.
@@ -72,7 +72,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
   - **Commit**: `chore(scope): pass execution checkpoint` (only if fixes are needed)
   - _Requirements: FR-7, FR-8, FR-9, FR-10_
 
-- [ ] 1.5 [RED] Failing contract tests: prefer current mechanisms
+- [x] 1.5 [RED] Failing contract tests: prefer current mechanisms
   - **Do**:
     1. Assert the same four choices appear in order in architect, planner, and executor prompts.
     2. Assert avoidable dependencies and unjustified single-use abstractions are rejected.

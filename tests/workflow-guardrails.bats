@@ -5,9 +5,19 @@
 GOAL_INTERVIEW="plugins/ralph-specum/references/goal-interview.md"
 QUICK_MODE="plugins/ralph-specum/references/quick-mode.md"
 NEW_COMMAND="plugins/ralph-specum/commands/new.md"
+ARCHITECT_REVIEWER="plugins/ralph-specum/agents/architect-reviewer.md"
 TASK_PLANNER="plugins/ralph-specum/agents/task-planner.md"
 SPEC_EXECUTOR="plugins/ralph-specum/agents/spec-executor.md"
 COORDINATOR="plugins/ralph-specum/references/coordinator-pattern.md"
+MODIFIED_PROMPTS=(
+    "$GOAL_INTERVIEW"
+    "$QUICK_MODE"
+    "$NEW_COMMAND"
+    "$ARCHITECT_REVIEWER"
+    "$TASK_PLANNER"
+    "$SPEC_EXECUTOR"
+    "$COORDINATOR"
+)
 
 assert_scope_envelope() {
     local file="$1"
@@ -26,6 +36,23 @@ line_number() {
     local literal="$2"
 
     grep -nF "$literal" "$file" | head -n 1 | cut -d: -f1
+}
+
+assert_minimal_implementation_order() {
+    local file="$1"
+    local reuse_line feature_line configure_line add_line
+    reuse_line="$(line_number "$file" 'Reuse repository code.')"
+    feature_line="$(line_number "$file" 'Use a language or framework feature already available to the project.')"
+    configure_line="$(line_number "$file" 'Change configuration or remove obsolete code.')"
+    add_line="$(line_number "$file" 'Add code.')"
+
+    [ -n "$reuse_line" ]
+    [ -n "$feature_line" ]
+    [ -n "$configure_line" ]
+    [ -n "$add_line" ]
+    [ "$reuse_line" -lt "$feature_line" ]
+    [ "$feature_line" -lt "$configure_line" ]
+    [ "$configure_line" -lt "$add_line" ]
 }
 
 @test "normal intake persists all six scope-envelope fields" {
@@ -117,4 +144,39 @@ line_number() {
 @test "planner records adjacent issues as learnings instead of tasks" {
     grep -Eiq 'adjacent (finding|issue).*(learning|learnings)' "$TASK_PLANNER"
     grep -Eiq 'adjacent (finding|issue).*(not|never).*(task|tasks)|(not|never).*(task|tasks).*adjacent (finding|issue)' "$TASK_PLANNER"
+}
+
+@test "architect uses the ordered minimal-implementation decision" {
+    assert_minimal_implementation_order "$ARCHITECT_REVIEWER"
+}
+
+@test "planner uses the ordered minimal-implementation decision" {
+    assert_minimal_implementation_order "$TASK_PLANNER"
+}
+
+@test "executor uses the ordered minimal-implementation decision" {
+    assert_minimal_implementation_order "$SPEC_EXECUTOR"
+}
+
+@test "dependencies require evidence that existing choices cannot satisfy the requirement" {
+    for file in "$ARCHITECT_REVIEWER" "$TASK_PLANNER" "$SPEC_EXECUTOR"; do
+        grep -Fq 'A dependency requires evidence that steps 1-3 cannot satisfy a current requirement.' "$file"
+    done
+}
+
+@test "abstractions require two current uses or an explicit design requirement" {
+    for file in "$ARCHITECT_REVIEWER" "$TASK_PLANNER" "$SPEC_EXECUTOR"; do
+        grep -Fq 'An abstraction requires two current uses or an explicit design requirement.' "$file"
+    done
+}
+
+@test "minimal implementation preserves required safeguards and verification" {
+    for file in "$ARCHITECT_REVIEWER" "$TASK_PLANNER" "$SPEC_EXECUTOR"; do
+        grep -Fq 'The order cannot remove required validation, safety, accessibility, error handling, acceptance criteria, or verification.' "$file"
+    done
+}
+
+@test "modified prompts do not import or identify the source skills" {
+    ! grep -Eiq '(ponytail|stay-in-scope)/SKILL\.md|Skill\(\{[^}]*skill:[[:space:]]*"(ralph-specum:)?(ponytail|stay-in-scope)"' "${MODIFIED_PROMPTS[@]}"
+    ! grep -Eq '^# (Ponytail|Stay in scope)$' "${MODIFIED_PROMPTS[@]}"
 }
