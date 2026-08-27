@@ -12,7 +12,7 @@ Intent: MID_SIZED. Workflow: TDD. Granularity: coarse because the prompt-only ch
 
 ## Phase 1: Red-Green Cycles
 
-- [ ] 1.1 [RED] Failing contract tests: bind scope before research
+- [x] 1.1 [RED] Failing contract tests: bind scope before research
   - **Do**:
     1. Create Bats tests for all six scope labels in normal and quick intake.
     2. Assert quick binding occurs before reproduction and research.
