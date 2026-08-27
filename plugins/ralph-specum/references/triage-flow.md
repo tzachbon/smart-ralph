@@ -46,12 +46,15 @@ Output: research.md at <basePath>/research.md
 Follow `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` but with:
 - basePath = epic directory (e.g., `./specs/_epics/<epic-name>`)
 - Research directive = triage directive above (not standard spec research)
+- Phase gate = `triage`; run `check-delegation` immediately before every `research-analyst` Task and include the gate marker plus full selected-skill manifest
 
 ## Step 2: Brainstorming & Decomposition
 
 Delegate to `triage-analyst` agent via Task tool:
 - Pass basePath, epicName, goal, and the research output
-- The agent runs the brainstorming dialogue and produces `epic.md`
+- Pass the approved triage decision brief and full selected-skill manifest
+- Run `check-delegation` immediately before the Task and include the gate marker
+- The agent reloads every selected contract, records per-source load receipts, checks its write gate, and produces `epic.md`
 - Wait for the agent to complete
 
 ## Step 3: Validation Research
@@ -80,6 +83,7 @@ Output findings as a validation section appended to <basePath>/research.md
 
 Spawn a single research-analyst agent (not full team -- this is targeted validation):
 - Pass basePath, epicName, and the validation directive
+- Run `check-delegation` immediately before the Task and include the triage gate marker and selected-skill manifest
 - Agent reads epic.md and validates against codebase
 - Appends findings to research.md under a `## Validation Findings` section
 
@@ -89,18 +93,29 @@ After validation:
 
 1. If validation surfaced issues:
    - Pass validation findings back to triage-analyst
+   - Run `check-delegation`, assign a fresh unique artifact agent ID, and include the gate marker plus manifest before each revision Task
    - Agent adjusts epic.md (merge/split/reorder specs, fix contracts)
    - Max 2 adjustment rounds
 
 2. Once epic.md is finalized:
-   - Ask user: "Where should I store this plan?"
+   - In interactive mode, display its walkthrough and require explicit artifact approval.
+   - In exact quick mode, use the completed validation pass as the review gate, apply its concrete fixes within the two-round limit, and continue without asking for artifact approval.
+
+   Interactive artifact approval choices:
+   - `Approve` accepts the current epic artifact.
+   - `Run review` shows validation findings and returns to this gate.
+   - `Request changes` or `apply the changes` applies already-recorded review/revision feedback immediately, delegates a gated triage-analyst revision, redisplays the walkthrough, and stays in this gate. Ask one focused change question only when no pending feedback exists.
+
+3. Choose the output destination:
+   - In exact quick mode, select **Spec files** as the deterministic default. Do not ask an output question and do not create GitHub issues.
+   - In interactive mode after explicit artifact approval, ask: "Where should I store this plan?"
      - **Spec files** -- create individual spec directories with plan.md
      - **GitHub issues** -- create parent issue with sub-issues
      - **Both** -- do both with cross-references
 
-3. Execute chosen output format (see Output Handlers below)
+4. Execute chosen output format (see Output Handlers below)
 
-4. Initialize `.epic-state.json`:
+5. Merge the finalized fields into the existing `.epic-state.json`, preserving `phaseSkillLoad`, `phaseInterview`, and mode authorization:
    ```json
    {
      "name": "<epic-name>",
@@ -114,9 +129,9 @@ After validation:
    }
    ```
 
-5. Set `.current-epic` (write epic name to `specs/.current-epic`)
+6. Set `.current-epic` (write epic name to `specs/.current-epic`)
 
-6. Ensure gitignore entry for `specs/.current-epic`
+7. Ensure gitignore entry for `specs/.current-epic`
 
 ## Output Handlers
 
@@ -124,7 +139,8 @@ After validation:
 
 For each spec in epic.md:
 1. `mkdir -p ./specs/<spec-name>`
-2. Create `./specs/<spec-name>/plan.md` with:
+2. Run `check-delegation`, then delegate `plan.md` creation to a `triage-analyst` with a unique artifact agent ID, the triage gate marker, selected-skill manifest, approved epic artifact, and target path.
+3. The gated triage agent creates `./specs/<spec-name>/plan.md` with:
    - Goal, acceptance criteria, interface contracts from epic.md
    - Link back to epic: `Epic: specs/_epics/<epic-name>/epic.md`
 
@@ -142,7 +158,7 @@ For each spec in epic.md:
 
 ### Both Output
 
-Run both handlers. Add cross-references:
+Run both handlers. Route `plan.md` creation and revision through the gated triage agent. Add cross-references:
 - In plan.md: `GitHub Issue: #<number>`
 - In GitHub issue body: `Spec files: ./specs/<spec-name>/`
 

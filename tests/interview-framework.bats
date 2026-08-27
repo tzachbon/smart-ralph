@@ -10,62 +10,61 @@ GOAL_INTERVIEW="plugins/ralph-specum/references/goal-interview.md"
     [ -f "$SKILL_FILE" ]
 }
 
-@test "SKILL.md has Codebase-First Exploration section" {
-    grep -q "## Codebase-First Exploration" "$SKILL_FILE"
+@test "SKILL.md has critical decision test" {
+    grep -q "## Critical Decision Test" "$SKILL_FILE"
 }
 
-@test "SKILL.md codebase-first section distinguishes facts from decisions" {
-    grep -q "Codebase fact" "$SKILL_FILE"
-    grep -q "User decision" "$SKILL_FILE"
+@test "SKILL.md inspects facts and excludes administration" {
+    grep -q "Inspect facts" "$SKILL_FILE"
+    grep -q "Exclude setup choices, administrative preferences" "$SKILL_FILE"
 }
 
-@test "interview-framework has decision-tree traversal (not WHILE loop)" {
-    # SKILL.md references decision-tree in heading
-    grep -q "Decision-Tree" "$SKILL_FILE"
-    # Full pseudocode in algorithm.md
-    grep -q "DECISION-TREE TRAVERSAL" "$ALGORITHM_FILE"
-    # WHILE loop should be gone from both
-    ! grep -q "WHILE askedCount" "$SKILL_FILE"
-    ! grep -q "WHILE askedCount" "$ALGORITHM_FILE"
+@test "interview-framework opens and traverses the whole critical frontier" {
+    grep -q "## Layered Frontier" "$SKILL_FILE"
+    grep -q "open-frontier" "$SKILL_FILE"
+    grep -q "four-question maximum" "$ALGORITHM_FILE"
 }
 
-@test "SKILL.md has [Recommended] label pattern" {
-    grep -q "\[Recommended\]" "$SKILL_FILE"
+@test "SKILL.md has recommended option pattern" {
+    grep -q "(Recommended)" "$SKILL_FILE"
 }
 
-@test "SKILL.md completion signal check has no minRequired guard" {
-    ! grep -q "askedCount >= minRequired" "$SKILL_FILE"
+@test "SKILL.md has no intent-based question counts" {
+    ! grep -q "TRIVIAL: 1-2" "$SKILL_FILE"
+    ! grep -q "askedCount" "$ALGORITHM_FILE"
 }
 
 @test "SKILL.md has no Intent-Based Depth Scaling table" {
     ! grep -q "Intent-Based Depth Scaling" "$SKILL_FILE"
 }
 
-@test "SKILL.md preserves Option Limit Rule" {
-    grep -q "Option Limit Rule" "$SKILL_FILE"
+@test "SKILL.md limits each question to 2-4 options" {
+    grep -q "Give 2-4 viable options" "$SKILL_FILE"
 }
 
-@test "SKILL.md preserves Phase 2 PROPOSE APPROACHES" {
-    grep -q "PROPOSE APPROACHES" "$SKILL_FILE"
+@test "SKILL.md requires explicit final approval" {
+    grep -q "## Final Approval" "$SKILL_FILE"
+    grep -q "Approve and delegate" "$SKILL_FILE"
 }
 
-@test "SKILL.md preserves Phase 3 CONFIRM & STORE" {
-    grep -q "CONFIRM & STORE" "$SKILL_FILE"
+@test "SKILL.md distinguishes control-only and bare skip" {
+    grep -q "### Control-only reply" "$SKILL_FILE"
+    grep -q "### Bare skip" "$SKILL_FILE"
 }
 
-@test "goal-interview.md does not contain duplicate codebase-first mandatory block" {
-    ! grep -q "is this a codebase fact or a user decision" "$GOAL_INTERVIEW"
+@test "goal-interview.md does not prescribe setup questions" {
+    grep -q "Do not ask about spec location" "$GOAL_INTERVIEW"
 }
 
-@test "goal-interview.md still references SKILL.md for adaptive dialogue" {
+@test "goal-interview.md references the interview skill" {
     grep -q "skills/interview-framework/SKILL.md" "$GOAL_INTERVIEW"
 }
 
-@test "plugin.json version is 4.9.1" {
-    grep -q '"version": "4.9.1"' "plugins/ralph-specum/.claude-plugin/plugin.json"
+@test "plugin.json version is 4.11.0" {
+    grep -q '"version": "4.11.0"' "plugins/ralph-specum/.claude-plugin/plugin.json"
 }
 
-@test "marketplace.json ralph-specum version is 4.9.1" {
+@test "marketplace.json ralph-specum version is 4.11.0" {
     version=$(jq -r '.plugins[] | select(.name == "ralph-specum") | .version' ".claude-plugin/marketplace.json")
-    [ "$version" = "4.9.1" ]
+    [ "$version" = "4.11.0" ]
 }

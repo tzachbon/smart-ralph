@@ -15,7 +15,8 @@ All Ralph commands support these standard arguments:
 
 | Argument | Short | Description | Default |
 |----------|-------|-------------|---------|
-| `--quick` | `-q` | Skip interactive phases, auto-generate artifacts, start execution immediately | false |
+| `--quick` | | Exact token that enables persistent non-interactive generation | false |
+| `--interactive` | | Exact token that clears persistent quick mode | - |
 | `--commit` | `-c` | Commit and push spec/feature files after generation | true (normal), false (quick) |
 | `--no-commit` | | Explicitly disable committing files | - |
 | `--max-task-iterations` | `-m` | Max retries per failed task before stopping | 5 |
@@ -27,6 +28,8 @@ Argument precedence: `--no-commit` > `--commit` > mode default.
 
 ### Normal Mode (Interactive)
 
+- Exact `--interactive` clears a prior authorized quick mode
+- No mode flag resets legacy quick state that lacks exact `--quick` authorization
 - User reviews artifacts between phases
 - Phase transitions require explicit commands
 - Each phase sets `awaitingApproval: true`
@@ -34,6 +37,9 @@ Argument precedence: `--no-commit` > `--commit` > mode default.
 
 ### Quick Mode (`--quick`)
 
+- Only an exact `--quick` argument token enables this mode
+- `-q`, settings defaults, substrings, and natural-language requests do not enable it
+- `--quick` with `--interactive` is an error
 - Skip all interactive prompts, interviews, and approval pauses
 - Run the same phase agents (research, requirements, design, tasks) sequentially
 - Agents receive a "be more opinionated" directive since there is no user feedback
@@ -46,7 +52,7 @@ Argument precedence: `--no-commit` > `--commit` > mode default.
 
 All Ralph plugins use `.ralph-state.json` for execution state. See `references/state-file-schema.md` for full schema.
 
-Key fields: `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `awaitingApproval`.
+Key fields: `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `awaitingApproval`, `quickMode`, `quickAuthorization`, `phaseSkillLoad`, and `phaseInterview`.
 
 ## Commit Behavior
 

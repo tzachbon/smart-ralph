@@ -61,7 +61,7 @@ TeamCreate(team_name: "research-$spec", description: "Parallel research for $spe
 
 ### Step 3: Create Tasks
 
-One `TaskCreate` per topic. Output file naming: `.research-[topic-slug].md` (e.g., `.research-oauth-patterns.md`, `.research-codebase.md`, `.research-quality.md`).
+Create one `TaskCreate` per topic. Artifact-producing `research-analyst` topics use `.research-[topic-slug].md`. Read-only `Explore` topics return findings in their Task result and never write files.
 
 ```
 TaskCreate(
@@ -73,11 +73,14 @@ TaskCreate(
 
 ### Step 4: Spawn Teammates (ALL in ONE Message)
 
-ALL Task calls MUST be in ONE message to ensure true parallel execution. Spawning one at a time across separate messages runs them sequentially.
+ALL Task calls MUST be in ONE message to ensure true parallel execution. Before that batch, run `check-delegation` once per artifact-producing research teammate. Give every research teammate a unique artifact agent ID and include the full gate marker, selected-skill manifest, and approved decision brief. Read-only `Explore` calls need no marker and may not write.
 
 ```
 Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-1",
   prompt: "You are a research teammate.
+    Artifact agent ID: researcher-1
+    [RALPH_PHASE_GATE marker]
+    Selected skill manifest: [full manifest]
     Topic: [External best practices for topic]
     Spec: $spec | Path: ./specs/$spec/
     Output: ./specs/$spec/.research-[topic].md
@@ -93,9 +96,9 @@ Task(subagent_type: research-analyst, team_name: "research-$spec", name: "resear
 
 Task(subagent_type: Explore, team_name: "research-$spec", name: "explorer-1",
   prompt: "Analyze codebase for spec: $spec
-    Output: ./specs/$spec/.research-codebase.md
     Find existing patterns, dependencies, constraints related to [goal].
-    Write findings to output file with sections: Existing Patterns, Dependencies, Constraints, Recommendations.")
+    Return findings with sections: Existing Patterns, Dependencies, Constraints, Recommendations.
+    Read only. Do not write or edit files.")
 ```
 
 For more topics, add more `researcher-N` and `explorer-N` teammates in the same message.
@@ -109,11 +112,11 @@ For more topics, add more `researcher-N` and `explorer-N` teammates in the same 
 
 ## Merging Results
 
-After ALL parallel tasks complete, the coordinator merges results into a single `research.md`.
+After all parallel tasks complete, delegate the unified artifact to a fresh `research-analyst` merge teammate. Run `check-delegation` immediately before this Task. Include a unique artifact agent ID, gate marker, selected-skill manifest, approved brief, every partial artifact path, and all read-only Explore results.
 
 ### Merge Process
 
-1. **Read all partial files**: `.research-[topic-1].md`, `.research-codebase.md`, `.research-quality.md`, `.research-related-specs.md`, etc.
+1. **Read all partial inputs**: `.research-[topic-1].md` artifacts plus returned Explore findings for codebase, quality commands, verification tooling, and related specs.
 
 2. **Create unified `./specs/$spec/research.md`** with this structure:
 
@@ -155,6 +158,6 @@ After ALL parallel tasks complete, the coordinator merges results into a single 
 [All URLs and file paths from all agents]
 ```
 
-3. **Delete partial files** after successful merge: `rm ./specs/$spec/.research-*.md`
+3. **Delete partial files** after the merge agent successfully writes and validates `research.md`: `rm ./specs/$spec/.research-*.md`
 
 4. **Quality check**: Ensure no duplicate information, consistent formatting.

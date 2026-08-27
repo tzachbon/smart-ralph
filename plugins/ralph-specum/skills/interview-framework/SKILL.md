@@ -1,104 +1,112 @@
 ---
 name: interview-framework
-description: This skill should be used when running an interactive interview before a spec phase, gathering requirements through dialogue, asking the user clarifying questions before delegating to a subagent, or when any Ralph phase command (research, requirements, design, tasks) needs adaptive brainstorming dialogue. Covers the 3-phase algorithm (Understand, Propose Approaches, Confirm and Store).
-version: 0.2.0
+description: This skill should be used when a Ralph phase must identify critical user decisions, run a layered grill, persist partial answers, obtain explicit approval, or resume an interrupted phase interview before delegating artifact work.
+version: 0.3.0
 user-invocable: false
 ---
 
 # Interview Framework
 
-Adaptive brainstorming dialogue algorithm for all spec phases. Each phase command provides its own exploration territory (phase-specific areas to probe).
+Run the approval-gated interview for `start`, `triage`, `research`, `requirements`, `design`, and `tasks`. Treat this skill and its references as the single source of truth for interview behavior. Phase commands supply exploration territory and artifact context; they do not redefine the algorithm.
 
-## Option Limit Rule
+## Entry Contract
 
-Each question must have 2-4 options (max 4). Keep the most relevant options, combine similar ones.
+Before each new or resumed interview:
 
-## Recommendation Format
+1. Complete the applicable skill discovery pass from `${CLAUDE_PLUGIN_ROOT}/references/normal-mode-gates.md`.
+2. Reload this entire `SKILL.md`, `references/algorithm.md`, every selected skill body, and every selected skill resource required for the current work. Load `references/examples.md` only when an example is needed.
+3. Record the load manifest with `phase_gate.py record-skill-load`.
+4. Begin or resume the interview with the matching phase, interview ID, discovery revision, and context digest.
 
-Every question asked via `AskUserQuestion` in Phase 1 leads with the recommended option (except when options are symmetric, in which case `[Recommended]` may be omitted):
+Block when this skill or the core algorithm reference cannot be loaded. Warn and continue when a domain skill fails to load. Put unresolved material conflicts in the first critical frontier.
 
-```yaml
-AskUserQuestion:
-  question: "[Context-aware question referencing prior answers]. [One sentence rationale for the recommendation.]"
-  options:
-    - "[Recommended] [Option text -- the AI's suggested answer]"
-    - "[Alternative 1]"
-    - "[Alternative 2 if needed]"
-    - "Other"
+## Critical Decision Test
+
+Grill only a decision that meets both conditions:
+
+- The answer cannot be established by inspecting the project, prior artifacts, configuration, or selected skill contracts.
+- Different answers would materially change scope, observable behavior, architecture, risk acceptance, delivery sequencing, or the acceptance standard.
+
+Inspect facts with read-only tools or an `Explore` agent. Exclude setup choices, administrative preferences, status questions, facts the repository can answer, and low-impact polish. Treat a prescribed task action in a loaded domain skill as reference material during preload; do not execute it until the phase has approval and delegation begins.
+
+## Layered Frontier
+
+Build a design tree from the phase territory. Each node contains a stable decision ID, dependencies, known evidence, viable options, recommendation, tradeoffs, and material consequences.
+
+Ask the whole currently unblocked critical frontier. Use as many `AskUserQuestion` calls as needed, with at most four questions per call. Do not serialize independent questions one at a time. After each response:
+
+1. Call `open-frontier` for every decision ID before the `AskUserQuestion` call.
+2. Call deterministic `classify-reply` on the whole reply before applying any part of it.
+3. Persist every answered decision immediately with `record-answer`.
+4. Preserve unanswered pending decisions when the response is partial.
+5. Recompute the frontier from new answers and inspected facts.
+6. Ask the next unblocked frontier until no critical node remains open.
+
+Each question must:
+
+- Give 2-4 viable options.
+- Put the recommended option first and label it `(Recommended)` unless the options are symmetric.
+- State the recommendation rationale and the material tradeoff in the question or option description.
+- Avoid straw-man alternatives and unnecessary flexibility.
+
+See `references/algorithm.md` for the complete state machine.
+
+## Reply Semantics
+
+Classify the entire reply before applying it.
+
+### Substantive reply
+
+Apply text that answers one or more active decisions. Persist answered decisions and keep the rest open. A substantive answer can include control words without losing its decision content.
+
+### Control-only reply
+
+These replies do not answer any active decision by themselves:
+
+- `apply the changes`
+- `continue`
+- `proceed`
+- `go ahead`
+
+Keep the active frontier open and ask it again. Do not infer defaults or approval from a control-only reply.
+
+### Bare skip
+
+Treat bare `skip`, after an active question, as authorization to default the remaining phase interview. Call `skip` with explicit defaults and assumptions; this moves to `awaiting_confirmation`, not a delegable terminal state. Continue to final approval and confirm decision ID `skip-confirmation`. A sentence that contains `skip` plus substantive decision text is a substantive reply, not bare skip.
+
+## Final Approval
+
+When the critical frontier is exhausted or skipped:
+
+1. Present the decision brief: resolved decisions, recommended approach, tradeoffs, defaults, assumptions, and material conflicts.
+2. Call `await-confirmation` with a stable confirmation decision ID and the proposed approach.
+3. Ask one explicit approval question through `AskUserQuestion`:
+   - `Approve and delegate (Recommended)`
+   - `Revise decisions`
+   - `Cancel`
+4. Accept only an explicit approval selection. Control-only replies do not approve.
+5. On approval, call `confirm --source approve-and-delegate`, run `check-delegation`, and delegate immediately in the same response. Do not ask another question or stop between approval and delegation.
+
+When the user requests revisions, call one `revise` transition with every affected `--decision-id` before updating answers. Recompute any dependent frontier, return to final approval using the same confirmation ID, and keep the same interview record until the brief is approved again.
+
+## Artifact Approval
+
+Artifact review is a separate approval gate after delegation. `apply the changes` during artifact review means revise the artifact using the supplied feedback, redisplay the walkthrough, and remain in artifact approval. It never approves the artifact or advances the phase.
+
+## Persistence
+
+Use `phase_gate.py` transitions after each state change. Append a readable mirror to `.progress.md` without treating that Markdown as enforcement state:
+
+```markdown
+### <Phase> Interview
+- <decision-id>: <answer>
+- Defaults and assumptions: <text or none>
+- Approved approach: <summary>
 ```
 
-Rules:
-- `[Recommended]` is a label prefix on the first option only.
-- The rationale sits in the question text, not the option label.
-- Option count still 2-4 max (Option Limit Rule preserved).
-- If there is no meaningful recommendation (truly symmetric choice), omit the `[Recommended]` label rather than placing it arbitrarily.
-
-Example:
-
-```yaml
-AskUserQuestion:
-  question: "Where should the spec live? You only have one specs directory configured, so the default is fine unless you want to reorganize."
-  options:
-    - "[Recommended] ./specs/ (default)"
-    - "Let me configure a different path"
-    - "Other"
-```
-
-## Codebase-First Exploration
-
-Before asking any question, determine whether the answer is a **codebase fact** or a **user decision**:
-
-- **Codebase fact**: something discoverable by reading code, config, or existing specs (e.g., which framework is used, whether an interface already exists, what a file currently does). Use the Explore agent to find it. Never ask the user.
-- **User decision**: a preference, priority, trade-off, or constraint that only the user can answer (e.g., which approach to take, what the success criteria are, what's in scope). Ask via AskUserQuestion.
-
-Only ask what you cannot discover yourself.
-
-## Completion Signal Detection
-
-After each response, check for early completion signals using token-based matching:
-
-```text
-completionSignals = ["done", "proceed", "skip", "enough", "that's all", "continue", "next"]
-
-tokens = tokenize(userResponse.lower())  # split on whitespace/punctuation
-for signal in completionSignals:
-  if signal in tokens:  # exact token match, not substring
-    -> SKIP remaining questions, move to PROPOSE APPROACHES
-```
-
-## 3-Phase Overview
-
-### Phase 1: UNDERSTAND (Decision-Tree)
-
-Read all available context (.progress.md, prior artifacts, goal text). Build a question tree from the exploration territory with dependency ordering. Traverse the tree: auto-resolve codebase facts via exploration, ask user only about decisions. Each question leads with `[Recommended]` answer. No fixed question caps. Exit when all nodes resolved or user signals completion.
-
-See `references/algorithm.md` for full pseudocode.
-
-### Phase 2: PROPOSE APPROACHES
-
-Synthesize dialogue into 2-3 distinct approaches. Each includes: name, description, trade-offs. Lead with recommendation. Present via AskUserQuestion. Maximum 3 approaches (more causes decision fatigue). Trade-offs must be honest. No straw-man alternatives.
-
-See `references/algorithm.md` for full pseudocode.
-
-### Phase 3: CONFIRM & STORE
-
-Brief recap to user of key decisions and chosen approach. If user corrects something, update before storing. Store in .progress.md under Context Accumulator pattern.
-
-See `references/algorithm.md` for full pseudocode.
-
-## Adaptive Depth (Other Responses)
-
-When user selects "Other": ask a context-specific follow-up (never generic "elaborate"). Reference what the user typed. Continue until clarity or 5 rounds. Do not increment askedCount for follow-ups.
-
-See `references/examples.md` for example follow-up patterns.
-
-## Context Accumulator Pattern
-
-After each interview, update `.progress.md`: read existing content, append new section under "## Interview Responses" with descriptive keys reflecting what was discussed. Include the chosen approach.
-
-See `references/examples.md` for storage format.
+For triage, store enforcement state in the epic `.epic-state.json`. For spec phases, use `.ralph-state.json`.
 
 ## References
 
-- **`references/algorithm.md`** -- Full 3-phase pseudocode (UNDERSTAND decision-tree, PROPOSE APPROACHES, CONFIRM & STORE)
-- **`references/examples.md`** -- Example interview questions, "Other" response handling, context storage format
+- `references/algorithm.md` - Critical-frontier state machine and reply handling.
+- `references/examples.md` - Optional examples for frontier, partial-answer, skip, approval, and artifact revision cases.

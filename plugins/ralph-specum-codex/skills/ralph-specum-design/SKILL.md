@@ -21,18 +21,21 @@ You are a **coordinator, not an architect** -- delegate ALL work to an `architec
 
 1. Resolve the active spec. If none exists, stop.
 2. Require `requirements.md`. Read `research.md` when present, `.progress.md`, and current state.
-3. Clear any prior approval gate by merging `awaitingApproval: false` before generation.
-4. Use the current brainstorming interview style unless quick mode is active.
-5. **Delegate** design generation to an `architect-reviewer` sub-agent. Pass requirements, research, and interview context. The sub-agent writes `design.md`. Do NOT write design.md yourself.
-6. Read the sub-agent's output and validate it exists.
-7. Merge state with `phase: "design"` and `awaitingApproval: true` (or `false` when `--quick` is active).
-8. Update `.progress.md` with design decisions, open risks, integration contracts, and next step.
-9. If spec commits are enabled, commit only the spec artifacts.
+3. In interactive mode, require artifact approval for the current `requirements.md` before starting design. Exact quick mode continues with the validated artifact.
+4. Run `scripts/phase_gate.py mode STATE` with exact `--quick`, exact `--interactive`, or no flag. Reject both, `-q`, variants, and natural-language substitutes.
+5. Ensure skill discovery pass 2 exists for the goal plus final research. Run it now when the state lacks an applicable revision. Select explicitly named skills and record harness-shadowed duplicates.
+6. Load `skills/interview-framework-codex/SKILL.md`, its required algorithm, and all selected domain contracts in both interactive and quick mode. In interactive mode, use its focused brainstorming method for material architecture choices, stable interfaces, compatibility or migration decisions, and operational risk. Inspect repository facts and existing conventions instead of asking.
+7. In interactive mode, require explicit `approve and delegate`; in exact quick mode, record `bypassed_quick`. In both modes, run `phase_gate.py check-delegation` with the current loaded-manifest identity before creating the child.
+8. **Delegate** design generation to an `architect-reviewer` sub-agent. Pass the absolute helper path, state path, identity tuple, unique teammate dispatch identity, verbatim manifest, requirements, research, and interview context. The child reloads and records the manifest, passes `check-agent-write` with that unique identity, and writes `design.md`. Do NOT write design.md yourself.
+9. Read the sub-agent's output and validate it exists.
+10. Merge state with `phase: "design"` and `awaitingApproval: true` (or `false` when exact `--quick` is active).
+11. Update `.progress.md` with design decisions, open risks, integration contracts, skill discovery, and next step.
+12. If spec commits are enabled, commit only the spec artifacts.
 
 ### Stop Behavior
 
 - **Without `--quick`**: STOP HERE. Display the walkthrough summary and approval prompt. Do NOT continue to tasks. Wait for the user to explicitly approve and request the next phase.
-- **With `--quick`**: Continue directly into tasks.
+- **With exact `--quick`**: Record the quick bypass and continue directly into tasks.
 
 ## Output Shape
 
@@ -46,3 +49,4 @@ The result should cover architecture, interfaces, data flow, file changes, techn
   - `request changes`
   - `continue to tasks`
 - Treat `continue to tasks` as approval of `design.md`.
+- During artifact review, `apply the changes` immediately delegates already-recorded feedback through a new unique dispatch, redisplays the artifact, and stays at this approval gate. Ask one focused change question only when no feedback is pending. Control-only `continue`, `proceed`, and `go ahead` approve nothing.

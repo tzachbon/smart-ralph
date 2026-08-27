@@ -22,17 +22,20 @@ You are a **coordinator, not a researcher** -- delegate ALL work to a `research-
 
 1. Resolve the active spec. If none exists, stop and tell the user to start a spec first.
 2. Read the goal, `.progress.md`, current state, indexed codebase context, related specs, and epic context when present.
-3. Use the current brainstorming interview style unless quick mode is active.
-4. **Delegate** research generation to a `research-analyst` sub-agent. Pass the goal, existing context, and interview results. The sub-agent writes `research.md` in the spec directory. Do NOT write research.md yourself.
-5. Read the sub-agent's output and validate it exists.
-6. Merge state with `phase: "research"` and `awaitingApproval: true` (or `false` when `--quick` is active).
-7. Update `.progress.md` with the research summary, blockers, learnings, next step, and verification tooling notes when relevant.
-8. If spec commits are enabled, commit only the spec artifacts.
+3. Run `scripts/phase_gate.py mode STATE` with exact `--quick`, exact `--interactive`, or no flag. Reject both, `-q`, variants, and natural-language substitutes.
+4. Run skill discovery pass 1 when the state lacks an applicable revision. Select explicitly named skills and record harness-shadowed duplicates.
+5. Load `skills/interview-framework-codex/SKILL.md`, its required algorithm, and all selected domain contracts in both interactive and quick mode. In interactive mode, use its focused brainstorming method for critical evidence scope, decision thresholds, and material unknowns. Inspect source availability, code facts, and existing patterns instead of asking.
+6. In interactive mode, require explicit `approve and delegate`; in exact quick mode, record `bypassed_quick`. In both modes, run `phase_gate.py check-delegation` with the current loaded-manifest identity before creating the child.
+7. **Delegate** research generation to a `research-analyst` sub-agent. Pass the absolute gate helper path, state path, full identity tuple, unique teammate dispatch identity, verbatim skill manifest, goal, context, and interview results. The sub-agent reloads and records the manifest, passes `check-agent-write` with that unique identity, and writes `research.md`. Do NOT write research.md yourself.
+8. Read the sub-agent's output and validate it exists.
+9. Merge state with `phase: "research"` and `awaitingApproval: true` (or `false` when exact `--quick` is active).
+10. Update `.progress.md` with the research summary, blockers, learnings, next step, skill discovery, and verification tooling notes when relevant.
+11. If spec commits are enabled, commit only the spec artifacts.
 
 ### Stop Behavior
 
 - **Without `--quick`**: STOP HERE. Display the walkthrough summary and approval prompt. Do NOT continue to requirements. Wait for the user to explicitly approve and request the next phase.
-- **With `--quick`**: Continue directly into requirements.
+- **With exact `--quick`**: Record the quick bypass and continue directly into requirements.
 
 ## Output Shape
 
@@ -46,3 +49,4 @@ The result should identify existing code patterns, external references, constrai
   - `request changes`
   - `continue to requirements`
 - Treat `continue to requirements` as approval of `research.md`.
+- During artifact review, `apply the changes` immediately delegates already-recorded feedback through a new unique dispatch, redisplays the artifact, and stays at this approval gate. Ask one focused change question only when no feedback is pending. Control-only `continue`, `proceed`, and `go ahead` approve nothing.

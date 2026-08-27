@@ -19,22 +19,23 @@ You are a **coordinator, not a triage analyst** -- delegate decomposition work t
 
 ## Action
 
-1. Check `specs/.current-epic`. If an active epic exists, summarize status and offer resume, details, or a new epic.
-2. Resolve or create the epic directory and initialize `research.md`, `epic.md`, `.progress.md`, and `.epic-state.json` as needed.
-3. **Delegate** triage work to a `triage-analyst` sub-agent. The sub-agent runs the four-stage triage flow:
-   - exploration research on seams, constraints, and existing boundaries
-   - brainstorming and decomposition into specs
-   - validation of dependencies, contracts, and scope
-   - finalization of epic outputs
-   Do NOT decompose or generate epic content yourself.
-4. Assemble `epic.md` by aggregating and formatting the sub-agent's output (without altering substantive content) into:
-   - vision and scope
-   - spec list with goals and size
-   - dependency graph
-   - interface contracts and sequencing notes
-5. Persist `.epic-state.json` with each spec, its status, and dependencies.
-6. Set `specs/.current-epic` to the active epic name.
-7. Show the next unblocked spec and route back to `$ralph-specum-start` for per-spec execution.
+1. Parse exact `--quick` and exact `--interactive` tokens before routing. Reject both together, `-q`, variants, and natural-language substitutes.
+2. Check `specs/.current-epic`. If an active epic exists, load its `.epic-state.json` as `STATE` and normalize mode before any possible question. With exact `--quick`, resume the matching active epic without prompting; an explicit different epic must include its goal. In interactive mode, summarize status and offer resume, details, or a new epic.
+3. Resolve or create only the epic directory, `.progress.md`, and `.epic-state.json`. Use `.epic-state.json` as `STATE` for every phase gate command with phase `triage`; do not require `.ralph-state.json`. Create no `research.md`, `epic.md`, or generated `plan.md` before approval.
+4. For a new epic, run `scripts/phase_gate.py mode STATE` with the exact parsed mode flag, then register `specs/.current-epic` before discovery. Exact quick mode asks no setup question; missing required name or goal is an input error.
+5. Resolve the output destination from explicit input and configuration. In exact quick mode, use local Spec files as the deterministic default and ask nothing. Only interactive mode may ask one administrative destination question when the destination remains ambiguous; that answer never satisfies the interview gate.
+6. Ensure skill discovery pass 1 exists for the epic goal. Collect plugin, project `.agents/skills`, project `.claude/skills`, and current harness catalog entries. Select explicitly named skills and record shadowed duplicates.
+7. Load `skills/interview-framework-codex/SKILL.md`, its algorithm, and every selected domain contract in both interactive and quick mode. In interactive mode, follow the algorithm for critical decomposition boundaries, stable cross-spec contracts, dependency choices, and sequencing risks. Ask no storage, naming, branch, or discoverable question.
+8. In interactive mode, require explicit `approve and delegate`; in exact quick mode, record `bypassed_quick`. In both modes, run `phase_gate.py check-delegation` with phase `triage` and the current loaded-manifest identity before every artifact-producing child.
+9. Read-only exploration children may inspect seams, constraints, and existing boundaries, but they write no epic artifact.
+10. Use separate unique gated writer dispatches as needed:
+   - a triage research writer for `research.md`
+   - a triage plan writer for `epic.md` and generated spec `plan.md` files
+   - a fresh revision writer for every artifact-review revision
+   Pass the absolute gate helper path, epic state path, identity tuple, unique teammate dispatch identity, and verbatim `phaseSkillLoad` manifest to each writer. Each writer records its manifest loads and passes `check-agent-write` with its unique identity before its first filesystem artifact write.
+11. The coordinator does not assemble, format, or revise artifact content. Validate the gated writer outputs and persist `.epic-state.json` with each spec, its status, dependencies, and gate receipts.
+12. Keep `specs/.current-epic` set to the active epic name.
+13. Show the next unblocked spec and route back to `$ralph-specum-start` for per-spec execution.
 
 ## Output Shape
 
@@ -47,7 +48,7 @@ The result should make it clear:
 ## Stop Behavior
 
 - **Without `--quick`**: STOP HERE. Display the epic summary and approval prompt. Do NOT continue to the next spec until the user explicitly approves or requests changes.
-- **With `--quick`**: Continue directly to the first unblocked spec.
+- **With exact `--quick`**: Record the quick bypass and continue directly to the first unblocked spec.
 
 ## Response Handoff
 
@@ -57,3 +58,4 @@ The result should make it clear:
   - `request changes`
   - `continue to the next spec`
 - Treat `continue to the next spec` as approval of `epic.md`.
+- During artifact review, `apply the changes` immediately delegates already-recorded feedback through a fresh unique gated revision writer, redisplays the artifacts, and stays at this approval gate. Ask one focused change question only when no feedback is pending. Control-only `continue`, `proceed`, and `go ahead` approve nothing.

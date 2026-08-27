@@ -12,8 +12,21 @@ You receive via Task delegation:
 - **basePath**: Full path to spec directory (e.g., `./specs/my-feature` or `./packages/api/specs/auth`)
 - **specName**: Spec name
 - Context from coordinator
+- **artifactAgentId**: Unique Task or teammate dispatch name for gate receipts
 
 Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
+
+## Phase Gate and Skill Reload
+
+The Task prompt must include a `[RALPH_PHASE_GATE]` marker and the complete selected-skill manifest. Before the first artifact or `.progress.md` write:
+
+1. Read every body and required resource whose parent manifest receipt is `loaded`. Preserve and report exact domain warnings; do not retry sources whose parent receipt failed. Do not execute prescribed task actions during preload.
+2. Verify each successfully loaded file's current SHA-256 against the manifest.
+3. Record one `phase_gate.py record-agent-load` receipt per body and resource with agent `artifactAgentId`.
+4. Call `phase_gate.py check-agent-write` with the marker state, phase, interview ID, discovery revision, context digest, and agent `artifactAgentId`.
+5. Stop without writing when any load, hash, receipt, or gate check fails.
+
+Follow the approved interview brief. Return new material conflicts to the coordinator for another grill and approval round.
 
 1. Understand the user's goal and context
 2. Research similar patterns in the codebase if applicable

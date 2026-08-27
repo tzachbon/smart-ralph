@@ -10,7 +10,8 @@ From `$ARGUMENTS`, extract:
 - **name**: Optional spec name (kebab-case)
 - **goal**: Everything after the name except flags (optional)
 - **--fresh**: Force new spec without prompting if one exists
-- **--quick**: Skip all spec phases, auto-generate artifacts, start execution immediately
+- **--quick**: Bypass phase interviews and artifact-approval stops while still loading contracts, gating, and generating every artifact
+- **--interactive**: Clear persistent quick mode and run the normal gated flow
 - **--commit-spec**: Commit and push spec files after generation (default: true in normal mode, false in quick mode)
 - **--no-commit-spec**: Explicitly disable committing spec files
 - **--specs-dir <path>**: Create spec in specified directory (must be in configured specs_dirs array)
@@ -21,7 +22,7 @@ From `$ARGUMENTS`, extract:
 ```text
 1. Check if --no-commit-spec in $ARGUMENTS -> commitSpec = false
 2. Else if --commit-spec in $ARGUMENTS -> commitSpec = true
-3. Else if --quick in $ARGUMENTS -> commitSpec = false (quick mode default)
+3. Else if exact `--quick` token is present -> commitSpec = false (quick mode default)
 4. Else -> commitSpec = true (normal mode default)
 ```
 
@@ -69,7 +70,7 @@ From `$ARGUMENTS`, extract:
 
 ## Quick Mode Input Detection
 
-Parse arguments before `--quick` flag and classify input type:
+Tokenize arguments first. Exact simultaneous `--quick` and `--interactive` is an error. Only an exact `--quick` token enters this section; `-q`, substrings, settings, and natural-language requests do not. Remove the exact mode token and classify the remaining input:
 
 ```text
 Input Classification:
@@ -143,91 +144,9 @@ Examples:
 | "Fix the login bug where users can't reset password" | fix-login-bug-reset |
 | "Implement rate limiting" | implement-rate-limiting |
 
-## Goal Intent Classification
+## Normal-Mode Interview Routing
 
-Before asking interview questions, classify the user's goal to determine question depth.
-
-### Classification Logic
-
-Analyze the goal text for keywords to determine intent type:
-
-```text
-Intent Classification:
-
-1. BUG_FIX: Goal contains keywords like:
-   - "fix", "resolve", "debug", "broken", "failing"
-   - "not working", "error", "bug", "patch", "crash"
-   - "regression", "reproduce", "repro", "issue"
-   -> Min questions: 5, Max questions: 5
-   Note: TRIVIAL-specific keywords (typo, spelling, minor, tiny, rename, update text) override BUG_FIX when both match.
-
-2. TRIVIAL: Goal contains keywords like:
-   - "fix typo", "typo", "spelling"
-   - "small change", "minor"
-   - "quick", "simple", "tiny"
-   - "rename", "update text"
-   -> Min questions: 1, Max questions: 2
-
-3. REFACTOR: Goal contains keywords like:
-   - "refactor", "restructure", "reorganize"
-   - "clean up", "cleanup", "simplify"
-   - "extract", "consolidate", "modularize"
-   - "improve code", "tech debt"
-   -> Min questions: 3, Max questions: 5
-
-4. GREENFIELD: Goal contains keywords like:
-   - "new feature", "new system", "new module"
-   - "add", "build", "implement", "create"
-   - "integrate", "introduce"
-   - "from scratch"
-   -> Min questions: 5, Max questions: 10
-
-5. MID_SIZED: Default if no clear match
-   -> Min questions: 3, Max questions: 7
-```
-
-### Confidence Threshold
-
-| Match Count | Confidence | Action |
-|-------------|------------|--------|
-| 3+ keywords | High | Use matched category |
-| 1-2 keywords | Medium | Use matched category |
-| 0 keywords | Low | Default to MID_SIZED |
-
-### Question Count Rules
-
-- BUG_FIX: 5 questions (understand reproduction, scope, and root cause)
-- TRIVIAL: 1-2 questions (get essentials, move fast)
-- REFACTOR: 3-5 questions (understand scope and risks)
-- GREENFIELD: 5-10 questions (full context needed)
-- MID_SIZED: 3-7 questions (balanced approach)
-
-### Dialogue Depth by Intent
-
-Intent classification determines how deep the brainstorming dialogue goes:
-
-| Intent | Min Questions | Max Questions |
-|--------|---------------|---------------|
-| BUG_FIX | 5 | 5 |
-| TRIVIAL | 1 | 2 |
-| REFACTOR | 3 | 5 |
-| GREENFIELD | 5 | 10 |
-| MID_SIZED | 3 | 7 |
-
-### Store Intent
-
-After classification, store the result in `.progress.md`:
-```markdown
-## Interview Format
-- Version: 1.0
-
-## Intent Classification
-- Type: [BUG_FIX|TRIVIAL|REFACTOR|GREENFIELD|MID_SIZED]
-- Confidence: [high|medium|low] ([N] keywords matched)
-- Min questions: [N]
-- Max questions: [N]
-- Keywords matched: [list of matched keywords]
-```
+Do not derive interview depth or question counts from goal keywords. After setup, load `skills/interview-framework/SKILL.md` and ask only the whole currently unblocked critical frontier. The frontier ends when the consequential decisions are resolved, not when an intent-specific count is reached.
 
 ## Goal Type Detection (Quick Mode)
 
@@ -250,5 +169,5 @@ For fix goals: run reproduction command, document BEFORE state in .progress.md.
 | Name ambiguous (multiple dirs) | Show paths, ask user to specify |
 | No name + active spec exists | Resume flow |
 | No name + no active spec | Ask for name and goal, new flow |
-| --quick with goal/file | Quick mode flow (skip interactive phases) |
+| --quick with goal/file | Quick mode flow (bypass interviews; keep load and write gates) |
 | --quick with zero args | Error: "Quick mode requires a goal or plan file" |

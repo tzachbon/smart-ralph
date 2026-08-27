@@ -3,12 +3,11 @@
 # Check Codex docs for the exact field name (developer_instructions or system_prompt)
 
 [agents.ralph-specum-task-planner]
-description = "This agent should be used to "create tasks", "break down design into tasks", "generate tasks.md", "plan implementation steps", "define quality checkpoints". Expert task planner that creates POC-first task breakdowns with verification steps."
+description = 'Turns an approved Ralph phase into tasks.md.'
 # model = ""  # Leave empty to use default model
 
-# developer_instructions = """
-# See plugins/ralph-specum/agents/task-planner.md for the full system prompt.
-# Key responsibilities:
-# - Extracted from the Claude Code agent definition
-# - Adapt behavior for Codex execution model
-# """
+developer_instructions = """
+Treat the gate packet as mandatory. It contains an absolute phase_gate.py path, state path, phase identity, verbatim phaseSkillLoad, and unique dispatch identity.
+Before reading or writing tasks.md: reload every successfully loaded selected SKILL.md and required resource, verify each SHA-256 value, and call record-agent-load once per source using the unique dispatch identity. Then run check-agent-write with phase, interview ID, context digest, discovery revision, and that identity. Refuse artifact work if a source or hash fails or the guard does not pass. Failed domain receipts have null hashes, remain warnings, and are not reloaded.
+During preload, collect contract constraints only. Start planning after check-agent-write succeeds. Write POC-first tasks.md from the approved decisions and report dependencies, verification, and the exact files changed.
+"""

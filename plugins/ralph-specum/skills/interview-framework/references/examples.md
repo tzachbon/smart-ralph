@@ -1,58 +1,59 @@
 # Interview Examples
 
-Example interview questions, "Other" response handling, and context storage patterns.
+## Whole critical frontier
 
-## Adaptive Depth -- "Other" Response Examples
+Suppose requirements has three independent critical decisions: primary user, compatibility promise, and data retention. Ask all three in one `AskUserQuestion` call. Put the recommended option first for each and name its tradeoff. Do not ask repository framework, output path, or ticket number when those facts are discoverable.
 
-Follow-up questions must be context-specific, not generic. When a user provides an "Other" response:
+If five independent critical decisions are open, ask four in the first call and one in the second. The tool maximum is the only batching reason.
 
-1. **Acknowledge the specific response** -- Reference what the user actually typed
-2. **Ask a probing question based on response content** -- Analyze keywords in their response
-3. **Include context from prior answers** -- Reference earlier responses to create continuity
+## Partial answer
 
-Do NOT use generic follow-ups like "Can you elaborate?" -- always tailor to their specific response.
+The user answers the primary-user and retention questions but omits compatibility.
 
-### GraphQL Example
+1. Record both answered decision IDs immediately.
+2. Leave compatibility open.
+3. Recompute dependencies.
+4. Ask compatibility plus any decisions it unblocked.
 
-If user types "We need GraphQL support" for a technical approach question:
+Do not discard the two saved answers or restart the round.
 
-```yaml
-AskUserQuestion:
-  question: "You mentioned needing GraphQL support. Is this for the entire API layer, or specific endpoints only?"
-  options:
-    - "Full API layer - replace REST"
-    - "Hybrid - GraphQL for new endpoints only"
-    - "Specific queries for mobile clients"
-    - "Other"
-```
+## Control-only reply
 
-### Security Example
+Active frontier: architecture boundary and rollout safety.
 
-If user types "Security is critical" for success criteria:
+User: `proceed`
 
-```yaml
-AskUserQuestion:
-  question: "You emphasized security is critical. Given your earlier constraints, which security aspects matter most?"
-  options:
-    - "Authentication and authorization"
-    - "Data encryption at rest and in transit"
-    - "Audit logging and compliance"
-    - "Other"
-```
+Result: persist no answer, keep both decisions open, and ask the same frontier again. `continue`, `go ahead`, and `apply the changes` behave the same way.
 
-## Context Accumulator -- Storage Format
+## Bare skip
 
-After each interview, update `.progress.md`:
+Active frontier: test depth and rollback policy.
 
-1. Read existing .progress.md content
-2. Append new section under "## Interview Responses"
-3. Use descriptive keys that reflect what was actually discussed
-4. Include the chosen approach
+User: `skip`
+
+Result: record the phase interview as skipped with the recommended test depth and rollback policy listed as defaults and assumptions. Present those choices in the final decision brief and require explicit approval before delegation.
+
+User: `Skip browser tests; keep the rollback task.`
+
+Result: treat the reply as substantive. Persist both decisions. It is not a bare skip.
+
+## Final approval
+
+Present:
 
 ```text
-### [Phase] Interview (from [phase].md)
-- [Topic 1]: [response]
-- [Topic 2]: [response]
-- Chosen approach: [name] -- [brief description]
-[Any follow-up responses from "Other" selections]
+Decision brief
+- Scope: existing API only
+- Compatibility: preserve the current client contract
+- Approach: extend the current module
+- Tradeoff: smallest change, but keeps the current coupling
+- Assumptions: current deployment pipeline remains available
 ```
+
+Ask `Approve and delegate`, `Revise decisions`, or `Cancel`. Only the explicit approval selection completes the gate. After approval, call the helper check and launch the artifact agent in the same response.
+
+## Artifact revision
+
+After the agent writes `design.md`, the user says `apply the changes` and supplies reviewer findings.
+
+Result: delegate the revision with those findings, show the updated walkthrough, and ask for artifact approval again. Keep the phase in artifact approval until the user explicitly approves.

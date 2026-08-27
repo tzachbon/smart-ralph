@@ -1,6 +1,6 @@
 ---
 description: Run or re-run research phase for current spec
-argument-hint: [spec-name]
+argument-hint: [spec-name] [--quick|--interactive]
 allowed-tools: "*"
 ---
 
@@ -8,15 +8,17 @@ allowed-tools: "*"
 
 Run parallel research for the active spec. You are a **coordinator, not a researcher** -- delegate ALL work to subagents.
 
+Read `${CLAUDE_PLUGIN_ROOT}/references/normal-mode-gates.md` before gathering context. Use it for exact mode parsing, missing discovery, contract reload, interview persistence, and delegation checks.
+
 ## Checklist
 
 Create a task for each item and complete in order:
 
 1. **Gather context** -- resolve spec, read goal and existing files
-2. **Interview** -- brainstorming dialogue (skip if `--quick`)
+2. **Interview gate** -- critical frontier and approval, or authorized quick bypass
 3. **Execute parallel research** -- dispatch team of research-analyst + Explore agents
 4. **Merge results** -- synthesize partial files into research.md
-5. **Artifact review** -- spec-reviewer validation loop (only if `--quick`)
+5. **Artifact review** -- automatic spec-reviewer loop in authorized quick mode
 6. **Walkthrough & approval** -- display summary, get user approval
 7. **Finalize** -- update state, commit, stop
 
@@ -27,48 +29,24 @@ Create a task for each item and complete in order:
 3. Check the resolved spec directory exists
 4. Read `.ralph-state.json` if it exists
 5. Read `.progress.md` to understand the goal
+6. Reject simultaneous exact `--quick` and `--interactive` tokens. Normalize `.ralph-state.json` with `phase_gate.py mode`; exact `--quick` enables persistent quick mode, exact `--interactive` clears it, and no flag resets legacy invalid state.
+7. Run skill discovery pass 1 if the state lacks it. Reuse the current pass when present.
 
-## Step 2: Interview (skip if --quick)
+## Step 2: Skill Load, Critical Grill, and Approval
 
-Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
+If normalized `quickMode` is true, call `begin-interview` for phase `research` to record the authorized quick bypass, then continue to Step 3.
 
-### Read Context from .progress.md
+In interactive mode:
 
-Read `.progress.md` and parse:
-1. **Intent Classification** (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED) for question counts
-2. **Prior interview responses** to skip already-answered questions
+1. Reload the complete selected-skill manifest and every required current-work resource.
+2. Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` with phase `research`.
+3. Build critical decision candidates from research direction, material constraints, systems in scope, and alternatives whose comparison would change later artifacts.
+4. Inspect repository facts, prior specs, existing technology, and available commands. Do not ask setup, administrative, discoverable, or low-impact questions.
+5. Ask the whole unblocked critical frontier, at most four questions per `AskUserQuestion` call.
+6. Persist partial answers, handle control-only and bare-skip replies through the helper, and require explicit final approval. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for the explicit approval selection.
+7. On approval, run `check-delegation` and continue immediately to Step 3 in the same response.
 
-**Intent-Based Question Counts:**
-- TRIVIAL: 1-2 | REFACTOR: 3-5 | GREENFIELD: 5-10 | MID_SIZED: 3-7
-
-### Brainstorming Dialogue
-
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time, adapting to prior answers.
-
-**Research Exploration Territory** (hints, not a script):
-- **Technical approach preference** -- follow existing patterns or introduce new ones?
-- **Known constraints** -- performance, compatibility, timeline, budget
-- **Integration surface area** -- which systems, services, or APIs does this touch?
-- **Prior knowledge** -- what does the user already know vs what needs discovery?
-- **Technologies to evaluate or avoid** -- specific libraries, frameworks, or patterns
-
-### Research Approach Proposals
-
-After dialogue, propose 2-3 research strategies. Examples (illustrative only):
-- **(A)** Deep dive on specific technology/library comparison
-- **(B)** Focus on existing codebase patterns with minimal external research
-- **(C)** Broad survey across multiple alternatives before narrowing
-
-### Store Interview & Approach
-
-Append to `.progress.md` under "Interview Responses":
-```markdown
-### Research Interview (from research.md)
-- [Topic 1]: [response]
-- Chosen approach: [name] -- [brief description]
-```
-
-Pass combined context to subagent delegation as "Interview Context".
+Pass the approved brief and full skill manifest to artifact agents.
 
 ## Step 3: Execute Parallel Research (Team-Based)
 
@@ -93,23 +71,25 @@ Research topics identified for parallel execution:
 
 Follow the full team lifecycle: Clean up stale team (MANDATORY TeamDelete first) -> Create team -> Create tasks -> Spawn teammates (ALL in ONE message) -> Wait -> Shutdown -> Collect results -> Clean up team.
 
+Immediately before each `research-analyst` Task call, run `phase_gate.py check-delegation`. Include the `[RALPH_PHASE_GATE]` marker, complete selected-skill manifest, and approved decision brief in its prompt. The PreToolUse hook repeats this check. `Explore` is read-only and remains allowed without a marker.
+
 **Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct Task calls without a team.
 </mandatory>
 
-## Step 4: Merge Results
+## Step 4: Delegate Result Merge
 
-After ALL parallel tasks complete, merge into unified `./specs/$spec/research.md`.
+After all parallel tasks complete, run `check-delegation` and delegate the unified `./specs/$spec/research.md` write to a fresh `research-analyst` with a unique artifact agent ID, gate marker, full selected-skill manifest, approved brief, partial artifact paths, and returned Explore findings.
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` "Merging Results" section for the exact merge structure and process.
 
 After merge, delete partial files: `rm ./specs/$spec/.research-*.md`
 
-## Step 5: Artifact Review (only in --quick mode)
+## Step 5: Automatic Artifact Review (authorized quick mode)
 
 <mandatory>
 **Review loop must complete before walkthrough. Max 3 iterations.**
 
-If NOT `--quick`, skip to Step 6.
+If normalized `quickMode` is false, skip to Step 6.
 
 Invoke `spec-reviewer` via Task tool to validate research.md. Follow the standard review loop:
 - REVIEW_PASS: log to .progress.md, proceed to walkthrough
@@ -119,7 +99,7 @@ Invoke `spec-reviewer` via Task tool to validate research.md. Follow the standar
 
 **Review delegation**: Include full research.md content, iteration count, and prior findings. Upstream: none (research is first artifact).
 
-**Revision delegation**: Re-invoke research-analyst with reviewer feedback. Focus on specific issues flagged.
+**Revision delegation**: Run `check-delegation`, create a fresh unique artifact agent ID, and re-invoke research-analyst with reviewer feedback, gate marker, manifest, and current artifact. The agent reloads successful sources, records receipts, and checks its write gate. Focus on the flagged issues.
 
 **Error handling**: Reviewer no signal = REVIEW_PASS. Agent failure during revision = retry once, then use original.
 </mandatory>
@@ -148,9 +128,9 @@ Output: $PWD/specs/$spec/research.md
 ```
 </mandatory>
 
-### User Approval (skip if --quick)
+### User Approval (interactive mode)
 
-If `--quick`, skip to Step 7.
+If normalized `quickMode` is true, skip to Step 7.
 
 Ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
 1. **Approve** (Recommended) -- Accept artifact as-is, advance to next phase
@@ -159,7 +139,7 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 
 **If "Approve"**: proceed to Step 7.
 **If "Run review"**: Invoke spec-reviewer via Task tool with full research.md content (upstream: none). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
-**If "Request changes" or "Other"**: Ask what to change, invoke subagents with feedback, re-merge, re-display walkthrough, ask again with same 3 choices. Loop until approved.
+**If "Request changes", "Other", or `apply the changes`**: Apply already-recorded review or revision feedback immediately. Ask one focused change question only when no pending feedback exists. Run the delegation gate, invoke the research agents with the feedback and original marker/manifest, re-merge, re-display the walkthrough, and ask again with the same choices. Stay in artifact approval until explicit `Approve`.
 
 ## Step 7: Finalize
 
@@ -190,7 +170,7 @@ If commit or push fails, display warning but continue.
 <mandatory>
 **STOP HERE. DO NOT PROCEED TO REQUIREMENTS.**
 
-(Does not apply in `--quick` mode.)
+(Does not apply when normalized quick mode is authorized.)
 
 1. Display: `-> Next: Run /ralph-specum:requirements`
 2. End your response immediately

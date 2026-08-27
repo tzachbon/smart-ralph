@@ -23,12 +23,13 @@
 
 Every phase skill acts as a coordinator. The coordinator:
 
-1. Gathers context (spec state, progress, prior artifacts)
-2. Runs the brainstorming interview (skip if `--quick`)
-3. Delegates artifact generation to the appropriate sub-agent type
-4. Validates the sub-agent output exists and is well-formed
-5. Presents the walkthrough summary
-6. Waits for user approval (skip if `--quick`)
+1. Normalizes mode through `scripts/phase_gate.py mode`. Only exact `--quick` and exact `--interactive` change mode.
+2. Runs the applicable skill discovery pass.
+3. Reloads the internal `interview-framework-codex` skill, every selected domain skill, and every required current-work reference.
+4. Runs the critical-decision frontier interview from `skills/interview-framework-codex/references/algorithm.md`.
+5. Obtains explicit `approve and delegate` confirmation.
+6. Persists that choice with confirmation source `approve-and-delegate`, runs `phase_gate.py check-delegation`, and delegates artifact generation to the phase sub-agent.
+7. Validates the sub-agent output and presents it for artifact approval.
 
 | Phase | Sub-agent type |
 |-------|---------------|
@@ -40,19 +41,22 @@ Every phase skill acts as a coordinator. The coordinator:
 | Triage | `triage-analyst` |
 | Refactor | `refactor-specialist` |
 
-The coordinator MUST NOT write spec artifacts directly. If sub-agent delegation is unavailable, report the limitation and stop.
+The coordinator MUST NOT write spec artifacts directly. If sub-agent delegation is unavailable or the phase gate fails, report the limitation and stop.
 
 ## Normal Flow
 
-1. Resolve current repo state, branch, and spec roots.
-2. Start or resume a spec.
-3. STOP. Wait for explicit direction to continue to research unless `--quick`.
-4. Delegate `research.md` to `research-analyst` sub-agent. STOP and request approval unless `--quick`.
-5. Delegate `requirements.md` to `product-manager` sub-agent. STOP and request approval unless `--quick`.
-6. Delegate `design.md` to `architect-reviewer` sub-agent. STOP and request approval unless `--quick`.
-7. Delegate `tasks.md` to `task-planner` sub-agent. STOP and request approval unless `--quick`.
-8. Delegate each task to `spec-executor` sub-agent until complete or blocked.
-9. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
+1. Resolve current repo state and set up or resume the spec.
+2. Run skill discovery pass 1 and the start goal grill.
+3. After explicit final approval, delegate `research.md` to `research-analyst`.
+4. Review and approve the research artifact.
+5. Run skill discovery pass 2 and the requirements grill. After explicit final approval, delegate `requirements.md`.
+6. Repeat the reload, grill, final approval, and delegation path for design and tasks.
+7. Approve `tasks.md`, then delegate each implementation task until complete or blocked.
+8. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
+
+Direct or resumed `triage`, `research`, `requirements`, `design`, or `tasks` invocations run their applicable discovery pass when state lacks it. A resumed grill reloads the complete selected manifest before asking another question.
+
+The old `Wait for explicit direction to continue to research` setup pause is obsolete. Start begins the goal grill after setup and waits for explicit `approve and delegate` at the final interview gate.
 
 ## Start And New
 
@@ -62,6 +66,22 @@ The coordinator MUST NOT write spec artifacts directly. If sub-agent delegation 
   - feature branch in place
   - worktree with a feature branch
 - If the user wants a worktree, stop after creating it and ask them to continue from the worktree.
+- Start setup is complete when the spec directory, state, progress, and current-spec marker exist. In normal mode, begin the goal grill at that point. Do not ask setup or administration questions in the grill.
+
+## Skill discovery and load
+
+Run pass 1 after start setup using the goal. Run pass 2 after the final research artifact using the goal plus only the `## Executive Summary` section through the next level-2 heading. Hash the full applicable `research.md` bytes for gate staleness even though selection relevance uses only that summary. Collect candidates from plugin skills, project `.agents/skills`, project `.claude/skills`, and the current Codex harness catalog.
+
+- Always select explicitly named skills.
+- When names collide, use the harness-resolved active source and record other sources as shadowed in the selection reason and `.progress.md`. Reserve manifest warnings for exact load errors.
+- Append cumulative `discoveredSkills` history for every pass with pass, revision, name, active source, reason, and shadowed sources. Legacy `invoked` is not a load receipt.
+- Put the internal `interview-framework-codex` skill first in every normal-mode phase manifest.
+- Reload every selected `SKILL.md` and required current-work reference before every new or resumed grill.
+- Treat discovery and preload as contract extraction. Start no prescribed domain-skill task action during either step.
+- Stop when the core interview skill fails. Warn and continue when a domain skill fails.
+- Give failed receipts a null hash and exact errors. Loaded receipts use the current source hash.
+- Resolve clear conflicts through harness instruction precedence and record them without asking. Ask only unresolved material contract conflicts in the first critical-decision frontier.
+- Pass the verbatim manifest and gate identity to the artifact agent.
 
 ## Quick Mode
 
@@ -73,7 +93,9 @@ Quick mode does not rely on Claude hooks. In Codex it means:
 4. Continue directly into implementation in the same run.
 5. Persist `.ralph-state.json` after every task so a later run can resume.
 
-Only use quick mode when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
+Only exact `--quick` enables quick mode. Exact `--interactive` clears it for any affected phase. Passing both is an error. Reject `-q`, flag variants, and natural-language autonomy requests. A phase invocation without either flag normalizes legacy or invalid quick state to interactive before deciding whether to grill.
+
+Quick bypasses interview questions and final interview confirmation only. Run the applicable discovery pass, record a current `complete` or `partial_warned` manifest, and pass it through the parent delegation check. Each quick-mode artifact child reloads the manifest, records every loaded source under its unique dispatch identity, and passes `check-agent-write` before writing.
 
 ## Implement
 
@@ -119,6 +141,12 @@ Cascade downstream updates when upstream requirements or design changes.
 
 ## Approval Prompt Shape
 
+The pre-delegation interview and post-generation artifact review are separate gates.
+
+Before delegation, show the decision ledger and require the explicit native user-input choice `Approve and delegate (Recommended)`. Replies that only say `apply the changes`, `continue`, `proceed`, or `go ahead` answer no interview question and approve no delegation. Bare `skip` during an active interview fills the remaining critical decisions with recorded defaults and assumptions, then still requires final approval.
+
+Classify each reply with `phase_gate.py classify-reply`. Persist final approval only with `confirm --source approve-and-delegate`. If the user chooses revision at final confirmation, call `revise` for all affected decision IDs, collect the reopened answers in its incremented round, and return to the same final confirmation ID.
+
 When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, or refactored spec files outside quick mode:
 
 - name the file or files that changed
@@ -129,6 +157,8 @@ When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, o
   - `continue to <named next step>`
 
 Treat `continue to <named next step>` as approval of the current artifact.
+
+During artifact review, `apply the changes` immediately delegates already-recorded feedback through the same gate and a new unique dispatch, redisplays the artifact, and returns to artifact approval. Ask one focused change question only when no revision feedback is pending. A bare `continue`, `proceed`, or `go ahead` does not approve the artifact.
 
 ## Hook-Driven Execution Path
 

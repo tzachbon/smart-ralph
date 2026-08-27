@@ -5,6 +5,184 @@
   "description": "Schema for ralph-specum state files and spec document frontmatter",
 
   "definitions": {
+    "loadReceipt": {
+      "type": "object",
+      "required": ["source", "sha256", "loadStatus", "errors"],
+      "properties": {
+        "source": { "type": "string", "minLength": 1, "pattern": "^/" },
+        "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+        "loadStatus": { "type": "string", "enum": ["loaded", "failed"] },
+        "errors": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "loadStatus": { "const": "loaded" } } },
+          "then": {
+            "properties": {
+              "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+              "errors": { "maxItems": 0 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "loadStatus": { "const": "failed" } } },
+          "then": {
+            "properties": {
+              "sha256": { "const": null },
+              "errors": { "minItems": 1 }
+            }
+          }
+        }
+      ]
+    },
+
+    "discoveredSkill": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "matchedAt": { "type": "string" },
+        "pass": { "type": ["string", "integer"] },
+        "discoveryRevision": { "type": ["string", "integer"] },
+        "revision": { "type": ["string", "integer"] },
+        "activeSource": { "type": "string", "minLength": 1 },
+        "outcome": { "type": "string" },
+        "reason": { "type": "string" },
+        "shadowedSources": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "invoked": { "type": "boolean" }
+      }
+    },
+
+    "phaseSkillLoad": {
+      "type": "object",
+      "required": ["phase", "interviewId", "discoveryRevision", "contextDigest", "context", "status", "selected", "warnings", "conflicts", "failures", "noDomainMatches", "artifactAgentLoads"],
+      "properties": {
+        "phase": { "type": "string", "enum": ["start", "triage", "research", "requirements", "design", "tasks"] },
+        "interviewId": { "type": "string", "minLength": 1 },
+        "discoveryRevision": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "integer", "minimum": 0 }
+          ]
+        },
+        "contextDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "context": {
+          "type": "object",
+          "required": ["goal", "artifacts"],
+          "properties": {
+            "goal": { "type": "string", "minLength": 1, "pattern": "\\S" },
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["source", "sha256"],
+                "properties": {
+                  "source": { "type": "string", "minLength": 1, "pattern": "^/" },
+                  "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+                }
+              }
+            }
+          }
+        },
+        "status": { "type": "string", "enum": ["complete", "partial_warned", "core_failed"] },
+        "selected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "reason", "source", "core", "body", "requiredResources"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "source": { "type": "string", "minLength": 1, "pattern": "^/" },
+              "core": { "type": "boolean" },
+              "body": {
+                "type": "object",
+                "required": ["sha256", "loadStatus", "errors"],
+                "properties": {
+                  "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+                  "loadStatus": { "type": "string", "enum": ["loaded", "failed"] },
+                  "errors": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+                },
+                "allOf": [
+                  {
+                    "if": { "properties": { "loadStatus": { "const": "loaded" } } },
+                    "then": {
+                      "properties": {
+                        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                        "errors": { "maxItems": 0 }
+                      }
+                    }
+                  },
+                  {
+                    "if": { "properties": { "loadStatus": { "const": "failed" } } },
+                    "then": {
+                      "properties": {
+                        "sha256": { "const": null },
+                        "errors": { "minItems": 1 }
+                      }
+                    }
+                  }
+                ]
+              },
+              "requiredResources": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/loadReceipt" }
+              }
+            }
+          }
+        },
+        "warnings": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "conflicts": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "failures": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "noDomainMatches": { "type": "boolean" },
+        "artifactAgentLoads": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              { "$ref": "#/definitions/loadReceipt" },
+              {
+                "type": "object",
+                "required": ["agent"],
+                "properties": { "agent": { "type": "string", "minLength": 1 } }
+              }
+            ]
+          }
+        }
+      }
+    },
+
+    "phaseInterview": {
+      "type": "object",
+      "required": ["phase", "interviewId", "round", "status", "askedDecisionIds", "pendingDecisionIds", "answeredDecisionIds", "selectedApproach", "confirmationSource", "bypassReason", "assumptionsRecorded"],
+      "properties": {
+        "phase": { "type": "string", "enum": ["start", "triage", "research", "requirements", "design", "tasks"] },
+        "interviewId": { "type": "string", "minLength": 1 },
+        "round": { "type": "integer", "minimum": 1 },
+        "status": { "type": "string", "enum": ["collecting", "awaiting_confirmation", "complete", "skipped", "bypassed_quick"] },
+        "askedDecisionIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "pendingDecisionIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "answeredDecisionIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "selectedApproach": { "type": ["string", "null"] },
+        "confirmationSource": { "enum": [null, "approve-and-delegate"] },
+        "bypassReason": { "type": ["string", "null"] },
+        "assumptionsRecorded": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "skipped" } } },
+          "then": { "properties": { "assumptionsRecorded": { "minItems": 1 } } }
+        }
+      ]
+    },
+
+    "quickAuthorization": {
+      "type": "object",
+      "required": ["source"],
+      "properties": {
+        "source": { "type": "string", "const": "--quick" }
+      }
+    },
+
     "state": {
       "type": "object",
       "description": "Runtime state for spec execution loop",
@@ -24,11 +202,17 @@
           "type": "string",
           "description": "Path to spec directory (e.g., ./specs/my-feature)"
         },
+        "goal": { "type": "string", "minLength": 1, "pattern": "\\S" },
         "phase": {
           "type": "string",
           "enum": ["research", "requirements", "design", "tasks", "execution"],
           "description": "Current workflow phase"
         },
+        "phaseSkillLoad": { "$ref": "#/definitions/phaseSkillLoad" },
+        "phaseInterview": { "$ref": "#/definitions/phaseInterview" },
+        "quickAuthorization": { "$ref": "#/definitions/quickAuthorization" },
+        "quickMode": { "type": "boolean" },
+        "discoveredSkills": { "type": "array", "items": { "$ref": "#/definitions/discoveredSkill" } },
         "taskIndex": {
           "type": "integer",
           "minimum": 0,
@@ -245,7 +429,12 @@
         "issueNumber": {
           "type": ["integer", "null"],
           "description": "GitHub parent issue number (if output includes github-issues)"
-        }
+        },
+        "phaseSkillLoad": { "$ref": "#/definitions/phaseSkillLoad" },
+        "phaseInterview": { "$ref": "#/definitions/phaseInterview" },
+        "quickAuthorization": { "$ref": "#/definitions/quickAuthorization" },
+        "quickMode": { "type": "boolean" },
+        "discoveredSkills": { "type": "array", "items": { "$ref": "#/definitions/discoveredSkill" } }
       }
     },
 

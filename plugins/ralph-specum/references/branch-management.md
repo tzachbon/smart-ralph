@@ -101,7 +101,7 @@ Branch: feat/user-auth-2
 
 ## Quick Mode Branch Handling
 
-In `--quick` mode, still perform branch check but skip the user prompt for non-default branches:
+When quick mode has exact `--quick` authorization, still perform the branch check but skip the user prompt for non-default branches. A bare legacy `quickMode: true` does not enter this branch:
 - If on default branch: auto-create feature branch in current directory (no worktree prompt in quick mode)
 - If on non-default branch: stay on current branch (no prompt, quick mode is non-interactive)
 
