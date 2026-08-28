@@ -29,9 +29,14 @@ Use this to report Ralph state across configured spec roots.
    - `requirements.md`
    - `design.md`
    - `tasks.md`
-5. If `tasks.md` exists, count completed and incomplete tasks.
-6. Group results by spec root.
-7. Show the active spec, current phase, backlog state, approval state, granularity when present, and which artifacts exist.
+5. When state exists, use the resolved spec path as `basePath`, run `plugins/ralph-specum-codex/scripts/prototype_records.py reconcile --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"`, then re-read state. Never construct `specs/<name>` after resolution.
+6. Inventory prototype records in lexical order:
+   - Read `activePrototypes`, treating a missing field as an empty map.
+   - List `prototypes/.*.candidate.md`, immutable `prototypes/*.md` finals, and visible or dot-prefixed `*.quarantine.md` files.
+   - Parse candidates and finals with `prototype_records.py parse`; use `select-downstream` with state to derive blockers and stale dependencies.
+7. If `tasks.md` exists, count completed and incomplete tasks.
+8. Group results by spec root.
+9. Show the active spec, current phase, backlog state, approval state, granularity when present, and which artifacts exist.
 
 ## Output
 
@@ -40,3 +45,5 @@ Use this to report Ralph state across configured spec roots.
 - Include the next likely command when it is obvious.
 - If an epic is active, include the next unblocked spec.
 - If approval is pending, explicitly tell the user to approve the current artifact, request changes, or continue to the named next step.
+- When prototype data exists, report counts and deterministic rows for active entries, candidates, immutable finals, and quarantines. Include prototype ID, lifecycle status or verdict, blocker targets, `returnPhase`, `returnTaskIndex`, `sourceDisposition` or source pointer, gate approval, and quarantine reason.
+- Include derived `activeBlockers`, `staleArtifacts`, and `staleTaskIndexes`. Omit the prototype section when all overlay counts are zero so legacy output stays unchanged.

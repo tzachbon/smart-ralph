@@ -114,7 +114,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): gate Codex execution dispatch`
   - _Requirements: FR-1, FR-3, FR-4, FR-5, FR-8, NFR-5_
 
-- [ ] 1.14 Add Codex resume and visibility surfaces
+- [x] 1.14 Add Codex resume and visibility surfaces
   - **Do**: Reconcile at start, add routing metadata for resume, show active and terminal records in status, and show blockers in switch.
   - **Files**: `plugins/ralph-specum-codex/skills/ralph-specum-start/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-start/agents/openai.yaml`, `plugins/ralph-specum-codex/skills/ralph-specum-status/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-switch/SKILL.md`
   - **Done when**: Codex resumes and reports the same records and blockers as Claude.

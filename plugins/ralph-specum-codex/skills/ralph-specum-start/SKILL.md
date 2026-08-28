@@ -20,7 +20,7 @@ Use this for the `start` and `new` entrypoints.
 
 ## Action
 
-1. Parse explicit name, goal, `--quick`, commit flags, optional specs root, and optional `--tasks-size fine|coarse`.
+1. Parse explicit name, goal, `--quick`, `--resume <prototype-id>`, commit flags, optional specs root, and optional `--tasks-size fine|coarse`.
 2. Resolve the target by explicit path, exact name, or `.current-spec`.
 3. If the same name exists in multiple configured roots, stop and require a full path.
 4. Check active epic context from `specs/.current-epic` when no explicit spec was chosen.
@@ -49,6 +49,16 @@ Use this for the `start` and `new` entrypoints.
 10. On resume, prefer `tasks.md` and present files over stale state when they disagree.
 11. In quick mode, generate missing artifacts in order, skip normal approval pauses, and continue into implementation in the same run.
 12. **Without quick mode or explicit autonomy: STOP HERE after setup. Do NOT proceed to research. Wait for the user to explicitly ask to continue.** This is non-negotiable.
+
+## Prototype Reconciliation and Resume
+
+After resolving the target and before normal resume or quick routing:
+
+1. Use `plugins/ralph-specum-codex/scripts/resolve_spec_paths.py` and only its resolved `basePath`. When both `basePath` and `<basePath>/.ralph-state.json` exist, run `prototype_records.py reconcile --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"`, then re-read state.
+2. Treat a missing `activePrototypes` field as an empty map. Sort entries by `created`, then ID.
+3. Resume an explicit active ID through `$ralph-specum-prototype --resume <id>` and stop this skill. In normal mode, resume the sole active entry automatically. When several remain, list deterministic IDs with question, status, blocker, `returnPhase`, and `returnTaskIndex`, then stop for an explicit ID.
+4. In quick mode, ask no question. Sort entries that block design by `created`, then ID. At the post-requirements boundary, route through `$ralph-specum-prototype --quick`; the prototype skill takes over the oldest design blocker and owns every decision. Preserve earlier quick flow and unrelated entries.
+5. Treat `resume_review` candidates as recovery work, not terminal evidence. Exclude quarantined or malformed records. If no overlay exists, continue the existing start behavior without extra output.
 
 ## Branch Isolation
 

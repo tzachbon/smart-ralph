@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Start"
-  short_description: "Create or resume a Ralph spec"
-  default_prompt: "Use $ralph-specum-start to create or resume a Ralph spec, then wait for explicit direction to continue to research unless I asked for quick or autonomous flow."
+  short_description: "Create a spec or route prototype resume"
+  default_prompt: "Use $ralph-specum-start to create or resume a Ralph spec, reconcile prototype records, and route active prototype resume through $ralph-specum-prototype; when no overlay exists, wait for explicit direction unless I asked for quick or autonomous flow."
 policy:
   allow_implicit_invocation: false

@@ -28,3 +28,9 @@ Use this to switch the active spec.
    - bare name for the default root
    - full path for non-default roots
 5. Read the target spec state and summarize phase, progress, approval state, and present files.
+6. Report prototype dependencies without mutating them:
+   - Treat a missing `activePrototypes` field as an empty map.
+   - When state exists, run `plugins/ralph-specum-codex/scripts/prototype_records.py select-downstream --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"` using the selected spec's resolved `basePath`.
+   - Show each blocker with prototype ID, status, blocked artifact or transition, `returnPhase`, and `returnTaskIndex`.
+   - Show `staleArtifacts` and `staleTaskIndexes` from the selection result.
+   - Do not reconcile, remove active entries, edit records, or change blocker data. If no overlay or stale dependency exists, preserve the existing switch output.
