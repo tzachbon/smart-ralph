@@ -10,6 +10,7 @@
 | `/ralph-specum:requirements` | `$ralph-specum` or `$ralph-specum-requirements` |
 | `/ralph-specum:design` | `$ralph-specum` or `$ralph-specum-design` |
 | `/ralph-specum:tasks` | `$ralph-specum` or `$ralph-specum-tasks` |
+| `/ralph-specum:prototype` | `$ralph-specum` or `$ralph-specum-prototype` |
 | `/ralph-specum:implement` | `$ralph-specum` or `$ralph-specum-implement` |
 | `/ralph-specum:status` | `$ralph-specum` or `$ralph-specum-status` |
 | `/ralph-specum:switch` | `$ralph-specum` or `$ralph-specum-switch` |
@@ -39,8 +40,9 @@ Every phase skill acts as a coordinator. The coordinator:
 | Implement | `spec-executor` (per task) |
 | Triage | `triage-analyst` |
 | Refactor | `refactor-specialist` |
+| Prototype source | Child agent recorded by `agentId` |
 
-The coordinator MUST NOT write spec artifacts directly. If sub-agent delegation is unavailable, report the limitation and stop.
+The coordinator MUST NOT write spec artifacts directly. Prototype source also stays delegated to a child agent; do not create a user-owned task with `create_thread`. If sub-agent delegation is unavailable, report the limitation and stop in normal mode. Quick mode records a failed prototype outcome and continues to design.
 
 ## Normal Flow
 
@@ -53,6 +55,8 @@ The coordinator MUST NOT write spec artifacts directly. If sub-agent delegation 
 7. Delegate `tasks.md` to `task-planner` sub-agent. STOP and request approval unless `--quick`.
 8. Delegate each task to `spec-executor` sub-agent until complete or blocked.
 9. Use `status`, `switch`, `cancel`, `index`, `refactor`, `feedback`, and `help` as needed.
+
+After normal research or requirements, offer `continue to prototype` beside the next phase; never force it. Direct `$ralph-specum-prototype` is available from any main phase. The prototype is an `activePrototypes` overlay and never changes the main `phase` to `prototype`.
 
 ## Start And New
 
@@ -69,9 +73,10 @@ Quick mode does not rely on Claude hooks. In Codex it means:
 
 1. Create or resolve the spec.
 2. Generate missing phase artifacts in order.
-3. Count tasks.
-4. Continue directly into implementation in the same run.
-5. Persist `.ralph-state.json` after every task so a later run can resume.
+3. After requirements, run exactly one prototype request. Ask no prototype questions. Take over the oldest active design blocker when one exists; otherwise select the highest-risk grounded question or record a skip.
+4. Own verdict, cleanup, and handoff decisions, then continue to design in every outcome.
+5. Count tasks and continue directly into implementation in the same run.
+6. Persist `.ralph-state.json` after every task so a later run can resume.
 
 Only use quick mode when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
 
@@ -88,14 +93,21 @@ Only use quick mode when the user explicitly asks Ralph to be autonomous, do it 
   - update progress
   - commit using the task commit line unless task commits were explicitly disabled
 - Remove `.ralph-state.json` only when all tasks are complete and verified.
+- Before dispatch, reconcile records and stop only for a prototype blocker or stale artifact/task that affects the current task. Restore `returnTaskIndex` after handoff. Keep state at completion while `activePrototypes` is nonempty.
 
 ## Cancel
 
-Claude `cancel` deletes the spec directory. In Codex:
+Safe cancel is the default. Publish and verify one immutable `cancelled` record for each active prototype before removing its active entry. Preserve source, partial work, records, and local branches. Full spec removal or prototype-source deletion requires a separate confirmation naming the exact local path and branch. Never delete a remote branch.
 
-- confirm before deleting a spec directory
-- allow a safer "stop but keep files" interpretation when the user asks to keep the spec
-- always clear execution state when the user asks to stop execution
+## Prototype Overlay
+
+1. Resolve `basePath`, reconcile candidates and finals, and read `activePrototypes` through the shared helpers.
+2. Resume an explicit ID, the sole active entry, or a user-selected entry. Quick mode selects the oldest design blocker without asking.
+3. Build in a sibling worktree or eligible scratch area without switching the current checkout or copying unapproved dirty paths.
+4. Review exact candidate bytes, publish an immutable final under `<basePath>/prototypes/`, verify it, then remove the active entry.
+5. Feed only gate-approved, non-superseded `validated` or `rejected` evidence to affected downstream work. Keep malformed, excluded, cancelled, failed, skipped, and inconclusive records out.
+
+Prototype source and evidence remain local. A local commit does not authorize a push, PR update, issue write, or any other remote action.
 
 ## Index
 
@@ -139,7 +151,7 @@ When the Codex Stop hook is enabled (`[features] codex_hooks = true` in Codex co
 3. If tasks remain, it outputs `{"decision": "block", "reason": "<next task prompt>"}` to prevent the session from closing and inject the next task instruction.
 4. The agent resumes, executes the next task, marks the checkbox, updates state, and stops again.
 5. The loop repeats until all tasks are complete or `taskIndex >= totalTasks`.
-6. On completion the script outputs `{"decision": "proceed"}` to allow the session to close normally.
+6. On completion the script allows the session to close only when `activePrototypes` is empty.
 
 The Stop hook is experimental and requires `codex_hooks = true`. It is disabled by default and not available on Windows. Verify the feature flag is set before relying on hook-driven execution.
 
@@ -183,6 +195,8 @@ When `[features] codex_hooks = true` is set in `config.toml`, the execution loop
 - `awaitingApproval: true` in state -> exit 0 (do not continue)
 - No `.ralph-state.json` found -> exit 0
 - `taskIndex >= totalTasks` -> exit 0 (all done)
+- a dependent active prototype or stale current task -> block with resume guidance
+- completed tasks with nonempty `activePrototypes` -> block and preserve state
 
 ## Manual Fallback Path
 

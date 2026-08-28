@@ -9,6 +9,8 @@ Relevant frontmatter keys:
 - `specs_dirs`
 - `default_max_iterations`
 - `auto_commit_spec`
+- `prototype_lock_timeout_seconds` and `prototype_quick_lock_timeout_seconds`
+- prototype logic/UI, activity-extension, hard-deadline, conflict, transfer-path, and builder-execution limits
 
 ## Default Behavior
 
@@ -48,8 +50,11 @@ Exit behavior:
 - `--name` returns `1` when no spec matches
 - `--name` returns `2` when multiple specs match
 
+The default JSON output also includes `specRoot`, `basePath`, validated `prototype_settings`, and ordered `configWarnings`. Prototype coordinators, record helpers, state helpers, hooks, status, and indexing use that resolved `basePath`; they never reconstruct `specs/<name>`. A resumed entry uses its stored configuration snapshot.
+
 ## Listing Rules
 
 - Only existing spec directories count in `--list`
 - Hidden directories are ignored
 - Missing configured roots do not stop resolution
+- Prototype paths may be in any configured root and remain local to that resolved spec

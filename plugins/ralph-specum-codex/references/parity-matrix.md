@@ -8,10 +8,11 @@
 | Slash commands | Primary and helper skills | Public surface moves from `/command` to `$skill` |
 | Hook-driven loop | State-driven resume | `.ralph-state.json` replaces hook continuation |
 | `start --quick` | Quick-mode intent in start or primary skill | Generate artifacts and continue in one session |
+| `prototype` | `$ralph-specum-prototype` | Optional `activePrototypes` overlay with matching direct, suggested, resume, quick, and cancel behavior |
 | `new` | Alias inside start | No separate install unit needed |
 | `implement` | Same skill surface | Implementation continues until complete or blocked |
 | `switch` | Same skill surface | Updates `.current-spec` |
-| `cancel` | Same skill surface | Confirm before destructive spec delete |
+| `cancel` | Same skill surface | Publish cancelled prototype records, preserve source, and confirm exact local deletion |
 | `index` | Same skill surface | Generate `specs/.index/` directly |
 | `refactor` | Same skill surface | Update requirements, design, and tasks after learnings |
 | `feedback` | Same skill surface | Use `gh` when available or fall back to issue URL |
@@ -30,13 +31,29 @@ Codex:
 
 - read repo state at skill start
 - persist state after each phase or task
-- resume on the next invocation
+- use `locked_state.py` for writes and `merge_state.py` only as its compatibility entrypoint
+- let the Stop hook reconcile and block dependent prototype or stale work
+- resume on the next invocation when hooks are unavailable
 
 ### Subagents
 
 Claude uses subagents like `research-analyst` and `spec-executor`.
 
-Codex skills MUST delegate phase work to sub-agents, matching the Claude Code delegation model. The skill acts as coordinator: gather context, run interview, delegate to the appropriate agent type, validate output, present for approval. The skill MUST NOT write spec artifacts (research.md, requirements.md, design.md, tasks.md) directly.
+Codex skills MUST delegate phase work to sub-agents, matching the Claude Code delegation model. The skill acts as coordinator: gather context, run interview, delegate to the appropriate agent type, validate output, present for approval. The skill MUST NOT write spec artifacts (research.md, requirements.md, design.md, tasks.md) directly. Prototype builders are child agents recorded by `agentId`; they are not user-owned `create_thread` tasks.
+
+### Prototype Parity
+
+| Claude component | Codex component |
+|------------------|-----------------|
+| `/ralph-specum:prototype` | `$ralph-specum-prototype` |
+| `references/prototype-coordinator.md` | matching Codex coordinator reference |
+| `hooks/scripts/locked-state.py` | `scripts/locked_state.py` |
+| `hooks/scripts/prototype-records.py` | `scripts/prototype_records.py` |
+| `hooks/scripts/prototype-harness.py` | `scripts/prototype_harness.py` |
+| `prototype-builder` subagent | child agent plus optional builder config template |
+| Claude stop gate | Codex stop hook or manual implement resume |
+
+Both packages keep prototype evidence local, never switch the current checkout, require exact authorization for destructive local cleanup, and require separate authorization for any remote action. Quick mode takes over the oldest design blocker, owns decisions, asks no questions, and always continues to design.
 
 ### Worktrees
 

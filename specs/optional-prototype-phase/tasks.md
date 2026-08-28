@@ -276,11 +276,11 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `docs(prototype): define Claude overlay contract`
   - _Requirements: FR-1, FR-3, FR-6, NFR-3_
 
-- [ ] 2.8 Complete Codex workflow and state references
+- [x] 2.8 Complete Codex workflow and state references
   - **Do**: Document matching overlay, locked state, path resolution, quick takeover, local-only evidence, and parity mappings for Codex.
   - **Files**: `plugins/ralph-specum-codex/references/workflow.md`, `plugins/ralph-specum-codex/references/state-contract.md`, `plugins/ralph-specum-codex/references/path-resolution.md`, `plugins/ralph-specum-codex/references/parity-matrix.md`
   - **Done when**: Codex references map every Claude behavior to its skill, helper, or hook without changing the contract.
-  - **Verify**: `rg -l 'activePrototypes|prototype' plugins/ralph-specum-codex/references/{workflow,state-contract,path-resolution,parity-matrix}.md | wc -l | grep -q '^4$'`
+  - **Verify**: `test "$(rg -l 'activePrototypes|prototype' plugins/ralph-specum-codex/references/{workflow,state-contract,path-resolution,parity-matrix}.md | wc -l | tr -d '[:space:]')" = 4`
   - **Commit**: `docs(prototype): define Codex overlay contract`
   - _Requirements: FR-1, FR-3, FR-6, FR-8, NFR-5_
 

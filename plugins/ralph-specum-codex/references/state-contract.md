@@ -33,6 +33,7 @@ Optional but common:
 - `awaitingApproval`
 - `recoveryMode`
 - `fixTaskMap`
+- `activePrototypes`
 
 ## New Spec Defaults
 
@@ -58,11 +59,19 @@ Use these defaults when a new spec starts:
 
 Read `default_max_iterations` and `auto_commit_spec` from `.claude/ralph-specum.local.md` when present.
 
+## Overlay State
+
+`activePrototypes` is an optional map keyed by prototype ID. It supplements the main state; `prototype` is never a main `phase` value. Each active entry records identity, lifecycle status, `triggerPhase`, `returnPhase`, optional `returnTaskIndex`, timestamps, blocking and stale dependency data, child `agentId`, resolved `specRoot` and `basePath`, isolation pointers, source disposition, configuration evidence, attempts, lease data, and decision checkpoints.
+
+Terminal records are immutable files under `<basePath>/prototypes/<id>.md`. Candidate files remain ignored and mutable only until exact-byte review and no-overwrite publication. Remove an active entry only after re-reading and verifying its final record. Never delete state while the active map is nonempty.
+
 ## Merge Rule
 
 Never rebuild state from scratch once the file exists. Merge only the fields needed for the current phase.
 
-Use `scripts/merge_state.py` for deterministic top-level merges.
+Use `scripts/locked_state.py` for every write, lease, transition, removal, and guarded deletion. `scripts/merge_state.py` is only the compatibility wrapper for deterministic top-level merges. Resolve `basePath` before every operation and preserve unknown fields.
+
+Normal prototype verdict and handoff checkpoints belong to the user. Quick mode owns them, asks no questions, and continues to design. Both modes persist the selected verdict, handoff, stale artifacts, and stale task indexes before publication so resume never depends on conversation memory.
 
 ## Approval Contract
 
@@ -98,3 +107,4 @@ Treat `continue to <named next step>` as approval of the current artifact and pe
 - Spec artifacts may be auto-committed when `commitSpec` is true.
 - Implementation tasks should use the task's `Commit` line by default.
 - If the user disables commits, keep the disk state and progress updates but skip git commits.
+- Prototype source commits and records stay local unless the user separately authorizes the exact push, PR, issue, or other remote action.
