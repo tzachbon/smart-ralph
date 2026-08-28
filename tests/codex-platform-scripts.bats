@@ -131,15 +131,19 @@ setup() {
     [ -z "$output" ]
 }
 
-@test "workflow: all Claude plugin files trigger Bats" {
-    local workflow push_count pull_request_count
+@test "workflow: all Ralph Specum files and Ralph Speckit shell files trigger Bats" {
+    local workflow push_specum_count push_shell_count pull_request_specum_count pull_request_shell_count
     workflow="$(repo_root)/.github/workflows/bats-tests.yml"
 
-    push_count="$(sed -n '/^  push:/,/^  pull_request:/p' "$workflow" | grep -Fxc "      - 'plugins/ralph-specum/**'")"
-    pull_request_count="$(sed -n '/^  pull_request:/,/^jobs:/p' "$workflow" | grep -Fxc "      - 'plugins/ralph-specum/**'")"
+    push_specum_count="$(sed -n '/^  push:/,/^  pull_request:/p' "$workflow" | grep -Fxc "      - 'plugins/ralph-specum/**'")"
+    push_shell_count="$(sed -n '/^  push:/,/^  pull_request:/p' "$workflow" | grep -Fxc "      - 'plugins/**/*.sh'")"
+    pull_request_specum_count="$(sed -n '/^  pull_request:/,/^jobs:/p' "$workflow" | grep -Fxc "      - 'plugins/ralph-specum/**'")"
+    pull_request_shell_count="$(sed -n '/^  pull_request:/,/^jobs:/p' "$workflow" | grep -Fxc "      - 'plugins/**/*.sh'")"
 
-    [ "$push_count" -eq 1 ]
-    [ "$pull_request_count" -eq 1 ]
+    [ "$push_specum_count" -eq 1 ]
+    [ "$push_shell_count" -eq 1 ]
+    [ "$pull_request_specum_count" -eq 1 ]
+    [ "$pull_request_shell_count" -eq 1 ]
 }
 
 teardown() {

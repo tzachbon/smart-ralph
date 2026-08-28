@@ -5,6 +5,7 @@ on:
     paths:
       - 'plugins/ralph-specum/**'
       - 'plugins/ralph-specum-codex/**'
+      - 'plugins/**/*.sh'
       - 'tests/**/*.bats'
       - 'tests/test_prototype_windows.py'
       - 'tests/helpers/**'
@@ -14,6 +15,7 @@ on:
     paths:
       - 'plugins/ralph-specum/**'
       - 'plugins/ralph-specum-codex/**'
+      - 'plugins/**/*.sh'
       - 'tests/**/*.bats'
       - 'tests/test_prototype_windows.py'
       - 'tests/helpers/**'
