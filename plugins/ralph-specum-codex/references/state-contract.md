@@ -104,7 +104,7 @@ Treat `continue to <named next step>` as approval of the current artifact and pe
 
 ## Commit Rules
 
-- Spec artifacts may be auto-committed when `commitSpec` is true.
+- Spec artifacts may be auto-committed locally when `commitSpec` is true. The setting authorizes no remote action.
 - Implementation tasks should use the task's `Commit` line by default.
 - If the user disables commits, keep the disk state and progress updates but skip git commits.
-- Prototype source commits and records stay local unless the user separately authorizes the exact push, PR, issue, or other remote action.
+- Before any push, apply the Prototype Evidence Push Gate in `workflow.md`. Prototype source commits and records stay local unless the user separately authorizes the exact records and remote action at that boundary. Quick mode never asks and never pushes.

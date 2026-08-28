@@ -10,6 +10,8 @@ metadata:
 
 Use this to report Ralph state across configured spec roots.
 
+Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill by resolving two parent directories from the `SKILL.md` directory. Never derive it from the project working directory.
+
 ## Contract
 
 - Read `.claude/ralph-specum.local.md` when present
@@ -29,7 +31,7 @@ Use this to report Ralph state across configured spec roots.
    - `requirements.md`
    - `design.md`
    - `tasks.md`
-5. When state exists, use the resolved spec path as `basePath`, run `plugins/ralph-specum-codex/scripts/prototype_records.py reconcile --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"`, then re-read state. Never construct `specs/<name>` after resolution.
+5. When state exists, use the resolved spec path as `basePath`, run `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" reconcile --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"`, then re-read state. Never construct `specs/<name>` after resolution.
 6. Inventory prototype records in lexical order:
    - Read `activePrototypes`, treating a missing field as an empty map.
    - List `prototypes/.*.candidate.md`, immutable `prototypes/*.md` finals, and visible or dot-prefixed `*.quarantine.md` files.

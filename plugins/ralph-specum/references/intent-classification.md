@@ -11,7 +11,7 @@ From `$ARGUMENTS`, extract:
 - **goal**: Everything after the name except flags (optional)
 - **--fresh**: Force new spec without prompting if one exists
 - **--quick**: Skip all spec phases, auto-generate artifacts, start execution immediately
-- **--commit-spec**: Commit and push spec files after generation (default: true in normal mode, false in quick mode)
+- **--commit-spec**: Commit spec files locally after generation (default: true in normal mode, false in quick mode). Existing normal-mode pushes still run after the Prototype Evidence Push Gate; this flag never authorizes a prototype record push.
 - **--no-commit-spec**: Explicitly disable committing spec files
 - **--specs-dir <path>**: Create spec in specified directory (must be in configured specs_dirs array)
 - **--tasks-size <fine|coarse>**: Task granularity level for task generation

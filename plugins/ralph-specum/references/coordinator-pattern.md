@@ -490,7 +490,7 @@ Commit after every task, but batch pushes to avoid excessive remote operations.
    - Phase boundary: current task's phase header differs from previous task's
    - Commit count: 5+ commits since last push
    - Approval gate: awaitingApproval about to be set
-3. If any condition met: `git push`
+3. If any condition is met, run the Prototype Evidence Push Gate in `${CLAUDE_PLUGIN_ROOT}/references/commit-discipline.md`, then run `git push` only when that gate permits it.
 4. Log push in .progress.md: "Pushed N commits (reason: phase boundary / batch limit / approval gate)"
 
 ## Progress Merge (Parallel Only)
@@ -723,7 +723,7 @@ Task: Create pull request
 
 Do:
 1. Verify not on default branch: git branch --show-current
-2. Push branch: git push -u origin <branch>
+2. Run the Prototype Evidence Push Gate in `${CLAUDE_PLUGIN_ROOT}/references/commit-discipline.md`, then push the branch only when permitted: git push -u origin <branch>
 3. Create PR: gh pr create --title "feat: <spec>" --body "<summary>"
 
 Verify: gh pr view shows PR created
@@ -742,7 +742,7 @@ While (CI checks not all green):
      - Create new Phase 5.X task in tasks.md
      - Delegate new task to spec-executor with task index and Files list
      - Wait for TASK_COMPLETE
-     - Push fixes (if not already pushed by spec-executor)
+     - Run the Prototype Evidence Push Gate, then push fixes if the gate permits and spec-executor has not pushed them
      - Restart wait cycle
   4. If pending:
      - Continue waiting

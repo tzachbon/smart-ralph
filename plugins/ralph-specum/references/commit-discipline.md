@@ -100,6 +100,18 @@ When running in parallel mode, use flock to prevent race conditions:
 - Only push to feature branches: `git push -u origin <feature-branch-name>`
 - If somehow on default branch during execution, STOP and alert the user
 
+## Prototype Evidence Push Gate
+
+Run this gate immediately before every push, including batched task pushes, CI fixes, review fixes, first branch publication, and PR creation:
+
+1. Resolve the exact target remote and branch. Inspect the commits the push would add to that target with `git log --format= --name-only <remote-target>..HEAD -- '**/prototypes/*.md' | sed '/^$/d' | sort -u`. For a new target branch, identify its actual remote base first; stop before pushing if the outbound range cannot be determined.
+2. When the list is empty, preserve the existing non-prototype push behavior.
+3. When the list contains prototype records, normal mode stops at this push boundary and requires separate explicit authorization naming every exact record path. `commitSpec`, task execution, and generic branch, PR, or push approval authorize no prototype record.
+4. Quick mode asks no question and skips the push. Keep all commits local.
+5. Never push an isolated `prototype/<spec>/<id>` source branch.
+
+Re-run the inspection after any new commit and immediately before the push. The authorization covers only the named record paths in that outbound range. `commitSpec` remains local commit authorization.
+
 ## State File Protection
 
 The spec-executor must NEVER modify `.ralph-state.json`:

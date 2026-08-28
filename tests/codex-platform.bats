@@ -129,7 +129,7 @@ for skill in (ROOT / "plugins/ralph-specum-codex/skills").glob("ralph-specum*"):
     [ -f "$proot/assets/bootstrap/ralph-specum.local.md" ]
 }
 
-@test "codex platform: helper skills stay self-contained" {
+@test "codex platform: skills resolve packaged resources without consumer-repo paths" {
     local root skill skill_text metadata_text
     root="$(plugin_root)"
 
@@ -137,13 +137,37 @@ for skill in (ROOT / "plugins/ralph-specum-codex/skills").glob("ralph-specum*"):
         skill_text="$(<"$root/skills/$skill/SKILL.md")"
         metadata_text="$(<"$root/skills/$skill/agents/openai.yaml")"
 
-        [[ "$skill_text" != *"../"* ]]
         [[ "$skill_text" != *"/home/"* ]]
-        [[ "$skill_text" != *"plugins/ralph-specum-codex/skills/ralph-specum/"* ]]
+        [[ "$skill_text" != *"plugins/ralph-specum-codex/scripts/"* ]]
+        [[ "$skill_text" != *"plugins/ralph-specum-codex/references/"* ]]
         [[ "$metadata_text" != *"../"* ]]
         [[ "$metadata_text" != *"/home/"* ]]
         [[ "$metadata_text" != *"plugins/ralph-specum-codex/skills/ralph-specum/"* ]]
     done < <(helper_codex_skills)
+
+    skill_text="$(<"$root/skills/ralph-specum-prototype/SKILL.md")"
+    [[ "$skill_text" == *'../../references/prototype-coordinator.md'* ]]
+    [[ "$skill_text" == *'RALPH_CODEX_PLUGIN_ROOT'* ]]
+
+    skill_text="$(<"$root/skills/ralph-specum/SKILL.md")"
+    [[ "$skill_text" == *'../../references/workflow.md'* ]]
+    [[ "$skill_text" == *'../../references/prototype-coordinator.md'* ]]
+    [[ "$skill_text" == *'RALPH_CODEX_PLUGIN_ROOT'* ]]
+
+    run rg -n 'plugins/ralph-specum-codex/(scripts|references)' "$root/skills" "$root/references"
+    [ "$status" -eq 1 ]
+}
+
+@test "codex platform: prototype coordinator helpers use the installed plugin root" {
+    local root coordinator
+    root="$(plugin_root)"
+    coordinator="$root/references/prototype-coordinator.md"
+
+    grep -q 'Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded reference' "$coordinator"
+    grep -q '\$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py' "$coordinator"
+    grep -q '\$RALPH_CODEX_PLUGIN_ROOT/scripts/locked_state.py' "$coordinator"
+    grep -q '\$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py' "$coordinator"
+    ! grep -q 'plugins/ralph-specum-codex/scripts/' "$coordinator"
 }
 
 @test "codex platform: docs describe the packaged distribution" {

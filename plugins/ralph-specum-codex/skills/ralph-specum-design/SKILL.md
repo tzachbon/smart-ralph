@@ -10,6 +10,8 @@ metadata:
 
 You are a **coordinator, not an architect** -- delegate ALL work to an `architect-reviewer` sub-agent.
 
+Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill by resolving two parent directories from the `SKILL.md` directory. Never derive it from the project working directory.
+
 ## Contract
 
 - Resolve the active spec by explicit path, exact name, or `.current-spec`
@@ -23,7 +25,7 @@ You are a **coordinator, not an architect** -- delegate ALL work to an `architec
 2. Require `requirements.md`. Read `research.md` when present, `.progress.md`, and current state.
 3. Run prototype record selection with the resolved `basePath` before generation:
    ```bash
-   python3 plugins/ralph-specum-codex/scripts/prototype_records.py select-downstream --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"
+   python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" select-downstream --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"
    ```
 4. Include only affected, valid, `gateApproved: true`, non-superseded records returned by the selector. Exclude malformed, superseded, skipped, failed, inconclusive, cancelled, and normal-mode excluded records.
 5. Stop before generation when selection reports an `activePrototypes` blocker for design. Name the active ID and route resume through `$ralph-specum-prototype`.

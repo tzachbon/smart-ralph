@@ -665,6 +665,8 @@ After POC validated, clean up code.
 <mandatory>
 NEVER push directly to the default branch (main/master). Always use feature branches and PRs.
 
+Every generated task that can push must include the Prototype Evidence Push Gate. Immediately before each push, inspect the exact outbound commit range for `**/prototypes/*.md`. Normal mode requires separate explicit authorization naming every exact record in that range; `commitSpec` and generic branch or PR approval do not count. Quick mode asks no question and skips every push. Never push an isolated `prototype/<spec>/<id>` source branch. Preserve existing pushes when the outbound range has no prototype record.
+
 **NOTE**: Branch management is handled at startup (via `/ralph-specum:start`).
 You should already be on a feature branch by the time you reach Phase 4.
 
@@ -694,7 +696,7 @@ Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user (should not happen - branch is set at startup)
-    3. Push branch: `git push -u origin <branch-name>`
+    3. Run the Prototype Evidence Push Gate, then push the branch only when permitted: `git push -u origin <branch-name>`
     4. Create PR using gh CLI: `gh pr create --title "<title>" --body "<summary>"`
     5. If gh CLI unavailable, provide URL for manual PR creation
   - **Verify**: Use gh CLI to verify CI:
@@ -705,7 +707,7 @@ Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
   - **If CI fails**:
     1. Read failure details: `gh pr checks`
     2. Fix issues locally
-    3. Push fixes: `git push`
+    3. Run the Prototype Evidence Push Gate, then push fixes only when permitted: `git push`
     4. Re-verify: `gh pr checks --watch`
 
 ## Phase 5: PR Lifecycle

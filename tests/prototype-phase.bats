@@ -137,6 +137,63 @@ assert_both_coordinators() {
     assert_both_coordinators 'quick takes over the oldest blocking entry|quick mode take over the oldest blocking entry'
 }
 
+@test "prototype phase: conflict decisions persist the approved deadline retry and late-reply runtime" {
+    local coordinator
+
+    for coordinator in "$(claude_coordinator)" "$(codex_coordinator)"; do
+        assert_has "$coordinator" 'Start conflict-decision runtime only when.*same downstream target.*incompatible evidence'
+        assert_has "$coordinator" 'half the resolved initial builder timeout'
+        assert_has "$coordinator" 'prototype_conflict_timeout_min_minutes.*prototype_conflict_timeout_max_minutes'
+        assert_has "$coordinator" 'Quick timeout is 0 minutes'
+        assert_has "$coordinator" 'reset `decisionDeadline` once'
+        assert_has "$coordinator" 'decisionDeadline.*resolvedAt: null.*conflictResolutionAttempt: 0.*maxConflictResolutionRetries'
+        assert_has "$coordinator" 'locked compare-and-set `transition`'
+        assert_has "$coordinator" 'conflictResolutionAttempt <= maxConflictResolutionRetries'
+        assert_has "$coordinator" 'first later safe boundary'
+        assert_has "$coordinator" 'Normal mode keeps dependent work blocked after failed resolution'
+        assert_has "$coordinator" 'Quick mode writes an exclusion record.*continues'
+        assert_has "$coordinator" 'reply arrives after expiry.*automatic resolution first.*supersedes'
+    done
+}
+
+@test "prototype phase: reservation is exclusive and lease mutations require the claimed token" {
+    local coordinator
+
+    for coordinator in "$(claude_coordinator)" "$(codex_coordinator)"; do
+        assert_has "$coordinator" '`upsert-prototype` is create-only and exclusive'
+        assert_has "$coordinator" 'existing ID as a collision'
+        assert_has "$coordinator" 'Update an existing entry only through compare-and-set `transition`'
+        assert_has "$coordinator" 'pass that exact token to every `heartbeat`, `renew-lease`, and `release-lease` call'
+        assert_has "$coordinator" 'token or revision mismatch.*without launching another builder'
+    done
+}
+
+@test "prototype phase: every push instruction gates outbound prototype records" {
+    local root file count
+    root="$(repo_root)"
+    count=0
+
+    while IFS= read -r file; do
+        assert_has "$file" 'Prototype Evidence Push Gate'
+        count=$((count + 1))
+    done < <(rg -l --glob '*.md' '\bgit push\b' \
+        "$root/plugins/ralph-specum" \
+        "$root/plugins/ralph-specum-codex")
+
+    [ "$count" -gt 0 ]
+    assert_has "$root/plugins/ralph-specum/references/commit-discipline.md" "git log --format= --name-only <remote-target>..HEAD -- '\*\*/prototypes/\*.md'"
+    assert_has "$root/plugins/ralph-specum/references/commit-discipline.md" 'authorization naming every exact record path'
+    assert_has "$root/plugins/ralph-specum/references/commit-discipline.md" '`commitSpec` remains local commit authorization'
+    assert_has "$root/plugins/ralph-specum/references/commit-discipline.md" 'Quick mode asks no question and skips the push'
+    assert_has "$root/plugins/ralph-specum/references/commit-discipline.md" 'Never push an isolated `prototype/<spec>/<id>` source branch'
+    assert_has "$root/plugins/ralph-specum/references/quick-mode.md" 'Quick mode never asks for push authorization and never pushes'
+    assert_both_coordinators 'Never push an isolated prototype source branch'
+
+    for file in research requirements design tasks; do
+        assert_has "$(claude_command "$file")" 'In quick mode.*do not push'
+    done
+}
+
 @test "prototype phase: quick mode has one post-requirements request and no delegated decisions" {
     local root claude_count codex_count
     root="$(repo_root)"

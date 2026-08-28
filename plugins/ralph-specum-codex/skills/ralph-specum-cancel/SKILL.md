@@ -10,6 +10,8 @@ metadata:
 
 Use this to stop execution safely and optionally remove a spec. Safe cancel preserves the spec and every prototype source path.
 
+Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill by resolving two parent directories from the `SKILL.md` directory. Never derive it from the project working directory.
+
 ## Contract
 
 - Resolve the target by explicit path, exact name, or `.current-spec`
@@ -23,7 +25,7 @@ Use this to stop execution safely and optionally remove a spec. Safe cancel pres
 
 1. Resolve the target spec. If none exists, report that there is nothing to cancel.
 2. Read `.ralph-state.json` when present and summarize the current phase and progress.
-3. If `activePrototypes` is non-empty, use the resolved `basePath` and run `plugins/ralph-specum-codex/scripts/prototype_records.py reconcile` before cancellation. Process active IDs by `created`, then ID, at the next safe tool boundary.
+3. If `activePrototypes` is non-empty, use the resolved `basePath` and run `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" reconcile` before cancellation. Process active IDs by `created`, then ID, at the next safe tool boundary.
 4. For each active prototype:
    - Interrupt only its recorded child builder through the bounded harness contract, then release its lease through `locked_state.py`.
    - Preserve its question, blocker, return phase and task, timestamps, local branch, isolation pointers, partial implementation, run evidence, stale metadata, and downstream artifacts.

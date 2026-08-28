@@ -9,24 +9,26 @@ metadata:
 
 Use this as the primary Codex surface for Ralph Specum. It carries the full reusable workflow and can handle the entire command surface directly when helper skills are not installed.
 
+Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill: take the directory containing `SKILL.md`, then its parent `skills` directory, then the next parent. Never derive the plugin root from the project working directory.
+
 ## Read These References
 
-- `references/workflow.md` for the phase flow, branch and worktree behavior, quick mode, and command routing
-- `references/state-contract.md` for `.ralph-state.json`, `.progress.md`, commit rules, and resume semantics
-- `references/path-resolution.md` for `specs_dirs`, `.current-spec`, ambiguity handling, and default directory behavior
-- `references/parity-matrix.md` for Claude-to-Codex feature translation and command mapping
-- `references/prototype-coordinator.md` for direct, suggested, resume, quick, cancel, and prototype handoff behavior
+- `../../references/workflow.md` for the phase flow, branch and worktree behavior, quick mode, and command routing
+- `../../references/state-contract.md` for `.ralph-state.json`, `.progress.md`, commit rules, and resume semantics
+- `../../references/path-resolution.md` for `specs_dirs`, `.current-spec`, ambiguity handling, and default directory behavior
+- `../../references/parity-matrix.md` for Claude-to-Codex feature translation and command mapping
+- `../../references/prototype-coordinator.md` for direct, suggested, resume, quick, cancel, and prototype handoff behavior
 
 ## Use These Helpers
 
-- `scripts/resolve_spec_paths.py` for spec roots, current spec, and unique or ambiguous name resolution
-- `scripts/merge_state.py` for safe top-level state merges
-- `scripts/count_tasks.py` for task counts and next incomplete task
-- `scripts/locked_state.py` for locked state and `activePrototypes` mutations
-- `scripts/prototype_records.py` for reviewed immutable prototype records and downstream selection
-- `scripts/prototype_harness.py` for bounded builder control outcomes and retry metadata
-- `assets/templates/` for the canonical Ralph markdown file shapes
-- `assets/bootstrap/` when the user wants optional project-local Codex guidance
+- `"$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py"` for spec roots, current spec, and unique or ambiguous name resolution
+- `"$RALPH_CODEX_PLUGIN_ROOT/scripts/merge_state.py"` for safe top-level state merges
+- `"$RALPH_CODEX_PLUGIN_ROOT/scripts/count_tasks.py"` for task counts and next incomplete task
+- `"$RALPH_CODEX_PLUGIN_ROOT/scripts/locked_state.py"` for locked state and `activePrototypes` mutations
+- `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py"` for reviewed immutable prototype records and downstream selection
+- `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_harness.py"` for bounded builder control outcomes and retry metadata
+- `"$RALPH_CODEX_PLUGIN_ROOT/assets/templates/"` for the canonical Ralph markdown file shapes
+- `"$RALPH_CODEX_PLUGIN_ROOT/assets/bootstrap/"` when the user wants optional project-local Codex guidance
 
 ## Primary Routing
 
@@ -34,11 +36,11 @@ Handle these intents directly:
 
 | Intent | Action |
 |--------|--------|
-| Start, new, resume, quick mode | Follow the start flow in `references/workflow.md` |
+| Start, new, resume, quick mode | Follow the start flow in `../../references/workflow.md` |
 | Triage | Delegate to `triage-analyst` sub-agent to decompose into epic and specs |
 | Research | Delegate to `research-analyst` sub-agent to write `research.md` |
 | Requirements | Delegate to `product-manager` sub-agent to write `requirements.md` |
-| Prototype | Follow `references/prototype-coordinator.md`, or route an explicit helper request to `$ralph-specum-prototype` |
+| Prototype | Follow `../../references/prototype-coordinator.md`, or route an explicit helper request to `$ralph-specum-prototype` |
 | Design | Delegate to `architect-reviewer` sub-agent to write `design.md` |
 | Tasks | Delegate to `task-planner` sub-agent to write `tasks.md` |
 | Implement | Delegate each task to `spec-executor` sub-agent until complete or blocked |
@@ -109,7 +111,7 @@ Bootstrap project-local files only when the user wants them.
 
 Suggested bootstrap files:
 
-- `assets/bootstrap/AGENTS.md` to give a consumer repo local Ralph guidance
-- `assets/bootstrap/ralph-specum.local.md` to seed local settings
+- `"$RALPH_CODEX_PLUGIN_ROOT/assets/bootstrap/AGENTS.md"` to give a consumer repo local Ralph guidance
+- `"$RALPH_CODEX_PLUGIN_ROOT/assets/bootstrap/ralph-specum.local.md"` to seed local settings
 
 Do not bootstrap by default. Installation into `$CODEX_HOME/skills` is enough.

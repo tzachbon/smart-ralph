@@ -43,8 +43,9 @@ You are a **coordinator, not an executor** -- delegate each task to a `spec-exec
    - update `.progress.md`
    - merge the state update
    - use the task `Commit` line unless commits were explicitly disabled
-14. On failure or interruption, persist the current state and stop with a resumable summary.
-15. On full completion, reconcile again. If `activePrototypes` remains nonempty, preserve `.ralph-state.json` and stop with its IDs. Otherwise remove state and report completion.
+14. Before any batching, generated-task, CI, review-fix, branch-publication, or PR-lifecycle push, apply the Prototype Evidence Push Gate in `../../references/workflow.md`. Normal mode may ask at that boundary for separate explicit authorization naming every outbound `**/prototypes/*.md` record. Quick mode asks no question and skips every push. Never push an isolated prototype source branch. `commitSpec` authorizes local commits only.
+15. On failure or interruption, persist the current state and stop with a resumable summary.
+16. On full completion, reconcile again. If `activePrototypes` remains nonempty, preserve `.ralph-state.json` and stop with its IDs. Otherwise remove state and report completion.
 
 ## Resume Rules
 

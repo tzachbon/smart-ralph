@@ -33,15 +33,15 @@ When a spec name exists in multiple roots:
 
 ## Script Usage
 
-Use `scripts/resolve_spec_paths.py`.
+Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded reference by taking the parent of its containing `references` directory. Never derive it from the project working directory. Use `"$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py"`.
 
-Examples for this source repo, run them from the repo root:
+Examples from any consumer project:
 
 ```bash
-python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD"
-python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --current
-python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --name api-auth
-python3 ./plugins/ralph-specum-codex/scripts/resolve_spec_paths.py --cwd "$PWD" --list
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py" --cwd "$PWD"
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py" --cwd "$PWD" --current
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py" --cwd "$PWD" --name api-auth
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py" --cwd "$PWD" --list
 ```
 
 Exit behavior:

@@ -95,6 +95,18 @@ Only use quick mode when the user explicitly asks Ralph to be autonomous, do it 
 - Remove `.ralph-state.json` only when all tasks are complete and verified.
 - Before dispatch, reconcile records and stop only for a prototype blocker or stale artifact/task that affects the current task. Restore `returnTaskIndex` after handoff. Keep state at completion while `activePrototypes` is nonempty.
 
+## Prototype Evidence Push Gate
+
+Run this gate immediately before every push produced by implementation batching, generated tasks, CI repair, review repair, branch publication, or PR lifecycle work:
+
+1. Resolve the exact target remote and branch. Inspect the commits the push would add to that target with `git log --format= --name-only <remote-target>..HEAD -- '**/prototypes/*.md' | sed '/^$/d' | sort -u`. For a new target branch, identify its actual remote base first; stop before pushing if the outbound range cannot be determined.
+2. Preserve the existing non-prototype push when no prototype record appears.
+3. In normal mode, stop at the push boundary when records appear and require separate explicit authorization naming every exact record path. `commitSpec`, task execution, and generic branch, PR, or push approval do not count.
+4. In quick mode, ask no question and skip the push. Keep every commit local.
+5. Never push an isolated `prototype/<spec>/<id>` source branch.
+
+Re-run the inspection after every new commit and immediately before the push. `commitSpec` remains local commit authorization.
+
 ## Cancel
 
 Safe cancel is the default. Publish and verify one immutable `cancelled` record for each active prototype before removing its active entry. Preserve source, partial work, records, and local branches. Full spec removal or prototype-source deletion requires a separate confirmation naming the exact local path and branch. Never delete a remote branch.
@@ -107,7 +119,7 @@ Safe cancel is the default. Publish and verify one immutable `cancelled` record 
 4. Review exact candidate bytes, publish an immutable final under `<basePath>/prototypes/`, verify it, then remove the active entry.
 5. Feed only gate-approved, non-superseded `validated` or `rejected` evidence to affected downstream work. Keep malformed, excluded, cancelled, failed, skipped, and inconclusive records out.
 
-Prototype source and evidence remain local. A local commit does not authorize a push, PR update, issue write, or any other remote action.
+Prototype source and evidence remain local. A local commit does not authorize a push, PR update, issue write, or any other remote action. Apply the Prototype Evidence Push Gate before every push-capable downstream task.
 
 ## Index
 

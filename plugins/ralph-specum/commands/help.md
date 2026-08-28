@@ -90,10 +90,10 @@ Terminal records live under the resolved `<basePath>/prototypes/`. `status` show
 ```
 - `--fresh`: Force new spec, overwrite if exists (skips "resume or fresh?" prompt)
 - `--quick`: Skip interactive phases, auto-generate all specs, start execution immediately
-- `--commit-spec`: Commit and push spec files after each phase (default: true in normal mode, false in quick mode)
+- `--commit-spec`: Commit spec files locally after each phase (default: true in normal mode, false in quick mode). Normal-mode phase pushes keep their existing behavior after the Prototype Evidence Push Gate; prototype records require separate authorization naming the exact records.
 - `--no-commit-spec`: Explicitly disable committing spec files
 
-The `--commit-spec` setting is stored in `.ralph-state.json` and applies to all subsequent phases (research, requirements, design, tasks).
+The `--commit-spec` setting is stored in `.ralph-state.json` and applies to local commits in all subsequent phases (research, requirements, design, tasks). It authorizes no remote prototype evidence action.
 
 ### new command
 ```

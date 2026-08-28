@@ -10,6 +10,8 @@ metadata:
 
 Use this for the `start` and `new` entrypoints.
 
+Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill by resolving two parent directories from the `SKILL.md` directory. Never derive it from the project working directory.
+
 ## Contract
 
 - Read `.claude/ralph-specum.local.md` when present
@@ -54,7 +56,7 @@ Use this for the `start` and `new` entrypoints.
 
 After resolving the target and before normal resume or quick routing:
 
-1. Use `plugins/ralph-specum-codex/scripts/resolve_spec_paths.py` and only its resolved `basePath`. When both `basePath` and `<basePath>/.ralph-state.json` exist, run `prototype_records.py reconcile --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"`, then re-read state.
+1. Use `"$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py"` and only its resolved `basePath`. When both `basePath` and `<basePath>/.ralph-state.json` exist, run `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" reconcile --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"`, then re-read state.
 2. Treat a missing `activePrototypes` field as an empty map. Sort entries by `created`, then ID.
 3. Resume an explicit active ID through `$ralph-specum-prototype --resume <id>` and stop this skill. In normal mode, resume the sole active entry automatically. When several remain, list deterministic IDs with question, status, blocker, `returnPhase`, and `returnTaskIndex`, then stop for an explicit ID.
 4. In quick mode, ask no question. Sort entries that block design by `created`, then ID. At the post-requirements boundary, route through `$ralph-specum-prototype --quick`; the prototype skill takes over the oldest design blocker and owns every decision. Preserve earlier quick flow and unrelated entries.

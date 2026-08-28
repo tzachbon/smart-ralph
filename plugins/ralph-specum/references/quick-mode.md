@@ -112,7 +112,8 @@ Validation Sequence:
 16. Transition to Execution:
     - Count total tasks (number of `- [ ]` checkboxes)
     - Update state: phase="execution", totalTasks=<count>, taskIndex=0
-    - If commitSpec: stage, commit, push spec files
+    - If `commitSpec`: stage and commit spec files locally. `commitSpec` authorizes no remote action.
+    - Apply the Prototype Evidence Push Gate by keeping every quick-mode commit local. Quick mode never asks for push authorization and never pushes.
 17. Invoke spec-executor for task 1
 ```
 

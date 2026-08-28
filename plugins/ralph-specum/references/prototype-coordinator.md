@@ -33,7 +33,7 @@ python3 "$RECORD_HELPER" publish --base-path "$BASE_PATH" --id "$ID"
 python3 "$RECORD_HELPER" reconcile --base-path "$BASE_PATH" --state "$STATE_FILE"
 ```
 
-The prototype command does not use the first `merge` example to change the main phase. It shows the exact helper interface exercised by the end-to-end checkpoint.
+The prototype command does not use the first `merge` example to change the main phase. It shows the exact helper interface exercised by the end-to-end checkpoint. `upsert-prototype` is create-only and exclusive: use it once to reserve a new ID, and treat an existing ID as a collision. After reservation, mutate the entry only with `transition` using its expected `stateRevision` and expected status.
 
 ## Reserve or resume
 
@@ -41,7 +41,21 @@ The prototype command does not use the first `merge` example to change the main 
 2. For the same question hash and blocker target, offer resume, supersede, or a distinct record in normal mode. Quick mode applies the approved duplicate rules and counts the result as its one request.
 3. For incompatible evidence against one blocker target, create a conflict set. Normal mode blocks dependent work until the user or bounded conflict policy resolves it. Quick mode chooses supported evidence or excludes the set, records the resolution, and continues.
 4. An explicit ID resumes that entry. One active entry resumes without another choice. List several active entries for normal selection; quick takes over the oldest blocking entry.
-5. Reserve and update entries through `upsert-prototype`, `claim-builder`, `heartbeat`, `renew-lease`, `release-lease`, and compare-and-set `transition` calls. Never replace the full state object.
+5. Reserve a new ID through create-only `upsert-prototype`. Update an existing entry only through compare-and-set `transition`; never call `upsert-prototype` as an update operation or replace the full state object.
+6. Claim builder ownership with the expected ID, revision, and status. Persist the returned `leaseToken`, and pass that exact token to every `heartbeat`, `renew-lease`, and `release-lease` call. On a token or revision mismatch, reload state and join, resume, or report the current owner without launching another builder.
+
+## Resolve record conflicts
+
+Start conflict-decision runtime only when two or more live or terminal records affect the same downstream target and contain incompatible evidence or handoff rules. Ordinary normal verdict and handoff waits have no deadline.
+
+1. In normal mode, calculate the interval as half the resolved initial builder timeout, including approved transfer-path additions, then clamp it between `prototype_conflict_timeout_min_minutes` and `prototype_conflict_timeout_max_minutes`. Quick timeout is 0 minutes.
+2. Initialize `decisionDeadline`, `resolvedAt: null`, `conflictResolutionAttempt: 0`, and `maxConflictResolutionRetries` from `prototype_conflict_resolution_retries` with one locked compare-and-set `transition`.
+3. A user message, verdict or handoff choice, reviewer start, or reviewer result may reset `decisionDeadline` once. Persist the reset marker and new deadline with the expected `stateRevision`; later activity does not reset it.
+4. Evaluate expiry at the first later safe boundary: prototype, start, status, phase generation, implementation dispatch or loop, or stop-hook continuation. No background scheduler is assumed.
+5. At expiry, increment `conflictResolutionAttempt` with a locked compare-and-set `transition`, rerun downstream selection, and apply reviewer-passed runnable evidence, target relevance, recorded observations, source disposition, and run instructions. A verdict label alone never selects the winner.
+6. Retry a transient selection, candidate-parse, or reviewer-evidence failure only while `conflictResolutionAttempt <= maxConflictResolutionRetries`. The configured default of 0 permits the first automatic attempt and no retry.
+7. Record `resolvedAt` through locked compare-and-set before rendering the immutable resolution record. Normal mode keeps dependent work blocked after failed resolution. Quick mode writes an exclusion record, excludes all unsupported conflicting evidence, and continues.
+8. If a normal user reply arrives after expiry, publish the automatic resolution first. Then let the user create a new immutable record that supersedes that resolution.
 
 ## Choose capture and isolation
 
@@ -58,7 +72,7 @@ Quick mode classifies capture without a prompt. It uses retained source for app 
 ## Build under bounded control
 
 1. Delegate source work to `prototype-builder` in the recorded isolation path.
-2. Launch, wait, heartbeat, interrupt, and inspect status through the harness helper. Store its run ID, name, heartbeat, deadline, request attempt, and builder execution attempt in the active entry.
+2. Launch, wait, heartbeat, interrupt, and inspect status through the harness helper. Store its run ID, name, heartbeat, deadline, request attempt, and builder execution attempt in the active entry. Pass the claimed `leaseToken` to each state heartbeat, lease renewal, and release.
 3. Extend the rolling deadline only for recorded activity and never beyond the hard deadline. At the hard deadline, interrupt the builder and release its lease.
 4. Normal mode follows the configured builder execution count, then asks whether to retry, record failure, or cancel. Quick allows one initial execution and one mechanical retry at most.
 5. If control is unavailable, normal mode asks the user to wait or cancel before launch. Quick publishes a failed record and continues to design.
@@ -107,4 +121,4 @@ On resume, reconcile first. If a cleanup receipt exists and source is missing, r
 
 At the next safe boundary, interrupt a live builder through the harness, release its lease, and publish an immutable `cancelled` record. Preserve source, partial implementation, origin phase, return phase, return task index, and downstream artifacts. Remove the active entry only after final verification. Restore the recorded phase and task index without changing unrelated state.
 
-After any normal terminal outcome, apply the selected handoff and return to the recorded phase or task. After any quick terminal outcome, continue to design. Report the terminal record path, source disposition, downstream inclusion, and local branch. Label every remote pointer `pending authorization` until the user separately approves the exact remote action.
+After any normal terminal outcome, apply the selected handoff and return to the recorded phase or task. After any quick terminal outcome, continue to design. Report the terminal record path, source disposition, downstream inclusion, and local branch. Never push an isolated prototype source branch. Before any other push, inspect the exact outbound commits for `**/prototypes/*.md`. If records are present, normal mode may ask at that boundary for separate explicit authorization naming every exact record; `commitSpec` and generic push or PR approval do not count. Quick mode never asks and never pushes. Label every remote pointer `pending authorization` until the user separately approves the exact remote action.

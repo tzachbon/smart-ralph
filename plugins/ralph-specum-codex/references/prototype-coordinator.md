@@ -4,7 +4,8 @@ Use this procedure for direct, suggested, resumed, quick, and cancelled prototyp
 
 ## Invariants
 
-- Resolve the target with `plugins/ralph-specum-codex/scripts/resolve_spec_paths.py` before every operation. Use its `basePath`, `specRoot`, validated prototype settings, and `configWarnings`.
+- Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded reference: take the directory containing `prototype-coordinator.md`, then its parent. Never derive the plugin root from the project working directory.
+- Resolve the target with `"$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py"` before every operation. Use its `basePath`, `specRoot`, validated prototype settings, and `configWarnings`.
 - Store `triggerPhase`, `returnPhase`, and `returnTaskIndex` in the active entry. Preserve every unrelated state field.
 - Keep the current checkout on its branch. Run source work only in the recorded sibling worktree or eligible scratch path.
 - Route state, record, and harness mechanics through `locked_state.py`, `prototype_records.py`, and `prototype_harness.py`. Do not write state, candidates, or final records by hand.
@@ -26,14 +27,14 @@ Use this procedure for direct, suggested, resumed, quick, and cancelled prototyp
 Use these exact task 1.16-compatible helper forms:
 
 ```bash
-python3 plugins/ralph-specum-codex/scripts/locked_state.py merge --state "$STATE_FILE" --set "phase=requirements"
-python3 plugins/ralph-specum-codex/scripts/locked_state.py upsert-prototype --state "$STATE_FILE" --id "$ID" --entry-json "$ENTRY_JSON"
-python3 plugins/ralph-specum-codex/scripts/prototype_records.py render-candidate --base-path "$BASE_PATH" --record-json "$RECORD_JSON"
-python3 plugins/ralph-specum-codex/scripts/prototype_records.py publish --base-path "$BASE_PATH" --id "$ID"
-python3 plugins/ralph-specum-codex/scripts/prototype_records.py reconcile --base-path "$BASE_PATH" --state "$STATE_FILE"
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/locked_state.py" merge --state "$STATE_FILE" --set "phase=requirements"
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/locked_state.py" upsert-prototype --state "$STATE_FILE" --id "$ID" --entry-json "$ENTRY_JSON"
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" render-candidate --base-path "$BASE_PATH" --record-json "$RECORD_JSON"
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" publish --base-path "$BASE_PATH" --id "$ID"
+python3 "$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" reconcile --base-path "$BASE_PATH" --state "$STATE_FILE"
 ```
 
-The prototype workflow does not use the first example to change its main phase. That command documents the end-to-end checkpoint interface.
+The prototype workflow does not use the first example to change its main phase. That command documents the end-to-end checkpoint interface. `upsert-prototype` is create-only and exclusive: use it once to reserve a new ID, and treat an existing ID as a collision. After reservation, mutate the entry only with `transition` using its expected `stateRevision` and expected status.
 
 ## Reserve or resume
 
@@ -41,7 +42,21 @@ The prototype workflow does not use the first example to change its main phase. 
 2. For the same question and blocker, offer resume, supersede, or a distinct record in normal mode. Apply approved duplicate rules in quick mode and count the result as its one request.
 3. Group incompatible evidence for one blocker into a conflict set. Block dependent normal work until the conflict policy resolves it. In quick mode, select supported evidence or exclude the set, record the result, and continue.
 4. Resume an explicit ID. Resume one active entry without another choice. List several entries for normal selection; let quick mode take over the oldest blocking entry.
-5. Use `upsert-prototype`, `claim-builder`, `heartbeat`, `renew-lease`, `release-lease`, and compare-and-set `transition` operations. Keep the main phase untouched while the overlay runs.
+5. Reserve a new ID through create-only `upsert-prototype`. Update an existing entry only through compare-and-set `transition`; never call `upsert-prototype` as an update operation.
+6. Claim builder ownership with the expected ID, revision, and status. Persist the returned `leaseToken`, and pass that exact token to every `heartbeat`, `renew-lease`, and `release-lease` call. On a token or revision mismatch, reload state and join, resume, or report the current owner without launching another builder.
+
+## Resolve record conflicts
+
+Start conflict-decision runtime only when two or more live or terminal records affect the same downstream target and contain incompatible evidence or handoff rules. Ordinary normal verdict and handoff waits have no deadline.
+
+1. In normal mode, calculate the interval as half the resolved initial builder timeout, including approved transfer-path additions, then clamp it between `prototype_conflict_timeout_min_minutes` and `prototype_conflict_timeout_max_minutes`. Quick timeout is 0 minutes.
+2. Initialize `decisionDeadline`, `resolvedAt: null`, `conflictResolutionAttempt: 0`, and `maxConflictResolutionRetries` from `prototype_conflict_resolution_retries` with one locked compare-and-set `transition`.
+3. A user message, verdict or handoff choice, reviewer start, or reviewer result may reset `decisionDeadline` once. Persist the reset marker and new deadline with the expected `stateRevision`; later activity does not reset it.
+4. Evaluate expiry at the first later safe boundary: prototype, start, status, phase generation, implementation dispatch or loop, or stop-hook continuation. No background scheduler is assumed.
+5. At expiry, increment `conflictResolutionAttempt` with a locked compare-and-set `transition`, rerun downstream selection, and apply reviewer-passed runnable evidence, target relevance, recorded observations, source disposition, and run instructions. A verdict label alone never selects the winner.
+6. Retry a transient selection, candidate-parse, or reviewer-evidence failure only while `conflictResolutionAttempt <= maxConflictResolutionRetries`. The configured default of 0 permits the first automatic attempt and no retry.
+7. Record `resolvedAt` through locked compare-and-set before rendering the immutable resolution record. Normal mode keeps dependent work blocked after failed resolution. Quick mode writes an exclusion record, excludes all unsupported conflicting evidence, and continues.
+8. If a normal user reply arrives after expiry, publish the automatic resolution first. Then let the user create a new immutable record that supersedes that resolution.
 
 ## Choose capture and isolate source
 
@@ -59,7 +74,7 @@ Quick mode classifies capture without a prompt and never transfers dirty paths. 
 
 1. Spawn one internal child agent with the prototype-builder contract and the recorded isolation path.
 2. Store only its `agentId` in `harnessRun`. Use `wait_agent` for bounded waits and `interrupt_agent` at the hard deadline. Never use `create_thread`, a user-visible task, or `threadId` for an internal builder.
-3. Map launch, wait, heartbeat, interrupt, and status results to the deterministic `prototype_harness.py` contract. Persist the agent ID, heartbeat, deadlines, request attempt, and builder execution attempt through the locked helper.
+3. Map launch, wait, heartbeat, interrupt, and status results to the deterministic `prototype_harness.py` contract. Persist the agent ID, heartbeat, deadlines, request attempt, and builder execution attempt through the locked helper. Pass the claimed `leaseToken` to each state heartbeat, lease renewal, and release.
 4. Extend the rolling deadline only for recorded activity and never beyond the hard deadline. Release the lease after completion, timeout, or interruption.
 5. After the configured normal execution count, ask whether to retry, record failure, or cancel. Quick mode permits one initial execution and one mechanical retry at most.
 6. If child controls are unavailable, ask normal mode to wait or cancel before launch. Publish a failed quick record and continue to design.
@@ -101,4 +116,4 @@ On resume, reconcile first. When a receipt exists and source is missing, render 
 
 At the next safe boundary, interrupt a live child through `interrupt_agent`, release its lease, and publish an immutable `cancelled` record. Preserve source, partial implementation, origin phase, return phase, return task index, and downstream artifacts. Remove the active entry only after final verification.
 
-Apply the selected normal handoff and resume the recorded phase or task. Continue every quick terminal outcome to design. Report the final record, source disposition, downstream inclusion, and local branch. Mark every remote pointer `pending authorization` until the user authorizes that exact write.
+Apply the selected normal handoff and resume the recorded phase or task. Continue every quick terminal outcome to design. Report the final record, source disposition, downstream inclusion, and local branch. Never push an isolated prototype source branch. Before any other push, inspect the exact outbound commits for `**/prototypes/*.md`. If records are present, normal mode may ask at that boundary for separate explicit authorization naming every exact record; `commitSpec` and generic push or PR approval do not count. Quick mode never asks and never pushes. Mark every remote pointer `pending authorization` until the user authorizes that exact write.

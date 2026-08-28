@@ -281,6 +281,8 @@ After POC validated, clean up code.
 
 > **IMPORTANT**: NEVER push directly to the default branch (main/master). Branch management is handled at startup via `/ralph-specum:start`. You should already be on a feature branch by this phase.
 
+> **Prototype Evidence Push Gate**: Immediately before every push below, resolve the exact target remote and inspect the outbound commits with `git log --format= --name-only <remote-target>..HEAD -- '**/prototypes/*.md' | sed '/^$/d' | sort -u`. For a new target branch, identify its actual remote base first; stop when the outbound range cannot be determined. If records appear, normal mode requires separate explicit authorization naming every exact record path. `commitSpec` and generic branch, PR, or push approval do not count. Quick mode asks no question and skips the push. Never push an isolated `prototype/<spec>/<id>` source branch. Preserve each existing push when no prototype record appears.
+
 > **Default Behavior**: When on a feature branch (not main/master), the final deliverable is a Pull Request with all CI checks passing. This is the default unless explicitly stated otherwise.
 
 - [ ] 4.1 Local quality check
@@ -297,7 +299,7 @@ After POC validated, clean up code.
   - **Do**:
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user (branch should be set at startup)
-    3. Push branch: `git push -u origin $(git branch --show-current)`
+    3. Run the Prototype Evidence Push Gate, then push when permitted: `git push -u origin $(git branch --show-current)`
     4. Create PR using gh CLI (if available):
        ```bash
        gh pr create --title "feat: {{feature-name}}" --body "## Summary
@@ -324,7 +326,7 @@ After POC validated, clean up code.
     1. View failures: `gh pr checks`
     2. Get detailed logs: `gh run view <run-id> --log-failed`
     3. Fix issues locally
-    4. Commit and push: `git add . && git commit -m "fix: address CI failures" && git push`
+    4. Commit fixes, run the Prototype Evidence Push Gate, then push when permitted: `git add . && git commit -m "fix: address CI failures" && git push`
     5. Re-verify: `gh pr checks --watch`
 
 - [ ] VF [VERIFY] Verify original issue resolved (only for fix-type goals)
@@ -374,7 +376,7 @@ After POC validated, clean up code.
 - [ ] 5.1 Create pull request
   - **Do**:
     1. Verify current branch: `git branch --show-current`
-    2. Push: `git push -u origin $(git branch --show-current)`
+    2. Run the Prototype Evidence Push Gate, then push when permitted: `git push -u origin $(git branch --show-current)`
     3. Create PR: `gh pr create --title "feat: {{feature-name}}" --body "$(cat <<'EOF'
 ## Summary
 {{brief description}}
@@ -398,7 +400,7 @@ EOF
     3. If failures: read logs with `gh run view --log-failed`
     4. Fix issues locally
     5. Commit fixes: `git add . && git commit -m "fix: address CI failures"`
-    6. Push: `git push`
+    6. Run the Prototype Evidence Push Gate, then push when permitted: `git push`
     7. Repeat from step 1 until all green
   - **Verify**: `gh pr checks` shows all ✓
   - **Done when**: All CI checks passing
@@ -412,7 +414,7 @@ EOF
        - Read review body and inline comments
        - Implement requested change
        - Commit: `fix: address review - {{comment summary}}`
-    3. Push all fixes: `git push`
+    3. Run the Prototype Evidence Push Gate, then push all fixes when permitted: `git push`
     4. Wait 5 minutes
     5. Re-check for new reviews
     6. Repeat until no unresolved reviews
