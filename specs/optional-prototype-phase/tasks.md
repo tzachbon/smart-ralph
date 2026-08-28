@@ -90,11 +90,11 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): gate Claude execution dispatch`
   - _Requirements: FR-1, FR-3, FR-4, FR-5, NFR-3_
 
-- [ ] 1.11 Add Claude resume and visibility surfaces
+- [x] 1.11 Add Claude resume and visibility surfaces
   - **Do**: Reconcile active and terminal records at start, show active entries and candidates in status, and show blockers for the selected spec in switch.
   - **Files**: `plugins/ralph-specum/commands/start.md`, `plugins/ralph-specum/commands/status.md`, `plugins/ralph-specum/commands/switch.md`
   - **Done when**: One active entry resumes automatically, several are listed, and blockers are visible without mutating state.
-  - **Verify**: `rg -l 'activePrototypes|prototype' plugins/ralph-specum/commands/{start,status,switch}.md | wc -l | grep -q '^3$'`
+  - **Verify**: `test "$(rg -l 'activePrototypes|prototype' plugins/ralph-specum/commands/{start,status,switch}.md | wc -l | tr -d '[:space:]')" = 3`
   - **Commit**: `feat(prototype): add Claude resume visibility`
   - _Requirements: FR-3, FR-5, NFR-3_
 

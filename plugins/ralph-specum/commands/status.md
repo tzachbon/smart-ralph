@@ -51,22 +51,31 @@ specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
 
 For each spec directory found:
 
-1. Read `.ralph-state.json` if exists to get:
+1. If `.ralph-state.json` exists, run `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py reconcile --base-path "$basePath" --state "$basePath/.ralph-state.json"`, then re-read state. Use the resolved spec path as `basePath`; never construct a default `specs/<name>` path.
+2. Read `.ralph-state.json` if exists to get:
    - Current phase
    - Task progress (taskIndex/totalTasks)
    - Iteration count
+   - `activePrototypes` entries, treating a missing field as an empty map
 
-2. Check which files exist:
+3. Check which files exist:
    - research.md
    - requirements.md
    - design.md
    - tasks.md
 
-3. If tasks.md exists, count completed tasks:
+4. If tasks.md exists, count completed tasks:
    - Count lines matching `- [x]` pattern
    - Count lines matching `- [ ]` pattern
 
-4. If `.ralph-state.json` has `relatedSpecs`:
+5. Run `prototype-records.py select-downstream --base-path "$basePath"` as a read-only inventory, adding `--state "$basePath/.ralph-state.json"` only when state exists. Enumerate `prototypes/*.md` finals and parse each through `prototype-records.py parse`; also list both visible and dot-prefixed `*.quarantine.md` paths plus `prototypes/.*.candidate.md` in lexical order. Report:
+   - Active ID, question, lifecycle status, blocker targets, `returnPhase`, `returnTaskIndex`, and source disposition or source pointer
+   - Candidate ID and the reconciliation action, especially `resume_review`
+   - Immutable final ID, verdict, gate approval, return phase/task, and `sourceDisposition`
+   - Quarantined path and reason
+   - Derived active blockers, stale artifacts, and stale task indexes
+
+6. If `.ralph-state.json` has `relatedSpecs`:
    - List related specs with relevance
    - Mark those with `mayNeedUpdate: true` with asterisk
 
@@ -87,6 +96,8 @@ Progress: <completed>/<total> tasks (<percentage>%)
 Files: [research] [requirements] [design] [tasks]
 Related: auth-system (HIGH*), api-middleware (MEDIUM)
          * = may need update
+Prototypes: active=<count> candidates=<count> final=<count> quarantined=<count>
+Prototype blockers: <none or id: target>
 
 ### <spec-name-2>
 Phase: <phase>
@@ -136,3 +147,7 @@ For each file, show:
 - [ ] if file does not exist
 
 Example: `Files: [x] research [x] requirements [ ] design [ ] tasks`
+
+## Prototype Display
+
+Omit prototype detail rows when all four counts are zero. Otherwise show deterministic rows below the affected spec. Status reports recovery state; it does not edit candidates, finals, source, or blocker declarations directly. Reconciliation alone may perform its documented idempotent cleanup of an already verified publish.

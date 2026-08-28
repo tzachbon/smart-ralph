@@ -145,6 +145,13 @@ List all configured specs_dirs that were searched, helping user understand where
    - `.ralph-state.json` for phase and progress
    - `.progress.md` for context
 
+4. Report prototype blockers without mutating state:
+   - Treat a missing `activePrototypes` field as an empty map.
+   - Run `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py select-downstream --base-path "$full_path" --state "$full_path/.ralph-state.json"` when state exists.
+   - Show each selected spec blocker with prototype ID, status, blocked artifact or transition, `returnPhase`, and `returnTaskIndex`.
+   - Show `staleArtifacts` and `staleTaskIndexes` from the read-only selection result.
+   - Do not reconcile, remove an active entry, edit a record, or change blocker data from this command. If no `activePrototypes` or stale dependencies exist, preserve the existing output.
+
 ## Output
 
 ```
@@ -159,6 +166,9 @@ Files present:
 - [x/blank] requirements.md
 - [x/blank] design.md
 - [x/blank] tasks.md
+
+Prototype blockers: <none or id: target>
+Stale dependencies: <none or artifact/task list>
 
 Next: Run /ralph-specum:<appropriate-phase> to continue
 ```

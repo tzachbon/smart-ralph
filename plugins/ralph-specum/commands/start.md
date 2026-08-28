@@ -16,8 +16,9 @@ Create a task for each item and complete in order:
 2. **Parse input** -- extract name, goal, flags from $ARGUMENTS
 3. **Skill Discovery (Pass 1)** -- detect required skills and capabilities
 4. **Classify intent** -- determine what user wants (new spec, resume, quick mode)
-5. **Scan existing specs** -- find matching or related specs
-6. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
+5. **Reconcile prototype work** -- recover candidates and route active overlays
+6. **Scan existing specs** -- find matching or related specs
+7. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
 
 ## Step 1: Branch Management (FIRST STEP)
 
@@ -37,7 +38,19 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/intent-classification.md` and follow the 
 
 ### Quick Mode Check
 
-If `--quick` flag detected in $ARGUMENTS, skip to **Step 5: Quick Mode Flow**.
+Do not skip prototype recovery. If `--quick` is present, complete Step 2.5 and then continue to **Step 5: Quick Mode Flow**.
+
+## Step 2.5: Reconcile Prototype Work
+
+Resolve the current spec with `ralph_resolve_context` from `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/path-resolver.sh`. If `basePath` and `<basePath>/.ralph-state.json` exist:
+
+1. Run `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py reconcile --base-path "$basePath" --state "$basePath/.ralph-state.json"` before selecting resume work. This is the only allowed candidate/final recovery path.
+2. Re-read state and treat a missing `activePrototypes` field as an empty map. Sort entries by `created`, then ID, so every resume choice is deterministic.
+3. If the classified intent names an explicit active prototype ID, invoke `/ralph-specum:prototype --resume <id>` and stop this command.
+4. In normal mode, invoke `/ralph-specum:prototype --resume <id>` automatically when exactly one active entry remains. When several remain, list their IDs, questions, statuses, blockers, `returnPhase`, and `returnTaskIndex`; ask the user to select an ID and stop this command.
+5. In quick mode, never ask. Sort design blockers by `created`, then ID. At or after the post-requirements prototype boundary, invoke `/ralph-specum:prototype --quick`; the prototype coordinator takes over the oldest design blocker and owns its decisions. Before that boundary, preserve the existing quick flow and pass the ordered blocker set to its required post-requirements prototype call.
+
+Candidate actions returned as `resume_review` are active recovery work, not terminal evidence. Valid immutable finals removed from `activePrototypes` by reconciliation do not resume. Quarantined or malformed records are reported and excluded. If there is no overlay work, preserve the existing start behavior below.
 
 ## Step 3: Scan Existing Specs
 
