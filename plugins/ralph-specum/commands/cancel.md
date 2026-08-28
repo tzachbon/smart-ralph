@@ -72,14 +72,16 @@ Cancellation never deletes a prototype worktree, scratch path, local branch, rem
 
 Safe cancel is the default. After every active prototype has a verified immutable `cancelled` record, delete only the execution state:
 
-1. Delete the state file through the locked helper:
+1. Re-read state with `locked-state.py list --state "$spec_path/.ralph-state.json"`. Continue only when `activePrototypes` is empty.
+
+2. Delete the state file through the locked helper:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" delete-state --state "$spec_path/.ralph-state.json"
    ```
 
-2. Keep the spec directory, terminal prototype records, progress, partial implementation, worktrees, and branches.
+3. Keep the spec directory, terminal prototype records, progress, partial implementation, worktrees, and branches.
 
-3. Keep `.current-spec` pointing at the preserved spec.
+4. Keep `.current-spec` pointing at the preserved spec.
 
 If the user explicitly requests full removal, show the resolved spec directory and every prototype isolation path and local branch. Ask for confirmation naming the exact spec directory. Only after that confirmation may the command remove that directory and clear `.current-spec` when it points to the target. Prototype isolation paths and branches need their own exact confirmations; never include them in a recursive spec cleanup or remove a remote branch.
 

@@ -123,7 +123,13 @@ If "Regenerate" selected, delegate to the original agent (architect-reviewer for
 
 ### Update State
 
-1. Update `.ralph-state.json`: keep existing phase, reset `taskIndex` to 0 if tasks modified, set `awaitingApproval: true`
+1. Merge through `locked-state.py` without supplying `phase`, so the existing phase and unknown fields remain unchanged:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+     --state "$SPEC_PATH/.ralph-state.json" \
+     --set "awaitingApproval=true"
+   # If tasks changed, run a second locked merge with --set "taskIndex=0".
+   ```
 2. Append refactoring summary to `.progress.md`
 
 ### Commit (if enabled)

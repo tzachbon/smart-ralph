@@ -228,7 +228,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `refactor(state): lock Claude phase writers`
   - _Requirements: FR-3, FR-5, NFR-2, NFR-3_
 
-- [ ] 2.2 Migrate Claude task and cleanup command state writers
+- [x] 2.2 Migrate Claude task and cleanup command state writers
   - **Do**: Route tasks, implement, refactor, and cancel state updates through the helper. Use `delete-state` only after active entries are empty.
   - **Files**: `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/commands/implement.md`, `plugins/ralph-specum/commands/refactor.md`, `plugins/ralph-specum/commands/cancel.md`
   - **Done when**: The four commands contain no raw state move or deletion and preserve active prototype recovery data.

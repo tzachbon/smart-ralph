@@ -101,36 +101,28 @@ Update `.ralph-state.json` by merging these fields into the existing object:
 }
 ```
 
-Use a jq merge pattern to preserve existing fields:
+Use the locked helper to merge every execution field while preserving existing and unknown fields:
 ```bash
-jq --argjson taskIndex <first_incomplete> \
-   --argjson totalTasks <count> \
-   --argjson maxTaskIter <parsed or 5> \
-   --argjson recoveryMode <true|false> \
-   --argjson maxGlobalIter <parsed or 100> \
-   '
-   . + {
-     phase: "execution",
-     taskIndex: $taskIndex,
-     totalTasks: $totalTasks,
-     taskIteration: 1,
-     maxTaskIterations: $maxTaskIter,
-     recoveryMode: $recoveryMode,
-     maxFixTasksPerOriginal: 3,
-     maxFixTaskDepth: 3,
-     globalIteration: 1,
-     maxGlobalIterations: $maxGlobalIter,
-     fixTaskMap: {},
-     modificationMap: {},
-     maxModificationsPerTask: 3,
-     maxModificationDepth: 2,
-     awaitingApproval: false,
-     nativeTaskMap: {},
-     nativeSyncEnabled: true,
-     nativeSyncFailureCount: 0
-   }
-   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+  --state "$SPEC_PATH/.ralph-state.json" \
+  --set "phase=execution" \
+  --set "taskIndex=$FIRST_INCOMPLETE" \
+  --set "totalTasks=$TOTAL" \
+  --set "taskIteration=1" \
+  --set "maxTaskIterations=$MAX_TASK_ITERATIONS" \
+  --set "recoveryMode=$RECOVERY_MODE" \
+  --set "maxFixTasksPerOriginal=3" \
+  --set "maxFixTaskDepth=3" \
+  --set "globalIteration=1" \
+  --set "maxGlobalIterations=$MAX_GLOBAL_ITERATIONS" \
+  --json 'fixTaskMap={}' \
+  --json 'modificationMap={}' \
+  --set "maxModificationsPerTask=3" \
+  --set "maxModificationDepth=2" \
+  --set "awaitingApproval=false" \
+  --json 'nativeTaskMap={}' \
+  --set "nativeSyncEnabled=true" \
+  --set "nativeSyncFailureCount=0"
 ```
 
 **Preserved fields** (set by earlier phases, must NOT be removed):
@@ -192,7 +184,7 @@ Then Read and follow these references in order. They contain the complete coordi
 When all tasks complete (taskIndex >= totalTasks):
 1. Verify all tasks marked [x] in tasks.md
 2. Reconcile prototype records. If `activePrototypes` is nonempty, keep `.ralph-state.json`, report the remaining IDs, and stop before `ALL_TASKS_COMPLETE`.
-3. Delete `.ralph-state.json` only after the active map is empty.
+3. Re-read state with `locked-state.py list --state "$SPEC_PATH/.ralph-state.json"`. Only when `activePrototypes` is empty, delete state through `locked-state.py delete-state --state "$SPEC_PATH/.ralph-state.json"`.
 4. Keep .progress.md (preserve learnings and history)
 5. Cleanup orphaned temp progress files: `find "$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true`
 6. Update spec index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
