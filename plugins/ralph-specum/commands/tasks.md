@@ -40,10 +40,10 @@ Create a task for each item and complete in order:
 9. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
 10. Run prototype record selection before task generation:
     ```bash
-    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json" --target tasks --target 'transition:design->tasks' --path design.md --path tasks.md
     ```
 11. Include only valid, `gateApproved: true`, non-superseded prototype evidence returned by the selector. Reject skipped, failed, inconclusive, cancelled, malformed, superseded, and explicitly excluded records.
-12. If selection reports an `activePrototypes` blocker for task generation, stop before Step 2 and report the active prototype ID, blocker reason, and resume command. Proven unrelated prototypes do not block task generation.
+12. If selection reports an `activePrototypes` blocker for task generation, stop before Step 2 and report the active prototype ID, blocker reason, and resume command. Proven unrelated prototypes may continue only when every matching `targetDecisions` entry has `proofAvailable: true` and `eligible: true`; missing dependency or transfer-path proof blocks conservatively.
 13. If selection reports stale `design.md` or an upstream artifact that design depends on, stop and route to the earliest stale phase. Do not generate tasks from stale design.
 14. Pass selected prototype evidence and the clean blocker/stale-gate result to the task-planner.
 

@@ -43,14 +43,14 @@ specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
 
 Before initialization or task dispatch:
 
-1. Read `.ralph-state.json`. When `activePrototypes` is absent or empty, keep the existing execution path unchanged.
-2. When active entries exist, reconcile and select records with the resolved `basePath`:
+1. Read `.ralph-state.json`. Reconcile whenever state exists. Run selection whenever `activePrototypes` is nonempty or the `prototypes/` history directory exists.
+2. Select for execution, the current task, and every declared current-task path with the resolved `basePath`:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" reconcile --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
-   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json" --target execution --target "task:$TASK_INDEX" --path "<each declared current-task path>"
    ```
 3. Stop before dispatch when `activeBlockers` targets execution or the current task, when `staleTaskIndexes` contains the current `taskIndex`, or when `staleArtifacts` contains an upstream artifact required by tasks. Report the prototype ID and route resume through `/ralph-specum:prototype --resume <id>`.
-4. Preserve eligible work when the selector proves that the active prototype, stale artifact, stale task index, and approved transfer paths do not affect the current task.
+4. Preserve eligible work only when every matching `targetDecisions` entry has `proofAvailable: true` and `eligible: true`. Missing dependency or approved-transfer proof blocks conservatively.
 5. On prototype return, restore `taskIndex` from the entry's `returnTaskIndex` before dispatch. Verify that the restored index still points to the first eligible incomplete task.
 
 ## Step 2: Parse Arguments
@@ -102,11 +102,13 @@ Update `.ralph-state.json` by merging these fields into the existing object:
 ```
 
 Use the locked helper to merge every execution field while preserving existing and unknown fields:
+
+Set `TASK_INDEX_TO_MERGE=$FIRST_INCOMPLETE` only for fresh execution. When resuming a prototype return, read the blocking or just-completed prototype's `returnTaskIndex`, require a non-negative integer within the task list, verify it identifies the first eligible incomplete task, and set `TASK_INDEX_TO_MERGE` to that value. Do not replace it with `FIRST_INCOMPLETE`.
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
   --state "$SPEC_PATH/.ralph-state.json" \
   --set "phase=execution" \
-  --set "taskIndex=$FIRST_INCOMPLETE" \
+  --set "taskIndex=$TASK_INDEX_TO_MERGE" \
   --set "totalTasks=$TOTAL" \
   --set "taskIteration=1" \
   --set "maxTaskIterations=$MAX_TASK_ITERATIONS" \

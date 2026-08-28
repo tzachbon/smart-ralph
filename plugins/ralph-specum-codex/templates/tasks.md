@@ -32,7 +32,7 @@ This spec is not complete until all applicable criteria are met:
 ✅ **PR Ready**: Pull request created, reviewed, approved
 ✅ **Review Comments Resolved**: All code review feedback addressed
 
-**Remote gate exception**: When the Prototype Evidence Push Gate skips or denies a push, the PR, CI, review, and issue criteria that depend on that push do not apply to this run. Quick mode completes the applicable local criteria and reports `Remote lifecycle skipped: prototype evidence stayed local.`
+**Remote gate exception**: When the Prototype Evidence Push Gate skips or denies a push, the PR, CI, review, and issue criteria that depend on that push do not apply to this run. Complete the applicable local criteria and report `Remote lifecycle skipped: prototype evidence stayed local.` This local report is terminal for the run.
 
 **Note**: The executor will continue working until all applicable criteria are met. Do not stop at Phase 4 if CI fails or review comments exist after a permitted push.
 
@@ -284,7 +284,6 @@ After POC validated, clean up code.
 > **IMPORTANT**: NEVER push directly to the default branch (main/master). Branch management is handled at startup via `/ralph-specum:start`. You should already be on a feature branch by this phase.
 
 > **Prototype Evidence Push Gate**: Immediately before every push below, resolve the exact target remote and inspect the outbound commits with `git log --format= --name-only <remote-target>..HEAD -- '**/prototypes/*.md' | sed '/^$/d' | sort -u`. For a new target branch, identify its actual remote base first; stop when the outbound range cannot be determined. If records appear, normal mode requires separate explicit authorization naming every exact record path. `commitSpec` and generic branch, PR, or push approval do not count. Quick mode asks no question and skips the push. A skipped or denied push ends the dependent remote lifecycle path: do not run later `gh pr create`, `gh pr merge`, `gh pr checks`, `gh pr view`, `gh api`, `gh run`, `gh issue`, remote review polling, issue writes, or other remote steps that depend on that push. Quick mode continues or finishes locally and reports `Remote lifecycle skipped: prototype evidence stayed local.` Preserve each existing push and its remote lifecycle when the gate permits it. Never push an isolated `prototype/<spec>/<id>` source branch.
-
 > **Default Behavior**: When on a feature branch (not main/master), the final deliverable is a Pull Request with all CI checks passing after the Prototype Evidence Push Gate permits the branch push.
 
 - [ ] 4.1 Local quality check
@@ -373,7 +372,7 @@ After POC validated, clean up code.
 
 ## Phase 5: PR Lifecycle (Continuous Validation)
 
-> **Autonomous Loop**: This phase continues until ALL completion criteria met. The executor monitors CI, addresses review comments, and iterates until production-ready.
+> **Autonomous Loop**: This phase continues until all applicable completion criteria are met. A skipped or denied push ends the remote lifecycle; finish the applicable local criteria, record the local skip report, and stop this phase.
 
 - [ ] 5.1 Create pull request
   - **Do**:
@@ -431,8 +430,8 @@ EOF
     3. If the remote lifecycle is active, check that `gh pr checks` is green; otherwise verify the remote-lifecycle-skipped report
     4. Verify modularity documented in .progress.md
     5. Confirm real-world validation documented
-  - **Verify**: All commands pass, all criteria documented
-  - **Done when**: All completion criteria ✅
+  - **Verify**: All applicable commands pass and all applicable criteria are documented
+  - **Done when**: All applicable completion criteria pass; after a skipped or denied push, the local remote-lifecycle-skipped report is terminal
   - **Commit**: None
 
 ## Notes

@@ -323,9 +323,46 @@ teardown() {
     [ "$(jq -c '[.selected[].id]' <<< "$selected")" = '["replacement"]' ]
     [ "$(jq -c .superseded <<< "$selected")" = '["old"]' ]
     [ "$(jq -r '.quarantined[] | select(.path | endswith("/bad.md")) | .reason' <<< "$selected")" != "" ]
-    [ "$(jq -c .activeBlockers <<< "$selected")" = '[{"blocked":["design","task:3"],"id":"blocker","status":"blocked"}]' ]
+    [ "$(jq -c '[.activeBlockers[] | {blocked,id,status}]' <<< "$selected")" = '[{"blocked":["design","task:3"],"id":"blocker","status":"blocked"}]' ]
     [ "$(jq -c .staleArtifacts <<< "$selected")" = '["design.md","tasks.md"]' ]
     [ "$(jq -c .staleTaskIndexes <<< "$selected")" = '[3,7]' ]
+}
+
+@test "prototype records: downstream selection proves each requested target or blocks conservatively" {
+    local entry selected
+    entry="$(active_entry_json dependency building '{}' '{"blocks":["design"]}')"
+    entry="$(jq '. + {
+        returnPhase:"execution",
+        returnTaskIndex:4,
+        isolation:{approvedTransfers:["src/prototype.ts"]}
+    }' <<< "$entry")"
+    upsert_active dependency "$entry"
+
+    run python3 "$(claude_record_cli)" select-downstream \
+        --base-path "$BASE_PATH" --state "$STATE_FILE" \
+        --target design --path design.md
+    [ "$status" -eq 0 ]
+    selected="$output"
+    [ "$(jq -c '.activeBlockers[0] | {id,returnPhase,returnTaskIndex}' <<< "$selected")" = \
+        '{"id":"dependency","returnPhase":"execution","returnTaskIndex":4}' ]
+    [ "$(jq -r '.targetDecisions[0].eligible' <<< "$selected")" = false ]
+    [ "$(jq -c '.targetDecisions[0].blockedBy' <<< "$selected")" = '["dependency"]' ]
+
+    run python3 "$(codex_record_cli)" select-downstream \
+        --base-path "$BASE_PATH" --state "$STATE_FILE" \
+        --target tasks --path tasks.md
+    [ "$status" -eq 0 ]
+    [ "$(jq -r '.targetDecisions[0].proofAvailable' <<< "$output")" = true ]
+    [ "$(jq -r '.targetDecisions[0].eligible' <<< "$output")" = true ]
+
+    entry="$(active_entry_json unknown building '{}' '{}')"
+    upsert_active unknown "$entry"
+    run python3 "$(codex_record_cli)" select-downstream \
+        --base-path "$BASE_PATH" --state "$STATE_FILE" --target tasks
+    [ "$status" -eq 0 ]
+    [ "$(jq -r '.targetDecisions[0].proofAvailable' <<< "$output")" = false ]
+    [ "$(jq -r '.targetDecisions[0].eligible' <<< "$output")" = false ]
+    [ "$(jq -c '.targetDecisions[0].proofUnavailableFor' <<< "$output")" = '["dependency","unknown"]' ]
 }
 
 @test "prototype records: published terminal staleness survives active-state removal and rejects malformed types" {
@@ -352,6 +389,17 @@ teardown() {
     run render_candidate "$(codex_record_cli)" "$BASE_PATH" "$invalid_indexes"
     [ "$status" -ne 0 ]
     [[ "$output" == *"Prototype staleTaskIndexes must be an array of non-negative integers."* ]]
+}
+
+@test "prototype records: state failures exit two without a traceback" {
+    local cli
+    printf '{ invalid\n' > "$STATE_FILE"
+    for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
+        run python3 "$cli" select-downstream --base-path "$BASE_PATH" --state "$STATE_FILE"
+        [ "$status" -eq 2 ]
+        [[ "$output" == *"State file is not valid JSON:"* ]]
+        [[ "$output" != *"Traceback"* ]]
+    done
 }
 
 @test "prototype records: cleanup receipt gates post-deletion review and missing-source resume" {

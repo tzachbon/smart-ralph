@@ -336,7 +336,8 @@ Before completing, verify:
 As your FINAL action before completing, you MUST update the state file to signal that user approval is required before proceeding:
 
 ```bash
-# Set BASE_PATH to the exact basePath supplied by Task delegation.
+# Replace the quoted value with the exact basePath supplied by Task delegation.
+BASE_PATH='<delegated basePath>'
 python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
   --state "$BASE_PATH/.ralph-state.json" \
   --set awaitingApproval=true

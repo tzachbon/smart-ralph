@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import socket
 import subprocess
 import sys
@@ -51,16 +52,26 @@ class PrototypeWindowsTests(unittest.TestCase):
 
     def test_simulated_windows_pid_probes_do_not_call_os_kill(self) -> None:
         with mock.patch.object(locked_state.os, "name", "nt"):
-            with mock.patch.object(locked_state, "_windows_pid_running", return_value=True, create=True):
+            with mock.patch.object(locked_state, "_windows_pid_running", return_value=True):
                 with mock.patch.object(locked_state.os, "kill") as kill_spy:
                     self.assertTrue(locked_state.pid_exists(123))
                     kill_spy.assert_not_called()
 
         with mock.patch.object(prototype_harness.os, "name", "nt"):
-            with mock.patch.object(prototype_harness, "_windows_pid_running", return_value=True, create=True):
+            with mock.patch.object(prototype_harness, "_windows_pid_running", return_value=True):
                 with mock.patch.object(prototype_harness.os, "kill") as kill_spy:
                     self.assertTrue(prototype_harness.pid_running(123))
                     kill_spy.assert_not_called()
+
+    def test_posix_pid_probe_parses_zombie_state_after_command_name(self) -> None:
+        proc_stat = mock.Mock()
+        proc_stat.exists.return_value = True
+        proc_stat.read_text.return_value = "123 (builder command with spaces) Z 1 2 3\n"
+
+        with mock.patch.object(prototype_harness, "Path", return_value=proc_stat):
+            with mock.patch.object(prototype_harness.os, "kill") as kill_spy:
+                self.assertFalse(prototype_harness.pid_running(123))
+                kill_spy.assert_not_called()
 
     def test_simulated_windows_interrupt_failure_keeps_run_running(self) -> None:
         registry = Path(self.temp.name) / "harness"
@@ -198,6 +209,46 @@ class PrototypeWindowsTests(unittest.TestCase):
         self.assertNotIn("controlError", persisted)
         self.assertNotIn("controlErrorAt", persisted)
 
+    def test_simulated_posix_interrupt_failure_stays_unverified(self) -> None:
+        registry = Path(self.temp.name) / "harness"
+        run_id = "posix-interrupt-failure"
+        metadata_path = prototype_harness.registry_path(registry, run_id)
+        prototype_harness.write_metadata(
+            metadata_path,
+            {
+                "id": run_id,
+                "pid": 12345,
+                "status": "running",
+                "startedEpoch": time.time(),
+            },
+        )
+
+        with mock.patch.object(prototype_harness.os, "name", "posix"):
+            with mock.patch.object(prototype_harness, "pid_running", return_value=True):
+                with mock.patch.object(prototype_harness.os, "killpg") as killpg_spy:
+                    with mock.patch.object(
+                        prototype_harness.time,
+                        "monotonic",
+                        side_effect=(10.0, 12.0, 20.0, 26.0),
+                    ):
+                        with self.assertRaises(prototype_harness.HarnessError) as raised:
+                            prototype_harness.interrupt(registry=registry, run_id=run_id)
+
+        self.assertEqual(raised.exception.outcome, "unavailable-control")
+        self.assertEqual(
+            killpg_spy.call_args_list,
+            [
+                mock.call(12345, signal.SIGTERM),
+                mock.call(12345, 0),
+                mock.call(12345, signal.SIGKILL),
+                mock.call(12345, 0),
+            ],
+        )
+        persisted = json.loads(metadata_path.read_text(encoding="utf-8"))
+        self.assertEqual(persisted["status"], "running")
+        self.assertTrue(persisted["terminationUnverified"])
+        self.assertIn("process group did not exit", persisted["controlError"])
+
     @unittest.skipUnless(os.name == "nt", "requires native Windows process APIs")
     def test_native_windows_pid_probes_leave_a_live_process_running(self) -> None:
         process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
@@ -316,6 +367,36 @@ class PrototypeWindowsTests(unittest.TestCase):
         with locked_state.directory_lock(lock_path, 0.2, stale_seconds=1):
             self.assertTrue((lock_path / "owner.json").is_file())
         self.assertFalse(lock_path.exists())
+
+    def test_malformed_stale_owner_pid_uses_normal_recovery(self) -> None:
+        lock_path = self.base_path / ".ralph-state.lock"
+        lock_path.mkdir()
+        (lock_path / "owner.json").write_text(
+            json.dumps(
+                {
+                    "host": socket.gethostname(),
+                    "pid": "not-a-pid",
+                    "created": "2000-01-01T00:00:00Z",
+                    "heartbeatAt": "2000-01-01T00:00:00Z",
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        with locked_state.directory_lock(lock_path, 0.2, stale_seconds=1):
+            owner = json.loads((lock_path / "owner.json").read_text(encoding="utf-8"))
+            self.assertEqual(owner["pid"], os.getpid())
+        self.assertFalse(lock_path.exists())
+
+    def test_state_error_is_a_catchable_application_exception(self) -> None:
+        caught: Exception | None = None
+        try:
+            locked_state.parse_pairs(["missing-separator"], as_json=False)
+        except Exception as exc:
+            caught = exc
+
+        self.assertIsInstance(caught, locked_state.StateError)
+        self.assertNotIsInstance(caught, SystemExit)
 
     def test_directory_lock_cleans_up_when_owner_metadata_write_fails(self) -> None:
         lock_path = self.base_path / ".ralph-state.lock"

@@ -277,8 +277,9 @@ REVIEW_FAIL
 ```
 
 Rules:
-- If no dimension is FAIL (all PASS or WARN): output `REVIEW_PASS`, listing any WARN rows as warnings
-- If ANY dimension is FAIL: output `REVIEW_FAIL`
+- For requirements, WARN-only results may output `REVIEW_PASS` with every warning listed
+- For prototype, output `REVIEW_PASS` only when every Prototype Rubric dimension is PASS; any WARN or FAIL outputs `REVIEW_FAIL`
+- For every other artifact type, output `REVIEW_FAIL` when any dimension is FAIL; otherwise output `REVIEW_PASS`
 - The signal MUST be the very last line of output (no trailing whitespace or text after it)
 - The "Feedback for Revision" section is REQUIRED when outputting REVIEW_FAIL
 - The "Feedback for Revision" section may be omitted or contain "No issues found." when outputting REVIEW_PASS

@@ -59,7 +59,7 @@ Treat a missing `activePrototypes` field as an empty map.
 
 If `activePrototypes` is non-empty, resolve `basePath` with `ralph_resolve_context` and run `prototype-records.py reconcile` before cancellation. At the next safe tool boundary, process active IDs in `created`, then ID order:
 
-1. Interrupt a live builder through `prototype-harness.py interrupt`; never stop an unrelated task or a running tool call. Release its lease through `locked-state.py release-lease`.
+1. Read the active entry's `leaseToken`, then interrupt its live builder through `prototype-harness.py interrupt`; never stop an unrelated task or a running tool call. Release the lease only after the harness verifies that the recorded builder and its descendants stopped, using `locked-state.py release-lease --id "<id>" --lease-token "<active-entry leaseToken>"`. If interruption is unavailable, fails, or is unverified, retain the lease and active entry and stop cancellation for that ID.
 2. Build a terminal record from the active entry with `status: terminal`, `verdict: cancelled`, `gateApproved: false`, the original question and blocking declaration, `returnPhase`, `returnTaskIndex`, timestamps, local branch and isolation pointers, and `sourceDisposition: retained`. Preserve partial implementation, run evidence, stale metadata, and downstream artifacts.
 3. Render the record exclusively through `prototype-records.py render-candidate`. If its ID already has candidate or final bytes, preserve them and allocate a new ID with `supersedes`; never overwrite either path.
 4. Give `spec-reviewer` the exact candidate bytes and source pointers. Continue only on `REVIEW_PASS`, then call `review-candidate` with the exact candidate hash and `publish` with the state path.

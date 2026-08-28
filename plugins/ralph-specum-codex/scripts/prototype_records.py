@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from locked_state import active_map, fsync_dir, mutate_state, read_json_object
+from locked_state import StateError, active_map, fsync_dir, mutate_state, read_json_object
 
 
 JSON = dict[str, Any]
@@ -532,24 +532,110 @@ def cmd_select_downstream(args: argparse.Namespace) -> JSON:
                 "verdict": frontmatter["verdict"],
                 "triggerMode": frontmatter["triggerMode"],
                 "returnPhase": frontmatter["returnPhase"],
+                "returnTaskIndex": frontmatter.get("returnTaskIndex"),
                 "staleArtifacts": record_stale_artifacts,
                 "staleTaskIndexes": record_stale_tasks,
                 "recordHash": sha256_path(Path(record["path"])),
             }
         )
     state = read_json_object(args.state) if args.state and args.state.exists() else {}
+    active = state.get("activePrototypes") or {}
+    if not isinstance(active, dict):
+        raise StateError("activePrototypes must be an object.")
     blockers: list[JSON] = []
-    for prototype_id, entry in sorted((state.get("activePrototypes") or {}).items()):
+    active_entries: list[JSON] = []
+    for prototype_id, entry in sorted(active.items()):
         if not isinstance(entry, dict):
             continue
         blocking = entry.get("blocking") or {}
         blocked = (blocking.get("blocks") or []) if isinstance(blocking, dict) else []
+        isolation = entry.get("isolation") or {}
+        approved_transfers = isolation.get("approvedTransfers") if isinstance(isolation, dict) else None
+        proof_available = (
+            isinstance(blocking, dict)
+            and isinstance(blocking.get("blocks"), list)
+            and all(isinstance(item, str) for item in blocking["blocks"])
+            and isinstance(isolation, dict)
+            and isinstance(approved_transfers, list)
+            and all(isinstance(item, str) for item in approved_transfers)
+        )
+        active_entries.append(
+            {
+                "id": prototype_id,
+                "blocked": blocked,
+                "approvedTransfers": approved_transfers if isinstance(approved_transfers, list) else [],
+                "proofAvailable": proof_available,
+            }
+        )
         if blocked:
-            blockers.append({"id": prototype_id, "status": entry.get("status"), "blocked": blocked})
+            blockers.append(
+                {
+                    "id": prototype_id,
+                    "status": entry.get("status"),
+                    "blocked": blocked,
+                    "returnPhase": entry.get("returnPhase"),
+                    "returnTaskIndex": entry.get("returnTaskIndex"),
+                    "approvedTransfers": approved_transfers if isinstance(approved_transfers, list) else [],
+                    "proofAvailable": proof_available,
+                }
+            )
         checkpoint = entry.get("decisionCheckpoint") or {}
         if isinstance(checkpoint, dict):
             stale_artifacts.update(item for item in (checkpoint.get("staleArtifacts") or []) if isinstance(item, str))
             stale_tasks.update(item for item in (checkpoint.get("staleTaskIndexes") or []) if isinstance(item, int))
+    def paths_overlap(left: str, right: str) -> bool:
+        left_path = left.replace("\\", "/").removeprefix("./").strip("/")
+        right_path = right.replace("\\", "/").removeprefix("./").strip("/")
+        return bool(left_path and right_path) and (
+            left_path == right_path
+            or left_path.startswith(f"{right_path}/")
+            or right_path.startswith(f"{left_path}/")
+            or left_path.endswith(f"/{right_path}")
+            or right_path.endswith(f"/{left_path}")
+        )
+
+    target_paths = [item for item in (args.paths or []) if isinstance(item, str) and item]
+    target_decisions: list[JSON] = []
+    for target in args.targets or []:
+        blocked_by: list[str] = []
+        transfer_overlaps: list[JSON] = []
+        proof_unavailable: list[str] = []
+        for entry in active_entries:
+            if not entry["proofAvailable"]:
+                proof_unavailable.append(entry["id"])
+                continue
+            if target in entry["blocked"] or any(paths_overlap(target, item) for item in entry["blocked"]):
+                blocked_by.append(entry["id"])
+            transfers = entry["approvedTransfers"]
+            if transfers and not target_paths:
+                proof_unavailable.append(entry["id"])
+                continue
+            for transfer in transfers:
+                if any(paths_overlap(transfer, path) for path in target_paths):
+                    transfer_overlaps.append({"id": entry["id"], "path": transfer})
+        stale_by = [
+            record["id"]
+            for record in selected
+            if target in record["staleArtifacts"]
+            or any(paths_overlap(item, path) for item in record["staleArtifacts"] for path in target_paths)
+            or (
+                target.startswith("task:")
+                and target[5:].isdigit()
+                and int(target[5:]) in record["staleTaskIndexes"]
+            )
+        ]
+        proof_available = not proof_unavailable
+        target_decisions.append(
+            {
+                "target": target,
+                "proofAvailable": proof_available,
+                "proofUnavailableFor": sorted(set(proof_unavailable)),
+                "blockedBy": sorted(set(blocked_by)),
+                "staleBy": sorted(set(stale_by)),
+                "transferOverlaps": transfer_overlaps,
+                "eligible": proof_available and not blocked_by and not stale_by and not transfer_overlaps,
+            }
+        )
     return {
         "selected": selected,
         "superseded": sorted(superseded),
@@ -557,6 +643,7 @@ def cmd_select_downstream(args: argparse.Namespace) -> JSON:
         "activeBlockers": blockers,
         "staleArtifacts": sorted(stale_artifacts),
         "staleTaskIndexes": sorted(stale_tasks),
+        "targetDecisions": target_decisions,
     }
 
 
@@ -612,6 +699,8 @@ def build_parser() -> argparse.ArgumentParser:
     select = sub.add_parser("select-downstream", help="Select approved non-superseded evidence")
     add_base(select)
     select.add_argument("--state", type=Path)
+    select.add_argument("--target", dest="targets", action="append", default=[])
+    select.add_argument("--path", dest="paths", action="append", default=[])
     select.set_defaults(func=cmd_select_downstream)
     return parser
 
@@ -620,8 +709,12 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         result = args.func(args)
+    except (RecordError, StateError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise RecordError(str(exc)) from exc
+        print(str(exc), file=sys.stderr)
+        return 2
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0
 

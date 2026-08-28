@@ -24,7 +24,7 @@ Use this to explain the Ralph Specum surface in Codex.
 - Direct mode: invoke `$ralph-specum-prototype` from research, requirements, design, tasks, or execution. Preserve the main phase and current checkout.
 - Suggested mode: research or requirements may offer `continue to prototype`, then return to the next normal phase.
 - Resume mode: use `$ralph-specum-prototype --resume <id>`. One active entry resumes automatically; several are listed deterministically for selection.
-- Quick mode: run exactly one agent-owned request after requirements, ask no prototype questions, take over the oldest design blocker, own verdict and handoff decisions, and continue to design for every result.
+- Quick mode: run exactly one agent-owned request after requirements, ask no prototype questions, take over the oldest design blocker or select the highest-risk grounded, falsifiable question when no blocker exists, own verdict and handoff decisions, and continue to design for every result.
 - Cancel mode: use `$ralph-specum-prototype --cancel <id>` or safe spec cancellation. Stop at a safe boundary, publish a reviewed immutable `cancelled` record, and preserve source and partial implementation.
 
 Store terminal records under the resolved `<basePath>/prototypes/`. Run source work in a sibling worktree or eligible scratch area without switching the current checkout or copying unapproved dirty paths. Keep source, evidence, records, and branches local. Require separate authorization for every push, PR or issue change, and other remote action. Require exact-path and local-branch confirmation before local deletion; never delete a remote branch during prototype cleanup.

@@ -70,7 +70,7 @@ _ralph_frontmatter_scalar() {
 _ralph_spec_root() {
     local base_path="$1"
     local default_dir="$2"
-    local root normalized_base normalized_root
+    local root normalized_base normalized_root best_root="" best_length=0
 
     if [ -z "$base_path" ]; then
         _ralph_normalize_path "$default_dir"
@@ -81,10 +81,16 @@ _ralph_spec_root() {
         [ -z "$root" ] && continue
         normalized_root=$(_ralph_normalize_path "$root")
         if [ "$normalized_base" = "$normalized_root" ] || [[ "$normalized_base" == "$normalized_root/"* ]]; then
-            echo "$normalized_root"
-            return 0
+            if (( ${#normalized_root} > best_length )); then
+                best_root="$normalized_root"
+                best_length=${#normalized_root}
+            fi
         fi
     done < <(ralph_get_specs_dirs)
+    if [ -n "$best_root" ]; then
+        echo "$best_root"
+        return 0
+    fi
     _ralph_normalize_path "$(dirname "$normalized_base")"
 }
 
@@ -92,7 +98,7 @@ _ralph_spec_root() {
 # Existing path functions retain their original text output.
 ralph_resolve_context() {
     local default_dir base_path spec_root dirs_json settings_json warnings_json
-    local item key default minimum maximum raw value warning
+    local item key default minimum maximum raw value warning digits
 
     default_dir=$(ralph_get_default_dir)
     base_path=$(ralph_resolve_current 2>/dev/null || true)
@@ -107,7 +113,19 @@ ralph_resolve_context() {
         value="$raw"
         if [ -z "$value" ]; then
             value="$default"
-        elif ! [[ "$value" =~ ^-?[0-9]+$ ]] || (( value < minimum || value > maximum )); then
+        elif [[ "$value" =~ ^-?[0-9]+$ ]]; then
+            if [[ "$value" == -* ]]; then
+                digits="${value#-}"
+                value=$((-10#$digits))
+            else
+                value=$((10#$value))
+            fi
+            if (( value < minimum || value > maximum )); then
+                value="$default"
+                warning="$key must be an integer from $minimum to $maximum; using $default"
+                warnings_json=$(jq -c --arg warning "$warning" '. + [$warning]' <<< "$warnings_json")
+            fi
+        else
             value="$default"
             warning="$key must be an integer from $minimum to $maximum; using $default"
             warnings_json=$(jq -c --arg warning "$warning" '. + [$warning]' <<< "$warnings_json")

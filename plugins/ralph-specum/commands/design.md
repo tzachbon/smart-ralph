@@ -34,12 +34,12 @@ Create a task for each item and complete in order:
 6. Read context: `requirements.md` (required), `research.md` (if exists), `.progress.md`
 7. Run prototype record selection before design generation:
    ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json" --target design --target 'transition:requirements->design' --path requirements.md --path design.md
    ```
 8. Use only valid, `gateApproved: true`, non-superseded prototype evidence that affects design. Exclude skipped, failed, inconclusive, malformed, superseded, and explicitly excluded records.
 9. If selection reports an `activePrototypes` blocker for the design transition, stop before Step 2 and report the active prototype ID, blocker reason, and resume command.
 10. If selection reports stale requirements, research, design, or task indexes that affect this design generation, stop and route to the earliest stale phase or task. Do not generate design from stale artifacts.
-11. Proven unrelated work may continue only when the selector reports no dependency on the active prototype, stale artifact, stale task index, or approved transfer path.
+11. Read the matching `targetDecisions` entries. Proven unrelated work may continue only when each entry has `proofAvailable: true` and `eligible: true`; this proves no active blocker, stale input, or approved transfer path overlaps design. Missing or unavailable proof blocks conservatively.
 
 ## Step 2: Grill (skip if --quick)
 

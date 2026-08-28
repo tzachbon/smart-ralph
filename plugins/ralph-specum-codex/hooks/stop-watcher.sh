@@ -38,6 +38,22 @@ if [ ! -f "$STATE_FILE" ]; then
   exit 0
 fi
 
+if ! jq empty "$STATE_FILE" 2>/dev/null; then
+  emit_block "Corrupt .ralph-state.json. Preserve it and repair or cancel the spec before continuation."
+  exit 0
+fi
+
+ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE")
+PROTOTYPE_HISTORY=false
+if [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ] || [ -d "$BASE_PATH/prototypes" ]; then
+  PROTOTYPE_HISTORY=true
+fi
+if ! PYTHONDONTWRITEBYTECODE=1 python3 "$RECORD_HELPER" reconcile --base-path "$BASE_PATH" --state "$STATE_FILE" >/dev/null 2>&1; then
+  emit_block "Prototype reconciliation failed. Preserve .ralph-state.json and resume the active prototype before task continuation."
+  exit 0
+fi
+ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE")
+
 PHASE=$(jq -r '.phase // empty' "$STATE_FILE" 2>/dev/null || true)
 TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
@@ -47,16 +63,10 @@ if [ "$PHASE" != "execution" ] || [ "$AWAITING" = "true" ]; then
   exit 0
 fi
 
-ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE" 2>/dev/null || echo "0")
-if [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ]; then
-  if ! PYTHONDONTWRITEBYTECODE=1 python3 "$RECORD_HELPER" reconcile --base-path "$BASE_PATH" --state "$STATE_FILE" >/dev/null 2>&1; then
-    emit_block "Prototype reconciliation failed. Preserve .ralph-state.json and resume the active prototype before task continuation."
-    exit 0
-  fi
-
-  ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE" 2>/dev/null || echo "0")
-  if [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ]; then
-    if ! SELECTOR_OUTPUT=$(PYTHONDONTWRITEBYTECODE=1 python3 "$RECORD_HELPER" select-downstream --base-path "$BASE_PATH" --state "$STATE_FILE" 2>/dev/null); then
+if [ "$PROTOTYPE_HISTORY" = true ] || [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ]; then
+    if ! SELECTOR_OUTPUT=$(PYTHONDONTWRITEBYTECODE=1 python3 "$RECORD_HELPER" select-downstream \
+      --base-path "$BASE_PATH" --state "$STATE_FILE" \
+      --target execution --target tasks --target "task:$TASK_INDEX" 2>/dev/null); then
       emit_block "Prototype selection failed. Preserve .ralph-state.json and resume the active prototype before task continuation."
       exit 0
     fi
@@ -81,17 +91,25 @@ if [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ]; then
     STALE_TASK=$(jq -n --argjson selected "$SELECTOR_OUTPUT" --slurpfile state "$STATE_FILE" --argjson task "$TASK_INDEX" '[($selected.staleTaskIndexes[]?), ($state[0].activePrototypes[]?.decisionCheckpoint.staleTaskIndexes[]?)] | map(select(. == $task)) | length' 2>/dev/null || echo "0")
     STALE_ARTIFACT=$(jq -n --argjson selected "$SELECTOR_OUTPUT" --slurpfile state "$STATE_FILE" '[($selected.staleArtifacts[]?), ($state[0].activePrototypes[]?.decisionCheckpoint.staleArtifacts[]?)] | map(select(. == "research.md" or . == "requirements.md" or . == "design.md" or . == "tasks.md" or . == "execution")) | length' 2>/dev/null || echo "0")
     DEPENDENT_COUNT=$(echo "$DEPENDENT_BLOCKERS" | jq 'length' 2>/dev/null || echo "0")
+    TARGET_BLOCKERS=$(echo "$SELECTOR_OUTPUT" | jq '[.targetDecisions[]? | select(.eligible != true)] | length' 2>/dev/null || echo "0")
 
-    if [ "$DEPENDENT_COUNT" -gt 0 ] || [ "$STALE_TASK" -gt 0 ] || [ "$STALE_ARTIFACT" -gt 0 ]; then
-      PROTOTYPE_IDS=$(echo "$DEPENDENT_BLOCKERS" | jq -r 'map(.id) | unique | join(", ")' 2>/dev/null || true)
+    if [ "$DEPENDENT_COUNT" -gt 0 ] || [ "$STALE_TASK" -gt 0 ] || [ "$STALE_ARTIFACT" -gt 0 ] || [ "$TARGET_BLOCKERS" -gt 0 ]; then
+      PROTOTYPE_IDS=$(echo "$SELECTOR_OUTPUT" | jq -r '
+        [(.targetDecisions[]? | .blockedBy[], .staleBy[], .proofUnavailableFor[], .transferOverlaps[].id)] | unique | join(", ")
+      ' 2>/dev/null || true)
+      [ -n "$PROTOTYPE_IDS" ] || PROTOTYPE_IDS=$(echo "$DEPENDENT_BLOCKERS" | jq -r 'map(.id) | unique | join(", ")' 2>/dev/null || true)
       if [ -z "$PROTOTYPE_IDS" ]; then
-        PROTOTYPE_IDS=$(jq -r '(.activePrototypes // {}) | keys | join(", ")' "$STATE_FILE" 2>/dev/null || echo "unknown")
+        PROTOTYPE_IDS="unknown"
       fi
-      RETURN_TASK_INDEX=$(jq -r '[.activePrototypes[]? | .returnTaskIndex // empty] | first // empty' "$STATE_FILE" 2>/dev/null || true)
+      RETURN_TASK_INDEX=$(jq -nr --argjson selection "$SELECTOR_OUTPUT" --slurpfile state "$STATE_FILE" --arg ids "$PROTOTYPE_IDS" '
+        ($ids | split(", ") | map(gsub("^ +| +$"; ""))) as $wanted |
+        [($state[0].activePrototypes // {} | to_entries[]? | select(.key as $id | $wanted | index($id)) | .value.returnTaskIndex),
+         ($selection.selected[]? | select(.id as $id | $wanted | index($id)) | .returnTaskIndex)] |
+        map(select(. != null)) | unique | join(", ")
+      ' 2>/dev/null || true)
       emit_block "Prototype ${PROTOTYPE_IDS} blocks task ${NEXT_TASK_NUMBER}/${TOTAL_TASKS}. Resume it with \$ralph-specum-prototype --resume <id>; after verified handoff restore taskIndex from returnTaskIndex${RETURN_TASK_INDEX:+ ($RETURN_TASK_INDEX)}."
       exit 0
     fi
-  fi
 fi
 
 # Completion must not discard active prototype recovery state, even when it did

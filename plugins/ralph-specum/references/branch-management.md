@@ -165,14 +165,17 @@ if [ -n "$SPEC_PATH" ] && [ -d "$SPEC_PATH" ]; then
 
     # Merge source state into a new worktree state file through the common lock.
     if [ -f "$SPEC_PATH/.ralph-state.json" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.ralph-state.json" ]; then
-        SOURCE_STATE=$(python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge --stdout --state "$SPEC_PATH/.ralph-state.json")
-        MERGE_ARGS=()
-        while IFS= read -r field; do
-            MERGE_ARGS+=(--json "$field")
-        done < <(jq -r 'to_entries[] | "\(.key)=\(.value | tojson)"' <<< "$SOURCE_STATE")
-        python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
-            --state "$WORKTREE_PATH/$SPEC_PATH/.ralph-state.json" \
-            "${MERGE_ARGS[@]}" || echo "Warning: Failed to merge .ralph-state.json into worktree"
+        if SOURCE_STATE=$(python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge --stdout --state "$SPEC_PATH/.ralph-state.json"); then
+            MERGE_ARGS=()
+            while IFS= read -r field; do
+                MERGE_ARGS+=(--json "$field")
+            done < <(jq -r 'to_entries[] | "\(.key)=\(.value | tojson)"' <<< "$SOURCE_STATE")
+            python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+                --state "$WORKTREE_PATH/$SPEC_PATH/.ralph-state.json" \
+                "${MERGE_ARGS[@]}" || echo "Warning: Failed to merge .ralph-state.json into worktree"
+        else
+            echo "Warning: If the source-state read fails, skip worktree state creation"
+        fi
     fi
 
     if [ -f "$SPEC_PATH/.progress.md" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.progress.md" ]; then

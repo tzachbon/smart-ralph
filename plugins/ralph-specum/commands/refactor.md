@@ -33,14 +33,14 @@ Create a task for each item and complete in order:
 
 Before scope selection or refactor dispatch:
 
-1. Read `.ralph-state.json`. When `activePrototypes` is absent or empty, keep the existing refactor path unchanged.
-2. When active entries exist, reconcile and select records with the resolved `basePath`:
+1. Read `.ralph-state.json`. Whenever it exists, reconcile candidates and finals even when `activePrototypes` is absent or empty.
+2. Select records with the resolved `basePath`:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" reconcile --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
-   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json" --target "$FILE" --path "$FILE"
    ```
 3. Stop a file's refactor dispatch when `activeBlockers` targets that file or transition, when its task index appears in `staleTaskIndexes`, or when `staleArtifacts` contains the file or an upstream dependency.
-4. Preserve eligible files when the selector proves no dependency on the active prototype, stale artifact, stale task index, or approved transfer path.
+4. Preserve a file only when its `targetDecisions` entry has `proofAvailable: true` and `eligible: true`. Missing dependency or approved-transfer proof blocks that file conservatively.
 5. When refactor resumes execution, restore `taskIndex` from the relevant entry's `returnTaskIndex` before task dispatch.
 
 ## Step 2: Determine Scope & Present Overview

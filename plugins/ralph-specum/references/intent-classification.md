@@ -160,11 +160,12 @@ Intent Classification:
    - "regression", "reproduce", "repro", "issue"
    -> Seed reproduction, expected versus observed behavior, regression history,
       affected scope, and verification branches.
-   Note: TRIVIAL-specific keywords override BUG_FIX when both match.
+   Note: An explicit trivial-change phrase such as "fix typo" may override
+   BUG_FIX. A generic speed modifier such as "quick" or "quickly" never does.
 
 2. TRIVIAL: Goal contains keywords like:
    - "fix typo", "typo", "spelling"
-   - "small change", "minor", "quick", "simple", "tiny"
+   - "small change", "minor", "simple", "tiny"
    - "rename", "update text"
    -> Seed target, exact desired result, and scope-boundary branches.
 

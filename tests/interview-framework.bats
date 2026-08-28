@@ -119,6 +119,11 @@ PHASE_COMMANDS=(
     ! grep -Eiq 'questions? one at a time|WHILE askedCount|askedCount >= minRequired|maxAllowed' "${files[@]}"
 }
 
+@test "generic speed wording does not override bug-fix intent" {
+    grep -Fq 'A generic speed modifier such as "quick" or "quickly" never does.' "$INTENT_FILE"
+    ! grep -Eq '^   - .*"quick"' "$INTENT_FILE"
+}
+
 @test "bug task planning reads the goal grill reproduction command" {
     grep -q 'latest `Reproduction command:` entry in the goal grill' "$TASK_PLANNER"
     grep -q 'Goal Grill round' "$TASK_PLANNER"

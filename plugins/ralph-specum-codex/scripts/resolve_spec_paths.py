@@ -133,6 +133,8 @@ def default_specs_dir(cwd: Path, specs_dirs: list[str]) -> str:
 def resolve_prototype_settings(
     settings: dict[str, object],
 ) -> tuple[dict[str, int], list[str]]:
+    """Validate prototype settings and report each defaulted value."""
+
     resolved: dict[str, int] = {}
     warnings: list[str] = []
     for key, (default, minimum, maximum) in PROTOTYPE_SETTINGS.items():
@@ -190,6 +192,8 @@ def resolve_current(cwd: Path, default_dir: str) -> str | None:
 
 
 def resolve_spec_root(current: str | None, specs_dirs: list[str], default_dir: str) -> str:
+    """Return the longest configured root that contains the current spec."""
+
     if not current:
         return normalize_relative(default_dir)
     normalized_current = normalize_relative(current)

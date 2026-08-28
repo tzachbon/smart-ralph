@@ -537,3 +537,14 @@ More text")
     fallback_count=$(sed -n '/tail -20.*ALL_TASKS_COMPLETE/,/# Validate state file is readable JSON/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || true)
     [ "$fallback_count" -ge 1 ]
 }
+
+@test "stop watcher selects prototype history and uses the blocking prototype return index" {
+    run bash -c "grep -q 'PROTOTYPE_HISTORY' '$STOP_WATCHER_SCRIPT' && \
+        grep -q 'targetDecisions' '$STOP_WATCHER_SCRIPT' && \
+        ! grep -q 'activePrototypes\[\]\? | \.returnTaskIndex' '$STOP_WATCHER_SCRIPT'"
+    [ "$status" -eq 0 ]
+
+    selection_line=$(grep -n '# Select whenever active or terminal prototype history exists.' "$STOP_WATCHER_SCRIPT" | cut -d: -f1)
+    completion_line=$(grep -n '# Check for ALL_TASKS_COMPLETE in transcript' "$STOP_WATCHER_SCRIPT" | cut -d: -f1)
+    [ "$selection_line" -lt "$completion_line" ]
+}

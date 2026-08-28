@@ -25,15 +25,21 @@ JSON = dict[str, Any]
 Update = Callable[[JSON], JSON | None]
 
 
-class StateError(SystemExit):
+class StateError(Exception):
+    """Report a rejected or unavailable state operation."""
+
     pass
 
 
 def utc_now() -> str:
+    """Return the current UTC time in the state file format."""
+
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def parse_scalar(raw: str) -> Any:
+    """Parse a legacy scalar assignment without executing input."""
+
     lowered = raw.lower()
     if lowered == "true":
         return True
@@ -48,6 +54,8 @@ def parse_scalar(raw: str) -> Any:
 
 
 def parse_pairs(items: list[str], as_json: bool) -> JSON:
+    """Parse key-value assignments as scalars or strict JSON values."""
+
     merged: JSON = {}
     for item in items:
         if "=" not in item:
@@ -68,6 +76,8 @@ def parse_pairs(items: list[str], as_json: bool) -> JSON:
 
 
 def read_json_object(path: Path) -> JSON:
+    """Read a state object, treating a missing file as empty state."""
+
     if not path.exists():
         return {}
     try:
@@ -80,6 +90,8 @@ def read_json_object(path: Path) -> JSON:
 
 
 def fsync_dir(path: Path) -> None:
+    """Best-effort sync a directory after an atomic state replacement."""
+
     if not hasattr(os, "O_DIRECTORY"):
         return
     try:
@@ -95,6 +107,8 @@ def fsync_dir(path: Path) -> None:
 
 
 def write_json_atomic(path: Path, state: JSON) -> None:
+    """Fsync state before replacement, then best-effort sync its directory."""
+
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.parent / f"{path.name}.tmp"
     encoded = json.dumps(state, indent=2, sort_keys=True) + "\n"
@@ -137,6 +151,8 @@ def _windows_pid_running(pid: int) -> bool:
 
 
 def pid_exists(pid: int) -> bool:
+    """Check process liveness without sending a terminating signal."""
+
     if pid <= 0:
         return False
     if os.name == "nt":
@@ -153,6 +169,8 @@ def pid_exists(pid: int) -> bool:
 
 
 def lock_metadata() -> JSON:
+    """Describe the current process as a directory-lock owner."""
+
     return {
         "host": socket.gethostname(),
         "pid": os.getpid(),
@@ -163,6 +181,8 @@ def lock_metadata() -> JSON:
 
 @contextlib.contextmanager
 def posix_lock(lock_path: Path, timeout: float):
+    """Hold an exclusive flock until context exit or the acquisition deadline."""
+
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     with lock_path.open("a+", encoding="utf-8") as handle:
         deadline = time.monotonic() + timeout
@@ -186,6 +206,8 @@ def posix_lock(lock_path: Path, timeout: float):
 
 
 def parse_time(raw: Any) -> float | None:
+    """Parse an ISO timestamp for stale-owner checks."""
+
     if not isinstance(raw, str):
         return None
     try:
@@ -195,6 +217,8 @@ def parse_time(raw: Any) -> float | None:
 
 
 def try_break_stale_lock(lock_path: Path, stale_seconds: int) -> bool:
+    """Remove a directory lock only when its owner metadata is stale."""
+
     owner_path = lock_path / "owner.json"
     try:
         owner = json.loads(owner_path.read_text(encoding="utf-8"))
@@ -213,7 +237,11 @@ def try_break_stale_lock(lock_path: Path, stale_seconds: int) -> bool:
     heartbeat = parse_time(owner.get("heartbeatAt") or owner.get("created"))
     if heartbeat is None or time.time() - heartbeat < stale_seconds:
         return False
-    if owner.get("host") == socket.gethostname() and pid_exists(int(owner.get("pid") or 0)):
+    try:
+        owner_pid = int(str(owner.get("pid") or 0), 10)
+    except ValueError:
+        owner_pid = 0
+    if owner.get("host") == socket.gethostname() and pid_exists(owner_pid):
         return False
     try:
         owner_path.unlink(missing_ok=True)
@@ -225,6 +253,8 @@ def try_break_stale_lock(lock_path: Path, stale_seconds: int) -> bool:
 
 @contextlib.contextmanager
 def directory_lock(lock_path: Path, timeout: float, stale_seconds: int = 600):
+    """Hold a portable directory lock and recover only stale owners."""
+
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     deadline = time.monotonic() + timeout
     acquired = False
@@ -260,6 +290,8 @@ def directory_lock(lock_path: Path, timeout: float, stale_seconds: int = 600):
 
 
 def lock_for(state_path: Path, timeout: float):
+    """Select the POSIX or directory lock implementation for a state file."""
+
     lock_path = state_path.parent / ".ralph-state.lock"
     if fcntl is not None and os.name != "nt":
         return posix_lock(lock_path, timeout)
@@ -267,6 +299,8 @@ def lock_for(state_path: Path, timeout: float):
 
 
 def mutate_state(state_path: Path, timeout: float, update: Update, *, delete: bool = False) -> JSON:
+    """Update and durably publish state while holding its exclusive lock."""
+
     with lock_for(state_path, timeout):
         state = read_json_object(state_path)
         result = update(state)
@@ -285,6 +319,8 @@ def mutate_state(state_path: Path, timeout: float, update: Update, *, delete: bo
 
 
 def active_map(state: JSON) -> JSON:
+    """Return the mutable active-prototype map, creating it when absent."""
+
     active = state.get("activePrototypes")
     if active is None:
         active = {}
@@ -295,6 +331,8 @@ def active_map(state: JSON) -> JSON:
 
 
 def get_entry(state: JSON, prototype_id: str) -> JSON:
+    """Return one active prototype entry or reject an unknown identifier."""
+
     entry = active_map(state).get(prototype_id)
     if not isinstance(entry, dict):
         raise StateError(f"Prototype not found: {prototype_id}")
@@ -302,11 +340,15 @@ def get_entry(state: JSON, prototype_id: str) -> JSON:
 
 
 def bump(entry: JSON) -> None:
+    """Advance an entry revision and update its timestamp."""
+
     entry["stateRevision"] = int(entry.get("stateRevision") or 0) + 1
     entry["updated"] = utc_now()
 
 
 def ensure_revision(entry: JSON, expected: int | None) -> None:
+    """Enforce an optional compare-and-set state revision."""
+
     if expected is None:
         return
     current = int(entry.get("stateRevision") or 0)
@@ -315,6 +357,8 @@ def ensure_revision(entry: JSON, expected: int | None) -> None:
 
 
 def ensure_token(entry: JSON, token: str | None) -> None:
+    """Require the active lease token for a builder mutation."""
+
     if token is None:
         raise StateError("leaseToken is required")
     if entry.get("leaseToken") != token:
@@ -322,6 +366,8 @@ def ensure_token(entry: JSON, token: str | None) -> None:
 
 
 def live_lease(entry: JSON, owner: str) -> bool:
+    """Return whether another owner still holds an unexpired lease."""
+
     entry_owner = entry.get("owner")
     if not entry_owner or entry_owner == owner:
         return False
@@ -330,6 +376,8 @@ def live_lease(entry: JSON, owner: str) -> bool:
 
 
 def lease_until(seconds: int, hard_deadline: Any = None) -> str:
+    """Return a lease expiry capped by the builder hard deadline."""
+
     target = time.time() + seconds
     hard = parse_time(hard_deadline)
     if hard is not None:

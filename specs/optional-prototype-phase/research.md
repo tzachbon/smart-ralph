@@ -8,21 +8,21 @@ created: 2026-08-27T15:15:00Z
 
 ## In short
 
-Add `prototype` as an optional planning phase between requirements and design:
+Prototype shipped as an optional overlay that leaves the main planning phase unchanged:
 
 ```text
-research -> requirements -> [prototype] -> design -> tasks -> execution
+research -> requirements -> [prototype overlay] -> design -> tasks -> execution
 ```
 
-The smallest useful version gives Claude and Codex each one new command or helper skill, one new agent, one `prototype.md` decision record, one template, and one new state value. Users opt in by running the prototype command after requirements. The default workflow and quick mode skip it.
+The implementation gives Claude and Codex a command or helper skill, a builder, immutable records under `<basePath>/prototypes/`, and concurrent live entries under `activePrototypes`. The main state value remains `research`, `requirements`, `design`, `tasks`, or `execution`. Normal mode may suggest an overlay after research or requirements and accepts direct invocation from every main phase. Quick mode runs one bounded, question-free request after requirements and continues to design.
 
-The phase must capture its final prototype code on a throwaway branch outside main. A sibling worktree is an optional isolation method that the user may select, not part of the phase contract. The active feature branch should receive only `prototype.md` and later production code that applies the verdict.
+Retained source stays on an isolated local branch outside main. Eligible ephemeral source may use a sibling worktree or scratch directory and is deleted only after reviewed evidence and an immutable cleanup receipt exist. The active feature branch receives terminal records and later production code that applies approved evidence.
 
-The Claude and Codex schema copies enumerate and document the current phase values. Both copies need the same `prototype` update. The pinned tree also has a version mismatch: the Claude plugin and marketplace are `4.10.0`, while the Codex plugin is `4.10.1`. `plugins/ralph-specum/.claude-plugin/plugin.json:1-4`, `.claude-plugin/marketplace.json:9-17`, `plugins/ralph-specum-codex/.codex-plugin/plugin.json:1-4`. A minor bump for both packages should bring all three versioned entries to one value.
+The implementation kept the main phase enum unchanged and added `phase: prototype` only to prototype-record frontmatter. At the research baseline, the Claude plugin and marketplace were `4.10.0` while the Codex plugin was `4.10.1`; the release work later aligned all three entries at `4.11.0`.
 
-## Confirmed current workflow
+## Baseline workflow before implementation
 
-### Ralph has one linear planning path
+### Ralph had one linear planning path
 
 The documented phase order is `research -> requirements -> design -> tasks -> implement`. Each planning phase ends with `awaitingApproval: true`, and quick mode skips interviews, walkthroughs, and approval stops. `plugins/ralph-specum/skills/spec-workflow/references/phase-transitions.md:5-9`, `plugins/ralph-specum/skills/spec-workflow/references/phase-transitions.md:88-104`.
 
@@ -34,7 +34,7 @@ The next command implicitly approves the preceding artifact. Requirements says t
 
 Quick mode creates state with `phase: "research"`, runs research, requirements, design, and tasks, then changes the state to `execution`. `plugins/ralph-specum/references/quick-mode.md:60-78`, `plugins/ralph-specum/references/quick-mode.md:111-120`. The start command summarizes the same four-artifact sequence and requires a native task for each phase. `plugins/ralph-specum/commands/start.md:253-259`.
 
-V1 should leave that quick sequence unchanged. The Claude stop hook already treats every phase other than `execution` as planning work, and the Codex hook acts only during execution. Neither hook needs new behavior for a directly invoked prototype phase. `plugins/ralph-specum/hooks/scripts/stop-watcher.sh:159-184`, `plugins/ralph-specum-codex/hooks/stop-watcher.sh:38-47`.
+The shipped quick sequence inserts one overlay request after requirements and before design. The Claude stop hook still treats every phase other than `execution` as planning work, and the Codex hook acts only during execution, because the overlay never sets the main phase to `prototype`. `plugins/ralph-specum/hooks/scripts/stop-watcher.sh:159-184`, `plugins/ralph-specum-codex/hooks/stop-watcher.sh:38-47`.
 
 ### State readers are partly generic and partly enumerated
 
@@ -78,15 +78,15 @@ The winning idea must be rewritten under production constraints. Losing variants
 | B. Gate after several artifact walkthroughs | Offer "run prototype" after research, requirements, and design without changing phase state | Fewer new disk artifacts and no new phase enum | No canonical verdict, ambiguous resume point, prototypes can validate three different upstream snapshots |
 | C. Generic side path callable from any planning phase | Prototype can interrupt research, requirements, design, or tasks | Maximum flexibility | Needs origin-phase tracking, stale-artifact rules, more transition branches, and more recovery tests |
 
-## One optional slot after requirements is the smallest viable design
+## The dedicated-phase recommendation was superseded
 
-Recommend option A for the first release.
+The initial research recommended option A. The approved implementation superseded that model with an overlay derived from option C: normal mode can invoke prototype work from any main phase, while quick mode has one fixed post-requirements call site.
 
 Requirements are the first artifact that can state the user-visible behavior and acceptance boundary. Design is the first artifact that should commit the implementation architecture. A prototype between them tests the risky state model or UI choice before the design records it.
 
 This placement also preserves a simple skip path. The design command already requires only `requirements.md`. `plugins/ralph-specum/commands/design.md:22-29`. Leaving that prerequisite intact means omission of `prototype` changes nothing for existing specs.
 
-The phase should have one official slot. The prototype command must require `requirements.md` and reject invocation when `design.md` exists or state has advanced to design, tasks, or execution. Post-design re-entry would need artifact revision ordering and invalidation rules. Defer that behavior until a later release.
+The implementation keeps one official quick-mode slot but permits normal direct invocation from research, requirements, design, tasks, or execution. Dependency selection, stale-artifact gates, return phase, and return task index make post-design and mid-task overlays resumable without changing the main phase.
 
 The prior unmerged `origin/codex/prototype-gates` branch is useful negative evidence. Commit `1a623cf` offered a prototype after research, requirements, and design and stored the result only in `.progress.md`. That implementation kept the disk contract unchanged, so it could not resume a prototype as its own phase or keep one canonical verdict. It also used a terminal logic prototype and omitted the supplied skill's branch capture rules. Do not cherry-pick it into this design.
 
@@ -94,25 +94,25 @@ The prior unmerged `origin/codex/prototype-gates` branch is useful negative evid
 
 ### Normal mode
 
-1. A user opts in by running `/ralph-specum:prototype` after requirements and before design.
-2. The command rejects the run if `requirements.md` is absent, `design.md` exists, or state has moved beyond the pre-design slot.
-3. Omission means skip. Running `/ralph-specum:design` after requirements keeps the current path unchanged.
-4. The prototype coordinator clears the prior approval gate, delegates to `prototype-builder`, checks `prototype.md` and the runnable prototype, then presents the run path or URL.
-5. Approval accepts the recorded verdict and makes design the next phase. A change request reuses the same builder with the user's observations. A review checks the artifact and runnable contract, not production test coverage; the existing `spec-reviewer` must accept `artifactType: prototype` with a prototype rubric.
+1. A user may invoke `/ralph-specum:prototype` from research, requirements, design, tasks, or execution. Research and requirements may also suggest it.
+2. The coordinator records the current main phase, return phase, and return task index without setting `phase: prototype` in `.ralph-state.json`.
+3. Omission leaves the normal phase path unchanged.
+4. The prototype coordinator delegates isolated source work, reviews a candidate record and runnable evidence, then publishes an immutable terminal record.
+5. The user owns normal-mode verdict and handoff decisions. The reviewer checks the artifact and runnable contract, not production test coverage.
 
 This follows the existing approval shape rather than adding a second kind of gate. Phase commands already offer approve, review, or request changes and loop after changes. `plugins/ralph-specum/commands/requirements.md:134-148`.
 
 ### Quick mode
 
-Quick mode skips prototype in v1. It keeps the existing research, requirements, design, and tasks sequence. A future release may add an explicit quick-mode prototype option after it defines how an unattended run can obtain a user verdict.
+Quick mode makes exactly one bounded request after requirements. It takes over the oldest design blocker or selects the highest-risk grounded question, owns verdict and handoff decisions, asks no prototype questions, and continues to design after every outcome.
 
 ### The same command resumes an interrupted prototype
 
-The prototype command owns its own recovery. With `phase: prototype` and `awaitingApproval: false`, rerunning it resumes the builder from `prototype.md` and the recorded branch. With `awaitingApproval: true`, rerunning it shows the verdict and approval choices. Standard start and session guidance should tell the user to invoke `/ralph-specum:prototype` in both cases. Start guidance must never auto-run it, add a start flag, change quick-mode routing, or infer prototype from files when state is absent.
+The prototype command owns recovery through `activePrototypes`, immutable candidates, and terminal records. The earlier main-state `phase: prototype` proposal is superseded. Start and session guidance route active entries and review recovery through `/ralph-specum:prototype`; they do not infer a main prototype phase from files.
 
 ## The canonical artifact should be a decision record
 
-Use `specs/<name>/prototype.md` for workflow truth. Keep the prototype code out of the spec directory and off the active feature branch.
+Use immutable `<basePath>/prototypes/<id>.md` records for workflow truth. Keep prototype source out of the spec directory and off the active feature branch.
 
 The template should contain:
 
@@ -129,7 +129,7 @@ The template should contain:
 
 Add a `prototypeFrontmatter` definition to both schemas with `spec`, `phase: prototype`, `kind`, `verdict`, and `created`. Keep detailed branch and issue data in the artifact, not transient state.
 
-Add only `prototype` as a documented `phase` value. Do not add opt-in, kind, branch, verdict, or return fields to `.ralph-state.json`. `prototype.md` owns those values, and the current state contract keeps phase artifacts outside the runtime state object. `plugins/ralph-specum-codex/references/state-contract.md:14-35`, `plugins/ralph-specum-codex/references/state-contract.md:61-65`.
+Keep the main state `phase` enum unchanged. Use `phase: prototype` only in prototype-record frontmatter, and store live overlay coordination under `activePrototypes`. Immutable terminal records own the final kind, verdict, source disposition, return target, and evidence hashes.
 
 ## Final capture belongs on a branch outside main
 
@@ -143,7 +143,7 @@ After approval, `prototype.md` records the throwaway branch and commit. The acti
 
 Cancel must never delete the retained prototype branch. Claude cancel currently deletes the spec directory, including the only local pointer if it is not captured first. `plugins/ralph-specum/commands/cancel.md:44-76`. Update cancel to read `prototype.md`, report the retained branch, and leave branch deletion to an explicit destructive request. The Codex cancel path already treats directory deletion as a confirmed action. `plugins/ralph-specum-codex/skills/ralph-specum-cancel/SKILL.md:20-26`.
 
-## Affected Claude plugin files
+## Original Claude file proposal (superseded)
 
 | File or component | Change |
 |---|---|
@@ -162,7 +162,7 @@ Cancel must never delete the retained prototype branch. Claude cancel currently 
 
 No behavioral change is needed in `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`; add a regression test that `phase: prototype` behaves like the other non-execution phases. Quick mode stays unchanged.
 
-## Affected Codex plugin files
+## Original Codex file proposal (superseded)
 
 | File or component | Change |
 |---|---|
@@ -196,9 +196,9 @@ The generated index describes itself as auto-generated and was last updated on 2
 
 | Risk | Consequence | Control |
 |---|---|---|
-| Optional becomes mandatory | Every spec pays time and branch cost | Add only a direct command and leave design callable after requirements |
+| Optional becomes mandatory | Every spec pays time and branch cost | Keep normal suggestions user-owned and limit quick mode to one bounded request |
 | Prototype code reaches production | Untested code enters implementation | Require final capture on a throwaway branch outside main; a sibling worktree remains optional |
-| Post-design invocation changes an approved design | Tasks can reflect conflicting decisions | Reject prototype when design exists or state has advanced past the pre-design slot |
+| Post-design invocation changes an approved design | Tasks can reflect conflicting decisions | Track dependencies and block stale downstream artifacts or task indexes before consumption |
 | Issue or remote branch changes exceed authority | External state changes without consent | Record a ready pointer and require explicit push or issue-update authority |
 | Logic and UI paths blur | Builder produces the wrong artifact | Require one question and one `kind`; ask the user when the choice is unclear |
 | Existing count tests fail | Package structure change breaks CI | Replace hard-coded counts with explicit lists that include the new helper, agent, and template |
@@ -223,8 +223,8 @@ git diff --check
 
 Add tests for:
 
-1. Direct invocation succeeds only after requirements and before design; default and quick flows still skip it.
-2. State merge preserves existing fields, stores `phase: prototype`, resumes through the same command, and rejects post-design invocation.
+1. Direct invocation preserves every supported origin phase; normal suggestions stay optional; quick mode makes one post-requirements request.
+2. State merge preserves the main phase and unknown fields, stores live work under `activePrototypes`, and resumes through the same command.
 3. Logic/UI selection, fallback questioning, required artifact headings, and the normal approval loop.
 4. Status, switch, cancel reporting, help, README, schemas, reviewer acceptance and prototype rubric, and all three version entries.
 5. Claude/Codex helper parity, updated skill/agent/template lists, script-count coverage, and final prototype capture outside main.
@@ -235,18 +235,18 @@ The pinned tree has a known version issue. `bash tests/helpers/version-sync.sh` 
 
 ## Recommendations for requirements
 
-1. Define `prototype` as an optional direct command after requirements and before design. Default and quick workflows skip it.
-2. Reject invocation when requirements are missing, design exists, or state has advanced beyond the pre-design slot.
-3. Require one canonical `prototype.md` with question, kind, run instructions, observations, verdict, design input, branch pointer, and issue-pointer status.
-4. Add only `prototype` as a documented phase value. Keep branch, kind, and verdict in `prototype.md`.
+1. Define prototype work as an optional overlay available from every main phase, with user-owned normal suggestions and one question-free quick request after requirements.
+2. Preserve the main phase and store concurrent live entries under `activePrototypes`; gate downstream work on blockers, dependencies, and staleness.
+3. Publish immutable `<basePath>/prototypes/<id>.md` records with the question, evidence, verdict, handoff, source disposition, and hashes.
+4. Keep `prototype` out of the main phase enum; use `phase: prototype` only for prototype-record frontmatter.
 5. Delegate to a dedicated builder that follows the supplied logic and UI paths, including the single-file logic demo and three route variants.
 6. Require final prototype capture on a throwaway branch outside main. Offer a sibling worktree only when the user selects it.
 7. Update Claude and Codex in one change, including the command or helper, agents, templates, schemas, state and transition references, status/help/switch/cancel paths, resume owners, spec-reviewer prototype acceptance and rubric, docs, tests, and matching minor versions.
 
-## Open questions
+## Resolved authorization questions
 
-1. Does invoking the prototype phase authorize pushing its throwaway branch, or must the phase ask separately? Current `commitSpec` wording covers spec artifacts only.
-2. Which issue systems can receive the required branch pointer, and is writing that pointer part of the phase or a draft for later approval?
+1. Invoking the overlay and enabling `commitSpec` authorize local work only. Pushing terminal records requires separate authorization naming each exact record, and isolated prototype source branches never push.
+2. Issue writes and other remote lifecycle actions require their own authorization and run only after the Prototype Evidence Push Gate permits and completes the dependent push.
 
 ## Sources
 

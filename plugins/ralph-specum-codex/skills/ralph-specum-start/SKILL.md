@@ -23,7 +23,7 @@ Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill by resolving two parent 
 ## Action
 
 1. Parse explicit name, goal, `--quick`, `--resume <prototype-id>`, commit flags, optional specs root, and optional `--tasks-size fine|coarse`.
-2. Resolve the target by explicit path, exact name, or `.current-spec`.
+2. Classify new versus resume intent, then resolve the classified target by explicit path, exact name, or `.current-spec`. A new-spec request does not inherit or recover the existing current spec.
 3. If the same name exists in multiple configured roots, stop and require a full path.
 4. Check active epic context from `specs/.current-epic` when no explicit spec was chosen.
 5. For large or cross-cutting goals, route to triage instead of forcing a single spec.
@@ -54,13 +54,14 @@ Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill by resolving two parent 
 
 ## Prototype Reconciliation and Resume
 
-After resolving the target and before normal resume or quick routing:
+After resolving the classified target and before normal resume or quick routing. Skip existing-current-spec recovery for new-spec intent:
 
 1. Use `"$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py"` and only its resolved `basePath`. When both `basePath` and `<basePath>/.ralph-state.json` exist, run `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" reconcile --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"`, then re-read state.
 2. Treat a missing `activePrototypes` field as an empty map. Sort entries by `created`, then ID.
 3. Resume an explicit active ID through `$ralph-specum-prototype --resume <id>` and stop this skill. In normal mode, resume the sole active entry automatically. When several remain, list deterministic IDs with question, status, blocker, `returnPhase`, and `returnTaskIndex`, then stop for an explicit ID.
 4. In quick mode, ask no question. Sort entries that block design by `created`, then ID. At the post-requirements boundary, route through `$ralph-specum-prototype --quick`; the prototype skill takes over the oldest design blocker and owns every decision. Preserve earlier quick flow and unrelated entries.
-5. Treat `resume_review` candidates as recovery work, not terminal evidence. Exclude quarantined or malformed records. If no overlay exists, continue the existing start behavior without extra output.
+5. Treat `resume_review` candidates as recovery work, not terminal evidence. Route each through deterministic exact-candidate review and publish recovery even when its ID is absent from `activePrototypes`. If recovery cannot proceed, stop and report the candidate ID and candidate hash. Exclude quarantined or malformed records. If no overlay exists, continue the existing start behavior without extra output.
+6. Quick mode completes its automatic local route and does not reach the interactive Response Handoff below.
 
 ## Branch Isolation
 
@@ -70,7 +71,7 @@ After resolving the target and before normal resume or quick routing:
 ## Response Handoff
 
 - After creating or resuming the spec, name the resolved spec path and summarize the current state briefly.
-- End with exactly one explicit choice prompt:
+- In normal mode only, end with exactly one explicit choice prompt:
   - `request changes`
   - `continue to research`
 - Do not run research until the user explicitly asks to continue or explicitly asked for quick or autonomous flow.

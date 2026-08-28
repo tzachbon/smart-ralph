@@ -12,4 +12,6 @@ repo_root() { echo "$BATS_TEST_DIRNAME/.."; }
     grep -Fq 'gh api --hostname github.com --method PUT /user/starred/tzachbon/smart-ralph' "$command_file"
     grep -Fq 'Do not ask again when the marker exists.' "$command_file"
     grep -Fq 'Record the decision after either option' "$command_file"
+    grep -Fq 'When `--quick` is present, skip the rest of Step 1.5 without asking, starring, or writing the marker.' "$command_file"
+    ! grep -Fq 'allowed even when `--quick` is present' "$command_file"
 }

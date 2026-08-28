@@ -52,10 +52,11 @@ The result should include user stories, acceptance criteria, functional requirem
 ## Response Handoff
 
 - After writing `requirements.md`, name `requirements.md` and summarize the requirements briefly.
-- End with exactly one explicit choice prompt:
+- In normal mode only, end with exactly one explicit choice prompt:
   - `approve current artifact`
   - `request changes`
   - `continue to design`
   - `continue to prototype`
-- Treat `continue to design` as approval of `requirements.md`.
-- Treat `continue to prototype` as approval of `requirements.md` and route through `$ralph-specum-prototype` with `returnPhase: design`.
+- In normal mode, treat `continue to design` as approval of `requirements.md`.
+- In normal mode, treat `continue to prototype` as approval of `requirements.md` and route through `$ralph-specum-prototype` with `returnPhase: design`.
+- In quick mode, omit the choice prompt and any second prototype route. After the single Quick Prototype Gate request completes, continue directly to design.

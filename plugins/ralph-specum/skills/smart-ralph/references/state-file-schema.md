@@ -85,7 +85,7 @@ Completion may call `delete-state` only when `activePrototypes` is empty. A lock
 
 ## Records And Gates
 
-Render candidates exclusively under `<basePath>/prototypes/.candidates/`, review the exact bytes and source evidence, then publish `<basePath>/prototypes/<id>.md` without overwrite. Terminal records are immutable. A correction, conflict decision, cancellation, or changed conclusion creates a new ID and names prior records in `supersedes`.
+Render candidates exclusively at `<basePath>/prototypes/.<prototype-id>.candidate.md`, review the exact bytes and source evidence, then publish `<basePath>/prototypes/<id>.md` without overwrite. Terminal records are immutable. A correction, conflict decision, cancellation, or changed conclusion creates a new ID and names prior records in `supersedes`.
 
 Downstream selection accepts only valid, non-superseded, `gateApproved` records. In normal mode, the user chooses whether validated or rejected evidence is included. In quick mode, the agent approves validated or rejected evidence; skipped, failed, and inconclusive records do not feed design. Active blockers and stale indexes stop only dependent work.
 

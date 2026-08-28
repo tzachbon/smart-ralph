@@ -18,8 +18,9 @@ from typing import Any
 
 JSON = dict[str, Any]
 VALID_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
-WINDOWS_TERMINATION_TIMEOUT_SECONDS = 5.0
-WINDOWS_TERMINATION_POLL_SECONDS = 0.05
+TERMINATION_GRACE_SECONDS = 1.0
+TERMINATION_TIMEOUT_SECONDS = 5.0
+TERMINATION_POLL_SECONDS = 0.05
 
 
 class HarnessError(Exception):
@@ -109,7 +110,7 @@ def _wait_for_pid_exit(pid: int, timeout_seconds: float) -> bool:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             return False
-        time.sleep(min(WINDOWS_TERMINATION_POLL_SECONDS, remaining))
+        time.sleep(min(TERMINATION_POLL_SECONDS, remaining))
     return True
 
 
@@ -124,7 +125,7 @@ def _terminate_windows_process_tree(pid: int) -> None:
             check=False,
             capture_output=True,
             text=True,
-            timeout=WINDOWS_TERMINATION_TIMEOUT_SECONDS,
+            timeout=TERMINATION_TIMEOUT_SECONDS,
             shell=False,
         )
     except subprocess.TimeoutExpired:
@@ -143,10 +144,58 @@ def _terminate_windows_process_tree(pid: int) -> None:
             "unavailable-control",
             f"Cannot stop Windows harness process tree {pid}: taskkill exited with status {result.returncode}",
         )
-    if not _wait_for_pid_exit(pid, WINDOWS_TERMINATION_TIMEOUT_SECONDS):
+    if not _wait_for_pid_exit(pid, TERMINATION_TIMEOUT_SECONDS):
         raise HarnessError(
             "unavailable-control",
             f"Cannot stop Windows harness process tree {pid}: process did not exit after taskkill",
+        )
+
+
+def _posix_process_tree_running(pid: int) -> bool:
+    try:
+        os.killpg(pid, 0)
+    except ProcessLookupError:
+        return pid_running(pid)
+    except PermissionError:
+        return True
+    except OSError:
+        return pid_running(pid)
+    return True
+
+
+def _wait_for_posix_process_tree_exit(pid: int, timeout_seconds: float) -> bool:
+    deadline = time.monotonic() + timeout_seconds
+    while _posix_process_tree_running(pid):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        time.sleep(min(TERMINATION_POLL_SECONDS, remaining))
+    return True
+
+
+def _signal_posix_process_tree(pid: int, requested_signal: signal.Signals) -> None:
+    try:
+        os.killpg(pid, requested_signal)
+        return
+    except OSError:
+        pass
+    try:
+        os.kill(pid, requested_signal)
+    except OSError:
+        pass
+
+
+def _terminate_posix_process_tree(pid: int) -> None:
+    if type(pid) is not int or pid <= 0:
+        raise HarnessError("unavailable-control", "Harness metadata contains an invalid POSIX PID.")
+    _signal_posix_process_tree(pid, signal.SIGTERM)
+    if _wait_for_posix_process_tree_exit(pid, TERMINATION_GRACE_SECONDS):
+        return
+    _signal_posix_process_tree(pid, signal.SIGKILL)
+    if not _wait_for_posix_process_tree_exit(pid, TERMINATION_TIMEOUT_SECONDS):
+        raise HarnessError(
+            "unavailable-control",
+            f"Cannot stop POSIX harness process tree {pid}: process group did not exit",
         )
 
 
@@ -157,8 +206,10 @@ def pid_running(pid: int) -> bool:
         return _windows_pid_running(pid)
     proc_stat = Path(f"/proc/{pid}/stat")
     try:
-        if proc_stat.exists() and proc_stat.read_text(encoding="utf-8").split()[2] == "Z":
-            return False
+        if proc_stat.exists():
+            state = proc_stat.read_text(encoding="utf-8").rsplit(")", 1)[1].split()[0]
+            if state == "Z":
+                return False
     except (OSError, IndexError):
         pass
     try:
@@ -181,6 +232,8 @@ def read_output(registry: Path, run_id: str) -> str:
 
 
 def refresh(metadata: JSON, registry: Path) -> JSON:
+    """Persist completion when a running PID exits, except after unverified termination."""
+
     run_id = str(metadata["id"])
     if metadata.get("status") != "running":
         return metadata
@@ -219,6 +272,8 @@ def launch(
     max_builder_executions: int = 2,
     unavailable_control: bool = False,
 ) -> JSON:
+    """Launch a builder and return `launched`, or raise a CLI-mapped harness error."""
+
     validate_id(run_id)
     if unavailable_control:
         raise HarnessError("unavailable-control", "Harness control is unavailable.", exit_code=0)
@@ -277,6 +332,8 @@ def launch(
 
 
 def heartbeat(*, registry: Path, run_id: str) -> JSON:
+    """Extend a running deadline or return `already-complete`; control errors exit 2."""
+
     metadata = refresh(read_metadata(registry, run_id), registry)
     _raise_if_termination_unverified(metadata)
     if metadata.get("status") != "running":
@@ -296,31 +353,26 @@ def heartbeat(*, registry: Path, run_id: str) -> JSON:
 
 
 def interrupt(*, registry: Path, run_id: str, outcome: str = "stopped") -> JSON:
+    """Persist `stopped` or `timeout` only after verified process-tree shutdown."""
+
     metadata = refresh(read_metadata(registry, run_id), registry)
     if metadata.get("status") != "running":
         return {**metadata, "outcome": "already-complete"}
-    if os.name == "nt":
-        try:
+    try:
+        if os.name == "nt":
             _terminate_windows_process_tree(metadata.get("pid"))
-        except HarnessError as exc:
-            metadata["status"] = "running"
-            metadata["terminationUnverified"] = True
-            metadata["controlError"] = str(exc)
-            metadata["controlErrorAt"] = utc_now()
-            write_metadata(registry_path(registry, run_id), metadata)
-            raise
-        metadata.pop("terminationUnverified", None)
-        metadata.pop("controlError", None)
-        metadata.pop("controlErrorAt", None)
-    else:
-        pid = int(metadata.get("pid") or 0)
-        try:
-            os.killpg(pid, signal.SIGTERM)
-        except (ProcessLookupError, PermissionError, OSError):
-            try:
-                os.kill(pid, signal.SIGTERM)
-            except (ProcessLookupError, PermissionError, OSError):
-                pass
+        else:
+            _terminate_posix_process_tree(metadata.get("pid"))
+    except HarnessError as exc:
+        metadata["status"] = "running"
+        metadata["terminationUnverified"] = True
+        metadata["controlError"] = str(exc)
+        metadata["controlErrorAt"] = utc_now()
+        write_metadata(registry_path(registry, run_id), metadata)
+        raise
+    metadata.pop("terminationUnverified", None)
+    metadata.pop("controlError", None)
+    metadata.pop("controlErrorAt", None)
     metadata["status"] = "timed_out" if outcome == "timeout" else "stopped"
     metadata["outcome"] = outcome
     if outcome == "timeout":
@@ -332,6 +384,8 @@ def interrupt(*, registry: Path, run_id: str, outcome: str = "stopped") -> JSON:
 
 
 def status(*, registry: Path, run_id: str) -> JSON:
+    """Return the stored status as outcome; unavailable control maps to CLI exit 2."""
+
     metadata = refresh(read_metadata(registry, run_id), registry)
     _raise_if_termination_unverified(metadata)
     return {**metadata, "outcome": str(metadata.get("status"))}
@@ -340,6 +394,8 @@ def status(*, registry: Path, run_id: str) -> JSON:
 def wait(
     *, registry: Path, run_id: str, until_seconds: float = 10.0, poll_seconds: float = 0.05
 ) -> JSON:
+    """Return `completed`, `timeout`, or `still-running`; control errors exit 2."""
+
     stop_at = time.monotonic() + max(0.0, until_seconds)
     while True:
         metadata = refresh(read_metadata(registry, run_id), registry)
@@ -364,8 +420,15 @@ def wait(
                     float(metadata["hardDeadlineEpoch"]),
                 )
                 write_metadata(registry_path(registry, run_id), metadata)
-        if now >= float(metadata["rollingDeadlineEpoch"]) or time.monotonic() >= stop_at:
+        if now >= float(metadata["rollingDeadlineEpoch"]):
             return {**metadata, "outcome": "timeout", "hard": False, "output": read_output(registry, run_id)}
+        if time.monotonic() >= stop_at:
+            return {
+                **metadata,
+                "outcome": "still-running",
+                "hard": False,
+                "output": read_output(registry, run_id),
+            }
         time.sleep(max(0.01, poll_seconds))
 
 

@@ -53,7 +53,12 @@ fi
 # Extract spec name from path (last component)
 SPEC_NAME=$(basename "$SPEC_PATH")
 
-STATE_FILE="$CWD/$SPEC_PATH/.ralph-state.json"
+if [[ "$SPEC_PATH" = /* ]]; then
+    BASE_PATH="$SPEC_PATH"
+else
+    BASE_PATH="$CWD/${SPEC_PATH#./}"
+fi
+STATE_FILE="$BASE_PATH/.ralph-state.json"
 if [ ! -f "$STATE_FILE" ]; then
     exit 0
 fi
@@ -75,8 +80,96 @@ if command -v stat >/dev/null 2>&1; then
     fi
 fi
 
+# Validate and reconcile before any completion shortcut can inspect active state.
+if ! jq empty "$STATE_FILE" 2>/dev/null; then
+    REASON=$(cat <<EOF
+ERROR: Corrupt state file at $SPEC_PATH/.ralph-state.json
+
+Recovery options:
+1. Reset state: /ralph-specum:implement (reinitializes from tasks.md)
+2. Cancel spec: /ralph-specum:cancel
+EOF
+)
+    emit_block "$REASON" "Ralph-specum: corrupt state file"
+    exit 0
+fi
+
+ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE")
+PROTOTYPE_HISTORY=false
+if [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ] || [ -d "$BASE_PATH/prototypes" ]; then
+    PROTOTYPE_HISTORY=true
+fi
+RECORD_HELPER="$SCRIPT_DIR/prototype-records.py"
+if ! python3 "$RECORD_HELPER" reconcile --base-path "$BASE_PATH" --state "$STATE_FILE" >/dev/null 2>&1; then
+    REASON="Prototype reconciliation failed for $SPEC_NAME. Preserve state and resume the prototype before task continuation."
+    emit_block "$REASON" "Ralph-specum: prototype reconciliation failed"
+    exit 0
+fi
+
 # Completion cannot discard prototype recovery state.
-ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE" 2>/dev/null || echo "0")
+ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE")
+
+# Read state and enforce prototype gates before transcript completion shortcuts.
+PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
+TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
+QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+NATIVE_SYNC=$(jq -r '.nativeSyncEnabled // true' "$STATE_FILE" 2>/dev/null || echo "true")
+
+# Select whenever active or terminal prototype history exists.
+if [ "$PROTOTYPE_HISTORY" = true ] || [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ]; then
+        if ! SELECTOR_OUTPUT=$(python3 "$RECORD_HELPER" select-downstream \
+            --base-path "$BASE_PATH" --state "$STATE_FILE" \
+            --target execution --target tasks --target "task:$TASK_INDEX" 2>/dev/null); then
+            REASON="Prototype selection failed for $SPEC_NAME. Preserve state and resume the prototype before task continuation."
+            emit_block "$REASON" "Ralph-specum: prototype selection failed"
+            exit 0
+        fi
+
+        DEPENDENT_BLOCKERS=$(echo "$SELECTOR_OUTPUT" | jq -c --argjson task "$TASK_INDEX" '
+          [.activeBlockers[]? |
+            ((.blocked // []) | if type == "array" then map(tostring) else [tostring] end) as $targets |
+            select(
+              ($targets | index("execution")) != null or
+              ($targets | index("implement")) != null or
+              ($targets | index("tasks")) != null or
+              ($targets | index("tasks.md")) != null or
+              ($targets | index("task:" + ($task | tostring))) != null or
+              ($targets | index($task | tostring)) != null
+            )
+          ]' 2>/dev/null || echo '[]')
+        STALE_TASK=$(echo "$SELECTOR_OUTPUT" | jq --argjson task "$TASK_INDEX" '[.staleTaskIndexes[]? | select(. == $task)] | length' 2>/dev/null || echo "0")
+        STALE_ARTIFACT=$(echo "$SELECTOR_OUTPUT" | jq '[.staleArtifacts[]? | select(. == "requirements.md" or . == "research.md" or . == "design.md" or . == "tasks.md" or . == "execution")] | length' 2>/dev/null || echo "0")
+        DEPENDENT_COUNT=$(echo "$DEPENDENT_BLOCKERS" | jq 'length' 2>/dev/null || echo "0")
+        TARGET_BLOCKERS=$(echo "$SELECTOR_OUTPUT" | jq '[.targetDecisions[]? | select(.eligible != true)] | length' 2>/dev/null || echo "0")
+
+        if [ "$DEPENDENT_COUNT" -gt 0 ] || [ "$STALE_TASK" -gt 0 ] || [ "$STALE_ARTIFACT" -gt 0 ] || [ "$TARGET_BLOCKERS" -gt 0 ]; then
+            PROTOTYPE_IDS=$(echo "$SELECTOR_OUTPUT" | jq -r '
+              [(.targetDecisions[]? | .blockedBy[], .staleBy[], .proofUnavailableFor[], .transferOverlaps[].id)] | unique | join(", ")
+            ' 2>/dev/null || true)
+            [ -n "$PROTOTYPE_IDS" ] || PROTOTYPE_IDS=$(echo "$DEPENDENT_BLOCKERS" | jq -r 'map(.id) | unique | join(", ")' 2>/dev/null || true)
+            [ -n "$PROTOTYPE_IDS" ] || PROTOTYPE_IDS="unknown"
+            RETURN_TASK_INDEX=$(jq -nr --argjson selection "$SELECTOR_OUTPUT" --slurpfile state "$STATE_FILE" --arg ids "$PROTOTYPE_IDS" '
+              ($ids | split(", ") | map(gsub("^ +| +$"; ""))) as $wanted |
+              [($state[0].activePrototypes // {} | to_entries[]? | select(.key as $id | $wanted | index($id)) | .value.returnTaskIndex),
+               ($selection.selected[]? | select(.id as $id | $wanted | index($id)) | .returnTaskIndex)] |
+              map(select(. != null)) | unique | join(", ")
+            ' 2>/dev/null || true)
+            REASON=$(cat <<EOF
+Prototype work blocks task $((TASK_INDEX + 1)) for $SPEC_NAME.
+
+Active prototype IDs: $PROTOTYPE_IDS
+Stale current task: $STALE_TASK
+Stale upstream artifacts: $STALE_ARTIFACT
+
+Resume the blocking prototype. After its terminal record verifies, restore taskIndex from returnTaskIndex${RETURN_TASK_INDEX:+ ($RETURN_TASK_INDEX)} before dispatch.
+EOF
+)
+            emit_block "$REASON" "Ralph-specum: prototype dependency blocks task continuation"
+            exit 0
+        fi
+fi
 
 # Check for ALL_TASKS_COMPLETE in transcript (backup termination detection)
 # Use specific pattern to avoid false positives from code/comments containing the phrase
@@ -139,89 +232,6 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
         fi
         "$SCRIPT_DIR/update-spec-index.sh" --quiet 2>/dev/null || true
         exit 0
-    fi
-fi
-
-# Validate state file is readable JSON
-if ! jq empty "$STATE_FILE" 2>/dev/null; then
-    REASON=$(cat <<EOF
-ERROR: Corrupt state file at $SPEC_PATH/.ralph-state.json
-
-Recovery options:
-1. Reset state: /ralph-specum:implement (reinitializes from tasks.md)
-2. Cancel spec: /ralph-specum:cancel
-EOF
-)
-
-    jq -n \
-      --arg reason "$REASON" \
-      --arg msg "Ralph-specum: corrupt state file" \
-      '{
-        "decision": "block",
-        "reason": $reason,
-        "systemMessage": $msg
-      }'
-    exit 0
-fi
-
-# Read state
-PHASE=$(jq -r '.phase // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
-TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
-QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
-NATIVE_SYNC=$(jq -r '.nativeSyncEnabled // true' "$STATE_FILE" 2>/dev/null || echo "true")
-
-# Reconcile and gate only when the overlay exists. Specs without activePrototypes keep the legacy path.
-if [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ]; then
-    BASE_PATH="$CWD/$SPEC_PATH"
-    RECORD_HELPER="$SCRIPT_DIR/prototype-records.py"
-    if ! python3 "$RECORD_HELPER" reconcile --base-path "$BASE_PATH" --state "$STATE_FILE" >/dev/null 2>&1; then
-        REASON="Prototype reconciliation failed for $SPEC_NAME. Preserve state and resume the prototype before task continuation."
-        emit_block "$REASON" "Ralph-specum: prototype reconciliation failed"
-        exit 0
-    fi
-
-    ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE" 2>/dev/null || echo "0")
-    if [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ]; then
-        if ! SELECTOR_OUTPUT=$(python3 "$RECORD_HELPER" select-downstream --base-path "$BASE_PATH" --state "$STATE_FILE" 2>/dev/null); then
-            REASON="Prototype selection failed for $SPEC_NAME. Preserve state and resume the prototype before task continuation."
-            emit_block "$REASON" "Ralph-specum: prototype selection failed"
-            exit 0
-        fi
-
-        DEPENDENT_BLOCKERS=$(echo "$SELECTOR_OUTPUT" | jq -c --argjson task "$TASK_INDEX" '
-          [.activeBlockers[]? |
-            ((.blocked // []) | if type == "array" then map(tostring) else [tostring] end) as $targets |
-            select(
-              ($targets | index("execution")) != null or
-              ($targets | index("implement")) != null or
-              ($targets | index("tasks")) != null or
-              ($targets | index("tasks.md")) != null or
-              ($targets | index("task:" + ($task | tostring))) != null or
-              ($targets | index($task | tostring)) != null
-            )
-          ]' 2>/dev/null || echo '[]')
-        STALE_TASK=$(echo "$SELECTOR_OUTPUT" | jq --argjson task "$TASK_INDEX" '[.staleTaskIndexes[]? | select(. == $task)] | length' 2>/dev/null || echo "0")
-        STALE_ARTIFACT=$(echo "$SELECTOR_OUTPUT" | jq '[.staleArtifacts[]? | select(. == "requirements.md" or . == "research.md" or . == "design.md" or . == "tasks.md" or . == "execution")] | length' 2>/dev/null || echo "0")
-        DEPENDENT_COUNT=$(echo "$DEPENDENT_BLOCKERS" | jq 'length' 2>/dev/null || echo "0")
-
-        if [ "$DEPENDENT_COUNT" -gt 0 ] || [ "$STALE_TASK" -gt 0 ] || [ "$STALE_ARTIFACT" -gt 0 ]; then
-            PROTOTYPE_IDS=$(jq -r '(.activePrototypes // {}) | keys | join(", ")' "$STATE_FILE" 2>/dev/null || echo "unknown")
-            RETURN_TASK_INDEX=$(jq -r '[.activePrototypes[]? | .returnTaskIndex // empty] | first // empty' "$STATE_FILE" 2>/dev/null || true)
-            REASON=$(cat <<EOF
-Prototype work blocks task $((TASK_INDEX + 1)) for $SPEC_NAME.
-
-Active prototype IDs: $PROTOTYPE_IDS
-Stale current task: $STALE_TASK
-Stale upstream artifacts: $STALE_ARTIFACT
-
-Resume the blocking prototype. After its terminal record verifies, restore taskIndex from returnTaskIndex${RETURN_TASK_INDEX:+ ($RETURN_TASK_INDEX)} before dispatch.
-EOF
-)
-            emit_block "$REASON" "Ralph-specum: prototype dependency blocks task continuation"
-            exit 0
-        fi
     fi
 fi
 

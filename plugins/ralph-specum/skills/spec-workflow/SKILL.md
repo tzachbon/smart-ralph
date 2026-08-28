@@ -26,7 +26,7 @@ start/new -> research -> requirements -> design -> tasks -> implement
                          optional prototype overlay, then return
 ```
 
-Each phase produces a markdown artifact in `./specs/<name>/`. Normal mode pauses for approval between phases. Quick mode runs all phases then auto-starts execution.
+Each phase produces a markdown artifact under the resolved `<basePath>/`. Normal mode pauses for approval between phases. Quick mode runs all phases then auto-starts execution.
 
 Prototype is an optional overlay, not a main phase. The main `phase` remains `research`, `requirements`, `design`, `tasks`, or `execution`; live prototype work is stored in `activePrototypes`. Resolve the configured spec root and `basePath` before any overlay operation. Follow [`references/phase-transitions.md`](references/phase-transitions.md) when suggesting, starting, resuming, cancelling, or consuming prototype evidence.
 

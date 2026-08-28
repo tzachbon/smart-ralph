@@ -42,7 +42,9 @@ FIRST_RUN_MARKER="$FIRST_RUN_DIR/star-prompt-v1"
 
 Do not ask again when the marker exists.
 
-When the marker does not exist, use `AskUserQuestion` once. This one-time support question is allowed even when `--quick` is present.
+When `--quick` is present, skip the rest of Step 1.5 without asking, starring, or writing the marker.
+
+Otherwise, when the marker does not exist, use `AskUserQuestion` once.
 
 Question: "Would you like to star Smart Ralph on GitHub?"
 
@@ -82,7 +84,7 @@ Do not skip prototype recovery. If `--quick` is present, complete Step 2.5 and t
 
 ## Step 2.5: Reconcile Prototype Work
 
-Resolve the current spec with `ralph_resolve_context` from `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/path-resolver.sh`. If `basePath` and `<basePath>/.ralph-state.json` exist:
+Use the classified target from Step 2. For resume intent, resolve that exact target with `ralph_resolve_context` from `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/path-resolver.sh`. For new-spec intent, skip recovery of the existing current spec. If the classified target's `basePath` and `<basePath>/.ralph-state.json` exist:
 
 1. Run `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py reconcile --base-path "$basePath" --state "$basePath/.ralph-state.json"` before selecting resume work. This is the only allowed candidate/final recovery path.
 2. Re-read state and treat a missing `activePrototypes` field as an empty map. Sort entries by `created`, then ID, so every resume choice is deterministic.
@@ -90,7 +92,7 @@ Resolve the current spec with `ralph_resolve_context` from `${CLAUDE_PLUGIN_ROOT
 4. In normal mode, invoke `/ralph-specum:prototype --resume <id>` automatically when exactly one active entry remains. When several remain, list their IDs, questions, statuses, blockers, `returnPhase`, and `returnTaskIndex`; ask the user to select an ID and stop this command.
 5. In quick mode, never ask. Sort design blockers by `created`, then ID. At or after the post-requirements prototype boundary, invoke `/ralph-specum:prototype --quick`; the prototype coordinator takes over the oldest design blocker and owns its decisions. Before that boundary, preserve the existing quick flow and pass the ordered blocker set to its required post-requirements prototype call.
 
-Candidate actions returned as `resume_review` are active recovery work, not terminal evidence. Valid immutable finals removed from `activePrototypes` by reconciliation do not resume. Quarantined or malformed records are reported and excluded. If there is no overlay work, preserve the existing start behavior below.
+Candidate actions returned as `resume_review` are active recovery work, not terminal evidence. Route each through the prototype coordinator's deterministic candidate review and exact-byte publish recovery even when its ID is absent from `activePrototypes`. If recovery cannot proceed, stop and report the candidate ID and candidate hash. Valid immutable finals removed from `activePrototypes` by reconciliation do not resume. Quarantined or malformed records are reported and excluded. If there is no overlay work, preserve the existing start behavior below.
 
 ## Step 3: Scan Existing Specs
 

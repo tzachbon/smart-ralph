@@ -195,7 +195,7 @@ assert_both_coordinators() {
 }
 
 @test "prototype phase: a skipped push ends every dependent remote lifecycle path" {
-    local root file
+    local root file output
     root="$(repo_root)"
 
     for file in \
@@ -224,10 +224,27 @@ assert_both_coordinators() {
         assert_has "$file" 'Only after step .* completes a permitted push, create the PR.*gh pr create'
         assert_has "$file" 'Enter this remote loop only after.*permitted push'
         assert_has "$file" 'Enter this remote review path only while the permitted-push PR lifecycle is active'
+        assert_has "$file" 'all applicable completion criteria are met'
+        assert_has "$file" 'All applicable commands pass and all applicable criteria are documented'
+        assert_has "$file" 'local remote-lifecycle-skipped report is terminal'
+
+        run sed -n '/^> \*\*Prototype Evidence Push Gate\*\*/,/^> \*\*Default Behavior\*\*/p' "$file"
+        [ "$status" -eq 0 ]
+        [[ "$output" != *$'\n\n'* ]]
     done
+
+    run rg -n 'ALL completion criteria met|Done when.*All completion criteria' \
+        "$root/plugins/ralph-specum/templates/tasks.md" \
+        "$root/plugins/ralph-specum-codex/templates/tasks.md"
+    [ "$status" -eq 1 ]
 
     assert_has "$root/plugins/ralph-specum/references/coordinator-pattern.md" 'Enter or continue this loop only after the Prototype Evidence Push Gate completes the required push'
     assert_has "$root/plugins/ralph-specum-codex/references/workflow.md" 'When the gate permits and completes the push, preserve the existing normal remote lifecycle'
+
+    file="$root/specs/optional-prototype-phase/tasks.md"
+    assert_has "$file" 'Only after the gate permits and completes the feature-branch push'
+    assert_has "$file" 'skipped or denied push is terminal'
+    assert_has "$file" 'run no dependent PR creation, CI wait, review polling, issue write, or other remote lifecycle step'
 }
 
 @test "prototype phase: quick mode has one post-requirements request and no delegated decisions" {
@@ -251,9 +268,10 @@ assert_both_coordinators() {
 }
 
 @test "prototype phase: quick selection, skip, takeover, and retry rules are deterministic" {
-    local quick codex_requirements
+    local quick codex_requirements codex_help
     quick="$(repo_root)/plugins/ralph-specum/references/quick-mode.md"
     codex_requirements="$(codex_skill requirements)"
+    codex_help="$(codex_skill help)"
 
     assert_has "$quick" 'oldest by `created` timestamp'
     assert_has "$quick" 'highest-risk grounded falsifiable question'
@@ -264,7 +282,36 @@ assert_both_coordinators() {
     assert_has "$codex_requirements" 'highest-risk grounded, falsifiable question'
     assert_has "$codex_requirements" 'no suitable question exists'
     assert_has "$codex_requirements" 'builderExecutionAttempt'
+    assert_has "$codex_help" 'highest-risk grounded, falsifiable question when no blocker exists'
     assert_both_coordinators 'one mechanical retry at most'
+}
+
+@test "prototype phase: command and research docs describe the shipped overlay" {
+    local root design_prompt claude_help new_command workflow research
+    root="$(repo_root)"
+    design_prompt="$root/plugins/ralph-specum-codex/skills/ralph-specum-design/agents/openai.yaml"
+    claude_help="$root/plugins/ralph-specum/commands/help.md"
+    new_command="$root/plugins/ralph-specum/commands/new.md"
+    workflow="$root/plugins/ralph-specum/skills/spec-workflow/SKILL.md"
+    research="$root/specs/optional-prototype-phase/research.md"
+
+    assert_has "$design_prompt" 'Write design.md directly'
+    assert_has "$design_prompt" 'leave routing, blocker delegation, and the next design-decision handoff to the parent coordinator'
+    run rg -n 'default_prompt: "Use \$ralph-specum-design' "$design_prompt"
+    [ "$status" -eq 1 ]
+
+    assert_has "$claude_help" '/ralph-specum:prototype \[--resume ID \\| --cancel ID \\| --quick\]'
+    assert_has "$new_command" 'phase: \$phase'
+    assert_has "$new_command" 'Starting \$phase phase'
+    assert_has "$new_command" 'Complete \$phase, then proceed to \$nextPhase'
+    assert_has "$workflow" 'resolved `<basePath>/`'
+
+    assert_has "$research" 'main state value remains `research`, `requirements`, `design`, `tasks`, or `execution`'
+    assert_has "$research" 'Quick mode runs one bounded, question-free request after requirements'
+    assert_has "$research" 'earlier main-state `phase: prototype` proposal is superseded'
+    assert_has "$research" 'Keep `prototype` out of the main phase enum'
+    run rg -n 'Quick mode skips prototype|Default and quick workflows skip it' "$research"
+    [ "$status" -eq 1 ]
 }
 
 @test "prototype phase: every quick result continues to design" {
@@ -308,6 +355,7 @@ assert_both_coordinators() {
     assert_has "$claude_reviewer" 'exact candidate file bytes'
     assert_has "$claude_reviewer" 'Every review MUST end with exactly one of: `REVIEW_PASS` or `REVIEW_FAIL`'
     assert_has "$claude_reviewer" 'Any missing input or mismatch is REVIEW_FAIL|A missing input is a failure'
+    assert_has "$claude_reviewer" 'For prototype, output `REVIEW_PASS` only when every Prototype Rubric dimension is PASS'
     assert_has "$codex_reviewer" 'exact candidate file bytes'
     assert_has "$codex_reviewer" 'Every response must end with exactly REVIEW_PASS or REVIEW_FAIL'
     assert_has "$codex_reviewer" 'Any missing input or mismatch is REVIEW_FAIL'
@@ -332,6 +380,46 @@ assert_both_coordinators() {
     assert_has "$claude_tasks" 'Do not generate tasks from stale design'
     assert_has "$codex_design" 'Route to the earliest stale phase'
     assert_has "$codex_tasks" 'Route to the earliest stale phase'
+}
+
+@test "prototype phase: coordinator recovery and dispatch contracts fail closed" {
+    local root claude_start claude_implement claude_cancel codex_start codex_implement codex_refactor codex_cancel codex_requirements codex_switch
+    root="$(repo_root)"
+    claude_start="$(claude_command start)"
+    claude_implement="$(claude_command implement)"
+    claude_cancel="$(claude_command cancel)"
+    codex_start="$(codex_skill start)"
+    codex_implement="$(codex_skill implement)"
+    codex_refactor="$(codex_skill refactor)"
+    codex_cancel="$(codex_skill cancel)"
+    codex_requirements="$(codex_skill requirements)"
+    codex_switch="$(codex_skill switch)"
+
+    assert_has "$claude_start" 'classified target'
+    assert_has "$claude_start" 'new-spec.*skip|skip.*new-spec'
+    assert_has "$claude_start" 'resume_review.*candidate ID.*candidate hash|candidate ID.*candidate hash.*resume_review'
+    assert_has "$codex_start" 'resume_review.*candidate ID.*candidate hash|candidate ID.*candidate hash.*resume_review'
+    assert_has "$codex_start" 'Quick mode.*does not reach.*Response Handoff|quick mode.*does not reach.*Response Handoff'
+
+    assert_has "$claude_implement" 'fresh execution'
+    assert_has "$claude_implement" 'returnTaskIndex'
+    assert_has "$claude_implement" 'targetDecisions'
+    assert_has "$codex_implement" 'prototype history'
+    assert_has "$codex_implement" 'targetDecisions'
+    assert_has "$codex_refactor" 'whenever.*\.ralph-state\.json.*exists|\.ralph-state\.json.*exists.*whenever'
+
+    assert_has "$claude_cancel" 'leaseToken'
+    assert_has "$claude_cancel" 'verified.*interrupt|interrupt.*verified'
+    assert_has "$codex_cancel" 'leaseToken'
+    assert_has "$codex_cancel" 'unavailable or unverified'
+    assert_has "$codex_requirements" 'normal mode only'
+    assert_has "$codex_switch" 'returnPhase'
+    assert_has "$codex_switch" 'returnTaskIndex'
+
+    assert_has "$root/plugins/ralph-specum/references/branch-management.md" 'If the source-state read fails'
+    assert_has "$root/plugins/ralph-specum/agents/research-analyst.md" 'BASE_PATH='
+    assert_has "$root/plugins/ralph-specum/agents/task-planner.md" 'BASE_PATH='
+    assert_has "$root/plugins/ralph-specum/skills/smart-ralph/references/state-file-schema.md" 'prototypes/\.<prototype-id>\.candidate\.md'
 }
 
 @test "prototype harness: Claude launch wait status heartbeat and interrupt are bounded" {

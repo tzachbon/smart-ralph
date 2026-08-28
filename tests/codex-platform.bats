@@ -304,7 +304,7 @@ expected = {
     "ralph-specum-start": ["wait for explicit direction", "reconcile prototype records"],
     "ralph-specum-research": ["continue to requirements", "continue to prototype", "request changes"],
     "ralph-specum-requirements": ["continue to design", "continue to prototype", "request changes"],
-    "ralph-specum-design": ["select valid prototype evidence", "active prototype blockers", "next design decision"],
+    "ralph-specum-design": ["coordinator-selected prototype evidence", "Write design.md directly", "parent coordinator"],
     "ralph-specum-tasks": ["select valid prototype evidence", "active prototype blockers", "next implementation decision"],
     "ralph-specum-cancel": ["whether anything was removed", "exactly what if so"],
     "ralph-specum-triage": ["approve current artifact", "continue to the next spec"],
@@ -489,10 +489,28 @@ assert "[\"merge\"" in merge_state
 assert "activePrototypes" in locked_state
 assert "review-candidate" in prototype_records
 assert "select-downstream" in prototype_records
+assert "targetDecisions" in prototype_records
 assert "heartbeat" in prototype_harness
 assert "interrupt" in prototype_harness
 assert ".current-spec" in resolve_paths
 assert "specs_dirs" in resolve_paths
 assert "quick_mode_default" not in resolve_paths
+' "$root"
+}
+
+
+@test "codex platform: stop watcher selects terminal history and reports the blocking return index" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+watcher = (ROOT / "plugins/ralph-specum-codex/hooks/stop-watcher.sh").read_text()
+assert "PROTOTYPE_HISTORY" in watcher
+assert watcher.count("select-downstream") == 1
+assert "targetDecisions" in watcher
+assert "DEPENDENT_BLOCKERS" in watcher
+assert "returnTaskIndex" in watcher
+assert "activePrototypes[]? | .returnTaskIndex" not in watcher
+assert watcher.index("select-downstream") < watcher.index("# Completion must not discard")
 ' "$root"
 }

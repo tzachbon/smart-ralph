@@ -24,6 +24,10 @@ resolver_cli() {
     echo "$(repo_root)/plugins/ralph-specum-codex/scripts/resolve_spec_paths.py"
 }
 
+claude_resolver() {
+    echo "$(repo_root)/plugins/ralph-specum/hooks/scripts/path-resolver.sh"
+}
+
 entry_json() {
     local prototype_id status revision request_attempt builder_attempt hard_deadline
     prototype_id="$1"
@@ -305,6 +309,27 @@ teardown() {
     [ ! -e "$TEST_ROOT/specs/demo/.ralph-state.json" ]
 }
 
+@test "prototype state: shell resolver normalizes decimal settings and selects the longest root" {
+    local result
+    mkdir -p "$TEST_ROOT/.claude" "$TEST_ROOT/specs/sub/demo"
+    cat > "$TEST_ROOT/.claude/ralph-specum.local.md" <<'EOF'
+---
+specs_dirs: ["./specs", "./specs/sub"]
+prototype_logic_timeout_minutes: 008
+prototype_transfer_path_extra_minutes: -00
+---
+EOF
+    printf '%s\n' './specs/sub/demo' > "$TEST_ROOT/specs/.current-spec"
+
+    run env RALPH_CWD="$TEST_ROOT" bash -c 'source "$1"; ralph_resolve_context' _ "$(claude_resolver)"
+    [ "$status" -eq 0 ]
+    result="$output"
+    [ "$(jq -r .specRoot <<< "$result")" = "./specs/sub" ]
+    [ "$(jq -r .prototype_settings.prototype_logic_timeout_minutes <<< "$result")" -eq 8 ]
+    [ "$(jq -r .prototype_settings.prototype_transfer_path_extra_minutes <<< "$result")" -eq 0 ]
+    [ "$(jq -r '.configWarnings | length' <<< "$result")" -eq 0 ]
+}
+
 @test "prototype state: POSIX lock path times out without changing state" {
     local cli lock_path ready holder before after ready_waits lock_status lock_output
     cli="$(state_cli)"
@@ -377,9 +402,14 @@ lock_path.mkdir()
     "created": "2000-01-01T00:00:00Z",
     "heartbeatAt": "2000-01-01T00:00:00Z",
 }), encoding="utf-8")
-with module.directory_lock(lock_path, 0.2, stale_seconds=1):
-    current = json.loads((lock_path / "owner.json").read_text(encoding="utf-8"))
-    assert current["pid"] == os.getpid()
+real_pid_exists = module.pid_exists
+module.pid_exists = lambda _pid: False
+try:
+    with module.directory_lock(lock_path, 0.2, stale_seconds=1):
+        current = json.loads((lock_path / "owner.json").read_text(encoding="utf-8"))
+        assert current["pid"] == os.getpid()
+finally:
+    module.pid_exists = real_pid_exists
 assert not lock_path.exists()
 
 lock_path.mkdir()

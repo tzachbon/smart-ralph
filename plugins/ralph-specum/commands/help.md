@@ -18,7 +18,7 @@ Ralph Specum is a spec-driven development plugin that guides you through researc
 | `/ralph-specum:requirements` | Generate requirements (approves research) |
 | `/ralph-specum:design` | Generate design (approves requirements) |
 | `/ralph-specum:tasks` | Generate tasks (approves design) |
-| `/ralph-specum:prototype [--resume ID | --cancel ID | --quick]` | Run, resume, or cancel optional prototype evidence |
+| `/ralph-specum:prototype [--resume ID \| --cancel ID \| --quick]` | Run, resume, or cancel optional prototype evidence |
 | `/ralph-specum:implement` | Start execution loop (approves tasks) |
 | `/ralph-specum:status` | Show all specs and progress |
 | `/ralph-specum:switch <name>` | Change active spec |

@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Design"
   short_description: "Design with approved prototype evidence"
-  default_prompt: "Use $ralph-specum-design to select valid prototype evidence before writing design.md; route active prototype blockers through $ralph-specum-prototype, then ask for the next design decision."
+  default_prompt: "Consume the requirements, research, coordinator-selected prototype evidence, clean blocker and stale-gate result, and interview context. Write design.md directly. Do not invoke $ralph-specum-design or handle prototype routing; leave routing, blocker delegation, and the next design-decision handoff to the parent coordinator."
 policy:
   allow_implicit_invocation: false

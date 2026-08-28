@@ -27,7 +27,7 @@ Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill by resolving two parent 
 2. Read `.ralph-state.json` when present and summarize the current phase and progress.
 3. If `activePrototypes` is non-empty, use the resolved `basePath` and run `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py" reconcile` before cancellation. Process active IDs by `created`, then ID, at the next safe tool boundary.
 4. For each active prototype:
-   - Interrupt only its recorded child builder through the bounded harness contract, then release its lease through `locked_state.py`.
+   - Read its `leaseToken`. Interrupt only its recorded child builder through the bounded harness contract. Release through `locked_state.py release-lease --id <id> --lease-token <leaseToken>` only after the harness verifies that the recorded builder and descendants stopped. If interruption is unavailable or unverified, or reports any failed termination attempt, retain the lease and active entry and stop cancellation for that ID.
    - Preserve its question, blocker, return phase and task, timestamps, local branch, isolation pointers, partial implementation, run evidence, stale metadata, and downstream artifacts.
    - Render an exclusive terminal candidate with `verdict: cancelled`, `gateApproved: false`, and `sourceDisposition: retained`. Never overwrite existing candidate or final bytes; allocate a superseding ID on collision.
    - Send the exact candidate bytes and source pointers to the reviewer. Continue only after `REVIEW_PASS`, then record the candidate hash and publish through `prototype_records.py`.

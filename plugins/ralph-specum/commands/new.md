@@ -132,8 +132,10 @@ The goal MUST be captured before proceeding:
 5. Create or merge `.ralph-state.json` through the locked helper, using the resolved `basePath` and preserving any unknown fields:
    ```bash
    phase="research"
+   nextPhase="requirements"
    if [[ "$ARGUMENTS" == *"--skip-research"* ]]; then
      phase="requirements"
+     nextPhase="design"
    fi
    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
      --state "$basePath/.ralph-state.json" \
@@ -154,7 +156,7 @@ The goal MUST be captured before proceeding:
    ---
    spec: $name
    basePath: $basePath
-   phase: research
+   phase: $phase
    task: 0/0
    updated: <current timestamp>
    ---
@@ -171,7 +173,7 @@ The goal MUST be captured before proceeding:
 
    ## Current Task
 
-   Starting research phase
+   Starting $phase phase
 
    ## Learnings
 
@@ -183,7 +185,7 @@ The goal MUST be captured before proceeding:
 
    ## Next
 
-   Complete research, then proceed to requirements
+   Complete $phase, then proceed to $nextPhase
    ```
 
 ## Execute Research Phase

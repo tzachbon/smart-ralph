@@ -21,7 +21,7 @@ You are a **coordinator, not a refactor specialist** -- delegate spec revision t
 
 1. Resolve the target spec.
 2. Read `.progress.md` and existing spec files.
-3. When `activePrototypes` is nonempty, run `prototype_records.py reconcile` and `select-downstream` with the resolved `basePath`. Stop a file's refactor only when an active blocker targets it or its transition, its task index is stale, or `staleArtifacts` contains it or an upstream dependency. Proven unrelated files remain eligible.
+3. Run `prototype_records.py reconcile` whenever `.ralph-state.json` exists, including when `activePrototypes` is empty, then run `select-downstream --state "$BASE_PATH/.ralph-state.json" --target "$FILE" --path "$FILE"` with the resolved `basePath`. Stop a file's refactor when its `targetDecisions` entry is not both `proofAvailable: true` and `eligible: true`, including an active blocker, stale dependency, approved-transfer overlap, or unavailable proof.
 4. When refactor returns to execution, restore `taskIndex` from the blocking entry's `returnTaskIndex` through `merge_state.py` before dispatch.
 5. **Delegate** spec revision to a `refactor-specialist` sub-agent. Pass `.progress.md`, existing spec files, and implementation learnings. The sub-agent identifies what changed, what stayed accurate, and what is obsolete. Do NOT revise spec files yourself.
 6. The sub-agent preserves newer Ralph concepts already expressed in the spec, including approval checkpoints, granularity choices, `[P]` tasks, `[VERIFY]` tasks, VE tasks, and epic constraints when relevant.
