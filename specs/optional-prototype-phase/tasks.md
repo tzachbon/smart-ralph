@@ -130,32 +130,89 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): preserve source on Codex cancel`
   - _Requirements: FR-2, FR-3, FR-4, FR-8, NFR-1, NFR-5_
 
-- [ ] 1.16 [VERIFY] Prove one local end-to-end prototype record flow
-  - **Do**: Run the exact automated command below. It uses a temporary directory for each helper stack, creates requirements-phase state, reserves an active entry, renders and publishes a minimal skipped record, reconciles state, and asserts the final/candidate/state results. It does not create a spec directory or touch the current checkout state.
+- [x] 1.16 [VERIFY] Prove one local end-to-end prototype record flow
+  - **Do**: Run the exact automated command below. It uses a temporary directory for each helper stack, creates requirements-phase state, reserves an active entry, renders a minimal skipped record with all required sections, proves publish-before-review fails without removing active state, reviews exact candidate bytes, publishes verified bytes, reconciles state, and asserts the final/candidate/state results. It does not create a spec directory or touch the current checkout state.
   - **Files**: Read-only
   - **Done when**: Both helper stacks create one verified immutable final record, remove the active entry only after verification, leave no candidate, and produce matching normalized fields.
   - **Verify**:
     ```bash
-    python3 - <<'PY'
-    import json, pathlib, subprocess, tempfile
+    PYTHONDONTWRITEBYTECODE=1 python3 - <<'PY'
+    import json, os, pathlib, subprocess, tempfile
     stacks = [
         ("plugins/ralph-specum/hooks/scripts/locked-state.py", "plugins/ralph-specum/hooks/scripts/prototype-records.py"),
         ("plugins/ralph-specum-codex/scripts/locked_state.py", "plugins/ralph-specum-codex/scripts/prototype_records.py"),
     ]
+    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+    headings = [
+        "Question",
+        "Blocking Declaration",
+        "Isolation",
+        "Run Instructions",
+        "Cases Or Variants",
+        "Evidence And Observations",
+        "Verdict",
+        "Downstream Handoff",
+        "Conflict Resolution",
+        "Staleness",
+        "Source Disposition",
+    ]
+    sections = {heading: "none" for heading in headings}
+    sections.update({
+        "Question": "Does publication work?",
+        "Evidence And Observations": "candidate hash is reviewed before publish",
+        "Verdict": "skipped",
+        "Source Disposition": "not_created",
+    })
     entry = {"id": "smoke", "stateRevision": 1, "question": "Does publication work?", "questionHash": "smoke", "kind": "logic", "captureMode": "retained", "triggerMode": "explicit", "triggerPhase": "requirements", "returnPhase": "design", "returnTaskIndex": None, "status": "pending", "decisionOwner": "user", "resolutionMode": "normal", "created": "2026-01-01T00:00:00Z", "sourceDisposition": "not_created"}
-    record = {"spec": "smoke", "phase": "prototype", "id": "smoke", "question": "Does publication work?", "kind": "logic", "captureMode": "retained", "triggerMode": "explicit", "triggerPhase": "requirements", "returnPhase": "design", "status": "completed", "verdict": "skipped", "created": "2026-01-01T00:00:00Z", "gateApproved": False, "sourceDisposition": "not_created", "runInstructions": "none"}
+    record = {"spec": "smoke", "phase": "prototype", "id": "smoke", "status": "terminal", "verdict": "skipped", "kind": "logic", "captureMode": "retained", "triggerMode": "explicit", "triggerPhase": "requirements", "returnPhase": "design", "returnTaskIndex": None, "decisionOwner": "user", "resolutionMode": "normal", "gateApproved": False, "created": "2026-01-01T00:00:00Z", "completed": "2026-01-01T00:00:01Z", "sourceDisposition": "not_created", "sections": sections}
+    expected_fields = ("spec", "phase", "id", "status", "verdict", "kind", "captureMode", "triggerMode", "triggerPhase", "returnPhase", "returnTaskIndex", "decisionOwner", "resolutionMode", "gateApproved", "created", "completed", "sourceDisposition")
+    def run_json(args, **kwargs):
+        completed = subprocess.run(args, check=True, text=True, capture_output=True, env=env, **kwargs)
+        return json.loads(completed.stdout)
+    def read_state(path):
+        return json.loads(path.read_text())
+    def parse_frontmatter(path):
+        text = path.read_text()
+        raw = text.split("---\n", 2)[1]
+        parsed = {}
+        for line in raw.splitlines():
+            if not line:
+                continue
+            key, value = line.split(":", 1)
+            value = value.strip()
+            try:
+                parsed[key] = json.loads(value)
+            except json.JSONDecodeError:
+                parsed[key] = value.strip('"')
+        return {key: parsed.get(key) for key in expected_fields}
+    results = []
     for state_cli, record_cli in stacks:
         with tempfile.TemporaryDirectory() as raw:
             base = pathlib.Path(raw)
             state = base / ".ralph-state.json"
-            subprocess.run(["python3", state_cli, "merge", "--state", str(state), "--set", "phase=requirements"], check=True)
-            subprocess.run(["python3", state_cli, "upsert-prototype", "--state", str(state), "--id", "smoke", "--entry-json", json.dumps(entry)], check=True)
-            subprocess.run(["python3", record_cli, "render-candidate", "--base-path", str(base), "--record-json", json.dumps(record)], check=True)
-            subprocess.run(["python3", record_cli, "publish", "--base-path", str(base), "--id", "smoke"], check=True)
-            subprocess.run(["python3", record_cli, "reconcile", "--base-path", str(base), "--state", str(state)], check=True)
-            assert (base / "prototypes" / "smoke.md").is_file()
-            assert not (base / "prototypes" / ".smoke.candidate.md").exists()
-            assert not json.loads(state.read_text()).get("activePrototypes")
+            run_json(["python3", state_cli, "merge", "--state", str(state), "--set", "phase=requirements"])
+            run_json(["python3", state_cli, "upsert-prototype", "--state", str(state), "--id", "smoke", "--entry-json", json.dumps(entry)])
+            rendered = run_json(["python3", record_cli, "render-candidate", "--base-path", str(base), "--record-json", json.dumps(record)])
+            candidate = pathlib.Path(rendered["candidate"])
+            candidate_hash = rendered["candidateHash"]
+            assert candidate.is_file()
+            early_publish = subprocess.run(["python3", record_cli, "publish", "--base-path", str(base), "--id", "smoke", "--state", str(state)], text=True, capture_output=True, env=env)
+            assert early_publish.returncode != 0
+            assert candidate.is_file()
+            assert "smoke" in read_state(state).get("activePrototypes", {})
+            reviewed = run_json(["python3", record_cli, "review-candidate", "--base-path", str(base), "--id", "smoke", "--candidate-hash", candidate_hash, "--state", str(state)])
+            assert reviewed["reviewPass"] is True
+            assert read_state(state)["activePrototypes"]["smoke"]["reviewedCandidateHash"] == candidate_hash
+            published = run_json(["python3", record_cli, "publish", "--base-path", str(base), "--id", "smoke", "--state", str(state)])
+            assert published["recordHash"] == candidate_hash
+            run_json(["python3", record_cli, "reconcile", "--base-path", str(base), "--state", str(state)])
+            final = base / "prototypes" / "smoke.md"
+            assert final.is_file()
+            assert not candidate.exists()
+            assert not read_state(state).get("activePrototypes")
+            results.append(parse_frontmatter(final))
+    assert len(results) == 2
+    assert results[0] == results[1]
     PY
     ```
   - **Commit**: None
