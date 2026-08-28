@@ -516,11 +516,14 @@ def cmd_select_downstream(args: argparse.Namespace) -> JSON:
     for prototype_id, entry in sorted((state.get("activePrototypes") or {}).items()):
         if not isinstance(entry, dict):
             continue
-        blocked = entry.get("blockedArtifacts") or entry.get("blockedTransitions") or []
+        blocking = entry.get("blocking") or {}
+        blocked = (blocking.get("blocks") or []) if isinstance(blocking, dict) else []
         if blocked:
             blockers.append({"id": prototype_id, "status": entry.get("status"), "blocked": blocked})
-        stale_artifacts.update(item for item in (entry.get("staleArtifacts") or []) if isinstance(item, str))
-        stale_tasks.update(item for item in (entry.get("staleTaskIndexes") or []) if isinstance(item, int))
+        checkpoint = entry.get("decisionCheckpoint") or {}
+        if isinstance(checkpoint, dict):
+            stale_artifacts.update(item for item in (checkpoint.get("staleArtifacts") or []) if isinstance(item, str))
+            stale_tasks.update(item for item in (checkpoint.get("staleTaskIndexes") or []) if isinstance(item, int))
     return {
         "selected": selected,
         "superseded": sorted(superseded),
