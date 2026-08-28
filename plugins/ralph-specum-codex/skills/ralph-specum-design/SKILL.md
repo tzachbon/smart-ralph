@@ -21,13 +21,20 @@ You are a **coordinator, not an architect** -- delegate ALL work to an `architec
 
 1. Resolve the active spec. If none exists, stop.
 2. Require `requirements.md`. Read `research.md` when present, `.progress.md`, and current state.
-3. Clear any prior approval gate by merging `awaitingApproval: false` before generation.
-4. Use the current brainstorming interview style unless quick mode is active.
-5. **Delegate** design generation to an `architect-reviewer` sub-agent. Pass requirements, research, and interview context. The sub-agent writes `design.md`. Do NOT write design.md yourself.
-6. Read the sub-agent's output and validate it exists.
-7. Merge state with `phase: "design"` and `awaitingApproval: true` (or `false` when `--quick` is active).
-8. Update `.progress.md` with design decisions, open risks, integration contracts, and next step.
-9. If spec commits are enabled, commit only the spec artifacts.
+3. Run prototype record selection with the resolved `basePath` before generation:
+   ```bash
+   python3 plugins/ralph-specum-codex/scripts/prototype_records.py select-downstream --base-path "$BASE_PATH" --state "$BASE_PATH/.ralph-state.json"
+   ```
+4. Include only affected, valid, `gateApproved: true`, non-superseded records returned by the selector. Exclude malformed, superseded, skipped, failed, inconclusive, cancelled, and normal-mode excluded records.
+5. Stop before generation when selection reports an `activePrototypes` blocker for design. Name the active ID and route resume through `$ralph-specum-prototype`.
+6. Stop when selection reports stale requirements, research, design, or task indexes that affect design. Route to the earliest stale phase. Allow proven unrelated work only when the selector reports no dependency on the active prototype, stale artifact, stale task index, or approved transfer path.
+7. Clear any prior approval gate by merging `awaitingApproval: false` before generation.
+8. Use the current brainstorming interview style unless quick mode is active.
+9. **Delegate** design generation to an `architect-reviewer` sub-agent. Pass requirements, research, selected prototype evidence, the clean blocker/stale-gate result, and interview context. The sub-agent writes `design.md`. Do NOT write design.md yourself.
+10. Read the sub-agent's output and validate it exists.
+11. Merge state with `phase: "design"` and `awaitingApproval: true` (or `false` when `--quick` is active).
+12. Update `.progress.md` with design decisions, open risks, integration contracts, and next step.
+13. If spec commits are enabled, commit only the spec artifacts.
 
 ### Stop Behavior
 

@@ -74,7 +74,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): mirror Codex entry gates`
   - _Requirements: FR-1, FR-6, FR-8, NFR-5_
 
-- [ ] 1.9 Mirror design and tasks evidence gates in Codex
+- [x] 1.9 Mirror design and tasks evidence gates in Codex
   - **Do**: Select only gate-approved records and reject active blockers or stale artifacts before Codex design and task generation. Add matching routing metadata.
   - **Files**: `plugins/ralph-specum-codex/skills/ralph-specum-design/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-design/agents/openai.yaml`, `plugins/ralph-specum-codex/skills/ralph-specum-tasks/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-tasks/agents/openai.yaml`
   - **Done when**: Excluded, superseded, malformed, and stale prototype evidence cannot feed Codex planning.
