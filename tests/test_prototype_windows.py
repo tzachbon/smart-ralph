@@ -5,9 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import signal
 import socket
+import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -18,6 +21,7 @@ SCRIPTS = REPO_ROOT / "plugins" / "ralph-specum-codex" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import locked_state  # noqa: E402
+import prototype_harness  # noqa: E402
 import prototype_records  # noqa: E402
 
 
@@ -45,6 +49,53 @@ class PrototypeWindowsTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.temp.cleanup()
+
+    def test_simulated_windows_pid_probes_do_not_call_os_kill(self) -> None:
+        with mock.patch.object(locked_state.os, "name", "nt"):
+            with mock.patch.object(locked_state, "_windows_pid_running", return_value=True, create=True):
+                with mock.patch.object(locked_state.os, "kill") as kill_spy:
+                    self.assertTrue(locked_state.pid_exists(123))
+                    kill_spy.assert_not_called()
+
+        with mock.patch.object(prototype_harness.os, "name", "nt"):
+            with mock.patch.object(prototype_harness, "_windows_pid_running", return_value=True, create=True):
+                with mock.patch.object(prototype_harness.os, "kill") as kill_spy:
+                    self.assertTrue(prototype_harness.pid_running(123))
+                    kill_spy.assert_not_called()
+
+    @unittest.skipUnless(os.name == "nt", "requires native Windows process APIs")
+    def test_native_windows_pid_probes_leave_a_live_process_running(self) -> None:
+        process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+        try:
+            self.assertTrue(locked_state.pid_exists(process.pid))
+            self.assertTrue(prototype_harness.pid_running(process.pid))
+            self.assertIsNone(process.poll())
+        finally:
+            process.terminate()
+            process.wait(timeout=5)
+
+    @unittest.skipUnless(os.name == "nt", "requires native Windows process APIs")
+    def test_native_windows_interrupt_terminates_without_killpg(self) -> None:
+        registry = Path(self.temp.name) / "harness"
+        launched = prototype_harness.launch(
+            registry=registry,
+            run_id="windows-interrupt",
+            kind="codex_agent",
+            command=[sys.executable, "-c", "import time; time.sleep(30)"],
+            agent_id="windows-child",
+        )
+        pid = int(launched["pid"])
+        try:
+            result = prototype_harness.interrupt(registry=registry, run_id="windows-interrupt")
+            self.assertEqual(result["outcome"], "stopped")
+            for _ in range(100):
+                if not prototype_harness.pid_running(pid):
+                    break
+                time.sleep(0.02)
+            self.assertFalse(prototype_harness.pid_running(pid))
+        finally:
+            if prototype_harness.pid_running(pid):
+                os.kill(pid, signal.SIGTERM)
 
     def test_directory_lock_lifecycle_and_stale_handling(self) -> None:
         lock_path = self.base_path / ".ralph-state.lock"

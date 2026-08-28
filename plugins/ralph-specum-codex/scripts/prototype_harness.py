@@ -71,9 +71,71 @@ def read_metadata(registry: Path, run_id: str) -> JSON:
     return data
 
 
+def _windows_pid_running(pid: int) -> bool:
+    import ctypes
+    from ctypes import wintypes
+
+    process_query_limited_information = 0x1000
+    still_active = 259
+    error_access_denied = 5
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    open_process = kernel32.OpenProcess
+    open_process.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    open_process.restype = wintypes.HANDLE
+    get_exit_code = kernel32.GetExitCodeProcess
+    get_exit_code.argtypes = (wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+    get_exit_code.restype = wintypes.BOOL
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = (wintypes.HANDLE,)
+    close_handle.restype = wintypes.BOOL
+
+    handle = open_process(process_query_limited_information, False, pid)
+    if not handle:
+        return ctypes.get_last_error() == error_access_denied
+    exit_code = wintypes.DWORD()
+    try:
+        if not get_exit_code(handle, ctypes.byref(exit_code)):
+            return True
+        return exit_code.value == still_active
+    finally:
+        close_handle(handle)
+
+
+def _terminate_windows_process(pid: int) -> None:
+    import ctypes
+    from ctypes import wintypes
+
+    process_terminate = 0x0001
+    error_invalid_parameter = 87
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    open_process = kernel32.OpenProcess
+    open_process.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    open_process.restype = wintypes.HANDLE
+    terminate_process = kernel32.TerminateProcess
+    terminate_process.argtypes = (wintypes.HANDLE, wintypes.UINT)
+    terminate_process.restype = wintypes.BOOL
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = (wintypes.HANDLE,)
+    close_handle.restype = wintypes.BOOL
+
+    handle = open_process(process_terminate, False, pid)
+    if not handle:
+        error = ctypes.get_last_error()
+        if error == error_invalid_parameter:
+            return
+        raise ctypes.WinError(error)
+    try:
+        if not terminate_process(handle, 1):
+            raise ctypes.WinError(ctypes.get_last_error())
+    finally:
+        close_handle(handle)
+
+
 def pid_running(pid: int) -> bool:
     if pid <= 0:
         return False
+    if os.name == "nt":
+        return _windows_pid_running(pid)
     proc_stat = Path(f"/proc/{pid}/stat")
     try:
         if proc_stat.exists() and proc_stat.read_text(encoding="utf-8").split()[2] == "Z":
@@ -208,13 +270,19 @@ def interrupt(*, registry: Path, run_id: str, outcome: str = "stopped") -> JSON:
     if metadata.get("status") != "running":
         return {**metadata, "outcome": "already-complete"}
     pid = int(metadata.get("pid") or 0)
-    try:
-        os.killpg(pid, signal.SIGTERM)
-    except (ProcessLookupError, PermissionError, OSError):
+    if os.name == "nt":
         try:
-            os.kill(pid, signal.SIGTERM)
+            _terminate_windows_process(pid)
         except (ProcessLookupError, PermissionError, OSError):
             pass
+    else:
+        try:
+            os.killpg(pid, signal.SIGTERM)
+        except (ProcessLookupError, PermissionError, OSError):
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except (ProcessLookupError, PermissionError, OSError):
+                pass
     metadata["status"] = "timed_out" if outcome == "timeout" else "stopped"
     metadata["outcome"] = outcome
     if outcome == "timeout":
