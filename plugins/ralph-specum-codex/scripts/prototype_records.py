@@ -370,7 +370,42 @@ def cmd_publish(args: argparse.Namespace) -> JSON:
         raise RecordError(f"Candidate does not exist: {candidate}")
     candidate_bytes = candidate.read_bytes()
     candidate_hash = sha256_bytes(candidate_bytes)
-    validate_record_text(candidate_bytes.decode("utf-8"), args.id)
+    record = validate_record_text(candidate_bytes.decode("utf-8"), args.id)
+    if args.publisher_only_lock_timeout:
+        if not args.candidate_hash or args.candidate_hash != candidate_hash:
+            raise RecordError("Publisher-only candidate hash does not match the exact candidate bytes.")
+        frontmatter = record["frontmatter"]
+        expected = {
+            "triggerMode": "quick",
+            "verdict": "failed",
+            "resolutionMode": "lock_timeout",
+            "gateApproved": False,
+            "sourceDisposition": "not_created",
+        }
+        for key, value in expected.items():
+            if frontmatter.get(key) != value:
+                raise RecordError(f"Publisher-only lock timeout requires {key}={yaml_scalar(value)}.")
+        for key in ("evidenceHash", "cleanupReceiptHash"):
+            if key not in frontmatter or frontmatter[key] is not None:
+                raise RecordError(f"Publisher-only lock timeout requires {key}=null.")
+        for key in ("sourcePointers", "isolationPath", "isolationBranch"):
+            if frontmatter.get(key) is not None:
+                raise RecordError(f"Publisher-only lock timeout requires {key}=null when present.")
+        final = final_path(args.base_path, args.id)
+        publish_exact(candidate, final)
+        final_bytes = final.read_bytes()
+        if sha256_bytes(final_bytes) != candidate_hash or final_bytes != candidate_bytes:
+            raise RecordError("Published bytes do not match the lock-timeout candidate.")
+        validate_record_text(final_bytes.decode("utf-8"), args.id)
+        candidate.unlink()
+        fsync_dir(candidate.parent)
+        return {
+            "id": args.id,
+            "final": str(final),
+            "recordHash": candidate_hash,
+            "activeRemoved": False,
+            "publisherOnly": True,
+        }
     state_path = args.state or args.base_path.resolve() / ".ralph-state.json"
     state = read_json_object(state_path)
     entry = (state.get("activePrototypes") or {}).get(args.id)
@@ -535,6 +570,8 @@ def build_parser() -> argparse.ArgumentParser:
     publish.add_argument("--id", required=True)
     publish.add_argument("--state", type=Path)
     publish.add_argument("--timeout", type=float, default=10.0)
+    publish.add_argument("--publisher-only-lock-timeout", action="store_true")
+    publish.add_argument("--candidate-hash")
     publish.set_defaults(func=cmd_publish)
 
     reconcile = sub.add_parser("reconcile", help="Reconcile candidates, finals, and active state")
