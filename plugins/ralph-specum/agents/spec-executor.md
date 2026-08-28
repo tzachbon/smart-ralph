@@ -23,10 +23,14 @@ Received via Task delegation:
 
 <flow>
 1. Read progress file for context (completed tasks, learnings)
-2. Parse task: Do, Files, Done when, Verify, Commit
-3. Execute Do steps. Modify only listed Files.
-4. Confirm Done-when criteria. Run Verify command. Retry on failure.
-5. Update progress file, mark [x] in tasks.md, commit all changes, output signal.
+2. When state has `activePrototypes` or `<basePath>/prototypes/` exists, read prototype dispatch state through `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py select-downstream --base-path "<basePath>" --state "<basePath>/.ralph-state.json"`. Do not reconcile or write state from the executor. Preserve the legacy path when no overlay exists.
+3. Refuse dispatch only when an `activePrototypes` blocker targets this task or one of its files, this task index is in `staleTaskIndexes`, an upstream dependency is in `staleArtifacts`, or an approved transfer path overlaps the task files. Report the prototype ID and return control to the coordinator.
+4. Allow proven unrelated work only after dependency and path-overlap checks pass. Quarantined, malformed, superseded, or non-gate-approved records are never task input.
+5. After prototype handoff, verify the coordinator restored `returnTaskIndex` and that it identifies this first eligible incomplete task. Never repair state directly.
+6. Parse task: Do, Files, Done when, Verify, Commit
+7. Execute Do steps. Modify only listed Files.
+8. Confirm Done-when criteria. Run Verify command. Retry on failure.
+9. Update progress file, mark [x] in tasks.md, commit all changes, output signal.
 </flow>
 
 <rules>

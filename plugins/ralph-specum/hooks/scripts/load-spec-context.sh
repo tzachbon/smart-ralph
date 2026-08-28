@@ -39,13 +39,18 @@ if [ -f "$SETTINGS_FILE" ]; then
     fi
 fi
 
-# Resolve current spec using path resolver
-SPEC_RELATIVE_PATH=$(ralph_resolve_current 2>/dev/null)
+# Resolve current spec using the shared context contract
+RESOLVED_CONTEXT=$(ralph_resolve_context 2>/dev/null || true)
+SPEC_RELATIVE_PATH=$(printf '%s' "$RESOLVED_CONTEXT" | jq -r '.basePath // empty' 2>/dev/null || true)
 if [ -z "$SPEC_RELATIVE_PATH" ]; then
     exit 0
 fi
 
-SPEC_PATH="$CWD/$SPEC_RELATIVE_PATH"
+if [[ "$SPEC_RELATIVE_PATH" = /* ]]; then
+    SPEC_PATH="$SPEC_RELATIVE_PATH"
+else
+    SPEC_PATH="$CWD/${SPEC_RELATIVE_PATH#./}"
+fi
 if [ ! -d "$SPEC_PATH" ]; then
     exit 0
 fi
@@ -65,8 +70,31 @@ if [ -f "$STATE_FILE" ] && jq empty "$STATE_FILE" 2>/dev/null; then
     TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null)
     TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null)
     AWAITING=$(jq -r '.awaitingApproval // false' "$STATE_FILE" 2>/dev/null)
+    ACTIVE_COUNT=$(jq -r '(.activePrototypes // {}) | length' "$STATE_FILE" 2>/dev/null || echo 0)
 
     echo "[ralph-specum] Phase: $PHASE | Task: $((TASK_INDEX + 1))/$TOTAL_TASKS | Awaiting approval: $AWAITING" >&2
+
+    PROTOTYPE_DIR="$SPEC_PATH/prototypes"
+    if [ "$ACTIVE_COUNT" -gt 0 ] || [ -d "$PROTOTYPE_DIR" ]; then
+        CANDIDATE_COUNT=$(find "$PROTOTYPE_DIR" -maxdepth 1 -type f -name '.*.candidate.md' 2>/dev/null | wc -l | tr -d ' ')
+        FINAL_FILE_COUNT=$(find "$PROTOTYPE_DIR" -maxdepth 1 -type f -name '*.md' ! -name '.*' ! -name '*.quarantine.md' 2>/dev/null | wc -l | tr -d ' ')
+        QUARANTINE_FILE_COUNT=$(find "$PROTOTYPE_DIR" -maxdepth 1 -type f -name '*.quarantine.md' 2>/dev/null | wc -l | tr -d ' ')
+        SELECTION=$(python3 "$SCRIPT_DIR/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$STATE_FILE" 2>/dev/null || printf '{}')
+        MALFORMED_COUNT=$(printf '%s' "$SELECTION" | jq -r '(.quarantined // []) | length' 2>/dev/null || echo 0)
+        FINAL_COUNT=$((FINAL_FILE_COUNT - MALFORMED_COUNT))
+        [ "$FINAL_COUNT" -lt 0 ] && FINAL_COUNT=0
+        QUARANTINE_COUNT=$((QUARANTINE_FILE_COUNT + MALFORMED_COUNT))
+        BLOCKER_COUNT=$(printf '%s' "$SELECTION" | jq -r '(.activeBlockers // []) | length' 2>/dev/null || echo 0)
+        STALE_ARTIFACTS=$(printf '%s' "$SELECTION" | jq -r '(.staleArtifacts // []) | join(",")' 2>/dev/null || true)
+        STALE_TASKS=$(printf '%s' "$SELECTION" | jq -r '(.staleTaskIndexes // []) | map(tostring) | join(",")' 2>/dev/null || true)
+        echo "[ralph-specum] Prototypes: active=$ACTIVE_COUNT candidates=$CANDIDATE_COUNT finals=$FINAL_COUNT quarantined=$QUARANTINE_COUNT blockers=$BLOCKER_COUNT" >&2
+        if [ -n "$STALE_ARTIFACTS$STALE_TASKS" ]; then
+            echo "[ralph-specum] Prototype stale dependencies: artifacts=${STALE_ARTIFACTS:-none} tasks=${STALE_TASKS:-none}" >&2
+        fi
+        if [ "$ACTIVE_COUNT" -gt 0 ] || [ "$CANDIDATE_COUNT" -gt 0 ]; then
+            echo "[ralph-specum] Prototype recovery available. Run /ralph-specum:start or /ralph-specum:prototype --resume <id>." >&2
+        fi
+    fi
 
     if [ "$PHASE" = "execution" ] && [ "$AWAITING" = "false" ]; then
         echo "[ralph-specum] Execution in progress. Run /ralph-specum:implement to continue." >&2

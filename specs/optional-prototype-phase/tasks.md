@@ -252,7 +252,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `refactor(state): lock Claude reference writers`
   - _Requirements: FR-3, FR-5, FR-6, NFR-2, NFR-3_
 
-- [ ] 2.5 Add context, index, and dispatcher visibility
+- [x] 2.5 Add context, index, and dispatcher visibility
   - **Do**: Make resolved active prototypes, candidates, terminal records, quarantines, counts, and blocker status visible to context loading, indexing, quick guard, and the spec scanner. Make the executor refuse stale or blocked tasks without changing unrelated task behavior.
   - **Files**: `plugins/ralph-specum/hooks/scripts/load-spec-context.sh`, `plugins/ralph-specum/hooks/scripts/update-spec-index.sh`, `plugins/ralph-specum/hooks/scripts/quick-mode-guard.sh`, `plugins/ralph-specum/references/spec-scanner.md`, `plugins/ralph-specum/agents/spec-executor.md`
   - **Done when**: Every dispatcher sees active blockers and stale indexes, configured roots work, and unrelated tasks remain eligible only after dependency and path checks.

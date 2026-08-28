@@ -37,6 +37,10 @@ ralph_resolve_current()   # Resolve .current-spec to full path
    - Read $path/.progress.md (using the full path from ralph_list_specs)
    - Extract "Original Goal" section (line after "## Original Goal")
    - If .progress.md doesn't exist, skip this spec
+   - Treat `$path` as the resolved `basePath`; never reconstruct `specs/<name>`
+   - Read `activePrototypes` from `$path/.ralph-state.json`, treating a missing field as empty
+   - Only when the active map is non-empty or `$path/prototypes/` exists, inventory `prototypes/.*.candidate.md`, immutable finals, and visible or dot-prefixed quarantines
+   - At that same boundary, run `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py select-downstream --base-path "$path" --state "$path/.ralph-state.json"` when state exists to derive blockers, stale artifacts, and stale task indexes without writing state
    |
 3. Keyword matching:
    - Extract keywords from current goal (split by spaces, lowercase)
@@ -67,6 +71,7 @@ ralph_resolve_current()   # Resolve .current-spec to full path
    - api-docs [Low]: External API documentation for...
    |
    This context may inform the interview questions.
+   For any matching spec with overlay state, also show active, candidate, immutable-final, and quarantine counts; active blocker targets; stale artifacts and task indexes; `returnPhase`; `returnTaskIndex`; and `sourceDisposition`. Mark a candidate without a final as recovery work and show `/ralph-specum:prototype --resume <id>`. Preserve the legacy row when no overlay exists.
    |
 6. Store in state through the locked helper, using the resolved base path:
    ```bash
