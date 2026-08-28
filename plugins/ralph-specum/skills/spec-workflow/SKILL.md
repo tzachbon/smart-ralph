@@ -86,7 +86,7 @@ specs/
 ### Guided development
 ```bash
 /ralph-specum:start my-feature "Build X"
-# Interactive interviews at each phase
+# Fact-first grilling at each phase
 # Review and approve each artifact
 /ralph-specum:implement
 ```

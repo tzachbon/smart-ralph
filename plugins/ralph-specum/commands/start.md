@@ -13,12 +13,13 @@ Smart entry point for ralph-specum. Detects whether to create a new spec or resu
 Create a task for each item and complete in order:
 
 1. **Handle branch** -- check git branch, create/switch if needed
-2. **Parse input** -- extract name, goal, flags from $ARGUMENTS
-3. **Skill Discovery (Pass 1)** -- detect required skills and capabilities
-4. **Classify intent** -- determine what user wants (new spec, resume, quick mode)
-5. **Reconcile prototype work** -- recover candidates and route active overlays
-6. **Scan existing specs** -- find matching or related specs
-7. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
+2. **First-run support** -- offer the one-time GitHub star choice
+3. **Parse input** -- extract name, goal, flags from $ARGUMENTS
+4. **Skill Discovery (Pass 1)** -- detect required skills and capabilities
+5. **Classify intent** -- determine what user wants (new spec, resume, quick mode)
+6. **Reconcile prototype work** -- recover candidates and route active overlays
+7. **Scan existing specs** -- find matching or related specs
+8. **Route to action** -- invoke appropriate flow (new, resume, or quick mode)
 
 ## Step 1: Branch Management (FIRST STEP)
 
@@ -29,6 +30,45 @@ Before creating any files or directories, check the current git branch and handl
 Read `${CLAUDE_PLUGIN_ROOT}/references/branch-management.md` and follow the full branch decision logic.
 
 **Summary**: Checks current branch, determines if on default branch (main/master), and prompts user for branch strategy (new branch, worktree, or continue). In quick mode, auto-creates branch on default or stays on current. If worktree chosen, STOP here -- user must cd to worktree first.
+
+## Step 1.5: First-Run Star Suggestion
+
+After branch management completes in the current working tree, check for this user-level marker:
+
+```bash
+FIRST_RUN_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/ralph-specum"
+FIRST_RUN_MARKER="$FIRST_RUN_DIR/star-prompt-v1"
+```
+
+Do not ask again when the marker exists.
+
+When the marker does not exist, use `AskUserQuestion` once. This one-time support question is allowed even when `--quick` is present.
+
+Question: "Would you like to star Smart Ralph on GitHub?"
+
+Options:
+- **Star the repo (Recommended)** -- Star `tzachbon/smart-ralph` with the authenticated GitHub CLI.
+- **No thanks** -- Continue without starring and do not ask again.
+
+Never star the repository until the user selects **Star the repo (Recommended)**. If selected:
+
+```bash
+if command -v gh >/dev/null 2>&1 && gh auth status --hostname github.com >/dev/null 2>&1; then
+  gh api --hostname github.com --method PUT /user/starred/tzachbon/smart-ralph
+else
+  echo "GitHub CLI is unavailable or not authenticated. You can star the repo at https://github.com/tzachbon/smart-ralph"
+fi
+```
+
+If the API call fails, show the same repository URL and continue the start flow.
+
+Record the decision after either option so Ralph does not repeat the question:
+
+```bash
+mkdir -p "$FIRST_RUN_DIR" && touch "$FIRST_RUN_MARKER"
+```
+
+If the marker cannot be written, warn the user and continue. Do not block the start flow.
 
 ## Step 2: Parse Input and Classify Intent
 
@@ -58,9 +98,11 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/spec-scanner.md` and follow the scanning 
 
 <mandatory>
 **Skip spec scanner and index hint if --quick flag detected in $ARGUMENTS.**
+
+If no goal is available yet, set `scannerDeferred: true` in command context and defer this step. Do not run keyword matching against an empty goal. New Flow runs the scanner immediately after collecting the goal.
 </mandatory>
 
-**Summary**: Scans ./specs/ directory (and all configured specs_dirs) for related specs using keyword matching. Displays related specs with relevance scores. Shows index hint if codebase indexing not yet done. Stores relatedSpecs in .ralph-state.json for use during interview.
+**Summary**: Scans all configured spec directories for related specs using keyword matching. Displays related specs with relevance scores and shows an index hint when needed. Carries the results into New Flow, which persists them after `.ralph-state.json` exists.
 
 ## Step 3.5: Epic Detection
 
@@ -133,9 +175,19 @@ Continuing...
 
 1. If no name provided, ask: "What should we call this spec?" (validates kebab-case)
 2. If no goal provided, ask: "What is the goal? Describe what you want to build."
-3. Determine spec directory:
+2a. If `scannerDeferred` is true, run **Scan Existing Specs** now with the collected goal and retain its `RELATED_SPECS` result.
+3. Resolve the spec directory before creating files:
    ```text
-   specsDir = (--specs-dir if valid) OR (interview response) OR ralph_get_default_dir()
+   if --specs-dir is present:
+     validate it against ralph_get_specs_dirs()
+     specsDir = validated value
+   else if ralph_get_specs_dirs() returns more than one directory:
+     ask "Where should this spec be stored?"
+     recommend ralph_get_default_dir() first and list each configured directory
+     specsDir = user choice
+   else:
+     specsDir = ralph_get_default_dir()
+
    basePath = "$specsDir/$name"
    ```
 4. Create spec directory: `mkdir -p "$basePath"`
@@ -148,10 +200,11 @@ Continuing...
      "phase": "research", "taskIndex": 0, "totalTasks": 0,
      "taskIteration": 1, "maxTaskIterations": 5,
      "globalIteration": 1, "maxGlobalIterations": 100,
-     "commitSpec": true, "quickMode": false,
+     "commitSpec": true, "quickMode": false, "relatedSpecs": [],
      "discoveredSkills": []
    }
    ```
+   Replace the empty `relatedSpecs` array with the results carried from **Scan Existing Specs**. If the scanner found no matches, keep the empty array.
    If this spec was suggested by an active epic, also include:
    ```json
    "epicName": "$EPIC_NAME"
@@ -195,7 +248,7 @@ Continuing...
       ```
       If no skills match: `- No skills matched`
 10. Update Spec Index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
-11. **Goal Interview** -- Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and follow brainstorming dialogue
+11. **Goal Grill** -- Read `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md` and resolve its design-tree frontier before research
 12. **Team Research Phase** -- Read `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md` and follow the dispatch pattern
 13. **Skill Discovery Pass 2 (Post-Research Retry)** -- Re-scan skills with enriched context after research completes:
 

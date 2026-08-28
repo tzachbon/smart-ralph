@@ -3,15 +3,15 @@
 Auto-generated summary of all specs across configured directories.
 See [index-state.json](./index-state.json) for machine-readable data.
 
-**Last updated:** 2026-04-07T11:17:53Z
+**Last updated:** 2026-07-20T07:57:33Z
 
 ## Directories (1)
 
 | Directory | Specs | Default |
 |-----------|-------|---------|
-| ./specs | 33 | Yes |
+| ./specs | 35 | Yes |
 
-## All Specs (33)
+## All Specs (35)
 
 | Spec | Directory | Phase | Status |
 |------|-----------|-------|--------|
@@ -26,7 +26,9 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | implement-ralph-wiggum | ./specs | tasks | 27/35 tasks |
 | token-efficient-executor | ./specs | completed | done |
 | fork-ralph-wiggum | ./specs | completed | done |
+| remove-codex-prefix | ./specs | tasks | 2/16 tasks |
 | reality-verification-principle | ./specs | tasks | 9/11 tasks |
+| requirements-process-improvements | ./specs | completed | done |
 | update-index-on-complete | ./specs | completed | done |
 | karpathy-skills-rules | ./specs | completed | done |
 | adopt-grill-me-interview | ./specs | tasks | 14/18 tasks |
@@ -41,7 +43,7 @@ See [index-state.json](./index-state.json) for machine-readable data.
 | iterative-failure-recovery | ./specs | tasks | 14/20 tasks |
 | reviewer-subagent | ./specs | completed | done |
 | goal-interview | ./specs | completed | done |
-| codex-plugin-sync | ./specs | execution | 33/61 tasks |
+| codex-plugin-sync | ./specs | completed | done |
 | adaptive-interview | ./specs | completed | done |
 | add-autonomous-e2e-verify | ./specs | tasks | 54/55 tasks |
 | remove-ralph-wiggum | ./specs | completed | done |

@@ -10,244 +10,23 @@
 [![Claude Code](https://img.shields.io/badge/Built%20for-Claude%20Code-blueviolet)](https://claude.ai/code)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-**Spec-driven development for Claude Code and Codex. Task-by-task execution with fresh context per task.**
+**Spec-driven development for Claude Code and Codex.**
 
-Self-contained execution loop. No external dependencies.
+Smart Ralph turns a feature request into a structured spec, then executes it one task at a time with fresh context. The execution loop is self-contained and has no external plugin dependencies.
 
-[Quick Start](#-quick-start) | [Commands](#-commands) | [How It Works](#-how-it-works) | [Troubleshooting](#-troubleshooting)
+[How it works](#how-it-works) | [Installation](#installation) | [Quick start](#quick-start) | [Commands](#commands) | [Troubleshooting](#troubleshooting)
 
 </div>
 
 ---
 
-## What is this?
+## How it works
 
-Smart Ralph is a Claude Code plugin that turns your vague feature ideas into structured specs, then executes them task-by-task. Like having a tiny product team in your terminal.
+Smart Ralph creates research, requirements, design, and task files before implementation. Large goals can start with triage, which splits the work into dependency-aware specs.
 
-```text
-You: "Add user authentication"
-Ralph: *creates research.md, requirements.md, design.md, tasks.md*
-Ralph: *executes each task with fresh context*
-Ralph: "I'm helping!"
-```
+The spec files stay in the project, so you can review or edit each phase before execution. Smart Ralph records progress between tasks and can resume after a stopped session.
 
-## Why "Ralph"?
-
-Named after the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and everyone's favorite Springfield student. Ralph doesn't overthink. Ralph just does the next task. Be like Ralph.
-
----
-
-## Installation
-
-### Claude Code
-
-```bash
-# Install Smart Ralph
-/plugin marketplace add tzachbon/smart-ralph
-/plugin install ralph-specum@smart-ralph
-
-# Restart Claude Code
-```
-
-### Codex
-
-> **Prerequisite:** Install the [Codex CLI](https://github.com/openai/codex) first: `npm install -g @openai/codex`
-
-<details>
-<summary>Personal install (available in every project)</summary>
-
-Run these commands from any directory. They clone the repo to a temp folder, copy the plugin to your Codex plugins directory, and clean up.
-
-```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your personal plugins directory
-mkdir -p ~/.codex/plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry so Codex can discover the plugin
-mkdir -p ~/.agents/plugins
-cat > ~/.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "~/.codex/plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
-```
-
-</details>
-
-<details>
-<summary>Per-project install (one repo only)</summary>
-
-Run these commands from your project root directory (the repo where you want to use Ralph).
-
-```bash
-# 1. Clone the Smart Ralph repo
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-
-# 2. Copy the Codex plugin into your project
-mkdir -p ./plugins
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ./plugins/ralph-specum-codex
-
-# 3. Create a marketplace entry in your project
-mkdir -p ./.agents/plugins
-cat > ./.agents/plugins/marketplace.json << 'EOF'
-{
-  "name": "smart-ralph",
-  "plugins": [{
-    "name": "ralph-specum",
-    "source": {"source": "local", "path": "./plugins/ralph-specum-codex"},
-    "policy": {"installation": "AVAILABLE"},
-    "category": "Productivity"
-  }]
-}
-EOF
-
-# 4. Clean up
-rm -rf /tmp/smart-ralph
-```
-
-</details>
-
-After either method: restart Codex, open the plugin directory, and install `ralph-specum`.
-
-**Optional**: Enable the Stop hook for automatic task execution:
-
-```toml
-# ~/.codex/config.toml
-[features]
-codex_hooks = true
-```
-
-See [`plugins/ralph-specum-codex/README.md`](plugins/ralph-specum-codex/README.md) for full details.
-
-**Updating** (run from any directory):
-
-```bash
-rm -rf /tmp/smart-ralph
-git clone https://github.com/tzachbon/smart-ralph.git /tmp/smart-ralph
-cp -R /tmp/smart-ralph/plugins/ralph-specum-codex ~/.codex/plugins/ralph-specum-codex
-rm -rf /tmp/smart-ralph
-# Restart Codex
-```
-
-For per-project installs, replace `~/.codex/plugins/ralph-specum-codex` with `./plugins/ralph-specum-codex` (run from your project root).
-
-<details>
-<summary>Migrating from old skills (platforms/codex/)?</summary>
-
-1. Remove old skills: `rm -rf ~/.codex/skills/ralph-specum*`
-2. Follow the install steps above
-
-See the [migration guide](plugins/ralph-specum-codex/README.md#migration-from-old-skills-platformscodex) for details.
-
-</details>
-
-<details>
-<summary>Troubleshooting & alternative methods</summary>
-
-**Install from GitHub directly:**
-```bash
-/plugin install https://github.com/tzachbon/smart-ralph
-```
-
-**Local development:**
-```bash
-git clone https://github.com/tzachbon/smart-ralph.git
-claude --plugin-dir ./smart-ralph/plugins/ralph-specum
-```
-
-</details>
-
----
-
-## Quick Start
-
-### Codex
-
-Use `$ralph-specum` as the default Codex surface. Helper skills mirror the explicit phase entrypoints:
-
-```text
-$ralph-specum
-$ralph-specum-start
-$ralph-specum-triage
-$ralph-specum-research
-$ralph-specum-requirements
-$ralph-specum-prototype
-$ralph-specum-design
-$ralph-specum-tasks
-$ralph-specum-implement
-$ralph-specum-status
-```
-
-The helper skill package also includes `$ralph-specum-switch`, `$ralph-specum-cancel`, `$ralph-specum-index`, `$ralph-specum-refactor`, `$ralph-specum-feedback`, and `$ralph-specum-help`.
-
-Use `$ralph-specum-triage` first when the goal is large, cross-cutting, or likely to become multiple specs. Use `$ralph-specum-start` for a single spec or to resume an existing one.
-
-Codex Ralph is approval-gated by default. After each spec artifact, Ralph stops and asks you to approve the current artifact, request changes, or continue to the next step. Quick or autonomous flow happens only when you explicitly ask for it.
-
-### Claude Code
-
-```bash
-# The smart way (auto-detects resume or new)
-/ralph-specum:start user-auth Add JWT authentication
-
-# Quick mode (skip spec phases, auto-generate everything)
-/ralph-specum:start "Add user auth" --quick
-
-# The step-by-step way
-/ralph-specum:new user-auth Add JWT authentication
-/ralph-specum:requirements
-/ralph-specum:design
-/ralph-specum:tasks
-/ralph-specum:implement
-```
-
----
-
-## Commands
-
-For Codex, the equivalent surface is `$ralph-specum` plus 15 helper skills installed via the `ralph-specum` plugin.
-
-| Command | What it does |
-|---------|--------------|
-| `/ralph-specum:start [name] [goal]` | Smart entry: resume existing or create new |
-| `/ralph-specum:start [goal] --quick` | Quick mode: auto-generate all specs and execute |
-| `/ralph-specum:new <name> [goal]` | Create new spec, start research |
-| `/ralph-specum:research` | Run/re-run research phase |
-| `/ralph-specum:requirements` | Generate requirements from research |
-| `/ralph-specum:prototype` | Run or resume an optional prototype |
-| `/ralph-specum:design` | Generate technical design |
-| `/ralph-specum:tasks` | Break design into executable tasks |
-| `/ralph-specum:implement` | Execute tasks one-by-one |
-| `/ralph-specum:index` | Scan codebase and generate component specs |
-| `/ralph-specum:status` | Show all specs and progress |
-| `/ralph-specum:switch <name>` | Change active spec |
-| `/ralph-specum:triage [name] [goal]` | Decompose large features into multiple specs (epics) |
-| `/ralph-specum:cancel` | Cancel loop, cleanup state |
-| `/ralph-specum:help` | Show help |
-
-### Optional Prototypes
-
-- After research or requirements, normal mode may suggest a prototype. Choose `decline and continue` to move to the next phase, or `continue to prototype` to test one question. Run `/ralph-specum:prototype` or `$ralph-specum-prototype` from any main phase for a direct request.
-- Quick mode runs one request after requirements. It asks no prototype questions, takes over the oldest design blocker or selects the highest-risk grounded question, owns the decisions, and continues to design after every outcome.
-- Ralph builds source in a sibling worktree or eligible scratch directory. It keeps the current checkout on its branch and copies no dirty work by default. Normal mode transfers only paths the user approves; quick mode transfers none. `retained` keeps source. `ephemeral` permits deletion only after the normal exact-path confirmation or the reviewed quick cleanup receipt.
-- Ralph publishes reviewed terminal records without overwrite at `<resolved-basePath>/prototypes/<id>.md`. Start and prototype commands resume active work by ID. Status lists active requests, candidates, immutable finals, quarantines, blockers, return targets, and source disposition.
-- Prototype source and evidence stay local. A local commit does not authorize a push, remote branch, PR inclusion, issue write, or terminal-record deletion. Each remote action needs separate approval.
-
----
-
-## How It Works
+An optional prototype can test one focused design question without turning disposable source into production code.
 
 ```mermaid
 flowchart TD
@@ -268,213 +47,175 @@ flowchart TD
     T4 -->|"Spec 1, Spec 2, ..."| C
 ```
 
-### The Agents
+## Installation
 
-Each phase uses a specialized sub-agent:
+### Claude Code
 
-| Phase | Agent | Superpower |
-|-------|-------|------------|
-| Triage | `triage-analyst` | Feature decomposition, dependency graphs, interface contracts |
-| Research | `research-analyst` | Web search, codebase analysis, feasibility checks |
-| Requirements | `product-manager` | User stories, acceptance criteria, business value |
-| Design | `architect-reviewer` | Architecture patterns, technical trade-offs |
-| Tasks | `task-planner` | POC-first breakdown, task sequencing |
-| Execution | `spec-executor` | Autonomous implementation, quality gates |
+```bash
+/plugin marketplace add tzachbon/smart-ralph
+/plugin install ralph-specum@smart-ralph
+```
 
-### Task Execution Workflow
+Restart Claude Code after installation.
 
-Tasks follow a 4-phase structure:
+### Codex
 
-1. **Make It Work** - POC validation, skip tests initially
-2. **Refactoring** - Clean up the code
-3. **Testing** - Unit, integration, e2e tests
-4. **Quality Gates** - Lint, types, CI checks
+```bash
+codex plugin marketplace add tzachbon/smart-ralph \
+  --sparse .agents/plugins \
+  --sparse plugins/ralph-specum-codex
+codex plugin add ralph-specum@smart-ralph
+```
 
-Current Ralph planning also supports:
-- `--tasks-size fine|coarse` to control task granularity
+Start a new Codex task after installation. Run `/hooks`, review the bundled Stop hook, and trust it if you want automatic task execution. Until then, run `$ralph-specum-implement` once per task.
+
+The [Codex installation guide](plugins/ralph-specum-codex/README.md#installation) covers updates, local development with `codex plugin marketplace add .`, and migration from the old `platforms/codex/` skills.
+
+For local Claude Code development, clone this repository and run `claude --plugin-dir ./plugins/ralph-specum`.
+
+## Quick start
+
+### Codex
+
+```text
+$ralph-specum-start user-auth "Add JWT authentication"
+```
+
+Use `$ralph-specum` when you want Smart Ralph to choose the next action. Codex asks for approval after each spec artifact unless you request quick or autonomous execution. Start with `$ralph-specum-triage` when a goal spans several features or systems.
+
+### Claude Code
+
+```bash
+/ralph-specum:start user-auth "Add JWT authentication"
+```
+
+Add `--quick` to generate the spec and start execution without stopping between phases. Run `/ralph-specum:start` without arguments to resume the active spec.
+
+## Commands
+
+Claude Code uses `/ralph-specum:<name>`. Codex uses `$ralph-specum-<name>` and folds `new` into `$ralph-specum-start`.
+
+| Command | What it does |
+|---------|--------------|
+| `/ralph-specum:start [name] [goal]` | Resume a spec or create one |
+| `/ralph-specum:start [goal] --quick` | Generate all spec phases and execute |
+| `/ralph-specum:new <name> [goal]` | Create a spec and wait for approval before research |
+| `/ralph-specum:triage [name] [goal]` | Split a large goal into an epic |
+| `/ralph-specum:research` | Run or repeat research |
+| `/ralph-specum:requirements` | Generate requirements from research |
+| `/ralph-specum:prototype` | Run or resume an optional prototype |
+| `/ralph-specum:design` | Generate the technical design |
+| `/ralph-specum:tasks` | Break the design into executable tasks |
+| `/ralph-specum:implement` | Execute tasks one at a time |
+| `/ralph-specum:index` | Generate searchable codebase specs |
+| `/ralph-specum:refactor` | Update requirements, design, or tasks |
+| `/ralph-specum:status` | Show specs and progress |
+| `/ralph-specum:switch <name>` | Change the active spec |
+| `/ralph-specum:cancel` | Cancel execution and remove loop state |
+| `/ralph-specum:feedback [message]` | Submit feedback or report an issue |
+| `/ralph-specum:help` | Show command and workflow help |
+
+## Execution model
+
+Smart Ralph gives each phase to a focused agent.
+
+| Phase | Agent | Responsibility |
+|-------|-------|----------------|
+| Triage | `triage-analyst` | Split features and map dependencies |
+| Research | `research-analyst` | Inspect the codebase and check feasibility |
+| Requirements | `product-manager` | Write user stories and acceptance criteria |
+| Prototype | `prototype-builder` | Test one design question with disposable evidence |
+| Design | `architect-reviewer` | Define architecture and trade-offs |
+| Tasks | `task-planner` | Create a POC-first task sequence |
+| Execution | `spec-executor` | Implement tasks and run quality gates |
+
+Tasks follow four phases:
+
+1. Make it work: validate the approach with a POC.
+2. Refactoring: clean up the working implementation.
+3. Testing: add unit, integration, and end-to-end coverage.
+4. Quality gates: run lint, type, and CI checks.
+
+Planning controls include:
+
+- `--tasks-size fine|coarse` for task granularity
+- `[P]` for low-conflict parallel tasks
+- `[VERIFY]` and VE tasks for explicit verification
 - approval checkpoints between spec phases outside quick mode
-- `[P]` markers for low-conflict parallel tasks
-- `[VERIFY]` and VE tasks for explicit verification work
-- epic planning through `/ralph-specum:triage` or `$ralph-specum-triage`
 
----
+### Optional prototypes
 
-## Codebase Indexing
+- In normal mode, Smart Ralph may suggest a prototype after research or requirements. You can also run `/ralph-specum:prototype` or `$ralph-specum-prototype` at a safe phase boundary.
+- In quick mode, Smart Ralph asks no prototype questions, owns the decisions, and always continues to design after the prototype outcome.
+- Prototype source stays in a sibling worktree or eligible scratch directory. Quick mode transfers no source into the current checkout; normal mode transfers only paths you approve.
+- Reviewed terminal records are immutable. Local evidence does not authorize a push, remote branch, PR update, issue write, or record deletion.
 
-Starting with v2.12.0, Smart Ralph can scan existing codebases and auto-generate component specs, making legacy code discoverable during new feature research.
+Smart Ralph stores progress in `.progress.md` and marks completed work in `tasks.md`. Each implementation task starts with fresh context.
 
-### Why Index?
+## Codebase indexing
 
-When starting a new feature on an existing codebase, the **research phase benefits from knowing what's already built**. Without indexing, the research agent has limited visibility into your codebase structure.
-
-The `/ralph-specum:index` command:
-
-- Scans your codebase for controllers, services, models, helpers, and migrations
-- Generates searchable specs for each component
-- Indexes external resources (URLs, MCP servers, installed skills)
-- Makes existing code discoverable in `/ralph-specum:start`
-
-### Quick Start
+`/ralph-specum:index` scans an existing project and writes searchable component specs under `specs/.index/`. Research agents use that index to find code that the project already has.
 
 ```bash
-# Full interactive indexing (recommended for first-time)
 /ralph-specum:index
-
-# Quick mode - skip interviews, batch scan only
 /ralph-specum:index --quick
-
-# Dry run - preview what would be indexed
 /ralph-specum:index --dry-run
-
-# Index specific directory
 /ralph-specum:index --path=src/api/
-
-# Force regenerate all specs
-/ralph-specum:index --force
 ```
 
-### How It Works
+| Option | Effect |
+|--------|--------|
+| `--path=<dir>` | Scan one directory |
+| `--type=<types>` | Limit component types |
+| `--exclude=<patterns>` | Skip matching paths |
+| `--dry-run` | Preview without writing specs |
+| `--force` | Regenerate the index |
+| `--changed` | Regenerate Git-changed files |
+| `--quick` | Skip interviews |
 
-```mermaid
-flowchart TD
-    A["/ralph-specum:index"] --> B[Pre-Scan Interview]
-    B -->|External URLs? Focus areas?| C[Component Scanner]
-    C -->|Controllers, services, models...| D[External Resources]
-    D -->|URLs, MCP, skills| E[Post-Scan Review]
-    E -->|Validates findings with user| F["specs/.index/"]
-    F --- G["index.md - Summary dashboard"]
-    F --- H["components/ - Code component specs"]
-    F --- I["external/ - External resource specs"]
-```
+The scanner detects controllers, services, models, helpers, and migrations. It can also record external URLs, MCP servers, and installed skills. Run the index before starting a feature in a codebase that Smart Ralph has not seen.
 
-### Options
+The generated index has a summary dashboard, component specs, and external resource specs. Research searches both feature specs and indexed specs when it gathers context.
 
-| Option | Description |
-|--------|-------------|
-| `--path=<dir>` | Limit indexing to specific directory |
-| `--type=<types>` | Filter by type: controllers, services, models, helpers, migrations |
-| `--exclude=<patterns>` | Patterns to exclude (e.g., test, mock) |
-| `--dry-run` | Preview without writing files |
-| `--force` | Regenerate all specs (overwrites existing) |
-| `--changed` | Regenerate only git-changed files |
-| `--quick` | Skip interviews, batch scan only |
+## Project structure
 
-### Recommended: Index Before Research
+Plugin source lives in `plugins/ralph-specum/` for Claude Code, `plugins/ralph-specum-codex/` for Codex, and `plugins/ralph-speckit/` for the Spec-Kit workflow.
 
-**For best results, run `/ralph-specum:index` before starting new features on an existing codebase.**
-
-The research phase searches indexed specs to discover relevant existing components. Without an index, you may miss important context about what's already built.
-
-```bash
-# First time on a codebase? Index it first
-/ralph-specum:index
-
-# Then start your feature
-/ralph-specum:start my-feature Add user authentication
-```
-
-When you run `/ralph-specum:start`:
-
-1. If no index exists, you'll see a hint suggesting to run `/ralph-specum:index`
-2. The spec scanner searches both regular specs AND indexed specs
-3. Indexed components appear in "Related Specs" during research
-
-### What Gets Indexed
-
-**Components** (detected by path/name patterns):
-- Controllers: `**/controllers/**/*.{ts,js,py,go}`
-- Services: `**/services/**/*.{ts,js,py,go}`
-- Models: `**/models/**/*.{ts,js,py,go}`
-- Helpers: `**/helpers/**/*.{ts,js,py,go}`
-- Migrations: `**/migrations/**/*.{ts,js,sql}`
-
-**External Resources** (discovered via interview):
-- URLs (fetched via WebFetch)
-- MCP servers (queried for tools/resources)
-- Installed skills (commands/agents documented)
-
-**Default Excludes**:
-`node_modules`, `vendor`, `dist`, `build`, `.git`, `__pycache__`, test files
-
----
-
-## Project Structure
+Smart Ralph writes feature specs inside the project where you run it:
 
 ```text
-smart-ralph/
-├── .claude-plugin/
-│   └── marketplace.json
-├── plugins/
-│   ├── ralph-specum/           # Claude Code plugin (self-contained)
-│   │   ├── .claude-plugin/
-│   │   │   └── plugin.json
-│   │   ├── agents/             # Sub-agent definitions
-│   │   ├── commands/           # Slash commands
-│   │   ├── hooks/              # Stop watcher (controls execution loop)
-│   │   ├── templates/          # Spec templates
-│   │   └── schemas/            # Validation schemas
-│   ├── ralph-specum-codex/     # Codex plugin (full parity)
-│   │   ├── .codex-plugin/
-│   │   │   └── plugin.json
-│   │   ├── skills/             # 15 skills ($ralph-specum-*)
-│   │   ├── hooks/              # Stop watcher (Codex format)
-│   │   ├── agent-configs/      # 9 TOML bootstrap templates
-│   │   ├── templates/          # Spec templates
-│   │   └── references/         # Workflow, state, parity docs
-│   └── ralph-speckit/          # Spec-kit methodology
-│       ├── .claude-plugin/
-│       │   └── plugin.json
-│       ├── agents/             # spec-executor, qa-engineer
-│       ├── commands/           # /speckit:* commands
-│       └── templates/          # Constitution, spec, plan templates
-└── README.md
+specs/
+|-- .current-spec
+`-- my-feature/
+    |-- .ralph-state.json
+    |-- .progress.md
+    |-- prototypes/
+    |   `-- <id>.md
+    |-- research.md
+    |-- requirements.md
+    |-- design.md
+    `-- tasks.md
 ```
 
-### Your Specs
+Smart Ralph deletes `.ralph-state.json` when execution finishes. It keeps `.progress.md` so later tasks can recover decisions and learnings.
 
-Specs live in `./specs/` in your project:
+Epic plans live under `specs/_epics/<name>/`. Their state files track which specs are ready, blocked, or complete.
 
-```text
-./specs/
-├── .current-spec           # Active spec name
-└── my-feature/
-    ├── .ralph-state.json   # Loop state (deleted on completion)
-    ├── .progress.md        # Progress tracking
-    ├── research.md
-    ├── requirements.md
-    ├── design.md
-    └── tasks.md
-```
+## Ralph Speckit
 
----
-
-## Ralph Speckit (Spec-Kit Methodology)
-
-**ralph-speckit** is an alternative plugin implementing [GitHub's spec-kit methodology](https://github.com/github/spec-kit) with constitution-first governance.
-
-### Key Differences from ralph-specum
+`ralph-speckit` is the alternative plugin for [GitHub's Spec-Kit methodology](https://github.com/github/spec-kit). It adds a project constitution and requirement-to-task traceability.
 
 | Feature | ralph-specum | ralph-speckit |
 |---------|--------------|---------------|
-| Directory | `./specs/` | `.specify/specs/` |
+| Directory | `specs/` | `.specify/specs/` |
 | Naming | `my-feature/` | `001-feature-name/` |
-| Constitution | None | `.specify/memory/constitution.md` |
-| Spec structure | research, requirements, design, tasks | spec (WHAT/WHY), plan (HOW), tasks |
-| Traceability | Basic | Full FR/AC annotations |
-
-### Installation
+| Governance | Per-spec workflow | Project constitution |
+| Main files | Research, requirements, design, tasks | Spec, plan, tasks |
+| Best fit | Fast iteration | Team governance and audit trails |
 
 ```bash
 /plugin install ralph-speckit@smart-ralph
-```
-
-### Quick Start
-
-```bash
-# Initialize constitution (first time only)
 /speckit:constitution
-
-# Create and develop a feature
 /speckit:start user-auth "Add JWT authentication"
 /speckit:specify
 /speckit:plan
@@ -482,113 +223,32 @@ Specs live in `./specs/` in your project:
 /speckit:implement
 ```
 
-### Commands
-
-| Command | What it does |
-|---------|--------------|
-| `/speckit:constitution` | Create/update project constitution |
-| `/speckit:start <name> [goal]` | Create new feature with auto ID |
-| `/speckit:specify` | Define feature spec (WHAT/WHY) |
-| `/speckit:plan [tech]` | Create technical plan with research |
-| `/speckit:tasks` | Generate task breakdown by user story |
-| `/speckit:implement` | Execute tasks task-by-task |
-| `/speckit:status` | Show current feature status |
-| `/speckit:switch <name>` | Switch active feature |
-| `/speckit:cancel` | Cancel execution loop |
-| `/speckit:clarify` | Optional: clarify ambiguous requirements |
-| `/speckit:analyze` | Optional: check spec consistency |
-
-### Feature Directory Structure
-
-```text
-.specify/
-├── memory/
-│   └── constitution.md       # Project-level principles
-├── .current-feature          # Active feature pointer
-└── specs/
-    ├── 001-user-auth/
-    │   ├── .speckit-state.json
-    │   ├── .progress.md
-    │   ├── spec.md           # Requirements (WHAT/WHY)
-    │   ├── research.md
-    │   ├── plan.md           # Technical design (HOW)
-    │   └── tasks.md
-    └── 002-payment-flow/
-        └── ...
-```
-
-### When to Use Which
-
-- **ralph-specum**: Quick iterations, personal projects, simple features
-- **ralph-speckit**: Enterprise projects, team collaboration, audit trails needed
-
----
+The plugin also includes `/speckit:status`, `/speckit:switch`, `/speckit:cancel`, `/speckit:clarify`, and `/speckit:analyze`. See the [Ralph Speckit guide](plugins/ralph-speckit/README.md) for its file layout and command details.
 
 ## Troubleshooting
 
-**Task keeps failing?**
-After max iterations, the loop stops. Check `.progress.md` for errors. Fix manually, then `/ralph-specum:implement` to resume.
+- Repeated task failure: read `.progress.md`, fix the reported problem, then run `/ralph-specum:implement`.
+- Start over: run `/ralph-specum:cancel`, then start a new spec.
+- Resume work: run `/ralph-specum:start`. Ralph finds the active spec.
 
-**Want to start over?**
-`/ralph-specum:cancel` cleans up state files. Then start fresh.
+See the [Troubleshooting Guide](TROUBLESHOOTING.md) for installation, state, hook, and recovery problems.
 
-**Resume existing spec?**
-Just `/ralph-specum:start` - it auto-detects and continues where you left off.
+## Upgrading
 
-**More issues?** See the full [Troubleshooting Guide](TROUBLESHOOTING.md).
+Smart Ralph v3.0.0 moved execution into the plugin's Stop hook. Projects that used v2.x no longer need the separate Ralph Loop plugin.
 
----
-
-## Breaking Changes
-
-### v3.0.0
-
-**Self-contained execution loop (no more ralph-loop dependency)**
-
-Starting with v3.0.0, Smart Ralph is fully self-contained. The execution loop is handled by the built-in stop-hook.
-
-**Migration from v2.x:**
-1. Update Smart Ralph to v3.0.0+
-2. Restart Claude Code
-3. Existing specs continue working. No spec file changes needed.
-4. You can optionally uninstall ralph-loop if you don't use it elsewhere
-
-**What changed:**
-- Ralph Loop dependency removed
-- Stop-hook now controls the execution loop directly
-- `/implement` runs the loop internally (no external invocation)
-- `/cancel` only cleans up Smart Ralph state files
-
-**Why:**
-- Simpler installation (one plugin instead of two)
-- No version compatibility issues between plugins
-- Self-contained workflow
-
-### v2.0.0
-
-**Ralph Loop dependency required** *(superseded by v3.0.0)*
-
-v2.0.0 delegated task execution to the Ralph Loop plugin. This is no longer required as of v3.0.0.
-
----
+Update Smart Ralph, restart Claude Code, and resume. Existing spec files need no migration. You can uninstall Ralph Loop if no other workflow uses it. Check [GitHub releases](https://github.com/tzachbon/smart-ralph/releases) for later changes.
 
 ## Contributing
 
-PRs welcome! This project is friendly to first-time contributors.
-
-1. Fork it
-2. Create your feature branch (`git checkout -b feature/amazing`)
-3. Commit your changes
-4. Push to the branch
-5. Open a PR
-
----
+PRs are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, tests, and pull request guidance.
 
 ## Credits
 
-- [Ralph agentic loop pattern](https://ghuntley.com/ralph/) by Geoffrey Huntley
-- Built for [Claude Code](https://claude.ai/code)
-- Inspired by every developer who wished their AI could just figure out the whole feature
+Smart Ralph takes its name from the [Ralph agentic loop pattern](https://ghuntley.com/ralph/) and Springfield's most determined student. Ralph does the next task. Be like Ralph.
+
+- Built for [Claude Code](https://claude.ai/code) and [OpenAI Codex](https://github.com/openai/codex)
+- Inspired by developers who wanted their coding agent to handle the whole feature
 
 ---
 
@@ -598,6 +258,6 @@ PRs welcome! This project is friendly to first-time contributors.
 
 *"The doctor said I wouldn't have so many nosebleeds if I kept my finger outta there."*
 
-MIT License
+[MIT License](LICENSE)
 
 </div>

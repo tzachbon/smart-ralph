@@ -1,58 +1,68 @@
-# Interview Examples
+# Grilling Examples
 
-Example interview questions, "Other" response handling, and context storage patterns.
+## One Frontier Round
 
-## Adaptive Depth -- "Other" Response Examples
-
-Follow-up questions must be context-specific, not generic. When a user provides an "Other" response:
-
-1. **Acknowledge the specific response** -- Reference what the user actually typed
-2. **Ask a probing question based on response content** -- Analyze keywords in their response
-3. **Include context from prior answers** -- Reference earlier responses to create continuity
-
-Do NOT use generic follow-ups like "Can you elaborate?" -- always tailor to their specific response.
-
-### GraphQL Example
-
-If user types "We need GraphQL support" for a technical approach question:
-
-```yaml
-AskUserQuestion:
-  question: "You mentioned needing GraphQL support. Is this for the entire API layer, or specific endpoints only?"
-  options:
-    - "Full API layer - replace REST"
-    - "Hybrid - GraphQL for new endpoints only"
-    - "Specific queries for mobile clients"
-    - "Other"
-```
-
-### Security Example
-
-If user types "Security is critical" for success criteria:
-
-```yaml
-AskUserQuestion:
-  question: "You emphasized security is critical. Given your earlier constraints, which security aspects matter most?"
-  options:
-    - "Authentication and authorization"
-    - "Data encryption at rest and in transit"
-    - "Audit logging and compliance"
-    - "Other"
-```
-
-## Context Accumulator -- Storage Format
-
-After each interview, update `.progress.md`:
-
-1. Read existing .progress.md content
-2. Append new section under "## Interview Responses"
-3. Use descriptive keys that reflect what was actually discussed
-4. Include the chosen approach
+Assume repository exploration has established that the project uses REST, has no background worker, and already exposes an authenticated admin API. Two independent user decisions are now unblocked.
 
 ```text
-### [Phase] Interview (from [phase].md)
-- [Topic 1]: [response]
-- [Topic 2]: [response]
-- Chosen approach: [name] -- [brief description]
-[Any follow-up responses from "Other" selections]
+Q1 - Delivery boundary: Should the first version run inside the existing admin API or introduce a worker?
+
+Recommendation: Keep it in the admin API. The repository has no worker infrastructure, and the current workload does not justify adding one.
+
+Options:
+- [Recommended] Extend the admin API
+- Introduce a background worker
+- Other
+
+Q2 - First-release scope: Should the first version process one item or support batches?
+
+Recommendation: Start with one item. This proves the workflow without committing to batch failure semantics.
+
+Options:
+- [Recommended] One item per request
+- Batch processing
+- Other
+```
+
+Ask both questions in the same round because neither depends on the other. A retry-policy question belongs to a later round because it depends on the delivery-boundary answer.
+
+Submit this round through `AskUserQuestion` when available. Otherwise render the block in the response and wait for both answers.
+
+## Fact Lookup While a Round Continues
+
+If deployment support requires a code lookup, mark that branch `INVESTIGATING`. Continue the round with unrelated scope and user-experience decisions. Ask deployment decisions only after the lookup returns.
+
+## Domain-Language Challenge
+
+If `CONTEXT.md` defines **Workspace** as a tenant boundary and the user says "account" while describing tenant ownership, ask:
+
+```text
+Q3 - Canonical owner term: Do you mean the existing Workspace concept, or a separate user Account?
+
+Recommendation: Use Workspace if the boundary matches the glossary and code. This avoids introducing two names for the same domain concept.
+```
+
+After confirmation, update `CONTEXT.md` in that round.
+
+## Progress Storage
+
+```markdown
+## Interview Responses
+
+### Design Grill - Round 1
+- Facts resolved: Existing admin API at `src/admin`; no worker runtime configured
+- Decisions: Delivery boundary -> extend admin API
+- Decisions: First-release scope -> one item per request
+- Domain language: Workspace -> tenant boundary that owns the operation
+- Frontier after round: failure behavior, retry policy
+
+### Design Grill - Round 2
+- Decisions: Failure behavior -> return the existing problem-details response
+- Decisions: Retry policy -> caller retries; service adds no retry queue
+- Out of scope: batch partial-failure semantics
+- Frontier after round: empty
+
+### Design Grill - Confirmed
+- Shared understanding confirmed by user
+- Chosen approach: extend the existing admin API for single-item processing
 ```

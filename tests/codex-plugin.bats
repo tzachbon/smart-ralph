@@ -65,6 +65,115 @@ print('ok')
     [ "$status" -eq 0 ]
 }
 
+@test "codex plugin: manifest declares a valid Stop hook" {
+    local manifest hook_manifest
+    manifest="$(plugin_root)/.codex-plugin/plugin.json"
+    hook_manifest="$(plugin_root)/hooks/hooks.json"
+
+    run python3 -c "
+import json
+manifest = json.load(open('$manifest'))
+hooks = json.load(open('$hook_manifest'))
+assert manifest['hooks'] == './hooks/hooks.json'
+assert set(hooks['hooks']) == {'Stop'}
+assert len(hooks['hooks']['Stop']) == 1
+handlers = hooks['hooks']['Stop'][0]['hooks']
+assert len(handlers) == 1
+handler = handlers[0]
+assert handler['type'] == 'command'
+command = handler['command']
+assert command == 'bash \"\${PLUGIN_ROOT}/hooks/stop-watcher.sh\"'
+print('ok')
+"
+    [ "$status" -eq 0 ]
+}
+
+@test "codex plugin: declared Stop hook executes the bundled watcher" {
+    local command workspace
+    workspace="$BATS_TEST_TMPDIR/hook-workspace"
+    mkdir -p "$workspace/specs/test-spec"
+    printf 'test-spec\n' > "$workspace/specs/.current-spec"
+    printf '%s\n' \
+        '{"phase":"execution","taskIndex":0,"totalTasks":2,"awaitingApproval":false}' \
+        > "$workspace/specs/test-spec/.ralph-state.json"
+    command=$(python3 -c "
+import json
+hooks = json.load(open('$(plugin_root)/hooks/hooks.json'))
+print(hooks['hooks']['Stop'][0]['hooks'][0]['command'])
+")
+
+    run env PLUGIN_ROOT="$(plugin_root)" bash -c "$command" \
+        <<< "{\"cwd\":\"$workspace\"}"
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'"decision":"block"'* ]]
+    [[ "$output" == *'Continue to task 1/2'* ]]
+}
+
+@test "codex plugin: marketplace installs with authentication on install" {
+    local marketplace manifest
+    marketplace="$(repo_root)/.agents/plugins/marketplace.json"
+    manifest="$(plugin_root)/.codex-plugin/plugin.json"
+
+    run python3 -c "
+import json, os
+marketplace = json.load(open('$marketplace'))
+manifest = json.load(open('$manifest'))
+assert marketplace['name'] == 'smart-ralph'
+plugins = [
+    plugin
+    for plugin in marketplace['plugins']
+    if plugin['name'] == 'ralph-specum'
+]
+assert len(plugins) == 1
+plugin = plugins[0]
+assert plugin['name'] == manifest['name']
+assert plugin['source']['source'] == 'local'
+assert plugin['source']['path'] == './plugins/ralph-specum-codex'
+source = os.path.normpath(os.path.join('$(repo_root)', plugin['source']['path']))
+assert source == os.path.normpath('$(plugin_root)')
+assert os.path.isdir(source)
+assert plugin['policy']['installation'] == 'AVAILABLE'
+assert plugin['policy']['authentication'] == 'ON_INSTALL'
+print('ok')
+"
+    [ "$status" -eq 0 ]
+}
+
+@test "codex plugin: install docs fetch and install the plugin" {
+    local root readme
+    root="$(repo_root)"
+
+    for readme in "$root/README.md" "$(plugin_root)/README.md"; do
+        grep -Fq -- "--sparse .agents/plugins" "$readme"
+        grep -Fq -- "--sparse plugins/ralph-specum-codex" "$readme"
+        grep -Fq "codex plugin add ralph-specum@smart-ralph" "$readme"
+        grep -Fq "codex plugin marketplace add ." "$readme"
+    done
+}
+
+@test "codex plugin: docs use the current hook trust flow" {
+    local root readme workflow
+    root="$(repo_root)"
+    workflow="$(plugin_root)/references/workflow.md"
+
+    run grep -E "plugin_hooks|codex_hooks" \
+        "$root/README.md" \
+        "$(plugin_root)/README.md" \
+        "$workflow"
+    [ "$status" -eq 1 ]
+
+    for readme in "$root/README.md" "$(plugin_root)/README.md"; do
+        grep -Fq '/hooks' "$readme"
+        grep -Fq 'review' "$readme"
+        grep -Fq 'trust' "$readme"
+    done
+
+    grep -Fq '`bash`' "$workflow"
+    grep -Fq '`jq`' "$workflow"
+    grep -Fq 'Manual Fallback Path' "$workflow"
+}
+
 @test "codex plugin: all 16 skill directories have SKILL.md" {
     local root skill
     root="$(plugin_root)"

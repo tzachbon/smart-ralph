@@ -13,7 +13,7 @@ Run parallel research for the active spec. You are a **coordinator, not a resear
 Create a task for each item and complete in order:
 
 1. **Gather context** -- resolve spec, read goal and existing files
-2. **Interview** -- brainstorming dialogue (skip if `--quick`)
+2. **Grill** -- resolve the design-tree frontier (skip if `--quick`)
 3. **Execute parallel research** -- dispatch team of research-analyst + Explore agents
 4. **Merge results** -- synthesize partial files into research.md
 5. **Artifact review** -- spec-reviewer validation loop (only if `--quick`)
@@ -28,22 +28,15 @@ Create a task for each item and complete in order:
 4. Read `.ralph-state.json` if it exists
 5. Read `.progress.md` to understand the goal
 
-## Step 2: Interview (skip if --quick)
+## Step 2: Grill (skip if --quick)
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
-### Read Context from .progress.md
+### Grilling
 
-Read `.progress.md` and parse:
-1. **Intent Classification** (TRIVIAL, REFACTOR, GREENFIELD, MID_SIZED) for question counts
-2. **Prior interview responses** to skip already-answered questions
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` in full. It owns context and spec-index reading, fact lookup, the design tree, frontier rounds, domain-language work, progress capture, and the shared-understanding confirmation gate.
 
-**Intent-Based Question Counts:**
-- TRIVIAL: 1-2 | REFACTOR: 3-5 | GREENFIELD: 5-10 | MID_SIZED: 3-7
-
-### Brainstorming Dialogue
-
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time, adapting to prior answers.
+Read intent classification and prior interview responses only as context for building the tree. Do not derive question counts from intent.
 
 **Research Exploration Territory** (hints, not a script):
 - **Technical approach preference** -- follow existing patterns or introduce new ones?
@@ -52,20 +45,21 @@ Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/S
 - **Prior knowledge** -- what does the user already know vs what needs discovery?
 - **Technologies to evaluate or avoid** -- specific libraries, frameworks, or patterns
 
-### Research Approach Proposals
+### Research Strategy Branch
 
-After dialogue, propose 2-3 research strategies. Examples (illustrative only):
+When the research strategy requires a user decision, add 2-3 grounded strategies to the design tree. Examples (illustrative only):
 - **(A)** Deep dive on specific technology/library comparison
 - **(B)** Focus on existing codebase patterns with minimal external research
 - **(C)** Broad survey across multiple alternatives before narrowing
 
-### Store Interview & Approach
+### Store Grill Results
 
 Append to `.progress.md` under "Interview Responses":
 ```markdown
-### Research Interview (from research.md)
-- [Topic 1]: [response]
+### Research Grill (from research.md)
+- [Round decisions and resolved facts]
 - Chosen approach: [name] -- [brief description]
+- Shared understanding: confirmed
 ```
 
 Pass combined context to subagent delegation as "Interview Context".

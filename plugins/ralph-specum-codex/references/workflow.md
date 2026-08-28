@@ -156,9 +156,9 @@ When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, o
 
 Treat `continue to <named next step>` as approval of the current artifact.
 
-## Hook-Driven Execution Path
+## Hook-Driven Execution Overview
 
-When the Codex Stop hook is enabled (`[features] codex_hooks = true` in Codex config), the execution loop runs without user re-invocation:
+When the bundled Codex Stop hook is trusted and enabled, the execution loop runs without user re-invocation:
 
 1. The stop-watcher script runs on every agent stop event.
 2. It reads `.ralph-state.json` to determine the current phase and task index.
@@ -167,7 +167,7 @@ When the Codex Stop hook is enabled (`[features] codex_hooks = true` in Codex co
 5. The loop repeats until all tasks are complete or `taskIndex >= totalTasks`.
 6. On completion the script allows the session to close only when `activePrototypes` is empty.
 
-The Stop hook is experimental and requires `codex_hooks = true`. It is disabled by default and not available on Windows. Verify the feature flag is set before relying on hook-driven execution.
+Codex enables hooks by default, but plugin hooks do not run until you review and trust them with `/hooks`. This hook also requires `bash` and `jq`.
 
 ## Manual Fallback Path
 
@@ -179,11 +179,11 @@ When hooks are disabled or unavailable, re-invoke the implement skill after each
 4. Repeat step 1 until the skill reports all tasks complete.
 5. If a task is blocked (exceeded retry limit), the skill will report the blocker. Resolve the issue manually, then re-invoke to continue.
 
-Use this path whenever `codex_hooks` is not set, when running on Windows, or when verifying hook behavior during development.
+Use this path whenever the Stop hook is not trusted or enabled, when `bash` or `jq` is unavailable, or when verifying hook behavior during development.
 
-## Hook-Driven Execution Path
+## Hook-Driven Execution Details
 
-When `[features] codex_hooks = true` is set in `config.toml`, the execution loop is automated via the Stop hook.
+When the bundled Stop hook is trusted and enabled, it automates the execution loop.
 
 ### How it works
 
@@ -212,9 +212,9 @@ When `[features] codex_hooks = true` is set in `config.toml`, the execution loop
 - a dependent active prototype or stale current task -> block with resume guidance
 - completed tasks with nonempty `activePrototypes` -> block and preserve state
 
-## Manual Fallback Path
+## Manual Fallback Details
 
-When hooks are disabled (no `codex_hooks = true`, or on Windows), run phases manually:
+When the Stop hook is not trusted or enabled, or when `bash` or `jq` is unavailable, run phases manually:
 
 ### Step-by-step re-invocation
 

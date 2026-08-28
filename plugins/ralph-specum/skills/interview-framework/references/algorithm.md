@@ -1,128 +1,92 @@
-# Interview Algorithm (3-Phase)
+# Grilling Algorithm
 
-Detailed pseudocode for the adaptive brainstorming dialogue algorithm.
-
-## Phase 1: UNDERSTAND (Decision-Tree)
+Use this algorithm for every normal-mode Ralph interview.
 
 ```text
-UNDERSTAND:
-  1. Read all available context:
-     - .progress.md (prior phase answers, intent, goal)
-     - Prior artifacts (research.md, requirements.md, etc.)
-     - Original goal text
-  2. Read the exploration territory provided by the calling command
-  3. Identify what is UNKNOWN vs what is already decided
-     - If prior phases already covered a topic, mark it RESOLVED. Skip it.
-  4. Build the question tree:
-     nodes = []
-     for each area in exploration_territory:
-       nodes.append({ topic: area, status: OPEN, dependency: [], finding: null })
-     # Dependency ordering: if topic B requires knowing topic A first,
-     # set B.dependency = [A]. Do not ask B until A is RESOLVED.
+GRILL:
+  1. GATHER CONTEXT
+     - Read the original goal, .progress.md, .ralph-state.json, and prior artifacts.
+     - Read <default-specs-dir>/.index/index.md when present.
+     - Open related indexed entries and existing specs that may affect the goal.
+     - Read CONTEXT-MAP.md and its applicable CONTEXT.md, or root CONTEXT.md.
+     - Read the calling command's exploration territory.
 
-  DECISION-TREE TRAVERSAL:
-    while any node.status == OPEN:
-      # Select next node: first OPEN node whose dependencies are all RESOLVED
-      node = next_unblocked_open_node(nodes)
-      if node is null: break  # All remaining nodes are blocked (shouldn't happen)
+  2. BUILD DESIGN TREE
+     nodes = decisions implied by:
+       - the goal and phase territory
+       - prior artifacts and interview rounds
+       - spec-index relationships
+       - domain-language conflicts
+       - concrete scenarios and edge cases
+       - contradictions between user claims and code
 
-      # Codebase-first check
-      if node.topic is a codebase FACT (not a user decision):
-        finding = explore_codebase(node.topic)
-        node.status = RESOLVED
-        node.finding = finding
-        log: "Discovered: [topic] -> [finding]"
-        continue
+     for each node:
+       classify unknowns as FACT or USER_DECISION
+       record prerequisite decision and fact dependencies
+       set status = OPEN, INVESTIGATING, RESOLVED, or OUT_OF_SCOPE
 
-      # Ask user
-      recommended = derive_recommendation(node.topic, context, prior_answers)
-      AskUserQuestion:
-        question: "[Context-aware question]. [Recommended: recommended.rationale]"
-        options:
-          - "[Recommended] [recommended.option]"
-          - "[Alternative 1]"
-          - "[Alternative 2 if needed]"
-          - "Other"
+  3. RESOLVE FACTS
+     fact_frontier = discoverable facts whose prerequisites are resolved
+     dispatch independent fact_frontier lookups in parallel
+     mark each lookup INVESTIGATING
+     on result:
+       record evidence
+       mark fact RESOLVED
+       update dependent nodes
 
-      node.status = RESOLVED
-      node.finding = user_answer
+  4. ASK USER FRONTIER
+     user_frontier = every OPEN user decision whose prerequisites are RESOLVED
 
-      # Resolve any dependent nodes that this answer makes obvious
-      for dep_node in nodes where node in dep_node.dependency:
-        if dep_node can be inferred from node.finding:
-          dep_node.status = RESOLVED
-          dep_node.finding = inferred_value
-          log: "Inferred: [dep_topic] -> [inferred_value]"
+     if user_frontier is not empty:
+       build one numbered round from the whole frontier
+       for each question:
+         ground it in facts and prior answers
+         derive a recommended answer and rationale
+         present 2-4 meaningful options with recommendation first and Other last
+       if AskUserQuestion is available:
+         submit the round through AskUserQuestion
+       else:
+         render the same numbered round in the response
+       wait for every answer in the round
 
-      # Completion signal check
-      if user_answer contains completion_signal:
-        break
+       for each answer:
+         mark the node RESOLVED
+         infer dependent answers only when the inference is justified
+         add newly exposed branches
+         challenge glossary conflicts or fuzzy terms
+         test domain boundaries with concrete scenarios where needed
+         update CONTEXT.md immediately when a domain term resolves
 
-    -> Move to PROPOSE APPROACHES
+       append the round to .progress.md
+       return to RESOLVE FACTS
+
+  5. HANDLE APPARENT STOP SIGNALS
+     if the user asks to stop while unresolved branches remain:
+       show the remaining branches
+       ask whether each branch is out of scope or still needs resolution
+       mark OUT_OF_SCOPE only after explicit confirmation
+       return to RESOLVE FACTS
+
+  6. COMPLETE
+     if any fact is INVESTIGATING:
+       wait for it and return to RESOLVE FACTS
+     if any decision is OPEN:
+       return to ASK USER FRONTIER
+     if every branch is RESOLVED or OUT_OF_SCOPE:
+       summarize decisions, scope, approach, and domain-language updates
+       ask the user to confirm shared understanding
+       if corrected:
+         reopen affected nodes and return to RESOLVE FACTS
+       if confirmed:
+         store final summary in .progress.md
+         delegate to the phase agent
 ```
 
-**Key rules for question generation:**
-- Each question builds on prior answers in THIS dialogue AND prior phases
-- Reference specific things the user said ("You mentioned X, does that mean...")
-- Never ask something .progress.md already answers
-- Never ask generic questions. Every question must be grounded in the user's context.
-- If you have enough context to propose meaningful approaches, stop and move on. Do not exhaust every open node mechanically.
+## Invariants
 
-## Phase 2: PROPOSE APPROACHES
-
-```text
-PROPOSE APPROACHES:
-  1. Synthesize the dialogue into 2-3 distinct approaches
-  2. Each approach MUST include:
-     - Name (short label)
-     - Description (1-2 sentences)
-     - Trade-offs (pros and cons)
-  3. Lead with your recommendation
-  4. Present via AskUserQuestion:
-
-  AskUserQuestion:
-    question: "Based on our discussion, here are the approaches I see:
-
-      **A) [Recommended] [Name]**
-      [Description]. Trade-off: [pro] vs [con].
-
-      **B) [Name]**
-      [Description]. Trade-off: [pro] vs [con].
-
-      **C) [Name]** (if applicable)
-      [Description]. Trade-off: [pro] vs [con].
-
-      Which approach fits best?"
-    options:
-      - "A) [Name]"
-      - "B) [Name]"
-      - "C) [Name]" (if applicable)
-      - "Other"
-
-  5. If user picks "Other":
-     -> Ask what they'd change or combine
-     -> Iterate until approach is confirmed (max 3 rounds)
-  6. Store chosen approach as primary input for the subagent
-```
-
-**Approach rules:**
-- Always present at least 2 approaches (never just 1)
-- Maximum 3 approaches (more causes decision fatigue)
-- The recommended approach goes first
-- Trade-offs must be honest. No straw-man alternatives.
-- Apply YAGNI: strip unnecessary complexity from all approaches
-
-## Phase 3: CONFIRM & STORE
-
-```text
-CONFIRM & STORE:
-  1. Brief recap to the user:
-     "Here's what I'll pass to the [agent name]:
-      - [Key decision 1]
-      - [Key decision 2]
-      - [Chosen approach summary]
-      Does this look right?"
-  2. If user corrects something, update before storing
-  3. Store in .progress.md (see Context Accumulator in SKILL.md)
-  4. Proceed to subagent delegation
-```
+- Ask no repository fact as a user question.
+- Ask no dependent decision before its prerequisites resolve.
+- Ask every currently unblocked user decision in the same round.
+- Add no fixed question cap or early-exit heuristic.
+- Advance no phase with an open frontier.
+- Create no interview mode or counter in `.ralph-state.json`.

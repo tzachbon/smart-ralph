@@ -73,62 +73,51 @@ What to append:
 
 ## Requirements Structure
 
-Create requirements.md following this structure:
+Follow `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` exactly.
 
-```markdown
-# Requirements: <Feature Name>
+Fallback (only if template unreadable), section order: Problem Statement, Goal, User Stories, FRs, NFRs, Glossary, Out of Scope, Dependencies, Success Criteria, Risks, Unresolved Questions.
 
-## Goal
-[1-2 sentence description of what this feature accomplishes and why it matters]
+## Requirement Language Rules
 
-## User Stories
+- FR statements MUST be phrased "System MUST ..." (Must priority), "System SHOULD ..." (Should priority), or "System MAY ..." (Could priority) -- RFC 2119 modal matching the MoSCoW column (Must -> MUST, Should -> SHOULD, Could -> MAY). No other phrasing for functional requirements.
+- Every acceptance criterion MUST use Given/When/Then with all 3 clauses present.
+- ACs describe observable outcomes (exit codes, output, state changes), never implementation details.
 
-### US-1: [Story Title]
-**As a** [user type]
-**I want to** [action/capability]
-**So that** [benefit/value]
+Before/after few-shot rewrites:
 
-**Acceptance Criteria:**
-- [ ] AC-1.1: [Specific, testable criterion]
-- [ ] AC-1.2: [Specific, testable criterion]
+| Before (vague) | After (testable) |
+|---|---|
+| "handle errors gracefully" | "Given an invalid config path, When the command runs, Then it exits non-zero and prints the path in the error message" |
+| "search should be fast" | "Given 10k indexed specs, When a search runs, Then results return in <2s or target is `TBD (owner, date)`" |
 
-### US-2: [Story Title]
-...
+## Six-Scenario Checklist (per user story)
 
-## Functional Requirements
+For EVERY user story, consider all six scenario types when writing ACs:
 
-| ID | Requirement | Priority | Acceptance Criteria |
-|----|-------------|----------|---------------------|
-| FR-1 | [description] | High/Medium/Low | [how to verify] |
-| FR-2 | [description] | High/Medium/Low | [how to verify] |
+1. Happy path
+2. Empty/none (no data, zero results)
+3. Error (invalid input, failure)
+4. Cancellation (user aborts mid-flow)
+5. Permission (denied, unauthorized)
+6. Boundary (limits, edge values)
 
-## Non-Functional Requirements
+Non-applicable scenarios: add `N/A: <one-line reason>` under the story's ACs instead of omitting silently.
 
-| ID | Requirement | Metric | Target |
-|----|-------------|--------|--------|
-| NFR-1 | Performance | [metric] | [target value] |
-| NFR-2 | Security | [standard] | [compliance level] |
+## Append-Only ID Rules
 
-## Glossary
-- **Term**: Definition relevant to this feature
+- IDs (`US-N`, `FR-N`, `AC-N.N`, `NFR-N`) are append-only: NEVER renumber or reuse an ID once assigned.
+- To remove a requirement, retire it in place: mark the ID with `(retired)` (e.g., `FR-3 (retired)`) and keep the row/entry. New requirements always take the next unused number.
 
-## Out of Scope
-- [Item explicitly not included]
-- [Another exclusion]
+## TBD Discipline
 
-## Dependencies
-- [External dependency or prerequisite]
-
-## Success Criteria
-- [Measurable outcome that defines success]
-```
+- Unknown specifics (metrics, limits, owners, dates): write `TBD (owner, expected date)` — e.g., `TBD (Zach, 2026-08-01)`. NEVER invent a value.
+- Quick mode: never stall on unknowns. State assumptions explicitly — add an `Assumptions` note or inline TBD markers — and keep generating.
 
 ## Quality Checklist
 
 Before completing requirements:
-- [ ] Every user story has testable acceptance criteria
 - [ ] No ambiguous language ("fast", "easy", "simple", "better")
-- [ ] Clear priority for each requirement
+- [ ] Priorities use MoSCoW terms (Must/Should/Could)
 - [ ] Out-of-scope section prevents scope creep
 - [ ] Glossary defines domain-specific terms
 - [ ] Success criteria are measurable
@@ -177,20 +166,17 @@ This step is NON-NEGOTIABLE. Always set awaitingApproval = true as your last act
 
 ## Output Structure
 
-Every requirements output follows this order:
+The requirements.md **artifact** follows `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` exactly (section order and formats). Ordering emphasis within the artifact:
 
 1. Goal (1-2 sentences MAX)
 2. User Stories + Acceptance Criteria (bulk)
-3. Requirements tables
-4. Unresolved Questions (ambiguities found)
-5. Numbered Next Steps (ALWAYS LAST)
+3. Requirements tables (FR, NFR)
+4. Unresolved Questions -- ambiguities/edge cases needing a decision. Each bullet needs an owner and date (per the gate's unowned-question check), or state "None".
 
 ```markdown
 ## Unresolved Questions
-- [Ambiguity 1 that needs clarification]
-- [Edge case needing decision]
-
-## Next Steps
-1. [First action after requirements approved]
-2. [Second action]
+- [Ambiguity that needs clarification] Owner: [name], [date]
+- [Edge case needing decision] Owner: [name], [date]
 ```
+
+**Next Steps are NOT part of requirements.md.** Do not add a `## Next Steps` section to the artifact -- it is not in the template. After writing the file, report the numbered next steps (e.g., "run /ralph-specum:design") to the coordinator in your chat response only.

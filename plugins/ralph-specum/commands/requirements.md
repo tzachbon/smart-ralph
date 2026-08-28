@@ -13,9 +13,9 @@ Generate requirements for the active spec. Running this command implicitly appro
 Create a task for each item and complete in order:
 
 1. **Gather context** -- resolve spec, read research and goal
-2. **Interview** -- brainstorming dialogue (skip if `--quick`)
+2. **Grill** -- resolve the design-tree frontier (skip if `--quick`)
 3. **Execute requirements** -- dispatch product-manager via team
-4. **Artifact review** -- spec-reviewer validation loop (only if `--quick`)
+4. **Artifact review** -- spec-reviewer validation loop (both modes)
 5. **Walkthrough & approval** -- display summary, get user approval
 6. **Finalize** -- update state, commit, stop
 
@@ -32,20 +32,15 @@ Create a task for each item and complete in order:
    ```
 5. Read context: `research.md` (if exists), `.progress.md`, original goal
 
-## Step 2: Interview (skip if --quick)
+## Step 2: Grill (skip if --quick)
 
 Check if `--quick` appears in `$ARGUMENTS`. If present, skip to Step 3.
 
-### Read Context from .progress.md
+### Grilling
 
-Parse Intent Classification and prior interview responses to skip already-answered questions.
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` in full. It owns context and spec-index reading, fact lookup, the design tree, frontier rounds, domain-language work, progress capture, and the shared-understanding confirmation gate.
 
-**Intent-Based Question Counts:**
-- TRIVIAL: 1-2 | REFACTOR: 3-5 | GREENFIELD: 5-10 | MID_SIZED: 3-7
-
-### Brainstorming Dialogue
-
-Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`. Ask context-driven questions one at a time.
+Read intent classification and prior interview responses only as context for building the tree. Do not derive question counts from intent.
 
 **Requirements Exploration Territory** (hints, not a script):
 - **Primary users** -- who will use this feature? Developers, end users, specific roles?
@@ -54,20 +49,21 @@ Apply adaptive dialogue from `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/S
 - **Scope boundaries** -- what is explicitly out of scope for this iteration?
 - **Compliance or regulatory needs** -- security, privacy, or regulatory considerations?
 
-### Requirements Approach Proposals
+### Scope Approach Branch
 
-After dialogue, propose 2-3 scoping approaches. Examples (illustrative only):
+When scope requires a user decision, add 2-3 grounded approaches to the design tree. Examples (illustrative only):
 - **(A)** Full feature set -- comprehensive user stories covering all use cases
 - **(B)** MVP scope -- core user stories only, defer edge cases to v2
 - **(C)** Phased delivery -- essential stories now, planned expansion later
 
-### Store Interview & Approach
+### Store Grill Results
 
 Append to `.progress.md` under "Interview Responses":
 ```markdown
-### Requirements Interview (from requirements.md)
-- [Topic 1]: [response]
+### Requirements Grill (from requirements.md)
+- [Round decisions and resolved facts]
 - Chosen approach: [name] -- [brief description]
+- Shared understanding: confirmed
 ```
 
 Pass combined context to delegation prompt as "Interview Context".
@@ -82,7 +78,7 @@ Follow the full team lifecycle:
 1. **Clean up stale team (MANDATORY FIRST ACTION)**: Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
 2. **Create team**: `TeamCreate(team_name: "requirements-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate requirements for $spec", activeForm: "Generating requirements")`
-4. **Spawn teammate**: `Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1")` — delegate with research context, goal, and interview context. Instruct to create user stories with acceptance criteria, functional requirements (FR-*), non-functional requirements (NFR-*), glossary, out-of-scope, dependencies. Output to `./specs/$spec/requirements.md`.
+4. **Spawn teammate**: `Task(subagent_type: product-manager, team_name: "requirements-$spec", name: "pm-1")` — delegate with research context, goal, and interview context. Instruct to follow the structure in `${CLAUDE_PLUGIN_ROOT}/templates/requirements.md` (canonical section order and formats): user stories with acceptance criteria, functional requirements (FR-*), non-functional requirements (NFR-*), glossary, out-of-scope, dependencies. In `--quick` mode (no interview context), instruct to state assumptions explicitly in the artifact rather than leaving gaps. Output to `./specs/$spec/requirements.md`.
 5. **Wait for completion**: Monitor via TaskList.
 6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "pm-1")`
 7. **Collect results**: Read `./specs/$spec/requirements.md`.
@@ -91,24 +87,31 @@ Follow the full team lifecycle:
 **Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: product-manager)` call.
 </mandatory>
 
-## Step 4: Artifact Review (only in --quick mode)
+## Step 4: Artifact Review (both modes)
 
 <mandatory>
-**Review loop must complete before walkthrough. Max 3 iterations.**
+**Review runs after generation in normal AND quick mode. Behavior branches on mode** (check `--quick` in `$ARGUMENTS`). Must complete before the walkthrough.
 
-If NOT `--quick`, skip to Step 5.
+**Review delegation (both modes)**: Invoke `spec-reviewer` via Task tool. Include full requirements.md content, `artifactType: requirements`, `artifactPath: ./specs/$spec/requirements.md`, iteration count, prior findings. Upstream: research.md.
 
-Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
+### Normal mode: single pass
+
+Run `spec-reviewer` exactly ONCE. Do NOT loop or auto-regenerate on FAIL.
+- Log the result (REVIEW_PASS or REVIEW_FAIL) and all findings to .progress.md.
+- Carry the findings forward -- **including any FAIL-class findings** -- into the Step 5 walkthrough Validation block. The user decides what to do with them (approve as-is, request changes, or re-run review).
+- No signal: treat as REVIEW_PASS (permissive); note the missing signal in the Validation block.
+
+### Quick mode: max-3 loop
+
+Follow the standard review loop (unchanged):
 - REVIEW_PASS: log to .progress.md, proceed
 - REVIEW_FAIL (iteration < 3): log, re-invoke product-manager with feedback, loop
 - REVIEW_FAIL (iteration >= 3): graceful degradation, log warning, proceed
 - No signal: treat as REVIEW_PASS (permissive)
 
-**Review delegation**: Include full requirements.md content, iteration count, prior findings. Upstream: research.md.
+**Revision delegation (quick mode)**: Re-invoke product-manager with reviewer feedback. Focus on specific issues.
 
-**Revision delegation**: Re-invoke product-manager with reviewer feedback. Focus on specific issues.
-
-**Error handling**: Reviewer no signal = REVIEW_PASS. Agent failure = retry once, then use original.
+**Error handling (both modes)**: Reviewer no signal = REVIEW_PASS. Agent failure = retry once, then use original.
 </mandatory>
 
 ## Step 5: Walkthrough & Approval
@@ -133,7 +136,25 @@ Output: $PWD/specs/$spec/requirements.md
 [list all, keep titles brief]
 
 **Requirements**: [X] functional, [Y] non-functional
+
+## Validation
+
+**Checks** (from the Step 4 review, one row per check; show real statuses including any FAIL):
+| # | Check | Status |
+|---|-------|--------|
+| C1 | ID & cross-reference integrity | PASS / WARN / FAIL |
+| C2 | GWT clause presence | PASS / WARN / FAIL |
+| C3 | MoSCoW priority values | PASS / WARN / FAIL |
+| C4 | Requirement-language modals | PASS / WARN / FAIL |
+| C5 | NFR fill-or-N/A | PASS / WARN / FAIL |
+| C6 | Six-scenario coverage | PASS / WARN / FAIL |
+| C7 | Unowned TBD / open questions | PASS / WARN / FAIL |
+| C8 | MUST:SHOULD ratio advisory | PASS / WARN / FAIL |
+
+**Judgment findings**: [reviewer's judgment-based findings, or "None"]
 ```
+
+The Validation block reports the statuses of the 8 rubric checks plus any judgment findings from the most recent Step 4 review (normal mode: the single pass; FAILs are shown here for the user to decide on). User approval flow is unchanged.
 </mandatory>
 
 ### User Approval (skip if --quick)
@@ -152,7 +173,8 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 **If "Request changes" or "Other"**:
 1. Ask what to change
 2. Re-invoke product-manager using **cleanup-and-recreate** team pattern (TeamDelete old -> TeamCreate new -> spawn with feedback -> wait -> shutdown -> TeamDelete)
-3. Re-display walkthrough, ask again with the same 4 choices. Loop until approved.
+3. Re-run the Step 4 review loop on the revised artifact (review re-runs after EVERY regeneration, no exceptions)
+4. Re-display walkthrough (with updated Validation block), ask again with the same 4 choices. Loop until approved.
 
 ## Step 6: Finalize
 
