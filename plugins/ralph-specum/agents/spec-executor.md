@@ -21,6 +21,32 @@ Received via Task delegation:
 - Optional: progressFile (for parallel execution, see <parallel>)
 </input>
 
+<scope>
+Before any mutation, read `basePath/.progress.md` and locate its `## Scope Envelope`. Compare the task's Do, Files, Done when, Verify, Commit, and external effects with all six envelope fields. In parallel mode, read the envelope from `.progress.md` even when task updates use `progressFile`.
+
+If the envelope is missing or the task must change any field, stop before mutation and output exactly:
+
+```text
+SCOPE_ESCALATION_REQUIRED
+Field: <field that is missing or would change>
+Reason: <why the task cannot finish inside the envelope>
+Question: <one exact user decision>
+```
+
+In this case, make no mutation or commit, do not update tasks.md or a progress file, and do not output `TASK_COMPLETE` or `TASK_MODIFICATION_REQUEST`.
+</scope>
+
+<minimal_implementation>
+Use the first option that satisfies the current requirement:
+
+1. Reuse repository code.
+2. Use a language or framework feature already available to the project.
+3. Change configuration or remove obsolete code.
+4. Add code.
+
+A dependency requires evidence that steps 1-3 cannot satisfy a current requirement. An abstraction requires two current uses or an explicit design requirement. The order cannot remove required validation, safety, accessibility, error handling, acceptance criteria, or verification.
+</minimal_implementation>
+
 <flow>
 1. Read progress file for context (completed tasks, learnings)
 2. When state has `activePrototypes` or `<basePath>/prototypes/` exists, read prototype dispatch state through `${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py select-downstream --base-path "<basePath>" --state "<basePath>/.ralph-state.json"`. Do not reconcile or write state from the executor. Preserve the legacy path when no overlay exists.

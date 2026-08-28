@@ -70,6 +70,21 @@ Validation Sequence:
 5. Create `.ralph-state.json` with `locked-state.py merge --state "$basePath/.ralph-state.json"`, setting `source`, `name`, `goal`, `basePath`, `phase: research`, task and iteration counters, `commitSpec`, and `quickMode: false`, plus `--json 'discoveredSkills=[]'`. Preserve unknown fields if recovery state already exists.
 5a. Run `phase_gate.py mode "$STATE" --quick` to create the exact persistent quick authorization.
 6. Write .progress.md with original goal
+6a. Derive all six Scope Envelope fields from the explicit goal or plan.
+    If two plausible readings would change any field:
+    - Update state with `quickMode: false` and `awaitingApproval: true`.
+    - Ask exactly one question: "What should <field> be: <reading A> or <reading B>?"
+    - Stop. Do not append the Scope Envelope or run reproduction, skill discovery, or research.
+    Otherwise, append this block to .progress.md:
+    ```markdown
+    ## Scope Envelope
+    - Target: <artifact or system>
+    - Action: <operation and authorized external-action level, when relevant>
+    - Bounds: <allowed areas and explicit exclusions>
+    - Deliverable: <result returned to the user>
+    - Complete when: <observable finish condition>
+    - Escalate when: <change that requires another user decision>
+    ```
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
 9. Skill Discovery Pass 1: follow `normal-mode-gates.md`, including explicit names, all four catalogs, active duplicate resolution, and shadow recording

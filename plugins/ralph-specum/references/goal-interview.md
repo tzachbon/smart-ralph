@@ -31,13 +31,30 @@ For a bug, inspect existing tests, logs, issue text, and reproduction commands f
 
 Apply domain-language modeling throughout the grill. The spec location is already resolved; do not ask for it again during the goal grill.
 
+## Bind the Scope Envelope
+
+Include these six resolved fields in the goal decision brief:
+
+```markdown
+## Scope Envelope
+- Target: [artifact or system]
+- Action: [operation and authorized external-action level, when relevant]
+- Bounds: [allowed areas and explicit exclusions]
+- Deliverable: [result returned to the user]
+- Complete when: [observable finish condition]
+- Escalate when: [change that requires another user decision]
+```
+
+Resolve the fields from interview answers and repository facts. If two plausible readings would change a field, ask one exact question before final approval.
+
 ## Final approval and delegation
 
 Present the goal decision brief and require `Approve and delegate`. On approval:
 
 1. Call `confirm` for phase `start`.
-2. Run `check-delegation` with the current start interview and skill receipt.
-3. Delegate the research team immediately in the same response.
+2. Append the approved `## Scope Envelope` block to `.progress.md`.
+3. Run `check-delegation` with the current start interview and skill receipt.
+4. Delegate the research team immediately in the same response.
 
 Pass the approved decisions and complete selected-skill manifest to every artifact-producing research agent. Append a readable mirror to `.progress.md`:
 
