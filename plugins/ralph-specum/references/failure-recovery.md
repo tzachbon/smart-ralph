@@ -247,8 +247,9 @@ TASK_ID="X.Y"           # Original task ID (e.g., "1.3")
 FIX_TASK_ID="X.Y.N"     # Generated fix task ID (e.g., "1.3.1")
 ERROR_MSG="$failure_error"  # Escaped error message from failure object
 
-# Read current state, update fixTaskMap, write back
-jq --arg taskId "$TASK_ID" \
+# Read current state, derive the field values, then merge them under the lock
+STATE_JSON=$(python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge --stdout --state "$SPEC_PATH/.ralph-state.json")
+UPDATED_STATE=$(jq --arg taskId "$TASK_ID" \
    --arg fixId "$FIX_TASK_ID" \
    --arg error "$ERROR_MSG" \
    '
@@ -265,8 +266,13 @@ jq --arg taskId "$TASK_ID" \
 
    # Also increment totalTasks to account for inserted fix task
    .totalTasks += 1
-   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   ' <<< "$STATE_JSON")
+FIX_TASK_MAP_JSON=$(jq -c '.fixTaskMap' <<< "$UPDATED_STATE")
+TOTAL_TASKS=$(jq -r '.totalTasks' <<< "$UPDATED_STATE")
+python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+  --state "$SPEC_PATH/.ralph-state.json" \
+  --json "fixTaskMap=$FIX_TASK_MAP_JSON" \
+  --set "totalTasks=$TOTAL_TASKS"
 ```
 
 **Example state after fix task generation**:
@@ -317,16 +323,17 @@ After second failure (fix task 1.3.2 generated):
 
 ```bash
 # Check current attempts for a task
+STATE_JSON=$(python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge --stdout --state "$SPEC_PATH/.ralph-state.json")
 CURRENT_ATTEMPTS=$(jq -r --arg taskId "$TASK_ID" \
-  '.fixTaskMap[$taskId].attempts // 0' "$SPEC_PATH/.ralph-state.json")
+  '.fixTaskMap[$taskId].attempts // 0' <<< "$STATE_JSON")
 
 # Check if limit exceeded
-MAX_FIX=$(jq -r '.maxFixTasksPerOriginal // 3' "$SPEC_PATH/.ralph-state.json")
+MAX_FIX=$(jq -r '.maxFixTasksPerOriginal // 3' <<< "$STATE_JSON")
 if [ "$CURRENT_ATTEMPTS" -ge "$MAX_FIX" ]; then
   echo "ERROR: Max fix attempts ($MAX_FIX) reached for task $TASK_ID"
   # Show fix history
   jq -r --arg taskId "$TASK_ID" \
-    '.fixTaskMap[$taskId].fixTaskIds | join(", ")' "$SPEC_PATH/.ralph-state.json"
+    '.fixTaskMap[$taskId].fixTaskIds | join(", ")' <<< "$STATE_JSON"
   exit 1
 fi
 ```

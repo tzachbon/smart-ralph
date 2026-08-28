@@ -67,12 +67,7 @@ Validation Sequence:
    basePath = "$specsDir/$name"
 4. Create spec directory: mkdir -p "$basePath"
 4a. Ensure gitignore entries exist (.current-spec, .progress.md)
-5. Write .ralph-state.json:
-   { source: "plan", name, basePath, phase: "research",
-     taskIndex: 0, totalTasks: 0, taskIteration: 1,
-     maxTaskIterations: 5, globalIteration: 1,
-     maxGlobalIterations: 100, commitSpec: $commitSpec,
-     quickMode: true, discoveredSkills: [] }
+5. Create `.ralph-state.json` with `locked-state.py merge --state "$basePath/.ralph-state.json"`, setting `source`, `name`, `basePath`, `phase`, task and iteration counters, `commitSpec`, and `quickMode`, plus `--json 'discoveredSkills=[]'`. Preserve unknown fields if recovery state already exists.
 6. Write .progress.md with original goal
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
@@ -157,7 +152,7 @@ Scan all skill files and match against the goal text:
    - On success: add `{ name, matchedAt: "start", invoked: true }` to `discoveredSkills`
    - On failure: set `invoked: false` -- add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
 6. If no skills match across all scanned skills: log `- No skills matched`
-7. Update `.ralph-state.json` with updated `discoveredSkills` array
+7. Merge the updated array with `locked-state.py merge --state "$basePath/.ralph-state.json" --json "discoveredSkills=$DISCOVERED_SKILLS_JSON"`
 8. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
    ```markdown
    ## Skill Discovery
@@ -188,7 +183,7 @@ Re-scan skills with enriched context after research completes:
    - On success: add `{ name, matchedAt: "post-research", invoked: true }` to `discoveredSkills`
    - On failure: set `invoked: false` -- add `{ name, matchedAt: "post-research", invoked: false }`, log warning, continue
 6. If no skills match across all scanned skills: log `- No new skills matched`
-7. Update `.ralph-state.json` with updated `discoveredSkills` array
+7. Merge the updated array with `locked-state.py merge --state "$basePath/.ralph-state.json" --json "discoveredSkills=$DISCOVERED_SKILLS_JSON"`
 8. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
    ```markdown
    ### Post-Research Retry

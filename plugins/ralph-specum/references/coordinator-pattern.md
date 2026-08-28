@@ -66,7 +66,14 @@ If `nativeSyncEnabled` is not `false` in state AND (`nativeTaskMap` is missing o
    - On failure: increment `nativeSyncFailureCount` in state. If count >= 3: set `nativeSyncEnabled` to `false`, log "Native sync disabled after 3 consecutive failures" to .progress.md, stop creating remaining tasks and continue without sync
    - Store mapping: nativeTaskMap[i] = returned task ID
    - If task already completed ([x]): immediately TaskUpdate(taskId: nativeTaskMap[i], status: "completed")
-3. Write updated nativeTaskMap to .ralph-state.json
+3. Merge the updated map and sync counters through the locked helper:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+     --state "$SPEC_PATH/.ralph-state.json" \
+     --json "nativeTaskMap=$NATIVE_TASK_MAP_JSON" \
+     --set "nativeSyncFailureCount=$NATIVE_SYNC_FAILURE_COUNT" \
+     --set "nativeSyncEnabled=$NATIVE_SYNC_ENABLED"
+   ```
 
 If `nativeSyncEnabled` is `false`: skip all sync operations silently.
 
@@ -76,9 +83,10 @@ If `nativeSyncEnabled` is `false`: skip all sync operations silently.
 
 If taskIndex >= totalTasks:
 1. Verify all tasks marked [x] in tasks.md
-2. Delete state file explicitly:
+2. Reconcile prototypes, verify `activePrototypes` is empty, then delete state through the lock:
    ```bash
-   rm -f "$SPEC_PATH/.ralph-state.json"
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" delete-state \
+     --state "$SPEC_PATH/.ralph-state.json"
    ```
 3. Output: ALL_TASKS_COMPLETE
 4. STOP - do not delegate any task
@@ -413,7 +421,7 @@ After all 3 verification layers pass:
 
 After successful completion (TASK_COMPLETE for sequential or all parallel tasks complete):
 
-**CRITICAL: Always use jq merge pattern to preserve all existing fields (source, name, basePath, commitSpec, relatedSpecs, etc.). Never write a new object from scratch.**
+**CRITICAL: Always use `locked-state.py merge` to preserve all existing fields (source, name, basePath, commitSpec, relatedSpecs, activePrototypes, and unknown fields). Never write a new object from scratch.**
 
 **Sequential Update**:
 1. Read current .ralph-state.json
@@ -446,6 +454,16 @@ Updated fields (all other fields preserved as-is):
   "taskIteration": 1,
   "globalIteration": "<previous + 1>"
 }
+```
+
+For either sequential or parallel values computed above, persist them only through the helper:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+  --state "$SPEC_PATH/.ralph-state.json" \
+  --set "taskIndex=$NEXT_TASK_INDEX" \
+  --set "taskIteration=1" \
+  --set "globalIteration=$NEXT_GLOBAL_ITERATION"
 ```
 
 Check if all tasks complete:
@@ -539,7 +557,7 @@ Before outputting ALL_TASKS_COMPLETE:
 
 Before outputting:
 1. Verify all tasks marked [x] in tasks.md
-2. Delete .ralph-state.json (cleanup execution state)
+2. Reconcile prototype records, require an empty `activePrototypes` map, then call `locked-state.py delete-state` for `.ralph-state.json`
 3. Keep .progress.md (preserve learnings and history)
 4. **Cleanup orphaned temp progress files** (from interrupted parallel batches):
    ```bash
@@ -631,7 +649,8 @@ Extract the JSON payload:
 **Update State (modificationMap)**:
 
 ```bash
-jq --arg taskId "$TASK_ID" \
+STATE_JSON=$(python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge --stdout --state "$SPEC_PATH/.ralph-state.json")
+UPDATED_STATE=$(jq --arg taskId "$TASK_ID" \
    --arg modId "$MOD_TASK_ID" \
    --arg reason "$REASONING" \
    --arg type "$MOD_TYPE" \
@@ -642,8 +661,13 @@ jq --arg taskId "$TASK_ID" \
    .modificationMap[$taskId].count += 1 |
    .modificationMap[$taskId].modifications += [{id: $modId, type: $type, reason: $reason}] |
    .totalTasks += $delta
-   ' "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-   mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   ' <<< "$STATE_JSON")
+MODIFICATION_MAP_JSON=$(jq -c '.modificationMap' <<< "$UPDATED_STATE")
+TOTAL_TASKS=$(jq -r '.totalTasks' <<< "$UPDATED_STATE")
+python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+  --state "$SPEC_PATH/.ralph-state.json" \
+  --json "modificationMap=$MODIFICATION_MAP_JSON" \
+  --set "totalTasks=$TOTAL_TASKS"
 ```
 
 > **Note**: Set `PROPOSED_COUNT` to the number of proposed tasks (e.g., `PROPOSED_COUNT=$(echo "$PROPOSED_TASKS" | jq 'length')`). For SPLIT_TASK this is N (the number of sub-tasks), for ADD_PREREQUISITE and ADD_FOLLOWUP this is 1.
@@ -670,7 +694,7 @@ When TASK_MODIFICATION_REQUEST is processed and new tasks are inserted into task
    - `TaskUpdate` original task with `addBlockedBy: [prerequisite task ID]`
 4. For ADD_FOLLOWUP:
    - `TaskCreate(subject: "<FR-11 format>", description, activeForm: "<FR-12 format>")` for followup, add returned ID to `nativeTaskMap`
-5. Update `nativeTaskMap` in .ralph-state.json with new entries
+5. Merge `nativeTaskMap` into `.ralph-state.json` with `locked-state.py merge --json "nativeTaskMap=$NATIVE_TASK_MAP_JSON"`
 6. Re-indexing: rebuild `nativeTaskMap` to match the updated tasks.md order.
    - Parse tasks.md in order after insertion.
    - Keep existing native task IDs for unchanged task identities (match by task ID pattern `X.Y` in subject, not title alone).
@@ -758,7 +782,7 @@ All must be true:
 
 When all Step 4 criteria met:
 1. Update .progress.md with final state
-2. Delete .ralph-state.json
+2. Reconcile prototype records, require `activePrototypes` to be empty, and delete `.ralph-state.json` with `locked-state.py delete-state`
 3. Get PR URL: `gh pr view --json url -q .url`
 4. Output: ALL_TASKS_COMPLETE
 5. Output: PR link

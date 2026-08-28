@@ -163,9 +163,16 @@ if [ -n "$SPEC_PATH" ] && [ -d "$SPEC_PATH" ]; then
     mkdir -p "$WORKTREE_PATH/$SPEC_PARENT_DIR" || echo "Warning: Failed to create spec parent directory in worktree"
     mkdir -p "$WORKTREE_PATH/$SPEC_PATH" || echo "Warning: Failed to create spec directory in worktree"
 
-    # Copy state files (don't overwrite existing)
+    # Merge source state into a new worktree state file through the common lock.
     if [ -f "$SPEC_PATH/.ralph-state.json" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.ralph-state.json" ]; then
-        cp "$SPEC_PATH/.ralph-state.json" "$WORKTREE_PATH/$SPEC_PATH/" || echo "Warning: Failed to copy .ralph-state.json to worktree"
+        SOURCE_STATE=$(python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge --stdout --state "$SPEC_PATH/.ralph-state.json")
+        MERGE_ARGS=()
+        while IFS= read -r field; do
+            MERGE_ARGS+=(--json "$field")
+        done < <(jq -r 'to_entries[] | "\(.key)=\(.value | tojson)"' <<< "$SOURCE_STATE")
+        python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+            --state "$WORKTREE_PATH/$SPEC_PATH/.ralph-state.json" \
+            "${MERGE_ARGS[@]}" || echo "Warning: Failed to merge .ralph-state.json into worktree"
     fi
 
     if [ -f "$SPEC_PATH/.progress.md" ] && [ ! -f "$WORKTREE_PATH/$SPEC_PATH/.progress.md" ]; then

@@ -68,10 +68,14 @@ ralph_resolve_current()   # Resolve .current-spec to full path
    |
    This context may inform the interview questions.
    |
-6. Store in state file:
-   - Update .ralph-state.json with relatedSpecs array:
+6. Store in state through the locked helper, using the resolved base path:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+     --state "$basePath/.ralph-state.json" \
+     --json "relatedSpecs=$RELATED_SPECS_JSON"
+   ```
+   The merged `relatedSpecs` value has this shape:
      {
-       ...existing state,
        "relatedSpecs": [
          {"name": "spec-name-1", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "High"},
          {"name": "spec-name-2", "path": "full/path", "goal": "Original Goal text", "score": N, "type": "feature", "relevance": "Medium"},

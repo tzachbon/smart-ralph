@@ -244,7 +244,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `refactor(state): lock phase-agent approvals`
   - _Requirements: FR-3, FR-5, NFR-2, NFR-3_
 
-- [ ] 2.4 Migrate Claude reference state operations
+- [x] 2.4 Migrate Claude reference state operations
   - **Do**: Replace native task-map, modification-map, recovery, scanner, quick-mode, and worktree-copy state mutations with locked helper calls. Keep `quick-mode.md` behavior from task 1.7 and change only its state operations here.
   - **Files**: `plugins/ralph-specum/references/coordinator-pattern.md`, `plugins/ralph-specum/references/failure-recovery.md`, `plugins/ralph-specum/references/spec-scanner.md`, `plugins/ralph-specum/references/quick-mode.md`, `plugins/ralph-specum/references/branch-management.md`
   - **Done when**: Reference workflows perform no raw move, copy, or deletion of `.ralph-state.json`, and worktree transfer merges through the helper.
