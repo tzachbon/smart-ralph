@@ -26,6 +26,8 @@ def _translate_legacy_assignments(arguments: list[str]) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Translate legacy assignments and delegate to the locked state merge."""
+
     raw = list(sys.argv[1:] if argv is None else argv)
     if not raw or raw[0] in {"-h", "--help"}:
         return locked_main(["merge", "--help"])
@@ -42,4 +44,4 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except StateError as exc:
         print(str(exc), file=sys.stderr)
-        raise SystemExit(2)
+        raise SystemExit(2) from exc

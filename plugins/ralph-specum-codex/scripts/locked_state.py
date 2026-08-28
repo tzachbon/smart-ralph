@@ -11,6 +11,7 @@ import socket
 import sys
 import time
 import uuid
+from collections.abc import Iterator
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -180,7 +181,7 @@ def lock_metadata() -> JSON:
 
 
 @contextlib.contextmanager
-def posix_lock(lock_path: Path, timeout: float):
+def posix_lock(lock_path: Path, timeout: float) -> Iterator[None]:
     """Hold an exclusive flock until context exit or the acquisition deadline."""
 
     lock_path.parent.mkdir(parents=True, exist_ok=True)
@@ -252,7 +253,7 @@ def try_break_stale_lock(lock_path: Path, stale_seconds: int) -> bool:
 
 
 @contextlib.contextmanager
-def directory_lock(lock_path: Path, timeout: float, stale_seconds: int = 600):
+def directory_lock(lock_path: Path, timeout: float, stale_seconds: int = 600) -> Iterator[None]:
     """Hold a portable directory lock and recover only stale owners."""
 
     lock_path.parent.mkdir(parents=True, exist_ok=True)
@@ -289,7 +290,7 @@ def directory_lock(lock_path: Path, timeout: float, stale_seconds: int = 600):
                 pass
 
 
-def lock_for(state_path: Path, timeout: float):
+def lock_for(state_path: Path, timeout: float) -> contextlib.AbstractContextManager[None]:
     """Select the POSIX or directory lock implementation for a state file."""
 
     lock_path = state_path.parent / ".ralph-state.lock"
@@ -321,10 +322,11 @@ def mutate_state(state_path: Path, timeout: float, update: Update, *, delete: bo
 def active_map(state: JSON) -> JSON:
     """Return the mutable active-prototype map, creating it when absent."""
 
-    active = state.get("activePrototypes")
-    if active is None:
+    if "activePrototypes" not in state:
         active = {}
         state["activePrototypes"] = active
+    else:
+        active = state["activePrototypes"]
     if not isinstance(active, dict):
         raise StateError("activePrototypes must be an object.")
     return active
@@ -386,21 +388,28 @@ def lease_until(seconds: int, hard_deadline: Any = None) -> str:
 
 
 def cmd_merge(args: argparse.Namespace) -> JSON:
+    """Merge validated top-level fields into Ralph state."""
+
+    patch = parse_pairs(args.set, as_json=False)
+    patch.update(parse_pairs(args.json, as_json=True))
+    if patch.get("phase") == "prototype":
+        raise StateError("Main phase cannot be prototype; use activePrototypes.")
+
     if args.stdout:
         state = read_json_object(args.state)
-        state.update(parse_pairs(args.set, as_json=False))
-        state.update(parse_pairs(args.json, as_json=True))
+        state.update(patch)
         return state
 
     def update(state: JSON) -> JSON:
-        state.update(parse_pairs(args.set, as_json=False))
-        state.update(parse_pairs(args.json, as_json=True))
+        state.update(patch)
         return state
 
     return mutate_state(args.state, args.timeout, update)
 
 
 def cmd_upsert(args: argparse.Namespace) -> JSON:
+    """Reserve a new active prototype identifier."""
+
     try:
         entry = json.loads(args.entry_json)
     except json.JSONDecodeError as exc:
@@ -420,6 +429,8 @@ def cmd_upsert(args: argparse.Namespace) -> JSON:
 
 
 def cmd_remove(args: argparse.Namespace) -> JSON:
+    """Remove an active prototype entry."""
+
     def update(state: JSON) -> JSON:
         active = active_map(state)
         active.pop(args.id, None)
@@ -432,15 +443,21 @@ def cmd_remove(args: argparse.Namespace) -> JSON:
 
 
 def cmd_list(args: argparse.Namespace) -> JSON:
+    """List active prototype entries."""
+
     state = read_json_object(args.state)
-    return {"activePrototypes": state.get("activePrototypes") or {}}
+    return {"activePrototypes": active_map(state)}
 
 
 def cmd_delete(args: argparse.Namespace) -> JSON:
+    """Delete Ralph state when no active prototypes remain."""
+
     return mutate_state(args.state, args.timeout, lambda state: state, delete=True)
 
 
 def cmd_claim(args: argparse.Namespace) -> JSON:
+    """Claim builder ownership for an active prototype."""
+
     token = args.lease_token or uuid.uuid4().hex
 
     def update(state: JSON) -> JSON:
@@ -463,6 +480,8 @@ def cmd_claim(args: argparse.Namespace) -> JSON:
 
 
 def cmd_heartbeat(args: argparse.Namespace) -> JSON:
+    """Record activity for the matching builder lease."""
+
     def update(state: JSON) -> JSON:
         entry = get_entry(state, args.id)
         ensure_token(entry, args.lease_token)
@@ -474,6 +493,8 @@ def cmd_heartbeat(args: argparse.Namespace) -> JSON:
 
 
 def cmd_renew(args: argparse.Namespace) -> JSON:
+    """Renew the matching builder lease."""
+
     def update(state: JSON) -> JSON:
         entry = get_entry(state, args.id)
         ensure_token(entry, args.lease_token)
@@ -486,6 +507,8 @@ def cmd_renew(args: argparse.Namespace) -> JSON:
 
 
 def cmd_release(args: argparse.Namespace) -> JSON:
+    """Release the matching builder lease."""
+
     def update(state: JSON) -> JSON:
         entry = get_entry(state, args.id)
         ensure_token(entry, args.lease_token)
@@ -501,6 +524,8 @@ def cmd_release(args: argparse.Namespace) -> JSON:
 
 
 def cmd_transition(args: argparse.Namespace) -> JSON:
+    """Transition an active prototype with optional compare-and-set."""
+
     patch: JSON = {}
     if args.patch_json:
         try:
@@ -524,11 +549,15 @@ def cmd_transition(args: argparse.Namespace) -> JSON:
 
 
 def add_common(parser: argparse.ArgumentParser) -> None:
+    """Add state path and lock timeout arguments."""
+
     parser.add_argument("--state", required=True, type=Path, help="Path to .ralph-state.json")
     parser.add_argument("--timeout", type=float, default=10.0, help="Lock acquisition timeout in seconds")
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the locked-state command parser."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -600,6 +629,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run a locked-state command and print its JSON result."""
+
     args = build_parser().parse_args(argv)
     result = args.func(args)
     print(json.dumps(result, indent=2, sort_keys=True))

@@ -93,10 +93,13 @@ Completeness expectations: user stories have AC-* items; FRs have Must/Should/Co
 
 **Lint script (hybrid gate)**: When `artifactType: requirements` and an `artifactPath` is provided, resolve the script path with a fallback and run it. Prefer `${CLAUDE_PLUGIN_ROOT}`; if that variable is unset/empty or the file is missing, fall back to the repo-relative path; only if neither resolves, apply the Degradation rule (manual review):
 
+Set `ARTIFACT_PATH` to the exact `artifactPath` supplied in the delegation before running this command:
+
 ```bash
+ARTIFACT_PATH="<exact artifactPath from delegation>"
 LINT="${CLAUDE_PLUGIN_ROOT:+$CLAUDE_PLUGIN_ROOT/hooks/scripts/lint-requirements.sh}"
 [ -f "$LINT" ] || LINT="plugins/ralph-specum/hooks/scripts/lint-requirements.sh"
-[ -f "$LINT" ] && bash "$LINT" <artifactPath>   # neither path exists -> Degradation rule
+[ -f "$LINT" ] && bash "$LINT" "$ARTIFACT_PATH"   # neither path exists -> Degradation rule
 ```
 
 The script emits pipe-delimited findings (`FAIL|Cn|msg`, `WARN|Cn|msg`, `CHECK|Cn|PASS`) and exits 0 (no FAILs), 1 (FAILs), or 2 (usage/read error). Map each of the 8 checks into the findings table as its own row, with Status (PASS/WARN/FAIL) and messages taken verbatim from script output:
@@ -232,19 +235,19 @@ When `iteration` > 1:
 <mandatory>
 ALWAYS use this exact output structure. The coordinator parses the signal from the last line.
 
+Populate the findings table dynamically with one row for every applicable rubric dimension. Requirements reviews include all five judgment dimensions and C1-C8. Prototype reviews include all eight Prototype Rubric dimensions. Other artifact types include every dimension in their selected rubric. Do not copy a fixed subset of rows. The edge-case short circuits above may use only their required finding.
+
 ```text
 ## Review: $artifactType (Iteration $N)
 
 ### Findings
 | # | Dimension | Status | Finding |
 |---|-----------|--------|---------|
-| 1 | Completeness | PASS | All sections present |
-| 2 | Grounding | PASS | All claims cite specific file paths or URLs |
-| 3 | Scope | PASS | Content focused on stated goal |
+| 1..N | <every applicable rubric dimension or C1-C8 check> | <PASS/WARN/INFO> | <specific finding> |
 
 ### Summary
-- Passed: 3/3 dimensions
-- Failed: 0/3 dimensions
+- Passed: $passed/$total dimensions and checks
+- Failed: 0/$total dimensions and checks
 - Critical issues: None
 
 ### Feedback for Revision
@@ -261,13 +264,12 @@ or
 ### Findings
 | # | Dimension | Status | Finding |
 |---|-----------|--------|---------|
-| 1 | Completeness | PASS | All sections present |
-| 2 | Grounding | FAIL | Claim on line 45 has no source |
+| 1..N | <every applicable rubric dimension or C1-C8 check> | <PASS/WARN/FAIL/INFO> | <specific finding> |
 
 ### Summary
-- Passed: 1/2 dimensions
-- Failed: 1/2 dimensions
-- Critical issues: Ungrounded claim in Codebase Analysis
+- Passed: $passed/$total dimensions and checks
+- Failed: $failed/$total dimensions and checks
+- Critical issues: <specific critical issues or None>
 
 ### Feedback for Revision
 1. [Specific actionable feedback item with section/line reference]

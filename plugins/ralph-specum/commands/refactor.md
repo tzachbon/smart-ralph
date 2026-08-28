@@ -29,20 +29,6 @@ Create a task for each item and complete in order:
 6. If no spec files exist, error: "No spec files found. Run /ralph-specum:start first."
 7. Read `.progress.md` to understand implementation learnings
 
-### Prototype Refactor Gate
-
-Before scope selection or refactor dispatch:
-
-1. Read `.ralph-state.json`. Whenever it exists, reconcile candidates and finals even when `activePrototypes` is absent or empty.
-2. Select records with the resolved `basePath`:
-   ```bash
-   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" reconcile --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
-   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json" --target "$FILE" --path "$FILE"
-   ```
-3. Stop a file's refactor dispatch when `activeBlockers` targets that file or transition, when its task index appears in `staleTaskIndexes`, or when `staleArtifacts` contains the file or an upstream dependency.
-4. Preserve a file only when its `targetDecisions` entry has `proofAvailable: true` and `eligible: true`. Missing dependency or approved-transfer proof blocks that file conservatively.
-5. When refactor resumes execution, restore `taskIndex` from the relevant entry's `returnTaskIndex` before task dispatch.
-
 ## Step 2: Determine Scope & Present Overview
 
 Check `$ARGUMENTS` for `--file=` flag:
@@ -64,6 +50,22 @@ Implementation learnings from .progress.md:
 - [Key learning 1]
 - [Key learning 2]
 ```
+
+### Prototype Refactor Gate
+
+After resolving the ordered file list above and before any refactor dispatch:
+
+1. Whenever `.ralph-state.json` exists, reconcile candidates and finals once, even when `activePrototypes` is absent or empty:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" reconcile --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+   ```
+2. For each resolved file in scope, run selection with that exact file as both target and path:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json" --target "$FILE" --path "$FILE"
+   ```
+3. Stop that file's refactor dispatch when `activeBlockers` targets the file or transition, when its task index appears in `staleTaskIndexes`, or when `staleArtifacts` contains the file or an upstream dependency.
+4. Preserve a file only when its matching `targetDecisions` entry has `proofAvailable: true` and `eligible: true`. Missing dependency or approved-transfer proof blocks that file conservatively.
+5. When refactor resumes execution, restore `taskIndex` from the relevant entry's `returnTaskIndex` before task dispatch.
 
 ## Step 3: File-by-File Review
 

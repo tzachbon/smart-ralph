@@ -24,14 +24,14 @@ You are a **coordinator, not an executor** -- delegate each task to a `spec-exec
 1. Resolve the active spec. If none exists, stop.
 2. Require `tasks.md`. Read `.progress.md`, current state, and current task markers.
 3. Recompute task counters from disk: `total`, `completed`, and `next_index`.
-4. Merge state for execution. Set `taskIndex: next_index` only for fresh execution. On a prototype return, preserve its validated non-negative `returnTaskIndex` after verifying that it identifies the first eligible incomplete task; do not overwrite it with `next_index`:
+4. Resolve the dispatch task index before merging state. For fresh execution, use `next_index`. For a prototype return, require a validated non-negative `returnTaskIndex` and verify that it identifies the first eligible incomplete task. Merge state once with:
    - `phase: "execution"`
    - `awaitingApproval: false`
    - `totalTasks: total`
-   - `taskIndex: next_index`
+   - taskIndex: `next_index` for fresh execution, or the validated `returnTaskIndex` for a prototype return
    - preserve `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`
 5. Before dispatch, run `prototype_records.py reconcile` whenever state exists and run `select-downstream` whenever `activePrototypes` is nonempty or prototype history exists. Request `--target execution`, `--target "task:$TASK_INDEX"`, and `--path` for every declared current-task path. Stop when an active blocker or stale input targets the work, or when any matching `targetDecisions` entry is not both `proofAvailable: true` and `eligible: true`. Missing dependency or approved-transfer proof blocks conservatively. Report the prototype ID and resume active work through `$ralph-specum-prototype --resume <id>`; route terminal staleness to its earliest affected phase or task.
-6. When a prototype returns to execution, restore `taskIndex` from its `returnTaskIndex` through `merge_state.py`, then verify that it is the first eligible incomplete task.
+6. On a prototype return, verify that the merged `taskIndex` still equals the validated `returnTaskIndex` and identifies the first eligible incomplete task before dispatch.
 7. **Delegate** each task to a `spec-executor` sub-agent. Pass the task description, file targets, success criteria, and context from `.progress.md`. The sub-agent implements the task and outputs `TASK_COMPLETE`. Do NOT implement tasks yourself. Execute tasks in order until complete or blocked.
 8. `[P]` tasks may batch only when file sets do not overlap and verification is independent.
 9. `[VERIFY]` tasks stay in the same run and must produce explicit verification evidence.

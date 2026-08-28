@@ -133,7 +133,7 @@ The goal MUST be captured before proceeding:
    ```bash
    phase="research"
    nextPhase="requirements"
-   if [[ "$ARGUMENTS" == *"--skip-research"* ]]; then
+   if [[ "$ARGUMENTS" =~ (^|[[:space:]])--skip-research($|[[:space:]]) ]]; then
      phase="requirements"
      nextPhase="design"
    fi

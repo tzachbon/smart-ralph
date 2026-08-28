@@ -64,6 +64,8 @@ class PrototypeWindowsTests(unittest.TestCase):
                     kill_spy.assert_not_called()
 
     def test_posix_pid_probe_parses_zombie_state_after_command_name(self) -> None:
+        """Treat a spaced-command /proc zombie entry as no longer running."""
+
         proc_stat = mock.Mock()
         proc_stat.exists.return_value = True
         proc_stat.read_text.return_value = "123 (builder command with spaces) Z 1 2 3\n"
@@ -210,6 +212,8 @@ class PrototypeWindowsTests(unittest.TestCase):
         self.assertNotIn("controlErrorAt", persisted)
 
     def test_simulated_posix_interrupt_failure_stays_unverified(self) -> None:
+        """Keep a run active when POSIX process-group termination cannot be verified."""
+
         registry = Path(self.temp.name) / "harness"
         run_id = "posix-interrupt-failure"
         metadata_path = prototype_harness.registry_path(registry, run_id)
@@ -371,6 +375,8 @@ class PrototypeWindowsTests(unittest.TestCase):
         self.assertFalse(lock_path.exists())
 
     def test_malformed_stale_owner_pid_uses_normal_recovery(self) -> None:
+        """Recover a stale directory lock whose owner PID is malformed."""
+
         lock_path = self.base_path / ".ralph-state.lock"
         lock_path.mkdir()
         (lock_path / "owner.json").write_text(
@@ -391,6 +397,8 @@ class PrototypeWindowsTests(unittest.TestCase):
         self.assertFalse(lock_path.exists())
 
     def test_state_error_is_a_catchable_application_exception(self) -> None:
+        """Expose rejected state operations as catchable StateError exceptions."""
+
         caught: Exception | None = None
         try:
             locked_state.parse_pairs(["missing-separator"], as_json=False)

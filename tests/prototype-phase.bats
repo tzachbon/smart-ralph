@@ -304,6 +304,8 @@ assert_both_coordinators() {
     assert_has "$new_command" 'phase: \$phase'
     assert_has "$new_command" 'Starting \$phase phase'
     assert_has "$new_command" 'Complete \$phase, then proceed to \$nextPhase'
+    grep -Fq '[[ "$ARGUMENTS" =~ (^|[[:space:]])--skip-research($|[[:space:]]) ]]' "$new_command"
+    ! grep -Fq '== *"--skip-research"*' "$new_command"
     assert_has "$workflow" 'resolved `<basePath>/`'
 
     assert_has "$research" 'main state value remains `research`, `requirements`, `design`, `tasks`, or `execution`'
@@ -356,6 +358,13 @@ assert_both_coordinators() {
     assert_has "$claude_reviewer" 'Every review MUST end with exactly one of: `REVIEW_PASS` or `REVIEW_FAIL`'
     assert_has "$claude_reviewer" 'Any missing input or mismatch is REVIEW_FAIL|A missing input is a failure'
     assert_has "$claude_reviewer" 'For prototype, output `REVIEW_PASS` only when every Prototype Rubric dimension is PASS'
+    assert_has "$claude_reviewer" 'ARTIFACT_PATH="<exact artifactPath from delegation>"'
+    assert_has "$claude_reviewer" 'bash "\$LINT" "\$ARTIFACT_PATH"'
+    assert_has "$claude_reviewer" 'one row for every applicable rubric dimension'
+    assert_has "$claude_reviewer" 'Requirements reviews include all five judgment dimensions and C1-C8'
+    assert_has "$claude_reviewer" 'Prototype reviews include all eight Prototype Rubric dimensions'
+    run rg -n 'bash "\$LINT" <artifactPath>|\| 1 \| Completeness \| PASS \| All sections present \|' "$claude_reviewer"
+    [ "$status" -eq 1 ]
     assert_has "$codex_reviewer" 'exact candidate file bytes'
     assert_has "$codex_reviewer" 'Every response must end with exactly REVIEW_PASS or REVIEW_FAIL'
     assert_has "$codex_reviewer" 'Any missing input or mismatch is REVIEW_FAIL'
@@ -383,10 +392,11 @@ assert_both_coordinators() {
 }
 
 @test "prototype phase: coordinator recovery and dispatch contracts fail closed" {
-    local root claude_start claude_implement claude_cancel codex_start codex_implement codex_refactor codex_cancel codex_requirements codex_switch
+    local root claude_start claude_implement claude_refactor claude_cancel codex_start codex_implement codex_refactor codex_cancel codex_requirements codex_switch count_line selection_line scope_line
     root="$(repo_root)"
     claude_start="$(claude_command start)"
     claude_implement="$(claude_command implement)"
+    claude_refactor="$(claude_command refactor)"
     claude_cancel="$(claude_command cancel)"
     codex_start="$(codex_skill start)"
     codex_implement="$(codex_skill implement)"
@@ -404,14 +414,34 @@ assert_both_coordinators() {
     assert_has "$claude_implement" 'fresh execution'
     assert_has "$claude_implement" 'returnTaskIndex'
     assert_has "$claude_implement" 'targetDecisions'
+    count_line=$(grep -n 'TOTAL=$(grep' "$claude_implement" | head -1 | cut -d: -f1)
+    selection_line=$(grep -n 'select-downstream.*task:\$TASK_INDEX' "$claude_implement" | head -1 | cut -d: -f1)
+    [ "$count_line" -lt "$selection_line" ]
+    scope_line=$(grep -n 'Check `\$ARGUMENTS` for `--file=` flag' "$claude_refactor" | head -1 | cut -d: -f1)
+    selection_line=$(grep -n 'select-downstream.*--target "\$FILE"' "$claude_refactor" | head -1 | cut -d: -f1)
+    [ "$scope_line" -lt "$selection_line" ]
     assert_has "$codex_implement" 'prototype history'
     assert_has "$codex_implement" 'targetDecisions'
     assert_has "$codex_refactor" 'whenever.*\.ralph-state\.json.*exists|\.ralph-state\.json.*exists.*whenever'
 
     assert_has "$claude_cancel" 'leaseToken'
     assert_has "$claude_cancel" 'verified.*interrupt|interrupt.*verified'
+    assert_has "$claude_cancel" 'upsert-prototype'
+    assert_has "$claude_cancel" 'supersedes'
+    assert_has "$claude_cancel" 'candidateHash'
+    assert_has "$claude_cancel" 'original active entry.*final verification|final verification.*original active entry'
+    assert_has "$claude_start" 'resume_review.*upsert-prototype|upsert-prototype.*resume_review'
+    assert_has "$claude_start" 'candidateHash'
+    assert_has "$claude_start" 'create-only'
     assert_has "$codex_cancel" 'leaseToken'
     assert_has "$codex_cancel" 'unavailable or unverified'
+    assert_has "$codex_cancel" 'upsert-prototype'
+    assert_has "$codex_cancel" 'superseding ID'
+    assert_has "$codex_cancel" 'candidateHash'
+    assert_has "$codex_cancel" 'original active entry.*final verification|final verification.*original active entry'
+    assert_has "$codex_start" 'resume_review.*upsert-prototype|upsert-prototype.*resume_review'
+    assert_has "$codex_start" 'candidateHash'
+    assert_has "$codex_start" 'create-only'
     assert_has "$codex_requirements" 'normal mode only'
     assert_has "$codex_switch" 'returnPhase'
     assert_has "$codex_switch" 'returnTaskIndex'

@@ -288,6 +288,37 @@ teardown() {
     [ ! -e "$STATE_FILE" ]
 }
 
+@test "prototype state: locked CLIs reject prototype as the main phase without writing" {
+    local cli snapshot
+    python3 "$(state_cli)" merge --state "$STATE_FILE" --set phase=requirements >/dev/null
+    python3 "$(state_cli)" upsert-prototype --state "$STATE_FILE" --id active --entry-json "$(entry_json active)" >/dev/null
+    snapshot="$TEST_ROOT/state-before.json"
+    cp "$STATE_FILE" "$snapshot"
+
+    for cli in "$(state_cli)" "$(claude_state_cli)"; do
+        run python3 "$cli" merge --state "$STATE_FILE" --set phase=prototype
+        [ "$status" -eq 2 ]
+        [[ "$output" == *"Main phase cannot be prototype"* ]]
+        cmp -s "$snapshot" "$STATE_FILE"
+
+        run python3 "$cli" merge --state "$STATE_FILE" --json 'phase="prototype"'
+        [ "$status" -eq 2 ]
+        [[ "$output" == *"Main phase cannot be prototype"* ]]
+        cmp -s "$snapshot" "$STATE_FILE"
+    done
+}
+
+@test "prototype state: Codex implement merges the validated prototype return index once" {
+    local skill
+    skill="$(repo_root)/plugins/ralph-specum-codex/skills/ralph-specum-implement/SKILL.md"
+
+    run grep -F 'taskIndex: `next_index` for fresh execution, or the validated `returnTaskIndex` for a prototype return' "$skill"
+    [ "$status" -eq 0 ]
+
+    run grep -F 'restore `taskIndex` from its `returnTaskIndex`' "$skill"
+    [ "$status" -ne 0 ]
+}
+
 @test "prototype state: configured roots resolve one base path and avoid default-root writes" {
     local config result base_path state_path
     mkdir -p "$TEST_ROOT/.claude" "$TEST_ROOT/custom-specs/demo"

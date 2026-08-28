@@ -506,6 +506,7 @@ assert "quick_mode_default" not in resolve_paths
     assert_python '
 watcher = (ROOT / "plugins/ralph-specum-codex/hooks/stop-watcher.sh").read_text()
 assert "PROTOTYPE_HISTORY" in watcher
+assert "type == \"object\" and ((has(\"activePrototypes\") | not) or (.activePrototypes | type == \"object\"))" in watcher
 assert watcher.count("select-downstream") == 1
 assert "targetDecisions" in watcher
 assert "DEPENDENT_BLOCKERS" in watcher

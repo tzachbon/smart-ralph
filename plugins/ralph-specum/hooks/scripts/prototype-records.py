@@ -446,7 +446,7 @@ def cmd_publish(args: argparse.Namespace) -> JSON:
         }
     state_path = args.state or args.base_path.resolve() / ".ralph-state.json"
     state = read_json_object(state_path)
-    entry = (state.get("activePrototypes") or {}).get(args.id)
+    entry = active_map(state).get(args.id)
     if not isinstance(entry, dict) or entry.get("reviewedCandidateHash") != candidate_hash:
         raise RecordError("Publisher requires REVIEW_PASS for these exact candidate bytes.")
     final = final_path(args.base_path, args.id)
@@ -464,9 +464,7 @@ def cmd_publish(args: argparse.Namespace) -> JSON:
 def cmd_reconcile(args: argparse.Namespace) -> JSON:
     directory = prototype_dir(args.base_path)
     state = read_json_object(args.state)
-    active = state.get("activePrototypes") or {}
-    if not isinstance(active, dict):
-        raise RecordError("activePrototypes must be an object.")
+    active = active_map(state)
     actions: list[JSON] = []
     handled: set[str] = set()
     for candidate in sorted(directory.glob(".*.candidate.md")):
@@ -559,9 +557,7 @@ def cmd_select_downstream(args: argparse.Namespace) -> JSON:
             }
         )
     state = read_json_object(args.state) if args.state and args.state.exists() else {}
-    active = state.get("activePrototypes") or {}
-    if not isinstance(active, dict):
-        raise StateError("activePrototypes must be an object.")
+    active = active_map(state)
     blockers: list[JSON] = []
     active_entries: list[JSON] = []
     for prototype_id, entry in sorted(active.items()):
@@ -637,6 +633,7 @@ def cmd_select_downstream(args: argparse.Namespace) -> JSON:
             record["id"]
             for record in selected
             if target in record["staleArtifacts"]
+            or any(paths_overlap(item, target) for item in record["staleArtifacts"])
             or any(paths_overlap(item, path) for item in record["staleArtifacts"] for path in target_paths)
             or (
                 target.startswith("task:")

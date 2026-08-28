@@ -366,19 +366,28 @@ teardown() {
 }
 
 @test "prototype records: published terminal staleness survives active-state removal and rejects malformed types" {
-    local selected invalid_artifacts invalid_indexes
+    local cli selected invalid_artifacts invalid_indexes
     publish_record terminal-stale \
-        "$(record_json terminal-stale validated true retained '[]' '' '' '["design.md","tasks.md"]' '[3,7]')" >/dev/null
+        "$(record_json terminal-stale validated true retained '[]' '' '' '["design.md","tasks.md","src/api"]' '[3,7]')" >/dev/null
     run jq -e 'has("activePrototypes") | not' "$STATE_FILE"
     [ "$status" -eq 0 ]
 
     run python3 "$(codex_record_cli)" select-downstream --base-path "$BASE_PATH" --state "$STATE_FILE"
     [ "$status" -eq 0 ]
     selected="$output"
-    [ "$(jq -c '.selected[0].staleArtifacts' <<< "$selected")" = '["design.md","tasks.md"]' ]
+    [ "$(jq -c '.selected[0].staleArtifacts' <<< "$selected")" = '["design.md","tasks.md","src/api"]' ]
     [ "$(jq -c '.selected[0].staleTaskIndexes' <<< "$selected")" = '[3,7]' ]
-    [ "$(jq -c .staleArtifacts <<< "$selected")" = '["design.md","tasks.md"]' ]
+    [ "$(jq -c .staleArtifacts <<< "$selected")" = '["design.md","src/api","tasks.md"]' ]
     [ "$(jq -c .staleTaskIndexes <<< "$selected")" = '[3,7]' ]
+
+    for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
+        run python3 "$cli" select-downstream \
+            --base-path "$BASE_PATH" --state "$STATE_FILE" \
+            --target src/api/handler.ts
+        [ "$status" -eq 0 ]
+        [ "$(jq -c '.targetDecisions[0].staleBy' <<< "$output")" = '["terminal-stale"]' ]
+        [ "$(jq -r '.targetDecisions[0].eligible' <<< "$output")" = false ]
+    done
 
     invalid_artifacts="$(record_json invalid-artifacts validated true retained '[]' '' '' '"design.md"' '[]')"
     run render_candidate "$(codex_record_cli)" "$BASE_PATH" "$invalid_artifacts"
@@ -392,13 +401,23 @@ teardown() {
 }
 
 @test "prototype records: state failures exit two without a traceback" {
-    local cli
+    local cli invalid_active
     printf '{ invalid\n' > "$STATE_FILE"
     for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
         run python3 "$cli" select-downstream --base-path "$BASE_PATH" --state "$STATE_FILE"
         [ "$status" -eq 2 ]
         [[ "$output" == *"State file is not valid JSON:"* ]]
         [[ "$output" != *"Traceback"* ]]
+    done
+
+    for invalid_active in null false 0 '[]' '""'; do
+        printf '{"activePrototypes":%s}\n' "$invalid_active" > "$STATE_FILE"
+        for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
+            run python3 "$cli" reconcile --base-path "$BASE_PATH" --state "$STATE_FILE"
+            [ "$status" -eq 2 ]
+            [[ "$output" == *"activePrototypes must be an object."* ]]
+            [[ "$output" != *"Traceback"* ]]
+        done
     done
 }
 

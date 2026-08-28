@@ -126,6 +126,20 @@ load 'helpers/setup.bash'
     assert_json_reason_contains "Recovery options"
 }
 
+@test "rejects a falsey non-object activePrototypes value" {
+    local state_file tmp_state
+    create_state_file "execution" 0 5 1
+    state_file="$TEST_WORKSPACE/specs/test-spec/.ralph-state.json"
+    tmp_state="$state_file.invalid-active"
+    jq '.activePrototypes = false' "$state_file" > "$tmp_state"
+    mv "$tmp_state" "$state_file"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt state file"
+}
+
 # =============================================================================
 # Test: Missing jq -> exits gracefully
 # =============================================================================
@@ -541,7 +555,7 @@ More text")
 @test "stop watcher selects prototype history and uses the blocking prototype return index" {
     run bash -c "grep -q 'PROTOTYPE_HISTORY' '$STOP_WATCHER_SCRIPT' && \
         grep -q 'targetDecisions' '$STOP_WATCHER_SCRIPT' && \
-        ! grep -q 'activePrototypes\[\]\? | \.returnTaskIndex' '$STOP_WATCHER_SCRIPT'"
+        ! grep -Fq 'activePrototypes[]? | .returnTaskIndex' '$STOP_WATCHER_SCRIPT'"
     [ "$status" -eq 0 ]
 
     selection_line=$(grep -n '# Select whenever active or terminal prototype history exists.' "$STOP_WATCHER_SCRIPT" | cut -d: -f1)

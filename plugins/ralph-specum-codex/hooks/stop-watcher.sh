@@ -38,12 +38,12 @@ if [ ! -f "$STATE_FILE" ]; then
   exit 0
 fi
 
-if ! jq empty "$STATE_FILE" 2>/dev/null; then
+if ! jq -e 'type == "object" and ((has("activePrototypes") | not) or (.activePrototypes | type == "object"))' "$STATE_FILE" >/dev/null 2>&1; then
   emit_block "Corrupt .ralph-state.json. Preserve it and repair or cancel the spec before continuation."
   exit 0
 fi
 
-ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE")
+ACTIVE_PROTOTYPE_COUNT=$(jq 'if has("activePrototypes") then .activePrototypes | length else 0 end' "$STATE_FILE")
 PROTOTYPE_HISTORY=false
 if [ "$ACTIVE_PROTOTYPE_COUNT" -gt 0 ] || [ -d "$BASE_PATH/prototypes" ]; then
   PROTOTYPE_HISTORY=true
@@ -52,7 +52,7 @@ if ! PYTHONDONTWRITEBYTECODE=1 python3 "$RECORD_HELPER" reconcile --base-path "$
   emit_block "Prototype reconciliation failed. Preserve .ralph-state.json and resume the active prototype before task continuation."
   exit 0
 fi
-ACTIVE_PROTOTYPE_COUNT=$(jq '(.activePrototypes // {}) | length' "$STATE_FILE")
+ACTIVE_PROTOTYPE_COUNT=$(jq 'if has("activePrototypes") then .activePrototypes | length else 0 end' "$STATE_FILE")
 
 PHASE=$(jq -r '.phase // empty' "$STATE_FILE" 2>/dev/null || true)
 TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
