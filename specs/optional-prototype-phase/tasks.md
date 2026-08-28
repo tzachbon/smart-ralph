@@ -318,7 +318,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `test(prototype): cover immutable record publication`
   - _Requirements: FR-2, FR-3, FR-4, FR-6, NFR-3_
 
-- [ ] 3.3 Test normal, quick, builder, and reviewer flows
+- [x] 3.3 Test normal, quick, builder, and reviewer flows
   - **Do**: Add workflow tests for normal offers and decline, direct invocation, safe boundaries, capture choice, isolation failure, cancellation, handoff, duplicate and conflict resolution, one quick request, highest-risk selection, exact skip, oldest-blocker takeover, no user questions, one retry, logic and UI contracts, reviewer pass/fail, stale gates, and unconditional quick continuation to design.
   - **Files**: `tests/prototype-phase.bats`
   - **Done when**: Every FR-1, FR-2, FR-4, FR-6, and FR-7 acceptance path has a deterministic automated assertion.
