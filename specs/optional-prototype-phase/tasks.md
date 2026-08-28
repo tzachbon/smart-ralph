@@ -310,7 +310,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `test(prototype): cover locked overlay state`
   - _Requirements: FR-3, FR-5, FR-6, NFR-2, NFR-3, NFR-4_
 
-- [ ] 3.2 Test immutable records and reviewed cleanup
+- [x] 3.2 Test immutable records and reviewed cleanup
   - **Do**: Add Bats coverage for exclusive candidate creation, collisions, exact-byte publication, malformed quarantine, reconciliation states, supersession, downstream selection, no-source records, remote gates, cleanup receipts, post-deletion review, missing-source resume, and immutable finals.
   - **Files**: `tests/prototype-records.bats`
   - **Done when**: No test path can overwrite a final record or publish unreviewed deleted-source bytes.
