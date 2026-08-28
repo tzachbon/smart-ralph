@@ -292,7 +292,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `docs(prototype): explain optional overlay workflow`
   - _Requirements: FR-1, FR-2, FR-6, FR-8, NFR-1_
 
-- [ ] 2.10 Align both plugin versions at 4.11.0
+- [x] 2.10 Align both plugin versions at 4.11.0
   - **Do**: Bump only the modified Ralph Specum distributions and marketplace entry to the same new minor version `4.11.0`. Update fixed version assertions that otherwise encode the old baseline.
   - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/ralph-specum-codex/.codex-plugin/plugin.json`, `tests/interview-framework.bats`
   - **Done when**: All three published version fields are `4.11.0` and no applicable fixed assertion expects `4.9.1`, `4.10.0`, or `4.10.1`.
