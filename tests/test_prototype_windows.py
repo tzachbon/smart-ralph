@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import signal
 import socket
 import subprocess
 import sys
@@ -63,6 +62,68 @@ class PrototypeWindowsTests(unittest.TestCase):
                     self.assertTrue(prototype_harness.pid_running(123))
                     kill_spy.assert_not_called()
 
+    def test_simulated_windows_interrupt_failure_keeps_run_running(self) -> None:
+        registry = Path(self.temp.name) / "harness"
+        run_id = "windows-interrupt-failure"
+        metadata_path = prototype_harness.registry_path(registry, run_id)
+        prototype_harness.write_metadata(
+            metadata_path,
+            {
+                "id": run_id,
+                "pid": 12345,
+                "status": "running",
+                "startedEpoch": time.time(),
+            },
+        )
+        failed = subprocess.CompletedProcess(
+            ["taskkill", "/PID", "12345", "/T", "/F"],
+            returncode=1,
+            stdout="",
+            stderr="termination failed",
+        )
+
+        with mock.patch.object(prototype_harness.os, "name", "nt"):
+            with mock.patch.object(prototype_harness, "pid_running", return_value=True) as running_spy:
+                with mock.patch.object(prototype_harness.subprocess, "run", return_value=failed) as run_spy:
+                    with mock.patch.object(prototype_harness.time, "monotonic", side_effect=(10.0, 16.0)):
+                        with self.assertRaises(prototype_harness.HarnessError) as raised:
+                            prototype_harness.interrupt(registry=registry, run_id=run_id)
+
+        self.assertEqual(raised.exception.outcome, "unavailable-control")
+        run_spy.assert_called_once_with(
+            ["taskkill", "/PID", "12345", "/T", "/F"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5.0,
+            shell=False,
+        )
+        self.assertGreaterEqual(running_spy.call_count, 3)
+        self.assertEqual(json.loads(metadata_path.read_text(encoding="utf-8"))["status"], "running")
+
+    def test_simulated_windows_interrupt_accepts_already_exited_race(self) -> None:
+        registry = Path(self.temp.name) / "harness"
+        run_id = "windows-interrupt-race"
+        metadata_path = prototype_harness.registry_path(registry, run_id)
+        prototype_harness.write_metadata(
+            metadata_path,
+            {
+                "id": run_id,
+                "pid": 12345,
+                "status": "running",
+                "startedEpoch": time.time(),
+            },
+        )
+
+        with mock.patch.object(prototype_harness.os, "name", "nt"):
+            with mock.patch.object(prototype_harness, "pid_running", side_effect=(True, False)):
+                with mock.patch.object(prototype_harness.subprocess, "run") as run_spy:
+                    result = prototype_harness.interrupt(registry=registry, run_id=run_id)
+
+        self.assertEqual(result["outcome"], "stopped")
+        run_spy.assert_not_called()
+        self.assertEqual(json.loads(metadata_path.read_text(encoding="utf-8"))["status"], "stopped")
+
     @unittest.skipUnless(os.name == "nt", "requires native Windows process APIs")
     def test_native_windows_pid_probes_leave_a_live_process_running(self) -> None:
         process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
@@ -75,27 +136,54 @@ class PrototypeWindowsTests(unittest.TestCase):
             process.wait(timeout=5)
 
     @unittest.skipUnless(os.name == "nt", "requires native Windows process APIs")
-    def test_native_windows_interrupt_terminates_without_killpg(self) -> None:
+    def test_native_windows_interrupt_terminates_builder_process_tree(self) -> None:
         registry = Path(self.temp.name) / "harness"
         launched = prototype_harness.launch(
             registry=registry,
             run_id="windows-interrupt",
             kind="codex_agent",
-            command=[sys.executable, "-c", "import time; time.sleep(30)"],
+            command=[
+                sys.executable,
+                "-c",
+                (
+                    "import subprocess, sys, time; "
+                    "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)']); "
+                    "print(child.pid, flush=True); "
+                    "time.sleep(30)"
+                ),
+            ],
             agent_id="windows-child",
         )
-        pid = int(launched["pid"])
+        parent_pid = int(launched["pid"])
+        child_pid = 0
         try:
+            output_deadline = time.monotonic() + 5.0
+            while time.monotonic() < output_deadline:
+                output = prototype_harness.read_output(registry, "windows-interrupt").strip()
+                if output.isdigit():
+                    child_pid = int(output)
+                    break
+                time.sleep(0.05)
+            self.assertGreater(child_pid, 0, "builder did not report its descendant PID")
+
             result = prototype_harness.interrupt(registry=registry, run_id="windows-interrupt")
             self.assertEqual(result["outcome"], "stopped")
-            for _ in range(100):
-                if not prototype_harness.pid_running(pid):
-                    break
-                time.sleep(0.02)
-            self.assertFalse(prototype_harness.pid_running(pid))
+            for pid in (parent_pid, child_pid):
+                exit_deadline = time.monotonic() + 5.0
+                while prototype_harness.pid_running(pid) and time.monotonic() < exit_deadline:
+                    time.sleep(0.05)
+                self.assertFalse(prototype_harness.pid_running(pid), f"Windows process {pid} survived interrupt")
         finally:
-            if prototype_harness.pid_running(pid):
-                os.kill(pid, signal.SIGTERM)
+            for pid in (parent_pid, child_pid):
+                if pid > 0 and prototype_harness.pid_running(pid):
+                    subprocess.run(
+                        ["taskkill", "/PID", str(pid), "/T", "/F"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        timeout=5.0,
+                        shell=False,
+                    )
 
     def test_directory_lock_lifecycle_and_stale_handling(self) -> None:
         lock_path = self.base_path / ".ralph-state.lock"

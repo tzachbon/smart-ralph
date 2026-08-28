@@ -18,6 +18,8 @@ from typing import Any
 
 JSON = dict[str, Any]
 VALID_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+WINDOWS_TERMINATION_TIMEOUT_SECONDS = 5.0
+WINDOWS_TERMINATION_POLL_SECONDS = 0.05
 
 
 class HarnessError(Exception):
@@ -101,34 +103,43 @@ def _windows_pid_running(pid: int) -> bool:
         close_handle(handle)
 
 
-def _terminate_windows_process(pid: int) -> None:
-    import ctypes
-    from ctypes import wintypes
+def _wait_for_pid_exit(pid: int, timeout_seconds: float) -> bool:
+    deadline = time.monotonic() + timeout_seconds
+    while pid_running(pid):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        time.sleep(min(WINDOWS_TERMINATION_POLL_SECONDS, remaining))
+    return True
 
-    process_terminate = 0x0001
-    error_invalid_parameter = 87
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-    open_process = kernel32.OpenProcess
-    open_process.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
-    open_process.restype = wintypes.HANDLE
-    terminate_process = kernel32.TerminateProcess
-    terminate_process.argtypes = (wintypes.HANDLE, wintypes.UINT)
-    terminate_process.restype = wintypes.BOOL
-    close_handle = kernel32.CloseHandle
-    close_handle.argtypes = (wintypes.HANDLE,)
-    close_handle.restype = wintypes.BOOL
 
-    handle = open_process(process_terminate, False, pid)
-    if not handle:
-        error = ctypes.get_last_error()
-        if error == error_invalid_parameter:
-            return
-        raise ctypes.WinError(error)
+def _terminate_windows_process_tree(pid: int) -> None:
+    if type(pid) is not int or pid <= 0:
+        raise HarnessError("unavailable-control", "Harness metadata contains an invalid Windows PID.")
+    if not pid_running(pid):
+        return
+
+    command = ["taskkill", "/PID", str(pid), "/T", "/F"]
+    failure = "taskkill did not stop the process tree"
     try:
-        if not terminate_process(handle, 1):
-            raise ctypes.WinError(ctypes.get_last_error())
-    finally:
-        close_handle(handle)
+        result = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=WINDOWS_TERMINATION_TIMEOUT_SECONDS,
+            shell=False,
+        )
+        if result.returncode != 0:
+            failure = f"taskkill exited with status {result.returncode}"
+    except subprocess.TimeoutExpired:
+        failure = "taskkill timed out"
+    except OSError as exc:
+        failure = f"taskkill could not run: {exc}"
+
+    if _wait_for_pid_exit(pid, WINDOWS_TERMINATION_TIMEOUT_SECONDS):
+        return
+    raise HarnessError("unavailable-control", f"Cannot stop Windows harness process tree {pid}: {failure}")
 
 
 def pid_running(pid: int) -> bool:
@@ -269,13 +280,10 @@ def interrupt(*, registry: Path, run_id: str, outcome: str = "stopped") -> JSON:
     metadata = refresh(read_metadata(registry, run_id), registry)
     if metadata.get("status") != "running":
         return {**metadata, "outcome": "already-complete"}
-    pid = int(metadata.get("pid") or 0)
     if os.name == "nt":
-        try:
-            _terminate_windows_process(pid)
-        except (ProcessLookupError, PermissionError, OSError):
-            pass
+        _terminate_windows_process_tree(metadata.get("pid"))
     else:
+        pid = int(metadata.get("pid") or 0)
         try:
             os.killpg(pid, signal.SIGTERM)
         except (ProcessLookupError, PermissionError, OSError):
