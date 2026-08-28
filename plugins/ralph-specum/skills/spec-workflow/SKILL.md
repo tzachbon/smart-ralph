@@ -22,9 +22,13 @@ Spec-driven development transforms feature requests into structured specs throug
 
 ```
 start/new -> research -> requirements -> design -> tasks -> implement
+                         ^
+                         optional prototype overlay, then return
 ```
 
 Each phase produces a markdown artifact in `./specs/<name>/`. Normal mode pauses for approval between phases. Quick mode runs all phases then auto-starts execution.
+
+Prototype is an optional overlay, not a main phase. The main `phase` remains `research`, `requirements`, `design`, `tasks`, or `execution`; live prototype work is stored in `activePrototypes`. Resolve the configured spec root and `basePath` before any overlay operation. Follow [`references/phase-transitions.md`](references/phase-transitions.md) when suggesting, starting, resuming, cancelling, or consuming prototype evidence.
 
 ### Phase Commands
 
@@ -35,6 +39,9 @@ Each phase produces a markdown artifact in `./specs/<name>/`. Normal mode pauses
 | `/ralph-specum:design` | architect-reviewer | design.md | Architecture, components, interfaces |
 | `/ralph-specum:tasks` | task-planner | tasks.md | POC-first task breakdown |
 | `/ralph-specum:implement` | spec-executor | commits | Autonomous task-by-task execution |
+| `/ralph-specum:prototype` | prototype-builder | prototypes/&lt;id&gt;.md | Test one falsifiable design question in isolation |
+
+Normal mode may suggest prototype after research or requirements, and the user owns capture, verdict, handoff, and deletion decisions. Direct invocation is available from any main phase. Quick mode runs at most one agent-owned request after requirements, takes over the oldest design blocker when one exists, asks no decision questions, and always continues to design.
 
 ## Epic Flow (Multi-Spec)
 
@@ -69,10 +76,11 @@ specs/
 
 ## Common Workflows
 
-### Quick prototype
+### Quick workflow
 ```bash
 /ralph-specum:start my-feature "Build X" --quick
 # Runs all phases automatically, starts execution
+# May run one unattended prototype request after requirements
 ```
 
 ### Guided development
@@ -92,4 +100,4 @@ specs/
 
 ## References
 
-- **`references/phase-transitions.md`** -- Detailed phase flow, state transitions, quick mode behavior, phase skipping
+- **`references/phase-transitions.md`** -- Read for phase flow, prototype overlay entry and return, quick ownership, recovery, or phase skipping

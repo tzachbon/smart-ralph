@@ -268,11 +268,11 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `refactor(prototype): align review and schemas`
   - _Requirements: FR-3, FR-7, FR-8, NFR-5_
 
-- [ ] 2.7 Complete Claude workflow and state references
+- [x] 2.7 Complete Claude workflow and state references
   - **Do**: Document overlay transitions, immutable records, locked state, commit behavior, configured paths, and quick ownership in Claude skills and references.
   - **Files**: `plugins/ralph-specum/skills/spec-workflow/SKILL.md`, `plugins/ralph-specum/skills/spec-workflow/references/phase-transitions.md`, `plugins/ralph-specum/skills/smart-ralph/SKILL.md`, `plugins/ralph-specum/skills/smart-ralph/references/state-file-schema.md`
   - **Done when**: Claude references agree on overlay rather than a main phase and on locked mutations under resolved `basePath`.
-  - **Verify**: `rg -l 'activePrototypes|prototype' plugins/ralph-specum/skills/spec-workflow/SKILL.md plugins/ralph-specum/skills/spec-workflow/references/phase-transitions.md plugins/ralph-specum/skills/smart-ralph/SKILL.md plugins/ralph-specum/skills/smart-ralph/references/state-file-schema.md | wc -l | grep -q '^4$'`
+  - **Verify**: `test "$(rg -l 'activePrototypes|prototype' plugins/ralph-specum/skills/spec-workflow/SKILL.md plugins/ralph-specum/skills/spec-workflow/references/phase-transitions.md plugins/ralph-specum/skills/smart-ralph/SKILL.md plugins/ralph-specum/skills/smart-ralph/references/state-file-schema.md | wc -l | tr -d '[:space:]')" = 4`
   - **Commit**: `docs(prototype): define Claude overlay contract`
   - _Requirements: FR-1, FR-3, FR-6, NFR-3_
 
