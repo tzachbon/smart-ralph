@@ -85,9 +85,8 @@ class PrototypeWindowsTests(unittest.TestCase):
         with mock.patch.object(prototype_harness.os, "name", "nt"):
             with mock.patch.object(prototype_harness, "pid_running", return_value=True) as running_spy:
                 with mock.patch.object(prototype_harness.subprocess, "run", return_value=failed) as run_spy:
-                    with mock.patch.object(prototype_harness.time, "monotonic", side_effect=(10.0, 16.0)):
-                        with self.assertRaises(prototype_harness.HarnessError) as raised:
-                            prototype_harness.interrupt(registry=registry, run_id=run_id)
+                    with self.assertRaises(prototype_harness.HarnessError) as raised:
+                        prototype_harness.interrupt(registry=registry, run_id=run_id)
 
         self.assertEqual(raised.exception.outcome, "unavailable-control")
         run_spy.assert_called_once_with(
@@ -98,31 +97,106 @@ class PrototypeWindowsTests(unittest.TestCase):
             timeout=5.0,
             shell=False,
         )
-        self.assertGreaterEqual(running_spy.call_count, 3)
-        self.assertEqual(json.loads(metadata_path.read_text(encoding="utf-8"))["status"], "running")
+        running_spy.assert_called_once_with(12345)
+        persisted = json.loads(metadata_path.read_text(encoding="utf-8"))
+        self.assertEqual(persisted["status"], "running")
+        self.assertTrue(persisted["terminationUnverified"])
+        self.assertIn("taskkill exited with status 1", persisted["controlError"])
 
-    def test_simulated_windows_interrupt_accepts_already_exited_race(self) -> None:
+    def test_simulated_windows_interrupt_rejects_unverified_parent_exit(self) -> None:
         registry = Path(self.temp.name) / "harness"
         run_id = "windows-interrupt-race"
         metadata_path = prototype_harness.registry_path(registry, run_id)
+        started = time.time()
         prototype_harness.write_metadata(
             metadata_path,
             {
                 "id": run_id,
                 "pid": 12345,
                 "status": "running",
-                "startedEpoch": time.time(),
+                "startedEpoch": started,
+                "rollingDeadlineEpoch": started + 30,
+                "hardDeadlineEpoch": started + 60,
+                "activityExtensionSeconds": 10,
             },
         )
+        parent_running = True
+
+        def pid_running(_pid: int) -> bool:
+            return parent_running
+
+        def failed_taskkill(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+            nonlocal parent_running
+            parent_running = False
+            return subprocess.CompletedProcess(
+                ["taskkill", "/PID", "12345", "/T", "/F"],
+                returncode=1,
+                stdout="",
+                stderr="parent exited before process-tree confirmation",
+            )
 
         with mock.patch.object(prototype_harness.os, "name", "nt"):
-            with mock.patch.object(prototype_harness, "pid_running", side_effect=(True, False)):
-                with mock.patch.object(prototype_harness.subprocess, "run") as run_spy:
+            with mock.patch.object(prototype_harness, "pid_running", side_effect=pid_running):
+                with mock.patch.object(prototype_harness.subprocess, "run", side_effect=failed_taskkill) as run_spy:
+                    with self.assertRaises(prototype_harness.HarnessError) as raised:
+                        prototype_harness.interrupt(registry=registry, run_id=run_id)
+
+        self.assertEqual(raised.exception.outcome, "unavailable-control")
+        run_spy.assert_called_once_with(
+            ["taskkill", "/PID", "12345", "/T", "/F"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5.0,
+            shell=False,
+        )
+        persisted = json.loads(metadata_path.read_text(encoding="utf-8"))
+        self.assertEqual(persisted["status"], "running")
+        self.assertTrue(persisted["terminationUnverified"])
+        self.assertIn("taskkill exited with status 1", persisted["controlError"])
+        self.assertFalse(parent_running)
+        rolling_deadline = persisted["rollingDeadlineEpoch"]
+
+        for operation in (
+            lambda: prototype_harness.status(registry=registry, run_id=run_id),
+            lambda: prototype_harness.wait(registry=registry, run_id=run_id, until_seconds=0),
+            lambda: prototype_harness.heartbeat(registry=registry, run_id=run_id),
+        ):
+            with self.assertRaises(prototype_harness.HarnessError) as control_raised:
+                operation()
+            self.assertEqual(control_raised.exception.outcome, "unavailable-control")
+
+        persisted = json.loads(metadata_path.read_text(encoding="utf-8"))
+        self.assertEqual(persisted["status"], "running")
+        self.assertEqual(persisted["rollingDeadlineEpoch"], rolling_deadline)
+
+        successful = subprocess.CompletedProcess(
+            ["taskkill", "/PID", "12345", "/T", "/F"],
+            returncode=0,
+            stdout="SUCCESS",
+            stderr="",
+        )
+        with mock.patch.object(prototype_harness.os, "name", "nt"):
+            with mock.patch.object(prototype_harness, "pid_running", return_value=False):
+                with mock.patch.object(
+                    prototype_harness.subprocess, "run", return_value=successful
+                ) as retry_spy:
                     result = prototype_harness.interrupt(registry=registry, run_id=run_id)
 
         self.assertEqual(result["outcome"], "stopped")
-        run_spy.assert_not_called()
-        self.assertEqual(json.loads(metadata_path.read_text(encoding="utf-8"))["status"], "stopped")
+        retry_spy.assert_called_once_with(
+            ["taskkill", "/PID", "12345", "/T", "/F"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5.0,
+            shell=False,
+        )
+        persisted = json.loads(metadata_path.read_text(encoding="utf-8"))
+        self.assertEqual(persisted["status"], "stopped")
+        self.assertNotIn("terminationUnverified", persisted)
+        self.assertNotIn("controlError", persisted)
+        self.assertNotIn("controlErrorAt", persisted)
 
     @unittest.skipUnless(os.name == "nt", "requires native Windows process APIs")
     def test_native_windows_pid_probes_leave_a_live_process_running(self) -> None:
