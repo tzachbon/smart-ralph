@@ -180,6 +180,8 @@ assert_full_task_scope_comparison() {
 
     assert_full_task_scope_comparison "$task_scope_line"
     grep -Fq '[Include the full task block: Do, Files, Done when, Verify, and Commit.]' "$COORDINATOR"
+    grep -Fq 'External effects:' "$COORDINATOR"
+    grep -Fq '[List the external effects identified during Scope Preflight, or None.]' "$COORDINATOR"
     grep -Fq 'If either boundary would change, make no mutation and output `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and `Question:`.' "$COORDINATOR"
     grep -Fq 'If delegated task output contains `SCOPE_ESCALATION_REQUIRED`' "$COORDINATOR"
 }

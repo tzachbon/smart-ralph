@@ -202,6 +202,9 @@ Task: [Full task description]
 Task Body:
 [Include the full task block: Do, Files, Done when, Verify, and Commit.]
 
+External effects:
+[List the external effects identified during Scope Preflight, or None.]
+
 Scope Envelope:
 [Include the six-field block from .progress.md]
 
