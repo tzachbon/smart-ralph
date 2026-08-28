@@ -900,7 +900,10 @@ Before completing tasks:
 As your FINAL action before completing, you MUST update the state file to signal that user approval is required before proceeding:
 
 ```bash
-jq '.awaitingApproval = true' <basePath>/.ralph-state.json > /tmp/state.json && mv /tmp/state.json <basePath>/.ralph-state.json
+# Set BASE_PATH to the exact basePath supplied by Task delegation.
+python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+  --state "$BASE_PATH/.ralph-state.json" \
+  --set awaitingApproval=true
 ```
 
 Use `basePath` from Task delegation (e.g., `./specs/my-feature` or `./packages/api/specs/auth`).

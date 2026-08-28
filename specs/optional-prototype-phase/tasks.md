@@ -236,7 +236,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `refactor(state): lock Claude task writers`
   - _Requirements: FR-3, FR-5, NFR-2, NFR-3_
 
-- [ ] 2.3 Migrate phase-agent approval state writers
+- [x] 2.3 Migrate phase-agent approval state writers
   - **Do**: Replace each agent's direct approval-state temp/move snippet with the common helper and preserve every unrelated state field.
   - **Files**: `plugins/ralph-specum/agents/research-analyst.md`, `plugins/ralph-specum/agents/product-manager.md`, `plugins/ralph-specum/agents/architect-reviewer.md`, `plugins/ralph-specum/agents/task-planner.md`
   - **Done when**: All four agents merge `awaitingApproval` through `locked-state.py` and perform no direct state move.
