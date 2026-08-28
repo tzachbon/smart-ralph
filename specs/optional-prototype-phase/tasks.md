@@ -284,7 +284,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `docs(prototype): define Codex overlay contract`
   - _Requirements: FR-1, FR-3, FR-6, FR-8, NFR-5_
 
-- [ ] 2.9 Complete user and consumer documentation
+- [x] 2.9 Complete user and consumer documentation
   - **Do**: Document the optional overlay, normal choices, quick placement, source retention, current-checkout safety, local-only prototype evidence, resume/status behavior, and both entrypoint names. Add bootstrap guidance for downstream Codex installations.
   - **Files**: `README.md`, `plugins/ralph-specum-codex/README.md`, `plugins/ralph-specum-codex/assets/bootstrap/AGENTS.md`
   - **Done when**: A user can tell when prototype is suggested, what quick mode does, where records live, and which remote actions still need separate authority.

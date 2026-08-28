@@ -131,6 +131,7 @@ Copy templates from `agent-configs/*.toml.template` into your `.codex/config.tom
 | `$ralph-specum-start` | Smart start (new or resume spec) |
 | `$ralph-specum-research` | Parallel research phase |
 | `$ralph-specum-requirements` | Requirements generation |
+| `$ralph-specum-prototype` | Run or resume an optional prototype |
 | `$ralph-specum-design` | Technical design |
 | `$ralph-specum-tasks` | Task breakdown (fine/coarse) |
 | `$ralph-specum-implement` | Task execution loop |
@@ -142,6 +143,14 @@ Copy templates from `agent-configs/*.toml.template` into your `.codex/config.tom
 | `$ralph-specum-refactor` | Spec file updates |
 | `$ralph-specum-feedback` | Submit feedback/bugs |
 | `$ralph-specum-help` | Show help and workflow guide |
+
+## Optional Prototypes
+
+- After research or requirements, normal mode may suggest a prototype. Choose `decline and continue` to move to the next phase, or `continue to prototype` to test one question. Use `$ralph-specum-prototype` for a direct request from any main phase. Claude users invoke the matching `/ralph-specum:prototype` command.
+- Quick mode runs one request after requirements. It asks no prototype questions, takes over the oldest design blocker or selects the highest-risk grounded question, and continues to design after every outcome.
+- Codex delegates the builder to a child agent and stores its `agentId`. Source stays in a sibling worktree or eligible scratch directory. The current checkout does not switch. Quick mode copies no dirty work; normal mode transfers only paths the user approves.
+- Choose `retained` to keep source. `ephemeral` allows deletion only after the normal exact-path confirmation or a reviewed quick cleanup receipt. Ralph publishes immutable records at `<resolved-basePath>/prototypes/<id>.md`; `$ralph-specum-start --resume <id>` and `$ralph-specum-prototype --resume <id>` resume active work, and `$ralph-specum-status` reports recovery and source state.
+- Source, records, receipts, and quarantines remain local. A local commit does not permit a push, remote branch, PR inclusion, issue write, or record deletion. Authorize each remote action on its own.
 
 ## Hooks
 

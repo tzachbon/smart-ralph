@@ -183,6 +183,7 @@ $ralph-specum-start
 $ralph-specum-triage
 $ralph-specum-research
 $ralph-specum-requirements
+$ralph-specum-prototype
 $ralph-specum-design
 $ralph-specum-tasks
 $ralph-specum-implement
@@ -216,7 +217,7 @@ Codex Ralph is approval-gated by default. After each spec artifact, Ralph stops 
 
 ## Commands
 
-For Codex, the equivalent surface is `$ralph-specum` plus 14 helper skills installed via the `ralph-specum` plugin.
+For Codex, the equivalent surface is `$ralph-specum` plus 15 helper skills installed via the `ralph-specum` plugin.
 
 | Command | What it does |
 |---------|--------------|
@@ -225,6 +226,7 @@ For Codex, the equivalent surface is `$ralph-specum` plus 14 helper skills insta
 | `/ralph-specum:new <name> [goal]` | Create new spec, start research |
 | `/ralph-specum:research` | Run/re-run research phase |
 | `/ralph-specum:requirements` | Generate requirements from research |
+| `/ralph-specum:prototype` | Run or resume an optional prototype |
 | `/ralph-specum:design` | Generate technical design |
 | `/ralph-specum:tasks` | Break design into executable tasks |
 | `/ralph-specum:implement` | Execute tasks one-by-one |
@@ -234,6 +236,14 @@ For Codex, the equivalent surface is `$ralph-specum` plus 14 helper skills insta
 | `/ralph-specum:triage [name] [goal]` | Decompose large features into multiple specs (epics) |
 | `/ralph-specum:cancel` | Cancel loop, cleanup state |
 | `/ralph-specum:help` | Show help |
+
+### Optional Prototypes
+
+- After research or requirements, normal mode may suggest a prototype. Choose `decline and continue` to move to the next phase, or `continue to prototype` to test one question. Run `/ralph-specum:prototype` or `$ralph-specum-prototype` from any main phase for a direct request.
+- Quick mode runs one request after requirements. It asks no prototype questions, takes over the oldest design blocker or selects the highest-risk grounded question, owns the decisions, and continues to design after every outcome.
+- Ralph builds source in a sibling worktree or eligible scratch directory. It keeps the current checkout on its branch and copies no dirty work by default. Normal mode transfers only paths the user approves; quick mode transfers none. `retained` keeps source. `ephemeral` permits deletion only after the normal exact-path confirmation or the reviewed quick cleanup receipt.
+- Ralph publishes reviewed terminal records without overwrite at `<resolved-basePath>/prototypes/<id>.md`. Start and prototype commands resume active work by ID. Status lists active requests, candidates, immutable finals, quarantines, blockers, return targets, and source disposition.
+- Prototype source and evidence stay local. A local commit does not authorize a push, remote branch, PR inclusion, issue write, or terminal-record deletion. Each remote action needs separate approval.
 
 ---
 
