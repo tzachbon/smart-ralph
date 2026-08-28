@@ -166,6 +166,14 @@ def try_break_stale_lock(lock_path: Path, stale_seconds: int) -> bool:
     owner_path = lock_path / "owner.json"
     try:
         owner = json.loads(owner_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        try:
+            if time.time() - lock_path.stat().st_mtime < stale_seconds:
+                return False
+            lock_path.rmdir()
+            return True
+        except OSError:
+            return False
     except Exception:
         return False
     if not isinstance(owner, dict):
@@ -191,8 +199,17 @@ def directory_lock(lock_path: Path, timeout: float, stale_seconds: int = 600):
     while True:
         try:
             os.mkdir(lock_path)
+            owner_path = lock_path / "owner.json"
+            try:
+                owner_path.write_text(json.dumps(lock_metadata(), sort_keys=True) + "\n", encoding="utf-8")
+            except Exception:
+                owner_path.unlink(missing_ok=True)
+                try:
+                    lock_path.rmdir()
+                except OSError:
+                    pass
+                raise
             acquired = True
-            (lock_path / "owner.json").write_text(json.dumps(lock_metadata(), sort_keys=True) + "\n", encoding="utf-8")
             break
         except FileExistsError:
             try_break_stale_lock(lock_path, stale_seconds)
@@ -266,7 +283,9 @@ def ensure_revision(entry: JSON, expected: int | None) -> None:
 
 
 def ensure_token(entry: JSON, token: str | None) -> None:
-    if token is not None and entry.get("leaseToken") != token:
+    if token is None:
+        raise StateError("leaseToken is required")
+    if entry.get("leaseToken") != token:
         raise StateError("leaseToken mismatch")
 
 
@@ -311,7 +330,10 @@ def cmd_upsert(args: argparse.Namespace) -> JSON:
     entry["id"] = args.id
 
     def update(state: JSON) -> JSON:
-        active_map(state)[args.id] = entry
+        active = active_map(state)
+        if args.id in active:
+            raise StateError(f"Prototype id is already reserved: {args.id}")
+        active[args.id] = entry
         return state
 
     return mutate_state(args.state, args.timeout, update)
@@ -468,20 +490,20 @@ def build_parser() -> argparse.ArgumentParser:
     heartbeat = sub.add_parser("heartbeat", help="Record builder activity")
     add_common(heartbeat)
     heartbeat.add_argument("--id", required=True)
-    heartbeat.add_argument("--lease-token")
+    heartbeat.add_argument("--lease-token", required=True)
     heartbeat.set_defaults(func=cmd_heartbeat)
 
     renew = sub.add_parser("renew-lease", help="Extend builder lease")
     add_common(renew)
     renew.add_argument("--id", required=True)
-    renew.add_argument("--lease-token")
+    renew.add_argument("--lease-token", required=True)
     renew.add_argument("--lease-seconds", type=int, default=600)
     renew.set_defaults(func=cmd_renew)
 
     release = sub.add_parser("release-lease", help="Release builder lease")
     add_common(release)
     release.add_argument("--id", required=True)
-    release.add_argument("--lease-token")
+    release.add_argument("--lease-token", required=True)
     release.add_argument("--status")
     release.set_defaults(func=cmd_release)
 

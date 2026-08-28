@@ -37,6 +37,8 @@ REQUIRED_FIELDS = {
     "created",
     "completed",
     "sourceDisposition",
+    "staleArtifacts",
+    "staleTaskIndexes",
 }
 REQUIRED_HEADINGS = (
     "Question",
@@ -71,6 +73,8 @@ FRONTMATTER_ORDER = (
     "sourceDisposition",
     "evidenceHash",
     "cleanupReceiptHash",
+    "staleArtifacts",
+    "staleTaskIndexes",
     "supersedes",
     "conflictsWith",
     "resolves",
@@ -180,6 +184,14 @@ def validate_record_text(text: str, expected_id: str | None = None) -> JSON:
                 raise RecordError(f"No-source prototypes require {key}=null when present.")
     if not isinstance(frontmatter.get("gateApproved"), bool):
         raise RecordError("Prototype gateApproved must be a boolean.")
+    stale_artifacts = frontmatter.get("staleArtifacts", [])
+    if not isinstance(stale_artifacts, list) or any(not isinstance(item, str) for item in stale_artifacts):
+        raise RecordError("Prototype staleArtifacts must be an array of strings.")
+    stale_task_indexes = frontmatter.get("staleTaskIndexes", [])
+    if not isinstance(stale_task_indexes, list) or any(
+        not isinstance(item, int) or isinstance(item, bool) or item < 0 for item in stale_task_indexes
+    ):
+        raise RecordError("Prototype staleTaskIndexes must be an array of non-negative integers.")
     sections = body_sections(body)
     missing_headings = [heading for heading in REQUIRED_HEADINGS if heading not in sections]
     if missing_headings:
@@ -501,12 +513,18 @@ def cmd_select_downstream(args: argparse.Namespace) -> JSON:
         if isinstance(item, str)
     }
     selected = []
+    stale_artifacts: set[str] = set()
+    stale_tasks: set[int] = set()
     for record in parsed:
         frontmatter = record["frontmatter"]
         if record["id"] in superseded:
             continue
         if frontmatter.get("gateApproved") is not True or frontmatter.get("verdict") not in {"validated", "rejected"}:
             continue
+        record_stale_artifacts = frontmatter.get("staleArtifacts") or []
+        record_stale_tasks = frontmatter.get("staleTaskIndexes") or []
+        stale_artifacts.update(record_stale_artifacts)
+        stale_tasks.update(record_stale_tasks)
         selected.append(
             {
                 "id": record["id"],
@@ -514,13 +532,13 @@ def cmd_select_downstream(args: argparse.Namespace) -> JSON:
                 "verdict": frontmatter["verdict"],
                 "triggerMode": frontmatter["triggerMode"],
                 "returnPhase": frontmatter["returnPhase"],
+                "staleArtifacts": record_stale_artifacts,
+                "staleTaskIndexes": record_stale_tasks,
                 "recordHash": sha256_path(Path(record["path"])),
             }
         )
     state = read_json_object(args.state) if args.state and args.state.exists() else {}
     blockers: list[JSON] = []
-    stale_artifacts: set[str] = set()
-    stale_tasks: set[int] = set()
     for prototype_id, entry in sorted((state.get("activePrototypes") or {}).items()):
         if not isinstance(entry, dict):
             continue

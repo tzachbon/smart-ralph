@@ -320,6 +320,8 @@ gateApproved: true|false
 created: 2026-08-27T18:45:00Z
 completed: 2026-08-27T19:10:00Z
 sourceDisposition: retained|deleted|not_created
+staleArtifacts: []
+staleTaskIndexes: []
 supersedes: []
 conflictsWith: []
 resolves: []
@@ -341,6 +343,8 @@ Required body sections:
 11. `## Source Disposition`
 
 `sourceDisposition: not_created` is required for `skipped` and for failures before source creation. Those records set isolation path, branch, source pointers, and run instructions to `null` or `none`.
+
+`staleArtifacts` is an array of artifact path strings. `staleTaskIndexes` is an array of non-negative task indexes. The downstream selector unions these terminal fields from approved, non-superseded records with active decision-checkpoint gates, so publication and active-state removal do not clear staleness.
 
 Resolution records require either `conflictsWith` or `resolves` IDs, `resolvedAt`, and a `## Conflict Resolution` section. The section lists evidence pointers and the rationale for the winner and losers. `supersedes` remains the downstream exclusion mechanism for replaced evidence.
 

@@ -84,6 +84,8 @@ lock_timeout_record_json() {
             sourceDisposition: "not_created",
             evidenceHash: null,
             cleanupReceiptHash: null,
+            staleArtifacts: [],
+            staleTaskIndexes: [],
             sections: sections
         }'
 }
@@ -135,6 +137,58 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
+@test "prototype state: upsert exclusively reserves an id without changing an existing entry" {
+    local cli before after replacement
+    cli="$(state_cli)"
+    python3 "$cli" upsert-prototype \
+        --state "$STATE_FILE" \
+        --id reserved \
+        --entry-json "$(entry_json reserved)" >/dev/null
+    before="$(shasum -a 256 "$STATE_FILE" | awk '{print $1}')"
+    replacement="$(entry_json reserved | jq '. + {status:"blocked", question:"replacement"}')"
+
+    run python3 "$cli" upsert-prototype \
+        --state "$STATE_FILE" \
+        --id reserved \
+        --entry-json "$replacement"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Prototype id is already reserved: reserved"* ]]
+
+    after="$(shasum -a 256 "$STATE_FILE" | awk '{print $1}')"
+    [ "$after" = "$before" ]
+    run jq -e '.activePrototypes.reserved.status == "pending" and (.activePrototypes.reserved | has("question") | not)' "$STATE_FILE"
+    [ "$status" -eq 0 ]
+}
+
+@test "prototype state: concurrent same-id reservations permit exactly one winner" {
+    local cli first second
+    cli="$(state_cli)"
+    first="$(entry_json collision | jq '. + {question:"first"}')"
+    second="$(entry_json collision | jq '. + {question:"second"}')"
+
+    run bash -c '
+        cli="$1"
+        state="$2"
+        out="$3"
+        first="$4"
+        second="$5"
+        python3 "$cli" upsert-prototype --state "$state" --id collision --entry-json "$first" >"$out/first" 2>&1 & first_pid=$!
+        python3 "$cli" upsert-prototype --state "$state" --id collision --entry-json "$second" >"$out/second" 2>&1 & second_pid=$!
+        first_status=0
+        second_status=0
+        wait "$first_pid" || first_status=$?
+        wait "$second_pid" || second_status=$?
+        successes=0
+        [ "$first_status" -eq 0 ] && successes=$((successes + 1))
+        [ "$second_status" -eq 0 ] && successes=$((successes + 1))
+        printf "%s\n" "$successes"
+    ' _ "$cli" "$STATE_FILE" "$TEST_ROOT" "$first" "$second"
+    [ "$status" -eq 0 ]
+    [ "$output" = "1" ]
+    run jq -e '.activePrototypes.collision.question == "first" or .activePrototypes.collision.question == "second"' "$STATE_FILE"
+    [ "$status" -eq 0 ]
+}
+
 @test "prototype state: compare-and-set permits only one builder launch" {
     local cli
     cli="$(state_cli)"
@@ -177,6 +231,16 @@ teardown() {
     [ "$status" -eq 0 ]
     claim_revision="$(jq -r .stateRevision <<< "$output")"
     [ "$claim_revision" -eq 2 ]
+
+    run python3 "$cli" heartbeat --state "$STATE_FILE" --id lease
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"--lease-token"* ]]
+    run python3 "$cli" renew-lease --state "$STATE_FILE" --id lease --lease-seconds 60
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"--lease-token"* ]]
+    run python3 "$cli" release-lease --state "$STATE_FILE" --id lease --status pending
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"--lease-token"* ]]
 
     run python3 "$cli" heartbeat --state "$STATE_FILE" --id lease --lease-token wrong-token
     [ "$status" -ne 0 ]

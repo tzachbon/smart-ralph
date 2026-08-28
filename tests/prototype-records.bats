@@ -17,7 +17,7 @@ state_cli() {
 }
 
 record_json() {
-    local prototype_id verdict gate disposition supersedes evidence_hash cleanup_hash
+    local prototype_id verdict gate disposition supersedes evidence_hash cleanup_hash stale_artifacts stale_task_indexes
     prototype_id="$1"
     verdict="${2:-validated}"
     gate="${3:-true}"
@@ -25,12 +25,16 @@ record_json() {
     supersedes="${5:-[]}"
     evidence_hash="${6:-}"
     cleanup_hash="${7:-}"
+    stale_artifacts="${8:-[]}"
+    stale_task_indexes="${9:-[]}"
     jq -nc \
         --arg id "$prototype_id" \
         --arg verdict "$verdict" \
         --argjson gate "$gate" \
         --arg disposition "$disposition" \
         --argjson supersedes "$supersedes" \
+        --argjson stale_artifacts "$stale_artifacts" \
+        --argjson stale_task_indexes "$stale_task_indexes" \
         --arg evidence_hash "$evidence_hash" \
         --arg cleanup_hash "$cleanup_hash" '
         def sections: {
@@ -66,6 +70,8 @@ record_json() {
             sourceDisposition: $disposition,
             evidenceHash: (if $evidence_hash == "" then null else $evidence_hash end),
             cleanupReceiptHash: (if $cleanup_hash == "" then null else $cleanup_hash end),
+            staleArtifacts: $stale_artifacts,
+            staleTaskIndexes: $stale_task_indexes,
             supersedes: $supersedes,
             conflictsWith: [],
             resolves: [],
@@ -301,9 +307,9 @@ teardown() {
 
 @test "prototype records: downstream selection excludes superseded and malformed evidence and returns nested gates" {
     local blocker_entry selected
-    publish_record old "$(record_json old validated true)" >/dev/null
+    publish_record old "$(record_json old validated true retained '[]' '' '' '["superseded.md"]' '[98]')" >/dev/null
     publish_record replacement "$(record_json replacement rejected true retained '["old"]')" >/dev/null
-    publish_record excluded "$(record_json excluded inconclusive false)" >/dev/null
+    publish_record excluded "$(record_json excluded inconclusive false retained '[]' '' '' '["excluded.md"]' '[99]')" >/dev/null
     printf '%s\n' malformed > "$BASE_PATH/prototypes/bad.md"
     blocker_entry="$(active_entry_json blocker blocked \
         '{"staleArtifacts":["tasks.md","design.md"],"staleTaskIndexes":[7,3]}' \
@@ -320,6 +326,32 @@ teardown() {
     [ "$(jq -c .activeBlockers <<< "$selected")" = '[{"blocked":["design","task:3"],"id":"blocker","status":"blocked"}]' ]
     [ "$(jq -c .staleArtifacts <<< "$selected")" = '["design.md","tasks.md"]' ]
     [ "$(jq -c .staleTaskIndexes <<< "$selected")" = '[3,7]' ]
+}
+
+@test "prototype records: published terminal staleness survives active-state removal and rejects malformed types" {
+    local selected invalid_artifacts invalid_indexes
+    publish_record terminal-stale \
+        "$(record_json terminal-stale validated true retained '[]' '' '' '["design.md","tasks.md"]' '[3,7]')" >/dev/null
+    run jq -e 'has("activePrototypes") | not' "$STATE_FILE"
+    [ "$status" -eq 0 ]
+
+    run python3 "$(codex_record_cli)" select-downstream --base-path "$BASE_PATH" --state "$STATE_FILE"
+    [ "$status" -eq 0 ]
+    selected="$output"
+    [ "$(jq -c '.selected[0].staleArtifacts' <<< "$selected")" = '["design.md","tasks.md"]' ]
+    [ "$(jq -c '.selected[0].staleTaskIndexes' <<< "$selected")" = '[3,7]' ]
+    [ "$(jq -c .staleArtifacts <<< "$selected")" = '["design.md","tasks.md"]' ]
+    [ "$(jq -c .staleTaskIndexes <<< "$selected")" = '[3,7]' ]
+
+    invalid_artifacts="$(record_json invalid-artifacts validated true retained '[]' '' '' '"design.md"' '[]')"
+    run render_candidate "$(codex_record_cli)" "$BASE_PATH" "$invalid_artifacts"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Prototype staleArtifacts must be an array of strings."* ]]
+
+    invalid_indexes="$(record_json invalid-indexes validated true retained '[]' '' '' '[]' '[true]')"
+    run render_candidate "$(codex_record_cli)" "$BASE_PATH" "$invalid_indexes"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Prototype staleTaskIndexes must be an array of non-negative integers."* ]]
 }
 
 @test "prototype records: cleanup receipt gates post-deletion review and missing-source resume" {

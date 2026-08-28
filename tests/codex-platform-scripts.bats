@@ -361,6 +361,95 @@ PY
     wait_for_pid_exit "$pid"
 }
 
+@test "codex prototype harness: early heartbeat and output activity never shorten the rolling deadline" {
+    local script registry pid launched heartbeat waited
+    script="$(prototype_harness_script)"
+    registry="$TEST_REPO/harness"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id codex-monotonic-heartbeat \
+        --kind codex_agent \
+        --agent-id child-monotonic-heartbeat \
+        --command-json '["python3","-c","import time; time.sleep(30)"]' \
+        --soft-timeout 5 \
+        --activity-extension 1 \
+        --hard-timeout 10
+    [ "$status" -eq 0 ]
+    launched="$output"
+    pid="$(json_query pid <<< "$launched")"
+    remember_harness_pid "$pid"
+
+    run python3 "$script" heartbeat --registry "$registry" --id codex-monotonic-heartbeat
+    [ "$status" -eq 0 ]
+    heartbeat="$output"
+    python3 - "$launched" "$heartbeat" <<'PY'
+import json, sys
+before, after = map(json.loads, sys.argv[1:])
+assert after["rollingDeadlineEpoch"] >= before["rollingDeadlineEpoch"]
+PY
+    python3 "$script" interrupt --registry "$registry" --id codex-monotonic-heartbeat >/dev/null
+    wait_for_pid_exit "$pid"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id codex-monotonic-output \
+        --kind codex_agent \
+        --agent-id child-monotonic-output \
+        --command-json '["python3","-c","import time; print(\"activity\", flush=True); time.sleep(30)"]' \
+        --soft-timeout 5 \
+        --activity-extension 1 \
+        --hard-timeout 10
+    [ "$status" -eq 0 ]
+    launched="$output"
+    pid="$(json_query pid <<< "$launched")"
+    remember_harness_pid "$pid"
+
+    run python3 "$script" wait --registry "$registry" --id codex-monotonic-output --until-seconds 0.2 --poll-seconds 0.02
+    [ "$status" -eq 0 ]
+    waited="$output"
+    python3 - "$launched" "$waited" <<'PY'
+import json, sys
+before, after = map(json.loads, sys.argv[1:])
+assert "lastOutputMtime" in after
+assert after["rollingDeadlineEpoch"] >= before["rollingDeadlineEpoch"]
+PY
+    python3 "$script" interrupt --registry "$registry" --id codex-monotonic-output >/dev/null
+    wait_for_pid_exit "$pid"
+}
+
+@test "codex prototype harness: resolver-approved builder execution counts launch and out-of-range counts fail" {
+    local script registry pid
+    script="$(prototype_harness_script)"
+    registry="$TEST_REPO/harness"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id codex-five-executions \
+        --kind codex_agent \
+        --agent-id child-five-executions \
+        --command-json '["python3","-c","import time; time.sleep(30)"]' \
+        --builder-execution-attempt 5 \
+        --max-builder-executions 5
+    [ "$status" -eq 0 ]
+    [ "$(json_query builderExecutionAttempt <<< "$output")" -eq 5 ]
+    [ "$(json_query maxBuilderExecutions <<< "$output")" -eq 5 ]
+    pid="$(json_query pid <<< "$output")"
+    remember_harness_pid "$pid"
+    python3 "$script" interrupt --registry "$registry" --id codex-five-executions >/dev/null
+    wait_for_pid_exit "$pid"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id codex-six-executions \
+        --kind codex_agent \
+        --agent-id child-six-executions \
+        --command-json '["python3","-c","print(1)"]' \
+        --max-builder-executions 6
+    [ "$status" -eq 2 ]
+    [ "$(json_query outcome <<< "$output")" = "unavailable-control" ]
+}
+
 @test "codex prototype harness: soft timeout requires interrupt and leaves no child" {
     local script registry pid
     script="$(prototype_harness_script)"

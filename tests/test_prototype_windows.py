@@ -89,6 +89,29 @@ class PrototypeWindowsTests(unittest.TestCase):
                 with locked_state.directory_lock(lock_path, 0.02, stale_seconds=600):
                     self.fail("live directory lock was acquired")
 
+    def test_ownerless_directory_lock_recovers_only_after_stale_age(self) -> None:
+        lock_path = self.base_path / ".ralph-state.lock"
+        lock_path.mkdir()
+
+        with self.assertRaisesRegex(locked_state.StateError, "Timed out acquiring lock"):
+            with locked_state.directory_lock(lock_path, 0.02, stale_seconds=1):
+                self.fail("fresh ownerless lock was acquired")
+        self.assertTrue(lock_path.is_dir())
+
+        stale_time = locked_state.time.time() - 2
+        os.utime(lock_path, (stale_time, stale_time))
+        with locked_state.directory_lock(lock_path, 0.2, stale_seconds=1):
+            self.assertTrue((lock_path / "owner.json").is_file())
+        self.assertFalse(lock_path.exists())
+
+    def test_directory_lock_cleans_up_when_owner_metadata_write_fails(self) -> None:
+        lock_path = self.base_path / ".ralph-state.lock"
+        with mock.patch.object(Path, "write_text", side_effect=OSError("metadata failure")):
+            with self.assertRaisesRegex(OSError, "metadata failure"):
+                with locked_state.directory_lock(lock_path, 0.2):
+                    self.fail("lock with missing metadata was acquired")
+        self.assertFalse(lock_path.exists())
+
     def test_atomic_replace_flushes_file_and_ignores_unsupported_directory_fsync(self) -> None:
         real_fsync = os.fsync
         real_replace = os.replace
@@ -167,6 +190,8 @@ class PrototypeWindowsTests(unittest.TestCase):
             "sourceDisposition": "deleted",
             "evidenceHash": evidence_hash,
             "cleanupReceiptHash": receipt["receiptHash"],
+            "staleArtifacts": [],
+            "staleTaskIndexes": [],
             "sections": sections,
         }
         rendered = prototype_records.cmd_render_candidate(

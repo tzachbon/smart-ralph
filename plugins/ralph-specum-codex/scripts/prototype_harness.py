@@ -141,10 +141,10 @@ def launch(
     if (
         request_attempt < 1
         or builder_execution_attempt < 1
-        or max_builder_executions not in (1, 2)
+        or not 1 <= max_builder_executions <= 5
         or builder_execution_attempt > max_builder_executions
     ):
-        raise HarnessError("unavailable-control", "Retry metadata must permit no more than one builder retry.")
+        raise HarnessError("unavailable-control", "Builder execution counts must stay between one and five.")
     path = registry_path(registry, run_id)
     if path.exists():
         raise HarnessError("invalid-id", f"Harness id already exists: {run_id}")
@@ -192,7 +192,10 @@ def heartbeat(*, registry: Path, run_id: str) -> JSON:
     now = time.time()
     metadata["heartbeatAt"] = utc_now(now)
     metadata["rollingDeadlineEpoch"] = min(
-        now + float(metadata["activityExtensionSeconds"]),
+        max(
+            float(metadata["rollingDeadlineEpoch"]),
+            now + float(metadata["activityExtensionSeconds"]),
+        ),
         float(metadata["hardDeadlineEpoch"]),
     )
     metadata["outcome"] = "heartbeat"
@@ -246,7 +249,10 @@ def wait(
                 metadata["lastOutputMtime"] = current_activity
                 metadata["heartbeatAt"] = utc_now(current_activity)
                 metadata["rollingDeadlineEpoch"] = min(
-                    now + float(metadata["activityExtensionSeconds"]),
+                    max(
+                        float(metadata["rollingDeadlineEpoch"]),
+                        now + float(metadata["activityExtensionSeconds"]),
+                    ),
                     float(metadata["hardDeadlineEpoch"]),
                 )
                 write_metadata(registry_path(registry, run_id), metadata)

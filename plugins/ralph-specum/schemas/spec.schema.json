@@ -349,7 +349,9 @@
         "gateApproved",
         "created",
         "completed",
-        "sourceDisposition"
+        "sourceDisposition",
+        "staleArtifacts",
+        "staleTaskIndexes"
       ],
       "properties": {
         "spec": { "type": "string", "minLength": 1 },
@@ -391,6 +393,14 @@
         "cleanupReceiptHash": {
           "type": ["string", "null"],
           "pattern": "^[a-f0-9]{64}$"
+        },
+        "staleArtifacts": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "staleTaskIndexes": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 }
         },
         "supersedes": {
           "type": "array",

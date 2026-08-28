@@ -403,6 +403,26 @@ for name in must_match_exactly:
 ' "$root"
 }
 
+@test "codex platform: prototype frontmatter schemas match and require structured staleness" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+import json
+
+claude_schema = json.loads((ROOT / "plugins/ralph-specum/schemas/spec.schema.json").read_text())
+codex_schema = json.loads((ROOT / "plugins/ralph-specum-codex/schemas/spec.schema.json").read_text())
+claude_prototype = claude_schema["definitions"]["prototypeFrontmatter"]
+codex_prototype = codex_schema["definitions"]["prototypeFrontmatter"]
+
+assert claude_prototype == codex_prototype
+required = set(codex_prototype["required"])
+assert {"staleArtifacts", "staleTaskIndexes"} <= required
+assert codex_prototype["properties"]["staleArtifacts"]["items"]["type"] == "string"
+assert codex_prototype["properties"]["staleTaskIndexes"]["items"] == {"type": "integer", "minimum": 0}
+' "$root"
+}
+
 @test "codex platform: shared bootstrap and scripts expose current drift-sensitive fields" {
     local root
     root="$(repo_root)"
