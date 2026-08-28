@@ -14,9 +14,9 @@ Use this to explain the Ralph Specum surface in Codex.
 
 - Primary skill: `$ralph-specum`
 - Helper skills: `$ralph-specum-start`, `$ralph-specum-triage`, `$ralph-specum-research`, `$ralph-specum-requirements`, `$ralph-specum-design`, `$ralph-specum-tasks`, `$ralph-specum-implement`, `$ralph-specum-status`, `$ralph-specum-switch`, `$ralph-specum-cancel`, `$ralph-specum-index`, `$ralph-specum-refactor`, `$ralph-specum-feedback`, `$ralph-specum-help`
-- Normal flow: start, stop, research, approval, requirements, approval, design, approval, tasks, approval, implement
+- Normal flow: start goal grill, approval, research, artifact approval, requirements grill, approval, design grill, approval, tasks grill, approval, implement
 - Large effort flow: triage, then start each unblocked spec
-- Quick mode: generate missing artifacts and continue into implementation in one run only when the user explicitly asks for quick or autonomous flow
+- Quick mode: only exact `--quick` bypasses interview questions; exact `--interactive` clears it. Discovery, skill loads, and artifact write gates still run
 - Disk contract: `./specs` or configured roots, `.current-spec`, optional `.current-epic`, per-spec markdown files, `.ralph-state.json`
 
 ## Guidance

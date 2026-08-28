@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+set -e
+
 repo_root() { echo "$BATS_TEST_DIRNAME/.."; }
 plugin_root() { echo "$(repo_root)/plugins/ralph-specum-codex"; }
 

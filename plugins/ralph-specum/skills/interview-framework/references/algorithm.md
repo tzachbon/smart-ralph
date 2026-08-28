@@ -1,92 +1,150 @@
-# Grilling Algorithm
+# Critical-Frontier Interview Algorithm
 
-Use this algorithm for every normal-mode Ralph interview.
+Use this state machine for every normal-mode phase interview.
+
+## 1. Establish the interview
 
 ```text
-GRILL:
-  1. GATHER CONTEXT
-     - Read the original goal, .progress.md, .ralph-state.json, and prior artifacts.
-     - Read <default-specs-dir>/.index/index.md when present.
-     - Open related indexed entries and existing specs that may affect the goal.
-     - Read CONTEXT-MAP.md and its applicable CONTEXT.md, or root CONTEXT.md.
-     - Read the calling command's exploration territory.
+context = goal + applicable prior artifact bytes or research relevance context
+phase = start | triage | research | requirements | design | tasks
+interviewId = stable ID for this phase attempt
+discoveryRevision = current skill discovery revision
+contextDigest = SHA-256 for the ordered current phase context
 
-  2. BUILD DESIGN TREE
-     nodes = decisions implied by:
-       - the goal and phase territory
-       - prior artifacts and interview rounds
-       - spec-index relationships
-       - domain-language conflicts
-       - concrete scenarios and edge cases
-       - contradictions between user claims and code
-
-     for each node:
-       classify unknowns as FACT or USER_DECISION
-       record prerequisite decision and fact dependencies
-       set status = OPEN, INVESTIGATING, RESOLVED, or OUT_OF_SCOPE
-
-  3. RESOLVE FACTS
-     fact_frontier = discoverable facts whose prerequisites are resolved
-     dispatch independent fact_frontier lookups in parallel
-     mark each lookup INVESTIGATING
-     on result:
-       record evidence
-       mark fact RESOLVED
-       update dependent nodes
-
-  4. ASK USER FRONTIER
-     user_frontier = every OPEN user decision whose prerequisites are RESOLVED
-
-     if user_frontier is not empty:
-       build one numbered round from the whole frontier
-       for each question:
-         ground it in facts and prior answers
-         derive a recommended answer and rationale
-         present 2-4 meaningful options with recommendation first and Other last
-       if AskUserQuestion is available:
-         submit the round through AskUserQuestion
-       else:
-         render the same numbered round in the response
-       wait for every answer in the round
-
-       for each answer:
-         mark the node RESOLVED
-         infer dependent answers only when the inference is justified
-         add newly exposed branches
-         challenge glossary conflicts or fuzzy terms
-         test domain boundaries with concrete scenarios where needed
-         update CONTEXT.md immediately when a domain term resolves
-
-       append the round to .progress.md
-       return to RESOLVE FACTS
-
-  5. HANDLE APPARENT STOP SIGNALS
-     if the user asks to stop while unresolved branches remain:
-       show the remaining branches
-       ask whether each branch is out of scope or still needs resolution
-       mark OUT_OF_SCOPE only after explicit confirmation
-       return to RESOLVE FACTS
-
-  6. COMPLETE
-     if any fact is INVESTIGATING:
-       wait for it and return to RESOLVE FACTS
-     if any decision is OPEN:
-       return to ASK USER FRONTIER
-     if every branch is RESOLVED or OUT_OF_SCOPE:
-       summarize decisions, scope, approach, and domain-language updates
-       ask the user to confirm shared understanding
-       if corrected:
-         reopen affected nodes and return to RESOLVE FACTS
-       if confirmed:
-         store final summary in .progress.md
-         delegate to the phase agent
+complete discovery and preload
+record-skill-load(state, manifest)
+begin-interview(state, phase, interviewId, round, discoveryRevision, contextDigest)
 ```
 
-## Invariants
+Compute the digest from the length-framed phase, exact goal snapshot, and current artifact-source bytes defined in `normal-mode-gates.md`. The helper re-reads those sources and recomputes the digest at every gate. Exclude answers, state, receipts, discovery history, and skill bytes. Reuse the existing interview ID, immutable digest, discovery revision, and round when resuming. `begin-interview` preserves the active record. Advance one layer with `open-frontier --round N+1`; do not overwrite partial answers.
 
-- Ask no repository fact as a user question.
-- Ask no dependent decision before its prerequisites resolve.
-- Ask every currently unblocked user decision in the same round.
-- Add no fixed question cap or early-exit heuristic.
-- Advance no phase with an open frontier.
-- Create no interview mode or counter in `.ralph-state.json`.
+## 2. Build the design tree
+
+First resolve facts from the goal, state, `.progress.md`, prior artifacts, configured specs index, applicable `CONTEXT.md`, code, configuration, and tests. Classify each unknown as a discoverable fact or a consequential user decision. Use read-only exploration for facts. Ask no repository fact as a user question.
+
+For each candidate topic from the phase territory:
+
+1. Assign a stable decision ID.
+2. Mark dependencies on other decisions.
+3. Inspect the codebase and prior artifacts for discoverable facts.
+4. Drop the topic when it fails the critical decision test.
+5. Resolve it from evidence when the answer is factual.
+6. Keep it open only when user judgment can materially change the artifact.
+
+Represent each open node as:
+
+```text
+{
+  id,
+  dependencies,
+  evidence,
+  options[2..4],
+  recommendation,
+  rationale,
+  tradeoffs,
+  consequences
+}
+```
+
+Track each node as `OPEN`, `INVESTIGATING`, `RESOLVED`, or `OUT_OF_SCOPE`. Apply the domain-language checks in `domain-modeling.md` throughout the tree. Update the applicable glossary when a domain term is resolved; do not create an ADR.
+
+Apply clear instruction precedence automatically. If loaded skill contracts still conflict materially after system, developer, user, project, plugin, and skill precedence is applied, create an unblocked conflict decision in the first layer. Describe both unresolved contracts and the consequence of choosing each.
+
+## 3. Traverse by frontier
+
+```text
+while critical open nodes remain:
+  frontier = every open node whose dependencies are resolved
+  inspect any newly discoverable facts
+  remove nodes resolved by evidence or inference
+  frontier = recompute frontier
+
+  if frontier is empty:
+    report the blocking dependency or conflict
+    stop without delegating
+
+  call open-frontier with the current round for every frontier decision ID
+  ask every node in frontier using AskUserQuestion
+  chunk only at the tool's four-question maximum
+
+  call classify-reply on the whole response
+
+  if bare skip after an active question:
+    call skip with decision ID skip-confirmation, reason, defaults, and assumptions
+    leave state awaiting_confirmation
+    break
+
+  if control-only:
+    keep every frontier node open
+    ask the same frontier again
+    continue
+
+  for each substantively answered node:
+    record-answer immediately
+    mark that node resolved
+
+  keep omitted or ambiguous nodes open
+  turn an Other response into a specific dependent node
+  add branches exposed by the answers
+  infer dependent answers only when the inference is deterministic
+```
+
+Ask all independent decisions together. Never reduce the batch below four merely to simulate a one-question-at-a-time conversation.
+If `AskUserQuestion` is available, use it for the numbered frontier round; otherwise render the same numbered round in the response. Ask every currently unblocked user decision in the same round, splitting only at the tool limit. Advance no phase with an open frontier.
+
+## 4. Handle partial and free-text answers
+
+- Map each clear answer to its stable decision ID.
+- Persist the mapped answers before asking again.
+- Keep unanswered questions active.
+- Turn ambiguous free text into a focused follow-up only when the ambiguity changes a material outcome.
+- Inspect any factual claim that can be verified locally before asking the user to confirm it.
+- Treat `Other` as input to a concrete next-layer decision, never as a generic invitation to elaborate.
+- Bound follow-ups by decision resolution, not an arbitrary question count.
+
+## 5. Prepare the decision brief
+
+When no critical node remains open, synthesize one recommended approach. Include viable rejected alternatives only when their tradeoffs help the approval decision.
+
+```text
+brief = {
+  resolved decisions,
+  recommended approach,
+  material tradeoffs,
+  defaults,
+  assumptions,
+  unresolved non-material items,
+  skill conflicts and resolutions
+}
+```
+
+Call `await-confirmation` with a stable confirmation decision ID and the recommended approach. Then ask the explicit final approval question.
+
+## 6. Process final approval
+
+```text
+if explicit "Approve and delegate" selection:
+  confirm(state, confirmationDecisionId or skip-confirmation, source)
+  check-delegation(state, phase, interviewId, discoveryRevision, contextDigest)
+  delegate immediately
+
+if "Revise decisions":
+  call revise once with every affected decision ID
+  reopen affected nodes
+  invalidate dependent answers when necessary
+  return to frontier traversal
+
+if "Cancel":
+  leave the interview nonterminal
+  stop without delegation
+
+if control-only text:
+  keep awaiting_confirmation
+  repeat the approval question
+```
+
+Approval of an earlier phase does not approve the current phase. Artifact approval after writing does not substitute for this pre-delegation approval.
+
+## 7. Quick mode
+
+Only exact `--quick` authorization may bypass the interview. Record mode first, begin the phase interview so the helper writes `bypassed_quick`, then run the delegation check. Natural-language requests, `-q`, stale booleans, and legacy malformed quick state do not bypass the gate.

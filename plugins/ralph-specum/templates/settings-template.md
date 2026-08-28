@@ -2,7 +2,6 @@
 enabled: true
 default_max_iterations: 5
 auto_commit_spec: true
-quick_mode_default: false
 specs_dirs: ["./specs"]
 ---
 
@@ -20,9 +19,6 @@ Default maximum retries per failed task before blocking (default: 5).
 
 ### auto_commit_spec
 Whether to automatically commit spec files after generation (default: true).
-
-### quick_mode_default
-Whether to run in quick mode by default when no flag provided (default: false).
 
 ### specs_dirs
 Array of directories where specs can be stored (default: `["./specs"]`).
@@ -45,13 +41,14 @@ Create this file at `.claude/ralph-specum.local.md` in your project root to cust
 enabled: true
 default_max_iterations: 3
 auto_commit_spec: false
-quick_mode_default: true
 ---
 
 # Ralph Specum Configuration
 
 Custom settings for this project.
 ```
+
+Quick mode is not a setting. Use the exact `--quick` command token to enable it and exact `--interactive` to clear it.
 
 ## Monorepo Example
 

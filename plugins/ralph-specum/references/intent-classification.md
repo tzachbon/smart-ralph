@@ -10,7 +10,8 @@ From `$ARGUMENTS`, extract:
 - **name**: Optional spec name (kebab-case)
 - **goal**: Everything after the name except flags (optional)
 - **--fresh**: Force new spec without prompting if one exists
-- **--quick**: Skip all spec phases, auto-generate artifacts, start execution immediately
+- **--quick**: Bypass phase interviews and artifact-approval stops while still loading contracts, gating, and generating every artifact
+- **--interactive**: Clear persistent quick mode and run the normal gated flow
 - **--commit-spec**: Commit and push spec files after generation (default: true in normal mode, false in quick mode)
 - **--no-commit-spec**: Explicitly disable committing spec files
 - **--specs-dir <path>**: Create spec in specified directory (must be in configured specs_dirs array)
@@ -21,7 +22,7 @@ From `$ARGUMENTS`, extract:
 ```text
 1. Check if --no-commit-spec in $ARGUMENTS -> commitSpec = false
 2. Else if --commit-spec in $ARGUMENTS -> commitSpec = true
-3. Else if --quick in $ARGUMENTS -> commitSpec = false (quick mode default)
+3. Else if exact `--quick` token is present -> commitSpec = false (quick mode default)
 4. Else -> commitSpec = true (normal mode default)
 ```
 
@@ -69,7 +70,7 @@ From `$ARGUMENTS`, extract:
 
 ## Quick Mode Input Detection
 
-Parse arguments before `--quick` flag and classify input type:
+Tokenize arguments first. Exact simultaneous `--quick` and `--interactive` is an error. Only an exact `--quick` token enters this section; `-q`, substrings, settings, and natural-language requests do not. Remove the exact mode token and classify the remaining input:
 
 ```text
 Input Classification:
@@ -143,7 +144,7 @@ Examples:
 | "Fix the login bug where users can't reset password" | fix-login-bug-reset |
 | "Implement rate limiting" | implement-rate-limiting |
 
-## Goal Intent Classification
+## Normal-Mode Interview Routing
 
 Before grilling, classify the user's goal to seed the design tree with the right territory. Intent changes which branches receive attention; it never sets a question count or completion threshold.
 
@@ -187,6 +188,7 @@ Intent Classification:
 ```
 
 The interview framework expands or removes branches from repository facts and user answers. It ends only when the frontier is empty and the user confirms shared understanding.
+After classification, ask the whole currently unblocked critical frontier; intent only seeds candidate branches.
 
 ### Confidence Threshold
 
@@ -231,5 +233,5 @@ For fix goals: run reproduction command, document BEFORE state in .progress.md.
 | Name ambiguous (multiple dirs) | Show paths, ask user to specify |
 | No name + active spec exists | Resume flow |
 | No name + no active spec | Ask for name and goal, new flow |
-| --quick with goal/file | Quick mode flow (skip interactive phases) |
+| --quick with goal/file | Quick mode flow (bypass interviews; keep load and write gates) |
 | --quick with zero args | Error: "Quick mode requires a goal or plan file" |

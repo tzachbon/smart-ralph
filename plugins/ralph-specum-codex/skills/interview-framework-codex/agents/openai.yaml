@@ -1,0 +1,6 @@
+interface:
+  display_name: "Ralph Specum interview framework"
+  short_description: "Internal phase interview and delegation gate"
+  default_prompt: "Load this internal contract only when a Ralph Specum phase skill directs you to do so."
+policy:
+  allow_implicit_invocation: false

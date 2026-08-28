@@ -69,6 +69,22 @@ assert_full_task_scope_comparison() {
     assert_scope_envelope "$GOAL_INTERVIEW"
 }
 
+@test "normal intake persists approved scope before delegation" {
+    local scope_line persist_line gate_line research_line
+    scope_line="$(line_number "$GOAL_INTERVIEW" '## Bind the Scope Envelope')"
+    persist_line="$(line_number "$GOAL_INTERVIEW" 'Append the approved `## Scope Envelope` block')"
+    gate_line="$(line_number "$GOAL_INTERVIEW" 'Run `check-delegation`')"
+    research_line="$(line_number "$GOAL_INTERVIEW" 'Delegate the research team immediately')"
+
+    [ -n "$scope_line" ]
+    [ -n "$persist_line" ]
+    [ -n "$gate_line" ]
+    [ -n "$research_line" ]
+    [ "$scope_line" -lt "$persist_line" ]
+    [ "$persist_line" -lt "$gate_line" ]
+    [ "$gate_line" -lt "$research_line" ]
+}
+
 @test "quick intake persists all six scope-envelope fields" {
     assert_scope_envelope "$QUICK_MODE"
 }
@@ -77,7 +93,7 @@ assert_full_task_scope_comparison() {
     local scope_line reproduction_line research_line
     scope_line="$(line_number "$QUICK_MODE" '## Scope Envelope')"
     reproduction_line="$(line_number "$QUICK_MODE" 'Goal Type Detection (BUG_FIX BEFORE state capture):')"
-    research_line="$(line_number "$QUICK_MODE" 'Research Phase: TaskCreate')"
+    research_line="$(line_number "$QUICK_MODE" '11. Research Phase:')"
 
     [ -n "$scope_line" ]
     [ -n "$reproduction_line" ]

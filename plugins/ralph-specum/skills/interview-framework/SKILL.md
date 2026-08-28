@@ -1,121 +1,135 @@
 ---
 name: interview-framework
-description: This skill should be used when running any normal-mode interview before a spec phase, grilling the user to reach shared understanding, gathering requirements through dialogue, or resolving design decisions before delegating to a Ralph subagent. Covers fact-first discovery, design-tree frontier rounds, recommendations, domain language, and confirmation.
+description: This skill should be used when a Ralph phase must identify critical user decisions, run a layered grill, persist partial answers, obtain explicit approval, or resume an interrupted phase interview before delegating artifact work.
 version: 0.3.0
 user-invocable: false
 ---
 
 # Interview Framework
 
-Treat every normal-mode interview governed by this framework as a grill. Reach shared understanding before delegating research, requirements, design, or task planning.
+Treat every normal-mode interview governed by this framework as a grill. Run the approval-gated interview for `start`, `triage`, `research`, `requirements`, `design`, and `tasks`. Treat this skill and its references as the single source of truth for interview behavior. Phase commands supply exploration territory and artifact context; they do not redefine the algorithm.
 
-Quick mode skips the interview. Do not weaken normal-mode grilling to imitate quick mode.
+Quick mode bypasses interview questions only. It still requires current discovery, contract loading, bypass receipts, delegation checks, and artifact-agent load parity.
 
-## Completion Contract
+## Entry Contract
 
-Do not proceed because the conversation feels sufficient or a question count has been reached. Proceed only when:
+Before each new or resumed interview:
 
-1. All discoverable facts required by the design tree have been resolved.
-2. The design-tree frontier is empty.
-3. Every branch is resolved or the user has explicitly placed it out of scope.
-4. The user confirms the resulting shared understanding.
+1. Complete the applicable skill discovery pass from `${CLAUDE_PLUGIN_ROOT}/references/normal-mode-gates.md`.
+2. Reload this entire `SKILL.md`, `references/algorithm.md`, `references/domain-modeling.md`, every selected skill body, and every selected skill resource required for the current work. Load `references/examples.md` only when an example is needed.
+3. Record the load manifest with `phase_gate.py record-skill-load`.
+4. Begin or resume the interview with the matching phase, interview ID, discovery revision, and context digest.
 
-## Preflight: Find Facts Before Questions
+Block when this skill or the core algorithm reference cannot be loaded. Warn and continue when a domain skill fails to load. Put unresolved material conflicts in the first critical frontier.
 
-Read the available project context before building the design tree:
+## Critical Decision Test
 
-1. Read the original goal, `.progress.md`, `.ralph-state.json`, and prior phase artifacts.
-2. Resolve the default specs directory with `ralph_get_default_dir()` when available, otherwise use `./specs`. Read `<default-specs-dir>/.index/index.md` when it exists, then open only relevant indexed entries and related specs.
-3. Read `CONTEXT-MAP.md` when it exists and follow it to the applicable `CONTEXT.md`. Otherwise read the root `CONTEXT.md` when present.
-4. Inspect code, configuration, tests, and existing specs for any fact needed by the interview.
+Grill only a decision that meets both conditions:
 
-Classify every unknown:
+- The answer cannot be established by inspecting the project, prior artifacts, configuration, or selected skill contracts.
+- Different answers would materially change scope, observable behavior, architecture, risk acceptance, delivery sequencing, or the acceptance standard.
 
-- **Fact**: discoverable from the repository, tools, documentation, or existing artifacts. Resolve it with Explore or another read-only subagent. Never ask the user.
-- **Decision**: a preference, priority, trade-off, boundary, or constraint that only the user can settle. Put it on the design tree.
+Inspect facts with read-only tools or an `Explore` agent. Exclude setup choices, administrative preferences, status questions, facts the repository can answer, and low-impact polish. Treat a prescribed task action in a loaded domain skill as reference material during preload; do not execute it until the phase has approval and delegation begins.
 
-Run independent fact lookups in parallel. A pending lookup blocks only the decisions that depend on it; ask the rest of the current frontier.
+Before building the tree, read the goal, state, `.progress.md`, prior phase artifacts, the configured `.index/index.md`, and the applicable `CONTEXT.md` reached through `CONTEXT-MAP.md` when present. Open only relevant indexed entries. Inspect code, configuration, tests, and existing specs for every discoverable fact. Run independent read-only lookups in parallel; a pending fact blocks only the nodes that depend on it.
 
-## Build the Design Tree
+- **Fact**: discoverable from project evidence. Resolve it through inspection; never ask the user.
+- **Decision**: a consequential preference, priority, boundary, or tradeoff only the user can settle. Put it on the design tree.
 
-Map every decision as a node. Add dependency edges from foundational decisions to the decisions that require them.
+## Build the Design Tree and Traverse the Layered Frontier
 
-Track each node as one of:
+Build a design tree from the phase territory. Each node contains a stable decision ID, dependencies, known evidence, viable options, recommendation, tradeoffs, and material consequences. Track nodes as open, investigating, resolved, or explicitly out of scope. The frontier contains every open critical decision whose prerequisites are resolved.
 
-- `OPEN`: ready once its prerequisites resolve
-- `INVESTIGATING`: waiting on a fact lookup
-- `RESOLVED`: answered by evidence, the user, or a justified inference
-- `OUT_OF_SCOPE`: explicitly excluded by the user
+Ask the whole currently unblocked critical frontier. Use as many `AskUserQuestion` calls as needed, with at most four questions per call. Batch independent decisions together.
 
-Define the **frontier** as every open decision whose prerequisites are resolved. Do not ask a decision that depends on another decision still open in the same round.
+Before every `AskUserQuestion` call, call `open-frontier` for every decision ID in that batch.
 
-Use the calling command's exploration territory as a starting point, then add branches exposed by project context, prior answers, concrete scenarios, and code contradictions. Do not use fixed question counts or a canned questionnaire.
+After each response:
 
-## Grill in Frontier Rounds
+1. Call deterministic `classify-reply` on the whole reply before applying any part of it.
+2. Persist every answered decision immediately with `record-answer`.
+3. Preserve unanswered pending decisions when the response is partial.
+4. Recompute the frontier from new answers and inspected facts.
+5. Ask the next unblocked frontier until no critical node remains open.
 
-Ask the whole current frontier in one round:
+Ask the whole current frontier in one round. Number each question (`Q1`, `Q2`, and so on). Use `AskUserQuestion` for the round when the tool is available. If `AskUserQuestion` is unavailable, render the same numbered round in the response and wait for the answers.
 
-1. Number each question (`Q1`, `Q2`, and so on).
-2. Ground it in known facts and prior answers.
-3. Give a recommended answer with a short rationale.
-4. Provide 2-4 meaningful options, with the recommendation first and `Other` last.
-5. Omit the recommendation label only when the options are symmetric.
+Turn an `Other` response into a specific dependent question in the next frontier. Never use a generic follow-up. Add branches exposed by concrete answers or contradictions, and remove branches that evidence resolves.
 
-Use `AskUserQuestion` for the round when the tool is available. Put the whole frontier in one call when it fits. If the frontier exceeds the tool limit, use multiple calls for that same round and wait for every frontier answer. If `AskUserQuestion` is unavailable, render the same numbered round in the response and wait for the user's answers. Advance the tree only after the user answers the round.
+Each question must:
 
-Format each question as:
+- Give 2-4 viable options.
+- Put the recommended option first and label it `(Recommended)` unless the options are symmetric.
+- State the recommendation rationale and the material tradeoff in the question or option description.
+- Avoid straw-man alternatives and unnecessary flexibility.
 
-```text
-Q1 - <short title>: <context-aware decision question>
+Give a recommended answer with a short rationale. Provide 2-4 meaningful options. Require that the design-tree frontier is empty before final confirmation. Continue only when the user confirms the resulting shared understanding through the explicit approval choice.
 
-Recommendation: <recommended answer and rationale>
-```
+See `references/algorithm.md` for the complete state machine.
 
-After the user answers the round:
+## Domain Language
 
-1. Mark answered nodes resolved.
-2. Record any justified inferences.
-3. Add branches exposed by the answers.
-4. Turn an `Other` response into a specific dependent question for the next frontier. Never ask a generic follow-up.
-5. Recompute the frontier and start the next round.
+Apply `references/domain-modeling.md` during every grill. Challenge terms that conflict with the applicable `CONTEXT.md`, replace fuzzy or overloaded words with a proposed canonical term, and use boundary or edge-case scenarios to test the model. Record resolved domain terms promptly. Keep implementation details out of `CONTEXT.md`. This interview framework does not create ADRs; `design.md` remains the specification's technical-decision record.
 
-Treat `done`, `skip`, or similar language as a request to narrow scope, not as an automatic exit. Show the remaining branches and require explicit confirmation before marking them out of scope.
+## Reply Semantics
 
-## Model Domain Language During the Grill
+Classify the entire reply before applying it.
 
-Apply `references/domain-modeling.md` throughout the rounds.
+### Substantive reply
 
-- Challenge terms that conflict with `CONTEXT.md`.
-- Replace fuzzy or overloaded words with a proposed canonical term.
-- Use concrete boundary and edge-case scenarios to test the model.
-- Check claims about current behavior against code.
-- Update the applicable `CONTEXT.md` as soon as a domain term is resolved. Do not batch glossary work until the end.
+Apply text that answers one or more active decisions. Persist answered decisions and keep the rest open. A substantive answer can include control words without losing its decision content.
 
-Keep implementation details and technical decisions out of `CONTEXT.md`. This interview framework does not create ADRs; `design.md` remains the specification's technical-decision record.
+### Control-only reply
 
-## Store Progress After Every Round
+These replies do not answer any active decision by themselves:
 
-Append each completed round to `.progress.md` under `## Interview Responses`. Record facts, decisions, explicit scope exclusions, and any glossary updates. Preserve earlier rounds.
+- `apply the changes`
+- `continue`
+- `proceed`
+- `go ahead`
+
+Keep the active frontier open and ask it again. Do not infer defaults or approval from a control-only reply.
+
+### Bare skip
+
+Treat bare `skip`, after an active question, as authorization to default the remaining phase interview. Call `skip` with explicit defaults and assumptions; this moves to `awaiting_confirmation`, not a delegable terminal state. Continue to final approval and confirm decision ID `skip-confirmation`. A sentence that contains `skip` plus substantive decision text is a substantive reply, not bare skip.
+
+## Final Approval
+
+When the critical frontier is exhausted or skipped:
+
+1. Present the decision brief: resolved decisions, recommended approach, tradeoffs, defaults, assumptions, and material conflicts.
+2. Call `await-confirmation` with a stable confirmation decision ID and the proposed approach.
+3. Ask one explicit approval question through `AskUserQuestion`:
+   - `Approve and delegate (Recommended)`
+   - `Revise decisions`
+   - `Cancel`
+4. Accept only an explicit approval selection. Control-only replies do not approve.
+5. On approval, call `confirm --source approve-and-delegate`, run `check-delegation`, and delegate immediately in the same response. Do not ask another question or stop between approval and delegation.
+
+When the user requests revisions, call one `revise` transition with every affected `--decision-id` before updating answers. Recompute any dependent frontier, return to final approval using the same confirmation ID, and keep the same interview record until the brief is approved again.
+
+## Artifact Approval
+
+Artifact review is a separate approval gate after delegation. `apply the changes` during artifact review means revise the artifact using the supplied feedback, redisplay the walkthrough, and remain in artifact approval. It never approves the artifact or advances the phase.
+
+## Persistence
+
+Use `phase_gate.py` transitions after each state change. Append every completed frontier round to `.progress.md` without treating that Markdown as enforcement state:
 
 ```markdown
 ### <Phase> Grill - Round <N>
 - Facts resolved: <fact and evidence>
-- Decisions: <topic> -> <answer>
-- Out of scope: <explicitly excluded branch, if any>
-- Domain language: <canonical term and definition, if any>
+- Decisions: <decision-id> -> <answer>
+- Out of scope: <explicitly excluded branch or none>
+- Domain language: <canonical term and definition or none>
 - Frontier after round: <remaining unblocked decisions or empty>
 ```
 
-Do not store a parallel interview mode or question counter in `.ralph-state.json`.
-
-## Confirm Shared Understanding
-
-When the frontier becomes empty, present a compact summary of settled decisions, scope boundaries, and the chosen approach. Ask the user to confirm it.
-
-If the user corrects or extends the summary, reopen the affected branch and continue grilling. Delegate to the phase agent only after confirmation.
+For triage, store enforcement state in the epic `.epic-state.json`. For spec phases, use `.ralph-state.json`.
 
 ## References
 
-- **`references/algorithm.md`** - Full fact-first design-tree and frontier-round algorithm
-- **`references/domain-modeling.md`** - `CONTEXT.md` discovery, language challenges, scenarios, and inline glossary updates
-- **`references/examples.md`** - Frontier-round and progress-storage examples
+- `references/algorithm.md` - Critical-frontier state machine and reply handling.
+- `references/domain-modeling.md` - Required context discovery, language challenges, scenarios, and glossary updates.
+- `references/examples.md` - Optional examples for frontier, partial-answer, skip, approval, and artifact revision cases.

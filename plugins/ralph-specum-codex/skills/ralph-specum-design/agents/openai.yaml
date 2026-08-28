@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Design"
   short_description: "Generate technical design for an active spec"
-  default_prompt: "Use $ralph-specum-design to write design.md, then ask me to `approve current artifact`, `request changes`, or `continue to tasks`."
+  default_prompt: "Use $ralph-specum-design to load the selected skill manifest in every mode. In interactive mode, classify replies, grill critical architecture decisions, and persist the explicit `approve and delegate` choice with confirm source approve-and-delegate; only exact --quick bypasses questions. Run phase_gate.py check-delegation before dispatch. Require the architect agent to record manifest loads and pass check-agent-write with the full identity tuple, including discovery revision, before writing design.md. Refuse dispatch or artifact writes on any gate or required-load failure. Ask me to `approve current artifact`, `request changes`, or `continue to tasks` only when quickMode is false; exact --quick continues after successful gates without prompting."
 policy:
   allow_implicit_invocation: false

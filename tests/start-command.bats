@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+set -e
+
 repo_root() { echo "$BATS_TEST_DIRNAME/.."; }
 
 @test "start command offers a one-time opt-out GitHub star prompt" {
