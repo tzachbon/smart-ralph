@@ -83,42 +83,60 @@ FRONTMATTER_ORDER = (
 
 
 class RecordError(SystemExit):
+    """Report an invalid or unsafe prototype record operation."""
+
     pass
 
 
 def utc_now() -> str:
+    """Return the current UTC time in record format."""
+
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def sha256_bytes(data: bytes) -> str:
+    """Return the SHA-256 digest of exact bytes."""
+
     return hashlib.sha256(data).hexdigest()
 
 
 def sha256_path(path: Path) -> str:
+    """Return the SHA-256 digest of a file's exact bytes."""
+
     return sha256_bytes(path.read_bytes())
 
 
 def safe_id(value: object) -> str:
+    """Validate and return a path-safe prototype identifier."""
+
     if not isinstance(value, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", value):
         raise RecordError("Prototype id must contain lowercase ASCII letters, digits, and hyphens.")
     return value
 
 
 def prototype_dir(base_path: Path) -> Path:
+    """Return the prototype record directory, creating it when absent."""
+
     path = base_path.resolve() / "prototypes"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def candidate_path(base_path: Path, prototype_id: str) -> Path:
+    """Return the private candidate path for a prototype."""
+
     return prototype_dir(base_path) / f".{safe_id(prototype_id)}.candidate.md"
 
 
 def final_path(base_path: Path, prototype_id: str) -> Path:
+    """Return the published record path for a prototype."""
+
     return prototype_dir(base_path) / f"{safe_id(prototype_id)}.md"
 
 
 def parse_scalar(raw: str) -> Any:
+    """Parse one restricted frontmatter scalar."""
+
     value = raw.strip()
     if not value:
         return ""
@@ -133,6 +151,8 @@ def parse_scalar(raw: str) -> Any:
 
 
 def split_record(text: str) -> tuple[JSON, str]:
+    """Split record frontmatter from its Markdown body."""
+
     match = re.match(r"^---\r?\n(.*?)\r?\n---\r?\n(.*)$", text, re.DOTALL)
     if not match:
         raise RecordError("Prototype record needs YAML frontmatter.")
@@ -148,6 +168,8 @@ def split_record(text: str) -> tuple[JSON, str]:
 
 
 def body_sections(body: str) -> JSON:
+    """Parse second-level Markdown sections from a record body."""
+
     sections: JSON = {}
     matches = list(re.finditer(r"(?m)^## ([^\r\n]+)\r?$", body))
     for index, match in enumerate(matches):
@@ -157,6 +179,8 @@ def body_sections(body: str) -> JSON:
 
 
 def validate_record_text(text: str, expected_id: str | None = None) -> JSON:
+    """Validate a terminal record and return its structured content."""
+
     frontmatter, body = split_record(text)
     missing = sorted(REQUIRED_FIELDS - set(frontmatter))
     if missing:
@@ -202,12 +226,16 @@ def validate_record_text(text: str, expected_id: str | None = None) -> JSON:
 
 
 def yaml_scalar(value: Any) -> str:
+    """Render a value as a deterministic frontmatter scalar."""
+
     if value is None or isinstance(value, (bool, int, float, list, dict)):
         return json.dumps(value, separators=(",", ":"))
     return json.dumps(str(value), ensure_ascii=True)
 
 
 def render_record(record: JSON) -> str:
+    """Render and validate a prototype record as Markdown."""
+
     markdown = record.get("markdown")
     if isinstance(markdown, str):
         validate_record_text(markdown)
@@ -229,6 +257,8 @@ def render_record(record: JSON) -> str:
 
 
 def write_exclusive(path: Path, data: bytes) -> None:
+    """Durably create a file without overwriting an existing path."""
+
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
@@ -246,6 +276,8 @@ def write_exclusive(path: Path, data: bytes) -> None:
 
 
 def load_json_argument(raw: str) -> JSON:
+    """Load a JSON object from inline text or an @path argument."""
+
     if raw.startswith("@"):
         raw = Path(raw[1:]).read_text(encoding="utf-8")
     try:
@@ -257,7 +289,15 @@ def load_json_argument(raw: str) -> JSON:
     return value
 
 
-def remove_active(state_path: Path, prototype_id: str, timeout: float) -> bool:
+def remove_active(
+    state_path: Path,
+    prototype_id: str,
+    timeout: float,
+    expected_entry: JSON | None,
+    artifact_hash: str,
+) -> bool:
+    """Remove an active entry matching the snapshot and recovered artifact."""
+
     if not state_path.exists():
         return False
 
@@ -266,7 +306,14 @@ def remove_active(state_path: Path, prototype_id: str, timeout: float) -> bool:
     def update(state: JSON) -> JSON:
         nonlocal removed
         active = active_map(state)
-        removed = prototype_id in active
+        current = active.get(prototype_id)
+        if (
+            expected_entry is None
+            or current != expected_entry
+            or current.get("reviewedCandidateHash") != artifact_hash
+        ):
+            return state
+        removed = True
         active.pop(prototype_id, None)
         if not active:
             state.pop("activePrototypes", None)
@@ -277,6 +324,8 @@ def remove_active(state_path: Path, prototype_id: str, timeout: float) -> bool:
 
 
 def publish_exact(candidate: Path, final: Path) -> None:
+    """Publish candidate bytes without overwriting an existing record."""
+
     if final.exists():
         raise RecordError(f"Prototype id collision: {final.name}")
     try:
@@ -294,6 +343,8 @@ def publish_exact(candidate: Path, final: Path) -> None:
 
 
 def quarantine_candidate(path: Path) -> Path:
+    """Move a conflicting candidate to a unique quarantine path."""
+
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
     for suffix in range(1, 1000):
         marker = "" if suffix == 1 else f"-{suffix}"
@@ -306,10 +357,14 @@ def quarantine_candidate(path: Path) -> Path:
 
 
 def receipt_path(base_path: Path, prototype_id: str) -> Path:
+    """Return the private cleanup receipt path for a prototype."""
+
     return prototype_dir(base_path) / f".{safe_id(prototype_id)}.cleanup.json"
 
 
 def validate_cleanup_receipt(record: JSON, receipt: Path) -> JSON:
+    """Validate cleanup proof against a terminal record."""
+
     data = read_json_object(receipt)
     for key in ("candidateHash", "evidenceHash", "isolationPath", "provenance", "reviewedAt"):
         if not data.get(key):
@@ -329,6 +384,8 @@ def validate_cleanup_receipt(record: JSON, receipt: Path) -> JSON:
 
 
 def cmd_render_candidate(args: argparse.Namespace) -> JSON:
+    """Render and exclusively reserve candidate record bytes."""
+
     record = load_json_argument(args.record_json)
     text = render_record(record)
     parsed = validate_record_text(text)
@@ -339,11 +396,15 @@ def cmd_render_candidate(args: argparse.Namespace) -> JSON:
 
 
 def cmd_parse(args: argparse.Namespace) -> JSON:
+    """Parse and validate an existing prototype record."""
+
     parsed = validate_record_text(args.record.read_text(encoding="utf-8"), args.id)
     return {**parsed, "recordHash": sha256_path(args.record)}
 
 
 def cmd_cleanup_receipt(args: argparse.Namespace) -> JSON:
+    """Create a durable cleanup receipt for ephemeral source."""
+
     data = load_json_argument(args.receipt_json)
     for key in ("candidateHash", "evidenceHash", "isolationPath", "provenance"):
         if not data.get(key):
@@ -356,6 +417,8 @@ def cmd_cleanup_receipt(args: argparse.Namespace) -> JSON:
 
 
 def cmd_review_candidate(args: argparse.Namespace) -> JSON:
+    """Record REVIEW_PASS for exact candidate and evidence bytes."""
+
     path = candidate_path(args.base_path, args.id)
     actual_hash = sha256_path(path)
     if actual_hash != args.candidate_hash:
@@ -383,6 +446,8 @@ def cmd_review_candidate(args: argparse.Namespace) -> JSON:
 
 
 def cmd_publish(args: argparse.Namespace) -> JSON:
+    """Publish reviewed candidate bytes and remove matching active state."""
+
     candidate = candidate_path(args.base_path, args.id)
     if not candidate.exists():
         raise RecordError(f"Candidate does not exist: {candidate}")
@@ -429,19 +494,43 @@ def cmd_publish(args: argparse.Namespace) -> JSON:
     entry = active_map(state).get(args.id)
     if not isinstance(entry, dict) or entry.get("reviewedCandidateHash") != candidate_hash:
         raise RecordError("Publisher requires REVIEW_PASS for these exact candidate bytes.")
+    reviewed_revision = entry.get("stateRevision")
+    if not isinstance(reviewed_revision, int) or isinstance(reviewed_revision, bool):
+        raise RecordError("Publisher requires a reviewed state revision.")
+    expected_entry = entry.copy()
     final = final_path(args.base_path, args.id)
-    publish_exact(candidate, final)
-    final_bytes = final.read_bytes()
-    if sha256_bytes(final_bytes) != candidate_hash or final_bytes != candidate_bytes:
-        raise RecordError("Published bytes do not match the reviewed candidate.")
-    validate_record_text(final_bytes.decode("utf-8"), args.id)
-    candidate.unlink()
-    fsync_dir(candidate.parent)
-    removed = remove_active(state_path, args.id, args.timeout)
+    removed = False
+
+    def publish_and_remove(current_state: JSON) -> JSON:
+        nonlocal removed
+        active = active_map(current_state)
+        current = active.get(args.id)
+        if (
+            current != expected_entry
+            or current.get("stateRevision") != reviewed_revision
+            or current.get("reviewedCandidateHash") != candidate_hash
+        ):
+            raise RecordError("Active prototype changed after REVIEW_PASS; refusing publication.")
+        publish_exact(candidate, final)
+        final_bytes = final.read_bytes()
+        if sha256_bytes(final_bytes) != candidate_hash or final_bytes != candidate_bytes:
+            raise RecordError("Published bytes do not match the reviewed candidate.")
+        validate_record_text(final_bytes.decode("utf-8"), args.id)
+        candidate.unlink()
+        fsync_dir(candidate.parent)
+        active.pop(args.id)
+        if not active:
+            current_state.pop("activePrototypes", None)
+        removed = True
+        return current_state
+
+    mutate_state(state_path, args.timeout, publish_and_remove)
     return {"id": args.id, "final": str(final), "recordHash": candidate_hash, "activeRemoved": removed}
 
 
 def cmd_reconcile(args: argparse.Namespace) -> JSON:
+    """Reconcile candidate, final, and active prototype state."""
+
     directory = prototype_dir(args.base_path)
     state = read_json_object(args.state)
     active = active_map(state)
@@ -460,10 +549,14 @@ def cmd_reconcile(args: argparse.Namespace) -> JSON:
         except RecordError as exc:
             actions.append({"id": prototype_id, "action": "quarantine_final", "reason": str(exc)})
             continue
-        if sha256_path(candidate) == sha256_path(final):
+        candidate_hash = sha256_path(candidate)
+        final_hash = sha256_path(final)
+        if candidate_hash == final_hash:
             candidate.unlink()
             fsync_dir(directory)
-            removed = remove_active(args.state, prototype_id, args.timeout)
+            removed = remove_active(
+                args.state, prototype_id, args.timeout, active.get(prototype_id), final_hash
+            )
             actions.append({"id": prototype_id, "action": "complete_matching_publish", "activeRemoved": removed})
         else:
             quarantine = quarantine_candidate(candidate)
@@ -481,7 +574,9 @@ def cmd_reconcile(args: argparse.Namespace) -> JSON:
             actions.append({"id": prototype_id, "action": "quarantine_final", "reason": str(exc)})
             continue
         if prototype_id in active:
-            removed = remove_active(args.state, prototype_id, args.timeout)
+            removed = remove_active(
+                args.state, prototype_id, args.timeout, active[prototype_id], sha256_path(final)
+            )
             actions.append({"id": prototype_id, "action": "remove_verified_active", "activeRemoved": removed})
         else:
             actions.append({"id": prototype_id, "action": "complete"})
@@ -492,6 +587,8 @@ def cmd_reconcile(args: argparse.Namespace) -> JSON:
 
 
 def cmd_select_downstream(args: argparse.Namespace) -> JSON:
+    """Select approved evidence and compute downstream gates."""
+
     directory = prototype_dir(args.base_path)
     parsed: list[JSON] = []
     quarantined: list[JSON] = []
@@ -645,10 +742,14 @@ def cmd_select_downstream(args: argparse.Namespace) -> JSON:
 
 
 def add_base(parser: argparse.ArgumentParser) -> None:
+    """Add the common prototype base-path argument."""
+
     parser.add_argument("--base-path", required=True, type=Path)
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the prototype record command parser."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -703,6 +804,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run a prototype record command and print its JSON result."""
+
     args = build_parser().parse_args(argv)
     try:
         result = args.func(args)

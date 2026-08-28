@@ -209,6 +209,179 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
+@test "prototype records: publish rejects a same-id replacement before publishing" {
+    local cli prototype_id rendered candidate_hash
+    prototype_id="publish-cas"
+
+    for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
+        rm -rf "$BASE_PATH/prototypes"
+        rm -f "$STATE_FILE"
+        upsert_active "$prototype_id"
+        rendered="$(render_candidate "$cli" "$BASE_PATH" "$(record_json "$prototype_id")")"
+        candidate_hash="$(jq -r .candidateHash <<< "$rendered")"
+        python3 "$cli" review-candidate \
+            --base-path "$BASE_PATH" --state "$STATE_FILE" --id "$prototype_id" \
+            --candidate-hash "$candidate_hash" >/dev/null
+
+        run python3 - "$cli" "$BASE_PATH" "$STATE_FILE" "$prototype_id" <<'PY'
+import argparse
+import importlib.util
+import sys
+from pathlib import Path
+
+module_path, base_raw, state_raw, prototype_id = sys.argv[1:]
+sys.path.insert(0, str(Path(module_path).resolve().parent))
+spec = importlib.util.spec_from_file_location("prototype_records_publish_cas", module_path)
+module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(module)
+
+state_path = Path(state_raw)
+real_mutate = module.mutate_state
+replacement = {"id": prototype_id, "status": "building", "stateRevision": 99, "marker": "replacement"}
+
+def raced_mutate(path, timeout, update, **kwargs):
+    def replace(state):
+        state.setdefault("activePrototypes", {})[prototype_id] = replacement
+        return state
+
+    real_mutate(path, timeout, replace)
+    return real_mutate(path, timeout, update, **kwargs)
+
+module.mutate_state = raced_mutate
+args = argparse.Namespace(
+    base_path=Path(base_raw),
+    id=prototype_id,
+    state=state_path,
+    timeout=10.0,
+    publisher_only_lock_timeout=False,
+    candidate_hash=None,
+)
+try:
+    module.cmd_publish(args)
+except module.RecordError as exc:
+    assert "changed after REVIEW_PASS" in str(exc)
+else:
+    raise AssertionError("publish accepted a same-id replacement")
+PY
+        [ "$status" -eq 0 ]
+        [ -f "$BASE_PATH/prototypes/.$prototype_id.candidate.md" ]
+        [ ! -e "$BASE_PATH/prototypes/$prototype_id.md" ]
+        run jq -e --arg id "$prototype_id" '.activePrototypes[$id].marker == "replacement"' "$STATE_FILE"
+        [ "$status" -eq 0 ]
+    done
+}
+
+@test "prototype records: reconciliation removes only its exact active snapshot" {
+    local cli prototype_id rendered candidate candidate_hash final entry
+    prototype_id="reconcile-cas"
+
+    for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
+        rm -rf "$BASE_PATH/prototypes"
+        rm -f "$STATE_FILE"
+        rendered="$(render_candidate "$cli" "$BASE_PATH" "$(record_json "$prototype_id")")"
+        candidate="$(jq -r .candidate <<< "$rendered")"
+        candidate_hash="$(jq -r .candidateHash <<< "$rendered")"
+        entry="$(active_entry_json "$prototype_id" | jq --arg hash "$candidate_hash" '. + {reviewedCandidateHash:$hash}')"
+        upsert_active "$prototype_id" "$entry"
+        final="$BASE_PATH/prototypes/$prototype_id.md"
+        cp "$candidate" "$final"
+        rm "$candidate"
+
+        run python3 - "$cli" "$BASE_PATH" "$STATE_FILE" "$prototype_id" <<'PY'
+import argparse
+import importlib.util
+import sys
+from pathlib import Path
+
+module_path, base_raw, state_raw, prototype_id = sys.argv[1:]
+sys.path.insert(0, str(Path(module_path).resolve().parent))
+spec = importlib.util.spec_from_file_location("prototype_records_reconcile_cas", module_path)
+module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(module)
+
+state_path = Path(state_raw)
+real_mutate = module.mutate_state
+real_remove = module.remove_active
+replacement = {"id": prototype_id, "status": "building", "stateRevision": 99, "marker": "replacement"}
+
+def raced_remove(*args, **kwargs):
+    def replace(state):
+        state.setdefault("activePrototypes", {})[prototype_id] = replacement
+        return state
+
+    real_mutate(state_path, 10.0, replace)
+    return real_remove(*args, **kwargs)
+
+module.remove_active = raced_remove
+result = module.cmd_reconcile(
+    argparse.Namespace(base_path=Path(base_raw), state=state_path, timeout=10.0)
+)
+action = next(item for item in result["actions"] if item["id"] == prototype_id)
+assert action["action"] == "remove_verified_active"
+assert action["activeRemoved"] is False
+PY
+        [ "$status" -eq 0 ]
+        run jq -e --arg id "$prototype_id" '.activePrototypes[$id].marker == "replacement"' "$STATE_FILE"
+        [ "$status" -eq 0 ]
+    done
+}
+
+@test "prototype records: reconciliation preserves preexisting replacements with a different reviewed hash" {
+    local cli candidate_id final_id rendered candidate entry
+    candidate_id="reconcile-candidate-replacement"
+    final_id="reconcile-final-replacement"
+
+    for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
+        rm -rf "$BASE_PATH/prototypes"
+        rm -f "$STATE_FILE"
+
+        rendered="$(render_candidate "$cli" "$BASE_PATH" "$(record_json "$candidate_id")")"
+        candidate="$(jq -r .candidate <<< "$rendered")"
+        cp "$candidate" "$BASE_PATH/prototypes/$candidate_id.md"
+        entry="$(active_entry_json "$candidate_id" | jq '. + {reviewedCandidateHash:"different",marker:"replacement"}')"
+        upsert_active "$candidate_id" "$entry"
+
+        rendered="$(render_candidate "$cli" "$BASE_PATH" "$(record_json "$final_id")")"
+        candidate="$(jq -r .candidate <<< "$rendered")"
+        cp "$candidate" "$BASE_PATH/prototypes/$final_id.md"
+        rm "$candidate"
+        entry="$(active_entry_json "$final_id" | jq '. + {reviewedCandidateHash:"different",marker:"replacement"}')"
+        upsert_active "$final_id" "$entry"
+
+        run python3 "$cli" reconcile --base-path "$BASE_PATH" --state "$STATE_FILE"
+        [ "$status" -eq 0 ]
+        [ "$(jq -r --arg id "$candidate_id" '.actions[] | select(.id == $id) | .activeRemoved' <<< "$output")" = false ]
+        [ "$(jq -r --arg id "$final_id" '.actions[] | select(.id == $id) | .activeRemoved' <<< "$output")" = false ]
+        run jq -e --arg candidate "$candidate_id" --arg final "$final_id" '
+            .activePrototypes[$candidate].marker == "replacement" and
+            .activePrototypes[$final].marker == "replacement"
+        ' "$STATE_FILE"
+        [ "$status" -eq 0 ]
+    done
+}
+
+@test "prototype records: public classes and functions have concise docstrings" {
+    run python3 - "$(claude_record_cli)" "$(codex_record_cli)" <<'PY'
+import ast
+import sys
+from pathlib import Path
+
+for raw in sys.argv[1:]:
+    path = Path(raw)
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    public = [
+        node
+        for node in tree.body
+        if isinstance(node, (ast.ClassDef, ast.FunctionDef)) and not node.name.startswith("_")
+    ]
+    missing = [node.name for node in public if not ast.get_docstring(node)]
+    assert not missing, f"{path}: missing docstrings: {', '.join(missing)}"
+PY
+    [ "$status" -eq 0 ]
+}
+
 @test "prototype records: an existing final is immutable and a collision preserves both byte sets" {
     local prototype_id final_path original_hash rendered candidate_hash
     prototype_id="immutable"
@@ -230,15 +403,17 @@ teardown() {
 }
 
 @test "prototype records: reconciliation covers every candidate, final, and active state" {
-    local other rendered
+    local other rendered matching_hash matching_entry final_active_hash final_active_entry
     other="$TEST_ROOT/other"
     mkdir -p "$other/prototypes" "$BASE_PATH/prototypes"
 
     render_candidate "$(codex_record_cli)" "$BASE_PATH" "$(record_json resume)" >/dev/null
 
-    render_candidate "$(codex_record_cli)" "$BASE_PATH" "$(record_json matching)" >/dev/null
+    rendered="$(render_candidate "$(codex_record_cli)" "$BASE_PATH" "$(record_json matching)")"
+    matching_hash="$(jq -r .candidateHash <<< "$rendered")"
     cp "$BASE_PATH/prototypes/.matching.candidate.md" "$BASE_PATH/prototypes/matching.md"
-    upsert_active matching
+    matching_entry="$(active_entry_json matching | jq --arg hash "$matching_hash" '. + {reviewedCandidateHash:$hash}')"
+    upsert_active matching "$matching_entry"
 
     render_candidate "$(codex_record_cli)" "$BASE_PATH" "$(record_json mismatch validated true)" >/dev/null
     rendered="$(render_candidate "$(codex_record_cli)" "$other" "$(record_json mismatch rejected true)")"
@@ -249,8 +424,10 @@ teardown() {
     cp "$(jq -r .candidate <<< "$rendered")" "$BASE_PATH/prototypes/final-only.md"
 
     rendered="$(render_candidate "$(codex_record_cli)" "$other" "$(record_json final-active)")"
+    final_active_hash="$(jq -r .candidateHash <<< "$rendered")"
     cp "$(jq -r .candidate <<< "$rendered")" "$BASE_PATH/prototypes/final-active.md"
-    upsert_active final-active
+    final_active_entry="$(active_entry_json final-active | jq --arg hash "$final_active_hash" '. + {reviewedCandidateHash:$hash}')"
+    upsert_active final-active "$final_active_entry"
 
     upsert_active active-only "$(active_entry_json active-only blocked)"
     printf '%s\n' 'not a prototype record' > "$BASE_PATH/prototypes/malformed.md"
@@ -418,6 +595,14 @@ teardown() {
             [[ "$output" == *"activePrototypes must be an object."* ]]
             [[ "$output" != *"Traceback"* ]]
         done
+    done
+
+    printf '%s\n' '{"activePrototypes":{"bad-entry":false}}' > "$STATE_FILE"
+    for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
+        run python3 "$cli" select-downstream --base-path "$BASE_PATH" --state "$STATE_FILE"
+        [ "$status" -eq 2 ]
+        [[ "$output" == *"activePrototypes values must be objects."* ]]
+        [[ "$output" != *"Traceback"* ]]
     done
 }
 

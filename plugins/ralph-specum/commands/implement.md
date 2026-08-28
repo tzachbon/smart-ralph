@@ -47,15 +47,40 @@ Before initialization or task dispatch:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" reconcile --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
    ```
-2. Count the tasks before selection and resolve the actual dispatch index:
+2. Parse `tasks.md` once into ordered top-level task rows before selection. A task row is an unindented checkbox outside fenced example blocks whose next token is a concrete numeric task ID, `V<number>`, `VE<number>`, or `VF`. Exclude nested and example checkboxes, completion criteria, and placeholder IDs. Derive every counter from that one ordered list:
    ```bash
-   TOTAL=$(grep -c -e '- \[.\]' "$SPEC_PATH/tasks.md" 2>/dev/null || echo 0)
-   COMPLETED=$(grep -c -e '- \[x\]' "$SPEC_PATH/tasks.md" 2>/dev/null || echo 0)
-   FIRST_INCOMPLETE=$((COMPLETED))
+   TASK_COUNTS=$(python3 - "$SPEC_PATH/tasks.md" <<'PY'
+   import re
+   import sys
+   from pathlib import Path
+
+   task_re = re.compile(r"^- \[(?P<mark>[ xX])\] (?P<id>(?:\d+(?:\.\d+)+|V\d+|VE\d+|VF))\b")
+   rows = []
+   fence = None
+   for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+       stripped = line.lstrip()
+       marker = stripped[:3]
+       if marker in {"```", "~~~"}:
+           fence = None if fence == marker else marker if fence is None else fence
+           continue
+       if fence is None:
+           match = task_re.match(line)
+           if match:
+               rows.append(match.group("mark").lower() == "x")
+
+   total = len(rows)
+   completed = sum(rows)
+   first_incomplete = next((index for index, done in enumerate(rows) if not done), total)
+   print(f"{total}\t{completed}\t{first_incomplete}")
+   PY
+   )
+   IFS=$'\t' read -r TOTAL COMPLETED FIRST_INCOMPLETE <<EOF
+   $TASK_COUNTS
+   EOF
    TASK_INDEX_TO_MERGE=$FIRST_INCOMPLETE
    TASK_INDEX=$TASK_INDEX_TO_MERGE
    ```
-   For fresh execution, keep `TASK_INDEX_TO_MERGE=$FIRST_INCOMPLETE`. On prototype return, read the relevant ID's `returnTaskIndex` from its reconciled active entry or immutable terminal record. Require a non-negative integer within the task list and verify that it identifies the first eligible incomplete task. Set both `TASK_INDEX_TO_MERGE` and `TASK_INDEX` to that validated value before selection.
+   `TOTAL` is the row count. `COMPLETED` is the completed count across all rows, regardless of order. `FIRST_INCOMPLETE` is the zero-based position of the first incomplete row, or `TOTAL` when all rows are complete. It is independent of `COMPLETED`, so non-prefix completion cases dispatch the earliest unchecked task. For fresh execution, keep `TASK_INDEX_TO_MERGE=$FIRST_INCOMPLETE`. On prototype return, read the relevant ID's `returnTaskIndex` from its reconciled active entry or immutable terminal record. Require a non-negative integer within the task list and verify that it identifies the first eligible incomplete task. Set both `TASK_INDEX_TO_MERGE` and `TASK_INDEX` to that validated value before selection.
 3. When `activePrototypes` is nonempty or the `prototypes/` history directory exists, select for execution, the resolved dispatch task, and every declared path for that task:
    ```bash
    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json" --target execution --target "task:$TASK_INDEX" --path "<each declared current-task path>"
@@ -72,7 +97,7 @@ From `$ARGUMENTS`:
 
 ## Step 3: Initialize Execution State
 
-Use `TOTAL`, `COMPLETED`, `FIRST_INCOMPLETE`, and `TASK_INDEX_TO_MERGE` from the Prototype Dispatch Gate. Do not recalculate or replace the validated dispatch index after selection. The gate uses grep's `-e` flag so the leading hyphen in each task pattern is not parsed as an option.
+Use `TOTAL`, `COMPLETED`, `FIRST_INCOMPLETE`, and `TASK_INDEX_TO_MERGE` from the Prototype Dispatch Gate. Do not recalculate or replace the validated dispatch index after selection.
 
 **CRITICAL: Merge into existing state -- do NOT overwrite the file.**
 

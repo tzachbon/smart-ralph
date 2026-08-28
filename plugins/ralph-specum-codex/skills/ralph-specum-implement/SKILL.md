@@ -23,7 +23,7 @@ You are a **coordinator, not an executor** -- delegate each task to a `spec-exec
 
 1. Resolve the active spec. If none exists, stop.
 2. Require `tasks.md`. Read `.progress.md`, current state, and current task markers.
-3. Recompute task counters from disk: `total`, `completed`, and `next_index`.
+3. Parse `tasks.md` once into ordered top-level task rows. Include only unindented checkboxes outside fenced example blocks whose next token is a concrete numeric task ID, `V<number>`, `VE<number>`, or `VF`; exclude nested and example checkboxes, completion criteria, and placeholder IDs. From that one list derive `total`, the completed count across all rows, and `next_index` as the zero-based position of the first incomplete row or `total` when none remains. Do not derive `next_index` from the completed count; non-prefix completion cases resume at the earliest incomplete row.
 4. Resolve the dispatch task index before merging state. For fresh execution, use `next_index`. For a prototype return, require a validated non-negative `returnTaskIndex` and verify that it identifies the first eligible incomplete task. Merge state once with:
    - `phase: "execution"`
    - `awaitingApproval: false`

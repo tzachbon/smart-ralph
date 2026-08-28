@@ -329,6 +329,8 @@ def active_map(state: JSON) -> JSON:
         active = state["activePrototypes"]
     if not isinstance(active, dict):
         raise StateError("activePrototypes must be an object.")
+    if not all(isinstance(entry, dict) for entry in active.values()):
+        raise StateError("activePrototypes values must be objects.")
     return active
 
 

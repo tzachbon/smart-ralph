@@ -28,6 +28,10 @@ claude_resolver() {
     echo "$(repo_root)/plugins/ralph-specum/hooks/scripts/path-resolver.sh"
 }
 
+codex_watcher() {
+    echo "$(repo_root)/plugins/ralph-specum-codex/hooks/stop-watcher.sh"
+}
+
 entry_json() {
     local prototype_id status revision request_attempt builder_attempt hard_deadline
     prototype_id="$1"
@@ -306,6 +310,36 @@ teardown() {
         [[ "$output" == *"Main phase cannot be prototype"* ]]
         cmp -s "$snapshot" "$STATE_FILE"
     done
+}
+
+@test "prototype state: locked CLIs reject non-object active prototype entries" {
+    local cli
+
+    for cli in "$(state_cli)" "$(claude_state_cli)"; do
+        printf '%s\n' '{"activePrototypes":{"bad-entry":false}}' > "$STATE_FILE"
+        run python3 "$cli" list --state "$STATE_FILE"
+        [ "$status" -eq 2 ]
+        [[ "$output" == *"activePrototypes values must be objects."* ]]
+    done
+}
+
+@test "prototype state: Codex watcher rejects non-object entries and accepts a missing map" {
+    local prototype_dir
+    prototype_dir="$(dirname "$STATE_FILE")/prototypes"
+    printf '%s\n' demo > "$TEST_ROOT/specs/.current-spec"
+    mkdir -p "$prototype_dir"
+    printf '%s\n' 'unreviewed candidate' > "$prototype_dir/.bad-entry.candidate.md"
+    printf '%s\n' '{"phase":"execution","taskIndex":0,"totalTasks":1,"activePrototypes":{"bad-entry":false}}' > "$STATE_FILE"
+
+    run bash -c 'printf "{\"cwd\":\"%s\"}\n" "$2" | "$1"' _ "$(codex_watcher)" "$TEST_ROOT"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Corrupt .ralph-state.json"* ]]
+    [[ "$output" != *"Continue to task"* ]]
+
+    printf '%s\n' '{"phase":"execution","taskIndex":0,"totalTasks":1}' > "$STATE_FILE"
+    run bash -c 'printf "{\"cwd\":\"%s\"}\n" "$2" | "$1"' _ "$(codex_watcher)" "$TEST_ROOT"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Continue to task 1/1"* ]]
 }
 
 @test "prototype state: Codex implement merges the validated prototype return index once" {

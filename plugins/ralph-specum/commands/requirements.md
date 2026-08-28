@@ -92,7 +92,24 @@ Follow the full team lifecycle:
 <mandatory>
 **Review runs after generation in normal AND quick mode. Behavior branches on mode** (check `--quick` in `$ARGUMENTS`). Must complete before the walkthrough.
 
-**Review delegation (both modes)**: Invoke `spec-reviewer` via Task tool. Include full requirements.md content, `artifactType: requirements`, `artifactPath: ./specs/$spec/requirements.md`, iteration count, prior findings. Upstream: research.md.
+Before every requirements review delegation, run the deterministic lint from the coordinator's runtime-resolved `SPEC_PATH`. Keep the artifact path in the quoted variable expansion shown here; do not rebuild this command by inserting a path into its source:
+
+```bash
+LINT="${CLAUDE_PLUGIN_ROOT:+$CLAUDE_PLUGIN_ROOT/hooks/scripts/lint-requirements.sh}"
+[ -f "$LINT" ] || LINT="plugins/ralph-specum/hooks/scripts/lint-requirements.sh"
+if [ -f "$LINT" ]; then
+  if REQUIREMENTS_LINT_OUTPUT=$(bash "$LINT" "$SPEC_PATH/requirements.md" 2>&1); then
+    REQUIREMENTS_LINT_EXIT=0
+  else
+    REQUIREMENTS_LINT_EXIT=$?
+  fi
+else
+  REQUIREMENTS_LINT_EXIT=unavailable
+  REQUIREMENTS_LINT_OUTPUT=""
+fi
+```
+
+**Review delegation (both modes)**: Invoke `spec-reviewer` via Task tool. Include full requirements.md content, `artifactType: requirements`, `artifactPath: $SPEC_PATH/requirements.md`, `requirementsLintExit: $REQUIREMENTS_LINT_EXIT`, the exact `requirementsLintOutput` as data, iteration count, and prior findings. Upstream: research.md. Re-run the coordinator lint after every quick-mode revision and before any user-requested re-review. When `requirementsLintExit` is `unavailable`, the reviewer applies its manual Degradation rule.
 
 ### Normal mode: single pass
 

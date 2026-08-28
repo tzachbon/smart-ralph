@@ -140,6 +140,24 @@ load 'helpers/setup.bash'
     assert_json_reason_contains "ERROR: Corrupt state file"
 }
 
+@test "rejects non-object activePrototypes entries before prototype reconciliation" {
+    local state_file tmp_state prototype_dir
+    create_state_file "execution" 0 5 1
+    state_file="$TEST_WORKSPACE/specs/test-spec/.ralph-state.json"
+    tmp_state="$state_file.invalid-active-entry"
+    prototype_dir="$TEST_WORKSPACE/specs/test-spec/prototypes"
+    jq '.activePrototypes = {"bad-entry": false}' "$state_file" > "$tmp_state"
+    mv "$tmp_state" "$state_file"
+    mkdir -p "$prototype_dir"
+    printf '%s\n' 'unreviewed candidate' > "$prototype_dir/.bad-entry.candidate.md"
+
+    run run_stop_watcher
+    [ "$status" -eq 0 ]
+    assert_json_block
+    assert_json_reason_contains "ERROR: Corrupt state file"
+    assert_output_not_contains "Continue spec"
+}
+
 # =============================================================================
 # Test: Missing jq -> exits gracefully
 # =============================================================================

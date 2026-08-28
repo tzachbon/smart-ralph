@@ -38,7 +38,7 @@ if [ ! -f "$STATE_FILE" ]; then
   exit 0
 fi
 
-if ! jq -e 'type == "object" and ((has("activePrototypes") | not) or (.activePrototypes | type == "object"))' "$STATE_FILE" >/dev/null 2>&1; then
+if ! jq -e 'type == "object" and ((has("activePrototypes") | not) or (.activePrototypes | type == "object" and all(.[]; type == "object")))' "$STATE_FILE" >/dev/null 2>&1; then
   emit_block "Corrupt .ralph-state.json. Preserve it and repair or cancel the spec before continuation."
   exit 0
 fi

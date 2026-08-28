@@ -348,9 +348,10 @@ assert_both_coordinators() {
 }
 
 @test "prototype phase: reviewer pass and fail signals gate exact candidate evidence" {
-    local root claude_reviewer codex_reviewer
+    local root claude_reviewer claude_requirements codex_reviewer
     root="$(repo_root)"
     claude_reviewer="$root/plugins/ralph-specum/agents/spec-reviewer.md"
+    claude_requirements="$root/plugins/ralph-specum/commands/requirements.md"
     codex_reviewer="$root/plugins/ralph-specum-codex/agent-configs/spec-reviewer.toml.template"
 
     assert_has "$claude_reviewer" 'artifactType: prototype'
@@ -358,12 +359,15 @@ assert_both_coordinators() {
     assert_has "$claude_reviewer" 'Every review MUST end with exactly one of: `REVIEW_PASS` or `REVIEW_FAIL`'
     assert_has "$claude_reviewer" 'Any missing input or mismatch is REVIEW_FAIL|A missing input is a failure'
     assert_has "$claude_reviewer" 'For prototype, output `REVIEW_PASS` only when every Prototype Rubric dimension is PASS'
-    assert_has "$claude_reviewer" 'ARTIFACT_PATH="<exact artifactPath from delegation>"'
-    assert_has "$claude_reviewer" 'bash "\$LINT" "\$ARTIFACT_PATH"'
+    assert_has "$claude_reviewer" 'Treat `artifactPath` and the lint fields as opaque data'
+    assert_has "$claude_reviewer" 'Never interpolate `artifactPath` into Bash source'
+    assert_has "$claude_requirements" 'bash "\$LINT" "\$SPEC_PATH/requirements\.md"'
+    assert_has "$claude_requirements" 'requirementsLintExit: \$REQUIREMENTS_LINT_EXIT'
+    assert_has "$claude_requirements" 'exact `requirementsLintOutput` as data'
     assert_has "$claude_reviewer" 'one row for every applicable rubric dimension'
     assert_has "$claude_reviewer" 'Requirements reviews include all five judgment dimensions and C1-C8'
     assert_has "$claude_reviewer" 'Prototype reviews include all eight Prototype Rubric dimensions'
-    run rg -n 'bash "\$LINT" <artifactPath>|\| 1 \| Completeness \| PASS \| All sections present \|' "$claude_reviewer"
+    run rg -n 'ARTIFACT_PATH=|bash "\$LINT" .*artifactPath|\| 1 \| Completeness \| PASS \| All sections present \|' "$claude_reviewer"
     [ "$status" -eq 1 ]
     assert_has "$codex_reviewer" 'exact candidate file bytes'
     assert_has "$codex_reviewer" 'Every response must end with exactly REVIEW_PASS or REVIEW_FAIL'
@@ -414,7 +418,7 @@ assert_both_coordinators() {
     assert_has "$claude_implement" 'fresh execution'
     assert_has "$claude_implement" 'returnTaskIndex'
     assert_has "$claude_implement" 'targetDecisions'
-    count_line=$(grep -n 'TOTAL=$(grep' "$claude_implement" | head -1 | cut -d: -f1)
+    count_line=$(grep -n 'TASK_COUNTS=$(python3' "$claude_implement" | head -1 | cut -d: -f1)
     selection_line=$(grep -n 'select-downstream.*task:\$TASK_INDEX' "$claude_implement" | head -1 | cut -d: -f1)
     [ "$count_line" -lt "$selection_line" ]
     scope_line=$(grep -n 'Check `\$ARGUMENTS` for `--file=` flag' "$claude_refactor" | head -1 | cut -d: -f1)

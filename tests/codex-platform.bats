@@ -348,6 +348,77 @@ for name, tokens in pairs.items():
 ' "$root"
 }
 
+@test "codex platform: implementation counters and cancellation distinguish recovery-only entries" {
+    local root
+    root="$(repo_root)"
+
+    assert_python '
+claude_implement = (ROOT / "plugins/ralph-specum/commands/implement.md").read_text()
+codex_implement = (ROOT / "plugins/ralph-specum-codex/skills/ralph-specum-implement/SKILL.md").read_text()
+claude_cancel = (ROOT / "plugins/ralph-specum/commands/cancel.md").read_text()
+codex_cancel = (ROOT / "plugins/ralph-specum-codex/skills/ralph-specum-cancel/SKILL.md").read_text()
+claude_start = (ROOT / "plugins/ralph-specum/commands/start.md").read_text()
+codex_start = (ROOT / "plugins/ralph-specum-codex/skills/ralph-specum-start/SKILL.md").read_text()
+
+for text in (claude_implement, codex_implement):
+    assert "ordered top-level task rows" in text
+    assert "parse `tasks.md` once" in text.lower()
+    assert "nested and example checkboxes" in text
+    assert "zero-based position of the first incomplete row" in text
+    assert "completed count" in text
+    assert "non-prefix" in text
+
+assert "TOTAL=$(grep" not in claude_implement
+assert "FIRST_INCOMPLETE=$((COMPLETED))" not in claude_implement
+
+import contextlib
+import io
+import re
+import tempfile
+import textwrap
+
+counter = re.search(r"TASK_COUNTS=\$\(python3 .*?<<.PY.\n(?P<body>.*?)\n   PY", claude_implement, re.DOTALL)
+assert counter, "embedded task counter not found"
+with tempfile.TemporaryDirectory() as directory:
+    tasks = Path(directory) / "tasks.md"
+    tasks.write_text("""# Tasks
+- [x] 1.1 completed first task
+  - [ ] nested acceptance item
+```markdown
+- [ ] 9.9 fenced example
+```
+- [ ] 1.2 first incomplete task
+- [x] 1.3 completed out of order
+- [ ] completion criterion without a task ID
+- [x] VF [VERIFY] final verification
+""")
+    old_argv = sys.argv
+    output = io.StringIO()
+    try:
+        sys.argv = ["counter", str(tasks)]
+        with contextlib.redirect_stdout(output):
+            exec(compile(textwrap.dedent(counter.group("body")), "task-counter", "exec"), {})
+    finally:
+        sys.argv = old_argv
+assert output.getvalue().strip() == "4\t3\t1", output.getvalue()
+
+for text in (claude_cancel, codex_cancel):
+    assert re.search(r"owner.*leaseToken.*both null or absent.*harnessRun\.id.*no builder is associated.*skip interrupt and release", text)
+    assert "no builder is associated" in text
+    assert "skip interrupt and release" in text
+    assert "inconsistent builder ownership" in text
+    assert "release-lease" in text
+    assert "only after the harness verifies" in text
+    assert "retain the lease and active entry" in text
+
+for text in (claude_start, codex_start):
+    assert "recovery-only entry" in text
+    assert "owner`, `leaseToken`, and `harnessRun.id` are all null or absent" in text
+    assert "skips interrupt and release" in text
+    assert "inconsistent builder ownership fails closed" in text
+' "$root"
+}
+
 @test "codex platform: phase skills require approval handoff text" {
     local root
     root="$(repo_root)"
@@ -506,7 +577,8 @@ assert "quick_mode_default" not in resolve_paths
     assert_python '
 watcher = (ROOT / "plugins/ralph-specum-codex/hooks/stop-watcher.sh").read_text()
 assert "PROTOTYPE_HISTORY" in watcher
-assert "type == \"object\" and ((has(\"activePrototypes\") | not) or (.activePrototypes | type == \"object\"))" in watcher
+assert "(.activePrototypes | type == \"object\"" in watcher
+assert "all(.[]; type == \"object\")" in watcher
 assert watcher.count("select-downstream") == 1
 assert "targetDecisions" in watcher
 assert "DEPENDENT_BLOCKERS" in watcher

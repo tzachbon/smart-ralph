@@ -81,7 +81,7 @@ if command -v stat >/dev/null 2>&1; then
 fi
 
 # Validate and reconcile before any completion shortcut can inspect active state.
-if ! jq -e 'type == "object" and ((has("activePrototypes") | not) or (.activePrototypes | type == "object"))' "$STATE_FILE" >/dev/null 2>&1; then
+if ! jq -e 'type == "object" and ((has("activePrototypes") | not) or (.activePrototypes | type == "object" and all(.[]; type == "object")))' "$STATE_FILE" >/dev/null 2>&1; then
     REASON=$(cat <<EOF
 ERROR: Corrupt state file at $SPEC_PATH/.ralph-state.json
 
