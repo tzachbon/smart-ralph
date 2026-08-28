@@ -223,16 +223,18 @@ class PrototypeWindowsTests(unittest.TestCase):
             },
         )
 
+        sigkill = getattr(signal, "SIGKILL", signal.SIGTERM)
         with mock.patch.object(prototype_harness.os, "name", "posix"):
             with mock.patch.object(prototype_harness, "pid_running", return_value=True):
-                with mock.patch.object(prototype_harness.os, "killpg") as killpg_spy:
-                    with mock.patch.object(
-                        prototype_harness.time,
-                        "monotonic",
-                        side_effect=(10.0, 12.0, 20.0, 26.0),
-                    ):
-                        with self.assertRaises(prototype_harness.HarnessError) as raised:
-                            prototype_harness.interrupt(registry=registry, run_id=run_id)
+                with mock.patch.object(prototype_harness.os, "killpg", create=True) as killpg_spy:
+                    with mock.patch.object(prototype_harness.signal, "SIGKILL", sigkill, create=True):
+                        with mock.patch.object(
+                            prototype_harness.time,
+                            "monotonic",
+                            side_effect=(10.0, 12.0, 20.0, 26.0),
+                        ):
+                            with self.assertRaises(prototype_harness.HarnessError) as raised:
+                                prototype_harness.interrupt(registry=registry, run_id=run_id)
 
         self.assertEqual(raised.exception.outcome, "unavailable-control")
         self.assertEqual(
@@ -240,7 +242,7 @@ class PrototypeWindowsTests(unittest.TestCase):
             [
                 mock.call(12345, signal.SIGTERM),
                 mock.call(12345, 0),
-                mock.call(12345, signal.SIGKILL),
+                mock.call(12345, sigkill),
                 mock.call(12345, 0),
             ],
         )
