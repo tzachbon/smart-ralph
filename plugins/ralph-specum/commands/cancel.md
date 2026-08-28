@@ -1,12 +1,12 @@
 ---
-description: Cancel active execution loop, cleanup state, and remove spec
+description: Cancel active execution safely and optionally remove the spec
 argument-hint: [spec-name-or-path]
 allowed-tools: [Read, Bash, Task]
 ---
 
 # Cancel Execution
 
-You are canceling the active execution loop, cleaning up state files, and removing the spec directory.
+You are canceling the active execution loop. Safe cancel preserves spec and prototype source. Full removal is a separate confirmed action.
 
 ## Multi-Directory Resolution
 
@@ -53,24 +53,37 @@ If state file exists, read and display:
 - Task progress (taskIndex/totalTasks)
 - Iteration count
 
+Treat a missing `activePrototypes` field as an empty map.
+
+## Cancel Active Prototypes First
+
+If `activePrototypes` is non-empty, resolve `basePath` with `ralph_resolve_context` and run `prototype-records.py reconcile` before cancellation. At the next safe tool boundary, process active IDs in `created`, then ID order:
+
+1. Interrupt a live builder through `prototype-harness.py interrupt`; never stop an unrelated task or a running tool call. Release its lease through `locked-state.py release-lease`.
+2. Build a terminal record from the active entry with `status: terminal`, `verdict: cancelled`, `gateApproved: false`, the original question and blocking declaration, `returnPhase`, `returnTaskIndex`, timestamps, local branch and isolation pointers, and `sourceDisposition: retained`. Preserve partial implementation, run evidence, stale metadata, and downstream artifacts.
+3. Render the record exclusively through `prototype-records.py render-candidate`. If its ID already has candidate or final bytes, preserve them and allocate a new ID with `supersedes`; never overwrite either path.
+4. Give `spec-reviewer` the exact candidate bytes and source pointers. Continue only on `REVIEW_PASS`, then call `review-candidate` with the exact candidate hash and `publish` with the state path.
+5. Re-read and parse the immutable final, verify that its hash matches the reviewed candidate, and run reconciliation. Only verified publication may remove that active entry.
+6. Restore the recorded main `phase` and `taskIndex` through `locked-state.py merge` without changing unrelated state.
+
+Cancellation never deletes a prototype worktree, scratch path, local branch, remote branch, partial implementation, or terminal record. Any later local deletion requires a separate confirmation naming the exact path and local branch. Remote deletion is never performed by this command.
+
 ## Cleanup
 
-1. Delete state file:
+Safe cancel is the default. After every active prototype has a verified immutable `cancelled` record, delete only the execution state:
+
+1. Delete the state file through the locked helper:
    ```bash
-   rm $spec_path/.ralph-state.json
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" delete-state --state "$spec_path/.ralph-state.json"
    ```
 
-2. Remove spec directory:
-   ```bash
-   rm -rf $spec_path
-   ```
+2. Keep the spec directory, terminal prototype records, progress, partial implementation, worktrees, and branches.
 
-3. Clear current spec marker:
-   ```bash
-   rm -f ./specs/.current-spec
-   ```
+3. Keep `.current-spec` pointing at the preserved spec.
 
-4. Update Spec Index (removes deleted spec from index):
+If the user explicitly requests full removal, show the resolved spec directory and every prototype isolation path and local branch. Ask for confirmation naming the exact spec directory. Only after that confirmation may the command remove that directory and clear `.current-spec` when it points to the target. Prototype isolation paths and branches need their own exact confirmations; never include them in a recursive spec cleanup or remove a remote branch.
+
+4. Update the spec index after safe cancel or confirmed removal:
    ```bash
    ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
    ```
@@ -88,10 +101,11 @@ State before cancellation:
 
 Cleanup:
 - [x] Removed .ralph-state.json
-- [x] Removed spec directory ($spec_path)
-- [x] Cleared current spec marker
+- [x] Preserved spec directory ($spec_path)
+- [x] Preserved prototype source and local branches
 
-The spec and all its files have been permanently removed.
+Immutable cancelled records: <paths or none>
+Nothing else was removed.
 
 To start a new spec:
 - Run /ralph-specum:new <name>
@@ -100,17 +114,13 @@ To start a new spec:
 
 ## If No Active Loop
 
-If there's no `.ralph-state.json`, still proceed with removing the spec directory and clearing `.current-spec`:
+If there is no `.ralph-state.json`, report that there is no active loop. Do not remove the spec unless the user explicitly requested full removal and confirms the exact resolved directory.
 
 ```
 No active execution loop found for spec: $spec_name
 
 Location: $spec_path
-Cleanup:
-- [x] Removed spec directory ($spec_path)
-- [x] Cleared current spec marker
-
-The spec has been removed.
+Nothing was removed.
 
 To start a new spec:
 - Run /ralph-specum:new <name>

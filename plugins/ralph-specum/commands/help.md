@@ -18,10 +18,11 @@ Ralph Specum is a spec-driven development plugin that guides you through researc
 | `/ralph-specum:requirements` | Generate requirements (approves research) |
 | `/ralph-specum:design` | Generate design (approves requirements) |
 | `/ralph-specum:tasks` | Generate tasks (approves design) |
+| `/ralph-specum:prototype [--resume ID | --cancel ID | --quick]` | Run, resume, or cancel optional prototype evidence |
 | `/ralph-specum:implement` | Start execution loop (approves tasks) |
 | `/ralph-specum:status` | Show all specs and progress |
 | `/ralph-specum:switch <name>` | Change active spec |
-| `/ralph-specum:cancel` | Cancel active loop, cleanup state |
+| `/ralph-specum:cancel` | Safely cancel active work; source is preserved |
 | `/ralph-specum:feedback [message]` | Submit feedback or report an issue |
 | `/ralph-specum:help` | Show this help |
 
@@ -69,6 +70,18 @@ Done!
 /ralph-specum:implement
 ```
 
+## Optional Prototype Overlay
+
+Research and requirements may offer `continue to prototype`; declining continues the normal workflow. `/ralph-specum:prototype` is also available directly from research, requirements, design, tasks, or execution without changing the main phase.
+
+- `/ralph-specum:prototype --resume <id>` resumes an explicit active entry. One active entry resumes automatically; several are listed for selection in normal mode.
+- `/ralph-specum:prototype --cancel <id>` stops at a safe boundary, publishes and verifies an immutable `cancelled` record, and preserves source and partial work.
+- `--quick` runs exactly one agent-owned request after requirements. It asks no prototype questions, takes over the oldest design blocker when one exists, owns verdict and handoff decisions, and continues to design.
+- Prototype source runs in a sibling worktree or eligible scratch area. Ralph never switches the current conversation checkout or copies unapproved dirty paths.
+- Source, evidence, branches, and records stay local. Pushes, PR or issue changes, and every remote action require separate explicit authorization. Local deletion also requires exact-path and local-branch approval; remote branches are never deleted by prototype cleanup.
+
+Terminal records live under the resolved `<basePath>/prototypes/`. `status` shows active entries, review candidates, immutable finals, quarantines, blockers, return phase/task, and source disposition.
+
 ## Options
 
 ### start command
@@ -100,6 +113,10 @@ Phase commands use the `commitSpec` setting from `.ralph-state.json` (set during
 ```
 - `--max-task-iterations`: Max retries per task before failure (default: 5)
 
+### cancel command
+
+Safe cancel deletes only execution state after every active prototype has a verified immutable `cancelled` record. It keeps the spec, prototype source, partial implementation, records, and local branches. Full spec removal requires a second confirmation naming the exact resolved directory; prototype paths and branches require separate confirmations.
+
 ## Directory Structure
 
 Specs are stored in `./specs/` by default:
@@ -112,7 +129,8 @@ Specs are stored in `./specs/` by default:
 │   ├── research.md         # Research findings
 │   ├── requirements.md     # Requirements
 │   ├── design.md           # Technical design
-│   └── tasks.md            # Implementation tasks
+│   ├── tasks.md            # Implementation tasks
+│   └── prototypes/         # Immutable terminal prototype records
 ```
 
 ## Multi-Directory Support

@@ -98,11 +98,11 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): add Claude resume visibility`
   - _Requirements: FR-3, FR-5, NFR-3_
 
-- [ ] 1.12 Add Claude cancel and help behavior
+- [x] 1.12 Add Claude cancel and help behavior
   - **Do**: Make normal cancellation publish and verify an immutable cancelled record before returning, preserve source and partial work, gate every deletion, and document direct and quick behavior in help.
   - **Files**: `plugins/ralph-specum/commands/cancel.md`, `plugins/ralph-specum/commands/help.md`
   - **Done when**: Cancel never deletes prototype source automatically and help names both the current-checkout and remote-action boundaries.
-  - **Verify**: `rg -l 'cancelled|prototype|delet|remote' plugins/ralph-specum/commands/{cancel,help}.md | wc -l | grep -q '^2$'`
+  - **Verify**: `test "$(rg -l 'cancelled|prototype|delet|remote' plugins/ralph-specum/commands/{cancel,help}.md | wc -l | tr -d '[:space:]')" = 2`
   - **Commit**: `feat(prototype): preserve source on Claude cancel`
   - _Requirements: FR-2, FR-3, FR-4, NFR-1, NFR-3_
 
