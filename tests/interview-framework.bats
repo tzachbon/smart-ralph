@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+set -e
 # Interview Framework Content Tests
 # Verifies that normal interviews use the fact-first grilling contract.
 
@@ -27,8 +28,23 @@ PHASE_COMMANDS=(
 
 @test "normal interview is the grill without an opt-in mode" {
     grep -q "Treat every normal-mode interview governed by this framework as a grill" "$SKILL_FILE"
-    grep -q "Quick mode skips the interview" "$SKILL_FILE"
+    grep -q "Quick mode bypasses interview questions only" "$SKILL_FILE"
     ! grep -Eq '(interviewMode|grillMode)' "$SKILL_FILE" "$ALGORITHM_FILE" "$GOAL_GRILL" "${PHASE_COMMANDS[@]}"
+}
+
+@test "hard gate distinguishes critical decisions from administration" {
+    grep -q "## Critical Decision Test" "$SKILL_FILE"
+    grep -q "Exclude setup choices, administrative preferences" "$SKILL_FILE"
+    grep -q "open-frontier" "$SKILL_FILE"
+    grep -q "four-question maximum" "$ALGORITHM_FILE"
+}
+
+@test "control-only replies bare skip and approval retain distinct semantics" {
+    grep -q "### Control-only reply" "$SKILL_FILE"
+    grep -q "### Bare skip" "$SKILL_FILE"
+    grep -q "## Final Approval" "$SKILL_FILE"
+    grep -q "Approve and delegate" "$SKILL_FILE"
+    grep -q "apply the changes" "$EXAMPLES_FILE"
 }
 
 @test "preflight reads the specification index and domain context" {
@@ -69,7 +85,7 @@ PHASE_COMMANDS=(
 @test "frontier rounds prefer AskUserQuestion and retain a text fallback" {
     grep -q 'Use `AskUserQuestion` for the round when the tool is available' "$SKILL_FILE"
     grep -q 'If `AskUserQuestion` is unavailable' "$SKILL_FILE"
-    grep -q 'if AskUserQuestion is available' "$ALGORITHM_FILE"
+    grep -q 'If `AskUserQuestion` is available' "$ALGORITHM_FILE"
     grep -q 'render the same numbered round in the response' "$ALGORITHM_FILE"
 }
 
@@ -136,4 +152,5 @@ PHASE_COMMANDS=(
 
     [[ "$plugin_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
     [ "$plugin_version" = "$marketplace_version" ]
+    [ "$plugin_version" = "4.11.0" ]
 }

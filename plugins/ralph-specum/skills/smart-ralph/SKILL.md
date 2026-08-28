@@ -15,7 +15,8 @@ All Ralph commands support these standard arguments:
 
 | Argument | Short | Description | Default |
 |----------|-------|-------------|---------|
-| `--quick` | `-q` | Skip interactive phases, auto-generate artifacts, start execution immediately | false |
+| `--quick` | | Exact token that enables persistent non-interactive generation | false |
+| `--interactive` | | Exact token that clears persistent quick mode | - |
 | `--commit` | `-c` | Commit spec/feature files locally after generation | true (normal), false (quick) |
 | `--no-commit` | | Explicitly disable committing files | - |
 | `--max-task-iterations` | `-m` | Max retries per failed task before stopping | 5 |
@@ -27,6 +28,8 @@ Argument precedence: `--no-commit` > `--commit` > mode default.
 
 ### Normal Mode (Interactive)
 
+- Exact `--interactive` clears a prior authorized quick mode
+- No mode flag resets legacy quick state that lacks exact `--quick` authorization
 - User reviews artifacts between phases
 - Phase transitions require explicit commands
 - Each phase sets `awaitingApproval: true`
@@ -36,6 +39,9 @@ Argument precedence: `--no-commit` > `--commit` > mode default.
 
 ### Quick Mode (`--quick`)
 
+- Only an exact `--quick` argument token enables this mode
+- `-q`, settings defaults, substrings, and natural-language requests do not enable it
+- `--quick` with `--interactive` is an error
 - Skip all interactive prompts, interviews, and approval pauses
 - Run the same phase agents (research, requirements, design, tasks) sequentially
 - Agents receive a "be more opinionated" directive since there is no user feedback
@@ -51,7 +57,7 @@ Argument precedence: `--no-commit` > `--commit` > mode default.
 
 All Ralph plugins use `.ralph-state.json` for execution state. See `references/state-file-schema.md` for full schema.
 
-Key fields: `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `awaitingApproval`, and optional `activePrototypes`.
+Key fields: `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `awaitingApproval`, `quickMode`, `quickAuthorization`, `phaseSkillLoad`, `phaseInterview`, and optional `activePrototypes`.
 
 Prototype is an overlay. `phase` remains one of the five main workflow phases and is never `prototype`. Resolve `basePath` before access, treat a missing `activePrototypes` map as empty, and route every mutation or deletion through `hooks/scripts/locked-state.py`. Read [`references/state-file-schema.md`](references/state-file-schema.md) before changing state, resuming an overlay, or deciding whether execution state may be deleted.
 
@@ -104,7 +110,7 @@ All Ralph plugins follow consistent branch strategy:
 1. Check current branch before starting
 2. If on default branch (main/master): prompt for branch strategy
 3. If on feature branch: offer to continue or create new
-4. Quick mode: auto-create branch, no prompts
+4. Exact `--quick`: create a feature branch without prompting only when currently on the default branch; otherwise keep the current non-default branch. Legacy `quickMode: true` does not select this path.
 
 Prototype isolation is separate from this feature-branch choice. Create or reuse a sibling worktree or eligible scratch path without checking out its branch in the current checkout. Retained and interrupted source remains available for recovery.
 

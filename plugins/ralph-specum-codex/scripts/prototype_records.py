@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import errno
 import hashlib
 import json
 import os
@@ -323,23 +322,15 @@ def remove_active(
     return removed
 
 
-def publish_exact(candidate: Path, final: Path) -> None:
-    """Publish candidate bytes without overwriting an existing record."""
+def publish_exact(data: bytes, final: Path) -> None:
+    """Publish exact prevalidated bytes without overwriting a record."""
 
     if final.exists():
         raise RecordError(f"Prototype id collision: {final.name}")
     try:
-        os.link(candidate, final)
-    except FileExistsError as exc:
+        write_exclusive(final, data)
+    except RecordError as exc:
         raise RecordError(f"Prototype id collision: {final.name}") from exc
-    except OSError as exc:
-        if exc.errno not in {errno.EXDEV, errno.EPERM, errno.EACCES, errno.ENOTSUP, errno.EOPNOTSUPP}:
-            raise
-        write_exclusive(final, candidate.read_bytes())
-        return
-    with final.open("rb+") as handle:
-        os.fsync(handle.fileno())
-    fsync_dir(final.parent)
 
 
 def quarantine_candidate(path: Path) -> Path:
@@ -475,7 +466,7 @@ def cmd_publish(args: argparse.Namespace) -> JSON:
             if frontmatter.get(key) is not None:
                 raise RecordError(f"Publisher-only lock timeout requires {key}=null when present.")
         final = final_path(args.base_path, args.id)
-        publish_exact(candidate, final)
+        publish_exact(candidate_bytes, final)
         final_bytes = final.read_bytes()
         if sha256_bytes(final_bytes) != candidate_hash or final_bytes != candidate_bytes:
             raise RecordError("Published bytes do not match the lock-timeout candidate.")
@@ -511,7 +502,7 @@ def cmd_publish(args: argparse.Namespace) -> JSON:
             or current.get("reviewedCandidateHash") != candidate_hash
         ):
             raise RecordError("Active prototype changed after REVIEW_PASS; refusing publication.")
-        publish_exact(candidate, final)
+        publish_exact(candidate_bytes, final)
         final_bytes = final.read_bytes()
         if sha256_bytes(final_bytes) != candidate_hash or final_bytes != candidate_bytes:
             raise RecordError("Published bytes do not match the reviewed candidate.")

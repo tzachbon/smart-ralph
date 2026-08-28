@@ -451,7 +451,7 @@ assert_both_coordinators() {
     assert_has "$codex_switch" 'returnTaskIndex'
 
     assert_has "$root/plugins/ralph-specum/references/branch-management.md" 'If the source-state read fails'
-    assert_has "$root/plugins/ralph-specum/agents/research-analyst.md" 'BASE_PATH='
+    assert_has "$root/plugins/ralph-specum/agents/research-analyst.md" 'Leave approval-state mutation to the coordinator'
     assert_has "$root/plugins/ralph-specum/agents/task-planner.md" 'BASE_PATH='
     assert_has "$root/plugins/ralph-specum/skills/smart-ralph/references/state-file-schema.md" 'prototypes/\.<prototype-id>\.candidate\.md'
 }

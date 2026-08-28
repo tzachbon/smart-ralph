@@ -2,49 +2,44 @@
 
 > Used by: start.md
 
-This reference defines the pre-research grill in normal mode. Quick mode skips it.
+Run the `start` phase interview only after the spec directory, `.ralph-state.json`, and `.progress.md` exist and skill discovery pass 1 has completed.
 
-## Prerequisite
+## Entry
 
-Classify intent first using `intent-classification.md`. Use intent to seed relevant design-tree branches, not to set a question count.
+1. Read `${CLAUDE_PLUGIN_ROOT}/references/normal-mode-gates.md`.
+2. Reload the full selected skill manifest and required current-work resources.
+3. Record the load receipt for phase `start`.
+4. Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md`.
 
-## Run the Grill
+Classify intent first using `intent-classification.md`. Use intent to seed relevant design-tree branches, never to set a question count or completion threshold. The critical decision frontier determines the depth.
 
-Apply `${CLAUDE_PLUGIN_ROOT}/skills/interview-framework/SKILL.md` in full.
+## Goal Territory
 
-The framework reads prior artifacts, the specification index, relevant domain context, and repository facts before it asks the user for decisions. It asks the whole user-decision frontier in numbered rounds and does not start research until the user confirms shared understanding.
+Use these topics only as candidate design-tree nodes. Add or remove branches as evidence and answers require, and ask them only when they pass the critical decision test:
 
-## Goal Exploration Territory
+- Problem or user need behind the goal.
+- Observable outcome and acceptance boundary.
+- Scope choice when two viable scopes materially change the research or artifact.
+- Non-negotiable compatibility, security, performance, or rollout constraints.
+- Risk or tradeoff ownership that cannot be inferred from existing project contracts.
+- Existing-system boundaries, reusable behavior, and viable approaches.
+- A material conflict between selected skill contracts.
 
-Use these areas to seed the design tree. Add or remove branches as the evidence and answers require:
+Inspect the repository, configuration, existing specs, related specs, and supplied source material before asking. Do not ask about spec location, naming, framework, repository layout, commands, ticket metadata, or other setup facts.
 
-- **Problem** - pain point or need behind the goal
-- **Constraints** - performance, compatibility, timeline, integration, or policy boundaries
-- **Success** - observable behavior or evidence that proves the work succeeded
-- **Scope** - explicit inclusions, exclusions, and deferred branches
-- **Existing system** - related indexed specs, domain concepts, code paths, and reusable behavior
-- **Approach** - viable implementation shapes and their trade-offs
+For a bug, inspect existing tests, logs, issue text, and reproduction commands first. Ask only for missing reproduction or expected-behavior decisions that block a correct research brief.
 
-## Bug-Fix Territory
+Apply domain-language modeling throughout the grill. The spec location is already resolved; do not ask for it again during the goal grill.
 
-For `BUG_FIX`, seed the tree with the causal chain instead of using a fixed questionnaire:
+## Final approval and delegation
 
-- reproduction steps and smallest failing command
-- expected behavior and observed behavior
-- regression point or relevant change history
-- existing failing test or missing reproducer
-- affected scope and required behavior preservation
-- evidence that will prove the fix
+Present the goal decision brief and require `Approve and delegate`. On approval:
 
-Resolve repository facts through tests, code, configuration, logs, and git history. Ask the user only for experience or decisions that the repository cannot provide.
+1. Call `confirm` for phase `start`.
+2. Run `check-delegation` with the current start interview and skill receipt.
+3. Delegate the research team immediately in the same response.
 
-## Resolved Spec Location
-
-`start.md` resolves spec location before creating the spec directory. Read that location as settled context and do not ask for it again during the goal grill.
-
-## Store Goal Context
-
-The interview framework appends each round to `.progress.md`. Keep intent metadata compact:
+Pass the approved decisions and complete selected-skill manifest to every artifact-producing research agent. Append a readable mirror to `.progress.md`:
 
 ```markdown
 ## Interview Format

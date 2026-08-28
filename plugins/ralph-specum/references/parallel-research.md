@@ -53,34 +53,46 @@ Call `TeamDelete()` before anything else. This releases whatever team the sessio
 
 ### Step 2: Create Team
 
-```
+```text
 TeamCreate(team_name: "research-$spec", description: "Parallel research for $spec")
 ```
 
-**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still fails, fall back to direct `Task(subagent_type: ...)` calls without a team. The research output is the same either way.
+**Fallback**: If TeamCreate fails with "already leading" error, call `TeamDelete()` and retry `TeamCreate` once. If still failing, run `check-delegation` for each writer and use direct `Task(subagent_type: ...)` calls without a team. Preserve each writer's same complete gate packet and fresh unique artifact agent ID. The research output is the same either way.
 
 ### Step 3: Create Tasks
 
-One `TaskCreate` per topic. Output file naming: `.research-[topic-slug].md` (e.g., `.research-oauth-patterns.md`, `.research-codebase.md`, `.research-quality.md`).
+Create one `TaskCreate` per topic. Artifact-producing `research-analyst` topics use `$SPEC_PATH/.research-[topic-slug].md`. Read-only `Explore` topics return findings in their Task result and never write files.
 
-```
+```text
 TaskCreate(
   subject: "[Topic name] research",
-  description: "Research [topic] for $spec. Output: ./specs/$spec/.research-[topic-slug].md",
+  description: "Research [topic] for $spec. Output: $SPEC_PATH/.research-[topic-slug].md",
   activeForm: "Researching [topic]"
+)
+
+TaskCreate(
+  subject: "[Codebase concern] exploration",
+  description: "Inspect [concern] for $spec. Return findings in the Task result. Read only; write no files.",
+  activeForm: "Exploring [concern]"
 )
 ```
 
 ### Step 4: Spawn Teammates (ALL in ONE Message)
 
-ALL Task calls MUST be in ONE message to ensure true parallel execution. Spawning one at a time across separate messages runs them sequentially.
+ALL Task calls MUST be in ONE message to ensure true parallel execution. Before that batch, run `check-delegation` once per artifact-producing research teammate. Give every writer a unique artifact agent ID. Include the absolute state path, absolute `phase_gate.py` path, complete `[RALPH_PHASE_GATE]` identity tuple (`state`, `phase`, `interviewId`, `discoveryRevision`, `contextDigest`), verbatim selected-skill manifest, and complete approved decision brief. Require matching per-source load receipts and `check-agent-write` with the same identity before writing. Read-only `Explore` calls need no marker and may not write.
 
-```
+```text
 Task(subagent_type: research-analyst, team_name: "research-$spec", name: "researcher-1",
   prompt: "You are a research teammate.
+    Artifact agent ID: researcher-1
+    [RALPH_PHASE_GATE marker]
+    Absolute state path: [state]
+    Absolute phase_gate.py path: [helper]
+    Selected skill manifest: [full manifest]
+    Approved decision brief: [full approved decision brief]
     Topic: [External best practices for topic]
-    Spec: $spec | Path: ./specs/$spec/
-    Output: ./specs/$spec/.research-[topic].md
+    Spec: $spec | Path: $SPEC_PATH/
+    Output: $SPEC_PATH/.research-[topic].md
 
     Goal context: [problem, constraints, success criteria from .progress.md]
 
@@ -93,9 +105,9 @@ Task(subagent_type: research-analyst, team_name: "research-$spec", name: "resear
 
 Task(subagent_type: Explore, team_name: "research-$spec", name: "explorer-1",
   prompt: "Analyze codebase for spec: $spec
-    Output: ./specs/$spec/.research-codebase.md
     Find existing patterns, dependencies, constraints related to [goal].
-    Write findings to output file with sections: Existing Patterns, Dependencies, Constraints, Recommendations.")
+    Return findings with sections: Existing Patterns, Dependencies, Constraints, Recommendations.
+    Read only. Do not write or edit files.")
 ```
 
 For more topics, add more `researcher-N` and `explorer-N` teammates in the same message.
@@ -109,13 +121,13 @@ For more topics, add more `researcher-N` and `explorer-N` teammates in the same 
 
 ## Merging Results
 
-After ALL parallel tasks complete, the coordinator merges results into a single `research.md`.
+After all parallel tasks complete, delegate the unified artifact to a fresh `research-analyst` merge teammate. Run `check-delegation` immediately before this Task. Include the absolute state and helper paths, complete marker identity tuple, verbatim selected-skill manifest, complete approved brief, fresh artifact agent ID, every partial artifact path, and all read-only Explore results. Require matching load receipts and `check-agent-write` before the merge writer creates `research.md`.
 
 ### Merge Process
 
-1. **Read all partial files**: `.research-[topic-1].md`, `.research-codebase.md`, `.research-quality.md`, `.research-related-specs.md`, etc.
+1. **Read all partial inputs**: `.research-[topic-1].md` artifacts plus returned Explore findings for codebase, quality commands, verification tooling, and related specs.
 
-2. **Create unified `./specs/$spec/research.md`** with this structure:
+2. **Create unified `$SPEC_PATH/research.md`** with this structure:
 
 ```markdown
 # Research: $spec
@@ -130,17 +142,17 @@ After ALL parallel tasks complete, the coordinator merges results into a single 
 ### Pitfalls to Avoid
 
 ## Codebase Analysis
-[From .research-codebase.md]
+[From returned Explore findings for codebase patterns and constraints]
 ### Existing Patterns
 ### Dependencies
 ### Constraints
 
 ## Related Specs
-[From .research-related-specs.md]
+[From returned Explore findings for related specs]
 | Spec | Relevance | Relationship | May Need Update |
 
 ## Quality Commands
-[From .research-quality.md]
+[From returned Explore findings for quality commands and verification tooling]
 | Type | Command | Source |
 
 ## Feasibility Assessment
@@ -155,6 +167,6 @@ After ALL parallel tasks complete, the coordinator merges results into a single 
 [All URLs and file paths from all agents]
 ```
 
-3. **Delete partial files** after successful merge: `rm ./specs/$spec/.research-*.md`
+3. **Delete partial files** after the merge agent successfully writes and validates `research.md`: remove only `$SPEC_PATH/.research-*.md` after resolving the exact matches.
 
 4. **Quality check**: Ensure no duplicate information, consistent formatting.

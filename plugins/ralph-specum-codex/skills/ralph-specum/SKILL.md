@@ -1,6 +1,6 @@
 ---
 name: ralph-specum
-description: Use only when the user explicitly invokes `$ralph-specum`, requests Ralph Specum in Codex, asks Ralph Specum to handle a named phase or optional prototype, or explicitly requests autonomous or quick mode or continuation without pauses.
+description: Use only when the user explicitly invokes `$ralph-specum`, requests Ralph Specum in Codex, or asks Ralph Specum to handle a named phase or optional prototype.
 metadata:
   surface: primary
 ---
@@ -13,17 +13,19 @@ Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill: take the directory cont
 
 ## Read These References
 
-- `../../references/workflow.md` for the phase flow, branch and worktree behavior, quick mode, and command routing
-- `../../references/state-contract.md` for `.ralph-state.json`, `.progress.md`, commit rules, and resume semantics
-- `../../references/path-resolution.md` for `specs_dirs`, `.current-spec`, ambiguity handling, and default directory behavior
-- `../../references/parity-matrix.md` for Claude-to-Codex feature translation and command mapping
-- `../../references/prototype-coordinator.md` for direct, suggested, resume, quick, cancel, and prototype handoff behavior
+- `"$RALPH_CODEX_PLUGIN_ROOT/references/workflow.md"` for the phase flow, branch and worktree behavior, quick mode, and command routing
+- `"$RALPH_CODEX_PLUGIN_ROOT/references/state-contract.md"` for `.ralph-state.json`, `.progress.md`, commit rules, and resume semantics
+- `"$RALPH_CODEX_PLUGIN_ROOT/references/path-resolution.md"` for `specs_dirs`, `.current-spec`, ambiguity handling, and default directory behavior
+- `"$RALPH_CODEX_PLUGIN_ROOT/references/parity-matrix.md"` for Claude-to-Codex feature translation and command mapping
+- `"$RALPH_CODEX_PLUGIN_ROOT/references/prototype-coordinator.md"` for direct, suggested, resume, quick, cancel, and prototype handoff behavior
+- `"$RALPH_CODEX_PLUGIN_ROOT/skills/interview-framework-codex/SKILL.md"` and its required algorithm and domain-modeling references for every normal-mode phase interview
 
 ## Use These Helpers
 
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/resolve_spec_paths.py"` for spec roots, current spec, and unique or ambiguous name resolution
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/merge_state.py"` for safe top-level state merges
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/count_tasks.py"` for task counts and next incomplete task
+- `"$RALPH_CODEX_PLUGIN_ROOT/scripts/phase_gate.py"` for mode, skill-load, interview, parent-delegation, and artifact-write gates
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/locked_state.py"` for locked state and `activePrototypes` mutations
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py"` for reviewed immutable prototype records and downstream selection
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_harness.py"` for bounded builder control outcomes and retry metadata
@@ -56,24 +58,32 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 
 ## Core Rules
 
-0. **You are a coordinator, not a doer.** For every phase (research, requirements, design, tasks, implement, triage, refactor), delegate the actual generation work to the appropriate sub-agent. Never write spec artifacts (research.md, requirements.md, design.md, tasks.md) yourself. Your job is to gather context, run the interview, delegate, validate the output, and present results for approval.
+0. **You are a coordinator, not a doer.** Delegate each phase to the appropriate sub-agent and never write spec artifacts (`research.md`, `requirements.md`, `design.md`, or `tasks.md`) yourself. For only `start`, `triage`, `research`, `requirements`, `design`, and `tasks`, gather context, discover and preload contracts, run the interview, obtain final approval, pass the gate, delegate, validate the output, and present results for artifact approval. Keep the existing delegation flows for `implement` and `refactor` unchanged; the new phase gates do not apply to them.
 1. Keep the Ralph disk contract stable.
 2. Treat `.claude/ralph-specum.local.md` as the settings source when present.
 3. Default to `./specs` when no valid config exists.
 4. Keep `.current-spec` in the default specs root.
 5. Merge state fields. Do not replace the whole state object.
-6. Preserve `source`, `name`, `basePath`, `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`.
+6. Preserve `source`, `name`, `goal`, `basePath`, `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`.
 7. Also preserve newer state fields when present, especially `awaitingApproval`, `quickMode`, `granularity`, `epicName`, `discoveredSkills`, and native task sync metadata.
 8. Write `.progress.md` after every phase and after every implementation attempt.
-9. Honor approval checkpoints between phases unless quick mode is active.
+9. Keep pre-delegation interview approval separate from post-generation artifact approval.
 10. Honor the `Commit` line in tasks during implementation unless the user explicitly disables task commits.
 11. Use branch creation or worktree creation when the user asks for branch isolation or the repo policy requires it.
-12. Enter quick mode only when the user explicitly asks Ralph to be autonomous, do it quickly, or continue without pauses.
-13. In quick mode, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
-14. Keep optional prototype work in `activePrototypes`; preserve the main phase and current checkout until the recorded handoff.
-15. Use child-agent controls and store only `agentId` for internal builders. Never use `create_thread` or `threadId` for them.
+12. Run `phase_gate.py mode` at entry to every affected phase. Only exact `--quick` enables quick mode; exact `--interactive` clears it. Reject both together, `-q`, variants, and natural-language substitutes. No flags normalize invalid legacy quick state to interactive.
+13. In exact quick mode, run discovery and contract loading, record the current manifest and `bypassed_quick`, generate missing artifacts, default task granularity to `fine` when unset, and continue into implementation in the same session.
+14. For normal-mode start, triage, research, requirements, design, and tasks, follow `"$RALPH_CODEX_PLUGIN_ROOT/skills/interview-framework-codex/references/algorithm.md"` before each delegation.
+15. Keep optional prototype work in `activePrototypes`; preserve the main phase and current checkout until the recorded handoff.
+16. Use child-agent controls and store only `agentId` for internal builders. Never use `create_thread` or `threadId` for them.
 
 ## Stop Enforcement
+
+Before delegating any affected phase in normal mode, you MUST:
+
+1. Complete the applicable discovery pass and reload receipts
+2. Finish all critical decision frontiers
+3. Obtain explicit `approve and delegate`
+4. Pass `phase_gate.py check-delegation`
 
 After completing any phase artifact (research, requirements, design, tasks), you MUST:
 
@@ -81,7 +91,7 @@ After completing any phase artifact (research, requirements, design, tasks), you
 2. Present the approval prompt (approve / request changes / continue to next)
 3. **STOP and wait for user response**
 
-The ONLY exception is `--quick` mode. Without `--quick`, you MUST NOT auto-continue to the next phase. This is non-negotiable.
+The ONLY exception is exact `--quick` mode with a valid bypass receipt. Without it, you MUST NOT auto-continue to the next phase.
 
 ## Response Handoff
 
@@ -92,12 +102,14 @@ The ONLY exception is `--quick` mode. Without `--quick`, you MUST NOT auto-conti
     - `approve current artifact`
     - `request changes`
     - `continue to <named next step>`
-- Treat `continue to <named next step>` as approval of the current artifact and permission to proceed.
-- After `start` or `new`, summarize the resolved spec and stop unless the user explicitly asked for quick or autonomous flow. The next choice should point to `continue to research`.
+- Treat `continue to <named next step>` as approval of the current artifact and permission to enter that phase's discovery and interview path.
+- Treat `apply the changes` during artifact review as immediate authorization to delegate already-recorded revision feedback through a new unique dispatch. Redisplay and remain at artifact approval. Ask one focused change question only when no feedback is pending.
+- Treat control-only `continue`, `proceed`, and `go ahead` as approval of nothing.
+- After normal-mode `start` or `new` setup, run discovery pass 1 and begin the goal grill. Explicit final approval delegates research immediately.
 
 ## Current Workflow Expectations
 
-- Use brainstorming-style interviews for research, requirements, design, and tasks when quick mode is not active.
+- Use critical-decision frontier interviews for start, triage, research, requirements, design, and tasks when quick mode is not active. Ask no setup, administration, or discoverable question.
 - Route obviously large or cross-cutting efforts to triage before normal spec generation.
 - Support active epic state via `specs/.current-epic` and per-epic state in `specs/_epics/<epic-name>/`.
 - Treat task planning as POC-first with `[P]` markers for safe parallel work and `[VERIFY]` checkpoints for explicit quality validation.

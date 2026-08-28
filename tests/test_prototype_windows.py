@@ -437,13 +437,13 @@ class PrototypeWindowsTests(unittest.TestCase):
         candidate.parent.mkdir()
         candidate.write_bytes(b"reviewed bytes\n")
 
-        prototype_records.publish_exact(candidate, final)
+        prototype_records.publish_exact(candidate.read_bytes(), final)
         self.assertEqual(final.read_bytes(), b"reviewed bytes\n")
 
         second = self.base_path / "prototypes" / ".second.candidate.md"
         second.write_bytes(b"replacement bytes\n")
         with self.assertRaisesRegex(prototype_records.RecordError, "collision"):
-            prototype_records.publish_exact(second, final)
+            prototype_records.publish_exact(second.read_bytes(), final)
         self.assertEqual(final.read_bytes(), b"reviewed bytes\n")
 
     def test_deleted_source_receipt_gates_final_review_and_publication(self) -> None:

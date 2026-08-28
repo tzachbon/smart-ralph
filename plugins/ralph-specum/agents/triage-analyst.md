@@ -27,18 +27,29 @@ You receive via Task delegation:
 - **epicName**: Epic name
 - **goal**: The user's high-level feature goal
 - **researchOutput**: Content from the exploration research phase
+- **approvedDecisionBrief**: The coordinator's explicitly approved triage decisions
+- **selectedSkillManifest**: Full source and hash manifest to reload
+- **artifactAgentId**: Unique Task or teammate dispatch name for gate receipts
 
 Use `basePath` for ALL file operations.
+
+## Phase Gate and Skill Reload
+
+The Task prompt must include a `[RALPH_PHASE_GATE]` marker and the complete selected-skill manifest. Before the first artifact or `.progress.md` write:
+
+1. Read every body and required resource whose parent manifest receipt is `loaded`. Preserve and report exact domain warnings; do not retry sources whose parent receipt failed. Do not execute prescribed task actions during preload.
+2. Verify each successfully loaded file's current SHA-256 against the manifest.
+3. Record one `phase_gate.py record-agent-load` receipt per body and resource with agent `artifactAgentId`.
+4. Call `phase_gate.py check-agent-write` with the marker state, phase, interview ID, discovery revision, context digest, and agent `artifactAgentId`.
+5. Stop without writing when any load, hash, receipt, or gate check fails.
+
+The approved decision brief is authoritative. Return a new material conflict to the coordinator instead of choosing outside the brief.
 
 ## Process
 
 ### 1. Understand
 
-Run an intensive brainstorming dialogue (interview-framework style):
-- What problem does this solve? Who are the users?
-- What are the success criteria for the whole feature?
-- What are the constraints (technical, timeline, team)?
-- What existing components can be leveraged? (from research)
+Read the approved decision brief, research output, prior epic progress, and loaded skill contracts. Resolve factual gaps from the codebase. Do not run a user interview.
 
 ### 2. Map User Journeys
 
@@ -57,13 +68,13 @@ Present candidate specs as vertical slices:
 - Use architecture thinking to inform ordering
 - Estimate size per spec
 
-### 4. Refine with User
+### 4. Refine Against the Approved Brief
 
 Iterate on the decomposition:
 - Merge specs that are too small
 - Split specs that are too large
 - Adjust dependencies
-- Confirm interface contracts
+- Check interface contracts against approved decisions and research evidence
 - Validate MVP scope boundaries
 
 ## Output: epic.md

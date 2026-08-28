@@ -81,7 +81,7 @@ For local Claude Code development, clone this repository and run `claude --plugi
 $ralph-specum-start user-auth "Add JWT authentication"
 ```
 
-Use `$ralph-specum` when you want Smart Ralph to choose the next action. Codex asks for approval after each spec artifact unless you request quick or autonomous execution. Start with `$ralph-specum-triage` when a goal spans several features or systems.
+Use `$ralph-specum` when you want Smart Ralph to choose the next action. Codex asks for approval after each spec artifact unless the command includes the exact `--quick` flag. Start with `$ralph-specum-triage` when a goal spans several features or systems.
 
 ### Claude Code
 
@@ -171,7 +171,7 @@ Smart Ralph stores progress in `.progress.md` and marks completed work in `tasks
 | `--dry-run` | Preview without writing specs |
 | `--force` | Regenerate the index |
 | `--changed` | Regenerate Git-changed files |
-| `--quick` | Skip interviews |
+| `--quick` | Skip the pre-scan and post-scan interviews |
 
 The scanner detects controllers, services, models, helpers, and migrations. It can also record external URLs, MCP servers, and installed skills. Run the index before starting a feature in a codebase that Smart Ralph has not seen.
 

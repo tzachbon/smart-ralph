@@ -115,6 +115,10 @@ TASK_INDEX=$(jq -r '.taskIndex // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TOTAL_TASKS=$(jq -r '.totalTasks // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 TASK_ITERATION=$(jq -r '.taskIteration // 1' "$STATE_FILE" 2>/dev/null || echo "1")
 QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
+QUICK_SOURCE=$(jq -r '.quickAuthorization.source // empty' "$STATE_FILE" 2>/dev/null || true)
+if [ "$QUICK_SOURCE" != "--quick" ]; then
+    QUICK_MODE=false
+fi
 NATIVE_SYNC=$(jq -r '.nativeSyncEnabled // true' "$STATE_FILE" 2>/dev/null || echo "true")
 
 # Select whenever active or terminal prototype history exists.

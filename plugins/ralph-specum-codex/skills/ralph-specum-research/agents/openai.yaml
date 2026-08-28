@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Research"
-  short_description: "Research, then route requirements or a prototype"
-  default_prompt: "Use $ralph-specum-research to write research.md and offer `continue to requirements`, `continue to prototype`, or `request changes`; route prototype work through $ralph-specum-prototype."
+  short_description: "Gate research, then route requirements or a prototype"
+  default_prompt: "Use $ralph-specum-research to load the selected skill manifest in every mode. In interactive mode, classify replies, grill critical research decisions, and persist the explicit `approve and delegate` choice with confirm source approve-and-delegate; only exact --quick bypasses questions. Run phase_gate.py check-delegation before dispatch. Require the research agent to record manifest loads and pass check-agent-write with the full identity tuple, including discovery revision, before writing research.md. Refuse dispatch or artifact writes on any gate or required-load failure. Route optional prototype work through $ralph-specum-prototype. Ask me to `approve current artifact`, `request changes`, `continue to requirements`, or `continue to prototype` only when quickMode is false; exact --quick continues after successful gates without prompting."
 policy:
   allow_implicit_invocation: false

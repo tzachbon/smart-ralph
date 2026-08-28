@@ -209,6 +209,66 @@ teardown() {
     [ "$status" -eq 0 ]
 }
 
+@test "prototype records: publish CLI writes prevalidated bytes when candidate pathname changes" {
+    local cli prototype_id rendered candidate candidate_hash snapshot
+    prototype_id="publish-prevalidated-bytes"
+
+    for cli in "$(claude_record_cli)" "$(codex_record_cli)"; do
+        rm -rf "$BASE_PATH/prototypes"
+        rm -f "$STATE_FILE"
+        upsert_active "$prototype_id"
+        rendered="$(render_candidate "$cli" "$BASE_PATH" "$(record_json "$prototype_id")")"
+        candidate="$(jq -r .candidate <<< "$rendered")"
+        candidate_hash="$(jq -r .candidateHash <<< "$rendered")"
+        snapshot="$TEST_ROOT/$(basename "$cli").reviewed.md"
+        cp "$candidate" "$snapshot"
+        python3 "$cli" review-candidate \
+            --base-path "$BASE_PATH" --state "$STATE_FILE" --id "$prototype_id" \
+            --candidate-hash "$candidate_hash" >/dev/null
+
+        run python3 - "$cli" "$BASE_PATH" "$STATE_FILE" "$prototype_id" "$candidate" "$snapshot" <<'PY'
+import importlib.util
+import sys
+from pathlib import Path
+
+module_path, base_raw, state_raw, prototype_id, candidate_raw, snapshot_raw = sys.argv[1:]
+sys.path.insert(0, str(Path(module_path).resolve().parent))
+spec = importlib.util.spec_from_file_location("prototype_records_publish_bytes", module_path)
+module = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+spec.loader.exec_module(module)
+
+candidate = Path(candidate_raw)
+snapshot = Path(snapshot_raw).read_bytes()
+real_publish = module.publish_exact
+
+def raced_publish(source, final):
+    candidate.write_bytes(b"unreviewed replacement\n")
+    return real_publish(source, final)
+
+module.publish_exact = raced_publish
+exit_code = module.main(
+    [
+        "publish",
+        "--base-path",
+        base_raw,
+        "--state",
+        state_raw,
+        "--id",
+        prototype_id,
+    ]
+)
+assert exit_code == 0, f"publish exited {exit_code}"
+final = Path(base_raw) / "prototypes" / f"{prototype_id}.md"
+assert final.read_bytes() == snapshot
+assert not candidate.exists()
+PY
+        [ "$status" -eq 0 ]
+        run jq -e --arg id "$prototype_id" '.activePrototypes[$id] == null' "$STATE_FILE"
+        [ "$status" -eq 0 ]
+    done
+}
+
 @test "prototype records: publish rejects a same-id replacement before publishing" {
     local cli prototype_id rendered candidate_hash
     prototype_id="publish-cas"

@@ -2,11 +2,11 @@
 
 > Used by: start.md
 
-This reference contains the full quick mode flow triggered by the `--quick` flag, including input detection, validation, execution sequence, review loops, and rollback.
+This reference contains the full quick mode flow triggered only by an exact `--quick` argument token. `-q`, substrings, and natural-language requests never trigger it. Exact `--quick` with exact `--interactive` is an error.
 
 ## Quick Mode Input Detection
 
-Parse arguments before `--quick` flag and classify input type:
+Tokenize the arguments, remove the exact `--quick` token, and classify the remaining positional input. Preserve other flags for their normal handlers.
 
 ```text
 Input Classification:
@@ -67,11 +67,12 @@ Validation Sequence:
    basePath = "$specsDir/$name"
 4. Create spec directory: mkdir -p "$basePath"
 4a. Ensure gitignore entries exist (.current-spec, .progress.md)
-5. Create `.ralph-state.json` with `locked-state.py merge --state "$basePath/.ralph-state.json"`, setting `source`, `name`, `basePath`, `phase`, task and iteration counters, `commitSpec`, and `quickMode`, plus `--json 'discoveredSkills=[]'`. Preserve unknown fields if recovery state already exists.
+5. Create `.ralph-state.json` with `locked-state.py merge --state "$basePath/.ralph-state.json"`, setting `source`, `name`, `goal`, `basePath`, `phase: research`, task and iteration counters, `commitSpec`, and `quickMode: false`, plus `--json 'discoveredSkills=[]'`. Preserve unknown fields if recovery state already exists.
+5a. Run `phase_gate.py mode "$STATE" --quick` to create the exact persistent quick authorization.
 6. Write .progress.md with original goal
 7. Update .current-spec (bare name or full path)
 8. Update Spec Index: ./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet
-9. Skill Discovery Pass 1: scan skills, match against goal text, invoke matches
+9. Skill Discovery Pass 1: follow `normal-mode-gates.md`, including explicit names, all four catalogs, active duplicate resolution, and shadow recording
 10. Goal Type Detection (BUG_FIX BEFORE state capture):
     - Classify as "fix" or "add" using regex indicators
     - Fix: fix|resolve|debug|broken|failing|error|bug|crash|issue|not working
@@ -103,12 +104,12 @@ Validation Sequence:
          - WARNING: Reproduction command exited 0; bug may not be reproducible with this command
          - Timestamp: <ISO 8601>
          ```
-11. Research Phase: TaskCreate("Research for $spec", activeForm: "Researching"), run Team Research flow (skip walkthrough), clear awaitingApproval, TaskUpdate(completed)
-12. Skill Discovery Pass 2: re-scan skills using goal + research Executive Summary, invoke new matches
-13. Requirements Phase: TaskCreate("Requirements for $spec", activeForm: "Generating requirements"), delegate to product-manager with Quick Mode Directive, review loop, TaskUpdate(completed)
+11. Research Phase: reload selected contracts and record the current `start` manifest; call `begin-interview` for phase `start` to record `bypassed_quick`; run `check-delegation`; create the native task; run Team Research with a gate marker and unique artifact agent ID per research teammate; skip walkthrough; clear awaitingApproval; mark the native task complete
+12. Skill Discovery Pass 2: follow `normal-mode-gates.md` using goal + research Executive Summary
+13. Requirements Phase: reload selected contracts and record the current `requirements` manifest; call `begin-interview`; run `check-delegation`; create the native task; delegate to product-manager with a unique artifact agent ID, gate marker, manifest, and Quick Mode Directive; run review loop; mark complete
 13a. Post-Requirements Prototype Gate: execute the single quick request defined below. Every outcome continues to step 14.
-14. Design Phase: run prototype downstream selection, then TaskCreate("Design for $spec", activeForm: "Generating design"), delegate to architect-reviewer with Quick Mode Directive and selected evidence, review loop, TaskUpdate(completed)
-15. Tasks Phase: TaskCreate("Tasks for $spec", activeForm: "Generating tasks"), delegate to task-planner with Quick Mode Directive, review loop, TaskUpdate(completed)
+14. Design Phase: reload selected contracts and record the current `design` manifest; call `begin-interview`; run `check-delegation`; run prototype downstream selection; create the native task; delegate to architect-reviewer with a unique artifact agent ID, gate marker, manifest, Quick Mode Directive, and selected evidence; run review loop; mark complete
+15. Tasks Phase: reload selected contracts and record the current `tasks` manifest; call `begin-interview`; run `check-delegation`; create the native task; delegate to task-planner with a unique artifact agent ID, gate marker, manifest, and Quick Mode Directive; run review loop; mark complete
 16. Transition to Execution:
     - Count total tasks (number of `- [ ]` checkboxes)
     - Update state: phase="execution", totalTasks=<count>, taskIndex=0
@@ -135,65 +136,11 @@ The quick path has no prototype question, verdict, retry, cleanup, or handoff pr
 
 ## Step 9: Skill Discovery Pass 1
 
-Scan all skill files and match against the goal text:
+Follow `${CLAUDE_PLUGIN_ROOT}/references/normal-mode-gates.md` exactly. Do not use keyword overlap as a substitute for explicit names and semantic relevance. Store selected active sources, shadowed duplicates, warnings, and pass revision.
 
-1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
-   - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
-   - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
-2. Determine **context text**: the goal text only (from step 1)
-3. Tokenize both context text and each skill's `description` using these rules:
-   a. Lowercase the entire string
-   b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
-   c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
-   d. Split on whitespace into word tokens
-   e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
-4. Count word overlap between context tokens and description tokens
-5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
-   - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
-   - On success: add `{ name, matchedAt: "start", invoked: true }` to `discoveredSkills`
-   - On failure: set `invoked: false` -- add `{ name, matchedAt: "start", invoked: false }`, log warning, continue
-6. If no skills match across all scanned skills: log `- No skills matched`
-7. Merge the updated array with `locked-state.py merge --state "$basePath/.ralph-state.json" --json "discoveredSkills=$DISCOVERED_SKILLS_JSON"`
-8. Append a `## Skill Discovery` section to `.progress.md` with match details per skill:
-   ```markdown
-   ## Skill Discovery
-   - **<skill-name>**: matched (keywords: <overlapping words>)
-   - **<skill-name>**: no match
-   - **<skill-name>**: skipped (unreadable)
-   - **<skill-name>**: skipped (no description)
-   ```
-   If no skills match: `- No skills matched`
+## Step 12: Skill Discovery Pass 2
 
-## Step 12: Skill Discovery Pass 2 (Post-Research Retry)
-
-Re-scan skills with enriched context after research completes:
-
-1. Read each `${CLAUDE_PLUGIN_ROOT}/skills/*/SKILL.md` file's YAML frontmatter (`name`, `description` fields)
-   - If a SKILL.md is unreadable (file error, permissions): skip that skill, log warning
-   - If a SKILL.md has no `description` field in frontmatter: skip that skill, log "no description"
-2. Determine **context text**: goal text + the **Executive Summary** section from `research.md`
-3. Tokenize both context text and each skill's `description` using these rules:
-   a. Lowercase the entire string
-   b. Replace hyphens with spaces ("brainstorming-style" -> "brainstorming style")
-   c. Strip all punctuation (parentheses, commas, periods, colons, quotes, brackets, etc.)
-   d. Split on whitespace into word tokens
-   e. Remove stopwords: a, an, the, to, for, with, and, or, in, on, by, is, be, that, this, of, it, should, used, when, asks, needs, about
-4. Count word overlap between context tokens and description tokens
-5. If overlap >= 2 AND skill not already in `discoveredSkills` with `invoked: true`:
-   - Invoke: `Skill({ skill: "ralph-specum:<name>" })`
-   - On success: add `{ name, matchedAt: "post-research", invoked: true }` to `discoveredSkills`
-   - On failure: set `invoked: false` -- add `{ name, matchedAt: "post-research", invoked: false }`, log warning, continue
-6. If no skills match across all scanned skills: log `- No new skills matched`
-7. Merge the updated array with `locked-state.py merge --state "$basePath/.ralph-state.json" --json "discoveredSkills=$DISCOVERED_SKILLS_JSON"`
-8. Append a `### Post-Research Retry` subsection to `.progress.md` under `## Skill Discovery`:
-   ```markdown
-   ### Post-Research Retry
-   - **<skill-name>**: matched (keywords: <overlapping words>)
-   - **<skill-name>**: no match (already invoked)
-   - **<skill-name>**: skipped (unreadable)
-   - **<skill-name>**: skipped (no description)
-   ```
-   If no new skills match: `- No new skills matched`
+After research and before requirements, follow pass 2 in `normal-mode-gates.md`. Retain pass 1 selections and add newly relevant active sources. Record shadowed duplicates and failures.
 
 ## Quick Mode Directive
 
@@ -209,6 +156,8 @@ Running in quick mode with no user feedback. You MUST:
 - Keep scope tight - interpret the goal strictly, do not expand
 - Add `generated: auto` to frontmatter of all artifacts you produce
 ```
+
+Each artifact Task also includes a unique artifact agent ID, the `[RALPH_PHASE_GATE]` marker, and the full selected-skill manifest. Run `check-delegation` immediately before the Task. The artifact agent records one load receipt per successfully loaded selected body/resource and calls `check-agent-write` with the marker's phase, interview ID, discovery revision, context digest, and unique agent ID before its first write.
 
 ## Quick Mode Review Loop (Per Artifact)
 
@@ -226,10 +175,12 @@ WHILE iteration <= 3:
      Review iteration: $iteration of 3
   3. Parse signal:
      - REVIEW_PASS: Proceed to next phase
-     - REVIEW_FAIL (iteration < 3): Revise artifact, increment iteration
+     - REVIEW_FAIL (iteration < 3): Run parent `check-delegation`, create a fresh unique artifact agent ID, and dispatch the phase artifact agent with reviewer feedback, current artifact, gate marker, and full manifest. The agent reloads successful sources, records its own receipts, calls `check-agent-write`, revises, then increment iteration
      - REVIEW_FAIL (iteration >= 3): Append warning to .progress.md, proceed
      - No signal: Treat as REVIEW_PASS (permissive)
 ```
+
+`spec-reviewer` is read-only and does not need the artifact write gate. Every revision writer is a new gated dispatch; never reuse another run's receipt identity.
 
 ## Atomic Rollback
 

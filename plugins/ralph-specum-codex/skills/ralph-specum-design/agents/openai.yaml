@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Design"
-  short_description: "Design with approved prototype evidence"
-  default_prompt: "Consume the requirements, research, coordinator-selected prototype evidence, clean blocker and stale-gate result, and interview context. Write design.md directly. Do not invoke $ralph-specum-design or handle prototype routing; leave routing, blocker delegation, and the next design-decision handoff to the parent coordinator."
+  short_description: "Design with mandatory gates and prototype evidence"
+  default_prompt: "Consume the requirements, research, coordinator-selected prototype evidence, clean blocker and stale-gate result, and interview context. Require the parent coordinator to load the selected skill manifest in every mode and pass phase_gate.py check-delegation before dispatch. In interactive mode, require the explicit `approve and delegate` choice with confirm source approve-and-delegate; only exact --quick bypasses questions. Reload and record the manifest, then pass check-agent-write with the full identity tuple, including discovery revision, before writing. Write design.md directly. Refuse dispatch or artifact writes on any gate or required-load failure. Do not invoke $ralph-specum-design or handle prototype routing; leave routing, blocker delegation, and the next design-decision handoff to the parent coordinator."
 policy:
   allow_implicit_invocation: false

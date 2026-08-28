@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Tasks"
-  short_description: "Plan tasks with approved prototype evidence"
-  default_prompt: "Use $ralph-specum-tasks to select valid prototype evidence before writing tasks.md; route active prototype blockers through $ralph-specum-prototype, then ask for the next implementation decision."
+  short_description: "Plan gated tasks with approved prototype evidence"
+  default_prompt: "Use $ralph-specum-tasks to load the selected skill manifest in every mode and select valid prototype evidence. In interactive mode, classify replies, grill critical delivery decisions, and persist the explicit `approve and delegate` choice with confirm source approve-and-delegate; only exact --quick bypasses questions. Run phase_gate.py check-delegation before dispatch. Route active prototype blockers through $ralph-specum-prototype. Require the task agent to record manifest loads and pass check-agent-write with the full identity tuple, including discovery revision, before writing tasks.md. Refuse dispatch or artifact writes on any gate or required-load failure. Keep the next implementation decision with the parent coordinator. Ask me to `approve current artifact`, `request changes`, or `continue to implementation` only when quickMode is false; exact --quick continues after successful gates without prompting."
 policy:
   allow_implicit_invocation: false

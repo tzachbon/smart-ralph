@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Requirements"
-  short_description: "Requirements, then route design or a prototype"
-  default_prompt: "Use $ralph-specum-requirements to write requirements.md and offer `continue to design`, `continue to prototype`, or `request changes`; route prototype work through $ralph-specum-prototype. The skill contract owns the single autonomous quick gate."
+  short_description: "Gate requirements, then route design or a prototype"
+  default_prompt: "Use $ralph-specum-requirements to load the selected skill manifest in every mode. In interactive mode, classify replies, grill critical product decisions, and persist the explicit `approve and delegate` choice with confirm source approve-and-delegate; only exact --quick bypasses questions. Run phase_gate.py check-delegation before dispatch. Require the product agent to record manifest loads and pass check-agent-write with the full identity tuple, including discovery revision, before writing requirements.md. Refuse dispatch or artifact writes on any gate or required-load failure. Route optional prototype work through $ralph-specum-prototype, and keep the single autonomous quick gate in the skill contract. Ask me to `approve current artifact`, `request changes`, `continue to design`, or `continue to prototype` only when quickMode is false; exact --quick continues after successful gates without prompting."
 policy:
   allow_implicit_invocation: false

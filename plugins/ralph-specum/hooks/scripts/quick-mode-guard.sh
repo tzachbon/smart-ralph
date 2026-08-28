@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PreToolUse hook: Block AskUserQuestion in quick mode
-# Reads .ralph-state.json and denies the call if quickMode is true.
+# Denies only when quickMode has exact --quick authorization.
 
 set -euo pipefail
 
@@ -21,37 +21,60 @@ RALPH_CWD="$CWD"
 export RALPH_CWD
 source "$SCRIPT_DIR/path-resolver.sh"
 
-# Resolve current spec and preserve configured roots
+# Resolve exact quick authorization from the active spec or epic.
+is_exact_quick_state() {
+    local state_file=$1
+    [ -f "$state_file" ] || return 1
+
+    local quick_mode quick_source
+    quick_mode=$(jq -r '.quickMode // false' "$state_file" 2>/dev/null || echo "false")
+    quick_source=$(jq -r '.quickAuthorization.source // empty' "$state_file" 2>/dev/null || true)
+    [ "$quick_mode" = "true" ] && [ "$quick_source" = "--quick" ]
+}
+
+# Resolve the current spec without losing configured-root support.
+BASE_PATH=""
+STATE_FILE=""
 RESOLVED_CONTEXT=$(ralph_resolve_context 2>/dev/null || true)
 RESOLVED_BASE_PATH=$(printf '%s' "$RESOLVED_CONTEXT" | jq -r '.basePath // empty' 2>/dev/null || true)
-if [ -z "$RESOLVED_BASE_PATH" ]; then
-    exit 0
+if [ -n "$RESOLVED_BASE_PATH" ]; then
+    if [[ "$RESOLVED_BASE_PATH" = /* ]]; then
+        BASE_PATH="$RESOLVED_BASE_PATH"
+    else
+        BASE_PATH="$CWD/${RESOLVED_BASE_PATH#./}"
+    fi
+    STATE_FILE="$BASE_PATH/.ralph-state.json"
+    if is_exact_quick_state "$STATE_FILE"; then
+        QUICK_MODE_ACTIVE=true
+    fi
 fi
 
-if [[ "$RESOLVED_BASE_PATH" = /* ]]; then
-    BASE_PATH="$RESOLVED_BASE_PATH"
-else
-    BASE_PATH="$CWD/${RESOLVED_BASE_PATH#./}"
+CURRENT_EPIC_FILE="$CWD/specs/.current-epic"
+if [ -f "$CURRENT_EPIC_FILE" ]; then
+    EPIC_NAME=$(tr -d '[:space:]' < "$CURRENT_EPIC_FILE")
+    if [[ "$EPIC_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+        EPIC_STATE="$CWD/specs/_epics/$EPIC_NAME/.epic-state.json"
+        if is_exact_quick_state "$EPIC_STATE"; then
+            QUICK_MODE_ACTIVE=true
+        fi
+    fi
 fi
 
-STATE_FILE="$BASE_PATH/.ralph-state.json"
-if [ ! -f "$STATE_FILE" ]; then
-    exit 0
-fi
-
-# Check quickMode flag
-QUICK_MODE=$(jq -r '.quickMode // false' "$STATE_FILE" 2>/dev/null || echo "false")
-if [ "$QUICK_MODE" != "true" ]; then
-    exit 0
-fi
+[ "${QUICK_MODE_ACTIVE:-false}" = true ] || exit 0
 
 # Quick mode is active - expose overlay state and block AskUserQuestion
-ACTIVE_COUNT=$(jq -r '(.activePrototypes // {}) | length' "$STATE_FILE" 2>/dev/null || echo 0)
-PROTOTYPE_DIR="$BASE_PATH/prototypes"
+ACTIVE_COUNT=0
+PROTOTYPE_DIR=""
 CANDIDATE_COUNT=0
 FINAL_COUNT=0
 QUARANTINE_COUNT=0
 SELECTION='{}'
+if [ -n "$STATE_FILE" ] && [ -f "$STATE_FILE" ]; then
+    ACTIVE_COUNT=$(jq -r '(.activePrototypes // {}) | length' "$STATE_FILE" 2>/dev/null || echo 0)
+fi
+if [ -n "$BASE_PATH" ]; then
+    PROTOTYPE_DIR="$BASE_PATH/prototypes"
+fi
 if [ -d "$PROTOTYPE_DIR" ]; then
     CANDIDATE_COUNT=$(find "$PROTOTYPE_DIR" -maxdepth 1 -type f -name '.*.candidate.md' 2>/dev/null | wc -l | tr -d ' ')
     FINAL_COUNT=$(find "$PROTOTYPE_DIR" -maxdepth 1 -type f -name '*.md' ! -name '.*' ! -name '*.quarantine.md' 2>/dev/null | wc -l | tr -d ' ')

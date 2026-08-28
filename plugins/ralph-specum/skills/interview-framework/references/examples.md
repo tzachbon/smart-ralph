@@ -1,68 +1,63 @@
 # Grilling Examples
 
-## One Frontier Round
+## Whole critical frontier
 
-Assume repository exploration has established that the project uses REST, has no background worker, and already exposes an authenticated admin API. Two independent user decisions are now unblocked.
+Suppose requirements has three independent critical decisions: primary user, compatibility promise, and data retention. Ask all three in one `AskUserQuestion` call. Put `[Recommended]` on the grounded first option for each and name its tradeoff. Do not ask repository framework, output path, or ticket number when those facts are discoverable.
+
+If five independent critical decisions are open, ask four in the first call and one in the second. The tool maximum is the only batching reason.
+
+Resolve repository facts and domain language before asking. For example, inspect the active authentication boundary and its `CONTEXT.md` definition instead of asking which module owns it. Ask only when the remaining boundary choice materially changes the artifact.
+
+## Partial answer
+
+The user answers the primary-user and retention questions but omits compatibility.
+
+1. Record both answered decision IDs immediately.
+2. Leave compatibility open.
+3. Recompute dependencies.
+4. Ask compatibility plus any decisions it unblocked.
+
+Do not discard the two saved answers or restart the round.
+
+If the user selects `Other`, create a specific dependent decision from the supplied alternative. Do not ask a generic "what did you have in mind?" question.
+
+## Control-only reply
+
+Active frontier: architecture boundary and rollout safety.
+
+User: `proceed`
+
+Result: persist no answer, keep both decisions open, and ask the same frontier again. `continue`, `go ahead`, and `apply the changes` behave the same way.
+
+## Bare skip
+
+Active frontier: test depth and rollback policy.
+
+User: `skip`
+
+Result: record the phase interview as skipped with the recommended test depth and rollback policy listed as defaults and assumptions. Present those choices in the final decision brief and require explicit approval before delegation.
+
+User: `Skip browser tests; keep the rollback task.`
+
+Result: treat the reply as substantive. Persist both decisions. It is not a bare skip.
+
+## Final approval
+
+Present:
 
 ```text
-Q1 - Delivery boundary: Should the first version run inside the existing admin API or introduce a worker?
-
-Recommendation: Keep it in the admin API. The repository has no worker infrastructure, and the current workload does not justify adding one.
-
-Options:
-- [Recommended] Extend the admin API
-- Introduce a background worker
-- Other
-
-Q2 - First-release scope: Should the first version process one item or support batches?
-
-Recommendation: Start with one item. This proves the workflow without committing to batch failure semantics.
-
-Options:
-- [Recommended] One item per request
-- Batch processing
-- Other
+Decision brief
+- Scope: existing API only
+- Compatibility: preserve the current client contract
+- Approach: extend the current module
+- Tradeoff: smallest change, but keeps the current coupling
+- Assumptions: current deployment pipeline remains available
 ```
 
-Ask both questions in the same round because neither depends on the other. A retry-policy question belongs to a later round because it depends on the delivery-boundary answer.
+Ask `Approve and delegate`, `Revise decisions`, or `Cancel`. Only the explicit approval selection completes the gate. After approval, call the helper check and launch the artifact agent in the same response.
 
-Submit this round through `AskUserQuestion` when available. Otherwise render the block in the response and wait for both answers.
+## Artifact revision
 
-## Fact Lookup While a Round Continues
+After the agent writes `design.md`, the user says `apply the changes` and supplies reviewer findings.
 
-If deployment support requires a code lookup, mark that branch `INVESTIGATING`. Continue the round with unrelated scope and user-experience decisions. Ask deployment decisions only after the lookup returns.
-
-## Domain-Language Challenge
-
-If `CONTEXT.md` defines **Workspace** as a tenant boundary and the user says "account" while describing tenant ownership, ask:
-
-```text
-Q3 - Canonical owner term: Do you mean the existing Workspace concept, or a separate user Account?
-
-Recommendation: Use Workspace if the boundary matches the glossary and code. This avoids introducing two names for the same domain concept.
-```
-
-After confirmation, update `CONTEXT.md` in that round.
-
-## Progress Storage
-
-```markdown
-## Interview Responses
-
-### Design Grill - Round 1
-- Facts resolved: Existing admin API at `src/admin`; no worker runtime configured
-- Decisions: Delivery boundary -> extend admin API
-- Decisions: First-release scope -> one item per request
-- Domain language: Workspace -> tenant boundary that owns the operation
-- Frontier after round: failure behavior, retry policy
-
-### Design Grill - Round 2
-- Decisions: Failure behavior -> return the existing problem-details response
-- Decisions: Retry policy -> caller retries; service adds no retry queue
-- Out of scope: batch partial-failure semantics
-- Frontier after round: empty
-
-### Design Grill - Confirmed
-- Shared understanding confirmed by user
-- Chosen approach: extend the existing admin API for single-item processing
-```
+Result: delegate the revision with those findings, show the updated walkthrough, and ask for artifact approval again. Keep the phase in artifact approval until the user explicitly approves.
