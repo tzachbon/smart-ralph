@@ -260,7 +260,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `refactor(prototype): expose overlay state to dispatchers`
   - _Requirements: FR-3, FR-4, FR-5, NFR-3_
 
-- [ ] 2.6 Complete reviewer and schema contracts
+- [x] 2.6 Complete reviewer and schema contracts
   - **Do**: Extend the reviewer for `artifactType: prototype`, deterministic pass/fail, exact candidate bytes, and cleanup-receipt validation. Add the terminal record frontmatter shape without adding prototype to the main phase enum.
   - **Files**: `plugins/ralph-specum/agents/spec-reviewer.md`, `plugins/ralph-specum-codex/agent-configs/spec-reviewer.toml.template`, `plugins/ralph-specum/schemas/spec.schema.json`, `plugins/ralph-specum-codex/schemas/spec.schema.json`
   - **Done when**: Valid prototype records pass both schemas, `phase: prototype` is limited to record artifacts, and reviewer rules require the exact candidate bytes that will publish.

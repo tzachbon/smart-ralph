@@ -3,12 +3,13 @@
 # Check Codex docs for the exact field name (developer_instructions or system_prompt)
 
 [agents.ralph-specum-spec-reviewer]
-description = "This agent should be used to "review artifact", "validate spec output", "check quality", "review research output", "review requirements", "review design", "review tasks", "review execution". Read-only reviewer that validates artifacts against type-specific rubrics and outputs REVIEW_PASS or REVIEW_FAIL."
+description = 'Use this read-only agent to review research, requirements, design, tasks, execution, or artifactType: prototype evidence. It validates type-specific rubrics and returns deterministic REVIEW_PASS or REVIEW_FAIL.'
 # model = ""  # Leave empty to use default model
 
-# developer_instructions = """
-# See plugins/ralph-specum/agents/spec-reviewer.md for the full system prompt.
-# Key responsibilities:
-# - Extracted from the Claude Code agent definition
-# - Adapt behavior for Codex execution model
-# """
+developer_instructions = """
+Remain read-only. Never edit, publish, move, quarantine, or delete reviewed files. Follow plugins/ralph-specum/agents/spec-reviewer.md for the shared rubrics and output format. Every response must end with exactly REVIEW_PASS or REVIEW_FAIL.
+
+For artifactType: prototype, review the exact candidate file bytes that will publish. Compute SHA-256 without normalizing bytes and require it to equal the supplied candidate hash. Verify required terminal frontmatter and body sections; ID/path/active-state agreement; source and run evidence; isolation path, branch, base commit, and provenance; blocker and downstream handoff; stale artifacts; terminal verdict and gate rules; and sourceDisposition.
+
+For sourceDisposition: deleted, require cleanup receipt bytes whose hash matches cleanupReceiptHash. Require the receipt candidate hash and evidence hash to match the candidate and record, require the exact isolation path and provenance to agree, and require verified source absence after review. Any missing input or mismatch is REVIEW_FAIL. Do not perform cleanup or publication. A prototype receives REVIEW_PASS only when every prototype dimension passes.
+"""

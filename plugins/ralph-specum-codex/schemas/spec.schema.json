@@ -330,6 +330,126 @@
       }
     },
 
+    "prototypeFrontmatter": {
+      "type": "object",
+      "description": "Frontmatter for immutable terminal prototype record artifacts",
+      "required": [
+        "spec",
+        "phase",
+        "id",
+        "status",
+        "verdict",
+        "kind",
+        "captureMode",
+        "triggerMode",
+        "triggerPhase",
+        "returnPhase",
+        "decisionOwner",
+        "resolutionMode",
+        "gateApproved",
+        "created",
+        "completed",
+        "sourceDisposition"
+      ],
+      "properties": {
+        "spec": { "type": "string", "minLength": 1 },
+        "phase": { "const": "prototype" },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,79}$"
+        },
+        "status": { "const": "terminal" },
+        "verdict": {
+          "type": "string",
+          "enum": ["validated", "rejected", "inconclusive", "cancelled", "failed", "skipped"]
+        },
+        "kind": { "type": "string", "enum": ["logic", "ui"] },
+        "captureMode": { "type": "string", "enum": ["retained", "ephemeral"] },
+        "triggerMode": { "type": "string", "enum": ["suggested", "explicit", "quick"] },
+        "triggerPhase": {
+          "type": "string",
+          "enum": ["research", "requirements", "design", "tasks", "execution"]
+        },
+        "returnPhase": {
+          "type": "string",
+          "enum": ["research", "requirements", "design", "tasks", "execution"]
+        },
+        "returnTaskIndex": { "type": ["integer", "null"], "minimum": 0 },
+        "decisionOwner": { "type": "string", "enum": ["user", "agent"] },
+        "resolutionMode": { "type": "string", "minLength": 1 },
+        "gateApproved": { "type": "boolean" },
+        "created": { "type": "string", "format": "date-time" },
+        "completed": { "type": "string", "format": "date-time" },
+        "sourceDisposition": {
+          "type": "string",
+          "enum": ["retained", "deleted", "not_created"]
+        },
+        "evidenceHash": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "cleanupReceiptHash": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "supersedes": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$" }
+        },
+        "conflictsWith": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$" }
+        },
+        "resolves": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$" }
+        },
+        "resolvedAt": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["gateApproved"],
+            "properties": { "gateApproved": { "const": true } }
+          },
+          "then": {
+            "properties": { "verdict": { "enum": ["validated", "rejected"] } }
+          }
+        },
+        {
+          "if": {
+            "required": ["sourceDisposition"],
+            "properties": { "sourceDisposition": { "const": "deleted" } }
+          },
+          "then": {
+            "required": ["evidenceHash", "cleanupReceiptHash"],
+            "properties": {
+              "evidenceHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              "cleanupReceiptHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+            }
+          }
+        }
+      ]
+    },
+
+    "artifactFrontmatter": {
+      "type": "object",
+      "description": "Conditional artifact frontmatter branch; prototype is an overlay record, not a main workflow phase",
+      "required": ["phase"],
+      "if": {
+        "properties": { "phase": { "const": "prototype" } },
+        "required": ["phase"]
+      },
+      "then": { "$ref": "#/definitions/prototypeFrontmatter" },
+      "else": {
+        "properties": {
+          "phase": {
+            "enum": ["research", "requirements", "design", "tasks", "execution"]
+          }
+        }
+      }
+    },
+
     "progressFrontmatter": {
       "type": "object",
       "properties": {
