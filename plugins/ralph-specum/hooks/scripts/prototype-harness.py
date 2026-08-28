@@ -116,11 +116,8 @@ def _wait_for_pid_exit(pid: int, timeout_seconds: float) -> bool:
 def _terminate_windows_process_tree(pid: int) -> None:
     if type(pid) is not int or pid <= 0:
         raise HarnessError("unavailable-control", "Harness metadata contains an invalid Windows PID.")
-    if not pid_running(pid):
-        return
 
     command = ["taskkill", "/PID", str(pid), "/T", "/F"]
-    failure = "taskkill did not stop the process tree"
     try:
         result = subprocess.run(
             command,
@@ -130,16 +127,27 @@ def _terminate_windows_process_tree(pid: int) -> None:
             timeout=WINDOWS_TERMINATION_TIMEOUT_SECONDS,
             shell=False,
         )
-        if result.returncode != 0:
-            failure = f"taskkill exited with status {result.returncode}"
     except subprocess.TimeoutExpired:
-        failure = "taskkill timed out"
+        raise HarnessError(
+            "unavailable-control",
+            f"Cannot stop Windows harness process tree {pid}: taskkill timed out",
+        ) from None
     except OSError as exc:
-        failure = f"taskkill could not run: {exc}"
+        raise HarnessError(
+            "unavailable-control",
+            f"Cannot stop Windows harness process tree {pid}: taskkill could not run: {exc}",
+        ) from exc
 
-    if _wait_for_pid_exit(pid, WINDOWS_TERMINATION_TIMEOUT_SECONDS):
-        return
-    raise HarnessError("unavailable-control", f"Cannot stop Windows harness process tree {pid}: {failure}")
+    if result.returncode != 0:
+        raise HarnessError(
+            "unavailable-control",
+            f"Cannot stop Windows harness process tree {pid}: taskkill exited with status {result.returncode}",
+        )
+    if not _wait_for_pid_exit(pid, WINDOWS_TERMINATION_TIMEOUT_SECONDS):
+        raise HarnessError(
+            "unavailable-control",
+            f"Cannot stop Windows harness process tree {pid}: process did not exit after taskkill",
+        )
 
 
 def pid_running(pid: int) -> bool:
@@ -176,6 +184,8 @@ def refresh(metadata: JSON, registry: Path) -> JSON:
     run_id = str(metadata["id"])
     if metadata.get("status") != "running":
         return metadata
+    if metadata.get("terminationUnverified"):
+        return metadata
     if pid_running(int(metadata.get("pid") or 0)):
         return metadata
     metadata["status"] = "completed"
@@ -183,6 +193,14 @@ def refresh(metadata: JSON, registry: Path) -> JSON:
     metadata["output"] = read_output(registry, run_id)
     write_metadata(registry_path(registry, run_id), metadata)
     return metadata
+
+
+def _raise_if_termination_unverified(metadata: JSON) -> None:
+    if metadata.get("terminationUnverified"):
+        raise HarnessError(
+            "unavailable-control",
+            str(metadata.get("controlError") or "Windows process-tree termination is unverified."),
+        )
 
 
 def launch(
@@ -260,6 +278,7 @@ def launch(
 
 def heartbeat(*, registry: Path, run_id: str) -> JSON:
     metadata = refresh(read_metadata(registry, run_id), registry)
+    _raise_if_termination_unverified(metadata)
     if metadata.get("status") != "running":
         return {**metadata, "outcome": "already-complete"}
     now = time.time()
@@ -281,7 +300,18 @@ def interrupt(*, registry: Path, run_id: str, outcome: str = "stopped") -> JSON:
     if metadata.get("status") != "running":
         return {**metadata, "outcome": "already-complete"}
     if os.name == "nt":
-        _terminate_windows_process_tree(metadata.get("pid"))
+        try:
+            _terminate_windows_process_tree(metadata.get("pid"))
+        except HarnessError as exc:
+            metadata["status"] = "running"
+            metadata["terminationUnverified"] = True
+            metadata["controlError"] = str(exc)
+            metadata["controlErrorAt"] = utc_now()
+            write_metadata(registry_path(registry, run_id), metadata)
+            raise
+        metadata.pop("terminationUnverified", None)
+        metadata.pop("controlError", None)
+        metadata.pop("controlErrorAt", None)
     else:
         pid = int(metadata.get("pid") or 0)
         try:
@@ -303,6 +333,7 @@ def interrupt(*, registry: Path, run_id: str, outcome: str = "stopped") -> JSON:
 
 def status(*, registry: Path, run_id: str) -> JSON:
     metadata = refresh(read_metadata(registry, run_id), registry)
+    _raise_if_termination_unverified(metadata)
     return {**metadata, "outcome": str(metadata.get("status"))}
 
 
@@ -312,6 +343,7 @@ def wait(
     stop_at = time.monotonic() + max(0.0, until_seconds)
     while True:
         metadata = refresh(read_metadata(registry, run_id), registry)
+        _raise_if_termination_unverified(metadata)
         if metadata.get("status") != "running":
             return {**metadata, "outcome": "completed", "output": read_output(registry, run_id)}
         now = time.time()
