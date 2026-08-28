@@ -342,7 +342,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `test(prototype): verify Codex parity and Windows paths`
   - _Requirements: FR-8, NFR-2, NFR-5_
 
-- [ ] 3.6 Repair and run focused regressions
+- [x] 3.6 Repair and run focused regressions
   - **Do**: Update only the named assertions affected by the shared state helper, active blocker gates, or version. Preserve all prior phase and stop-loop behavior. Run the focused state, hook, integration, prototype, and Codex suites.
   - **Files**: `tests/state-management.bats`, `tests/stop-hook.bats`, `tests/integration.bats`, `tests/helpers/version-sync.sh`
   - **Done when**: Focused existing suites and all new prototype suites exit zero without weakening old assertions.

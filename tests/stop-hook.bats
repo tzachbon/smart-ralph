@@ -530,10 +530,10 @@ More text")
 @test "both ALL_TASKS_COMPLETE detection paths call update-spec-index.sh" {
     # Structural test: verify both grep paths have the index update call
     local primary_count
-    primary_count=$(sed -n '/tail -500.*ALL_TASKS_COMPLETE/,/exit 0/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || echo 0)
+    primary_count=$(sed -n '/tail -500.*ALL_TASKS_COMPLETE/,/# Fallback: check last 20 lines/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || true)
     [ "$primary_count" -ge 1 ]
 
     local fallback_count
-    fallback_count=$(sed -n '/tail -20.*ALL_TASKS_COMPLETE/,/exit 0/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || echo 0)
+    fallback_count=$(sed -n '/tail -20.*ALL_TASKS_COMPLETE/,/# Validate state file is readable JSON/p' "$STOP_WATCHER_SCRIPT" | grep -c 'update-spec-index.sh' || true)
     [ "$fallback_count" -ge 1 ]
 }
