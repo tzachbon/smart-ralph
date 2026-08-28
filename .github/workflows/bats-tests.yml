@@ -6,6 +6,7 @@ on:
       - 'plugins/**/*.sh'
       - 'plugins/ralph-specum-codex/**'
       - 'tests/**/*.bats'
+      - 'tests/test_prototype_windows.py'
       - 'tests/helpers/**'
       - 'tests/fixtures/**'
       - '.github/workflows/bats-tests.yml'
@@ -14,6 +15,7 @@ on:
       - 'plugins/**/*.sh'
       - 'plugins/ralph-specum-codex/**'
       - 'tests/**/*.bats'
+      - 'tests/test_prototype_windows.py'
       - 'tests/helpers/**'
       - 'tests/fixtures/**'
       - '.github/workflows/bats-tests.yml'
@@ -33,3 +35,15 @@ jobs:
 
       - name: Run bats tests
         run: bats tests/*.bats
+
+  prototype-windows:
+    name: Prototype Windows unittest
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run prototype Windows unittest
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -m unittest tests/test_prototype_windows.py

@@ -334,7 +334,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `test(prototype): cover harness control adapters`
   - _Requirements: FR-5, FR-7, FR-8, NFR-4, NFR-5_
 
-- [ ] 3.5 Test Codex inventory, parity, and native Windows behavior
+- [x] 3.5 Test Codex inventory, parity, and native Windows behavior
   - **Do**: Update fixed plugin inventories and counts for the skill, agent config, references, template, and helpers. Add a stdlib Windows unittest for lock directories, stale handling, flush-and-replace, unsupported directory `fsync`, exclusive publication, and final cleanup-receipt review. Add a `prototype-windows` `windows-latest` job that runs it.
   - **Files**: `tests/codex-plugin.bats`, `tests/codex-platform.bats`, `tests/codex-platform-scripts.bats`, `tests/test_prototype_windows.py`, `.github/workflows/bats-tests.yml`
   - **Done when**: Codex inventories are exact, shared behaviors are asserted, the unittest passes locally, and GitHub Actions has a native Windows job without requiring Bats on Windows.

@@ -15,6 +15,7 @@ ralph-specum-start
 ralph-specum-triage
 ralph-specum-research
 ralph-specum-requirements
+ralph-specum-prototype
 ralph-specum-design
 ralph-specum-tasks
 ralph-specum-implement
@@ -34,6 +35,7 @@ ralph-specum-start
 ralph-specum-triage
 ralph-specum-research
 ralph-specum-requirements
+ralph-specum-prototype
 ralph-specum-design
 ralph-specum-tasks
 ralph-specum-implement
@@ -115,7 +117,12 @@ for skill in (ROOT / "plugins/ralph-specum-codex/skills").glob("ralph-specum*"):
     [ -f "$proot/references/state-contract.md" ]
     [ -f "$proot/references/path-resolution.md" ]
     [ -f "$proot/references/parity-matrix.md" ]
+    [ -f "$proot/references/prototype-coordinator.md" ]
+    [ -f "$proot/templates/prototype.md" ]
+    [ -f "$proot/scripts/locked_state.py" ]
     [ -f "$proot/scripts/merge_state.py" ]
+    [ -f "$proot/scripts/prototype_harness.py" ]
+    [ -f "$proot/scripts/prototype_records.py" ]
     [ -f "$proot/scripts/count_tasks.py" ]
     [ -f "$proot/scripts/resolve_spec_paths.py" ]
     [ -f "$proot/assets/bootstrap/AGENTS.md" ]
@@ -232,6 +239,7 @@ required_tokens = {
     "triage": "| Triage |",
     "research": "| Research |",
     "requirements": "| Requirements |",
+    "prototype": "| Prototype |",
     "design": "| Design |",
     "tasks": "| Tasks |",
     "implement": "| Implement |",
@@ -256,11 +264,11 @@ for command, token in required_tokens.items():
     assert_python '
 expected = {
     "ralph-specum": ["approve current artifact", "request changes", "continue to <named next step>"],
-    "ralph-specum-start": ["wait for explicit direction", "research"],
-    "ralph-specum-research": ["approve current artifact", "continue to requirements"],
-    "ralph-specum-requirements": ["approve current artifact", "continue to design"],
-    "ralph-specum-design": ["approve current artifact", "continue to tasks"],
-    "ralph-specum-tasks": ["approve current artifact", "continue to implementation"],
+    "ralph-specum-start": ["wait for explicit direction", "reconcile prototype records"],
+    "ralph-specum-research": ["continue to requirements", "continue to prototype", "request changes"],
+    "ralph-specum-requirements": ["continue to design", "continue to prototype", "request changes"],
+    "ralph-specum-design": ["select valid prototype evidence", "active prototype blockers", "next design decision"],
+    "ralph-specum-tasks": ["select valid prototype evidence", "active prototype blockers", "next implementation decision"],
     "ralph-specum-cancel": ["whether anything was removed", "exactly what if so"],
     "ralph-specum-triage": ["approve current artifact", "continue to the next spec"],
     "ralph-specum-refactor": ["approve current artifact", "continue to implementation"],
@@ -283,6 +291,7 @@ pairs = {
     "triage": ["specs/_epics", ".current-epic", ".epic-state.json", "dependencies"],
     "research": ["brainstorming", "research.md", "verification tooling"],
     "requirements": ["brainstorming", "requirements.md", "awaitingApproval"],
+    "prototype": ["activePrototypes", "prototype_records.py", "agentId", "create_thread"],
     "design": ["brainstorming", "design.md", "awaitingApproval"],
     "tasks": ["granularity", "[P]", "[VERIFY]", "VE tasks", "taskIndex: first incomplete or totalTasks"],
     "implement": ["[P]", "[VERIFY]", "VE tasks", "tasks.md", "approval", "quick mode", "explicit user direction", "file sets do not overlap", "Marker syntax must be explicitly present"],
@@ -405,6 +414,9 @@ bootstrap = (ROOT / "plugins/ralph-specum-codex/assets/bootstrap/AGENTS.md").rea
 settings = (ROOT / "plugins/ralph-specum-codex/assets/bootstrap/ralph-specum.local.md").read_text()
 count_tasks = (ROOT / "plugins/ralph-specum-codex/scripts/count_tasks.py").read_text()
 merge_state = (ROOT / "plugins/ralph-specum-codex/scripts/merge_state.py").read_text()
+locked_state = (ROOT / "plugins/ralph-specum-codex/scripts/locked_state.py").read_text()
+prototype_records = (ROOT / "plugins/ralph-specum-codex/scripts/prototype_records.py").read_text()
+prototype_harness = (ROOT / "plugins/ralph-specum-codex/scripts/prototype_harness.py").read_text()
 resolve_paths = (ROOT / "plugins/ralph-specum-codex/scripts/resolve_spec_paths.py").read_text()
 frontmatter = settings.split("---", 2)[1]
 
@@ -415,8 +427,13 @@ assert re.search(r"(?m)^quick_mode_default\\s*:", frontmatter) is None
 assert "\"total\"" in count_tasks
 assert "\"completed\"" in count_tasks
 assert "\"next_index\"" in count_tasks
-assert "--set" in merge_state
-assert "--json" in merge_state
+assert "locked_main" in merge_state
+assert "[\"merge\"" in merge_state
+assert "activePrototypes" in locked_state
+assert "review-candidate" in prototype_records
+assert "select-downstream" in prototype_records
+assert "heartbeat" in prototype_harness
+assert "interrupt" in prototype_harness
 assert ".current-spec" in resolve_paths
 assert "specs_dirs" in resolve_paths
 assert "quick_mode_default" not in resolve_paths

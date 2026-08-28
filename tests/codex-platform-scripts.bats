@@ -16,6 +16,14 @@ prototype_harness_script() {
     echo "$(repo_root)/plugins/ralph-specum-codex/scripts/prototype_harness.py"
 }
 
+locked_state_script() {
+    echo "$(repo_root)/plugins/ralph-specum-codex/scripts/locked_state.py"
+}
+
+prototype_records_script() {
+    echo "$(repo_root)/plugins/ralph-specum-codex/scripts/prototype_records.py"
+}
+
 json_query() {
     local path
     path="$1"
@@ -66,6 +74,23 @@ setup() {
     export TEST_REPO
     export PYTHONDONTWRITEBYTECODE=1
     mkdir -p "$TEST_REPO/.claude"
+}
+
+@test "codex scripts: prototype helper inventory exposes locked state records and harness CLIs" {
+    run python3 "$(locked_state_script)" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"upsert-prototype"* ]]
+    [[ "$output" == *"claim-builder"* ]]
+
+    run python3 "$(prototype_records_script)" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"review-candidate"* ]]
+    [[ "$output" == *"select-downstream"* ]]
+
+    run python3 "$(prototype_harness_script)" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"heartbeat"* ]]
+    [[ "$output" == *"interrupt"* ]]
 }
 
 teardown() {
