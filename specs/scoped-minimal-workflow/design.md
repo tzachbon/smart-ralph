@@ -79,7 +79,7 @@ new command -----------+              |
 ```
 
 2. Each phase already reads `.progress.md`; no new handoff store is needed.
-3. Task-planner keeps `Do`, `Files`, `Done when`, `Verify`, and external effects inside the envelope.
+3. Task-planner keeps `Do`, `Files`, `Done when`, `Verify`, `Commit`, and external effects inside the envelope.
 4. Coordinator runs the same check before every delegation; qa-engineer repeats it before any fix.
 5. Spec-executor repeats the check before mutation.
 6. If scope is missing or must change, the delegated agent returns:

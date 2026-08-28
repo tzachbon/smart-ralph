@@ -151,7 +151,7 @@ If no [P] marker on current task, set:
 
 ## Scope Preflight
 
-Before any task delegation, including `[VERIFY]` tasks sent to qa-engineer, read `## Scope Envelope` from `.progress.md`. Compare the current task's Do, Files, Done when, Verify, and external effects with all six fields. Before any parallel batch delegation or native task update, compare every task in `parallelGroup.taskIndices` against the same fields. If any task falls outside the envelope, gate the whole batch before processing its first task.
+Before any task delegation, including `[VERIFY]` tasks sent to qa-engineer, read `## Scope Envelope` from `.progress.md`. Compare the current task's Do, Files, Done when, Verify, Commit, and external effects with all six fields. Before any parallel batch delegation or native task update, compare every task in `parallelGroup.taskIndices` against the same fields. If any task falls outside the envelope, gate the whole batch before processing its first task.
 
 If the Scope Envelope is missing or the task must change a field, do not delegate or mark the native task in progress. Record `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and one exact `Question:`; set `awaitingApproval: true`; keep taskIndex, taskIteration, and globalIteration unchanged; ask the question; and stop. Resume through the approval or rejection flow under After Delegation.
 
@@ -200,14 +200,14 @@ Path: $SPEC_PATH/
 Task: [Full task description]
 
 Task Body:
-[Include Do, Verify, Done when sections]
+[Include the full task block: Do, Files, Done when, Verify, and Commit.]
 
 Scope Envelope:
 [Include the six-field block from .progress.md]
 
 Instructions:
 1. Execute the verification as specified.
-2. Before any fix, compare its Files and external effects with the Scope Envelope and current task.
+2. Before any fix, compare its Do, Files, Done when, Verify, Commit, and external effects with the Scope Envelope and current task.
 3. If either boundary would change, make no mutation and output `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and `Question:`.
 4. Otherwise, fix only what both boundaries authorize.
 5. Output VERIFICATION_PASS if verification succeeds.

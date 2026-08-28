@@ -56,6 +56,15 @@ assert_minimal_implementation_order() {
     [ "$configure_line" -lt "$add_line" ]
 }
 
+assert_full_task_scope_comparison() {
+    local text="$1"
+    local field
+
+    for field in Do Files 'Done when' Verify Commit 'external effects'; do
+        [[ "$text" == *"$field"* ]] || return 1
+    done
+}
+
 @test "normal intake persists all six scope-envelope fields" {
     assert_scope_envelope "$GOAL_INTERVIEW"
 }
@@ -96,19 +105,22 @@ assert_minimal_implementation_order() {
 }
 
 @test "planner checks every task and adjacent finding against the scope envelope" {
+    local task_scope_line
+    task_scope_line="$(grep -F 'Compare every planned task, including its' "$TASK_PLANNER")"
+
     grep -Fq '## Scope Envelope' "$TASK_PLANNER"
     grep -Eiq 'every planned task.*scope envelope|scope envelope.*every planned task' "$TASK_PLANNER"
     grep -Eiq 'adjacent (finding|issue).*scope envelope|scope envelope.*adjacent (finding|issue)' "$TASK_PLANNER"
+    assert_full_task_scope_comparison "$task_scope_line"
 }
 
 @test "executor compares the full task contract and external effects before mutation" {
+    local task_scope_line
+    task_scope_line="$(grep -F "Compare the task's" "$SPEC_EXECUTOR")"
+
     grep -Fq '## Scope Envelope' "$SPEC_EXECUTOR"
     grep -Eiq 'before (any )?mutation|before modifying' "$SPEC_EXECUTOR"
-    grep -Fq 'Do' "$SPEC_EXECUTOR"
-    grep -Fq 'Files' "$SPEC_EXECUTOR"
-    grep -Fq 'Done when' "$SPEC_EXECUTOR"
-    grep -Fq 'Verify' "$SPEC_EXECUTOR"
-    grep -Eiq 'external (effects|actions|side effects)' "$SPEC_EXECUTOR"
+    assert_full_task_scope_comparison "$task_scope_line"
 }
 
 @test "executor emits the exact scope escalation signal and fields" {
@@ -131,15 +143,16 @@ assert_minimal_implementation_order() {
 }
 
 @test "coordinator scope-checks every delegation route before mutation" {
-    local preflight_line verify_route_line
+    local preflight_line verify_route_line task_scope_line
     preflight_line="$(line_number "$COORDINATOR" '## Scope Preflight')"
     verify_route_line="$(line_number "$COORDINATOR" '### VERIFY Task Detection')"
+    task_scope_line="$(grep -F "Compare the current task's" "$COORDINATOR")"
 
     [ -n "$preflight_line" ]
     [ -n "$verify_route_line" ]
     [ "$preflight_line" -lt "$verify_route_line" ]
     grep -Fq 'including `[VERIFY]` tasks sent to qa-engineer' "$COORDINATOR"
-    grep -Fq "Compare the current task's Do, Files, Done when, Verify, and external effects" "$COORDINATOR"
+    assert_full_task_scope_comparison "$task_scope_line"
     grep -Fq 'If the Scope Envelope is missing or the task must change a field, do not delegate' "$COORDINATOR"
 }
 
@@ -162,7 +175,11 @@ assert_minimal_implementation_order() {
 }
 
 @test "qa fixes use the same no-mutation scope escalation" {
-    grep -Fq 'Before any fix, compare its Files and external effects with the Scope Envelope and current task.' "$COORDINATOR"
+    local task_scope_line
+    task_scope_line="$(grep -F 'Before any fix, compare its' "$COORDINATOR")"
+
+    assert_full_task_scope_comparison "$task_scope_line"
+    grep -Fq '[Include the full task block: Do, Files, Done when, Verify, and Commit.]' "$COORDINATOR"
     grep -Fq 'If either boundary would change, make no mutation and output `SCOPE_ESCALATION_REQUIRED` with `Field:`, `Reason:`, and `Question:`.' "$COORDINATOR"
     grep -Fq 'If delegated task output contains `SCOPE_ESCALATION_REQUIRED`' "$COORDINATOR"
 }

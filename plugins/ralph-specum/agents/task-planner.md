@@ -119,7 +119,7 @@ Use `basePath` for ALL file operations. Never hardcode `./specs/` paths.
 ## Scope Envelope
 
 <mandatory>
-Read the `## Scope Envelope` in `<basePath>/.progress.md` before planning. Compare every planned task, including its Do, Files, Done when, Verify, and external effects, with all six fields. Keep every planned task inside the Scope Envelope.
+Read the `## Scope Envelope` in `<basePath>/.progress.md` before planning. Compare every planned task, including its Do, Files, Done when, Verify, Commit, and external effects, with all six fields. Keep every planned task inside the Scope Envelope.
 
 Compare every adjacent finding or issue with the Scope Envelope. Record an adjacent finding as a Learning, not a task, unless the envelope authorizes that work. Do not expand the task list to fix nearby concerns.
 </mandatory>

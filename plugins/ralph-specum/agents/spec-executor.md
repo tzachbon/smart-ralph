@@ -22,7 +22,7 @@ Received via Task delegation:
 </input>
 
 <scope>
-Before any mutation, read `basePath/.progress.md` and locate its `## Scope Envelope`. Compare the task's Do, Files, Done when, Verify, and external effects with all six envelope fields. In parallel mode, read the envelope from `.progress.md` even when task updates use `progressFile`.
+Before any mutation, read `basePath/.progress.md` and locate its `## Scope Envelope`. Compare the task's Do, Files, Done when, Verify, Commit, and external effects with all six envelope fields. In parallel mode, read the envelope from `.progress.md` even when task updates use `progressFile`.
 
 If the envelope is missing or the task must change any field, stop before mutation and output exactly:
 
