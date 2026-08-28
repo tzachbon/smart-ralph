@@ -24,6 +24,10 @@ prototype_records_script() {
     echo "$(repo_root)/plugins/ralph-specum-codex/scripts/prototype_records.py"
 }
 
+claude_plugin_root() {
+    echo "$(repo_root)/plugins/ralph-specum"
+}
+
 json_query() {
     local path
     path="$1"
@@ -91,6 +95,51 @@ setup() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"heartbeat"* ]]
     [[ "$output" == *"interrupt"* ]]
+}
+
+@test "claude package: isolated marketplace source runs each Python helper" {
+    local install_root plugin_root state_file phase current_task
+    install_root="$TEST_REPO/install"
+    plugin_root="$install_root/ralph-specum"
+    state_file="$TEST_REPO/spec/.ralph-state.json"
+    mkdir -p "$install_root"
+    cp -R "$(claude_plugin_root)" "$plugin_root"
+
+    [ ! -e "$install_root/ralph-specum-codex" ]
+
+    run env -u PYTHONDONTWRITEBYTECODE python3 "$plugin_root/hooks/scripts/locked-state.py" merge \
+        --state "$state_file" \
+        --set "phase=research" \
+        --set "currentTask=2"
+    [ "$status" -eq 0 ]
+
+    phase="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["phase"])' "$state_file")"
+    current_task="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["currentTask"])' "$state_file")"
+    [ "$phase" = "research" ]
+    [ "$current_task" = "2" ]
+
+    run env -u PYTHONDONTWRITEBYTECODE python3 "$plugin_root/hooks/scripts/prototype-records.py" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"review-candidate"* ]]
+
+    run env -u PYTHONDONTWRITEBYTECODE python3 "$plugin_root/hooks/scripts/prototype-harness.py" --help
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"heartbeat"* ]]
+
+    run find "$plugin_root" -type d -name __pycache__ -print
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "workflow: all Claude plugin files trigger Bats" {
+    local workflow push_count pull_request_count
+    workflow="$(repo_root)/.github/workflows/bats-tests.yml"
+
+    push_count="$(sed -n '/^  push:/,/^  pull_request:/p' "$workflow" | grep -Fxc "      - 'plugins/ralph-specum/**'")"
+    pull_request_count="$(sed -n '/^  pull_request:/,/^jobs:/p' "$workflow" | grep -Fxc "      - 'plugins/ralph-specum/**'")"
+
+    [ "$push_count" -eq 1 ]
+    [ "$pull_request_count" -eq 1 ]
 }
 
 teardown() {

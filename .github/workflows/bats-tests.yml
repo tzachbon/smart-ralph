@@ -3,7 +3,7 @@ name: Bats Tests
 on:
   push:
     paths:
-      - 'plugins/**/*.sh'
+      - 'plugins/ralph-specum/**'
       - 'plugins/ralph-specum-codex/**'
       - 'tests/**/*.bats'
       - 'tests/test_prototype_windows.py'
@@ -12,7 +12,7 @@ on:
       - '.github/workflows/bats-tests.yml'
   pull_request:
     paths:
-      - 'plugins/**/*.sh'
+      - 'plugins/ralph-specum/**'
       - 'plugins/ralph-specum-codex/**'
       - 'tests/**/*.bats'
       - 'tests/test_prototype_windows.py'
