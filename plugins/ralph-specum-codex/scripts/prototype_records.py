@@ -172,6 +172,12 @@ def validate_record_text(text: str, expected_id: str | None = None) -> JSON:
         raise RecordError("Prototype triggerMode is invalid.")
     if frontmatter.get("sourceDisposition") not in SOURCE_DISPOSITIONS:
         raise RecordError("Prototype sourceDisposition is invalid.")
+    if frontmatter.get("verdict") == "skipped" and frontmatter.get("sourceDisposition") != "not_created":
+        raise RecordError("Skipped prototypes require sourceDisposition not_created.")
+    if frontmatter.get("sourceDisposition") == "not_created":
+        for key in ("sourcePointers", "isolationPath", "isolationBranch"):
+            if frontmatter.get(key) is not None:
+                raise RecordError(f"No-source prototypes require {key}=null when present.")
     if not isinstance(frontmatter.get("gateApproved"), bool):
         raise RecordError("Prototype gateApproved must be a boolean.")
     sections = body_sections(body)
