@@ -122,7 +122,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): add Codex resume visibility`
   - _Requirements: FR-3, FR-5, FR-8, NFR-3, NFR-5_
 
-- [ ] 1.15 Add Codex cancel and help behavior
+- [x] 1.15 Add Codex cancel and help behavior
   - **Do**: Mirror immutable cancellation, source preservation, deletion gates, direct invocation help, and remote-action boundaries.
   - **Files**: `plugins/ralph-specum-codex/skills/ralph-specum-cancel/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-help/SKILL.md`
   - **Done when**: Codex cancel and help behavior matches Claude without deleting retained or normal ephemeral source.
