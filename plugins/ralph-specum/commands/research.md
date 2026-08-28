@@ -153,13 +153,15 @@ Output: $PWD/specs/$spec/research.md
 If `--quick`, skip to Step 7.
 
 Ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
-1. **Approve** (Recommended) -- Accept artifact as-is, advance to next phase
-2. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
-3. **Request changes** -- Provide specific feedback to revise the artifact
+1. **Continue to requirements** (Recommended) -- Approve research and keep the normal phase path
+2. **continue to prototype** -- Approve research and run one suggested prototype before requirements
+3. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
+4. **Request changes** -- Provide specific feedback to revise the artifact
 
-**If "Approve"**: proceed to Step 7.
-**If "Run review"**: Invoke spec-reviewer via Task tool with full research.md content (upstream: none). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
-**If "Request changes" or "Other"**: Ask what to change, invoke subagents with feedback, re-merge, re-display walkthrough, ask again with same 3 choices. Loop until approved.
+**If "Continue to requirements"**: set `nextAction: requirements`, then proceed to Step 7 without creating a prototype.
+**If "continue to prototype"**: set `nextAction: prototype`, treat research as approved, then proceed to Step 7.
+**If "Run review"**: Invoke spec-reviewer via Task tool with full research.md content (upstream: none). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 4-choice question (user decides next action).
+**If "Request changes" or "Other"**: Ask what to change, invoke subagents with feedback, re-merge, re-display walkthrough, ask again with the same 4 choices. Loop until approved.
 
 ## Step 7: Finalize
 
@@ -192,7 +194,13 @@ If commit or push fails, display warning but continue.
 
 (Does not apply in `--quick` mode.)
 
+If `nextAction: prototype`:
+1. Invoke `/ralph-specum:prototype --suggested --return-phase requirements` with the resolved `basePath` at this phase boundary.
+2. Let the prototype coordinator own resume, review, verdict, cleanup, publication, and handoff.
+3. End after the coordinator returns to requirements. Do not generate requirements in this command.
+
+Otherwise:
 1. Display: `-> Next: Run /ralph-specum:requirements`
-2. End your response immediately
-3. Wait for user to explicitly run `/ralph-specum:requirements`
+2. End your response immediately.
+3. Wait for the user to run `/ralph-specum:requirements`.
 </mandatory>

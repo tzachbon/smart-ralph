@@ -58,7 +58,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): add Codex prototype skill`
   - _Requirements: FR-1, FR-6, FR-8, NFR-5_
 
-- [ ] 1.7 Wire Claude planning suggestions and quick ownership
+- [x] 1.7 Wire Claude planning suggestions and quick ownership
   - **Do**: Add `continue to prototype` after successful normal research and requirements. In quick mode run exactly one request after requirements, count the request separately from builder executions, select the highest-risk grounded question, own every decision, perform reviewed cleanup, and continue to design. Select only gate-approved evidence before design or tasks and enforce active-blocker and stale-artifact gates.
   - **Files**: `plugins/ralph-specum/commands/research.md`, `plugins/ralph-specum/commands/requirements.md`, `plugins/ralph-specum/commands/design.md`, `plugins/ralph-specum/commands/tasks.md`, `plugins/ralph-specum/references/quick-mode.md`
   - **Done when**: Normal mode offers but never forces prototype work; quick mode asks no questions, consumes exactly one request, and always continues to design; excluded or stale evidence cannot feed later artifacts.

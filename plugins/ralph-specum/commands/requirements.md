@@ -136,16 +136,18 @@ Output: $PWD/specs/$spec/requirements.md
 If `--quick`, skip to Step 6.
 
 Ask ONE question: "How do you want to proceed?" with these options via AskUserQuestion:
-1. **Approve** (Recommended) -- Accept artifact as-is, advance to next phase
-2. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
-3. **Request changes** -- Provide specific feedback to revise the artifact
+1. **Continue to design** (Recommended) -- Approve requirements and keep the normal phase path
+2. **continue to prototype** -- Approve requirements and run one suggested prototype before design
+3. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
+4. **Request changes** -- Provide specific feedback to revise the artifact
 
-**If "Approve"**: proceed to Step 6.
-**If "Run review"**: Invoke spec-reviewer via Task tool with full requirements.md content (upstream: research.md). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
+**If "Continue to design"**: set `nextAction: design`, then proceed to Step 6 without creating a prototype.
+**If "continue to prototype"**: set `nextAction: prototype`, treat requirements as approved, then proceed to Step 6.
+**If "Run review"**: Invoke spec-reviewer via Task tool with full requirements.md content (upstream: research.md). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 4-choice question (user decides next action).
 **If "Request changes" or "Other"**:
 1. Ask what to change
 2. Re-invoke product-manager using **cleanup-and-recreate** team pattern (TeamDelete old -> TeamCreate new -> spawn with feedback -> wait -> shutdown -> TeamDelete)
-3. Re-display walkthrough, ask again with same 3 choices. Loop until approved.
+3. Re-display walkthrough, ask again with the same 4 choices. Loop until approved.
 
 ## Step 6: Finalize
 
@@ -176,7 +178,17 @@ If commit or push fails, display warning but continue.
 
 (Does not apply in `--quick` mode.)
 
+If `nextAction: prototype`:
+1. Invoke `/ralph-specum:prototype --suggested --return-phase design` with the resolved `basePath` at this phase boundary.
+2. Let the prototype coordinator own resume, review, verdict, cleanup, publication, and handoff.
+3. End after the coordinator returns to design. Do not generate design in this command.
+
+Otherwise:
 1. Display: `-> Next: Run /ralph-specum:design`
-2. End your response immediately
-3. Wait for user to explicitly run `/ralph-specum:design`
+2. End your response immediately.
+3. Wait for the user to run `/ralph-specum:design`.
 </mandatory>
+
+### Quick continuation
+
+When `--quick` is active, do not ask the approval question above. After Step 6, execute the single Post-Requirements Prototype Gate in `${CLAUDE_PLUGIN_ROOT}/references/quick-mode.md`, then continue to design for every prototype outcome. That reference owns the only quick prototype call site; do not invoke it a second time here.

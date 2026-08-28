@@ -33,6 +33,14 @@ Create a task for each item and complete in order:
    - If `--tasks-size` flag is absent: leave `granularity` unchanged in `.ralph-state.json` (preserve any value set by `/ralph-specum:start`)
 8. **Quick mode granularity default**: If `--quick` is present in `$ARGUMENTS` AND `granularity` is not set in `.ralph-state.json`, set `"granularity": "fine"` in `.ralph-state.json`
 9. Read context: `requirements.md`, `design.md`, `research.md` (if exists), `.progress.md`
+10. Run prototype record selection before task generation:
+    ```bash
+    python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+    ```
+11. Include only valid, `gateApproved: true`, non-superseded prototype evidence returned by the selector. Reject skipped, failed, inconclusive, cancelled, malformed, superseded, and explicitly excluded records.
+12. If selection reports an `activePrototypes` blocker for task generation, stop before Step 2 and report the active prototype ID, blocker reason, and resume command. Proven unrelated prototypes do not block task generation.
+13. If selection reports stale `design.md` or an upstream artifact that design depends on, stop and route to the earliest stale phase. Do not generate tasks from stale design.
+14. Pass selected prototype evidence and the clean blocker/stale-gate result to the task-planner.
 
 ## Step 2: Interview (skip if --quick)
 
@@ -101,7 +109,7 @@ Follow the full team lifecycle:
 1. **Clean up stale team (MANDATORY FIRST ACTION)**: Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
 2. **Create team**: `TeamCreate(team_name: "tasks-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate implementation tasks for $spec", activeForm: "Generating tasks")`
-4. **Spawn teammate**: `Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1")` — delegate with requirements, design, and interview context. Instruct to:
+4. **Spawn teammate**: `Task(subagent_type: task-planner, team_name: "tasks-$spec", name: "planner-1")` -- delegate with requirements, design, selected prototype evidence, the clean blocker/stale-gate result, and interview context. Instruct to:
    - Break implementation into POC-first phases (Phase 1-5 per phase-rules.md)
    - Create atomic, autonomous-ready tasks with Do/Files/Done when/Verify/Commit fields
    - Insert quality checkpoints per quality-checkpoints.md

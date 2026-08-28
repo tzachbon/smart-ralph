@@ -111,7 +111,8 @@ Validation Sequence:
 11. Research Phase: TaskCreate("Research for $spec", activeForm: "Researching"), run Team Research flow (skip walkthrough), clear awaitingApproval, TaskUpdate(completed)
 12. Skill Discovery Pass 2: re-scan skills using goal + research Executive Summary, invoke new matches
 13. Requirements Phase: TaskCreate("Requirements for $spec", activeForm: "Generating requirements"), delegate to product-manager with Quick Mode Directive, review loop, TaskUpdate(completed)
-14. Design Phase: TaskCreate("Design for $spec", activeForm: "Generating design"), delegate to architect-reviewer with Quick Mode Directive, review loop, TaskUpdate(completed)
+13a. Post-Requirements Prototype Gate: execute the single quick request defined below. Every outcome continues to step 14.
+14. Design Phase: run prototype downstream selection, then TaskCreate("Design for $spec", activeForm: "Generating design"), delegate to architect-reviewer with Quick Mode Directive and selected evidence, review loop, TaskUpdate(completed)
 15. Tasks Phase: TaskCreate("Tasks for $spec", activeForm: "Generating tasks"), delegate to task-planner with Quick Mode Directive, review loop, TaskUpdate(completed)
 16. Transition to Execution:
     - Count total tasks (number of `- [ ]` checkboxes)
@@ -119,6 +120,22 @@ Validation Sequence:
     - If commitSpec: stage, commit, push spec files
 17. Invoke spec-executor for task 1
 ```
+
+## Post-Requirements Prototype Gate
+
+This is the only quick prototype call site. Run it once after requirements review and before design generation.
+
+1. Reconcile candidates and read `activePrototypes` plus valid terminal records from the resolved `basePath`.
+2. If a prototype blocks design, take over the oldest by `created` timestamp. Preserve its question, source pointers, `returnPhase`, and task index. Record `decisionOwner: agent` and `resolutionMode: quick_takeover`.
+3. If no entry blocks design, select the highest-risk grounded falsifiable question from research and requirements. If none exists, let the coordinator publish `skipped: no suitable question` with `sourceDisposition: not_created`.
+4. Invoke `/ralph-specum:prototype --quick --return-phase design` with the resolved `basePath`.
+5. Set `requestAttempt: 1` for the request. Keep `builderExecutionAttempt` separate: the first launch is 1 and the one allowed mechanical retry is 2. Duplicate reuse, supersession, conflict resolution, skip, and lock failure consume the request without adding a builder execution.
+6. Make every capture, conflict, verdict, timeout, handoff, and cleanup choice without asking the user. Extra active entries remain preserved and excluded from design input.
+7. For ephemeral source, require the cleanup receipt, source-absence check, and `REVIEW_PASS` on the exact final `sourceDisposition: deleted` candidate bytes before publication.
+8. Automatically gate-approve only `validated` and `rejected`. Exclude `inconclusive`, `failed`, `skipped`, `cancelled`, malformed, and superseded records.
+9. Continue to design after every result. On resume, a completed quick request counts as the one request; do not invoke the coordinator again.
+
+The quick path has no prototype question, verdict, retry, cleanup, or handoff prompt. It never delegates a decision to the user.
 
 ## Step 9: Skill Discovery Pass 1
 

@@ -27,6 +27,14 @@ Create a task for each item and complete in order:
 4. Check `requirements.md` exists. If not, error: "Requirements not found. Run /ralph-specum:requirements first."
 5. Read `.ralph-state.json`; clear approval flag: `awaitingApproval: false`
 6. Read context: `requirements.md` (required), `research.md` (if exists), `.progress.md`
+7. Run prototype record selection before design generation:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+   ```
+8. Use only valid, `gateApproved: true`, non-superseded prototype evidence that affects design. Exclude skipped, failed, inconclusive, malformed, superseded, and explicitly excluded records.
+9. If selection reports an `activePrototypes` blocker for the design transition, stop before Step 2 and report the active prototype ID, blocker reason, and resume command.
+10. If selection reports stale requirements, research, design, or task indexes that affect this design generation, stop and route to the earliest stale phase or task. Do not generate design from stale artifacts.
+11. Proven unrelated work may continue only when the selector reports no dependency on the active prototype, stale artifact, stale task index, or approved transfer path.
 
 ## Step 2: Interview (skip if --quick)
 
@@ -78,7 +86,7 @@ Follow the full team lifecycle:
 1. **Clean up stale team (MANDATORY FIRST ACTION)**: Call `TeamDelete()` before anything else. This releases whatever team the session is currently leading (could be from any prior phase). Errors mean no team was active -- harmless, proceed.
 2. **Create team**: `TeamCreate(team_name: "design-$spec")`
 3. **Create task**: `TaskCreate(subject: "Generate technical design for $spec", activeForm: "Generating design")`
-4. **Spawn teammate**: `Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1")` — delegate with requirements, research, and interview context. Instruct to design architecture with mermaid diagrams, component responsibilities, technical decisions with rationale, file structure, error handling, test strategy. Output to `./specs/$spec/design.md`.
+4. **Spawn teammate**: `Task(subagent_type: architect-reviewer, team_name: "design-$spec", name: "architect-1")` -- delegate with requirements, research, selected prototype evidence, stale-gate result, and interview context. Instruct to design architecture with mermaid diagrams, component responsibilities, technical decisions with rationale, file structure, error handling, test strategy. Output to `./specs/$spec/design.md`.
 5. **Wait for completion**: Monitor via TaskList.
 6. **Shutdown**: `SendMessage(type: "shutdown_request", recipient: "architect-1")`
 7. **Collect results**: Read `./specs/$spec/design.md`.
