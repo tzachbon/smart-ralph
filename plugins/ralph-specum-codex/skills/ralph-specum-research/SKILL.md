@@ -28,11 +28,12 @@ You are a **coordinator, not a researcher** -- delegate ALL work to a `research-
 6. Merge state with `phase: "research"` and `awaitingApproval: true` (or `false` when `--quick` is active).
 7. Update `.progress.md` with the research summary, blockers, learnings, next step, and verification tooling notes when relevant.
 8. If spec commits are enabled, commit only the spec artifacts.
+9. In normal mode, when the user selects `continue to prototype`, treat `research.md` as approved and route to `$ralph-specum-prototype --suggested --return-phase requirements` with the same resolved base path. Let that skill own prototype behavior and its return handoff.
 
 ### Stop Behavior
 
-- **Without `--quick`**: STOP HERE. Display the walkthrough summary and approval prompt. Do NOT continue to requirements. Wait for the user to explicitly approve and request the next phase.
-- **With `--quick`**: Continue directly into requirements.
+- **Without `--quick`**: STOP HERE. Display the walkthrough summary and choice prompt. Do NOT continue until the user selects the requirements or prototype route.
+- **With `--quick`**: Continue directly into requirements. Do not request a prototype from research; quick mode has one post-requirements request only.
 
 ## Output Shape
 
@@ -45,4 +46,6 @@ The result should identify existing code patterns, external references, constrai
   - `approve current artifact`
   - `request changes`
   - `continue to requirements`
+  - `continue to prototype`
 - Treat `continue to requirements` as approval of `research.md`.
+- Treat `continue to prototype` as approval of `research.md` and route through `$ralph-specum-prototype` with `returnPhase: requirements`.

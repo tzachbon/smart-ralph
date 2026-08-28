@@ -66,7 +66,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): wire Claude planning gates`
   - _Requirements: FR-1, FR-4, FR-6, NFR-4_
 
-- [ ] 1.8 Mirror research and requirements gates in Codex
+- [x] 1.8 Mirror research and requirements gates in Codex
   - **Do**: Add the normal prototype choices and one post-requirements quick request to the Codex research and requirements skills and routing metadata.
   - **Files**: `plugins/ralph-specum-codex/skills/ralph-specum-research/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-research/agents/openai.yaml`, `plugins/ralph-specum-codex/skills/ralph-specum-requirements/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-requirements/agents/openai.yaml`
   - **Done when**: Codex offers the normal choice and quick mode routes exactly one autonomous request without a user question.

@@ -28,11 +28,22 @@ You are a **coordinator, not a product manager** -- delegate ALL work to a `prod
 7. Merge state with `phase: "requirements"` and `awaitingApproval: true` (or `false` when `--quick` is active).
 8. Update `.progress.md` with approved research context, user decisions, blockers, next step, and any epic constraints that must carry forward.
 9. If spec commits are enabled, commit only the spec artifacts.
+10. In normal mode, when the user selects `continue to prototype`, treat `requirements.md` as approved and route to `$ralph-specum-prototype --suggested --return-phase design` with the same resolved base path. Let that skill own prototype behavior and its return handoff.
+
+### Quick Prototype Gate
+
+After requirements validation and review in quick mode:
+
+1. Select the oldest prototype that blocks design. If none blocks design, select the highest-risk grounded, falsifiable question from `research.md` and `requirements.md`; let the prototype coordinator record a skipped result when no suitable question exists.
+2. Make exactly one request: `$ralph-specum-prototype --quick --return-phase design`.
+3. Treat the request as `requestAttempt: 1`. Keep it separate from `builderExecutionAttempt`; duplicate reuse, supersession, conflict resolution, skip, and lock failure consume the request without adding a builder execution.
+4. Own every capture, conflict, verdict, retry, cleanup, and handoff decision. Ask no user questions and preserve unrelated active prototypes.
+5. Continue to design after every result. Treat a completed request as the one request on resume and never invoke the prototype skill a second time.
 
 ### Stop Behavior
 
-- **Without `--quick`**: STOP HERE. Display the walkthrough summary and approval prompt. Do NOT continue to design. Wait for the user to explicitly approve and request the next phase.
-- **With `--quick`**: Continue directly into design.
+- **Without `--quick`**: STOP HERE. Display the walkthrough summary and choice prompt. Do NOT continue until the user selects the design or prototype route.
+- **With `--quick`**: Run the Quick Prototype Gate once, then continue directly into design for every outcome.
 
 ## Output Shape
 
@@ -45,4 +56,6 @@ The result should include user stories, acceptance criteria, functional requirem
   - `approve current artifact`
   - `request changes`
   - `continue to design`
+  - `continue to prototype`
 - Treat `continue to design` as approval of `requirements.md`.
+- Treat `continue to prototype` as approval of `requirements.md` and route through `$ralph-specum-prototype` with `returnPhase: design`.
