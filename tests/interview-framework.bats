@@ -147,5 +147,5 @@ PHASE_COMMANDS=(
 
     [[ "$plugin_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
     [ "$plugin_version" = "$marketplace_version" ]
-    [ "$plugin_version" = "4.11.0" ]
+    [ "$plugin_version" = "4.11.1" ]
 }
