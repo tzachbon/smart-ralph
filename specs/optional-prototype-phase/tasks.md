@@ -220,7 +220,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
 
 ## Phase 2: Refactoring
 
-- [ ] 2.1 Migrate Claude phase command state writers
+- [x] 2.1 Migrate Claude phase command state writers
   - **Do**: Replace direct creation and `jq` temp/move updates in new, research, requirements, and design with locked helper calls while preserving every existing field.
   - **Files**: `plugins/ralph-specum/commands/new.md`, `plugins/ralph-specum/commands/research.md`, `plugins/ralph-specum/commands/requirements.md`, `plugins/ralph-specum/commands/design.md`
   - **Done when**: The four commands contain no raw write or move of `.ralph-state.json`.

@@ -168,12 +168,13 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 ### Update State
 
 1. Parse "Related Specs" table from research.md
-2. **Merge** into `.ralph-state.json` (preserve all existing fields):
+2. **Merge** into `.ralph-state.json` through the locked helper (preserve all existing and unknown fields):
    ```bash
-   jq --argjson specs "$RELATED_SPECS_JSON" \
-     '. + {"phase": "research", "awaitingApproval": true, "relatedSpecs": $specs}' \
-     "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-     mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+     --state "$SPEC_PATH/.ralph-state.json" \
+     --set "phase=research" \
+     --set "awaitingApproval=true" \
+     --json "relatedSpecs=$RELATED_SPECS_JSON"
    ```
 3. Update `.progress.md` with research completion
 

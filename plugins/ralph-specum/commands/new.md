@@ -129,23 +129,25 @@ The goal MUST be captured before proceeding:
    fi
    ```
 
-5. Create `.ralph-state.json` in the spec directory (note: basePath uses resolved path):
-   ```json
-   {
-     "source": "spec",
-     "name": "$name",
-     "basePath": "$basePath",
-     "phase": "research",
-     "taskIndex": 0,
-     "totalTasks": 0,
-     "taskIteration": 1,
-     "maxTaskIterations": 5,
-     "globalIteration": 1,
-     "maxGlobalIterations": 100
-   }
+5. Create or merge `.ralph-state.json` through the locked helper, using the resolved `basePath` and preserving any unknown fields:
+   ```bash
+   phase="research"
+   if [[ "$ARGUMENTS" == *"--skip-research"* ]]; then
+     phase="requirements"
+   fi
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+     --state "$basePath/.ralph-state.json" \
+     --set "source=spec" \
+     --set "name=$name" \
+     --set "basePath=$basePath" \
+     --set "phase=$phase" \
+     --set "taskIndex=0" \
+     --set "totalTasks=0" \
+     --set "taskIteration=1" \
+     --set "maxTaskIterations=5" \
+     --set "globalIteration=1" \
+     --set "maxGlobalIterations=100"
    ```
-
-   If `--skip-research`, set `"phase": "requirements"` instead.
 
 6. Create initial `.progress.md` with the captured goal:
    ```markdown

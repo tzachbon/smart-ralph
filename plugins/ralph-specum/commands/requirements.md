@@ -24,7 +24,12 @@ Create a task for each item and complete in order:
 1. If `$ARGUMENTS` contains a spec name, use `ralph_find_spec()` to resolve it; otherwise use `ralph_resolve_current()`
 2. If no active spec, error: "No active spec. Run /ralph-specum:new <name> first."
 3. Check the resolved spec directory exists
-4. Read `.ralph-state.json`; clear approval flag: `awaitingApproval: false`
+4. Clear the approval flag through the locked helper while preserving every other field:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+     --state "$SPEC_PATH/.ralph-state.json" \
+     --set "awaitingApproval=false"
+   ```
 5. Read context: `research.md` (if exists), `.progress.md`, original goal
 
 ## Step 2: Interview (skip if --quick)
@@ -153,11 +158,12 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 
 ### Update State
 
-1. **Merge** into `.ralph-state.json` (preserve all existing fields):
+1. **Merge** into `.ralph-state.json` through the locked helper (preserve all existing and unknown fields):
    ```bash
-   jq '. + {"phase": "requirements", "awaitingApproval": true}' \
-     "$SPEC_PATH/.ralph-state.json" > "$SPEC_PATH/.ralph-state.json.tmp" && \
-     mv "$SPEC_PATH/.ralph-state.json.tmp" "$SPEC_PATH/.ralph-state.json"
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/locked-state.py" merge \
+     --state "$SPEC_PATH/.ralph-state.json" \
+     --set "phase=requirements" \
+     --set "awaitingApproval=true"
    ```
 2. Update `.progress.md`: mark research as implicitly approved, set current phase
 
