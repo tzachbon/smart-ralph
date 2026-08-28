@@ -1,6 +1,6 @@
 interface:
   display_name: "Ralph Specum Implement"
   short_description: "Execute or resume a Ralph backlog"
-  default_prompt: "Use $ralph-specum-implement to execute the remaining Ralph tasks only after I approved tasks or explicitly told Ralph to continue."
+  default_prompt: "Use $ralph-specum-implement to reconcile prototype recovery, honor activePrototypes and stale task blockers, restore returnTaskIndex, and execute eligible Ralph tasks only after I approved tasks or explicitly told Ralph to continue."
 policy:
   allow_implicit_invocation: false

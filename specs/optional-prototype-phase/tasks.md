@@ -106,11 +106,11 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): preserve source on Claude cancel`
   - _Requirements: FR-2, FR-3, FR-4, NFR-1, NFR-3_
 
-- [ ] 1.13 Gate Codex implementation and refactor dispatch
+- [x] 1.13 Gate Codex implementation and refactor dispatch
   - **Do**: Mirror active-blocker, stale-task, resume-index, and completion-state checks in Codex implement, refactor, and stop-hook surfaces with routing metadata.
   - **Files**: `plugins/ralph-specum-codex/skills/ralph-specum-implement/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-implement/agents/openai.yaml`, `plugins/ralph-specum-codex/skills/ralph-specum-refactor/SKILL.md`, `plugins/ralph-specum-codex/skills/ralph-specum-refactor/agents/openai.yaml`, `plugins/ralph-specum-codex/hooks/stop-watcher.sh`
   - **Done when**: Codex dispatch behavior matches Claude and active recovery state survives completion attempts.
-  - **Verify**: `bash -n plugins/ralph-specum-codex/hooks/stop-watcher.sh && rg -l 'activePrototypes|stale|returnTaskIndex' plugins/ralph-specum-codex/skills/ralph-specum-{implement,refactor}/SKILL.md plugins/ralph-specum-codex/hooks/stop-watcher.sh | wc -l | grep -q '^3$'`
+  - **Verify**: `bash -n plugins/ralph-specum-codex/hooks/stop-watcher.sh && test "$(rg -l 'activePrototypes|stale|returnTaskIndex' plugins/ralph-specum-codex/skills/ralph-specum-{implement,refactor}/SKILL.md plugins/ralph-specum-codex/hooks/stop-watcher.sh | wc -l | tr -d '[:space:]')" = 3`
   - **Commit**: `feat(prototype): gate Codex execution dispatch`
   - _Requirements: FR-1, FR-3, FR-4, FR-5, FR-8, NFR-5_
 
