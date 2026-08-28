@@ -360,7 +360,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `fix(prototype): pass complete local quality gate` only if a focused fix is needed
   - _Requirements: FR-8, NFR-5_
 
-- [ ] V2 [VERIFY] Audit the final contract and scope
+- [x] V2 [VERIFY] Audit the final contract and scope
   - **Do**: Verify one common state protocol, no hardcoded resolved spec path, no unguarded direct state writer, no top-level prototype phase enum, no automatic remote action, exact 4.11.0 version parity, native Windows CI, and no unrelated tracked change. Record the final commands and results in `.progress.md`.
   - **Files**: Read-only except `.progress.md`
   - **Done when**: The diff maps to the approved exact file map and every FR/NFR has passing test or static evidence.
