@@ -302,7 +302,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Test locked state, ownership, paths, and races
+- [x] 3.1 Test locked state, ownership, paths, and races
   - **Do**: Add Bats coverage for concurrent merge/upsert/remove, compare-and-set builder claim, lease operations, phase merges, deletion refusal, configured roots, POSIX and Windows lock paths, stale Windows locks, lock timeout, quick publisher-only failure, crash recovery, and request versus builder execution counts.
   - **Files**: `tests/prototype-state.bats`
   - **Done when**: The tests prove no lost updates, no duplicate builder launch, no wrong-root writes, and compatible Codex merge behavior.
