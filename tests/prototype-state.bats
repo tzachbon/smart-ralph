@@ -242,7 +242,7 @@ teardown() {
 }
 
 @test "prototype state: POSIX lock path times out without changing state" {
-    local cli lock_path ready holder before after
+    local cli lock_path ready holder before after ready_waits lock_status lock_output
     cli="$(state_cli)"
     lock_path="$(dirname "$STATE_FILE")/.ralph-state.lock"
     ready="$TEST_ROOT/lock-ready"
@@ -256,19 +256,27 @@ lock_path.parent.mkdir(parents=True, exist_ok=True)
 with lock_path.open("a+") as handle:
     fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
     pathlib.Path(sys.argv[2]).touch()
-    time.sleep(1)
+    time.sleep(30)
 ' "$lock_path" "$ready" &
     holder=$!
-    for _ in 1 2 3 4 5 6 7 8 9 10; do
-        [ -e "$ready" ] && break
+    ready_waits=0
+    while [ ! -e "$ready" ] && [ "$ready_waits" -lt 100 ]; do
         sleep 0.05
+        ready_waits=$((ready_waits + 1))
     done
+    if [ ! -e "$ready" ]; then
+        kill "$holder" >/dev/null 2>&1 || true
+        wait "$holder" >/dev/null 2>&1 || true
+    fi
     [ -e "$ready" ]
 
     run python3 "$cli" merge --state "$STATE_FILE" --timeout 0.1 --set phase=design
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"Timed out acquiring lock:"* ]]
-    wait "$holder"
+    lock_status="$status"
+    lock_output="$output"
+    kill "$holder" >/dev/null 2>&1 || true
+    wait "$holder" >/dev/null 2>&1 || true
+    [ "$lock_status" -ne 0 ]
+    [[ "$lock_output" == *"Timed out acquiring lock:"* ]]
     [ -f "$lock_path" ]
     after="$(shasum -a 256 "$STATE_FILE" | awk '{print $1}')"
     [ "$after" = "$before" ]

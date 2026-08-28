@@ -352,7 +352,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
 
 ## Phase 4: Quality Gates
 
-- [ ] V1 [VERIFY] Run the complete local quality gate
+- [x] V1 [VERIFY] Run the complete local quality gate
   - **Do**: Run all Bats files, the native Windows unittest on the local platform, version sync, shell syntax, schema parsing, whitespace checks, and a tracked-file audit. Restore any test-fixture mutation under `specs/.index/` to its exact pretest bytes before judging the tree.
   - **Files**: Read-only except fixes required by failing checks
   - **Done when**: Every command exits zero and only feature files remain changed.
