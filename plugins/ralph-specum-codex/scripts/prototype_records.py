@@ -288,7 +288,7 @@ def publish_exact(candidate: Path, final: Path) -> None:
             raise
         write_exclusive(final, candidate.read_bytes())
         return
-    with final.open("rb") as handle:
+    with final.open("rb+") as handle:
         os.fsync(handle.fileno())
     fsync_dir(final.parent)
 
