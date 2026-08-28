@@ -39,6 +39,20 @@ specs_dirs: ["./specs", "./packages/api/specs", "./packages/web/specs"]
 2. Check the spec's tasks.md exists. If not: error "Tasks not found. Run /ralph-specum:tasks first."
 3. Set `$SPEC_PATH` to the resolved spec directory path. All references use this variable.
 
+### Prototype Dispatch Gate
+
+Before initialization or task dispatch:
+
+1. Read `.ralph-state.json`. When `activePrototypes` is absent or empty, keep the existing execution path unchanged.
+2. When active entries exist, reconcile and select records with the resolved `basePath`:
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" reconcile --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+   python3 "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/prototype-records.py" select-downstream --base-path "$SPEC_PATH" --state "$SPEC_PATH/.ralph-state.json"
+   ```
+3. Stop before dispatch when `activeBlockers` targets execution or the current task, when `staleTaskIndexes` contains the current `taskIndex`, or when `staleArtifacts` contains an upstream artifact required by tasks. Report the prototype ID and route resume through `/ralph-specum:prototype --resume <id>`.
+4. Preserve eligible work when the selector proves that the active prototype, stale artifact, stale task index, and approved transfer paths do not affect the current task.
+5. On prototype return, restore `taskIndex` from the entry's `returnTaskIndex` before dispatch. Verify that the restored index still points to the first eligible incomplete task.
+
 ## Step 2: Parse Arguments
 
 From `$ARGUMENTS`:
@@ -159,7 +173,7 @@ Then Read and follow these references in order. They contain the complete coordi
 - **You are a COORDINATOR, not an implementer.** Delegate via Task tool. Never implement yourself.
 - **Fully autonomous.** Never ask questions or wait for user input.
 - **State-driven loop.** Read .ralph-state.json each iteration to determine current task.
-- **Completion check.** If taskIndex >= totalTasks, verify all [x] marks, delete state file, output ALL_TASKS_COMPLETE.
+- **Completion check.** If taskIndex >= totalTasks, verify all [x] marks. If `activePrototypes` is nonempty, keep the state file and finish or cancel those entries before completion. Delete state only after the active map is empty, then output ALL_TASKS_COMPLETE.
 - **Task delegation.** Extract full task block from tasks.md, delegate to spec-executor (or qa-engineer for [VERIFY] tasks).
 - **After TASK_COMPLETE.** Run all 3 verification layers, then update state (advance taskIndex, reset taskIteration).
 - **On failure.** Parse failure output, increment taskIteration. If recovery-mode: generate fix task. If max retries exceeded: error and stop.
@@ -177,17 +191,18 @@ Then Read and follow these references in order. They contain the complete coordi
 
 When all tasks complete (taskIndex >= totalTasks):
 1. Verify all tasks marked [x] in tasks.md
-2. Delete .ralph-state.json
-3. Keep .progress.md (preserve learnings and history)
-4. Cleanup orphaned temp progress files: `find "$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true`
-5. Update spec index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
-6. Commit remaining spec changes:
+2. Reconcile prototype records. If `activePrototypes` is nonempty, keep `.ralph-state.json`, report the remaining IDs, and stop before `ALL_TASKS_COMPLETE`.
+3. Delete `.ralph-state.json` only after the active map is empty.
+4. Keep .progress.md (preserve learnings and history)
+5. Cleanup orphaned temp progress files: `find "$SPEC_PATH" -name ".progress-task-*.md" -mmin +60 -delete 2>/dev/null || true`
+6. Update spec index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`
+7. Commit remaining spec changes:
    ```bash
    git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
    git diff --cached --quiet || git commit -m "chore(spec): final progress update for $spec"
    ```
-7. Check for PR link: `gh pr view --json url -q .url 2>/dev/null`
-8. Output: ALL_TASKS_COMPLETE (and PR link if exists)
+8. Check for PR link: `gh pr view --json url -q .url 2>/dev/null`
+9. Output: ALL_TASKS_COMPLETE (and PR link if exists)
 
 ## Output on Start
 

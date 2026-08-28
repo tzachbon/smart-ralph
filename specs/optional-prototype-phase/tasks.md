@@ -82,7 +82,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `feat(prototype): mirror Codex evidence gates`
   - _Requirements: FR-3, FR-4, FR-8, NFR-5_
 
-- [ ] 1.10 Gate Claude implementation and refactor dispatch
+- [x] 1.10 Gate Claude implementation and refactor dispatch
   - **Do**: Block stale or prototype-dependent task dispatch, use `returnTaskIndex` for resume, preserve state while active entries exist, and enforce the same checks in refactor and the stop hook.
   - **Files**: `plugins/ralph-specum/commands/implement.md`, `plugins/ralph-specum/commands/refactor.md`, `plugins/ralph-specum/hooks/scripts/stop-watcher.sh`
   - **Done when**: Only dependent tasks pause and completion cannot delete recovery state while active prototypes remain.
