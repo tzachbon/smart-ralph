@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y bats jq
+          sudo apt-get install -y bats jq ripgrep
 
       - name: Run bats tests
         run: bats tests/*.bats
