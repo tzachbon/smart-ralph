@@ -27,7 +27,7 @@ Derive `RALPH_CODEX_PLUGIN_ROOT` from this loaded skill: take the directory cont
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/locked_state.py"` for locked state and `activePrototypes` mutations
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_records.py"` for reviewed immutable prototype records and downstream selection
 - `"$RALPH_CODEX_PLUGIN_ROOT/scripts/prototype_harness.py"` for bounded builder control outcomes and retry metadata
-- `"$RALPH_CODEX_PLUGIN_ROOT/assets/templates/"` for the canonical Ralph markdown file shapes
+- `"$RALPH_CODEX_PLUGIN_ROOT/templates/"` for the canonical Ralph markdown file shapes
 - `"$RALPH_CODEX_PLUGIN_ROOT/assets/bootstrap/"` when the user wants optional project-local Codex guidance
 
 ## Primary Routing

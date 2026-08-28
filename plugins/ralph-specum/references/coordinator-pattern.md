@@ -491,7 +491,8 @@ Commit after every task, but batch pushes to avoid excessive remote operations.
    - Commit count: 5+ commits since last push
    - Approval gate: awaitingApproval about to be set
 3. If any condition is met, run the Prototype Evidence Push Gate in `${CLAUDE_PLUGIN_ROOT}/references/commit-discipline.md`, then run `git push` only when that gate permits it.
-4. Log push in .progress.md: "Pushed N commits (reason: phase boundary / batch limit / approval gate)"
+4. When the gate skips or denies the push, end every dependent PR, CI, review, and issue path. Do not run `gh pr create`, `gh pr merge`, `gh pr checks`, `gh pr view`, `gh api`, `gh run`, `gh issue`, remote review polling, issue writes, or later remote steps that depend on that push. Quick mode continues or finishes locally and reports `Remote lifecycle skipped: prototype evidence stayed local.` Normal mode waits at its authorization boundary.
+5. After a permitted push, preserve the existing normal remote lifecycle and log in .progress.md: "Pushed N commits (reason: phase boundary / batch limit / approval gate)"
 
 ## Progress Merge (Parallel Only)
 
@@ -572,7 +573,7 @@ Before outputting:
    git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
    git diff --cached --quiet || git commit -m "chore(spec): final progress update for $spec"
    ```
-7. Check for PR and output link if exists: `gh pr view --json url -q .url 2>/dev/null`
+7. Check for a PR link with `gh pr view --json url -q .url 2>/dev/null` only while the permitted-push remote lifecycle is active; otherwise retain the remote-lifecycle-skipped report
 
 This signal terminates the Ralph Loop.
 
@@ -715,6 +716,8 @@ CRITICAL: Phase 5 is continuous autonomous PR management. Do NOT stop until all 
 PR Creation -> CI Monitoring -> Review Check -> Fix Issues -> Push -> Repeat
 ```
 
+Enter or continue this loop only after the Prototype Evidence Push Gate completes the required push. A skipped or denied push ends the dependent remote lifecycle. Quick mode completes applicable local criteria without questions and reports `Remote lifecycle skipped: prototype evidence stayed local.` Normal mode waits at the gate. Do not run `gh pr create`, `gh pr merge`, `gh pr checks`, `gh pr view`, `gh api`, `gh run`, `gh issue`, remote review polling, issue writes, or any other remote loop step after the gate blocks its push.
+
 **Step 1: Create PR (if not exists)**
 
 Delegate to spec-executor:
@@ -724,10 +727,10 @@ Task: Create pull request
 Do:
 1. Verify not on default branch: git branch --show-current
 2. Run the Prototype Evidence Push Gate in `${CLAUDE_PLUGIN_ROOT}/references/commit-discipline.md`, then push the branch only when permitted: git push -u origin <branch>
-3. Create PR: gh pr create --title "feat: <spec>" --body "<summary>"
+3. Only after step 2 completes a permitted push, create the PR: gh pr create --title "feat: <spec>" --body "<summary>"
 
-Verify: gh pr view shows PR created
-Done when: PR URL returned
+Verify: after a permitted push, gh pr view shows the created PR; after a skipped or denied push, verify the local remote-lifecycle-skipped report
+Done when: PR URL returned after a permitted push, or applicable local criteria complete after a skipped or denied push
 Commit: None
 ```
 
@@ -743,7 +746,7 @@ While (CI checks not all green):
      - Delegate new task to spec-executor with task index and Files list
      - Wait for TASK_COMPLETE
      - Run the Prototype Evidence Push Gate, then push fixes if the gate permits and spec-executor has not pushed them
-     - Restart wait cycle
+     - Restart the wait cycle only after the gate completes the fix push; otherwise end the dependent remote lifecycle and finish from local criteria
   4. If pending:
      - Continue waiting
   5. If all green:
@@ -762,19 +765,19 @@ While (CI checks not all green):
    - Create tasks from reviews (add to tasks.md as Phase 5.X)
    - Delegate each to spec-executor
    - Wait for completion
-   - Push fixes
-   - Return to Step 2 (re-check CI)
+   - Run the Prototype Evidence Push Gate, then push fixes only when permitted
+   - Return to Step 2 only after the permitted push; otherwise end the dependent remote lifecycle and finish from local criteria
 4. If no unresolved reviews/comments:
    - Proceed to Step 4
 ```
 
 **Step 4: Final Validation**
 
-All must be true:
+All applicable criteria must be true:
 - All Phase 1-4 tasks complete (checked [x])
-- All Phase 5 tasks complete
-- CI checks all green
-- No unresolved review comments
+- All Phase 5 tasks complete or marked skipped by the remote gate
+- CI checks all green while the remote lifecycle is active
+- No unresolved review comments while the remote lifecycle is active
 - Zero test regressions (all existing tests pass)
 - Code is modular/reusable (verified in .progress.md)
 
@@ -783,7 +786,7 @@ All must be true:
 When all Step 4 criteria met:
 1. Update .progress.md with final state
 2. Reconcile prototype records, require `activePrototypes` to be empty, and delete `.ralph-state.json` with `locked-state.py delete-state`
-3. Get PR URL: `gh pr view --json url -q .url`
+3. Get the PR URL with `gh pr view --json url -q .url` only while the permitted-push remote lifecycle is active; otherwise retain the remote-lifecycle-skipped report
 4. Output: ALL_TASKS_COMPLETE
 5. Output: PR link
 

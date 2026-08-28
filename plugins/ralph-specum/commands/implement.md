@@ -170,6 +170,7 @@ Then Read and follow these references in order. They contain the complete coordi
 - **After TASK_COMPLETE.** Run all 3 verification layers, then update state (advance taskIndex, reset taskIteration).
 - **On failure.** Parse failure output, increment taskIteration. If recovery-mode: generate fix task. If max retries exceeded: error and stop.
 - **Modification requests.** If TASK_MODIFICATION_REQUEST in output, process SPLIT_TASK / ADD_PREREQUISITE / ADD_FOLLOWUP per coordinator-pattern.md.
+- **Remote lifecycle.** Apply the Prototype Evidence Push Gate before a push-dependent PR, CI, review, or issue path. When the gate skips or denies the push, end the dependent remote lifecycle path: do not run `gh pr create`, `gh pr merge`, `gh pr checks`, `gh pr view`, `gh api`, `gh run`, `gh issue`, remote review polling, issue writes, or later remote steps that depend on that push. Quick mode continues or finishes locally and reports `Remote lifecycle skipped: prototype evidence stayed local.` Preserve the normal remote lifecycle only after the gate completes the push.
 
 ### Error States (never output ALL_TASKS_COMPLETE)
 
@@ -193,7 +194,7 @@ When all tasks complete (taskIndex >= totalTasks):
    git add "$SPEC_PATH/tasks.md" "$SPEC_PATH/.progress.md" ./specs/.index/
    git diff --cached --quiet || git commit -m "chore(spec): final progress update for $spec"
    ```
-8. Check for PR link: `gh pr view --json url -q .url 2>/dev/null`
+8. Check for a PR link with `gh pr view --json url -q .url 2>/dev/null` only when the Prototype Evidence Push Gate completed the branch push. If the gate skipped or denied the push, skip this dependent remote lookup.
 9. Output: ALL_TASKS_COMPLETE (and PR link if exists)
 
 ## Output on Start

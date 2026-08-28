@@ -450,9 +450,9 @@ Replace generic "Quality Checkpoint" tasks with [VERIFY] tagged tasks:
   - **Commit**: `chore(scope): pass local CI` (if fixes needed)
 
 - [ ] V5 [VERIFY] CI pipeline passes
-  - **Do**: Verify GitHub Actions/CI passes after push
-  - **Verify**: `gh pr checks` shows all green
-  - **Done when**: CI pipeline passes
+  - **Do**: Verify GitHub Actions/CI only after the Prototype Evidence Push Gate completes the branch push; otherwise mark this remote verification skipped
+  - **Verify**: While the remote lifecycle is active, `gh pr checks` shows all green; otherwise verify the remote-lifecycle-skipped report
+  - **Done when**: CI passes, or the gate ended the remote lifecycle and applicable local criteria pass
   - **Commit**: None
 
 - [ ] V6 [VERIFY] AC checklist
@@ -665,7 +665,7 @@ After POC validated, clean up code.
 <mandatory>
 NEVER push directly to the default branch (main/master). Always use feature branches and PRs.
 
-Every generated task that can push must include the Prototype Evidence Push Gate. Immediately before each push, inspect the exact outbound commit range for `**/prototypes/*.md`. Normal mode requires separate explicit authorization naming every exact record in that range; `commitSpec` and generic branch or PR approval do not count. Quick mode asks no question and skips every push. Never push an isolated `prototype/<spec>/<id>` source branch. Preserve existing pushes when the outbound range has no prototype record.
+Every generated task that can push must include the Prototype Evidence Push Gate. Immediately before each push, inspect the exact outbound commit range for `**/prototypes/*.md`. Normal mode requires separate explicit authorization naming every exact record in that range; `commitSpec` and generic branch or PR approval do not count. Quick mode asks no question and skips every push. A skipped or denied push ends the dependent remote lifecycle path: do not generate or run later `gh pr create`, `gh pr merge`, `gh pr checks`, `gh pr view`, `gh api`, `gh run`, `gh issue`, remote review polling, issue writes, or other remote steps that depend on that push. Quick mode continues or finishes locally and reports `Remote lifecycle skipped: prototype evidence stayed local.` Preserve existing pushes and their remote lifecycle when the gate permits them. Never push an isolated `prototype/<spec>/<id>` source branch.
 
 **NOTE**: Branch management is handled at startup (via `/ralph-specum:start`).
 You should already be on a feature branch by the time you reach Phase 4.
@@ -674,13 +674,13 @@ If for some reason you're still on the default branch:
 1. STOP and alert the user - this should not happen
 2. The user needs to run `/ralph-specum:start` properly first
 
-**Default Deliverable**: Pull request with ALL completion criteria met:
+**Default Deliverable after a permitted push**: Pull request with all completion criteria met:
 - Zero test regressions
 - Code is modular/reusable
 - CI checks green
 - Review comments addressed
 
-Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
+Phase 4 transitions into Phase 5 for continuous validation after a permitted push. When the gate skips or denies the push, generate local completion and remote-lifecycle-skipped criteria instead.
 </mandatory>
 
 - [ ] 4.1 Local quality check
@@ -697,18 +697,18 @@ Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user (should not happen - branch is set at startup)
     3. Run the Prototype Evidence Push Gate, then push the branch only when permitted: `git push -u origin <branch-name>`
-    4. Create PR using gh CLI: `gh pr create --title "<title>" --body "<summary>"`
+    4. Only after step 3 completes a permitted push, create the PR using gh CLI: `gh pr create --title "<title>" --body "<summary>"`
     5. If gh CLI unavailable, provide URL for manual PR creation
-  - **Verify**: Use gh CLI to verify CI:
+  - **Verify**: Only after the permitted push and PR creation, use gh CLI to verify CI:
     - `gh pr checks --watch` (wait for CI completion)
     - Or `gh pr checks` (poll current status)
     - All checks must show ✓ (passing)
-  - **Done when**: All CI checks green, PR ready for review
+  - **Done when**: After a permitted push, all CI checks are green and the PR is ready for review. After a skipped or denied push, applicable local criteria pass and the task reports the remote lifecycle skipped.
   - **If CI fails**:
     1. Read failure details: `gh pr checks`
     2. Fix issues locally
     3. Run the Prototype Evidence Push Gate, then push fixes only when permitted: `git push`
-    4. Re-verify: `gh pr checks --watch`
+    4. Re-verify with `gh pr checks --watch` only after the gate completes the fix push. If it skips or denies the push, end the dependent remote lifecycle path and use the local completion report.
 
 ## Phase 5: PR Lifecycle
 
@@ -719,7 +719,7 @@ Phase 4 transitions into Phase 5 (PR Lifecycle) for continuous validation.
 - Code review comment resolution
 - Final validation (zero regressions, modularity, real-world verification)
 
-Phase 5 runs autonomously until ALL completion criteria met. The spec is NOT done when Phase 4 completes.
+After a permitted push, Phase 5 runs autonomously until all completion criteria are met. After a skipped or denied push, mark dependent remote tasks skipped, complete the applicable local criteria, and report the skipped remote lifecycle.
 
 Use the template from `templates/tasks.md` Phase 5 section. Adapt commands to the actual project (discovered from research.md).
 </mandatory>

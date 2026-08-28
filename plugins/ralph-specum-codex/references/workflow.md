@@ -102,8 +102,10 @@ Run this gate immediately before every push produced by implementation batching,
 1. Resolve the exact target remote and branch. Inspect the commits the push would add to that target with `git log --format= --name-only <remote-target>..HEAD -- '**/prototypes/*.md' | sed '/^$/d' | sort -u`. For a new target branch, identify its actual remote base first; stop before pushing if the outbound range cannot be determined.
 2. Preserve the existing non-prototype push when no prototype record appears.
 3. In normal mode, stop at the push boundary when records appear and require separate explicit authorization naming every exact record path. `commitSpec`, task execution, and generic branch, PR, or push approval do not count.
-4. In quick mode, ask no question and skip the push. Keep every commit local.
-5. Never push an isolated `prototype/<spec>/<id>` source branch.
+4. When the gate skips or denies the push, end the dependent remote lifecycle path. Do not run `gh pr create`, `gh pr merge`, `gh pr checks`, `gh pr view`, `gh api`, `gh run`, `gh issue`, remote review polling, issue writes, or any later remote step that depends on that push.
+5. Quick mode asks no question and skips the push. Keep every commit local, continue or finish locally, and report `Remote lifecycle skipped: prototype evidence stayed local.`
+6. When the gate permits and completes the push, preserve the existing normal remote lifecycle.
+7. Never push an isolated `prototype/<spec>/<id>` source branch.
 
 Re-run the inspection after every new commit and immediately before the push. `commitSpec` remains local commit authorization.
 
@@ -129,7 +131,7 @@ Index creates or updates:
 - `specs/.index/components/*.md`
 - `specs/.index/external/*.md`
 
-Use the canonical templates from `assets/templates/`.
+Use the canonical templates from `"$RALPH_CODEX_PLUGIN_ROOT/templates/"`.
 
 ## Refactor
 

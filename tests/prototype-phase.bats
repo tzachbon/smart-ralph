@@ -194,6 +194,42 @@ assert_both_coordinators() {
     done
 }
 
+@test "prototype phase: a skipped push ends every dependent remote lifecycle path" {
+    local root file
+    root="$(repo_root)"
+
+    for file in \
+        "$root/plugins/ralph-specum/references/commit-discipline.md" \
+        "$root/plugins/ralph-specum/references/coordinator-pattern.md" \
+        "$root/plugins/ralph-specum/agents/task-planner.md" \
+        "$root/plugins/ralph-specum/commands/implement.md" \
+        "$root/plugins/ralph-specum/templates/tasks.md" \
+        "$root/plugins/ralph-specum-codex/references/workflow.md" \
+        "$root/plugins/ralph-specum-codex/skills/ralph-specum-implement/SKILL.md" \
+        "$root/plugins/ralph-specum-codex/templates/tasks.md"; do
+        assert_has "$file" 'Prototype Evidence Push Gate'
+        assert_has "$file" 'dependent remote lifecycle'
+        assert_has "$file" 'gh pr create'
+        assert_has "$file" 'gh pr merge'
+        assert_has "$file" 'gh pr checks'
+        assert_has "$file" 'gh issue'
+        assert_has "$file" 'remote review polling'
+        assert_has "$file" 'issue writes'
+        assert_has "$file" 'Remote lifecycle skipped: prototype evidence stayed local'
+    done
+
+    for file in \
+        "$root/plugins/ralph-specum/templates/tasks.md" \
+        "$root/plugins/ralph-specum-codex/templates/tasks.md"; do
+        assert_has "$file" 'Only after step .* completes a permitted push, create the PR.*gh pr create'
+        assert_has "$file" 'Enter this remote loop only after.*permitted push'
+        assert_has "$file" 'Enter this remote review path only while the permitted-push PR lifecycle is active'
+    done
+
+    assert_has "$root/plugins/ralph-specum/references/coordinator-pattern.md" 'Enter or continue this loop only after the Prototype Evidence Push Gate completes the required push'
+    assert_has "$root/plugins/ralph-specum-codex/references/workflow.md" 'When the gate permits and completes the push, preserve the existing normal remote lifecycle'
+}
+
 @test "prototype phase: quick mode has one post-requirements request and no delegated decisions" {
     local root claude_count codex_count
     root="$(repo_root)"

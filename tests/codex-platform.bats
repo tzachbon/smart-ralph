@@ -170,6 +170,19 @@ for skill in (ROOT / "plugins/ralph-specum-codex/skills").glob("ralph-specum*"):
     ! grep -q 'plugins/ralph-specum-codex/scripts/' "$coordinator"
 }
 
+@test "codex platform: installed template references use the plugin root templates directory" {
+    local root primary workflow
+    root="$(plugin_root)"
+    primary="$root/skills/ralph-specum/SKILL.md"
+    workflow="$root/references/workflow.md"
+
+    grep -Fq '$RALPH_CODEX_PLUGIN_ROOT/templates/' "$primary"
+    grep -Fq '$RALPH_CODEX_PLUGIN_ROOT/templates/' "$workflow"
+
+    run rg -n 'assets/templates' "$primary" "$workflow"
+    [ "$status" -eq 1 ]
+}
+
 @test "codex platform: docs describe the packaged distribution" {
     local root readme_text trouble_text package_text
     root="$(repo_root)"

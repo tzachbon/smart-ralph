@@ -107,8 +107,10 @@ Run this gate immediately before every push, including batched task pushes, CI f
 1. Resolve the exact target remote and branch. Inspect the commits the push would add to that target with `git log --format= --name-only <remote-target>..HEAD -- '**/prototypes/*.md' | sed '/^$/d' | sort -u`. For a new target branch, identify its actual remote base first; stop before pushing if the outbound range cannot be determined.
 2. When the list is empty, preserve the existing non-prototype push behavior.
 3. When the list contains prototype records, normal mode stops at this push boundary and requires separate explicit authorization naming every exact record path. `commitSpec`, task execution, and generic branch, PR, or push approval authorize no prototype record.
-4. Quick mode asks no question and skips the push. Keep all commits local.
-5. Never push an isolated `prototype/<spec>/<id>` source branch.
+4. When the gate skips or denies the push, end the dependent remote lifecycle path. Do not run `gh pr create`, `gh pr merge`, `gh pr checks`, `gh pr view`, `gh api`, `gh run`, `gh issue`, remote review polling, issue writes, or any later remote step that depends on that push.
+5. Quick mode asks no question and skips the push. Keep all commits local, continue or finish locally, and report `Remote lifecycle skipped: prototype evidence stayed local.`
+6. When the gate permits and completes the push, preserve the existing normal remote lifecycle.
+7. Never push an isolated `prototype/<spec>/<id>` source branch.
 
 Re-run the inspection after any new commit and immediately before the push. The authorization covers only the named record paths in that outbound range. `commitSpec` remains local commit authorization.
 

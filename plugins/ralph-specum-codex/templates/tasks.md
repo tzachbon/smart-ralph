@@ -22,7 +22,7 @@ Total tasks: {{N}}
 
 ## Completion Criteria (Autonomous Execution Standard)
 
-This spec is not complete until ALL criteria are met:
+This spec is not complete until all applicable criteria are met:
 
 ✅ **Zero Regressions**: All existing tests pass (no broken functionality)
 ✅ **Modular & Reusable**: Code follows project patterns, properly abstracted
@@ -32,7 +32,9 @@ This spec is not complete until ALL criteria are met:
 ✅ **PR Ready**: Pull request created, reviewed, approved
 ✅ **Review Comments Resolved**: All code review feedback addressed
 
-**Note**: The executor will continue working until all criteria are met. Do not stop at Phase 4 if CI fails or review comments exist.
+**Remote gate exception**: When the Prototype Evidence Push Gate skips or denies a push, the PR, CI, review, and issue criteria that depend on that push do not apply to this run. Quick mode completes the applicable local criteria and reports `Remote lifecycle skipped: prototype evidence stayed local.`
+
+**Note**: The executor will continue working until all applicable criteria are met. Do not stop at Phase 4 if CI fails or review comments exist after a permitted push.
 
 > **Quality Checkpoints**: Intermediate quality gate checks are inserted every 2-3 tasks to catch issues early. For small tasks, insert after 3 tasks. For medium/large tasks, insert after 2 tasks.
 
@@ -281,9 +283,9 @@ After POC validated, clean up code.
 
 > **IMPORTANT**: NEVER push directly to the default branch (main/master). Branch management is handled at startup via `/ralph-specum:start`. You should already be on a feature branch by this phase.
 
-> **Prototype Evidence Push Gate**: Immediately before every push below, resolve the exact target remote and inspect the outbound commits with `git log --format= --name-only <remote-target>..HEAD -- '**/prototypes/*.md' | sed '/^$/d' | sort -u`. For a new target branch, identify its actual remote base first; stop when the outbound range cannot be determined. If records appear, normal mode requires separate explicit authorization naming every exact record path. `commitSpec` and generic branch, PR, or push approval do not count. Quick mode asks no question and skips the push. Never push an isolated `prototype/<spec>/<id>` source branch. Preserve each existing push when no prototype record appears.
+> **Prototype Evidence Push Gate**: Immediately before every push below, resolve the exact target remote and inspect the outbound commits with `git log --format= --name-only <remote-target>..HEAD -- '**/prototypes/*.md' | sed '/^$/d' | sort -u`. For a new target branch, identify its actual remote base first; stop when the outbound range cannot be determined. If records appear, normal mode requires separate explicit authorization naming every exact record path. `commitSpec` and generic branch, PR, or push approval do not count. Quick mode asks no question and skips the push. A skipped or denied push ends the dependent remote lifecycle path: do not run later `gh pr create`, `gh pr merge`, `gh pr checks`, `gh pr view`, `gh api`, `gh run`, `gh issue`, remote review polling, issue writes, or other remote steps that depend on that push. Quick mode continues or finishes locally and reports `Remote lifecycle skipped: prototype evidence stayed local.` Preserve each existing push and its remote lifecycle when the gate permits it. Never push an isolated `prototype/<spec>/<id>` source branch.
 
-> **Default Behavior**: When on a feature branch (not main/master), the final deliverable is a Pull Request with all CI checks passing. This is the default unless explicitly stated otherwise.
+> **Default Behavior**: When on a feature branch (not main/master), the final deliverable is a Pull Request with all CI checks passing after the Prototype Evidence Push Gate permits the branch push.
 
 - [ ] 4.1 Local quality check
   - **Do**: Run ALL quality checks locally before creating PR
@@ -300,7 +302,7 @@ After POC validated, clean up code.
     1. Verify current branch is a feature branch: `git branch --show-current`
     2. If on default branch, STOP and alert user (branch should be set at startup)
     3. Run the Prototype Evidence Push Gate, then push when permitted: `git push -u origin $(git branch --show-current)`
-    4. Create PR using gh CLI (if available):
+    4. Only after step 3 completes a permitted push, create the PR using gh CLI (if available):
        ```bash
        gh pr create --title "feat: {{feature-name}}" --body "## Summary
        {{brief description of changes}}
@@ -310,7 +312,7 @@ After POC validated, clean up code.
        - [ ] CI checks pass"
        ```
     5. If gh CLI unavailable, output: "Create PR at: https://github.com/<org>/<repo>/compare/<branch>"
-  - **Verify**: Use gh CLI to verify CI status:
+  - **Verify**: Only after the permitted push and PR creation, use gh CLI to verify CI status:
     ```bash
     # Wait for CI and watch status
     gh pr checks --watch
@@ -321,13 +323,13 @@ After POC validated, clean up code.
     # Get detailed status
     gh pr view --json statusCheckRollup --jq '.statusCheckRollup[] | "\(.name): \(.conclusion)"'
     ```
-  - **Done when**: All CI checks show ✓ (passing), PR ready for review
+  - **Done when**: After a permitted push, all CI checks pass and the PR is ready for review. After a skipped or denied push, applicable local criteria pass and the remote-lifecycle-skipped report is recorded.
   - **If CI fails**:
     1. View failures: `gh pr checks`
     2. Get detailed logs: `gh run view <run-id> --log-failed`
     3. Fix issues locally
     4. Commit fixes, run the Prototype Evidence Push Gate, then push when permitted: `git add . && git commit -m "fix: address CI failures" && git push`
-    5. Re-verify: `gh pr checks --watch`
+    5. Re-verify with `gh pr checks --watch` only after the gate completes the fix push. If the gate skips or denies the push, end this remote lifecycle path and use the local completion report.
 
 - [ ] VF [VERIFY] Verify original issue resolved (only for fix-type goals)
   - **Do**: Re-run the command from "Reality Check (BEFORE)" section in .progress.md
@@ -363,10 +365,10 @@ After POC validated, clean up code.
   - **Done when**: No processes on port {{port}}, PID file removed
   - **Commit**: None
 
-- [ ] 4.3 Merge after approval (optional - only if explicitly requested)
-  - **Do**: Merge PR after approval and CI green
-  - **Verify**: `gh pr merge --auto` or merge via GitHub UI
-  - **Done when**: Changes in main branch
+- [ ] 4.3 Merge after approval (optional - only if explicitly requested and a permitted-push PR exists)
+  - **Do**: Merge the PR only after the Prototype Evidence Push Gate completed the branch push and the PR has approval and green CI
+  - **Verify**: While that remote lifecycle is active, use `gh pr merge --auto` or the GitHub UI; otherwise mark this task skipped by the remote gate
+  - **Done when**: Changes are in the main branch, or the task is skipped because no permitted-push PR exists
   - **Note**: Do NOT auto-merge unless user explicitly requests it
 
 ## Phase 5: PR Lifecycle (Continuous Validation)
@@ -377,7 +379,7 @@ After POC validated, clean up code.
   - **Do**:
     1. Verify current branch: `git branch --show-current`
     2. Run the Prototype Evidence Push Gate, then push when permitted: `git push -u origin $(git branch --show-current)`
-    3. Create PR: `gh pr create --title "feat: {{feature-name}}" --body "$(cat <<'EOF'
+    3. Only after step 2 completes a permitted push, create the PR: `gh pr create --title "feat: {{feature-name}}" --body "$(cat <<'EOF'
 ## Summary
 {{brief description}}
 
@@ -389,44 +391,44 @@ After POC validated, clean up code.
 - [ ] Code review approved
 EOF
 )"`
-  - **Verify**: `gh pr view` shows PR URL
-  - **Done when**: PR created and URL returned
+  - **Verify**: After a permitted push, `gh pr view` shows the PR URL. After a skipped or denied push, verify the local remote-lifecycle-skipped report and run no remote lookup.
+  - **Done when**: The PR URL is returned after a permitted push, or applicable local criteria complete after a skipped or denied push.
   - **Commit**: None
 
 - [ ] 5.2 Monitor CI and fix failures
   - **Do**:
-    1. Wait 3 minutes for CI to start
+    1. Enter this remote loop only after task 5.1 completes a permitted push and creates the PR; otherwise mark this task skipped by the remote gate
     2. Check status: `gh pr checks`
     3. If failures: read logs with `gh run view --log-failed`
     4. Fix issues locally
     5. Commit fixes: `git add . && git commit -m "fix: address CI failures"`
     6. Run the Prototype Evidence Push Gate, then push when permitted: `git push`
-    7. Repeat from step 1 until all green
-  - **Verify**: `gh pr checks` shows all ✓
-  - **Done when**: All CI checks passing
+    7. Repeat from step 1 until all green only after the gate completes each fix push. If a push is skipped or denied, end the dependent remote lifecycle path and finish from local criteria.
+  - **Verify**: While the remote lifecycle is active, `gh pr checks` shows all checks passing; otherwise verify the remote-lifecycle-skipped report
+  - **Done when**: All CI checks pass, or the task is skipped because the gate ended the remote lifecycle
   - **Commit**: `fix: address CI failures` (as needed per iteration)
 
 - [ ] 5.3 Address code review comments
   - **Do**:
-    1. Fetch reviews: `gh pr view --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED" or .state == "PENDING")'`
+    1. Enter this remote review path only while the permitted-push PR lifecycle is active, then fetch reviews: `gh pr view --json reviews --jq '.reviews[] | select(.state == "CHANGES_REQUESTED" or .state == "PENDING")'`
        - Note: For inline comment threads, use: `gh api repos/{owner}/{repo}/pulls/{number}/comments`
     2. For each unresolved review/comment:
        - Read review body and inline comments
        - Implement requested change
        - Commit: `fix: address review - {{comment summary}}`
-    3. Run the Prototype Evidence Push Gate, then push all fixes when permitted: `git push`
-    4. Wait 5 minutes
+    3. Run the Prototype Evidence Push Gate, then push all fixes when permitted: `git push`. If the gate skips or denies the push, end this remote review path and finish from local criteria.
+    4. After the permitted push, wait 5 minutes
     5. Re-check for new reviews
     6. Repeat until no unresolved reviews
-  - **Verify**: `gh pr view --json reviews` shows no CHANGES_REQUESTED or PENDING states
-  - **Done when**: All review comments resolved
+  - **Verify**: While the remote lifecycle is active, `gh pr view --json reviews` shows no CHANGES_REQUESTED or PENDING states; otherwise verify the remote-lifecycle-skipped report
+  - **Done when**: All review comments are resolved, or the task is skipped because the gate ended the remote lifecycle
   - **Commit**: `fix: address review - {{summary}}` (per comment)
 
 - [ ] 5.4 Final validation
-  - **Do**: Verify ALL completion criteria met:
+  - **Do**: Verify all applicable completion criteria:
     1. Run full test suite: `pnpm test` or equivalent
     2. Verify zero regressions (compare test count before/after)
-    3. Check CI: `gh pr checks` all green
+    3. If the remote lifecycle is active, check that `gh pr checks` is green; otherwise verify the remote-lifecycle-skipped report
     4. Verify modularity documented in .progress.md
     5. Confirm real-world validation documented
   - **Verify**: All commands pass, all criteria documented
