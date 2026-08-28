@@ -462,6 +462,8 @@ def cmd_reconcile(args: argparse.Namespace) -> JSON:
         if final.name.startswith(".") or ".quarantine." in final.name:
             continue
         prototype_id = final.stem
+        if prototype_id in handled:
+            continue
         handled.add(prototype_id)
         try:
             validate_record_text(final.read_text(encoding="utf-8"), prototype_id)
