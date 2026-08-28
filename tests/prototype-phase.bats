@@ -20,6 +20,48 @@ codex_coordinator() {
     echo "$(repo_root)/plugins/ralph-specum-codex/references/prototype-coordinator.md"
 }
 
+claude_harness() {
+    echo "$(repo_root)/plugins/ralph-specum/hooks/scripts/prototype-harness.py"
+}
+
+harness_json() {
+    local path
+    path="$1"
+    python3 -c 'import json, sys
+value = json.load(sys.stdin)
+for part in sys.argv[1].split("."):
+    value = value[part]
+if isinstance(value, bool):
+    print(str(value).lower())
+else:
+    print(value)' "$path"
+}
+
+wait_for_prototype_pid_exit() {
+    local pid attempt
+    pid="$1"
+    for attempt in $(seq 1 100); do
+        if ! kill -0 "$pid" 2>/dev/null; then
+            return 0
+        fi
+        sleep 0.02
+    done
+    return 1
+}
+
+setup() {
+    export PYTHONDONTWRITEBYTECODE=1
+    PROTOTYPE_HARNESS_PID=""
+}
+
+teardown() {
+    if [ -n "$PROTOTYPE_HARNESS_PID" ] && kill -0 "$PROTOTYPE_HARNESS_PID" 2>/dev/null; then
+        kill -TERM "-$PROTOTYPE_HARNESS_PID" 2>/dev/null \
+            || kill -TERM "$PROTOTYPE_HARNESS_PID" 2>/dev/null \
+            || true
+    fi
+}
+
 assert_has() {
     local file pattern
     file="$1"
@@ -197,4 +239,120 @@ assert_both_coordinators() {
     assert_has "$claude_tasks" 'Do not generate tasks from stale design'
     assert_has "$codex_design" 'Route to the earliest stale phase'
     assert_has "$codex_tasks" 'Route to the earliest stale phase'
+}
+
+@test "prototype harness: Claude launch wait status heartbeat and interrupt are bounded" {
+    local script registry pid
+    script="$(claude_harness)"
+    registry="$BATS_TEST_TMPDIR/claude-harness"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id claude-complete \
+        --kind claude_background \
+        --command-json '["python3","-c","print(\"claude complete\")"]' \
+        --soft-timeout 1 \
+        --activity-extension 1 \
+        --hard-timeout 2
+    [ "$status" -eq 0 ]
+    [ "$(harness_json outcome <<< "$output")" = "launched" ]
+    pid="$(harness_json pid <<< "$output")"
+    PROTOTYPE_HARNESS_PID="$pid"
+
+    run python3 "$script" wait --registry "$registry" --id claude-complete --until-seconds 1 --poll-seconds 0.02
+    [ "$status" -eq 0 ]
+    [ "$(harness_json outcome <<< "$output")" = "completed" ]
+    [[ "$(harness_json output <<< "$output")" == *"claude complete"* ]]
+    run python3 "$script" status --registry "$registry" --id claude-complete
+    [ "$status" -eq 0 ]
+    [ "$(harness_json outcome <<< "$output")" = "completed" ]
+    wait_for_prototype_pid_exit "$pid"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id claude-live \
+        --kind claude_background \
+        --command-json '["python3","-c","import time; time.sleep(30)"]' \
+        --soft-timeout 0.4 \
+        --activity-extension 1 \
+        --hard-timeout 3
+    [ "$status" -eq 0 ]
+    pid="$(harness_json pid <<< "$output")"
+    PROTOTYPE_HARNESS_PID="$pid"
+    run python3 "$script" heartbeat --registry "$registry" --id claude-live
+    [ "$status" -eq 0 ]
+    [ "$(harness_json outcome <<< "$output")" = "heartbeat" ]
+    run python3 "$script" interrupt --registry "$registry" --id claude-live
+    [ "$status" -eq 0 ]
+    [ "$(harness_json outcome <<< "$output")" = "stopped" ]
+    wait_for_prototype_pid_exit "$pid"
+    PROTOTYPE_HARNESS_PID=""
+}
+
+@test "prototype harness: Claude soft and hard timeouts leave no child" {
+    local script registry pid
+    script="$(claude_harness)"
+    registry="$BATS_TEST_TMPDIR/claude-harness"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id claude-soft \
+        --kind claude_background \
+        --command-json '["python3","-c","import time; time.sleep(30)"]' \
+        --soft-timeout 0.15 \
+        --activity-extension 0.15 \
+        --hard-timeout 3
+    [ "$status" -eq 0 ]
+    pid="$(harness_json pid <<< "$output")"
+    PROTOTYPE_HARNESS_PID="$pid"
+    run python3 "$script" wait --registry "$registry" --id claude-soft --until-seconds 0.6 --poll-seconds 0.02
+    [ "$status" -eq 0 ]
+    [ "$(harness_json outcome <<< "$output")" = "timeout" ]
+    [ "$(harness_json hard <<< "$output")" = "false" ]
+    run python3 "$script" interrupt --registry "$registry" --id claude-soft
+    [ "$status" -eq 0 ]
+    wait_for_prototype_pid_exit "$pid"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id claude-hard \
+        --kind claude_background \
+        --command-json '["python3","-c","import time; time.sleep(30)"]' \
+        --soft-timeout 0.2 \
+        --activity-extension 0.2 \
+        --hard-timeout 0.2
+    [ "$status" -eq 0 ]
+    pid="$(harness_json pid <<< "$output")"
+    PROTOTYPE_HARNESS_PID="$pid"
+    run python3 "$script" wait --registry "$registry" --id claude-hard --until-seconds 1 --poll-seconds 0.02
+    [ "$status" -eq 0 ]
+    [ "$(harness_json outcome <<< "$output")" = "timeout" ]
+    [ "$(harness_json hard <<< "$output")" = "true" ]
+    wait_for_prototype_pid_exit "$pid"
+    PROTOTYPE_HARNESS_PID=""
+}
+
+@test "prototype harness: Claude failures and Codex child identifier contract are explicit" {
+    local script registry codex
+    script="$(claude_harness)"
+    registry="$BATS_TEST_TMPDIR/claude-harness"
+    codex="$(codex_skill prototype)"
+
+    run python3 "$script" launch \
+        --registry "$registry" \
+        --id claude-unavailable \
+        --kind claude_background \
+        --command-json '["python3","-c","print(1)"]' \
+        --unavailable-control
+    [ "$status" -eq 0 ]
+    [ "$(harness_json outcome <<< "$output")" = "unavailable-control" ]
+
+    run python3 "$script" status --registry "$registry" --id 'bad/id'
+    [ "$status" -eq 2 ]
+    [ "$(harness_json outcome <<< "$output")" = "invalid-id" ]
+
+    assert_has "$codex" 'Store only the returned `agentId`'
+    assert_has "$codex" 'Never use `create_thread` or a `threadId`'
+    assert_has "$(codex_coordinator)" 'Store only its `agentId`'
+    assert_has "$(codex_coordinator)" 'Never use `create_thread`, a user-visible task, or `threadId`'
 }

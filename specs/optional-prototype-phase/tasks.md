@@ -326,7 +326,7 @@ Build one end-to-end local prototype path first. Tests are added in Phase 3 afte
   - **Commit**: `test(prototype): cover lifecycle and quick flow`
   - _Requirements: FR-1, FR-2, FR-4, FR-5, FR-6, FR-7, NFR-1, NFR-4_
 
-- [ ] 3.4 Test both harness control adapters
+- [x] 3.4 Test both harness control adapters
   - **Do**: Add explicit script tests for launch, wait, heartbeat, interrupt, status, soft timeout, hard timeout, unavailable control, and invalid identifier outcomes. Exercise both Claude and Codex adapters through deterministic stub commands; assert Codex accepts child `agentId` and rejects task `threadId` for internal builders.
   - **Files**: `tests/codex-platform-scripts.bats`, `tests/prototype-phase.bats`
   - **Done when**: Every adapter operation and failure outcome has an assertion on both helper paths, including timeout termination and unavailable-control behavior.
