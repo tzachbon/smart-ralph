@@ -1,6 +1,6 @@
 # Codex phase interview algorithm
 
-Use `phase_gate.py` as the deterministic state boundary. Resolve its absolute path before starting a phase. Use the spec's `.ralph-state.json` as `STATE`. Triage uses the active epic's `.epic-state.json` instead.
+The existing `phase_gate.py` stays unchanged and remains the deterministic state boundary. Resolve its absolute path before starting a phase. Use the spec's `.ralph-state.json` as `STATE`. Triage uses the active epic's `.epic-state.json` instead.
 
 ## 1. Resolve mode
 
@@ -14,7 +14,7 @@ python3 <phase-gate-script> mode STATE --interactive
 
 Only the exact `--quick` flag enables persistent quick mode. Only the exact `--interactive` flag clears it. Reject both flags together, `-q`, variants, and natural-language autonomy requests. A no-flag call resets legacy or invalid quick state to interactive.
 
-For quick mode, create a fresh phase identity, complete the applicable discovery and contract-load steps below, then run `begin-interview`. The helper records `phaseInterview.status: "bypassed_quick"` from the exact quick authorization. Record the assumptions used and run `check-delegation` with that identity before dispatch. Quick mode skips frontier questions and final interview confirmation only.
+For quick mode, create a fresh phase identity, complete the applicable discovery and contract-load steps below, then run `begin-interview`. The helper records `phaseInterview.status: "bypassed_quick"` from the exact quick authorization. Record the assumptions used and run `check-delegation` with that identity immediately before dispatch. Exact `--quick` preserves discovery, manifest, parent-delegation provenance, receipt recording, and `check-agent-write`. It skips frontier questions and final interview confirmation only.
 
 ## 2. Discover relevant skills
 
@@ -174,13 +174,13 @@ python3 <phase-gate-script> confirm STATE --decision-id skip-confirmation --sour
 
 The helper promotes the terminal status to `skipped` only after that confirmation.
 
-Run the parent delegation check after confirmation:
+Immediately before every affected transition or child dispatch, run the parent delegation check after confirmation:
 
 ```text
 python3 <phase-gate-script> check-delegation STATE --phase PHASE --interview-id ID --discovery-revision REV --context-digest SHA256
 ```
 
-Delegate immediately when the command succeeds. Stop when it fails.
+Delegate immediately when the command succeeds. A failed normal-mode check ends this invocation rather than continuing. On the next explicit invocation, record a fresh manifest/interview identity before `begin-interview`; a matching in-progress interview that has not reached this failed boundary remains valid for resume.
 
 ## 6. Pass and enforce the manifest
 
@@ -197,7 +197,7 @@ The artifact agent performs these first actions before reading or writing the ta
 python3 <phase-gate-script> check-agent-write STATE --phase PHASE --interview-id ID --context-digest SHA256 --discovery-revision REV --agent UNIQUE_DISPATCH_ID
 ```
 
-The coordinator has already run `check-delegation` before creating the child and passed the current manifest in both interactive and quick mode. Refuse artifact writes when `check-agent-write` fails, a manifest source is missing, or a hash differs. During preload, collect contract constraints only. Start artifact work after every receipt is stored and `check-agent-write` succeeds.
+The coordinator has already run `check-delegation` immediately before creating the child and passed the current manifest in both interactive and quick mode. Keep `check-agent-write` as the last pre-write guard. Refuse artifact writes when it fails, a manifest source is missing, or a hash differs. During preload, collect contract constraints only. Start artifact work after every receipt is stored and `check-agent-write` succeeds.
 
 ## 7. Review the artifact
 
