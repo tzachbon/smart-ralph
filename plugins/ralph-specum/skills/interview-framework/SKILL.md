@@ -73,7 +73,7 @@ Apply `references/domain-modeling.md` during every grill. Challenge terms that c
 
 ## Reply Semantics
 
-Classify the entire reply before applying it.
+For an open decision frontier, classify the entire reply before applying it. `classify-reply` is the only parser at this point; do not use `resolve-approval` to answer active questions.
 
 ### Substantive reply
 
@@ -104,14 +104,18 @@ When the critical frontier is exhausted or skipped:
    - `Approve and delegate (Recommended)`
    - `Revise decisions`
    - `Cancel`
-4. Accept only an explicit approval selection. Control-only replies do not approve.
-5. On approval, call `confirm --source approve-and-delegate`, run `check-delegation`, and delegate immediately in the same response. Do not ask another question or stop between approval and delegation.
+4. Handle the explicit choices first. A control-only reply does not approve an active question or bypass the canonical choice path.
+5. Only when the reply is not a canonical choice, call `resolve-approval "$STATE" --text "$REPLY"`. Act only if it returns `accepted` for exactly one live `approve-and-delegate` action; resolver acceptance is not authorization by itself.
+6. On canonical approval or accepted contextual approval, call `confirm --source approve-and-delegate`, run `check-delegation`, and delegate immediately in the same response. Do not ask another question or stop between approval and delegation.
+7. On `clarification`, ask one focused approval question and do not mutate or advance the gate.
 
 When the user requests revisions, call one `revise` transition with every affected `--decision-id` before updating answers. Recompute any dependent frontier, return to final approval using the same confirmation ID, and keep the same interview record until the brief is approved again.
 
 ## Artifact Approval
 
 Artifact review is a separate approval gate after delegation. `apply the changes` during artifact review means revise the artifact using the supplied feedback, redisplay the walkthrough, and remain in artifact approval. It never approves the artifact or advances the phase.
+
+Handle canonical artifact choices first. Only a view with `awaitingApproval` and exactly one current action may persist an `approvalGate`; it carries the action's stable ID, phase, kind, and action, while a revision gate also requires recorded feedback. A multi-option view persists no descriptor. Only after the canonical path may `resolve-approval` handle contextual text. On its accepted result, reuse the existing continuation or revision dispatch path; on `clarification`, leave state unchanged and ask one focused question. Clear or replace the descriptor only after that existing action succeeds. The helper owns append-only `approvalAudit` records (original reply, normalized action, gate ID); chat history is never authorization state.
 
 ## Persistence
 

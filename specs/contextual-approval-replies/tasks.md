@@ -45,7 +45,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-2, FR-4, FR-6, FR-7, FR-8; AC-1.2, AC-1.3, AC-2.2, AC-2.3, AC-3.2, AC-3.3, AC-4.3_
   - _Design: Existing Patterns to Follow; Security Considerations_
 
-- [ ] 1.3 Route Claude's shared gate contract through the resolver
+- [x] 1.3 Route Claude's shared gate contract through the resolver
   - **Do**:
     1. Keep `classify-reply` as the active-decision-frontier classifier.
     2. At final confirmation and artifact review, use `resolve-approval` only as a contextual fallback after the canonical choices.
