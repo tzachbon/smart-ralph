@@ -92,7 +92,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-1, FR-3, FR-4, FR-7; AC-1.1, AC-2.1, AC-2.2, AC-2.3, AC-3.1, AC-3.2, AC-3.3_
   - _Design: Persisted approval context; Data Flow_
 
-- [ ] 2.2 Align Claude downstream artifact handoffs
+- [x] 2.2 Align Claude downstream artifact handoffs
   - **Do**:
     1. Apply the same narrow fallback to requirements, design, and tasks artifact review clauses.
     2. Require recorded feedback before creating a revision descriptor or dispatching a revision.
