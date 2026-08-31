@@ -125,7 +125,7 @@ After resolving either a new or resumed epic state, write `$EPIC_NAME` to `./spe
 2. In both interactive and exact quick mode, reload every selected skill and required current-work resource, hash them, and record the current `phaseSkillLoad` manifest. A core load failure blocks both modes.
 3. Call `begin-interview` only after the manifest is accepted.
 4. In interactive mode, run the interview-framework with phase `triage` and only critical decomposition decisions. Inspect codebase boundaries and existing architecture instead of asking the user. Interactive setup answers for epic name, goal, or branch strategy do not satisfy or replace this interview.
-5. Present the decision brief and obtain explicit `Approve and delegate` approval. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for that explicit approval selection. In exact quick mode, `begin-interview` records `bypassed_quick` and asks no questions.
+5. Present the decision brief and obtain `Approve and delegate` approval. Use `classify-reply` for active decision frontiers and `revise --decision-id` for final-approval revisions. Keep canonical final choices first; only then may a noncanonical reply use the single-action `resolve-approval` fallback from `normal-mode-gates.md`. An accepted live `approve-and-delegate` result still requires `confirm --source approve-and-delegate` followed by `check-delegation`. In exact quick mode, `begin-interview` records `bypassed_quick` and asks no questions.
 6. Run `check-delegation` immediately before the first artifact-producing Task.
 
 ## Step 4: Run Triage Flow

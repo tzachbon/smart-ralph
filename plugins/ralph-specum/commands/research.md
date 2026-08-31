@@ -46,7 +46,7 @@ In interactive mode:
 2. Build critical decision candidates from research direction, material constraints, systems in scope, and alternatives whose comparison would change later artifacts.
 3. Inspect repository facts, prior specs, existing technology, and available commands. Do not ask setup, administrative, discoverable, or low-impact questions.
 4. Ask the whole unblocked critical frontier, at most four questions per `AskUserQuestion` call.
-5. Persist partial answers, handle control-only and bare-skip replies through the helper, and require explicit final approval. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for the explicit approval selection.
+5. Persist partial answers and handle control-only and bare-skip replies through the helper. Use `classify-reply` for active decision frontiers and `revise --decision-id` for final-approval revisions. Keep canonical final choices first; only then may a noncanonical reply use the single-action `resolve-approval` fallback from `normal-mode-gates.md`. An accepted live `approve-and-delegate` result still requires `confirm --source approve-and-delegate` followed by `check-delegation`.
 6. On approval, run `check-delegation` and continue immediately to Step 3 in the same response.
 
 Treat this exploration territory as hints for the design tree, not a script:
@@ -149,6 +149,8 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 2. **continue to prototype** -- Approve research and run one suggested prototype before requirements
 3. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
 4. **Request changes** -- Provide specific feedback to revise the artifact
+
+This is a multi-option view: persist no `approvalGate`, and treat a bare affirmative as a clarification that re-asks one focused canonical choice. A later artifact or revision view may use `resolve-approval` only when `awaitingApproval` is true and one persisted descriptor names its sole action; a revision descriptor additionally requires recorded feedback.
 
 **If "Continue to requirements"**: set `nextAction: requirements`, then proceed to Step 7 without creating a prototype.
 **If "continue to prototype"**: set `nextAction: prototype`, treat research as approved, then proceed to Step 7.

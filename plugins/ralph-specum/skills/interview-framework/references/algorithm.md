@@ -138,13 +138,38 @@ if "Cancel":
   leave the interview nonterminal
   stop without delegation
 
-if control-only text:
-  keep awaiting_confirmation
-  repeat the approval question
+if no canonical choice matched:
+  resolve-approval(state, reply)
+  if accepted with exactly one live approve-and-delegate action:
+    confirm(state, returned gate ID, source)
+    check-delegation(state, phase, interviewId, discoveryRevision, contextDigest)
+    delegate immediately
+  if clarification:
+    keep awaiting_confirmation
+    ask one focused approval question
 ```
 
-Approval of an earlier phase does not approve the current phase. Artifact approval after writing does not substitute for this pre-delegation approval.
+`classify-reply` remains the only parser for an open decision frontier; control-only replies do not answer questions. At final confirmation, use `resolve-approval` only after the canonical-choice path. Its accepted result selects the existing confirmation route, not an alternate authorization path. Approval of an earlier phase does not approve the current phase. Artifact approval after writing does not substitute for this pre-delegation approval.
 
-## 7. Quick mode
+## 7. Process artifact approval
+
+```text
+show artifact walkthrough and canonical choices
+
+if canonical action chosen:
+  run its existing continuation or revision route
+
+if no canonical choice matched:
+  resolve-approval(state, reply)
+  if accepted with exactly one live artifact or revision action:
+    run the returned action's existing route and fresh writer checks
+  if clarification:
+    leave state unchanged
+    ask one focused question
+```
+
+Persist `approvalGate` only when `awaitingApproval` has exactly one current artifact or revision action. Its ID, phase, kind, and action describe that action; revision additionally requires recorded feedback. Do not create a descriptor for a multi-option review. Clear or replace the descriptor only after the existing action succeeds. The helper owns append-only `approvalAudit` records, and neither chat history nor audit history authorizes an action.
+
+## 8. Quick mode
 
 Only exact `--quick` authorization may bypass the interview. Record mode first, begin the phase interview so the helper writes `bypassed_quick`, then run the delegation check. Natural-language requests, `-q`, stale booleans, and legacy malformed quick state do not bypass the gate.

@@ -56,6 +56,8 @@ Handle these intents directly:
 
 If the corresponding helper skill is installed and the user invoked it explicitly, keep behavior aligned with that helper. If not, perform the action here.
 
+For the gated start, triage, research, requirements, design, and tasks handoffs, handle canonical approval choices first. Only otherwise may `phase_gate.py resolve-approval STATE --text TEXT` accept one live helper-owned action; it selects an existing path and never authorizes from chat history. This leaves the existing `implement` and `refactor` routing unchanged.
+
 ## Core Rules
 
 0. **You are a coordinator, not a doer.** Delegate each phase to the appropriate sub-agent and never write spec artifacts (`research.md`, `requirements.md`, `design.md`, or `tasks.md`) yourself. For only `start`, `triage`, `research`, `requirements`, `design`, and `tasks`, gather context, discover and preload contracts, run the interview, obtain final approval, pass the gate, delegate, validate the output, and present results for artifact approval. Keep the existing delegation flows for `implement` and `refactor` unchanged; the new phase gates do not apply to them.
@@ -65,9 +67,9 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 4. Keep `.current-spec` in the default specs root.
 5. Merge state fields. Do not replace the whole state object.
 6. Preserve `source`, `name`, `goal`, `basePath`, `phase`, `taskIndex`, `totalTasks`, `taskIteration`, `maxTaskIterations`, `globalIteration`, `maxGlobalIterations`, `commitSpec`, and `relatedSpecs`.
-7. Also preserve newer state fields when present, especially `awaitingApproval`, `quickMode`, `granularity`, `epicName`, `discoveredSkills`, and native task sync metadata.
+7. Also preserve newer state fields when present, especially `awaitingApproval`, `approvalGate`, `approvalAudit`, `quickMode`, `granularity`, `epicName`, `discoveredSkills`, and native task sync metadata.
 8. Write `.progress.md` after every phase and after every implementation attempt.
-9. Keep pre-delegation interview approval separate from post-generation artifact approval.
+9. Keep pre-delegation interview approval separate from post-generation artifact approval. At an active decision frontier, retain `classify-reply`; otherwise handle canonical choices first and use `resolve-approval` only for exactly one live action. An accepted pre-delegation result still requires `confirm --source approve-and-delegate`, `check-delegation`, and the existing delegate path. An accepted artifact or revision result uses its existing continuation or revision route and fresh writer checks.
 10. Honor the `Commit` line in tasks during implementation unless the user explicitly disables task commits.
 11. Use branch creation or worktree creation when the user asks for branch isolation or the repo policy requires it.
 12. Run `phase_gate.py mode` at entry to every affected phase. Only exact `--quick` enables quick mode; exact `--interactive` clears it. Reject both together, `-q`, variants, and natural-language substitutes. No flags normalize invalid legacy quick state to interactive.
@@ -104,7 +106,7 @@ The ONLY exception is exact `--quick` mode with a valid bypass receipt. Without 
     - `continue to <named next step>`
 - Treat `continue to <named next step>` as approval of the current artifact and permission to enter that phase's discovery and interview path.
 - Treat `apply the changes` during artifact review as immediate authorization to delegate already-recorded revision feedback through a new unique dispatch. Redisplay and remain at artifact approval. Ask one focused change question only when no feedback is pending.
-- Treat control-only `continue`, `proceed`, and `go ahead` as approval of nothing.
+- Handle canonical artifact choices first. Only otherwise call `resolve-approval` for one current descriptor; on acceptance, use the existing continuation or revision route and fresh writer checks. A missing, stale, malformed, or multi-option descriptor leaves state unchanged and asks one focused clarification. The helper alone appends the reply audit; chat history never authorizes an action.
 - After normal-mode `start` or `new` setup, run discovery pass 1 and begin the goal grill. Explicit final approval delegates research immediately.
 
 ## Current Workflow Expectations

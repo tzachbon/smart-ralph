@@ -126,7 +126,7 @@ python3 <phase-gate-script> record-answer STATE --decision-id ID --answer TEXT
 python3 <phase-gate-script> record-answer STATE --decision-id ID --answer TEXT --assumption TEXT
 ```
 
-`classify-reply` prints exactly `bare_skip`, `control_only`, or `substantive`. It strips polite wrappers only when the whole reply is otherwise a pure control. A `control_only` result leaves the active decision pending. Record only `substantive` answers. The helper keeps status `collecting` while decisions remain and maintains the asked, pending, and answered decision IDs. Re-call `open-frontier` with the same round and remaining pending IDs before re-asking them.
+`classify-reply` prints exactly `bare_skip`, `control_only`, or `substantive`. It is the only parser for an active decision frontier. It strips polite wrappers only when the whole reply is otherwise a pure control. A `control_only` result leaves the active decision pending. Record only `substantive` answers. The helper keeps status `collecting` while decisions remain and maintains the asked, pending, and answered decision IDs. Re-call `open-frontier` with the same round and remaining pending IDs before re-asking them.
 
 If the reply is bare `skip`, fill remaining critical decisions with recommended defaults, record each assumption, and run `skip STATE --reason TEXT --assumption TEXT --decision-id skip-confirmation`. This moves to final confirmation without authorizing delegation. A sentence that contains the word `skip` is normal answer text unless it is only the bare control word.
 
@@ -144,11 +144,25 @@ Ask one final native user-input question with these choices:
 - `Revise decisions`
 - `Cancel`
 
-Only the explicit first choice completes approval. Control-only replies do not. On approval, record status `complete` and the explicit source:
+Handle the canonical choices first. On canonical approval, use the existing confirmation path:
 
 ```text
 python3 <phase-gate-script> confirm STATE --decision-id ID --source approve-and-delegate
 ```
+
+Only when the reply is not a canonical choice may the coordinator call:
+
+```text
+python3 <phase-gate-script> resolve-approval STATE --text TEXT
+```
+
+Act only when it returns `accepted` for exactly one live `approve-and-delegate` action. Then use the same confirmation path with the returned gate ID:
+
+```text
+python3 <phase-gate-script> confirm STATE --decision-id GATE_ID --source approve-and-delegate
+```
+
+Run `check-delegation` and delegate only when it succeeds. On `clarification`, leave state unchanged and ask one focused final-approval question. Resolver acceptance selects the existing path; it never bypasses confirmation or delegation checks.
 
 If the user chooses `Revise decisions`, reopen every affected decision in one transition:
 
@@ -201,10 +215,12 @@ The coordinator has already run `check-delegation` before creating the child and
 
 ## 7. Review the artifact
 
-After the agent writes the artifact, validate the file and set `awaitingApproval: true`. Present the existing artifact approval choices.
+After the agent writes the artifact, validate the file and set `awaitingApproval: true`. Persist `approvalGate` only when there is exactly one current artifact or revision action. Its stable ID, phase, kind, and action describe that action; a revision also requires recorded feedback. A missing or multi-option artifact view has no descriptor. Present the existing artifact approval choices.
 
 - `approve current artifact` approves without starting a new phase.
 - `continue to <named next step>` approves and enters that phase's discovery, reload, grill, and approval path.
 - `request changes` or a concrete correction records revision feedback.
 - `apply the changes` immediately delegates already-recorded revision feedback through a new unique dispatch, then redisplays and remains at artifact approval. Ask one focused change question only when no pending feedback exists.
-- `continue`, `proceed`, and `go ahead` alone approve nothing.
+- `continue`, `proceed`, and `go ahead` alone approve nothing through a canonical choice.
+
+Handle canonical artifact choices first. Only otherwise call `resolve-approval STATE --text TEXT`; act only on an `accepted` result for the one live descriptor, using the existing continuation or revision route and its fresh writer checks. On `clarification`, leave state unchanged and ask one focused question. Clear or replace the descriptor only after that existing action succeeds. The helper appends `approvalAudit` with the original reply, normalized action, and gate ID; neither chat history nor audit history authorizes a later action.

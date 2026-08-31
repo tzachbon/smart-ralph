@@ -234,7 +234,7 @@ For resumed artifact phases, do not delegate from this table directly. Follow th
 10. Update Spec Index: `./plugins/ralph-specum/hooks/scripts/update-spec-index.sh --quiet`.
 11. Run skill discovery pass 1 from `normal-mode-gates.md` after setup.
 12. **Contract load** -- In both interactive and exact quick mode, reload every selected contract and required current-work resource, hash them, record the current manifest, then call `begin-interview` for phase `start`. A core load failure blocks either mode.
-13. **Goal Grill** -- In normal mode, run the goal grill from `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md`. Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for the explicit approval selection. In exact quick mode, the preceding `begin-interview` records `bypassed_quick` and asks no questions.
+13. **Goal Grill** -- In normal mode, run the goal grill from `${CLAUDE_PLUGIN_ROOT}/references/goal-interview.md`. Use `classify-reply` for active decision frontiers and `revise --decision-id` for final-approval revisions. Keep canonical final choices first; only then may a noncanonical reply use the single-action `resolve-approval` fallback from `normal-mode-gates.md`. An accepted live `approve-and-delegate` result still requires `confirm --source approve-and-delegate` followed by `check-delegation`. In exact quick mode, the preceding `begin-interview` records `bypassed_quick` and asks no questions.
 14. Immediately after approval or authorized quick bypass, run `check-delegation` and execute the gated Team Research Phase from `${CLAUDE_PLUGIN_ROOT}/references/parallel-research.md`. Every writer Task receives the absolute state and helper paths, complete marker identity tuple (`state`, `phase`, `interviewId`, `discoveryRevision`, `contextDigest`), verbatim skill manifest, complete approved brief, fresh `artifactAgentId`, and matching load/write-check instructions. Read-only `Explore` Tasks remain allowed.
 15. After research completes, run skill discovery pass 2 from `normal-mode-gates.md`. Do not delegate requirements yet.
 16. Display the research walkthrough and enter artifact approval.
@@ -262,7 +262,7 @@ Output: $basePath/research.md
 **Feasibility**: [High/Medium/Low] | **Risk**: [High/Medium/Low] | **Effort**: [S/M/L/XL]
 ```
 
-Ask for explicit artifact approval with `Approve`, `Run review`, and `Request changes` choices. `apply the changes` applies pending feedback through a freshly identified gated research agent using the same complete packet with a new `artifactAgentId`, redisplays the walkthrough, and stays in this approval gate. Ask one focused question only when no feedback is pending. After explicit approval, set `awaitingApproval: true`, display `-> Next: Run /ralph-specum:requirements`, and stop.
+Ask for explicit artifact approval with `Approve`, `Run review`, and `Request changes` choices. This is a multi-option view: persist no `approvalGate`, and treat a bare affirmative as a clarification that re-asks one focused canonical choice. `apply the changes` applies pending feedback through a freshly identified gated research agent using the same complete packet with a new `artifactAgentId`, redisplays the walkthrough, and stays in this approval gate. Ask one focused question only when no feedback is pending. After the canonical `Approve` choice, set `awaitingApproval: true`, display `-> Next: Run /ralph-specum:requirements`, and stop.
 </mandatory>
 
 ## Step 5: Quick Mode Flow

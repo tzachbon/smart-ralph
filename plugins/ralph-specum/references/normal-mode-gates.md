@@ -149,13 +149,21 @@ On resume, reuse the same phase, interview ID, immutable digest, discovery revis
 
 Call `open-frontier` for every decision ID before the native question call. This makes unanswered IDs remain pending when a response is partial.
 
-Use `classify-reply` on the whole reply before recording any answer; it returns exactly `bare_skip`, `control_only`, or `substantive`. For a substantive reply, record only the answered pending IDs. For a control-only reply, leave the frontier unchanged. If the user chooses `Revise decisions` after the brief, call one `revise` transition with every affected ID, for example `revise "$STATE" --decision-id "$ID_1" --decision-id "$ID_2"`. Re-answer reopened decisions, call `await-confirmation` with the same final confirmation ID, and obtain canonical approval again.
+Use `classify-reply` on the whole reply before recording any answer; it returns exactly `bare_skip`, `control_only`, or `substantive`. It is the only parser for an open decision frontier: a control-only reply does not answer a question. For a substantive reply, record only the answered pending IDs. For a control-only reply, leave the frontier unchanged. If the user chooses `Revise decisions` after the brief, call one `revise` transition with every affected ID, for example `revise "$STATE" --decision-id "$ID_1" --decision-id "$ID_2"`. Re-answer reopened decisions, call `await-confirmation` with the same final confirmation ID, and obtain canonical approval again.
 
 For bare skip, use `skip "$STATE" --reason ... --assumption ... --decision-id skip-confirmation`. The helper moves to `awaiting_confirmation`; it does not authorize delegation. Present the defaulted brief, obtain explicit final approval, then call `confirm "$STATE" --decision-id skip-confirmation --source "approve-and-delegate"`. The helper promotes the terminal status to `skipped` only after that approval.
 
 In exact quick mode, still run applicable discovery, reload every successfully selected contract, record the current manifest, then call `begin-interview` for the phase. The helper records `bypassed_quick`; do not ask questions.
 
 If a newly recorded manifest changes the phase context, discovery revision, or selected contract provenance, prior terminal interview evidence is invalidated. Never reuse an approval across that manifest change.
+
+At final confirmation, handle the canonical `Approve and delegate`, `Revise decisions`, and `Cancel` choices first. Only when the reply is not a canonical choice may the coordinator call:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/phase_gate.py" resolve-approval "$STATE" --text "$REPLY"
+```
+
+Act only when it returns `accepted` for the one live `approve-and-delegate` action. Then call the existing `confirm "$STATE" --decision-id "$GATE_ID" --source "approve-and-delegate"`, followed by `check-delegation` and the normal delegation route. Resolver acceptance is not authorization to bypass those checks. For `clarification`, ask one focused approval question and do not mutate or advance the gate.
 
 ## 5. Gate and delegate
 
@@ -181,3 +189,7 @@ Pass the full load manifest with the task and a unique `artifactAgentId` equal t
 ## 6. Artifact approval
 
 After the artifact is written, show the phase walkthrough and require explicit artifact approval. `apply the changes` delegates a revision and returns to the same artifact approval gate. It never advances the phase.
+
+An artifact or revision view may persist `approvalGate` only while `awaitingApproval` is true and exactly one current action is available. The descriptor names its stable ID, phase, kind, and action; a revision descriptor additionally requires nonblank recorded feedback. A multi-option or descriptor-free view has no contextual action and must ask one focused clarification. Clear or replace a descriptor only after its existing continuation or revision action succeeds.
+
+Handle canonical artifact choices before contextual text. Only after that path may the coordinator call `resolve-approval`; act only on its `accepted` result and route the returned action through the existing continuation or revision checks and fresh writer packet. The helper, not the coordinator, appends `approvalAudit` entries containing the original reply, normalized action, and gate ID. On `clarification`, leave state unchanged and ask one focused question. Never use prompt wording, chat history, or audit history as authorization state.

@@ -46,6 +46,43 @@ CONTROL_PHRASES = {
     "y",
     "yes",
 }
+APPROVAL_PHRASES = {
+    "approve",
+    "approved",
+    "confirm",
+    "confirmed",
+    "continue",
+    "continue please",
+    "do it",
+    "go ahead",
+    "looks good",
+    "looks good continue",
+    "next",
+    "ok",
+    "okay",
+    "please continue",
+    "proceed",
+    "sounds good",
+    "y",
+    "yes",
+}
+APPROVAL_REJECTION_WORDS = {
+    "cant",
+    "cannot",
+    "change",
+    "changes",
+    "dont",
+    "edit",
+    "fix",
+    "never",
+    "no",
+    "not",
+    "revise",
+    "revision",
+    "update",
+    "updates",
+}
+APPROVAL_QUOTE_CHARS = "\"'`‘’“”"
 CANONICAL_CONFIRMATION = "approve-and-delegate"
 PHASES = {"start", "triage", "research", "requirements", "design", "tasks"}
 CONTEXT_MARKER = b"ralph-phase-context-v1"
@@ -810,6 +847,113 @@ def normalize_answer(text: str) -> str:
     return re.sub(r"\s+", " ", normalized)
 
 
+def nonblank_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def approval_phase(state: dict[str, Any]) -> str | None:
+    phase = state.get("phase")
+    if nonblank_string(phase):
+        return phase
+    interview = state.get("phaseInterview")
+    if isinstance(interview, dict) and nonblank_string(interview.get("phase")):
+        return interview["phase"]
+    return None
+
+
+def approval_interview_candidate(
+    state: dict[str, Any], phase: str | None
+) -> tuple[dict[str, str] | None, str | None]:
+    interview = state.get("phaseInterview")
+    if interview is None:
+        return None, None
+    if not isinstance(interview, dict):
+        return None, "phase interview is malformed"
+    status = interview.get("status")
+    if status not in INTERVIEW_STATUSES:
+        return None, "phase interview is malformed"
+    if status not in {"collecting", "awaiting_confirmation"}:
+        return None, None
+    if phase is None or interview.get("phase") != phase:
+        return None, "phase interview is stale"
+    try:
+        interview = validate_interview(interview, state)
+    except PhaseGateError:
+        return None, "phase interview is malformed"
+    if status == "collecting":
+        return None, "interview decisions are still active"
+    return {
+        "gateId": interview["pendingDecisionIds"][0],
+        "action": CANONICAL_CONFIRMATION,
+    }, None
+
+
+def approval_descriptor_candidate(
+    state: dict[str, Any], phase: str | None
+) -> tuple[dict[str, str] | None, str | None]:
+    awaiting = state.get("awaitingApproval")
+    gate = state.get("approvalGate")
+    if awaiting is not None and not isinstance(awaiting, bool):
+        return None, "approval state is malformed"
+    if awaiting is not True:
+        if gate is None:
+            return None, None
+        return None, "approval gate is stale"
+    if phase is None:
+        return None, "current phase is missing"
+    if not isinstance(gate, dict):
+        return None, "approval gate is malformed"
+    if any(not nonblank_string(gate.get(key)) for key in ("id", "phase", "kind", "action")):
+        return None, "approval gate is malformed"
+    if gate["phase"] != phase:
+        return None, "approval gate is stale"
+    if gate["kind"] not in {"artifact", "revision"}:
+        return None, "approval gate is malformed"
+    if gate["kind"] == "revision" and not nonblank_string(gate.get("feedback")):
+        return None, "revision approval lacks feedback"
+    return {"gateId": gate["id"], "action": gate["action"]}, None
+
+
+def approval_candidate(state: dict[str, Any]) -> tuple[dict[str, str] | None, str]:
+    phase = approval_phase(state)
+    interview, reason = approval_interview_candidate(state, phase)
+    if reason is not None:
+        return None, reason
+    descriptor, reason = approval_descriptor_candidate(state, phase)
+    if reason is not None:
+        return None, reason
+    if interview is not None and descriptor is not None:
+        return None, "multiple approval actions are pending"
+    if interview is not None:
+        return interview, ""
+    if descriptor is not None:
+        return descriptor, ""
+    return None, "no approval action is pending"
+
+
+def is_affirmative_approval(text: str, action: str) -> bool:
+    if not text.strip() or "?" in text or any(char in text for char in APPROVAL_QUOTE_CHARS):
+        return False
+    normalized = normalize_answer(text)
+    if set(normalized.split()) & APPROVAL_REJECTION_WORDS:
+        return False
+    return normalized in APPROVAL_PHRASES or normalized == normalize_answer(action)
+
+
+def valid_approval_audit(value: Any) -> list[dict[str, Any]] | None:
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        return None
+    for entry in value:
+        if not isinstance(entry, dict) or any(
+            not nonblank_string(entry.get(key))
+            for key in ("originalReply", "normalizedAction", "gateId")
+        ):
+            return None
+    return value
+
+
 def classify_reply(text: str) -> str:
     normalized = normalize_answer(text)
     words = normalized.split()
@@ -825,6 +969,29 @@ def classify_reply(text: str) -> str:
     if normalized in CONTROL_PHRASES:
         return "control_only"
     return "substantive"
+
+
+def command_resolve_approval(args: argparse.Namespace) -> dict[str, Any]:
+    path = Path(args.state)
+    state = read_state(path)
+    candidate, reason = approval_candidate(state)
+    if candidate is None:
+        return {"decision": "clarification", "reason": reason}
+    if not is_affirmative_approval(args.text, candidate["action"]):
+        return {"decision": "clarification", "reason": "reply does not clearly approve the pending action"}
+    audit = valid_approval_audit(state.get("approvalAudit"))
+    if audit is None:
+        return {"decision": "clarification", "reason": "approval audit is malformed"}
+    audit.append(
+        {
+            "originalReply": args.text,
+            "normalizedAction": candidate["action"],
+            "gateId": candidate["gateId"],
+        }
+    )
+    state["approvalAudit"] = audit
+    write_state(path, state)
+    return {"decision": "accepted", "gateId": candidate["gateId"], "action": candidate["action"]}
 
 
 def is_substantive(text: str) -> bool:
@@ -1171,6 +1338,13 @@ def build_parser() -> argparse.ArgumentParser:
     classify = subparsers.add_parser("classify-reply", help="Classify an interview reply.")
     classify.add_argument("--text", required=True)
     classify.set_defaults(handler=command_classify_reply)
+
+    resolve = subparsers.add_parser(
+        "resolve-approval", help="Resolve one persisted contextual approval."
+    )
+    resolve.add_argument("state")
+    resolve.add_argument("--text", required=True)
+    resolve.set_defaults(handler=command_resolve_approval)
     return parser
 
 

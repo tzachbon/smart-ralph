@@ -28,8 +28,8 @@ Every phase skill acts as a coordinator. The coordinator:
 2. Runs the applicable skill discovery pass.
 3. Reloads the internal `interview-framework-codex` skill, every selected domain skill, and every required current-work reference.
 4. Runs the critical-decision frontier interview from `skills/interview-framework-codex/references/algorithm.md` with the required domain-language contract in `references/domain-modeling.md`.
-5. Obtains explicit `approve and delegate` confirmation.
-6. Persists that choice with confirmation source `approve-and-delegate`, runs `phase_gate.py check-delegation`, and delegates artifact generation to the phase sub-agent.
+5. Handles canonical final-confirmation choices first; only then may `phase_gate.py resolve-approval` accept exactly one live `approve-and-delegate` action.
+6. Persists canonical or accepted contextual approval with confirmation source `approve-and-delegate`, runs `phase_gate.py check-delegation`, and delegates artifact generation to the phase sub-agent.
 7. Validates the sub-agent output and presents it for artifact approval.
 
 | Phase | Sub-agent type |
@@ -169,9 +169,9 @@ Cascade downstream updates when upstream requirements or design changes.
 
 The pre-delegation interview and post-generation artifact review are separate gates.
 
-Before delegation, show the decision ledger and require the explicit native user-input choice `Approve and delegate (Recommended)`. Replies that only say `apply the changes`, `continue`, `proceed`, or `go ahead` answer no interview question and approve no delegation. Bare `skip` during an active interview fills the remaining critical decisions with recorded defaults and assumptions, then still requires final approval.
+Before delegation, show the decision ledger and present the canonical native user-input choice `Approve and delegate (Recommended)`. For an active interview question, replies that only say `apply the changes`, `continue`, `proceed`, or `go ahead` answer no question; `classify-reply` remains the only parser at that frontier. Bare `skip` during an active interview fills the remaining critical decisions with recorded defaults and assumptions, then still requires final approval.
 
-Classify each reply with `phase_gate.py classify-reply`. Persist final approval only with `confirm --source approve-and-delegate`. If the user chooses revision at final confirmation, call `revise` for all affected decision IDs, collect the reopened answers in its incremented round, and return to the same final confirmation ID.
+Handle canonical final-confirmation choices first. Only when the reply is not canonical may the coordinator run `phase_gate.py resolve-approval STATE --text TEXT`. Act only on an `accepted` result for exactly one live `approve-and-delegate` action, then persist final approval with `confirm --source approve-and-delegate`, run `check-delegation`, and use the normal delegation path. On `clarification`, leave state unchanged and ask one focused approval question. If the user chooses revision at final confirmation, call `revise` for all affected decision IDs, collect the reopened answers in its incremented round, and return to the same final confirmation ID.
 
 When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, or refactored spec files outside quick mode:
 
@@ -184,7 +184,9 @@ When a phase writes `research.md`, `requirements.md`, `design.md`, `tasks.md`, o
 
 Treat `continue to <named next step>` as approval of the current artifact.
 
-During artifact review, `apply the changes` immediately delegates already-recorded feedback through the same gate and a new unique dispatch, redisplays the artifact, and returns to artifact approval. Ask one focused change question only when no revision feedback is pending. A bare `continue`, `proceed`, or `go ahead` does not approve the artifact.
+During artifact review, `apply the changes` immediately delegates already-recorded feedback through the same gate and a new unique dispatch, redisplays the artifact, and returns to artifact approval. Ask one focused change question only when no revision feedback is pending. A bare `continue`, `proceed`, or `go ahead` does not approve the artifact through a canonical choice.
+
+Handle canonical artifact choices first. Persist `approvalGate` only while `awaitingApproval` has exactly one current artifact or revision action; it contains the action's stable ID, phase, kind, and action, and a revision requires recorded feedback. A missing or multi-option view has no descriptor and must ask one focused clarification. Only then may `resolve-approval STATE --text TEXT` select an existing action. On `accepted`, use that continuation or revision's existing checks and fresh writer route; clear or replace the descriptor only after it succeeds. On `clarification`, do not mutate or advance state. The helper alone appends `approvalAudit` with the original reply, normalized action, and gate ID; never use prompt wording, chat history, or audit history as authorization state.
 
 ## Hook-Driven Execution Path
 

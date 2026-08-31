@@ -188,6 +188,42 @@
       }
     },
 
+    "approvalGate": {
+      "type": "object",
+      "description": "One current artifact or revision action eligible for contextual approval",
+      "required": ["id", "phase", "kind", "action"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "phase": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "kind": { "type": "string", "enum": ["artifact", "revision"] },
+        "action": { "type": "string", "minLength": 1, "pattern": "\\S" },
+        "feedback": { "type": "string", "minLength": 1, "pattern": "\\S" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["kind"],
+            "properties": { "kind": { "const": "revision" } }
+          },
+          "then": { "required": ["feedback"] }
+        }
+      ]
+    },
+
+    "approvalAudit": {
+      "type": "array",
+      "description": "Append-only contextual approval resolutions",
+      "items": {
+        "type": "object",
+        "required": ["originalReply", "normalizedAction", "gateId"],
+        "properties": {
+          "originalReply": { "type": "string", "minLength": 1, "pattern": "\\S" },
+          "normalizedAction": { "type": "string", "minLength": 1, "pattern": "\\S" },
+          "gateId": { "type": "string", "minLength": 1, "pattern": "\\S" }
+        }
+      }
+    },
+
     "state": {
       "type": "object",
       "description": "Runtime state for spec execution loop",
@@ -217,6 +253,8 @@
         "phaseInterview": { "$ref": "#/definitions/phaseInterview" },
         "quickAuthorization": { "$ref": "#/definitions/quickAuthorization" },
         "quickMode": { "type": "boolean" },
+        "approvalGate": { "$ref": "#/definitions/approvalGate" },
+        "approvalAudit": { "$ref": "#/definitions/approvalAudit" },
         "discoveredSkills": { "type": "array", "items": { "$ref": "#/definitions/discoveredSkill" } },
         "taskIndex": {
           "type": "integer",
@@ -439,6 +477,8 @@
         "phaseInterview": { "$ref": "#/definitions/phaseInterview" },
         "quickAuthorization": { "$ref": "#/definitions/quickAuthorization" },
         "quickMode": { "type": "boolean" },
+        "approvalGate": { "$ref": "#/definitions/approvalGate" },
+        "approvalAudit": { "$ref": "#/definitions/approvalAudit" },
         "discoveredSkills": { "type": "array", "items": { "$ref": "#/definitions/discoveredSkill" } }
       }
     },

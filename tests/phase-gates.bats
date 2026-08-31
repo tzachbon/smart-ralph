@@ -199,6 +199,88 @@ record_complete_gate() {
         --decision-id final-approach --source "approve-and-delegate"
 }
 
+write_approval_fixture() {
+    local fixture="$1"
+    local awaiting=false
+    local gate=null
+    local interview=null
+    local pending_interview='{"phase":"requirements","interviewId":"requirements-1","round":1,"status":"awaiting_confirmation","askedDecisionIds":["final-approval"],"pendingDecisionIds":["final-approval"],"answeredDecisionIds":[],"selectedApproach":"Use the existing path","confirmationSource":null,"bypassReason":null,"assumptionsRecorded":[]}'
+
+    case "$fixture" in
+        pre-delegation)
+            interview="$pending_interview"
+            ;;
+        artifact)
+            awaiting=true
+            gate='{"id":"artifact-review","phase":"requirements","kind":"artifact","action":"continue-to-design"}'
+            ;;
+        revision)
+            awaiting=true
+            gate='{"id":"revision-review","phase":"requirements","kind":"revision","action":"apply-revision","feedback":"Clarify the migration boundary"}'
+            ;;
+        missing-descriptor)
+            awaiting=true
+            ;;
+        stale-descriptor)
+            awaiting=true
+            gate='{"id":"stale-artifact-review","phase":"design","kind":"artifact","action":"continue-to-design"}'
+            ;;
+        missing-feedback)
+            awaiting=true
+            gate='{"id":"revision-review","phase":"requirements","kind":"revision","action":"apply-revision"}'
+            ;;
+        malformed-feedback)
+            awaiting=true
+            gate='{"id":"revision-review","phase":"requirements","kind":"revision","action":"apply-revision","feedback":42}'
+            ;;
+        competing)
+            awaiting=true
+            interview="$pending_interview"
+            gate='{"id":"artifact-review","phase":"requirements","kind":"artifact","action":"continue-to-design"}'
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    jq -n --arg base_path "$TEST_DIR" --argjson awaiting "$awaiting" \
+        --argjson gate "$gate" --argjson interview "$interview" '
+        {source:"spec",name:"demo",goal:"Demo goal",basePath:$base_path,phase:"requirements"}
+        + (if $awaiting then {awaitingApproval:true} else {} end)
+        + (if $gate == null then {} else {approvalGate:$gate} end)
+        + (if $interview == null then {} else {phaseInterview:$interview} end)
+    ' > "$STATE_FILE"
+}
+
+assert_contextual_approval_accepted() {
+    local helper="$1"
+    local reply="$2"
+    local action="$3"
+    local gate_id="$4"
+
+    run env PYTHONDONTWRITEBYTECODE=1 python3 "$helper" resolve-approval "$STATE_FILE" --text "$reply"
+    [ "$status" -eq 0 ]
+    run jq -e --arg action "$action" --arg gate_id "$gate_id" \
+        '.decision == "accepted" and .action == $action and .gateId == $gate_id' <<<"$output"
+    [ "$status" -eq 0 ]
+    run jq -e --arg reply "$reply" --arg action "$action" --arg gate_id "$gate_id" \
+        '.approvalAudit[-1] == {originalReply:$reply,normalizedAction:$action,gateId:$gate_id}' "$STATE_FILE"
+    [ "$status" -eq 0 ]
+}
+
+assert_contextual_approval_rejected_unchanged() {
+    local helper="$1"
+    local reply="$2"
+
+    cp "$STATE_FILE" "$TEST_DIR/approval-before.json"
+    run env PYTHONDONTWRITEBYTECODE=1 python3 "$helper" resolve-approval "$STATE_FILE" --text "$reply"
+    [ "$status" -eq 0 ]
+    run jq -e '.decision == "clarification"' <<<"$output"
+    [ "$status" -eq 0 ]
+    run cmp "$TEST_DIR/approval-before.json" "$STATE_FILE"
+    [ "$status" -eq 0 ]
+}
+
 @test "phase gate helpers are byte-identical and expose the documented commands" {
     run cmp "$(claude_helper)" "$(codex_helper)"
     [ "$status" -eq 0 ]
@@ -213,6 +295,7 @@ record_complete_gate() {
     [[ "$output" == *"check-agent-write"* ]]
     [[ "$output" == *"check-delegation"* ]]
     [[ "$output" == *"is-substantive"* ]]
+    [[ "$output" == *"resolve-approval"* ]]
 }
 
 @test "versioned Codex cache roots require exactly one packaged core" {
@@ -280,6 +363,9 @@ record_complete_gate() {
 }
 
 @test "schemas expose matching required phase gate state" {
+    run cmp "$(repo_root)/plugins/ralph-specum/schemas/spec.schema.json" "$(repo_root)/plugins/ralph-specum-codex/schemas/spec.schema.json"
+    [ "$status" -eq 0 ]
+
     run env REPO_ROOT="$(repo_root)" python3 - <<'PY'
 import json
 import os
@@ -298,13 +384,23 @@ assert properties["phaseSkillLoad"] == {"$ref": "#/definitions/phaseSkillLoad"}
 assert properties["phaseInterview"] == {"$ref": "#/definitions/phaseInterview"}
 assert properties["quickAuthorization"] == {"$ref": "#/definitions/quickAuthorization"}
 assert properties["quickMode"] == {"type": "boolean"}
+assert properties["approvalGate"] == {"$ref": "#/definitions/approvalGate"}
+assert properties["approvalAudit"] == {"$ref": "#/definitions/approvalAudit"}
 assert properties["discoveredSkills"] == {"type": "array", "items": {"$ref": "#/definitions/discoveredSkill"}}
 epic_properties = definitions["epicState"]["properties"]
 assert epic_properties["phaseSkillLoad"] == {"$ref": "#/definitions/phaseSkillLoad"}
 assert epic_properties["phaseInterview"] == {"$ref": "#/definitions/phaseInterview"}
 assert epic_properties["quickAuthorization"] == {"$ref": "#/definitions/quickAuthorization"}
 assert epic_properties["quickMode"] == {"type": "boolean"}
+assert epic_properties["approvalGate"] == {"$ref": "#/definitions/approvalGate"}
+assert epic_properties["approvalAudit"] == {"$ref": "#/definitions/approvalAudit"}
 assert definitions["quickAuthorization"]["properties"]["source"]["const"] == "--quick"
+approval_gate = definitions["approvalGate"]
+assert approval_gate["required"] == ["id", "phase", "kind", "action"]
+assert approval_gate["properties"]["kind"]["enum"] == ["artifact", "revision"]
+assert approval_gate["allOf"][0]["then"]["required"] == ["feedback"]
+approval_audit = definitions["approvalAudit"]
+assert approval_audit["items"]["required"] == ["originalReply", "normalizedAction", "gateId"]
 assert definitions["phaseSkillLoad"]["required"] == [
     "phase", "interviewId", "discoveryRevision", "contextDigest", "context", "status",
     "selected", "warnings", "conflicts", "failures", "noDomainMatches", "artifactAgentLoads",
@@ -672,12 +768,68 @@ PY
         [ "$status" -eq 0 ]
         [ "$output" = "control_only" ]
     done
+    for phrase in "apply the changes" "continue" "go ahead" "looks good"; do
+        run python3 "$helper" classify-reply --text "$phrase"
+        [ "$status" -eq 0 ]
+        [ "$output" = "control_only" ]
+    done
     run python3 "$helper" classify-reply --text "skip"
     [ "$output" = "bare_skip" ]
     run python3 "$helper" classify-reply --text "skip auth but keep billing"
     [ "$output" = "substantive" ]
     run python3 "$helper" classify-reply --text "continue with PostgreSQL"
     [ "$output" = "substantive" ]
+}
+
+@test "contextual approval resolves one live action and records its audit on both helpers" {
+    local helper
+    for helper in "$(claude_helper)" "$(codex_helper)"; do
+        write_approval_fixture pre-delegation
+        assert_contextual_approval_accepted "$helper" "yes" "approve-and-delegate" "final-approval"
+
+        write_approval_fixture artifact
+        assert_contextual_approval_accepted "$helper" "looks good, continue" "continue-to-design" "artifact-review"
+
+        jq '.approvalGate = {
+            id: "artifact-resume",
+            phase: "requirements",
+            kind: "artifact",
+            action: "continue-to-design"
+        }' "$STATE_FILE" > "$TEST_DIR/resumed-approval.json"
+        mv "$TEST_DIR/resumed-approval.json" "$STATE_FILE"
+        assert_contextual_approval_accepted "$helper" "continue to design" "continue-to-design" "artifact-resume"
+        run jq -e '.approvalAudit == [
+            {originalReply:"looks good, continue",normalizedAction:"continue-to-design",gateId:"artifact-review"},
+            {originalReply:"continue to design",normalizedAction:"continue-to-design",gateId:"artifact-resume"}
+        ]' "$STATE_FILE"
+        [ "$status" -eq 0 ]
+
+        write_approval_fixture revision
+        assert_contextual_approval_accepted "$helper" "do it" "apply-revision" "revision-review"
+    done
+}
+
+@test "contextual approval rejects unsafe or ambiguous replies without mutating either helper state" {
+    local helper scenario fixture reply
+    for helper in "$(claude_helper)" "$(codex_helper)"; do
+        for scenario in question quote negation revision change unrelated missing stale missing-feedback malformed-feedback competing; do
+            case "$scenario" in
+                question) fixture=pre-delegation; reply="looks good?" ;;
+                quote) fixture=pre-delegation; reply='"looks good"' ;;
+                negation) fixture=artifact; reply="do not continue" ;;
+                revision) fixture=artifact; reply="revise this" ;;
+                change) fixture=artifact; reply="change the design" ;;
+                unrelated) fixture=artifact; reply="looks good but add caching" ;;
+                missing) fixture=missing-descriptor; reply="yes" ;;
+                stale) fixture=stale-descriptor; reply="continue" ;;
+                missing-feedback) fixture=missing-feedback; reply="do it" ;;
+                malformed-feedback) fixture=malformed-feedback; reply="do it" ;;
+                competing) fixture=competing; reply="yes" ;;
+            esac
+            write_approval_fixture "$fixture"
+            assert_contextual_approval_rejected_unchanged "$helper" "$reply"
+        done
+    done
 }
 
 @test "interview transition commands reject control answers and illegal order" {

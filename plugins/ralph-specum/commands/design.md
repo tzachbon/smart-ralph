@@ -67,7 +67,7 @@ When multiple grounded architecture approaches remain viable, add them as explic
 
 Ask the whole currently unblocked critical frontier, in calls of at most four questions. Persist partial answers. Apply control-only and bare-skip semantics. Present the design decision brief and require explicit `Approve and delegate`. On approval, run `check-delegation` and launch Step 3 immediately in the same response.
 
-Use `classify-reply` before applying every reply, `revise --decision-id` for final-approval revisions, and `confirm --source approve-and-delegate` only for the explicit approval selection.
+Use `classify-reply` for active decision frontiers and `revise --decision-id` for final-approval revisions. Keep canonical final choices first; only then may a noncanonical reply use the single-action `resolve-approval` fallback from `normal-mode-gates.md`. An accepted live `approve-and-delegate` result still requires `confirm --source approve-and-delegate` followed by `check-delegation`.
 
 ## Step 3: Execute Design (Team-Based)
 
@@ -103,7 +103,7 @@ Invoke `spec-reviewer` via Task tool. Follow the standard review loop:
 
 **Review delegation**: Include full design.md content, iteration count, prior findings. Upstream: research.md + requirements.md.
 
-**Revision delegation**: Run `check-delegation`, create a fresh unique artifact agent ID, and re-invoke architect-reviewer with the absolute state/helper paths, complete marker identity tuple, verbatim manifest, matching load/write-check instructions, reviewer feedback, current artifact, and requirements.md. Focus on specific issues.
+**Revision delegation**: Record nonblank reviewer feedback in the revision context before creating a revision descriptor or dispatching a revision. Then run `check-delegation`, create a fresh unique artifact agent ID, and re-invoke architect-reviewer with the absolute state/helper paths, complete marker identity tuple, verbatim manifest, matching load/write-check instructions, reviewer feedback, current artifact, and requirements.md. Focus on specific issues.
 
 **Error handling**: Reviewer no signal = REVIEW_PASS. Agent failure = retry once, then use original.
 </mandatory>
@@ -144,10 +144,12 @@ Ask ONE question: "How do you want to proceed?" with these options via AskUserQu
 2. **Run review** -- Spawn spec-reviewer to validate against rubrics, show findings, then loop back to this choice
 3. **Request changes** -- Provide specific feedback to revise the artifact
 
+This is a multi-option view: persist no `approvalGate`, and treat a bare affirmative as a clarification that re-asks one focused canonical choice. A later concrete artifact or revision handoff may call `resolve-approval` only when `awaitingApproval` is true and one persisted descriptor names its sole action. Create a revision descriptor or dispatch a revision only after recorded nonblank feedback. Handle canonical choices first; an accepted result must take the existing continuation or fresh-writer route, and clear or replace its descriptor only after that route succeeds. On clarification, leave state unchanged and do not advance.
+
 **If "Approve"**: proceed to Step 6.
 **If "Run review"**: Invoke spec-reviewer via Task tool with full design.md content (upstream: research.md + requirements.md). Display findings table. If REVIEW_PASS, note it. If REVIEW_FAIL, show feedback. Then loop back to this same 3-choice question (user decides next action).
 **If "Request changes", "Other", or `apply the changes`**:
-1. Apply already-recorded review or revision feedback immediately. Ask one focused change question only when no pending feedback exists.
+1. Apply already-recorded review or revision feedback immediately. Ask one focused change question only when no pending feedback exists, record its nonblank answer, and only then create a revision descriptor or dispatch a revision.
 2. Run `check-delegation`, then re-invoke architect-reviewer using the **cleanup-and-recreate** team pattern with the same complete packet and a new unique artifact agent ID, current artifact, and feedback
 3. Re-display walkthrough, ask again with same 3 choices. Loop until approved.
 
