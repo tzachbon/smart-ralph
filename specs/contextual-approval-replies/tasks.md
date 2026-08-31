@@ -104,7 +104,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-1, FR-3, FR-4, FR-5, FR-7; AC-2.1, AC-2.2, AC-2.3, AC-3.1, AC-3.2, AC-3.3, AC-4.1_
   - _Design: Persisted approval context; Error Handling; Edge Cases_
 
-- [ ] V3 [VERIFY] Claude handoff checkpoint
+- [x] V3 [VERIFY] Claude handoff checkpoint
   - **Do**: Run Claude's prompt-flow regression suite and verify no source-specific prompt bypasses the shared helper.
   - **Files**: None (verification-only)
   - **Done when**: The Claude suite passes and all six phase commands still use the normal gate contract.
