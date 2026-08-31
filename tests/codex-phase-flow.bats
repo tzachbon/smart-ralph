@@ -16,16 +16,41 @@ ralph-specum-tasks
 EOF
 }
 
-@test "codex phase flow: manifest is 4.12.0 and core interview skill is internal" {
-    local root
+@test "codex phase flow: manifest and marketplace are 4.12.1 and core interview skill is internal" {
+    local root marketplace
     root="$(plugin_root)"
+    marketplace="$(repo_root)/.claude-plugin/marketplace.json"
 
-    run python3 -c "import json; assert json.load(open('$root/.codex-plugin/plugin.json'))['version'] == '4.12.0'"
+    run python3 -c "import json; plugin=json.load(open('$root/.codex-plugin/plugin.json')); marketplace=json.load(open('$marketplace')); entry=next(item for item in marketplace['plugins'] if item['name'] == 'ralph-specum-codex'); assert plugin['version'] == entry['version'] == '4.12.1'"
     [ "$status" -eq 0 ]
     [ -f "$root/skills/interview-framework-codex/SKILL.md" ]
     [ -f "$root/skills/interview-framework-codex/references/algorithm.md" ]
     grep -q 'surface: internal' "$root/skills/interview-framework-codex/SKILL.md"
     grep -q 'allow_implicit_invocation: false' "$root/skills/interview-framework-codex/agents/openai.yaml"
+}
+
+@test "codex phase flow: hard-transition coordinator matrix fails closed" {
+    local root coordinator path wording text
+    root="$(plugin_root)"
+
+    while IFS='|' read -r coordinator path wording; do
+        text="$(<"$root/$path")"
+        [[ "$text" == *"$wording"* ]] || return 1
+    done <<'EOF'
+shared framework|skills/interview-framework-codex/SKILL.md|Hard-transition invariant
+shared framework|skills/interview-framework-codex/SKILL.md|A failed normal-mode `check-delegation` stops this invocation before state transition, child dispatch, or target-artifact write.
+shared framework|skills/interview-framework-codex/SKILL.md|The next explicit invocation uses a fresh manifest/interview identity.
+shared framework|skills/interview-framework-codex/SKILL.md|A matching in-progress interview remains valid for resume.
+shared framework|skills/interview-framework-codex/SKILL.md|Exact `--quick` preserves discovery, manifest, parent-delegation provenance, `check-delegation`, receipt recording, and `check-agent-write`.
+primary fallback|skills/ralph-specum/SKILL.md|Apply the shared hard-transition invariant to only `start`, `triage`, `research`, `requirements`, `design`, and `tasks`.
+start|skills/ralph-specum-start/SKILL.md|Apply the shared hard-transition invariant before fresh or resumed research dispatch.
+triage|skills/ralph-specum-triage/SKILL.md|Apply the shared hard-transition invariant before every triage artifact writer.
+triage|skills/ralph-specum-triage/SKILL.md|Use `.epic-state.json` as `STATE` for every writer.
+research|skills/ralph-specum-research/SKILL.md|Apply the shared hard-transition invariant before research writer dispatch.
+requirements|skills/ralph-specum-requirements/SKILL.md|Apply the shared hard-transition invariant before requirements writer dispatch.
+design|skills/ralph-specum-design/SKILL.md|Apply the shared hard-transition invariant before design writer dispatch.
+tasks|skills/ralph-specum-tasks/SKILL.md|Apply the shared hard-transition invariant before task-planner dispatch.
+EOF
 }
 
 @test "codex phase flow: each affected phase normalizes mode and gates delegation" {
