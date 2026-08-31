@@ -137,7 +137,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-1, FR-3, FR-4, FR-7; AC-1.1, AC-2.1, AC-2.2, AC-2.3, AC-3.1, AC-3.2, AC-3.3_
   - _Design: Data Flow; Error Handling_
 
-- [ ] V4 [VERIFY] Codex early-handoff checkpoint
+- [x] V4 [VERIFY] Codex early-handoff checkpoint
   - **Do**: Run Codex's prompt-flow suite after the state and early-phase handoff cleanup.
   - **Files**: None (verification-only)
   - **Done when**: The Codex suite passes and no prompt creates an alternate approval or writer path.
