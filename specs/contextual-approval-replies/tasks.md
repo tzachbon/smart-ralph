@@ -1,7 +1,7 @@
 ---
 spec: contextual-approval-replies
 phase: tasks
-total_tasks: 18
+total_tasks: 19
 created: 2026-08-31
 generated: auto
 ---
@@ -207,6 +207,17 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
 
 ## Phase 4: Quality Gates
 
+- [ ] 4.2 Update the remaining release-version assertion
+  - **Do**:
+    1. Update the stale Codex release expectation from `4.12.0` to `4.12.1` in the interview-framework Bats suite.
+    2. Preserve every unrelated interview-framework assertion.
+  - **Files**: `tests/interview-framework.bats`
+  - **Done when**: The suite asserts the version emitted by the bumped Codex plugin manifest and passes locally.
+  - **Verify**: `bats tests/interview-framework.bats`
+  - **Commit**: `test(gates): update release version expectation`
+  - _Requirements: FR-8; AC-4.3_
+  - _Design: Dependencies_
+
 - [ ] V6 [VERIFY] Run the local release-quality gate
   - **Do**:
     1. Run the full Bats suite and both parity checks.
@@ -227,5 +238,5 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
 ## Dependencies
 
 ```text
-1.1 -> 1.2 -> V1 -> 1.3/1.4 -> V2 -> 2.1/2.2 -> V3 -> 2.3/2.4 -> V4 -> 2.5 -> 3.1 -> 4.1 -> 3.2 -> V5 -> V6
+1.1 -> 1.2 -> V1 -> 1.3/1.4 -> V2 -> 2.1/2.2 -> V3 -> 2.3/2.4 -> V4 -> 2.5 -> 3.1 -> 4.1 -> 3.2 -> V5 -> 4.2 -> V6
 ```
