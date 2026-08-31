@@ -207,7 +207,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.2 Update the remaining release-version assertion
+- [x] 4.2 Update the remaining release-version assertion
   - **Do**:
     1. Update the stale Codex release expectation from `4.12.0` to `4.12.1` in the interview-framework Bats suite.
     2. Preserve every unrelated interview-framework assertion.
