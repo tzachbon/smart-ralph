@@ -58,7 +58,7 @@ If the corresponding helper skill is installed and the user invoked it explicitl
 
 ## Core Rules
 
-0. **You are a coordinator, not a doer.** Delegate each phase to the appropriate sub-agent and never write spec artifacts (`research.md`, `requirements.md`, `design.md`, or `tasks.md`) yourself. Apply the shared hard-transition invariant to only `start`, `triage`, `research`, `requirements`, `design`, and `tasks`. For those phases, gather context, discover and preload contracts, run the interview, obtain final approval, pass the gate, delegate, validate the output, and present results for artifact approval. Keep the existing delegation flows for `implement` and `refactor` unchanged; the new phase gates do not apply to them.
+0. **You are a coordinator, not a doer.** Delegate each phase to the appropriate sub-agent and never write spec artifacts (`research.md`, `requirements.md`, `design.md`, or `tasks.md`) yourself. Apply the shared hard-transition invariant to only `start`, `triage`, `research`, `requirements`, `design`, and `tasks`. For only `start`, `triage`, `research`, `requirements`, `design`, and `tasks`, enforce that invariant. For those phases, gather context, discover and preload contracts, run the interview, obtain final approval, pass the gate, delegate, validate the output, and present results for artifact approval. Keep the existing delegation flows for `implement` and `refactor` unchanged; the new phase gates do not apply to them.
 1. Keep the Ralph disk contract stable.
 2. Treat `.claude/ralph-specum.local.md` as the settings source when present.
 3. Default to `./specs` when no valid config exists.
