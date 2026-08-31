@@ -57,7 +57,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-1, FR-2, FR-3, FR-4, FR-6, FR-7; AC-1.1, AC-1.2, AC-1.3, AC-2.1, AC-2.2, AC-3.1, AC-3.3_
   - _Design: Data Flow; Existing Patterns to Follow_
 
-- [ ] 1.4 Route Codex's shared gate contract through the resolver
+- [x] 1.4 Route Codex's shared gate contract through the resolver
   - **Do**:
     1. Preserve control-only handling for open interview decisions.
     2. Document resolver-first contextual fallback at final confirmation and artifact review, including the existing `confirm` and `check-delegation` path after acceptance.

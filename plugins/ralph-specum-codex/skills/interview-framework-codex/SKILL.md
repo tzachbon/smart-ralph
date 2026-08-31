@@ -27,10 +27,11 @@ Quick mode uses the same identity tuple. It requires a current `complete` or `pa
 - Ask the whole currently unblocked critical frontier. Split a frontier only when Codex's native user-input tool limit requires another batch. The current limit is three questions per call.
 - Put the recommended option first and state its tradeoff. Offer only viable alternatives.
 - Persist each partial answer before asking the next frontier.
-- Treat control-only replies such as `apply the changes`, `continue`, `proceed`, and `go ahead` as no answer to an active interview question.
+- Treat control-only replies such as `apply the changes`, `continue`, `proceed`, and `go ahead` as no answer to an active interview question. `classify-reply` is the only parser for that frontier.
 - Treat bare `skip` during an active question as an instruction to finish the remaining interview with stated defaults and assumptions. Present the final approval gate before delegation.
-- Delegate in the same turn after the user explicitly chooses `approve and delegate`.
+- At final confirmation, handle the canonical `Approve and delegate` (`approve and delegate`), `Revise decisions`, and `Cancel` choices first. Only otherwise call `resolve-approval`; act only on its `accepted` result for exactly one live `approve-and-delegate` action, then use the existing `confirm --source approve-and-delegate`, `check-delegation`, and delegation path. On `clarification`, ask one focused approval question without changing state.
 - During artifact review, treat `apply the changes` as a revision request. Delegate the revision and remain at the artifact approval gate.
+- During artifact review, handle canonical choices before `resolve-approval`. Persist `approvalGate` only while `awaitingApproval` has exactly one current artifact or revision action; a revision needs recorded feedback. A missing or multi-option view has no descriptor and must ask one focused clarification. An accepted resolver result uses the existing continuation or revision route; the helper owns append-only `approvalAudit`, not chat history.
 - Apply domain-language modeling during the grill. Challenge conflicting or vague terms, use concrete boundary scenarios, and record resolved domain terms without creating an ADR.
 
 ## Preload boundary
