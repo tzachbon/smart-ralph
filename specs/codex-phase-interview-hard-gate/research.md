@@ -44,7 +44,7 @@ The helper was exercised against temporary copies of the current state:
 | Wrong interview identity | `INTERVIEW_STALE` |
 | Current exact quick receipt | allowed (`path: quick`) |
 
-For a collecting interview with the same identity, `begin-interview` currently returns `resumed: true`. Recording a manifest with a fresh `interviewId` clears that old `phaseInterview` through `record-skill-load`, then `begin-interview` starts a new `collecting` interview. This is the existing helper path needed for the selected fresh-next-invocation recovery policy.
+For a collecting interview with the same identity, `begin-interview` currently returns `resumed: true`; this is the valid resume path before a failed delegation boundary. A failed delegation check can only inspect a terminal interview, so the next explicit invocation can record a manifest with a fresh `interviewId`; its changed fingerprint clears that old `phaseInterview` through `record-skill-load`, then `begin-interview` starts a new `collecting` interview. No separate failure marker is needed for this terminal-versus-in-progress distinction.
 
 The current red-capable contract assertion also fails for the primary coordinator and all six affected helper skills because none contains an explicit invariant equivalent to: a failed gate stops before phase-state mutation, child dispatch, or target-artifact write. `tests/codex-phase-flow.bats` is the correct permanent home for that assertion.
 
@@ -106,8 +106,8 @@ No related spec is recorded in the current state. Keep #149 scoped to Codex phas
 ## Recommendations for Requirements
 
 1. Add one shared hard-transition rule to the Codex interview framework: before each affected coordinator transition or child dispatch, run the current `check-delegation`; before every artifact write, run the current `check-agent-write`; on any nonzero result, stop without mutating phase state, dispatching, or writing the target artifact.
-2. Define recovery precisely: a failed missing/stale/partial/mismatched normal-mode gate does not continue in that invocation. On the next explicit affected-phase invocation, issue a fresh `interviewId`, record a fresh manifest (which clears the prior interview through existing `record-skill-load` behavior), then begin a new interview. Exact quick follows the existing bypass receipt path and still runs discovery, manifest, delegation, and writer checks.
-3. Extend `tests/codex-phase-flow.bats` with the transition invariant for the primary fallback plus start, triage, research, requirements, design, and tasks. Extend `tests/phase-gates.bats` with the fresh-identity recovery case, while retaining current tests for direct, resumed, stale, and exact-quick helper behavior. Run both Bats files in CI.
+2. Define recovery precisely: a failed missing/stale/partial/mismatched or unapproved normal-mode gate after terminal interview state does not continue in that invocation. On the next explicit affected-phase invocation, issue a fresh `interviewId`, record a fresh manifest (whose changed fingerprint clears the prior terminal interview through existing `record-skill-load` behavior), then begin a new interview; a matching collecting or awaiting interview that has not reached the failed boundary still resumes. Exact quick follows the existing bypass receipt path and still runs discovery, manifest, delegation, and writer checks.
+3. Keep `tests/codex-phase-flow.bats` as the text-contract seam: assert the hard-transition boundary appears before each protected writer/dispatch marker and retain the fresh-recovery, valid-resume, exact-quick, and provenance wording checks. Keep `tests/phase-gates.bats` unchanged for helper behavior and run both Bats files in CI.
 
 ## Open Questions
 

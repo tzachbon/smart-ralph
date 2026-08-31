@@ -14,7 +14,7 @@ python3 <phase-gate-script> mode STATE --interactive
 
 Only the exact `--quick` flag enables persistent quick mode. Only the exact `--interactive` flag clears it. Reject both flags together, `-q`, variants, and natural-language autonomy requests. A no-flag call resets legacy or invalid quick state to interactive.
 
-For quick mode, create a fresh phase identity, complete the applicable discovery and contract-load steps below, then run `begin-interview`. The helper records `phaseInterview.status: "bypassed_quick"` from the exact quick authorization. Record the assumptions used and run `check-delegation` with that identity immediately before dispatch. Exact `--quick` preserves discovery, manifest, parent-delegation provenance, receipt recording, and `check-agent-write`. It skips frontier questions and final interview confirmation only.
+For quick mode, create a fresh phase identity, complete the applicable discovery and contract-load steps below, then run `begin-interview`. The helper records `phaseInterview.status: "bypassed_quick"` from the exact quick authorization. Record the assumptions used and run `check-delegation` with that identity immediately before dispatch; a failed check in either mode stops before transition, dispatch, or target-artifact write. Exact `--quick` preserves discovery, manifest, parent-delegation provenance, receipt recording, and `check-agent-write`. It skips frontier questions and final interview confirmation only.
 
 ## 2. Discover relevant skills
 
@@ -180,7 +180,7 @@ Immediately before every affected transition or child dispatch, run the parent d
 python3 <phase-gate-script> check-delegation STATE --phase PHASE --interview-id ID --discovery-revision REV --context-digest SHA256
 ```
 
-Delegate immediately when the command succeeds. A failed normal-mode check ends this invocation rather than continuing. On the next explicit invocation, record a fresh manifest/interview identity before `begin-interview`; a matching in-progress interview that has not reached this failed boundary remains valid for resume.
+Delegate immediately when the command succeeds. A failed check in either mode ends this invocation rather than continuing. For a normal-mode failure, the next explicit invocation records a fresh manifest/interview identity before `begin-interview`; a matching in-progress interview that has not reached this failed boundary remains valid for resume. The helper needs no separate failure marker: only terminal interviews reach this check, while `begin-interview` resumes matching collecting or awaiting interviews and a fresh identity replaces the terminal prior interview.
 
 ## 6. Pass and enforce the manifest
 

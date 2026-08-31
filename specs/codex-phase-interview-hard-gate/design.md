@@ -14,7 +14,7 @@ prototypeEvidence: none (the terminal skipped record is excluded)
 
 Make the existing `phase_gate.py` the explicit, shared transition boundary in the Codex coordinator contracts. This is a documentation-contract and regression-seam change: it does not add a hook, middleware, state machine, dependency, or new helper command.
 
-Every affected coordinator will invoke the current delegation check immediately before its transition or child dispatch; every artifact writer will retain the current write check immediately before writing. A failed normal-mode check stops the current invocation, and the next explicit invocation starts a fresh manifest/interview identity before beginning its interview.
+Every affected coordinator will invoke the current delegation check immediately before its transition or child dispatch; every artifact writer will retain the current write check immediately before writing. A failed check in either mode stops the current invocation, and a normal-mode failure after terminal interview state makes the next explicit invocation start a fresh manifest/interview identity before beginning its interview.
 
 ## Architecture
 
@@ -67,7 +67,7 @@ flowchart LR
 2. Complete the existing discovery and manifest reload, then establish the immutable `phase`, `interviewId`, `discoveryRevision`, and `contextDigest` tuple.
 3. In normal mode, finish the current interview and record explicit `approve-and-delegate`; with exact `--quick`, record `bypassed_quick` instead. Both paths retain manifest and provenance checks.
 4. Immediately before a phase transition or child dispatch, run the existing `check-delegation` for that tuple. A failure ends this invocation before the transition, dispatch, or target-artifact write.
-5. After a normal-mode failed gate, the next explicit invocation creates a new `interviewId` and records a fresh manifest before `begin-interview`; the existing `record-skill-load` fingerprint behavior clears the failed prior interview. A matching in-progress interview that has not reached a failed transition boundary still resumes normally.
+5. A normal-mode failed gate occurs after the interview has reached a terminal state. On the next explicit invocation, the coordinator creates a new `interviewId` and records a fresh manifest before `begin-interview`; no separate failure marker is needed because `begin-interview` resumes only a matching collecting or awaiting interview, while the fresh manifest identity clears the terminal prior interview through the existing `record-skill-load` fingerprint behavior. A matching in-progress interview that has not reached a failed transition boundary still resumes normally.
 6. A permitted writer reloads every manifest source, records its receipts under a unique dispatch identity, and runs the existing `check-agent-write` before writing the artifact.
 7. Triage follows the same flow with its existing `.epic-state.json` as `STATE`; it preserves the existing epic-state and multi-writer behavior.
 
@@ -95,7 +95,7 @@ flowchart LR
 | `plugins/ralph-specum-codex/skills/ralph-specum-design/SKILL.md` | Modify | Gate direct design dispatch and stop on failure. |
 | `plugins/ralph-specum-codex/skills/ralph-specum-tasks/SKILL.md` | Modify | Gate direct task-planner dispatch and stop on failure. |
 | `tests/codex-phase-flow.bats` | Modify | Add one table-driven coordinator-contract regression seam for fresh, direct, resumed, triage, and exact-quick paths. |
-| `plugins/ralph-specum-codex/.codex-plugin/plugin.json` | Modify | Bump the Codex plugin patch version once, from `4.12.2` to `4.12.3`. |
+| `plugins/ralph-specum-codex/.codex-plugin/plugin.json` | Modify | Bump the Codex plugin patch version once, from `4.12.3` to `4.12.4`. |
 
 No change is proposed for `.claude-plugin/marketplace.json`, `plugins/ralph-specum-codex/scripts/phase_gate.py`, the byte-identical Claude helper, artifact-agent templates, hooks, schemas, or `tests/phase-gates.bats`.
 
