@@ -20,9 +20,9 @@ Delegate only after all of these conditions hold for one identity tuple:
 
 ## Hard-transition invariant
 
-Run the current `check-delegation` immediately before each affected phase transition or child dispatch. A failed normal-mode `check-delegation` stops this invocation before state transition, child dispatch, or target-artifact write. The next explicit invocation uses a fresh manifest/interview identity. A matching in-progress interview remains valid for resume.
+Run the current `check-delegation` immediately before each affected phase transition or child dispatch. A failed normal-mode check stops this invocation before state transition, child dispatch, or target-artifact write. The next explicit invocation uses a fresh manifest/interview identity. A matching in-progress interview remains valid for resume.
 
-Exact `--quick` preserves discovery, manifest, parent-delegation provenance, `check-delegation`, receipt recording, and `check-agent-write`. It uses the same identity tuple, requires a current `complete` or `partial_warned` manifest plus an interview receipt with status `bypassed_quick` and `quickAuthorization.source: "--quick"`, and bypasses interview questions and final approval only.
+Exact `--quick` preserves discovery, manifest, parent-delegation provenance, receipt recording, and `check-agent-write`. It still runs `check-delegation` immediately before dispatch, uses the same identity tuple, requires a current `complete` or `partial_warned` manifest plus an interview receipt with status `bypassed_quick` and `quickAuthorization.source: "--quick"`, and bypasses interview questions and final approval only.
 
 ## Hard boundaries
 
