@@ -160,7 +160,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
 
 ## Phase 3: Testing
 
-- [ ] 3.1 Add resolver behavior and state-safety coverage
+- [x] 3.1 Add resolver behavior and state-safety coverage
   - **Do**:
     1. Add Bats cases for accepted pre-delegation, artifact, and recorded-feedback revision actions on both helpers.
     2. Assert original reply, normalized action, and gate ID audit fields; reload state to prove resume uses the live descriptor.
