@@ -172,7 +172,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-8; AC-1.1, AC-1.2, AC-1.3, AC-2.1, AC-2.2, AC-2.3, AC-3.1, AC-3.2, AC-3.3, AC-4.1, AC-4.2, AC-4.3_
   - _Design: Test Strategy; Security Considerations_
 
-- [ ] 4.1 Bump the affected plugin release metadata (prerequisite for 3.2)
+- [x] 4.1 Bump the affected plugin release metadata (prerequisite for 3.2)
   - **Do**:
     1. Bump the Claude plugin and marketplace entries from `4.12.0` to `4.12.1`.
     2. Bump the Codex plugin manifest from `4.12.0` to `4.12.1`.
