@@ -331,12 +331,24 @@ def validate_discovery_linkage(
 
 
 def packaged_core_contract() -> tuple[str, Path, tuple[Path, ...]]:
+    """Return `(core name, source, resources)`.
+
+    Unknown roots require exactly one known packaged core.
+    """
     plugin_root = Path(__file__).resolve().parent.parent
-    skill_name = PACKAGED_CORES.get(plugin_root.name)
-    if skill_name is None:
-        fail("UNRECOGNIZED_PLUGIN_ROOT", "phase gate helper is outside a recognized packaged plugin root")
+    package_key = plugin_root.name
+    if package_key not in PACKAGED_CORES:
+        matching_package_keys = [
+            candidate_key
+            for candidate_key, candidate_skill_name in PACKAGED_CORES.items()
+            if (plugin_root / "skills" / candidate_skill_name / "SKILL.md").is_file()
+        ]
+        if len(matching_package_keys) != 1:
+            fail("UNRECOGNIZED_PLUGIN_ROOT", "phase gate helper is outside a recognized packaged plugin root")
+        package_key = matching_package_keys[0]
+    skill_name = PACKAGED_CORES[package_key]
     skill_source = plugin_root / "skills" / skill_name / "SKILL.md"
-    resource_names = PACKAGED_CORE_RESOURCES[plugin_root.name]
+    resource_names = PACKAGED_CORE_RESOURCES[package_key]
     resource_sources = tuple(
         (plugin_root / "skills" / skill_name / "references" / resource_name).resolve()
         for resource_name in resource_names
