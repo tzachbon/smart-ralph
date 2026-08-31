@@ -125,7 +125,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-1, FR-3, FR-4, FR-5, FR-7; AC-1.1, AC-2.1, AC-2.2, AC-3.1, AC-3.2, AC-4.1, AC-4.2_
   - _Design: Persisted approval context; Interfaces_
 
-- [ ] 2.4 Align Codex triage, research, and requirements handoffs
+- [x] 2.4 Align Codex triage, research, and requirements handoffs
   - **Do**:
     1. Replace conflicting control-only artifact approval wording with the shared resolver fallback.
     2. Require one current descriptor for artifact advancement and recorded feedback for revision dispatch.
