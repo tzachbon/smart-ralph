@@ -196,7 +196,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-3, FR-4, FR-6, FR-7, FR-8; AC-1.2, AC-1.3, AC-2.1, AC-2.2, AC-2.3, AC-3.1, AC-3.2, AC-3.3, AC-4.3_
   - _Design: Test Strategy; Existing Patterns to Follow_
 
-- [ ] V5 [VERIFY] Contextual-approval test checkpoint
+- [x] V5 [VERIFY] Contextual-approval test checkpoint
   - **Do**: Run all focused helper and prompt-flow suites after permanent coverage is in place.
   - **Files**: None (verification-only)
   - **Done when**: The accepted, rejected, ambiguity, audit, and resume seams are green on both plugin surfaces.
