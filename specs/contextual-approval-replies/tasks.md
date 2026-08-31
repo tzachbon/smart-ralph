@@ -24,7 +24,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-3, FR-5, FR-8; AC-2.1, AC-3.1, AC-4.1, AC-4.3_
   - _Design: Persisted approval context_
 
-- [ ] 1.2 Add the shared state-aware approval resolver
+- [x] 1.2 Add the shared state-aware approval resolver
   - **Do**:
     1. Add `resolve-approval STATE --text TEXT` under the existing state lock and copy it byte-for-byte to both helpers.
     2. Derive only one live candidate from either the sole pending final-confirmation ID or an `awaitingApproval` descriptor for the current phase; reject zero, stale, malformed, or competing candidates.
