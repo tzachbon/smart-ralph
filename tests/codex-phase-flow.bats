@@ -16,11 +16,11 @@ ralph-specum-tasks
 EOF
 }
 
-@test "codex phase flow: manifest is 4.12.0 and core interview skill is internal" {
+@test "codex phase flow: manifest is 4.12.1 and core interview skill is internal" {
     local root
     root="$(plugin_root)"
 
-    run python3 -c "import json; assert json.load(open('$root/.codex-plugin/plugin.json'))['version'] == '4.12.0'"
+    run python3 -c "import json; assert json.load(open('$root/.codex-plugin/plugin.json'))['version'] == '4.12.1'"
     [ "$status" -eq 0 ]
     [ -f "$root/skills/interview-framework-codex/SKILL.md" ]
     [ -f "$root/skills/interview-framework-codex/references/algorithm.md" ]
@@ -45,6 +45,51 @@ EOF
         [[ "$text" == *"unique teammate dispatch identity"* ]] || return 1
         [[ "$text" == *"check-agent-write"* ]] || return 1
     done < <(phase_skills)
+}
+
+@test "codex phase flow: contextual approval stays on the helper-owned gate" {
+    local root state workflow skill algorithm primary phase text
+    root="$(plugin_root)"
+    state="$(<"$root/references/state-contract.md")"
+    workflow="$(<"$root/references/workflow.md")"
+    skill="$(<"$root/skills/interview-framework-codex/SKILL.md")"
+    algorithm="$(<"$root/skills/interview-framework-codex/references/algorithm.md")"
+    primary="$(<"$root/skills/ralph-specum/SKILL.md")"
+
+    [[ "$state" == *'resolve-approval STATE --text TEXT'* ]] || return 1
+    [[ "$state" == *'approvalGate` and append-only `approvalAudit` are helper-owned enforcement state'* ]] || return 1
+    [[ "$state" == *'exactly one current artifact or revision action'* ]] || return 1
+    [[ "$state" == *'revision` also has recorded nonblank `feedback`'* ]] || return 1
+    [[ "$state" == *'missing, stale, malformed, or multi-option view has no usable descriptor'* ]] || return 1
+    [[ "$state" == *'confirm --source approve-and-delegate'* ]] || return 1
+    [[ "$state" == *'require `check-delegation`'* ]] || return 1
+
+    [[ "$workflow" == *'Handle canonical artifact choices first'* ]] || return 1
+    [[ "$workflow" == *'Persist `approvalGate` only while `awaitingApproval` has exactly one current artifact or revision action'* ]] || return 1
+    [[ "$workflow" == *'revision requires recorded feedback'* ]] || return 1
+    [[ "$workflow" == *'missing or multi-option view has no descriptor'* ]] || return 1
+    [[ "$workflow" == *'fresh writer route'* ]] || return 1
+
+    [[ "$skill" == *'exactly one live `approve-and-delegate` action'* ]] || return 1
+    [[ "$skill" == *'confirm --source approve-and-delegate'* ]] || return 1
+    [[ "$algorithm" == *'Handle canonical artifact choices first'* ]] || return 1
+    [[ "$algorithm" == *'one live descriptor'* ]] || return 1
+    [[ "$algorithm" == *'approvalAudit'* ]] || return 1
+    [[ "$primary" == *'one live helper-owned action'* ]] || return 1
+    [[ "$primary" == *'never authorizes from chat history'* ]] || return 1
+
+    while IFS= read -r phase; do
+        text="$(<"$root/skills/$phase/SKILL.md")"
+        [[ "$text" == *'resolve-approval'* ]] || return 1
+        [[ "$text" == *'confirm --source approve-and-delegate'* ]] || return 1
+        [[ "$text" == *'check-delegation'* ]] || return 1
+        [[ "$text" == *'check-agent-write'* ]] || return 1
+        [[ "$text" == *'approvalGate'* ]] || return 1
+        [[ "$text" == *'recorded feedback'* ]] || return 1
+    done < <(phase_skills)
+
+    text="$(<"$root/skills/ralph-specum-start/SKILL.md")"
+    [[ "$text" == *'multiple choices, so it creates no descriptor'* ]] || return 1
 }
 
 @test "codex phase flow: primary routing leaves implement and refactor ungated" {

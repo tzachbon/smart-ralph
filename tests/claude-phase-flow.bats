@@ -100,6 +100,44 @@ PY
     done
 }
 
+@test "Claude approval handoffs keep contextual approval state-backed" {
+    local gates skill algorithm command text
+    gates="$(plugin_root)/references/normal-mode-gates.md"
+    skill="$(plugin_root)/skills/interview-framework/SKILL.md"
+    algorithm="$(plugin_root)/skills/interview-framework/references/algorithm.md"
+
+    grep -q 'resolve-approval' "$gates"
+    grep -q 'exactly one current action is available' "$gates"
+    grep -q 'revision descriptor additionally requires nonblank recorded feedback' "$gates"
+    grep -q 'multi-option or descriptor-free view has no contextual action' "$gates"
+    grep -q 'approvalAudit' "$gates"
+    grep -q 'confirm .*approve-and-delegate' "$gates"
+    grep -q 'check-delegation' "$gates"
+
+    grep -q 'exactly one live `approve-and-delegate` action' "$skill"
+    grep -q 'resolver acceptance is not authorization by itself' "$skill"
+    grep -q 'revision gate also requires recorded feedback' "$skill"
+    grep -q 'canonical choice matched' "$algorithm"
+    grep -q 'exactly one live artifact or revision action' "$algorithm"
+
+    for command in start triage research requirements design tasks; do
+        text="$(<"$(plugin_root)/commands/$command.md")"
+        [[ "$text" == *'resolve-approval'* ]] || return 1
+        [[ "$text" == *'confirm --source approve-and-delegate'* ]] || return 1
+        [[ "$text" == *'check-delegation'* ]] || return 1
+    done
+
+    for command in start research requirements design tasks; do
+        text="$(<"$(plugin_root)/commands/$command.md")"
+        [[ "$text" == *'approvalGate'* ]] || return 1
+        [[ "$text" == *'multi-option'* ]] || return 1
+    done
+
+    for command in research requirements design tasks; do
+        grep -Eq 'recorded (nonblank )?feedback' "$(plugin_root)/commands/$command.md"
+    done
+}
+
 @test "interview contract uses whole critical frontiers and transition persistence" {
     local skill algorithm gates
     skill="$(plugin_root)/skills/interview-framework/SKILL.md"

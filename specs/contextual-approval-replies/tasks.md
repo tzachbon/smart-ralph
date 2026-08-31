@@ -184,7 +184,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-8; AC-4.3_
   - _Design: File Structure; Dependencies_
 
-- [ ] 3.2 Add Claude and Codex prompt-flow contract coverage
+- [x] 3.2 Add Claude and Codex prompt-flow contract coverage
   - **Do**:
     1. Require both flow suites to find the resolver fallback, one-descriptor rule, revision-feedback precondition, and retained canonical confirmation path.
     2. Update the Codex release expectation to the patched version.
