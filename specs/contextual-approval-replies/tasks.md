@@ -218,7 +218,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-8; AC-4.3_
   - _Design: Dependencies_
 
-- [ ] V6 [VERIFY] Run the local release-quality gate
+- [x] V6 [VERIFY] Run the local release-quality gate
   - **Do**:
     1. Run the full Bats suite and both parity checks.
     2. Validate changed JSON and inspect whitespace errors.
