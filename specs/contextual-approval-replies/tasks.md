@@ -12,7 +12,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
 
 ## Phase 1: Make It Work (POC)
 
-- [ ] 1.1 Define the persisted one-action approval model
+- [x] 1.1 Define the persisted one-action approval model
   - **Do**:
     1. Add shared `approvalGate` and append-only `approvalAudit` schema definitions to the spec schema.
     2. Expose both optional fields on spec and epic state without making legacy states invalid.
