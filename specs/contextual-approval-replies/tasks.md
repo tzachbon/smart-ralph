@@ -69,7 +69,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-1, FR-2, FR-3, FR-4, FR-6, FR-7; AC-1.1, AC-1.2, AC-1.3, AC-2.1, AC-2.2, AC-3.1, AC-3.3_
   - _Design: Data Flow; Error Handling; Edge Cases_
 
-- [ ] V2 [VERIFY] Shared-contract checkpoint
+- [x] V2 [VERIFY] Shared-contract checkpoint
   - **Do**: Run both prompt-flow suites after wiring the shared approval contracts.
   - **Files**: None (verification-only)
   - **Done when**: Both surfaces retain their existing phase provenance and approval contracts while documenting the resolver boundary.
