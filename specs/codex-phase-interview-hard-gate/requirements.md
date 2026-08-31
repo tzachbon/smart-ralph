@@ -37,8 +37,8 @@ Make the existing `phase_gate.py` checks the hard, shared transition boundary fo
 
 **Acceptance Criteria:**
 
-- AC-2.1: Given a normal-mode gate failure after a terminal interview, when I explicitly invoke that affected phase again, then it starts a fresh interview identity and does not reuse the failed state; a matching in-progress interview that has not reached the failed boundary remains resumable.
-- AC-2.2: Given exact `--quick`, when a gated phase runs, then it bypasses only interview questions and final approval while still completing discovery, manifest loading, parent delegation, child-load receipt, and child-write checks.
+- AC-2.1: Given a normal-mode or exact `--quick` gate failure after a terminal interview, when I explicitly invoke that affected phase again, then it starts a fresh manifest/interview identity and does not reuse terminal state or its discovery revision; a matching in-progress `collecting` or `awaiting_confirmation` interview that has not reached the failed boundary remains resumable.
+- AC-2.2: Given exact `--quick`, when a gated phase runs or retries after a failed delegation check, then it bypasses only interview questions and final approval while still completing discovery, fresh manifest/interview identity, parent delegation, child-load receipt, and child-write checks; it does not reuse a terminal `bypassed_quick` interview or its discovery revision, and only matching `collecting` or `awaiting_confirmation` interviews are resumable.
 - AC-2.3: Given `-q`, a misspelling, a natural-language shortcut, or any non-exact flag, when a phase starts, then it does not enable the quick bypass.
 
 ## Functional Requirements
@@ -48,10 +48,10 @@ Make the existing `phase_gate.py` checks the hard, shared transition boundary fo
 | FR-1 | The Codex interview framework MUST define one shared hard-transition invariant: run the current `check-delegation` before every affected phase transition or child dispatch, and run the current `check-agent-write` before every artifact write. A failed check stops the action. | Must | AC-1.1, AC-1.2, AC-1.3 |
 | FR-2 | The primary fallback plus `start`, `triage`, `research`, `requirements`, `design`, and `tasks` MUST apply that invariant at their existing coordinator boundaries. Triage MUST use its existing epic-state behavior. | Must | AC-1.2, AC-1.3 |
 | FR-3 | A failed normal-mode gate for missing, stale, partial, mismatched, or unapproved interview state MUST fail closed without state transition, dispatch, or target-artifact write. After a terminal interview reaches that failed boundary, the next explicit invocation MUST create a fresh manifest/interview identity before beginning the interview; a matching in-progress interview that has not reached the boundary remains resumable. | Must | AC-1.2, AC-2.1 |
-| FR-4 | Exact `--quick` MUST remain the only bypass and MUST retain existing discovery, skill-manifest, context-digest, delegation, and child writer-receipt checks. | Must | AC-2.2, AC-2.3 |
+| FR-4 | Exact `--quick` MUST remain the only bypass and MUST retain existing discovery, skill-manifest, context-digest, delegation, and child writer-receipt checks. After a failed quick delegation check, the next explicit invocation MUST rerun discovery and record a fresh `phaseSkillLoad` and interview identity instead of reusing terminal `bypassed_quick` state or its discovery revision; only matching `collecting` or `awaiting_confirmation` interviews are resumable. | Must | AC-2.2, AC-2.3 |
 | FR-5 | Existing state, manifest, context-digest, parent-delegation, and `check-agent-write` validation semantics MUST remain unchanged. | Must | AC-1.3, AC-2.2 |
 | FR-6 | One Bats regression seam in `tests/codex-phase-flow.bats` MUST assert the textual hard-transition, recovery, provenance, and mode contracts in order for fresh normal start, direct phase, resumed phase, and exact quick mode across the affected coordinator matrix; helper behavior remains covered by the unchanged `tests/phase-gates.bats` suite. | Must | AC-1.1, AC-1.2, AC-2.2, AC-2.3 |
-| FR-7 | The Codex plugin patch version MUST be bumped once to `4.12.4` in `plugins/ralph-specum-codex/.codex-plugin/plugin.json`; the separate Claude marketplace entry remains unchanged. | Must | Release validation |
+| FR-7 | The Codex plugin patch version MUST be bumped once to `4.12.5` in `plugins/ralph-specum-codex/.codex-plugin/plugin.json`; the separate Claude marketplace entry remains unchanged. | Must | Release validation |
 
 ## Non-Functional Requirements
 

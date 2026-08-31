@@ -16,11 +16,11 @@ ralph-specum-tasks
 EOF
 }
 
-@test "codex phase flow: manifest is 4.12.4 and core interview skill is internal" {
+@test "codex phase flow: manifest is 4.12.5 and core interview skill is internal" {
     local root
     root="$(plugin_root)"
 
-    run python3 -c "import json; assert json.load(open('$root/.codex-plugin/plugin.json'))['version'] == '4.12.4'"
+    run python3 -c "import json; assert json.load(open('$root/.codex-plugin/plugin.json'))['version'] == '4.12.5'"
     [ "$status" -eq 0 ]
     [ -f "$root/skills/interview-framework-codex/SKILL.md" ]
     [ -f "$root/skills/interview-framework-codex/references/algorithm.md" ]
@@ -41,21 +41,29 @@ shared framework|skills/interview-framework-codex/SKILL.md|A failed `check-deleg
 shared framework|skills/interview-framework-codex/SKILL.md|After a normal-mode failure, the next explicit invocation uses a fresh manifest/interview identity.
 shared framework|skills/interview-framework-codex/SKILL.md|A matching in-progress interview that has not reached a failed delegation boundary remains valid for resume.
 shared framework|skills/interview-framework-codex/SKILL.md|Exact `--quick` preserves discovery, manifest, parent-delegation provenance, `check-delegation`, receipt recording, and `check-agent-write`.
+shared framework|skills/interview-framework-codex/SKILL.md|After an exact `--quick` delegation failure, the next explicit invocation reruns discovery, records a fresh `phaseSkillLoad` and interview identity, and does not reuse a terminal `bypassed_quick` interview or its discovery revision.
+shared framework|skills/interview-framework-codex/SKILL.md|Only a matching in-progress `collecting` or `awaiting_confirmation` interview is resumable
 shared framework|skills/interview-framework-codex/references/algorithm.md|The helper needs no separate failure marker
 primary fallback|skills/ralph-specum/SKILL.md|Apply the shared hard-transition invariant to only `start`, `triage`, `research`, `requirements`, `design`, and `tasks`.
 start|skills/ralph-specum-start/SKILL.md|A failed `check-delegation` in either mode stops this invocation before phase transition, child dispatch, or target-artifact write
 start|skills/ralph-specum-start/SKILL.md|Apply the shared hard-transition invariant before fresh or resumed research dispatch.
+start|skills/ralph-specum-start/SKILL.md|After an exact `--quick` delegation failure, the next explicit invocation reruns discovery, records a fresh `phaseSkillLoad` and interview identity, and does not reuse a terminal `bypassed_quick` interview or its discovery revision.
 triage|skills/ralph-specum-triage/SKILL.md|A failed `check-delegation` in either mode stops this invocation before phase transition, child dispatch, or target-artifact write
 triage|skills/ralph-specum-triage/SKILL.md|Apply the shared hard-transition invariant before every triage artifact writer.
 triage|skills/ralph-specum-triage/SKILL.md|Use `.epic-state.json` as `STATE` for every writer.
 research|skills/ralph-specum-research/SKILL.md|A failed `check-delegation` in either mode stops this invocation before phase transition, child dispatch, or target-artifact write
 research|skills/ralph-specum-research/SKILL.md|Apply the shared hard-transition invariant before research writer dispatch.
+research|skills/ralph-specum-research/SKILL.md|After an exact `--quick` delegation failure, the next explicit invocation reruns discovery, records a fresh `phaseSkillLoad` and interview identity, and does not reuse a terminal `bypassed_quick` interview or its discovery revision.
 requirements|skills/ralph-specum-requirements/SKILL.md|A failed `check-delegation` in either mode ends this invocation before phase transition, child dispatch, or target-artifact write
 requirements|skills/ralph-specum-requirements/SKILL.md|Apply the shared hard-transition invariant before requirements writer dispatch.
 design|skills/ralph-specum-design/SKILL.md|A failed `check-delegation` in either mode ends this invocation before phase transition, child dispatch, or target-artifact write
 design|skills/ralph-specum-design/SKILL.md|Apply the shared hard-transition invariant before design writer dispatch.
 tasks|skills/ralph-specum-tasks/SKILL.md|A failed `check-delegation` in either mode ends this invocation before phase transition, child dispatch, or target-artifact write
 tasks|skills/ralph-specum-tasks/SKILL.md|Apply the shared hard-transition invariant before task-planner dispatch.
+tasks|skills/ralph-specum-tasks/SKILL.md|After an exact `--quick` delegation failure, the next explicit invocation reruns discovery, records a fresh `phaseSkillLoad` and interview identity, and does not reuse a terminal `bypassed_quick` interview or its discovery revision.
+requirements|skills/ralph-specum-requirements/SKILL.md|After an exact `--quick` delegation failure, the next explicit invocation reruns discovery, records a fresh `phaseSkillLoad` and interview identity, and does not reuse a terminal `bypassed_quick` interview or its discovery revision.
+design|skills/ralph-specum-design/SKILL.md|After an exact `--quick` delegation failure, the next explicit invocation reruns discovery, records a fresh `phaseSkillLoad` and interview identity, and does not reuse a terminal `bypassed_quick` interview or its discovery revision.
+triage|skills/ralph-specum-triage/SKILL.md|After an exact `--quick` delegation failure, the next explicit invocation reruns discovery, records a fresh `phaseSkillLoad` and interview identity, and does not reuse a terminal `bypassed_quick` interview or its discovery revision.
 EOF
 
     while IFS='|' read -r path gate action; do

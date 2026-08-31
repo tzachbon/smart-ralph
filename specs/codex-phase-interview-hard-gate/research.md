@@ -8,7 +8,7 @@ created: 2026-08-31
 
 ## Executive Summary
 
-Issue [#149](https://github.com/tzachbon/smart-ralph/issues/149) is feasible without a new hook, middleware layer, dependency, or change to the shared `phase_gate.py` state machine. The helper already rejects missing, partial, stale, and mismatched interviews, permits only the exact `--quick` bypass, and can clear a partial interview when the coordinator records a fresh manifest identity.
+Issue [#149](https://github.com/tzachbon/smart-ralph/issues/149) is feasible without a new hook, middleware layer, dependency, or change to the shared `phase_gate.py` state machine. The helper already rejects missing, partial, stale, and mismatched interviews, permits only the exact `--quick` bypass, and can clear a prior terminal interview when the coordinator records a fresh manifest identity for either a normal or quick retry.
 
 The gap is the Codex coordinator contract: the gate is described in several Markdown skills, but no runtime entrypoint automatically invokes it, and the current contract does not make the failed-check/fresh-next-invocation branch explicit at every transition. Make that one transition invariant the shared source of truth, have every affected coordinator apply it immediately before dispatch or transition, and lock it down with the existing Bats seams.
 
@@ -44,7 +44,7 @@ The helper was exercised against temporary copies of the current state:
 | Wrong interview identity | `INTERVIEW_STALE` |
 | Current exact quick receipt | allowed (`path: quick`) |
 
-For a collecting interview with the same identity, `begin-interview` currently returns `resumed: true`; this is the valid resume path before a failed delegation boundary. A failed delegation check can only inspect a terminal interview, so the next explicit invocation can record a manifest with a fresh `interviewId`; its changed fingerprint clears that old `phaseInterview` through `record-skill-load`, then `begin-interview` starts a new `collecting` interview. No separate failure marker is needed for this terminal-versus-in-progress distinction.
+For a collecting interview with the same identity, `begin-interview` currently returns `resumed: true`; this is the valid resume path before a failed delegation boundary. A failed delegation check can only inspect a terminal interview, so the next explicit invocation can record a manifest with a fresh `interviewId`; its changed fingerprint clears that old `phaseInterview` through `record-skill-load`, then `begin-interview` starts a new interview. Exact `--quick` must take the same fresh-identity path after failure rather than reuse terminal `bypassed_quick` state or its discovery revision. No separate failure marker is needed for this terminal-versus-in-progress distinction.
 
 The current red-capable contract assertion also fails for the primary coordinator and all six affected helper skills because none contains an explicit invariant equivalent to: a failed gate stops before phase-state mutation, child dispatch, or target-artifact write. `tests/codex-phase-flow.bats` is the correct permanent home for that assertion.
 
@@ -80,7 +80,7 @@ The primary fallback lists the affected routes in `skills/ralph-specum/SKILL.md:
 ### Constraints
 
 - Preserve the existing state, manifest, context-digest, parent-delegation, and artifact-agent receipt checks.
-- Preserve matching partial-interview resume unless the invocation has crossed the explicitly selected failed-gate recovery boundary; that boundary must record a fresh manifest identity before `begin-interview`.
+- Preserve matching partial-interview resume unless the invocation has crossed the explicitly selected failed-gate recovery boundary; normal and exact-quick retries after that boundary must rerun discovery and record a fresh manifest/interview identity before `begin-interview`.
 - Any Codex plugin file change requires a patch version bump in `plugins/ralph-specum-codex/.codex-plugin/plugin.json`; the separate Claude marketplace entry remains unchanged.
 
 ## Related Specs
@@ -106,7 +106,7 @@ No related spec is recorded in the current state. Keep #149 scoped to Codex phas
 ## Recommendations for Requirements
 
 1. Add one shared hard-transition rule to the Codex interview framework: before each affected coordinator transition or child dispatch, run the current `check-delegation`; before every artifact write, run the current `check-agent-write`; on any nonzero result, stop without mutating phase state, dispatching, or writing the target artifact.
-2. Define recovery precisely: a failed missing/stale/partial/mismatched or unapproved normal-mode gate after terminal interview state does not continue in that invocation. On the next explicit affected-phase invocation, issue a fresh `interviewId`, record a fresh manifest (whose changed fingerprint clears the prior terminal interview through existing `record-skill-load` behavior), then begin a new interview; a matching collecting or awaiting interview that has not reached the failed boundary still resumes. Exact quick follows the existing bypass receipt path and still runs discovery, manifest, delegation, and writer checks.
+2. Define recovery precisely: a failed missing/stale/partial/mismatched or unapproved normal-mode gate after terminal interview state does not continue in that invocation. On the next explicit affected-phase invocation, issue a fresh `interviewId`, record a fresh manifest (whose changed fingerprint clears the prior terminal interview through existing `record-skill-load` behavior), then begin a new interview; a matching `collecting` or `awaiting_confirmation` interview that has not reached the failed boundary still resumes. Exact quick follows the same fresh retry path after a failed delegation check: rerun discovery, record a fresh manifest/interview identity, and never reuse terminal `bypassed_quick` state or its discovery revision while preserving the question and approval bypass.
 3. Keep `tests/codex-phase-flow.bats` as the text-contract seam: assert the hard-transition boundary appears before each protected writer/dispatch marker and retain the fresh-recovery, valid-resume, exact-quick, and provenance wording checks. Keep `tests/phase-gates.bats` unchanged for helper behavior and run both Bats files in CI.
 
 ## Open Questions
