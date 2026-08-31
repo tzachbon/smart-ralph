@@ -95,7 +95,7 @@ flowchart LR
 | `plugins/ralph-specum-codex/skills/ralph-specum-design/SKILL.md` | Modify | Gate direct design dispatch and stop on failure. |
 | `plugins/ralph-specum-codex/skills/ralph-specum-tasks/SKILL.md` | Modify | Gate direct task-planner dispatch and stop on failure. |
 | `tests/codex-phase-flow.bats` | Modify | Add one table-driven coordinator-contract regression seam for fresh, direct, resumed, triage, and exact-quick paths. |
-| `plugins/ralph-specum-codex/.codex-plugin/plugin.json` | Modify | Bump the Codex plugin patch version once, from `4.12.3` to `4.12.5`. |
+| `plugins/ralph-specum-codex/.codex-plugin/plugin.json` | Modify | Bump the Codex plugin patch version once, from the verified `4.12.4` baseline to `4.12.5`. |
 
 No change is proposed for `.claude-plugin/marketplace.json`, `plugins/ralph-specum-codex/scripts/phase_gate.py`, the byte-identical Claude helper, artifact-agent templates, hooks, schemas, or `tests/phase-gates.bats`.
 
@@ -155,7 +155,7 @@ Extend the existing `tests/codex-phase-flow.bats` coordinator matrix rather than
 - A fresh normal start cannot transition, dispatch, or write until explicit approval and `check-delegation` succeed.
 - A direct or resumed phase stops on missing, partial, stale, mismatched, or unapproved interview state; a later explicit invocation uses fresh recovery.
 - A matching in-progress interview remains resumable before it crosses the failed-gate boundary.
-- Only exact `--quick` bypasses questions and final approval, while discovery, fresh retry identity, manifest reload, `check-delegation`, receipt recording, and `check-agent-write` remain mandatory; terminal `bypassed_quick` state is never reused after a failed quick gate.
+- Only exact `--quick` bypasses questions and final approval, while discovery, fresh retry identity, manifest reload, `check-delegation`, receipt recording, and `check-agent-write` remain mandatory; terminal `bypassed_quick` state is never reused after a failed quick gate. The exact-quick retry assertion includes an explicit `triage` row alongside every affected coordinator.
 - Triage uses `.epic-state.json` and applies the boundary to every artifact writer.
 
 Keep the existing helper-level assertions in `tests/phase-gates.bats` unchanged, then run:

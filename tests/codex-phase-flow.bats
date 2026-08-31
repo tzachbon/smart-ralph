@@ -82,6 +82,14 @@ skills/ralph-specum-tasks/SKILL.md|run `phase_gate.py check-delegation`|**Delega
 EOF
 }
 
+@test "codex phase flow: exact quick retry covers triage" {
+    local text
+    text="$(<"$(plugin_root)/skills/ralph-specum-triage/SKILL.md")"
+
+    [[ "$text" == *"After an exact \`--quick\` delegation failure, the next explicit invocation reruns discovery, records a fresh \`phaseSkillLoad\` and interview identity, and does not reuse a terminal \`bypassed_quick\` interview or its discovery revision."* ]] || return 1
+    [[ "$text" == *"Only a matching in-progress \`collecting\` or \`awaiting_confirmation\` interview is resumable."* ]] || return 1
+}
+
 @test "codex phase flow: each affected phase normalizes mode and gates delegation" {
     local root skill text
     root="$(plugin_root)"
