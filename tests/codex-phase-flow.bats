@@ -16,11 +16,11 @@ ralph-specum-tasks
 EOF
 }
 
-@test "codex phase flow: manifest is 4.12.1 and core interview skill is internal" {
+@test "codex phase flow: manifest is 4.12.3 and core interview skill is internal" {
     local root
     root="$(plugin_root)"
 
-    run python3 -c "import json; plugin=json.load(open('$root/.codex-plugin/plugin.json')); assert plugin['version'] == '4.12.1'"
+    run python3 -c "import json; assert json.load(open('$root/.codex-plugin/plugin.json'))['version'] == '4.12.3'"
     [ "$status" -eq 0 ]
     [ -f "$root/skills/interview-framework-codex/SKILL.md" ]
     [ -f "$root/skills/interview-framework-codex/references/algorithm.md" ]

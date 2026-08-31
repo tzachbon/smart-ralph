@@ -12,7 +12,7 @@ This is a targeted TDD contract change: add one red coordinator-matrix Bats seam
 - Normal failed-gate recovery uses a fresh manifest/interview identity only on the next explicit invocation; a valid in-progress interview still resumes.
 - Only exact `--quick` bypasses questions and final approval; discovery, manifest, parent delegation, load receipts, and `check-agent-write` remain required.
 - `tests/codex-phase-flow.bats` and unchanged `tests/phase-gates.bats` pass.
-- The Codex manifest is `4.12.1`; the separate Claude marketplace remains `4.12.0`.
+- The Codex manifest is `4.12.3`; the separate Claude marketplace remains package-owned.
 
 ## Phase 1: Red-Green Contract Change
 
@@ -20,7 +20,7 @@ This is a targeted TDD contract change: add one red coordinator-matrix Bats seam
   - **Do**:
     1. Extend the existing `phase_skills` text-contract pattern in `tests/codex-phase-flow.bats` with one table-driven Bats assertion covering the shared framework, primary fallback, and the six affected helper skills.
     2. Require the matrix to prove: failed normal-mode `check-delegation` stops before state transition, child dispatch, or target-artifact write; the next explicit invocation takes fresh recovery; valid in-progress resumes remain valid; exact `--quick` retains all provenance and writer checks; and triage keeps `.epic-state.json` for every writer.
-    3. Change the existing manifest assertion to require the planned Codex `4.12.1` version without coupling it to the separate Claude marketplace.
+    3. Change the existing manifest assertion to require the planned Codex `4.12.3` version without coupling it to the separate Claude marketplace.
   - **Files**: `tests/codex-phase-flow.bats`
   - **Done when**: One coordinator-matrix test fails against the current wording for the missing hard-transition and recovery contract, while `tests/phase-gates.bats` is not edited.
   - **Verify**: `bats tests/codex-phase-flow.bats` exits nonzero because the new matrix is red.
@@ -66,12 +66,12 @@ This is a targeted TDD contract change: add one red coordinator-matrix Bats seam
 
 - [x] 1.5 [GREEN] Bump the Codex plugin patch version
   - **Do**:
-    1. Change the Codex plugin manifest version from `4.12.0` to `4.12.1`.
+    1. Change the Codex plugin manifest version from `4.12.2` to `4.12.3`.
     2. Finish the Bats manifest assertion added in task 1.1 so it checks the Codex manifest carries that patch version.
   - **Files**: `plugins/ralph-specum-codex/.codex-plugin/plugin.json`, `tests/codex-phase-flow.bats`
-  - **Done when**: The Codex manifest and its Bats regression assertion agree on exactly `4.12.1`.
+  - **Done when**: The Codex manifest and its Bats regression assertion agree on exactly `4.12.3`.
   - **Verify**: `bats tests/codex-phase-flow.bats` exits 0.
-  - **Commit**: `chore(codex): bump plugin version to 4.12.1`
+  - **Commit**: `chore(codex): bump plugin version to 4.12.3`
   - _Requirements: FR-7; Release validation_
   - _Design: File Structure_
 

@@ -74,8 +74,8 @@ write_skill_load() {
     warnings="${3:-[]}"
     resource_errors="${4:-[]}"
     failures="${5:-[]}"
-    plugin_root="$(dirname "$(dirname "$helper")")"
-    plugin_name="$(basename "$plugin_root")"
+    plugin_root="${PHASE_GATE_TEST_PLUGIN_ROOT:-$(dirname "$(dirname "$helper")")}"
+    plugin_name="${PHASE_GATE_TEST_PLUGIN_NAME:-$(basename "$plugin_root")}"
     if [ "$plugin_name" = "ralph-specum-codex" ]; then
         core_name="interview-framework-codex"
     else
@@ -213,6 +213,70 @@ record_complete_gate() {
     [[ "$output" == *"check-agent-write"* ]]
     [[ "$output" == *"check-delegation"* ]]
     [[ "$output" == *"is-substantive"* ]]
+}
+
+@test "versioned Codex cache roots require exactly one packaged core" {
+    local source_root state_template cache_root zero_root both_root
+    local one_state zero_state both_state one_input zero_input both_input
+    source_root="$(repo_root)/plugins/ralph-specum-codex"
+    state_template="$STATE_FILE"
+    cache_root="$TEST_DIR/cache/smart-ralph/ralph-specum-codex/4.11.0"
+    zero_root="$TEST_DIR/zero-cache/smart-ralph/ralph-specum-codex/4.11.0"
+    both_root="$TEST_DIR/both-cache/smart-ralph/ralph-specum-codex/4.11.0"
+
+    mkdir -p "$cache_root/scripts" "$cache_root/skills/interview-framework-codex/references"
+    cp "$source_root/scripts/phase_gate.py" "$cache_root/scripts/phase_gate.py"
+    cp "$source_root/skills/interview-framework-codex/SKILL.md" \
+        "$cache_root/skills/interview-framework-codex/SKILL.md"
+    cp "$source_root/skills/interview-framework-codex/references/algorithm.md" \
+        "$cache_root/skills/interview-framework-codex/references/algorithm.md"
+    cp "$source_root/skills/interview-framework-codex/references/domain-modeling.md" \
+        "$cache_root/skills/interview-framework-codex/references/domain-modeling.md"
+
+    one_state="$TEST_DIR/one-cache-state.json"
+    one_input="$TEST_DIR/one-cache-skill-load.json"
+    cp "$state_template" "$one_state"
+    STATE_FILE="$one_state"
+    helper="$cache_root/scripts/phase_gate.py"
+    PHASE_GATE_TEST_PLUGIN_ROOT="$cache_root" \
+        PHASE_GATE_TEST_PLUGIN_NAME="ralph-specum-codex" write_skill_load
+    mv "$TEST_DIR/skill-load.json" "$one_input"
+
+    mkdir -p "$zero_root/scripts"
+    cp "$cache_root/scripts/phase_gate.py" "$zero_root/scripts/phase_gate.py"
+    zero_state="$TEST_DIR/zero-cache-state.json"
+    zero_input="$TEST_DIR/zero-cache-skill-load.json"
+    cp "$state_template" "$zero_state"
+    STATE_FILE="$zero_state"
+    helper="$zero_root/scripts/phase_gate.py"
+    PHASE_GATE_TEST_PLUGIN_ROOT="$cache_root" \
+        PHASE_GATE_TEST_PLUGIN_NAME="ralph-specum-codex" write_skill_load
+    mv "$TEST_DIR/skill-load.json" "$zero_input"
+
+    mkdir -p "$both_root"
+    cp -R "$cache_root/." "$both_root"
+    mkdir -p "$both_root/skills/interview-framework"
+    cp "$source_root/skills/interview-framework-codex/SKILL.md" \
+        "$both_root/skills/interview-framework/SKILL.md"
+    both_state="$TEST_DIR/both-cache-state.json"
+    both_input="$TEST_DIR/both-cache-skill-load.json"
+    cp "$state_template" "$both_state"
+    STATE_FILE="$both_state"
+    helper="$both_root/scripts/phase_gate.py"
+    PHASE_GATE_TEST_PLUGIN_ROOT="$both_root" \
+        PHASE_GATE_TEST_PLUGIN_NAME="ralph-specum-codex" write_skill_load
+    mv "$TEST_DIR/skill-load.json" "$both_input"
+
+    run python3 "$zero_root/scripts/phase_gate.py" record-skill-load "$zero_state" --input "$zero_input"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"UNRECOGNIZED_PLUGIN_ROOT"* ]]
+
+    run python3 "$both_root/scripts/phase_gate.py" record-skill-load "$both_state" --input "$both_input"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"UNRECOGNIZED_PLUGIN_ROOT"* ]]
+
+    run python3 "$cache_root/scripts/phase_gate.py" record-skill-load "$one_state" --input "$one_input"
+    [ "$status" -eq 0 ]
 }
 
 @test "schemas expose matching required phase gate state" {
