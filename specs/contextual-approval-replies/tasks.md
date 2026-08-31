@@ -172,6 +172,18 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-8; AC-1.1, AC-1.2, AC-1.3, AC-2.1, AC-2.2, AC-2.3, AC-3.1, AC-3.2, AC-3.3, AC-4.1, AC-4.2, AC-4.3_
   - _Design: Test Strategy; Security Considerations_
 
+- [ ] 4.1 Bump the affected plugin release metadata (prerequisite for 3.2)
+  - **Do**:
+    1. Bump the Claude plugin and marketplace entries from `4.12.0` to `4.12.1`.
+    2. Bump the Codex plugin manifest from `4.12.0` to `4.12.1`.
+    3. Do not change unrelated plugin metadata.
+  - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/ralph-specum-codex/.codex-plugin/plugin.json`
+  - **Done when**: Every modified plugin's required release metadata agrees on `4.12.1` before task 3.2 updates its release expectation.
+  - **Verify**: `test "$(jq -r .version plugins/ralph-specum/.claude-plugin/plugin.json)" = 4.12.1 && test "$(jq -r '.plugins[] | select(.name == "ralph-specum") | .version' .claude-plugin/marketplace.json)" = 4.12.1 && test "$(jq -r .version plugins/ralph-specum-codex/.codex-plugin/plugin.json)" = 4.12.1`
+  - **Commit**: `chore(plugins): bump contextual approval release`
+  - _Requirements: FR-8; AC-4.3_
+  - _Design: File Structure; Dependencies_
+
 - [ ] 3.2 Add Claude and Codex prompt-flow contract coverage
   - **Do**:
     1. Require both flow suites to find the resolver fallback, one-descriptor rule, revision-feedback precondition, and retained canonical confirmation path.
@@ -195,18 +207,6 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
 
 ## Phase 4: Quality Gates
 
-- [ ] 4.1 Bump the affected plugin release metadata
-  - **Do**:
-    1. Bump the Claude plugin and marketplace entries from `4.12.0` to `4.12.1`.
-    2. Bump the Codex plugin manifest from `4.12.0` to `4.12.1`.
-    3. Do not change unrelated plugin metadata.
-  - **Files**: `plugins/ralph-specum/.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `plugins/ralph-specum-codex/.codex-plugin/plugin.json`
-  - **Done when**: Every modified plugin's required release metadata agrees on `4.12.1`.
-  - **Verify**: `test "$(jq -r .version plugins/ralph-specum/.claude-plugin/plugin.json)" = 4.12.1 && test "$(jq -r '.plugins[] | select(.name == "ralph-specum") | .version' .claude-plugin/marketplace.json)" = 4.12.1 && test "$(jq -r .version plugins/ralph-specum-codex/.codex-plugin/plugin.json)" = 4.12.1`
-  - **Commit**: `chore(plugins): bump contextual approval release`
-  - _Requirements: FR-8; AC-4.3_
-  - _Design: File Structure; Dependencies_
-
 - [ ] V6 [VERIFY] Run the local release-quality gate
   - **Do**:
     1. Run the full Bats suite and both parity checks.
@@ -227,5 +227,5 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
 ## Dependencies
 
 ```text
-1.1 -> 1.2 -> V1 -> 1.3/1.4 -> V2 -> 2.1/2.2 -> V3 -> 2.3/2.4 -> V4 -> 2.5 -> 3.1/3.2 -> V5 -> 4.1 -> V6
+1.1 -> 1.2 -> V1 -> 1.3/1.4 -> V2 -> 2.1/2.2 -> V3 -> 2.3/2.4 -> V4 -> 2.5 -> 3.1 -> 4.1 -> 3.2 -> V5 -> V6
 ```
