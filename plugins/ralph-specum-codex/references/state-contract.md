@@ -31,6 +31,8 @@ Preserve these fields across all phases:
 Optional but common:
 
 - `awaitingApproval`
+- `approvalGate`
+- `approvalAudit`
 - `quickMode`
 - `quickAuthorization`
 - `phaseSkillLoad`
@@ -100,6 +102,7 @@ phase_gate.py record-skill-load STATE --input FILE
 phase_gate.py begin-interview STATE --phase PHASE --interview-id ID --round N --discovery-revision REV --context-digest SHA256
 phase_gate.py open-frontier STATE --round N --decision-id ID [--decision-id ID ...]
 phase_gate.py classify-reply --text TEXT
+phase_gate.py resolve-approval STATE --text TEXT
 phase_gate.py record-answer STATE --decision-id ID --answer TEXT [--assumption TEXT]
 phase_gate.py await-confirmation STATE --decision-id ID --approach TEXT
 phase_gate.py confirm STATE --decision-id ID --source approve-and-delegate
@@ -124,6 +127,8 @@ The one core selection must resolve to this plugin's packaged `skills/interview-
 
 This mirrors `Approval Prompt Shape` in `references/workflow.md` and should stay in sync with that section. Current enforcement is via Codex platform review plus the repo-local metadata and content checks.
 
+`approvalGate` and append-only `approvalAudit` are helper-owned enforcement state. Never authorize an action from prompt wording, chat history, or audit history. A usable `approvalGate` exists only while `awaitingApproval: true` and exactly one current artifact or revision action has nonblank `id`, `phase`, `kind`, and `action`; a `revision` also has recorded nonblank `feedback`. A missing, stale, malformed, or multi-option view has no usable descriptor: ask one focused clarification and do not mutate state. Clear or replace the descriptor only after its existing action succeeds. After an accepted resolver result only, the helper appends `originalReply`, `normalizedAction`, and `gateId` to `approvalAudit`.
+
 When a phase sets `awaitingApproval: true`, the visible assistant response must also:
 
 - name the file or files that changed
@@ -135,7 +140,7 @@ When a phase sets `awaitingApproval: true`, the visible assistant response must 
 
 Treat `continue to <named next step>` as approval of the current artifact and permission to move forward.
 
-Pre-delegation approval is separate. Require the explicit `Approve and delegate` choice, persist it through `phase_gate.py confirm --source approve-and-delegate`, and require `check-delegation` success before dispatch. `classify-reply` distinguishes `bare_skip`, `control_only`, and `substantive`; control-only text cannot answer or approve. Use `revise` from `awaiting_confirmation` to reopen named decisions, then obtain the same final confirmation ID again. During artifact review, `apply the changes` immediately delegates already-recorded feedback through a new unique dispatch, redisplays the artifact, and keeps `awaitingApproval: true`. Ask for focused feedback only when none is pending. Control-only `continue`, `proceed`, and `go ahead` approve nothing.
+Pre-delegation approval is separate. At an active decision frontier, retain `classify-reply`; control-only text cannot answer a decision. Handle canonical final and artifact choices first. Only otherwise run `phase_gate.py resolve-approval STATE --text TEXT` for one live action. For an accepted pre-delegation result, persist the existing `confirm --source approve-and-delegate`, require `check-delegation`, then use the existing delegate path. For an accepted artifact or revision result, use its existing continuation or revision route and fresh writer checks. Resolver acceptance never bypasses those checks. On clarification, leave state unchanged and ask one focused question. Use `revise` from `awaiting_confirmation` to reopen named decisions, then obtain the same final confirmation ID again. During artifact review, `apply the changes` immediately delegates already-recorded feedback through a new unique dispatch, redisplays the artifact, and keeps `awaitingApproval: true`. Ask for focused feedback only when none is pending.
 
 ## Progress File
 

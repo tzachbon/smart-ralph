@@ -113,7 +113,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-4, FR-6, FR-7; AC-1.2, AC-1.3, AC-2.2, AC-2.3, AC-3.2, AC-3.3_
   - _Design: Existing Patterns to Follow_
 
-- [ ] 2.3 Align Codex state, primary routing, and start handoffs
+- [x] 2.3 Align Codex state, primary routing, and start handoffs
   - **Do**:
     1. Document the descriptor and audit fields in the state contract as helper-owned enforcement state.
     2. Make primary routing and start reference the shared one-action fallback without changing implement/refactor behavior.
