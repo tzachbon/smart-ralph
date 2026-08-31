@@ -51,7 +51,7 @@ Make the existing `phase_gate.py` checks the hard, shared transition boundary fo
 | FR-4 | Exact `--quick` MUST remain the only bypass and MUST retain existing discovery, skill-manifest, context-digest, delegation, and child writer-receipt checks. | Must | AC-2.2, AC-2.3 |
 | FR-5 | Existing state, manifest, context-digest, parent-delegation, and `check-agent-write` validation semantics MUST remain unchanged. | Must | AC-1.3, AC-2.2 |
 | FR-6 | One Bats regression seam in `tests/codex-phase-flow.bats` MUST reproduce the bypass contract and cover fresh normal start, direct phase, resumed phase, and exact quick mode across the affected coordinator matrix. | Must | AC-1.1, AC-1.2, AC-2.2, AC-2.3 |
-| FR-7 | The Codex plugin patch version MUST be bumped once in both `plugins/ralph-specum-codex/.codex-plugin/plugin.json` and `.claude-plugin/marketplace.json`. | Must | Release validation |
+| FR-7 | The Codex plugin patch version MUST be bumped once in `plugins/ralph-specum-codex/.codex-plugin/plugin.json`; the separate Claude marketplace entry remains unchanged. | Must | Release validation |
 
 ## Non-Functional Requirements
 
@@ -79,14 +79,14 @@ Make the existing `phase_gate.py` checks the hard, shared transition boundary fo
 
 - Existing `plugins/ralph-specum-codex/scripts/phase_gate.py` validation and recovery behavior.
 - Existing `tests/codex-phase-flow.bats` Bats test seam and CI Bats provisioning.
-- Required Codex plugin and marketplace manifest version metadata.
+- Required Codex plugin manifest version metadata.
 
 ## Success Criteria
 
 - The one regression seam proves that fresh, direct, resumed, and exact-quick paths retain or enforce the hard gate as specified.
 - Every affected normal-mode coordinator stops before delegation, artifact writing, or phase transition unless the current interview has explicit approval.
 - No new dependency, hook, middleware, or helper state-machine behavior is introduced.
-- Both required plugin manifests carry the same single patch-version bump.
+- The Codex manifest carries the single patch-version bump without changing the separate Claude marketplace version.
 
 ## Risks
 

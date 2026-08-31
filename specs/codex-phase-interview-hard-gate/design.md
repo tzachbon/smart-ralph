@@ -96,9 +96,8 @@ flowchart LR
 | `plugins/ralph-specum-codex/skills/ralph-specum-tasks/SKILL.md` | Modify | Gate direct task-planner dispatch and stop on failure. |
 | `tests/codex-phase-flow.bats` | Modify | Add one table-driven coordinator-contract regression seam for fresh, direct, resumed, triage, and exact-quick paths. |
 | `plugins/ralph-specum-codex/.codex-plugin/plugin.json` | Modify | Bump the Codex plugin patch version once, from `4.12.0` to `4.12.1`. |
-| `.claude-plugin/marketplace.json` | Modify | Bump the matching `ralph-specum-codex` marketplace entry once to `4.12.1`. |
 
-No change is proposed for `plugins/ralph-specum-codex/scripts/phase_gate.py`, the byte-identical Claude helper, artifact-agent templates, hooks, schemas, or `tests/phase-gates.bats`.
+No change is proposed for `.claude-plugin/marketplace.json`, `plugins/ralph-specum-codex/scripts/phase_gate.py`, the byte-identical Claude helper, artifact-agent templates, hooks, schemas, or `tests/phase-gates.bats`.
 
 ## Interfaces
 

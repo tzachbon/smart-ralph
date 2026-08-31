@@ -12,7 +12,7 @@ This is a targeted TDD contract change: add one red coordinator-matrix Bats seam
 - Normal failed-gate recovery uses a fresh manifest/interview identity only on the next explicit invocation; a valid in-progress interview still resumes.
 - Only exact `--quick` bypasses questions and final approval; discovery, manifest, parent delegation, load receipts, and `check-agent-write` remain required.
 - `tests/codex-phase-flow.bats` and unchanged `tests/phase-gates.bats` pass.
-- Both Codex version locations are `4.12.1`.
+- The Codex manifest is `4.12.1`; the separate Claude marketplace remains `4.12.0`.
 
 ## Phase 1: Red-Green Contract Change
 
@@ -20,7 +20,7 @@ This is a targeted TDD contract change: add one red coordinator-matrix Bats seam
   - **Do**:
     1. Extend the existing `phase_skills` text-contract pattern in `tests/codex-phase-flow.bats` with one table-driven Bats assertion covering the shared framework, primary fallback, and the six affected helper skills.
     2. Require the matrix to prove: failed normal-mode `check-delegation` stops before state transition, child dispatch, or target-artifact write; the next explicit invocation takes fresh recovery; valid in-progress resumes remain valid; exact `--quick` retains all provenance and writer checks; and triage keeps `.epic-state.json` for every writer.
-    3. Change the existing manifest assertion to require the planned `4.12.1` version and matching marketplace entry, so the new regression is red before the contract and manifest changes.
+    3. Change the existing manifest assertion to require the planned Codex `4.12.1` version without coupling it to the separate Claude marketplace.
   - **Files**: `tests/codex-phase-flow.bats`
   - **Done when**: One coordinator-matrix test fails against the current wording for the missing hard-transition and recovery contract, while `tests/phase-gates.bats` is not edited.
   - **Verify**: `bats tests/codex-phase-flow.bats` exits nonzero because the new matrix is red.
@@ -67,10 +67,9 @@ This is a targeted TDD contract change: add one red coordinator-matrix Bats seam
 - [x] 1.5 [GREEN] Bump the Codex plugin patch version
   - **Do**:
     1. Change the Codex plugin manifest version from `4.12.0` to `4.12.1`.
-    2. Change only the matching `ralph-specum-codex` marketplace entry to `4.12.1`.
-    3. Finish the Bats manifest assertion added in task 1.1 so it checks both locations carry the same patch version.
-  - **Files**: `plugins/ralph-specum-codex/.codex-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `tests/codex-phase-flow.bats`
-  - **Done when**: Both required manifests and their Bats regression assertion agree on exactly `4.12.1`.
+    2. Finish the Bats manifest assertion added in task 1.1 so it checks the Codex manifest carries that patch version.
+  - **Files**: `plugins/ralph-specum-codex/.codex-plugin/plugin.json`, `tests/codex-phase-flow.bats`
+  - **Done when**: The Codex manifest and its Bats regression assertion agree on exactly `4.12.1`.
   - **Verify**: `bats tests/codex-phase-flow.bats` exits 0.
   - **Commit**: `chore(codex): bump plugin version to 4.12.1`
   - _Requirements: FR-7; Release validation_
@@ -84,7 +83,7 @@ This is a targeted TDD contract change: add one red coordinator-matrix Bats seam
     2. Confirm `tests/phase-gates.bats` has no source diff and the Codex helper remains byte-identical to the Claude helper.
     3. Confirm the matrix proves the normal, direct, resumed, triage, and exact-quick cases without adding a runtime enforcement mechanism.
   - **Files**: `tests/phase-gates.bats` (read-only verification), `tests/codex-phase-flow.bats` (read-only verification)
-  - **Done when**: Both suites pass and the only implementation changes are the planned Codex Markdown contracts, one Bats seam, and the two required version fields.
+  - **Done when**: Both suites pass and the only implementation changes are the planned Codex Markdown contracts, one Bats seam, and the Codex manifest version bump.
   - **Verify**: `bats tests/phase-gates.bats tests/codex-phase-flow.bats`
   - **Commit**: `test(codex): verify hard interview gate`
   - _Requirements: FR-5, FR-6, FR-7; NFR-1, NFR-2, NFR-3_

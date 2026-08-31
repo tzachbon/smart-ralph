@@ -81,7 +81,7 @@ The primary fallback lists the affected routes in `skills/ralph-specum/SKILL.md:
 
 - Preserve the existing state, manifest, context-digest, parent-delegation, and artifact-agent receipt checks.
 - Preserve matching partial-interview resume unless the invocation has crossed the explicitly selected failed-gate recovery boundary; that boundary must record a fresh manifest identity before `begin-interview`.
-- Any Codex plugin file change requires a patch version bump in both `plugins/ralph-specum-codex/.codex-plugin/plugin.json` and `.claude-plugin/marketplace.json`.
+- Any Codex plugin file change requires a patch version bump in `plugins/ralph-specum-codex/.codex-plugin/plugin.json`; the separate Claude marketplace entry remains unchanged.
 
 ## Related Specs
 
