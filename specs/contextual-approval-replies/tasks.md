@@ -146,7 +146,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
   - _Requirements: FR-2, FR-4, FR-6, FR-7; AC-1.2, AC-1.3, AC-2.2, AC-3.2, AC-3.3_
   - _Design: Security Considerations_
 
-- [ ] 2.5 Align Codex design and tasks handoffs
+- [x] 2.5 Align Codex design and tasks handoffs
   - **Do**:
     1. Apply the shared descriptor/fallback wording to design and tasks artifact reviews.
     2. Keep multi-option prototype/review branches descriptor-free until the coordinator has one explicit action.
