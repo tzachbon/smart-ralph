@@ -80,7 +80,7 @@ Intent: MID_SIZED behavior change. Workflow: POC-first, as required by the repos
 
 ## Phase 2: Refactoring
 
-- [ ] 2.1 Align Claude start, triage, and research handoffs
+- [x] 2.1 Align Claude start, triage, and research handoffs
   - **Do**:
     1. Replace only conflicting blanket control-only approval wording with the shared resolver rule.
     2. Preserve canonical choices and source-specific phase/interview/manifest checks.
