@@ -294,6 +294,10 @@ def validate_discovery_linkage(
 
 
 def packaged_core_contract() -> tuple[str, Path, tuple[Path, ...]]:
+    """Return `(core name, source, resources)`.
+
+    Unknown roots require exactly one known packaged core.
+    """
     plugin_root = Path(__file__).resolve().parent.parent
     package_key = plugin_root.name
     if package_key not in PACKAGED_CORES:

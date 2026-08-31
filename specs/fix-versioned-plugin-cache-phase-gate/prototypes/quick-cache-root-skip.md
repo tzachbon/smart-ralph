@@ -43,7 +43,7 @@ none
 
 ## Cases Or Variants
 
-The research reproduction already exercises one recognized Codex core, zero cores, and multiple cores through the real phase-gate path.
+The research reproduction exercises the one-core versioned-cache layout; the regression test covers zero- and multiple-core layouts.
 
 ## Evidence And Observations
 
