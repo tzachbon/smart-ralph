@@ -21,7 +21,7 @@ EOF
     root="$(plugin_root)"
     marketplace="$(repo_root)/.claude-plugin/marketplace.json"
 
-    run python3 -c "import json; plugin=json.load(open('$root/.codex-plugin/plugin.json')); marketplace=json.load(open('$marketplace')); entry=next(item for item in marketplace['plugins'] if item['name'] == 'ralph-specum-codex'); assert plugin['version'] == entry['version'] == '4.12.1'"
+    run python3 -c "import json; plugin=json.load(open('$root/.codex-plugin/plugin.json')); marketplace=json.load(open('$marketplace')); entry=next(item for item in marketplace['plugins'] if item['name'] == 'ralph-specum'); assert plugin['version'] == entry['version'] == '4.12.1'"
     [ "$status" -eq 0 ]
     [ -f "$root/skills/interview-framework-codex/SKILL.md" ]
     [ -f "$root/skills/interview-framework-codex/references/algorithm.md" ]
