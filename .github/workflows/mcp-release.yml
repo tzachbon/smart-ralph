@@ -1,0 +1,111 @@
+name: MCP Server Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            target: darwin-arm64
+            artifact: ralph-specum-mcp-darwin-arm64
+          - os: macos-13
+            target: darwin-x64
+            artifact: ralph-specum-mcp-darwin-x64
+          - os: ubuntu-latest
+            target: linux-x64
+            artifact: ralph-specum-mcp-linux-x64
+          - os: windows-latest
+            target: windows-x64
+            artifact: ralph-specum-mcp-windows-x64.exe
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.0'
+
+      - name: Install dependencies
+        working-directory: mcp-server
+        run: bun install
+
+      - name: Build binary
+        working-directory: mcp-server
+        run: |
+          bun build src/index.ts --compile --target=bun-${{ matrix.target }} --outfile=dist/${{ matrix.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: mcp-server/dist/${{ matrix.artifact }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la dist/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/ralph-specum-mcp-darwin-arm64
+            dist/ralph-specum-mcp-darwin-x64
+            dist/ralph-specum-mcp-linux-x64
+            dist/ralph-specum-mcp-windows-x64.exe
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+
+  publish-npm:
+    name: Publish to npm
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.0'
+
+      - name: Setup Node.js for npm publish
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        working-directory: mcp-server
+        run: bun install
+
+      - name: Publish to npm
+        working-directory: mcp-server
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
