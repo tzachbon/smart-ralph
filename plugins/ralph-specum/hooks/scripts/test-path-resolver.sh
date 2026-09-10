@@ -69,6 +69,25 @@ assert_contains() {
     fi
 }
 
+# Test helper: assert does not contain
+assert_not_contains() {
+    local haystack="$1"
+    local needle="$2"
+    local msg="$3"
+
+    if ! echo "$haystack" | grep -q "$needle"; then
+        echo -e "${GREEN}PASS${NC}: $msg"
+        PASS_COUNT=$((PASS_COUNT + 1))
+        return 0
+    else
+        echo -e "${RED}FAIL${NC}: $msg"
+        echo "  Expected NOT to contain: '$needle'"
+        echo "  Actual: '$haystack'"
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+        return 1
+    fi
+}
+
 # Test helper: assert exit code
 assert_exit() {
     local expected="$1"
@@ -523,6 +542,55 @@ test_list_specs_with_invalid_cwd() {
     cleanup
 }
 
+test_list_specs_excludes_epics_dir() {
+    echo ""
+    echo "=== test_list_specs_excludes_epics_dir ==="
+    setup
+
+    mkdir -p "$TEST_TMPDIR/specs/_epics/platform"
+    mkdir -p "$TEST_TMPDIR/specs/real-spec"
+
+    local result
+    result=$(ralph_list_specs 2>/dev/null)
+
+    assert_not_contains "$result" "_epics" "Does not contain _epics"
+    assert_contains "$result" "real-spec" "Contains real-spec"
+
+    cleanup
+}
+
+test_find_spec_epics_not_found() {
+    echo ""
+    echo "=== test_find_spec_epics_not_found ==="
+    setup
+
+    mkdir -p "$TEST_TMPDIR/specs/_epics/platform"
+
+    local exit_code=0
+    ralph_find_spec "_epics" >/dev/null 2>&1 || exit_code=$?
+
+    assert_exit 1 "$exit_code" "Returns exit 1 when searching for _epics"
+
+    cleanup
+}
+
+test_list_specs_preserves_draft_dir() {
+    echo ""
+    echo "=== test_list_specs_preserves_draft_dir ==="
+    setup
+
+    mkdir -p "$TEST_TMPDIR/specs/_draft"
+    mkdir -p "$TEST_TMPDIR/specs/_epics/platform"
+
+    local result
+    result=$(ralph_list_specs 2>/dev/null)
+
+    assert_contains "$result" "_draft" "Contains _draft"
+    assert_not_contains "$result" "_epics" "Does not contain _epics"
+
+    cleanup
+}
+
 # =============================================================================
 # Run all tests
 # =============================================================================
@@ -563,6 +631,11 @@ test_list_specs_single_root
 test_list_specs_multiple_roots
 test_list_specs_skips_hidden_dirs
 test_list_specs_with_invalid_cwd
+test_list_specs_excludes_epics_dir
+test_list_specs_preserves_draft_dir
+
+# ralph_find_spec _epics exclusion
+test_find_spec_epics_not_found
 
 # Summary
 echo ""

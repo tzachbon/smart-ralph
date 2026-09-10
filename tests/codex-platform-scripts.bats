@@ -368,6 +368,50 @@ EOF
     [ "$default_dir" = "./specs" ]
 }
 
+@test "codex scripts: resolve_spec_paths list excludes reserved _epics directory" {
+    local script count name
+    script="$(resolve_spec_paths_script)"
+
+    mkdir -p "$TEST_REPO/specs/_epics/platform"
+    mkdir -p "$TEST_REPO/specs/real-spec"
+
+    run python3 "$script" --cwd "$TEST_REPO" --list
+    [ "$status" -eq 0 ]
+
+    count="$(json_length <<< "$output")"
+    [ "$count" = "1" ]
+
+    name="$(json_query 0.name <<< "$output")"
+    [ "$name" = "real-spec" ]
+}
+
+@test "codex scripts: resolve_spec_paths --name _epics returns not-found" {
+    local script
+    script="$(resolve_spec_paths_script)"
+
+    mkdir -p "$TEST_REPO/specs/_epics/platform"
+
+    run python3 "$script" --cwd "$TEST_REPO" --name _epics
+    [ "$status" -eq 1 ]
+}
+
+@test "codex scripts: resolve_spec_paths list preserves _draft directory" {
+    local script count name
+    script="$(resolve_spec_paths_script)"
+
+    mkdir -p "$TEST_REPO/specs/_draft"
+    mkdir -p "$TEST_REPO/specs/_epics/platform"
+
+    run python3 "$script" --cwd "$TEST_REPO" --list
+    [ "$status" -eq 0 ]
+
+    count="$(json_length <<< "$output")"
+    [ "$count" = "1" ]
+
+    name="$(json_query 0.name <<< "$output")"
+    [ "$name" = "_draft" ]
+}
+
 @test "codex prototype harness: launch wait and status return completed output" {
     local script registry pid
     script="$(prototype_harness_script)"
