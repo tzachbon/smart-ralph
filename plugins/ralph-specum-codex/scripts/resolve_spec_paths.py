@@ -213,7 +213,7 @@ def list_specs(cwd: Path, specs_dirs: list[str]) -> list[dict[str, str]]:
         if not root_path.exists() or not root_path.is_dir():
             continue
         for child in sorted(root_path.iterdir()):
-            if not child.is_dir() or child.name.startswith("."):
+            if not child.is_dir() or child.name.startswith(".") or child.name == "_epics":
                 continue
             specs.append(
                 {

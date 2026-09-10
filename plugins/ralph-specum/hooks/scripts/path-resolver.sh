@@ -290,6 +290,12 @@ ralph_find_spec() {
     # Remove leading ./ if present
     name="${name#./}"
 
+    # Reject reserved _epics directory
+    if [ "$name" = "_epics" ]; then
+        echo "ERROR: Spec '_epics' not found in any configured directory" >&2
+        return 1
+    fi
+
     local found=""
     local count=0
     local dirs
@@ -353,8 +359,8 @@ ralph_list_specs() {
                 if [ -d "$spec_dir" ]; then
                     local name
                     name=$(basename "$spec_dir")
-                    # Skip hidden directories
-                    if [[ "$name" != .* ]]; then
+                    # Skip hidden directories and reserved _epics directory
+                    if [[ "$name" != .* ]] && [[ "$name" != "_epics" ]]; then
                         echo "$name|$dir/$name"
                     fi
                 fi
