@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## ⛔ CRITICAL SAFETY RULES
 
 1. **NEVER merge PRs without explicit user permission** — If unsure whether to merge, the answer is NO
@@ -17,7 +15,6 @@ Four rules for all agents and code generation. Non-negotiable.
 - State assumptions explicitly. If uncertain, ask.
 - Multiple interpretations? Present them, don't pick silently.
 - Simpler approach exists? Say so. Push back when warranted.
-- Something unclear? Stop. Name what's confusing. Ask.
 
 ### 2. Simplicity First
 - No features beyond what was asked.
@@ -79,32 +76,9 @@ No build step required. Changes take effect on Claude Code restart.
 
 ### Plugin Development Skills (ALWAYS USE)
 
-When creating or modifying plugin components, **ALWAYS** use the `plugin-dev` skills for guidance:
-
-- `/plugin-dev:plugin-structure` - Plugin manifest, directory layout, component organization
-- `/plugin-dev:command-development` - Creating slash commands with frontmatter
-- `/plugin-dev:skill-development` - Creating skills with progressive disclosure
-- `/plugin-dev:agent-development` - Creating subagents with system prompts
-- `/plugin-dev:hook-development` - Creating hooks (PreToolUse, PostToolUse, Stop, etc.)
-- `/plugin-dev:mcp-integration` - Integrating MCP servers into plugins
-- `/plugin-dev:plugin-settings` - Plugin configuration with .local.md files
-- `/plugin-dev:create-plugin` - Guided end-to-end plugin creation workflow
-
-**Example:** Before adding a new command, run `/plugin-dev:command-development` to ensure correct frontmatter and structure.
+When creating or modifying plugin components, **ALWAYS** use the `plugin-dev` skills for guidance.
 
 ## Architecture
-
-### Plugin Structure
-
-```
-plugins/ralph-specum/
-├── .claude-plugin/plugin.json   # Plugin manifest
-├── agents/                      # Sub-agent definitions (markdown)
-├── commands/                    # Slash command definitions (markdown)
-├── hooks/                       # Stop watcher (controls execution loop continuation)
-├── templates/                   # Spec file templates
-└── schemas/                     # JSON schema for spec validation
-```
 
 ### Execution Flow
 
@@ -117,8 +91,6 @@ plugins/ralph-specum/
 - `./specs/.current-spec` - Active spec name
 - `./specs/<name>/.ralph-state.json` - Loop state (phase, taskIndex, iterations). Deleted on completion
 - `./specs/<name>/.progress.md` - Progress tracking, learnings, context for agents
-- `./specs/.current-epic` - Active epic name
-- `./specs/_epics/<name>/.epic-state.json` - Epic progress (which specs are done/pending/blocked)
 
 ### Epics (Multi-Spec Orchestration)
 
@@ -142,17 +114,6 @@ specs/
 
 **Flow:** Explore (research) -> Brainstorm (triage-analyst) -> Validate (research) -> Finalize (output selection)
 
-### Agents
-
-| Agent | File | Purpose |
-|-------|------|---------|
-| research-analyst | `agents/research-analyst.md` | Web search, codebase analysis |
-| product-manager | `agents/product-manager.md` | User stories, acceptance criteria |
-| architect-reviewer | `agents/architect-reviewer.md` | Technical design, architecture |
-| task-planner | `agents/task-planner.md` | POC-first task breakdown |
-| spec-executor | `agents/spec-executor.md` | Autonomous task implementation |
-| triage-analyst | `agents/triage-analyst.md` | Feature decomposition, epic creation |
-
 ### POC-First Workflow (Mandatory)
 
 All specs follow 4 phases:
@@ -166,10 +127,6 @@ Quality checkpoints inserted every 2-3 tasks throughout all phases.
 ### Task Completion Protocol
 
 Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinator outputs `ALL_TASKS_COMPLETE` to end the Ralph Loop. If task fails, retries up to 5 times then blocks with error.
-
-### Dependencies
-
-Ralph Specum v3.0.0+ is self-contained with no external plugin dependencies. The execution loop is handled by the stop-hook.
 
 ## Key Files
 
