@@ -42,7 +42,7 @@ The task planner picks the workflow from the spec's intent: `GREENFIELD` runs PO
 
 ### Task completion protocol
 
-Spec-executor outputs `TASK_COMPLETE` for the coordinator to advance; the coordinator outputs `ALL_TASKS_COMPLETE` to end the loop. A failing task retries up to `--max-task-iterations` (default 5), then blocks with its error.
+Spec-executor outputs `TASK_COMPLETE` for the coordinator to advance; the coordinator outputs `ALL_TASKS_COMPLETE` to end the loop. A task without `TASK_COMPLETE` retries up to `--max-task-iterations` (default 5), then stops with its error; with `--recovery-mode`, it instead gets fix tasks inserted after it, then retries, stopping at `maxFixTasksPerOriginal` or `maxFixTaskDepth`. Details: [failure-recovery.md](plugins/ralph-specum/references/failure-recovery.md).
 
 ## Key files
 
