@@ -2,63 +2,60 @@
 
 ## Plugin components
 
-When creating or modifying plugin components, **ALWAYS** use the `plugin-dev` skills for guidance. Naming and style: [CONTRIBUTING.md](CONTRIBUTING.md#style-guide).
+Create or modify plugin components with the `plugin-dev` skills. Naming and style: [CONTRIBUTING.md](CONTRIBUTING.md#style-guide). Try a change with `claude --plugin-dir ./plugins/ralph-specum`, then `/ralph-specum:start test-feature Some test goal`; edits load on Claude Code restart, with no build step.
+
+## Version bumps
+
+Every change to a plugin's files bumps that plugin's version, once per set of related changes, in both `plugins/<plugin-name>/.claude-plugin/plugin.json` and its entry in `.claude-plugin/marketplace.json` (`ralph-specum-codex`: its `.codex-plugin/plugin.json`). Semantic versioning: patch for fixes, minor for features, major for breaking changes. Bump only the plugins you changed.
 
 ## Architecture
 
-### Execution Flow
+### Execution flow
 
-1. **Spec Phases**: Each command (`/ralph-specum:research`, `:requirements`, `:design`, `:tasks`) invokes a specialized agent to generate corresponding markdown in `./specs/<spec-name>/`
-2. **Execution Loop**: During execution (`/ralph-specum:implement`), the stop-hook reads `.ralph-state.json`, delegates tasks to spec-executor via Task tool, and outputs `ALL_TASKS_COMPLETE` when done. The loop is self-contained (no external plugin required).
-3. **Fresh Context**: Each task runs in isolation via Task tool. Progress persists in `.progress.md` and task checkmarks in `tasks.md`
+1. **Spec phases**: `/ralph-specum:research`, `:requirements`, `:design` and `:tasks` each invoke a specialized agent that writes its markdown to `./specs/<spec-name>/`.
+2. **Execution loop**: during `/ralph-specum:implement`, the stop hook reads `.ralph-state.json`, delegates each task to spec-executor via the Task tool, and outputs `ALL_TASKS_COMPLETE` when done. The loop needs no external plugin.
+3. **Fresh context**: each task runs in isolation; progress persists in `.progress.md` and the task checkmarks in `tasks.md`.
 
-### State Files
+### State files
 
-- `./specs/.current-spec` - Active spec name
-- `./specs/<name>/.ralph-state.json` - Loop state (phase, taskIndex, iterations). Deleted on completion
-- `./specs/<name>/.progress.md` - Progress tracking, learnings, context for agents
+- `./specs/.current-spec`: active spec name.
+- `./specs/<name>/.ralph-state.json`: loop state (phase, taskIndex, iterations); deleted on completion.
+- `./specs/<name>/.progress.md`: progress, learnings and context for agents.
 
-### Epics (Multi-Spec Orchestration)
+### Epics (multi-spec orchestration)
 
-Epics decompose large features into multiple dependency-aware specs.
+Epics decompose a large feature into dependency-aware specs. `/ralph-specum:triage <goal>` creates or resumes one; `/ralph-specum:start` detects active epics and suggests the next unblocked spec. Flow: explore (research), brainstorm (triage-analyst), validate (research), finalize (output selection).
 
-**File structure:**
 ```
 specs/
-  .current-epic          # Points to active epic name
-  _epics/
-    <epic-name>/
-      epic.md            # Triage output (vision, specs, dependency graph)
-      research.md        # Exploration + validation research
-      .epic-state.json   # Progress tracking across specs
-      .progress.md       # Learnings and decisions
+  .current-epic          # active epic name
+  _epics/<epic-name>/
+    epic.md              # triage output: vision, specs, dependency graph
+    research.md          # exploration and validation research
+    .epic-state.json     # progress across specs
+    .progress.md         # learnings and decisions
 ```
 
-**Entry points:**
-- `/ralph-specum:triage <goal>` -- create or resume an epic
-- `/ralph-specum:start` -- detects active epics, suggests next unblocked spec
+### POC-first workflow (mandatory)
 
-**Flow:** Explore (research) -> Brainstorm (triage-analyst) -> Validate (research) -> Finalize (output selection)
+Every spec runs four phases, with quality checkpoints every 2-3 tasks throughout:
 
-### POC-First Workflow (Mandatory)
+1. **Make it work**: POC validation, tests skipped.
+2. **Refactoring**: code cleanup.
+3. **Testing**: unit, integration, e2e.
+4. **Quality gates**: lint, types, CI, PR.
 
-All specs follow 4 phases:
-1. **Phase 1: Make It Work** - POC validation, skip tests
-2. **Phase 2: Refactoring** - Code cleanup
-3. **Phase 3: Testing** - Unit, integration, e2e
-4. **Phase 4: Quality Gates** - Lint, types, CI, PR
+### Task completion protocol
 
-Quality checkpoints inserted every 2-3 tasks throughout all phases.
+Spec-executor outputs `TASK_COMPLETE` for the coordinator to advance; the coordinator outputs `ALL_TASKS_COMPLETE` to end the loop. A failing task retries up to `--max-task-iterations` (default 5), then blocks with its error.
 
-### Task Completion Protocol
+## Key files
 
-Spec-executor must output `TASK_COMPLETE` for coordinator to advance. Coordinator outputs `ALL_TASKS_COMPLETE` to end the Ralph Loop. If task fails, retries up to 5 times then blocks with error.
+Under `plugins/ralph-specum/`:
 
-## Key Files
-
-- `commands/implement.md` - Thin wrapper + coordinator prompt for Ralph Loop
-- `commands/cancel.md` - Dual cleanup (cancel-ralph + state file deletion)
-- `hooks/scripts/stop-watcher.sh` - Execution loop controller (outputs continuation prompts)
-- `agents/spec-executor.md` - Task execution rules, commit discipline
-- `agents/task-planner.md` - Task format, quality checkpoint rules, POC workflow
-- `templates/*.md` - Spec file templates with structure requirements
+- `commands/implement.md`: thin wrapper plus the coordinator prompt for the loop.
+- `commands/cancel.md`: dual cleanup (cancel-ralph plus state file deletion).
+- `hooks/scripts/stop-watcher.sh`: loop controller (outputs continuation prompts).
+- `agents/spec-executor.md`: task execution rules, commit discipline.
+- `agents/task-planner.md`: task format, quality checkpoints, POC workflow; sizing per level in `references/sizing-rules.md`.
+- `templates/*.md`: spec file templates and their required structure.
