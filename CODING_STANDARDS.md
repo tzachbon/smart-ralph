@@ -36,14 +36,9 @@ specs/
     .progress.md         # learnings and decisions
 ```
 
-### POC-first workflow (mandatory)
+### Workflow by intent
 
-Every spec runs four phases, with quality checkpoints every 2-3 tasks throughout:
-
-1. **Make it work**: POC validation, tests skipped.
-2. **Refactoring**: code cleanup.
-3. **Testing**: unit, integration, e2e.
-4. **Quality gates**: lint, types, CI, PR.
+The task planner picks the workflow from the spec's intent: `GREENFIELD` runs POC-first; `TRIVIAL`, `REFACTOR` and `MID_SIZED` run TDD Red-Green-Yellow; `BUG_FIX` runs Bug TDD with a Phase 0 reproduction. Quality checkpoints land every 2-3 tasks throughout. Phases and their distribution: [phase-rules.md](plugins/ralph-specum/references/phase-rules.md).
 
 ### Task completion protocol
 
